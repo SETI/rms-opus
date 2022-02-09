@@ -5,12 +5,12 @@
 # It contains information on the observation and basic utility methods.
 ################################################################################
 
-import julian
 import pdsfile
 
 from config_targets import (TARGET_NAME_INFO,
                             TARGET_NAME_MAPPING)
-from import_util import (log_nonrepeating_error,
+from import_util import (cached_tai_from_iso,
+                         log_nonrepeating_error,
                          log_warning,
                          log_nonrepeating_warning,
                          log_unknown_target_name,
@@ -93,7 +93,7 @@ class ObsBase(object):
         if not opus_id:
             self._log_nonrepeating_error(
                         f'Unable to create OPUS_ID using filespec {filespec}')
-            opus_id = filespec.split('/')[-1]
+            return None
         self._opus_id_last_filespec = filespec
         self._opus_id_cached = opus_id
         return opus_id
@@ -110,7 +110,7 @@ class ObsBase(object):
         if filespec is None:
             self._log_nonrepeating_error('Supplemental index missing FILESPEC field')
             return None
-        return volume_id + '/' + filespec
+        return volume_id.rstrip('/') + '/' + filespec.lstrip('/')
 
     def opus_id_from_supp_index_row(self, supp_row):
         # This is a helper function used to take a row from the supplemental_index
@@ -124,22 +124,29 @@ class ObsBase(object):
             self._log_nonrepeating_warning(
                         'Unable to create OPUS_ID from supplemental index '+
                        f'using filespec {full_filespec} - internal PdsFile crash')
-            return filespec.split('/')[-1]
+            return None
         opus_id = pdsf.opus_id
         if not opus_id:
             self._log_nonrepeating_warning(
                         'Unable to create OPUS_ID from supplemental index '+
                        f'using filespec {full_filespec}')
-            return full_filespec.split('/')[-1]
+            return None
         return opus_id
 
     def is_main_supp_index_row(self, row):
         opus_id = self.opus_id_from_supp_index_row(row)
         primary_filespec = self.primary_filespec_from_supp_index_row(row)
-        if primary_filespec is None:
+        if opus_id is None or primary_filespec is None:
             return False
-        trial_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
+        try:
+            trial_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
+        except ValueError:
+            self._log_nonrepeating_warning(
+                f'Unable to convert OPUS ID "{opus_id}" for '+
+                f'filespec "{primary_filespec}"')
+            return False
         primary_filespec = self._convert_filespec_from_lbl(primary_filespec)
+        print(primary_filespec, trial_filespec)
         return primary_filespec in trial_filespec
 
 
@@ -250,7 +257,9 @@ class ObsBase(object):
         # or one of the associated label files and return the index name
         # as appropriate. If not found anywhere, return None.
         for index in ['supp_index_row', 'index_row', 'supp_index_label', 'index_label']:
-            if index in self._metadata and col in self._metadata[index]:
+            if (index in self._metadata and
+                self._metadata[index] is not None and
+                col in self._metadata[index]):
                 return index
         return None
 
@@ -315,7 +324,7 @@ class ObsBase(object):
             return None
 
         try:
-            start_time_sec = julian.tai_from_iso(start_time)
+            start_time_sec = cached_tai_from_iso(start_time)
         except Exception as e:
             self._log_nonrepeating_error(f'Bad start time format "{start_time}": {e}')
             return None
@@ -333,7 +342,7 @@ class ObsBase(object):
             return None
 
         try:
-            stop_time_sec = julian.tai_from_iso(stop_time)
+            stop_time_sec = cached_tai_from_iso(stop_time)
         except Exception as e:
             self._log_nonrepeating_error(f'Bad stop time format "{stop_time}": {e}')
             return None
@@ -382,7 +391,7 @@ class ObsBase(object):
         pct = index_row['PRODUCT_CREATION_TIME']
 
         try:
-            pct_sec = julian.tai_from_iso(pct)
+            pct_sec = cached_tai_from_iso(pct)
         except Exception as e:
             import_util.log_nonrepeating_error(
                 f'Bad product creation time format "{pct}": {e}')

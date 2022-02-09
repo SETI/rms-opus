@@ -7,8 +7,7 @@
 # identical import functions except for the instrument_id.
 ################################################################################
 
-import julian
-
+from import_util import cached_tai_from_iso
 from obs_instrument_vg28xx import (ObsInstrumentVG28xx,
                                    THRESHOLD_START_TIME_VG_AT_NORTH)
 
@@ -79,8 +78,8 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         src_name = self._index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
-        start_time = julian.tai_from_iso(self._index_col('START_TIME'))
-        threshold = julian.tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
+        start_time = cached_tai_from_iso(self._index_col('START_TIME'))
+        threshold = cached_tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
 
         is_at_north = (src_name == 'DELTA SCO' or
                        (src_name == 'SIGMA SGR' and target_name == 'U RINGS'))
@@ -103,8 +102,8 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         src_name = self._index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
-        start_time = julian.tai_from_iso(self._index_col('START_TIME'))
-        threshold = julian.tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
+        start_time = cached_tai_from_iso(self._index_col('START_TIME'))
+        threshold = cached_tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
 
         is_at_north = (src_name == 'DELTA SCO')
         # Check if the start time matches the Voyager location.

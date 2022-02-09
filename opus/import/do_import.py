@@ -794,15 +794,12 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
         if 'supp_index' in metadata:
             # Match up the primary filespec
             supp_index = metadata['supp_index']
-            # print(opus_id)
-            # print(list(supp_index.keys())[:5])
             if opus_id in supp_index:
                 metadata['supp_index_row'] = supp_index[opus_id]
             else:
-                import_util.log_nonrepeating_error(
+                import_util.log_nonrepeating_warning(
                     f'OPUS ID "{opus_id}" is missing supplemental data')
                 metadata['supp_index_row'] = None
-                continue # We don't process entries without supp_index
 
         # This is used to make all ground-based observations look like they were
         # done by a single instrument to make writing the populate_* functions

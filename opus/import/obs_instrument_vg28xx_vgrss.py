@@ -5,8 +5,6 @@
 # VGRSS instrument in VG_2803.
 ################################################################################
 
-import julian
-
 from config_targets import DSN_NAMES
 
 from obs_instrument_vg28xx import ObsInstrumentVG28xx

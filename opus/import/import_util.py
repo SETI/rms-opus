@@ -4,6 +4,7 @@
 # General utilities used by the import process.
 ################################################################################
 
+from functools import lru_cache
 import json
 import numpy as np
 import os
@@ -11,6 +12,7 @@ import re
 import sys
 import traceback
 
+import julian
 import pdsfile
 import pdsparser
 import pdstable
@@ -268,6 +270,7 @@ def safe_column(row, column_name, idx=None):
         return None
     return row[column_name][idx]
 
+
 ################################################################################
 # TABLE MANIPULATION
 ################################################################################
@@ -399,3 +402,12 @@ def log_nonrepeating_warning(msg):
 def log_unknown_target_name(target_name):
     msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
     log_nonrepeating_error(msg)
+
+
+################################################################################
+# MISC UTILITIES
+################################################################################
+
+@lru_cache(maxsize=64)
+def cached_tai_from_iso(s):
+    return julian.tai_from_iso(s)

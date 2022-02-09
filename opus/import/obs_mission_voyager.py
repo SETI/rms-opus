@@ -5,10 +5,9 @@
 # obs_mission_voyager table.
 ################################################################################
 
-import julian
-
 import opus_support
 
+from import_util import cached_tai_from_iso
 from obs_common import ObsCommon
 
 
@@ -75,7 +74,7 @@ class ObsMissionVoyager(ObsCommon):
         if ert_time == 'UNKNOWN':
             return None
         try:
-            ert_sec = julian.tai_from_iso(ert_time)
+            ert_sec = cached_tai_from_iso(ert_time)
         except Exception as e:
             self._log_nonrepeating_error(
                 f'Bad earth received time format "{ert_time}": {e}')

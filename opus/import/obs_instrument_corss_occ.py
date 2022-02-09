@@ -5,10 +5,9 @@
 # CORSS_8001.
 ################################################################################
 
-import julian
-
 from config_targets import DSN_NAMES
 
+from import_util import cached_tai_from_iso
 from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
 
 
@@ -173,7 +172,7 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
         start_time = self._supp_index_col('EARTH_RECEIVED_START_TIME')
 
         try:
-            ert_sec = julian.tai_from_iso(start_time)
+            ert_sec = cached_tai_from_iso(start_time)
         except Exception as e:
             self._log_nonrepeating_warning(
                 f'Bad earth received start time format "{start_time}": {e}')
@@ -185,7 +184,7 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
         stop_time = self._supp_index_col('EARTH_RECEIVED_STOP_TIME')
 
         try:
-            ert_sec = julian.tai_from_iso(stop_time)
+            ert_sec = cached_tai_from_iso(stop_time)
         except Exception as e:
             self._log_nonrepeating_warning(
                 f'Bad earth received stop time format "{stop_time}": {e}')

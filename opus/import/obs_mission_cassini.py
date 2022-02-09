@@ -7,13 +7,11 @@
 
 import re
 
-import julian
-
 import opus_support
 
+from import_util import cached_tai_from_iso
 from config_targets import (TARGET_NAME_INFO,
                             TARGET_NAME_MAPPING)
-
 from obs_common import ObsCommon
 
 
@@ -87,24 +85,24 @@ _CASSINI_TARGET_CODE_MAPPING = {
 _CASSINI_PHASE_NAME_MAPPING = (
     # Short encounters that interrupt longer ones; these take priority so
     # are listed first
-    ('Phoebe Encounter',          julian.tai_from_iso('2004-163T04:30:06.353'), julian.tai_from_iso('2004-163T20:52:47.180')),
-    ('Saturn Orbit Insertion',    julian.tai_from_iso('2004-183T03:11:40.288'), julian.tai_from_iso('2004-183T05:15:46.245')),
-    ('Titan A Encounter',         julian.tai_from_iso('2004-300T00:30:21.455'), julian.tai_from_iso('2004-300T21:15:32.979')),
-    ('Titan B Encounter',         julian.tai_from_iso('2004-348T00:18:13.469'), julian.tai_from_iso('2004-348T22:03:45.065')),
+    ('Phoebe Encounter',          cached_tai_from_iso('2004-163T04:30:06.353'), cached_tai_from_iso('2004-163T20:52:47.180')),
+    ('Saturn Orbit Insertion',    cached_tai_from_iso('2004-183T03:11:40.288'), cached_tai_from_iso('2004-183T05:15:46.245')),
+    ('Titan A Encounter',         cached_tai_from_iso('2004-300T00:30:21.455'), cached_tai_from_iso('2004-300T21:15:32.979')),
+    ('Titan B Encounter',         cached_tai_from_iso('2004-348T00:18:13.469'), cached_tai_from_iso('2004-348T22:03:45.065')),
     # Full length encounters that completely cover the mission timeline
-    ('Science Cruise',            julian.tai_from_iso('1997-001T00:00:00.000'), julian.tai_from_iso('2000-262T00:32:38.930')), # '2000-209T02:40:23.416'
-    ('Earth-Jupiter Cruise',      julian.tai_from_iso('2000-262T00:32:38.930'), julian.tai_from_iso('2001-014T23:02:09.804')), # '2001-013T22:47:48.047'
-    ('Jupiter Encounter',         julian.tai_from_iso('2001-014T23:02:09.804'), julian.tai_from_iso('2001-071T12:28:05.413')), # '2001-071T00:58:38.838'
-    ('Cruise Science',            julian.tai_from_iso('2001-071T12:28:05.413'), julian.tai_from_iso('2003-138T02:16:18.383')), # '2003-115T07:45:08.222'
-    ('Space Science',             julian.tai_from_iso('2003-138T02:16:18.383'), julian.tai_from_iso('2004-037T02:07:06.418')), # '2003-359T10:29:18.711'
-    ('Approach Science',          julian.tai_from_iso('2004-037T02:07:06.418'), julian.tai_from_iso('2004-164T02:33:41.000')), # '2004-162T14:47:05.854'
-    ('Tour Pre-Huygens',          julian.tai_from_iso('2004-164T02:33:41.000'), julian.tai_from_iso('2004-359T12:53:08.998')), # '2004-358T13:47:22.548'),
-    ('Huygens Probe Separation',  julian.tai_from_iso('2004-359T12:53:08.998'), julian.tai_from_iso('2004-360T13:30:10.410')), # '2004-359T13:47:22.981'),
+    ('Science Cruise',            cached_tai_from_iso('1997-001T00:00:00.000'), cached_tai_from_iso('2000-262T00:32:38.930')), # '2000-209T02:40:23.416'
+    ('Earth-Jupiter Cruise',      cached_tai_from_iso('2000-262T00:32:38.930'), cached_tai_from_iso('2001-014T23:02:09.804')), # '2001-013T22:47:48.047'
+    ('Jupiter Encounter',         cached_tai_from_iso('2001-014T23:02:09.804'), cached_tai_from_iso('2001-071T12:28:05.413')), # '2001-071T00:58:38.838'
+    ('Cruise Science',            cached_tai_from_iso('2001-071T12:28:05.413'), cached_tai_from_iso('2003-138T02:16:18.383')), # '2003-115T07:45:08.222'
+    ('Space Science',             cached_tai_from_iso('2003-138T02:16:18.383'), cached_tai_from_iso('2004-037T02:07:06.418')), # '2003-359T10:29:18.711'
+    ('Approach Science',          cached_tai_from_iso('2004-037T02:07:06.418'), cached_tai_from_iso('2004-164T02:33:41.000')), # '2004-162T14:47:05.854'
+    ('Tour Pre-Huygens',          cached_tai_from_iso('2004-164T02:33:41.000'), cached_tai_from_iso('2004-359T12:53:08.998')), # '2004-358T13:47:22.548'),
+    ('Huygens Probe Separation',  cached_tai_from_iso('2004-359T12:53:08.998'), cached_tai_from_iso('2004-360T13:30:10.410')), # '2004-359T13:47:22.981'),
     # The descent actually happened on Jan 14
-    ('Huygens Descent',           julian.tai_from_iso('2004-360T13:30:10.410'), julian.tai_from_iso('2005-015T18:28:29.451')), # '2005-001T14:28:54.449'),
-    ('Tour',                      julian.tai_from_iso('2005-015T18:28:29.451'), julian.tai_from_iso('2008-183T21:04:08.998')), # '2008-183T09:17:06.323'),
-    ('Extended Mission',          julian.tai_from_iso('2008-183T21:04:08.998'), julian.tai_from_iso('2010-285T05:22:24.745')), # '2010-283T14:14:20.741'),
-    ('Extended-Extended Mission', julian.tai_from_iso('2010-285T05:22:24.745'), julian.tai_from_iso('2020-001T00:00:00.000'))
+    ('Huygens Descent',           cached_tai_from_iso('2004-360T13:30:10.410'), cached_tai_from_iso('2005-015T18:28:29.451')), # '2005-001T14:28:54.449'),
+    ('Tour',                      cached_tai_from_iso('2005-015T18:28:29.451'), cached_tai_from_iso('2008-183T21:04:08.998')), # '2008-183T09:17:06.323'),
+    ('Extended Mission',          cached_tai_from_iso('2008-183T21:04:08.998'), cached_tai_from_iso('2010-285T05:22:24.745')), # '2010-283T14:14:20.741'),
+    ('Extended-Extended Mission', cached_tai_from_iso('2010-285T05:22:24.745'), cached_tai_from_iso('2020-001T00:00:00.000'))
 )
 
 # These mappings are for the TARGET_DESC field to clean them up
@@ -196,8 +194,8 @@ class ObsMissionCassini(ObsCommon):
         return False
 
     # Break points for each planet
-    _JUPITER_TAI = julian.tai_from_iso('2000-262T00:32:38.930')
-    _SATURN_TAI = julian.tai_from_iso('2003-138T02:16:18.383')
+    _JUPITER_TAI = cached_tai_from_iso('2000-262T00:32:38.930')
+    _SATURN_TAI = cached_tai_from_iso('2003-138T02:16:18.383')
 
     def _cassini_planet_id(self):
         """Find the planet associated with an observation. This is based on the

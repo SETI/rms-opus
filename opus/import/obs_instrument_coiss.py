@@ -5,10 +5,9 @@
 # obs_instrument_coiss table.
 ################################################################################
 
-import julian
-
 import opus_support
 
+from import_util import cached_tai_from_iso
 from obs_mission_cassini import (ObsMissionCassini,
                                  COISS_TARGET_DESC_MAPPING)
 
@@ -407,7 +406,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         start_time = self._index_col('EARTH_RECEIVED_START_TIME')
 
         try:
-            ert_sec = julian.tai_from_iso(start_time)
+            ert_sec = cached_tai_from_iso(start_time)
         except Exception as e:
             self._log_nonrepeating_warning(
                 f'Bad earth received start time format "{start_time}": {e}')
@@ -419,7 +418,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         stop_time = self._index_col('EARTH_RECEIVED_STOP_TIME')
 
         try:
-            ert_sec = julian.tai_from_iso(stop_time)
+            ert_sec = cached_tai_from_iso(stop_time)
         except Exception as e:
             self._log_nonrepeating_warning(
                 f'Bad earth received stop time format "{stop_time}": {e}')
