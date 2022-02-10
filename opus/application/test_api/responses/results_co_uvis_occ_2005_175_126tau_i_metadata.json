@@ -18,7 +18,7 @@
     },
     "PDS Constraints": {
         "volumeid": "COUVIS_8001",
-        "datasetid": "CO-SR-UVIS-HSP-2/4-OCC-V2.0",
+        "datasetid": "CO-SR-UVIS-HSP-2/4-OCC-V3.0",
         "productid": "UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB",
         "productcreationtime": "2020-11-27T20:00:00.000",
         "primaryfilespec": "COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL",

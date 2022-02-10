@@ -82,6 +82,10 @@ class ObsBase(object):
         return self._volume
 
     @property
+    def phase_name(self):
+        return self._metadata['phase_name']
+
+    @property
     def opus_id(self):
         filespec = self.primary_filespec
         if filespec == self._opus_id_last_filespec:
@@ -98,26 +102,26 @@ class ObsBase(object):
         self._opus_id_cached = opus_id
         return opus_id
 
-    def primary_filespec_from_supp_index_row(self, supp_row):
-        # Given a row from a supplemental_index file, return the primary_filespec
+    def primary_filespec_from_index_row(self, supp_row):
+        # Given a row from an index file, return the primary_filespec
         volume_id = supp_row.get('VOLUME_ID', None)
         if volume_id is None:
             volume_id = supp_row.get('VOLUME_NAME', None) # VG_[5678]xxx
-        if volume_id is None:
-            self._log_nonrepeating_error('Supplemental index missing VOLUME_ID field')
+        if volume_id is not None and volume_id.rstrip('/') != self.volume:
+            self._log_nonrepeating_error('Volume ID in index file inconsistent')
             return None
         filespec = supp_row.get('FILE_SPECIFICATION_NAME')
         if filespec is None:
-            self._log_nonrepeating_error('Supplemental index missing FILESPEC field')
+            self._log_nonrepeating_error('Index missing FILESPEC field')
             return None
-        return volume_id.rstrip('/') + '/' + filespec.lstrip('/')
+        return self.volume + '/' + filespec.lstrip('/')
 
-    def opus_id_from_supp_index_row(self, supp_row):
+    def opus_id_from_index_row(self, supp_row):
         # This is a helper function used to take a row from the supplemental_index
         # and convert it to an opus_id so that the supplemental_index and other
         # index/geo/inventory files can be cross-referenced. We do this here
         # because the supplemental index files are inconsistent in their formatting.
-        full_filespec = self.primary_filespec_from_supp_index_row(supp_row)
+        full_filespec = self.primary_filespec_from_index_row(supp_row)
         try:
             pdsf = self._pdsfile_from_filespec(full_filespec)
         except KeyError:
@@ -133,9 +137,9 @@ class ObsBase(object):
             return None
         return opus_id
 
-    def is_main_supp_index_row(self, row):
-        opus_id = self.opus_id_from_supp_index_row(row)
-        primary_filespec = self.primary_filespec_from_supp_index_row(row)
+    def is_main_index_row(self, row):
+        opus_id = self.opus_id_from_index_row(row)
+        primary_filespec = self.primary_filespec_from_index_row(row)
         if opus_id is None or primary_filespec is None:
             return False
         try:

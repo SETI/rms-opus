@@ -43,10 +43,10 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
     ###################################
 
     def field_obs_wavelength_wavelength1(self):
-        return self._index_col('MINIMUM_WAVELENGTH')
+        return self._index_col('MINIMUM_WAVELENGTH') / 1000. # nm -> micron
 
     def field_obs_wavelength_wavelength2(self):
-        return self._index_col('MAXIMUM_WAVELENGTH')
+        return self._index_col('MAXIMUM_WAVELENGTH') / 1000. # nm -> micron
 
     def field_obs_wavelength_wave_res1(self):
         wl1 = self.field_obs_wavelength_wavelength1()

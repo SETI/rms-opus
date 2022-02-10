@@ -29,7 +29,7 @@
         "duration": null,
         "greaterpixelsize": null,
         "lesserpixelsize": null,
-        "levels": "4096",
+        "levels": null,
         "imagetype": null
     },
     "Wavelength Constraints": {

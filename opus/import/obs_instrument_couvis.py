@@ -105,7 +105,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
 
         return start_time_sec + samples*integration_duration
 
-    # We occasionally don't bother to generate ring_geo data for COISS, like during
+    # We occasionally don't bother to generate ring_geo data for COUVIS, like during
     # cruise, so just use the given RA/DEC from the index if needed. We don't make
     # any effort to figure out the min/max values.
     def field_obs_general_right_asc1(self):

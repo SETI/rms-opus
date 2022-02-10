@@ -574,14 +574,12 @@ def import_one_volume(volume_id):
         if not os.path.exists(metadata_path):
             continue
         basenames = os.listdir(metadata_path)
-        vol_prefix = volume_id # XXX
         for basename in basenames:
             if basename == primary_index_name:
                 volume_label_path = os.path.join(metadata_path, basename)
                 ret = import_one_index(volume_id,
                                        vol_info,
                                        volume_pdsfile,
-                                       vol_prefix,
                                        metadata_paths,
                                        volume_label_path)
                 impglobals.LOGGER.close()
@@ -597,11 +595,10 @@ def import_one_volume(volume_id):
     return False
 
 
-def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_paths,
+def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
                      volume_label_path):
     """Import the observations given a single primary index file."""
     instrument_class = vol_info['instrument_class']
-    # XXX Handle GB
     volset = volume_pdsfile.volset
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
@@ -612,15 +609,25 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
     impglobals.LOGGER.log('info',
                f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
 
-    metadata = {}
-    metadata['index'] = obs_rows
-    metadata['index_label'] = obs_label_dict
+    metadata = {'phase_name': None}
 
     # Instantiate the appropriate class that knows how to import this instrument
     instrument_obj = instrument_class(
         volume=volume_id,
         metadata=metadata
     )
+
+    if vol_info['validate_index_rows']:
+        old_obs_rows = obs_rows
+        obs_rows = []
+        for row in old_obs_rows:
+            if instrument_obj.is_main_index_row(row):
+                obs_rows.append(row)
+            else:
+                print('Dropping', row['FILE_SPECIFICATION_NAME'])
+
+    metadata['index'] = obs_rows
+    metadata['index_label'] = obs_label_dict
 
 
     ######################################
@@ -644,7 +651,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
                 if basename.find('999') != -1:
                     # These are cumulative geo files
                     continue
-                if not basename.startswith(vol_prefix):
+                if not basename.startswith(volume_id):
                     continue
                 basename_upper = basename.upper()
                 if (not basename_upper.endswith('SUMMARY.LBL') and
@@ -732,13 +739,13 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
                 else:
                     assert assoc_type == 'supp_index'
                     for row in assoc_rows:
-                        key = instrument_obj.opus_id_from_supp_index_row(row)
+                        key = instrument_obj.opus_id_from_index_row(row)
                         # We throw away supplemental index rows where the OPUS ID doesn't
                         # convert back to the source filespec. In these cases, the
                         # index row is not the primary one we want to draw information
                         # from. For example, it might be a description of an occultation
                         # at a coarser resolution.
-                        if instrument_obj.is_main_supp_index_row(row):
+                        if instrument_obj.is_main_index_row(row):
                             if key is not None:
                                 # Error will already be logged if key is None
                                 assoc_dict[key] = row
@@ -781,6 +788,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
         metadata['index_row_num'] = index_row_num+1
+        metadata['phase_name'] = None
         obs_general_row = None
         obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
@@ -1292,11 +1300,6 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     for product_type in products:
         (category, sort_order_num, short_name,
          full_name, default_checked) = product_type
-
-        # We will skip all the diagrams of COUVIS_8xxx for now.
-        if (volume_id.startswith('COUVIS_8') and
-            full_name.find('Browse Diagram') != -1):
-            continue
 
         if category == 'standard':
             pref = 'ZZZZZ1'
