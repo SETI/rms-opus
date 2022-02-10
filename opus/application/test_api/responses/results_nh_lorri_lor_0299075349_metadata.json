@@ -19,9 +19,9 @@
     "PDS Constraints": {
         "volumeid": "NHPELO_1001",
         "datasetid": "NH-P-LORRI-2-PLUTO-V3.0",
-        "productid": "LOR_0299075349_0X632_ENG",
+        "productid": "LOR_0299075349_0X630_ENG",
         "productcreationtime": "2017-09-21T00:00:00.000",
-        "primaryfilespec": "NHPELO_1001/data/20150713_029907/lor_0299075349_0x632_eng.lbl",
+        "primaryfilespec": "NHPELO_1001/data/20150713_029907/lor_0299075349_0x630_eng.lbl",
         "opusid": "nh-lorri-lor_0299075349",
         "note": "LORRI IMAGES OF CHARON, 1X1"
     },
@@ -205,7 +205,7 @@
     },
     "New Horizons LORRI Constraints": {
         "NHLORRIbinningmode": "1x1",
-        "NHLORRIinstrumentcompressiontype": "Lossy",
+        "NHLORRIinstrumentcompressiontype": "Lossless",
         "duration": "0.15"
     }
 }

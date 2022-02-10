@@ -624,7 +624,9 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
             if instrument_obj.is_main_index_row(row):
                 obs_rows.append(row)
             else:
-                print('Dropping', row['FILE_SPECIFICATION_NAME'])
+                impglobals.LOGGER.log('info',
+                    'Dropping index row for duplicate filespec '+
+                    instrument_obj.primary_filespec_from_index_row(row))
 
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
