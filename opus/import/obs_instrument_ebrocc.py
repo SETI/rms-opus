@@ -53,7 +53,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
         return self.volume + filespec
 
-    def _convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.LBL', '.TAB')
 
 

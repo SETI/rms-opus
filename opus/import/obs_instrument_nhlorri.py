@@ -43,7 +43,7 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
         filespec = self._index_col('PATH_NAME') + self._index_col('FILE_NAME')
         return self.volume + '/' + filespec
 
-    def _convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec):
         filespec = filespec.replace('.lbl', '.fit')
         filespec = filespec.replace('.LBL', '.FIT')
         filespec = filespec.replace('_sci', '_eng')

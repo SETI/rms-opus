@@ -385,6 +385,9 @@ def log_error(msg, *args):
 def log_warning(msg, *args):
     impglobals.LOGGER.log('warning', _format_vol_line()+msg, *args)
 
+def log_info(msg, *args):
+    impglobals.LOGGER.log('info', _format_vol_line()+msg, *args)
+
 def log_debug(msg, *args):
     impglobals.LOGGER.log('debug', _format_vol_line()+msg, *args)
 

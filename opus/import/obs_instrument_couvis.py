@@ -34,7 +34,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         filespec = self._index_col('FILE_NAME')
         return filespec.lstrip('/')
 
-    def _convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.LBL', '.DAT')
 
     def _channel_time_helper(self):

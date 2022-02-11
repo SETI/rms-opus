@@ -79,21 +79,24 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
         start_time = cached_tai_from_iso(self._index_col('START_TIME'))
-        threshold = cached_tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
 
         is_at_north = (src_name == 'DELTA SCO' or
                        (src_name == 'SIGMA SGR' and target_name == 'U RINGS'))
         # Check if the start time matches the Voyager location
         if is_at_north:
-            if (start_time > threshold[4] or
-                threshold[1] > start_time > threshold[0] or
-                threshold[3] > start_time > threshold[2]):
+            if (start_time > THRESHOLD_START_TIME_VG_AT_NORTH[4] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[1] > start_time >
+                    THRESHOLD_START_TIME_VG_AT_NORTH[0] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[3] > start_time >
+                    THRESHOLD_START_TIME_VG_AT_NORTH[2]):
                 self._log_nonrepeating_error(
                     'Start time and Voyager N/S location do not match.')
         else:
-            if (start_time <= threshold[0] or
-                threshold[1] <= start_time <= threshold[2] or
-                threshold[3] <= start_time <= threshold[4]):
+            if (start_time <= THRESHOLD_START_TIME_VG_AT_NORTH[0] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[1] <= start_time <=
+                    THRESHOLD_START_TIME_VG_AT_NORTH[2] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[3] <= start_time <=
+                    THRESHOLD_START_TIME_VG_AT_NORTH[4]):
                 self._log_nonrepeating_error(
                     'Start time and Voyager N/S location do not match.')
         return is_at_north
@@ -103,20 +106,23 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
         start_time = cached_tai_from_iso(self._index_col('START_TIME'))
-        threshold = cached_tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
 
         is_at_north = (src_name == 'DELTA SCO')
         # Check if the start time matches the Voyager location.
         if is_at_north or (src_name == 'SIGMA SGR' and target_name == 'U RINGS'):
-            if (start_time > threshold[4] or
-                threshold[1] > start_time > threshold[0] or
-                threshold[3] > start_time > threshold[2]):
+            if (start_time > THRESHOLD_START_TIME_VG_AT_NORTH[4] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[1] > start_time >
+                    THRESHOLD_START_TIME_VG_AT_NORTH[0] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[3] > start_time >
+                    THRESHOLD_START_TIME_VG_AT_NORTH[2]):
                 self._log_nonrepeating_error(
                     'Start time and Voyager N/S location do not match.')
         else:
-            if (start_time <= threshold[0] or
-                threshold[1] <= start_time <= threshold[2] or
-                threshold[3] <= start_time <= threshold[4]):
+            if (start_time <= THRESHOLD_START_TIME_VG_AT_NORTH[0] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[1] <= start_time <=
+                    THRESHOLD_START_TIME_VG_AT_NORTH[2] or
+                THRESHOLD_START_TIME_VG_AT_NORTH[3] <= start_time <=
+                    THRESHOLD_START_TIME_VG_AT_NORTH[4]):
                 self._log_nonrepeating_error(
                     'Start time and Voyager N/S location do not match.')
         return is_at_north

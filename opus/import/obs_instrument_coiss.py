@@ -189,6 +189,9 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     def instrument_id(self):
         return 'COISS'
 
+    def convert_filespec_from_lbl(self, filespec):
+        return filespec.replace('.LBL', '.IMG')
+
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###

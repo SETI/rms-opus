@@ -48,7 +48,7 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
             return filespec.split('/')[-1]
         return opus_id
 
-    def _convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.LBL', '.IMG')
 
 

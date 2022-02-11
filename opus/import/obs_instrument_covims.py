@@ -38,7 +38,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         file_name = self._index_col('FILE_NAME')
         return f'{self.volume}{path_name}/{file_name}'
 
-    def _convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.lbl', '.qub')
 
     @property

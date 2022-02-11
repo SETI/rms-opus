@@ -16,7 +16,7 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
         super().__init__(*args, **kwargs)
 
 
-    def _convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.LBL', '.TAB')
 
 

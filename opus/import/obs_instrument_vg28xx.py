@@ -7,6 +7,8 @@
 # fields in the obs_instrument_vgiss/pps/rss/uvs tables for the VG_28XX volume.
 ################################################################################
 
+import julian
+
 from obs_mission_voyager import ObsMissionVoyager
 
 
@@ -29,13 +31,18 @@ _VG_TARGET_TO_MISSION_PHASE_MAPPING = {
 # North
 # 1986-01-24T17:10:13.320
 # South
-THRESHOLD_START_TIME_VG_AT_NORTH = [
-    '1980-11-12T05:15:45.520',
-    '1980-11-13T04:19:30.640',
-    '1981-08-26T04:16:45.080',
-    '1985-11-06T17:22:30.040',
-    '1986-01-24T17:10:13.320'
-]
+# We don't cache these dates because they're only computed once, and calling
+# julian.tai_from_iso directly allows us to do an easy vectorization of a list
+# of dates.
+THRESHOLD_START_TIME_VG_AT_NORTH = julian.tai_from_iso(
+    [
+        '1980-11-12T05:15:45.520',
+        '1980-11-13T04:19:30.640',
+        '1981-08-26T04:16:45.080',
+        '1985-11-06T17:22:30.040',
+        '1986-01-24T17:10:13.320'
+    ]
+)
 
 # This class handles everything that the instruments VGISS, VGPPS, VGRSS,
 # and VGUVS have in common in the VG_28xx reflection/occultation profile
@@ -53,6 +60,9 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     @property
     def mission_id(self):
         return 'VG'
+
+    def convert_filespec_from_lbl(self, filespec):
+        return filespec.replace('.LBL', '.TAB')
 
 
     ############################

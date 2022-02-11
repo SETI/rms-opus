@@ -1,3 +1,10 @@
+################################################################################
+# config_volume_info.py
+#
+# Defines the VOLUME_INFO structure, which gives information about how to
+# import each volume.
+################################################################################
+
 from obs_instrument_coiss import ObsInstrumentCOISS
 from obs_instrument_corss_occ import ObsInstrumentCORSSOcc
 from obs_instrument_couvis import ObsInstrumentCOUVIS
@@ -15,8 +22,23 @@ from obs_instrument_vg28xx_vgpps_vguvs import (ObsInstrumentVG28xxVGPPS,
 from obs_instrument_vg28xx_vgrss import ObsInstrumentVG28xxVGRSS
 
 
-# Information about each volume or group of volumes, used to determine
-# which instrument class to use, which index files to read, etc.
+# The VOLUME_INFO structure is used to determine the details of importing
+# each distinct type of volume.
+# - The first element of each tuple is a regular expression to match the volume_id.
+# - The second element of each tuple is a dictionary with these keys:
+#   - primary_index: The name of the primary index file. <VOLUME> will be
+#       substituted with the current volume ID. This is used to distinguish between
+#       plain index files, profile_index, and other special index files like
+#       raw_image_index for VGISS.
+#   - validate_index_rows: True if we should check the filespec for each row in
+#       the primary index to see if filespec -> opus_id -> filespec is
+#       idempotent. If it's not, we ignore this row. This is used to handle
+#       index files that include multiple versions of each opus_id or information
+#       on other support files. Basically this guarantees that only a single row
+#       will be used for each opus_id.
+#   - instrument_class: The Python class, imported above, that will handle the
+#       import.
+
 VOLUME_INFO = [
     (r'EBROCC_0001',
         # We would like to get rid of this profile_index, but the normal index
@@ -58,17 +80,17 @@ VOLUME_INFO = [
     ),
     (r'GO_00\d\d',
         {'primary_index': '<VOLUME>_index.lbl',
-         'validate_index_rows': False,
+         'validate_index_rows': True,
          'instrument_class': ObsInstrumentGOSSI},
     ),
     (r'NH..LO_[12]001',
         {'primary_index': '<VOLUME>_index.lbl',
-         'validate_index_rows': False,
+         'validate_index_rows': True,
          'instrument_class': ObsInstrumentNHLORRI},
     ),
     (r'NH..MV_[12]001',
         {'primary_index': '<VOLUME>_index.lbl',
-         'validate_index_rows': False,
+         'validate_index_rows': True,
          'instrument_class': ObsInstrumentNHMVIC},
     ),
     (r'VGISS_[5678]\d\d\d',
@@ -77,23 +99,23 @@ VOLUME_INFO = [
          'instrument_class': ObsInstrumentVGISS},
     ),
     (r'VG_2801',
-        {'primary_index': '<VOLUME>_index.lbl',
-         'validate_index_rows': True,
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'validate_index_rows': False,
          'instrument_class': ObsInstrumentVG28xxVGPPS},
     ),
     (r'VG_2802',
-        {'primary_index': '<VOLUME>_index.lbl',
-         'validate_index_rows': True,
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'validate_index_rows': False,
          'instrument_class': ObsInstrumentVG28xxVGUVS},
     ),
     (r'VG_2803',
-        {'primary_index': '<VOLUME>_index.lbl',
-         'validate_index_rows': True,
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'validate_index_rows': False,
          'instrument_class': ObsInstrumentVG28xxVGRSS},
     ),
     (r'VG_2810',
-        {'primary_index': '<VOLUME>_index.lbl',
-         'validate_index_rows': True,
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'validate_index_rows': False,
          'instrument_class': ObsInstrumentVG28xxVGISS},
     ),
 ]
