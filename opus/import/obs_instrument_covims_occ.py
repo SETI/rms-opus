@@ -41,18 +41,10 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         return 0.01662
 
     def field_obs_wavelength_wave_no_res1(self):
-        wave_res2 = self.field_obs_wavelength_wave_res2()
-        wl2 = self.field_obs_wavelength_wavelength2()
-        if wave_res2 is None or wl2 is None:
-            return None
-        return wave_res2 * 10000. / (wl2*wl2)
+        return self._wave_no_res1_from_wave_res()
 
     def field_obs_wavelength_wave_no_res2(self):
-        wave_res1 = self.field_obs_wavelength_wave_res1()
-        wl1 = self.field_obs_wavelength_wavelength1()
-        if wave_res1 is None or wl1 is None:
-            return None
-        return wave_res1 * 10000. / (wl1*wl1)
+        return self._wave_no_res2_from_wave_res()
 
     def field_obs_wavelength_spec_flag(self):
         return 'Y'

@@ -153,21 +153,13 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         return self._vgiss_wavelength_helper()[1] / 1000 # microns
 
     def field_obs_wavelength_wave_res1(self):
-        wl1 = self.field_obs_wavelength_wavelength1()
-        wl2 = self.field_obs_wavelength_wavelength2()
-        if wl1 is None or wl2 is None:
-            return None
-        return wl2 - wl1
+        return self._wave_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_res2(self):
         return self.field_obs_wavelength_wave_res1()
 
     def field_obs_wavelength_wave_no_res1(self):
-        wno1 = self.field_obs_wavelength_wave_no1()
-        wno2 = self.field_obs_wavelength_wave_no2()
-        if wno1 is None or wno2 is None:
-            return None
-        return wno2 - wno1
+        return self._wave_no_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_no_res2(self):
         return self.field_obs_wavelength_wave_no_res1()

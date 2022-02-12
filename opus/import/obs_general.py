@@ -126,10 +126,10 @@ class ObsGeneral(ObsBase):
         return target_name, target_info[2]
 
     def field_obs_general_time1(self):
-        return self._time1_from_some_index()
+        return self._time_from_some_index()
 
     def field_obs_general_time2(self):
-        return self._time2_from_some_index()
+        return self._time2_from_some_index(self.field_obs_general_time1())
 
     def field_obs_general_observation_duration(self):
         # This is the default behavior, but will be overriden for some

@@ -30,7 +30,7 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
     ################################
 
     def field_obs_general_time1(self):
-        return self._time1_from_supp_index(column='SPACECRAFT_EVENT_START_TIME')
+        return self._time_from_supp_index(column='SPACECRAFT_EVENT_START_TIME')
 
     def field_obs_general_time2(self):
         return self._time2_from_supp_index(self.field_obs_general_time1(),
@@ -169,36 +169,11 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
         return mp.replace('_', ' ')
 
     def field_obs_mission_cassini_ert1(self):
-        start_time = self._supp_index_col('EARTH_RECEIVED_START_TIME')
-
-        try:
-            ert_sec = cached_tai_from_iso(start_time)
-        except Exception as e:
-            self._log_nonrepeating_warning(
-                f'Bad earth received start time format "{start_time}": {e}')
-            return None
-
-        return ert_sec
+        return self._time_from_supp_index(column='EARTH_RECEIVED_START_TIME')
 
     def field_obs_mission_cassini_ert2(self):
-        stop_time = self._supp_index_col('EARTH_RECEIVED_STOP_TIME')
-
-        try:
-            ert_sec = cached_tai_from_iso(stop_time)
-        except Exception as e:
-            self._log_nonrepeating_warning(
-                f'Bad earth received stop time format "{stop_time}": {e}')
-            return None
-
-        start_time_sec = self.field_obs_mission_cassini_ert1()
-
-        if start_time_sec is not None and ert_sec < start_time_sec:
-            import_util.log_warning(
-                f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
-                +'are in the wrong order - setting to ert1')
-            ert_sec = start_time_sec
-
-        return ert_sec
+        return self._time2_from_supp_index(self.field_obs_mission_cassini_ert1(),
+                                          column='EARTH_RECEIVED_STOP_TIME')
 
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._supp_index_col('MISSION_PHASE_NAME')

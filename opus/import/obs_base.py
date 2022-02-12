@@ -354,23 +354,22 @@ class ObsBase(object):
         return pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
 
 
-    # Helpers for field_obs_general_time[12]
+    # Helpers for time fields
 
-    def _time1_helper(self, index, column):
-        # Read and convert the starting time, which can exist in various indexes or
+    def _time_helper(self, index, column):
+        # Read and convert a time, which can exist in various indexes or
         # columns.
-        start_time = safe_column(self._metadata[index], column)
-
-        if start_time is None:
+        the_time = safe_column(self._metadata[index], column)
+        if the_time is None:
             return None
 
         try:
-            start_time_sec = cached_tai_from_iso(start_time)
+            time_sec = cached_tai_from_iso(the_time)
         except Exception as e:
-            self._log_nonrepeating_error(f'Bad start time format "{start_time}": {e}')
+            self._log_nonrepeating_error(f'Bad {name} format "{the_time}": {e}')
             return None
 
-        return start_time_sec
+        return time_sec
 
     def _time2_helper(self, index, start_time_sec, column):
         # Read and convert the ending time, which can exist in various indexes or
@@ -378,29 +377,28 @@ class ObsBase(object):
         # order.
         index_row = self._metadata[index]
         stop_time = safe_column(index_row, column)
-
         if stop_time is None:
             return None
 
         try:
             stop_time_sec = cached_tai_from_iso(stop_time)
         except Exception as e:
-            self._log_nonrepeating_error(f'Bad stop time format "{stop_time}": {e}')
+            self._log_nonrepeating_error(f'Bad {column} format "{stop_time}": {e}')
             return None
 
         if start_time_sec is not None and stop_time_sec < start_time_sec:
             start_time = safe_column(index_row, column1)
-            self._log_warning(f'{column} ({start_time}) and ({stop_time}) '
+            self._log_warning(f'{column} start ({start_time}) and end ({stop_time}) '
                               'are in the wrong order - setting to start time')
             stop_time_sec = start_time_sec
 
         return stop_time_sec
 
-    def _time1_from_index(self, column='START_TIME'):
-        return self._time1_helper('index_row', column)
+    def _time_from_index(self, column='START_TIME'):
+        return self._time_helper('index_row', column)
 
-    def _time1_from_supp_index(self, column='START_TIME'):
-        return self._time1_helper('supp_index_row', column)
+    def _time_from_supp_index(self, column='START_TIME'):
+        return self._time_helper('supp_index_row', column)
 
     def _time2_from_index(self, start_time_sec, column='STOP_TIME'):
         return self._time2_helper('index_row', start_time_sec, column)
@@ -408,51 +406,61 @@ class ObsBase(object):
     def _time2_from_supp_index(self, start_time_sec, column='STOP_TIME'):
         return self._time2_helper('supp_index_row', start_time_sec, column)
 
-    def _time1_from_some_index(self):
-        index = self._col_in_some_index_or_label('START_TIME')
+    def _time_from_some_index(self, column='START_TIME'):
+        index = self._col_in_some_index(column)
         if index is None:
             self._log_nonrepeating_error(
-                f'Column "START_TIME" not found in supp_index or index')
+                f'Column "{column}" not found in supp_index or index')
             return None
-        return self._time1_helper(index, 'START_TIME')
+        return self._time_helper(index, column=column)
 
-    def _time2_from_some_index(self):
-        index = self._col_in_some_index_or_label('STOP_TIME')
+    def _time2_from_some_index(self, time1, column='STOP_TIME'):
+        index = self._col_in_some_index_or_label(column)
         if index is None:
             self._log_nonrepeating_error(
-                f'Column "STOP_TIME" not found in supp_index or index')
+                f'Column "{column}" not found in supp_index or index')
             return None
-        return self._time2_helper(index, self.field_obs_general_time1(), 'STOP_TIME')
-
-
-    # Helpers for field_obs_pds_product_creation_time
-
-    def _product_creation_time_helper(self, index):
-        index_row = self._metadata[index]
-        pct = index_row['PRODUCT_CREATION_TIME']
-
-        try:
-            pct_sec = cached_tai_from_iso(pct)
-        except Exception as e:
-            import_util.log_nonrepeating_error(
-                f'Bad product creation time format "{pct}": {e}')
-            return None
-
-        return pct_sec
+        return self._time2_helper(index, time1, column=column)
 
     def _product_creation_time_from_index(self):
-        return self._product_creation_time_helper('index_row')
+        return self._time_from_index(column='PRODUCT_CREATION_TIME')
 
     def _product_creation_time_from_supp_index(self):
-        return self._product_creation_time_helper('supp_index_row')
+        return self._time_from_supp_index(column='PRODUCT_CREATION_TIME')
 
     def _product_creation_time_from_some_index(self):
-        index = self._col_in_some_index('PRODUCT_CREATION_TIME')
-        if index is None:
-            self._log_nonrepeating_error(
-                f'Column "PRODUCT_CREATION_TIME" not found in supp_index or index')
+        return self._time_from_some_index(column='PRODUCT_CREATION_TIME')
+
+
+    # Helpers for wavelength
+
+    def _wave_res_from_full_bandwidth(self):
+        wl1 = self.field_obs_wavelength_wavelength1()
+        wl2 = self.field_obs_wavelength_wavelength2()
+        if wl1 is None or wl2 is None:
             return None
-        return self._product_creation_time_helper(index)
+        return wl2 - wl1
+
+    def _wave_no_res_from_full_bandwidth(self):
+        wno1 = self.field_obs_wavelength_wave_no1()
+        wno2 = self.field_obs_wavelength_wave_no2()
+        if wno1 is None or wno2 is None:
+            return None
+        return wno2 - wno1
+
+    def _wave_no_res1_from_wave_res(self):
+        wave_res2 = self.field_obs_wavelength_wave_res2()
+        wl2 = self.field_obs_wavelength_wavelength2()
+        if wave_res2 is None or wl2 is None:
+            return None
+        return wave_res2 * 10000. / (wl2*wl2)
+
+    def _wave_no_res2_from_wave_res(self):
+        wave_res1 = self.field_obs_wavelength_wave_res1()
+        wl1 = self.field_obs_wavelength_wavelength1()
+        if wave_res1 is None or wl1 is None:
+            return None
+        return wave_res1 * 10000. / (wl1*wl1)
 
 
     ### Error logging ###

@@ -78,7 +78,7 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         src_name = self._index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
-        start_time = cached_tai_from_iso(self._index_col('START_TIME'))
+        start_time = self.field_obs_general_time1()
 
         is_at_north = (src_name == 'DELTA SCO' or
                        (src_name == 'SIGMA SGR' and target_name == 'U RINGS'))
@@ -105,7 +105,7 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         src_name = self._index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
-        start_time = cached_tai_from_iso(self._index_col('START_TIME'))
+        start_time = self.field_obs_general_time1()
 
         is_at_north = (src_name == 'DELTA SCO')
         # Check if the start time matches the Voyager location.

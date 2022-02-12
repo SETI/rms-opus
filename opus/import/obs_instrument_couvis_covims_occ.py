@@ -20,7 +20,7 @@ class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
     ################################
 
     def field_obs_general_time1(self):
-        return self._time1_from_supp_index()
+        return self._time_from_supp_index()
 
     def field_obs_general_time2(self):
         return self._time2_from_supp_index(self.field_obs_general_time1())

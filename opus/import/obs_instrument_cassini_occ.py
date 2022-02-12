@@ -136,7 +136,7 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
         return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
-        return self._time1_from_index(column='RING_EVENT_START_TIME')
+        return self._time_from_index(column='RING_EVENT_START_TIME')
 
     def field_obs_ring_geometry_ring_intercept_time2(self):
         return self._time2_from_index(self.field_obs_ring_geometry_ring_intercept_time1(),

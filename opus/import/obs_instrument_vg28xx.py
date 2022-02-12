@@ -70,7 +70,7 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     ############################
 
     def field_obs_pds_product_creation_time(self):
-        return self._product_creation_time_helper('index_row')
+        return self._product_creation_time_from_index()
 
 
     ###################################
@@ -84,21 +84,13 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
         return self._index_col('MAXIMUM_WAVELENGTH')
 
     def field_obs_wavelength_wave_res1(self):
-        wl1 = self.field_obs_wavelength_wavelength1()
-        wl2 = self.field_obs_wavelength_wavelength2()
-        if wl1 is None or wl2 is None:
-            return None
-        return wl2 - wl1
+        return self._wave_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_res2(self):
         return self.field_obs_wavelength_wave_res1()
 
     def field_obs_wavelength_wave_no_res1(self):
-        wno1 = self.field_obs_wavelength_wave_no1()
-        wno2 = self.field_obs_wavelength_wave_no2()
-        if wno1 is None or wno2 is None:
-            return None
-        return wno2 - wno1
+        return self._wave_no_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_no_res2(self):
         return self.field_obs_wavelength_wave_no_res1()
@@ -190,7 +182,7 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
         return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
-        return self._time1_from_index(column='RING_EVENT_START_TIME')
+        return self._time_from_index(column='RING_EVENT_START_TIME')
 
     def field_obs_ring_geometry_ring_intercept_time2(self):
         return self._time2_from_index(self.field_obs_ring_geometry_ring_intercept_time1(),

@@ -73,13 +73,7 @@ class ObsMissionVoyager(ObsCommon):
         ert_time = self._index_col('EARTH_RECEIVED_TIME')
         if ert_time == 'UNKNOWN':
             return None
-        try:
-            ert_sec = cached_tai_from_iso(ert_time)
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Bad earth received time format "{ert_time}": {e}')
-            return None
-        return ert_sec
+        return self._time_from_index(column='EARTH_RECEIVED_TIME')
 
     def field_obs_mission_voyager_spacecraft_clock_count1(self):
         sc = self._some_index_or_label_col('SPACECRAFT_CLOCK_START_COUNT')

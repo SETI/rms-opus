@@ -336,21 +336,13 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return (central_wl + fwhm/2) / 1000 # microns
 
     def field_obs_wavelength_wave_res1(self):
-        wl1 = self.field_obs_wavelength_wavelength1()
-        wl2 = self.field_obs_wavelength_wavelength2()
-        if wl1 is None or wl2 is None:
-            return None
-        return wl2 - wl1
+        return self._wave_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_res2(self):
         return self.field_obs_wavelength_wave_res1()
 
     def field_obs_wavelength_wave_no_res1(self):
-        wno1 = self.field_obs_wavelength_wave_no1()
-        wno2 = self.field_obs_wavelength_wave_no2()
-        if wno1 is None or wno2 is None:
-            return None
-        return wno2 - wno1
+        return self._wave_no_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_no_res2(self):
         return self.field_obs_wavelength_wave_no_res1()
@@ -406,36 +398,11 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return sc_cvt
 
     def field_obs_mission_cassini_ert1(self):
-        start_time = self._index_col('EARTH_RECEIVED_START_TIME')
-
-        try:
-            ert_sec = cached_tai_from_iso(start_time)
-        except Exception as e:
-            self._log_nonrepeating_warning(
-                f'Bad earth received start time format "{start_time}": {e}')
-            return None
-
-        return ert_sec
+        return self._time_from_index(column='EARTH_RECEIVED_START_TIME')
 
     def field_obs_mission_cassini_ert2(self):
-        stop_time = self._index_col('EARTH_RECEIVED_STOP_TIME')
-
-        try:
-            ert_sec = cached_tai_from_iso(stop_time)
-        except Exception as e:
-            self._log_nonrepeating_warning(
-                f'Bad earth received stop time format "{stop_time}": {e}')
-            return None
-
-        start_time_sec = self.field_obs_mission_cassini_ert1()
-
-        if start_time_sec is not None and ert_sec < start_time_sec:
-            import_util.log_warning(
-                f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
-                +'are in the wrong order - setting to ert1')
-            ert_sec = start_time_sec
-
-        return ert_sec
+        return self._time2_from_index(self.field_obs_mission_cassini_ert1(),
+                                      column='EARTH_RECEIVED_STOP_TIME')
 
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._index_col('MISSION_PHASE_NAME')

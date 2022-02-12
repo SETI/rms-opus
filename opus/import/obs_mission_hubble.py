@@ -153,7 +153,7 @@ class ObsMissionHubble(ObsCommon):
     def field_obs_wavelength_wave_res2(self):
         return self._index_col('WAVELENGTH_RESOLUTION')
 
-    def field_obs_wavelength_wave_no_res1(self):
+    def field_obs_wavelength_wave_no_res1(self): # XXX
         wno1 = self.field_obs_wavelength_wave_no1()
         wno2 = self.field_obs_wavelength_wave_no2()
         if wno1 is None or wno2 is None:
@@ -194,7 +194,7 @@ class ObsMissionHubble(ObsCommon):
         return (ret, ret)
 
     def field_obs_mission_hubble_publication_date(self):
-        return self._time1_from_index('PUBLICATION_DATE')
+        return self._time_from_index(column='PUBLICATION_DATE')
 
     def field_obs_mission_hubble_hst_target_name(self):
         return self._index_col('HST_TARGET_NAME')
