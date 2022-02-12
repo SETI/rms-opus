@@ -49,6 +49,15 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
             return super().opus_id
         return super().opus_id + '_' + self.phase_name.lower()
 
+    @property
+    def phase_names(self):
+        phase_names = []
+        if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
+            phase_names.append('VIS')
+        if index_row['IR_SAMPLING_MODE_ID'] != 'N/A':
+            phase_names.append('IR')
+        return phase_names
+
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###

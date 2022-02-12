@@ -1,0 +1,143 @@
+################################################################################
+# obs_instrument_hststis.py
+#
+# Defines the ObsInstrumentHSTSTIS class, which encapsulates fields in the
+# obs_mission_hubble table for the HST ACS instrument. Note HST does not have
+# separate tables for each instrument but combines them all together.
+################################################################################
+
+from obs_mission_hubble import ObsMissionHubble
+
+
+class ObsInstrumentHSTSTIS(ObsMissionHubble):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+    def _stis_spec_flag(self):
+        obs_type = self.field_obs_general_observation_type()
+        return obs_type == 'SPE'
+
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
+    @property
+    def instrument_id(self):
+        return 'HSTSTIS'
+
+
+    ################################
+    ### OVERRIDE FROM ObsGeneral ###
+    ################################
+
+    def field_obs_general_observation_type(self):
+        obs_type = self._index_col('OBSERVATION_TYPE')
+        if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'):
+            self._log_nonrepeating_error(f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
+            return None
+        if obs_type.startswith('SPEC'): # SPECTRUM or SPECTROSCOPIC
+            return 'SPE' # Spectrum (1-D with spectral information)
+        return 'IMG' # Image
+
+
+    ##################################
+    ### OVERRIDE FROM ObsTypeImage ###
+    ##################################
+
+    def field_obs_type_image_levels(self):
+        if not self._is_image():
+            return None
+        return 65536 # STIS Inst Handbook, Sec 7.5.1
+
+
+    ###################################
+    ### OVERRIDE FROM ObsWavelength ###
+    ###################################
+
+
+    def field_obs_wavelength_wave_res1(self):
+        wr1 = self._index_col('MAXIMUM_WAVELENGTH_RESOLUTION')
+        wr2 = self._index_col('MINIMUM_WAVELENGTH_RESOLUTION')
+        # This is necessary because in some cases these are backwards in the table!
+        if wr1 > wr2:
+            self._log_warning(
+                'MAXIMUM_WAVELENGTH_RESOLUTION < MINIMUM_WAVELENGTH_RESOLUTION; '
+                +'swapping')
+            return wr2
+        return wr1
+
+    def field_obs_wavelength_wave_res2(self):
+        wr1 = self._index_col('MAXIMUM_WAVELENGTH_RESOLUTION')
+        wr2 = self._index_col('MINIMUM_WAVELENGTH_RESOLUTION')
+        # This is necessary because in some cases these are backwards in the table!
+        if wr1 > wr2:
+            return wr1
+        return wr2
+
+    def field_obs_wavelength_wave_no_res1(self):
+        wave_res2 = self.field_obs_wavelength_wave_res2()
+        wl2 = self.field_obs_wavelength_wavelength2()
+        if wave_res2 is None or wl2 is None:
+            return None
+        return wave_res2 * 10000. / (wl2*wl2)
+
+    def field_obs_wavelength_wave_no_res2(self):
+        wave_res1 = self.field_obs_wavelength_wave_res1()
+        wl1 = self.field_obs_wavelength_wavelength1()
+        if wave_res1 is None or wl1 is None:
+            return None
+        return wave_res1 * 10000. / (wl1*wl1)
+
+    def field_obs_wavelength_spec_flag(self):
+        if self._stis_spec_flag():
+            return 'Y'
+        return 'N'
+
+    def field_obs_wavelength_spec_size(self):
+        if not self._stis_spec_flag():
+            return None
+        lines = self._index_col('LINES')
+        samples = self._index_col('LINE_SAMPLES')
+        x1d_size = self._index_col('X1D_SPECTRUM_SIZE')
+        if lines is None:
+            lines = 0
+        if samples is None:
+            samples = 0
+        if x1d_size is None:
+            x1d_size = 0
+        return max(lines, samples, x1d_size)
+
+    def field_obs_wavelength_polarization_type(self):
+        return 'NONE'
+
+
+    ######################################
+    ### OVERRIDE FROM ObsMissionHubble ###
+    ######################################
+
+    def field_obs_mission_hubble_filter_type(self):
+        filter1, filter2 = self._decode_filters()
+
+        # STIS doesn't do filter stacking
+        if filter2 is not None:
+            self._log_nonrepeating_error('filter2 not None')
+            return None
+
+        if filter1 in ('CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS',
+                       'STRONTIUM_FLUORIDE', 'ND_3'):
+            return 'LP'
+        if filter1 == 'LYMAN_ALPHA':
+            return 'N'
+
+        self._log_nonrepeating_error(f'Unknown filter "{filter1}"')
+        return None
+
+    def field_obs_mission_hubble_proposed_aperture_type(self):
+        aperture = self._index_col('PROPOSED_APERTURE_TYPE').upper()
+        return (aperture, aperture)
+
+    def field_obs_mission_hubble_optical_element(self):
+        element = self._index_col('OPTICAL_ELEMENT_NAME').upper()
+        return (element, element)

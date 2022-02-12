@@ -5,21 +5,26 @@
 # import each volume.
 ################################################################################
 
-from obs_instrument_coiss import ObsInstrumentCOISS
-from obs_instrument_corss_occ import ObsInstrumentCORSSOcc
-from obs_instrument_couvis import ObsInstrumentCOUVIS
-from obs_instrument_couvis_occ import ObsInstrumentCOUVISOcc
-from obs_instrument_covims import ObsInstrumentCOVIMS
-from obs_instrument_covims_occ import ObsInstrumentCOVIMSOcc
-from obs_instrument_ebrocc import ObsInstrumentEBROCC
-from obs_instrument_gossi import ObsInstrumentGOSSI
-from obs_instrument_nhlorri import ObsInstrumentNHLORRI
-from obs_instrument_nhmvic import ObsInstrumentNHMVIC
-from obs_instrument_vgiss import ObsInstrumentVGISS
-from obs_instrument_vg28xx_vgiss import ObsInstrumentVG28xxVGISS
+from obs_instrument_coiss              import ObsInstrumentCOISS
+from obs_instrument_corss_occ          import ObsInstrumentCORSSOcc
+from obs_instrument_couvis             import ObsInstrumentCOUVIS
+from obs_instrument_couvis_occ         import ObsInstrumentCOUVISOcc
+from obs_instrument_covims             import ObsInstrumentCOVIMS
+from obs_instrument_covims_occ         import ObsInstrumentCOVIMSOcc
+from obs_instrument_ebrocc             import ObsInstrumentEBROCC
+from obs_instrument_gossi              import ObsInstrumentGOSSI
+from obs_instrument_hstacs             import ObsInstrumentHSTACS
+from obs_instrument_hstnicmos          import ObsInstrumentHSTNICMOS
+from obs_instrument_hststis            import ObsInstrumentHSTSTIS
+from obs_instrument_hstwfc3            import ObsInstrumentHSTWFC3
+from obs_instrument_hstwfpc2           import ObsInstrumentHSTWFPC2
+from obs_instrument_nhlorri            import ObsInstrumentNHLORRI
+from obs_instrument_nhmvic             import ObsInstrumentNHMVIC
+from obs_instrument_vgiss              import ObsInstrumentVGISS
+from obs_instrument_vg28xx_vgiss       import ObsInstrumentVG28xxVGISS
 from obs_instrument_vg28xx_vgpps_vguvs import (ObsInstrumentVG28xxVGPPS,
                                                ObsInstrumentVG28xxVGUVS)
-from obs_instrument_vg28xx_vgrss import ObsInstrumentVG28xxVGRSS
+from obs_instrument_vg28xx_vgrss       import ObsInstrumentVG28xxVGRSS
 
 
 # The VOLUME_INFO structure is used to determine the details of importing
@@ -82,6 +87,31 @@ VOLUME_INFO = [
         {'primary_index': '<VOLUME>_index.lbl',
          'validate_index_rows': True,
          'instrument_class': ObsInstrumentGOSSI},
+    ),
+    (r'HSTI\d_\d\d\d\d',
+        {'primary_index': '<VOLUME>_index.lbl',
+         'validate_index_rows': False,
+         'instrument_class': ObsInstrumentHSTWFC3},
+    ),
+    (r'HSTJ\d_\d\d\d\d',
+        {'primary_index': '<VOLUME>_index.lbl',
+         'validate_index_rows': False,
+         'instrument_class': ObsInstrumentHSTACS},
+    ),
+    (r'HSTN\d_\d\d\d\d',
+        {'primary_index': '<VOLUME>_index.lbl',
+         'validate_index_rows': False,
+         'instrument_class': ObsInstrumentHSTNICMOS},
+    ),
+    (r'HSTO\d_\d\d\d\d',
+        {'primary_index': '<VOLUME>_index.lbl',
+         'validate_index_rows': False,
+         'instrument_class': ObsInstrumentHSTSTIS},
+    ),
+    (r'HSTU\d_\d\d\d\d',
+        {'primary_index': '<VOLUME>_index.lbl',
+         'validate_index_rows': False,
+         'instrument_class': ObsInstrumentHSTWFPC2},
     ),
     (r'NH..LO_[12]001',
         {'primary_index': '<VOLUME>_index.lbl',

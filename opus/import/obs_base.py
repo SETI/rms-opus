@@ -192,6 +192,10 @@ class ObsBase(object):
         # be subclassed as necessary.
         return filespec
 
+    @property
+    def phase_names(self):
+        return ['']
+
 
     ### Helpers for other data_sources ###
 

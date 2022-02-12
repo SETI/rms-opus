@@ -861,15 +861,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
         # here and then process the row as many times as necessary.
-        if volset == 'COVIMS_0xxx':
-            phase_names = []
-            if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
-                phase_names.append('VIS')
-            if index_row['IR_SAMPLING_MODE_ID'] != 'N/A':
-                phase_names.append('IR')
-        else:
-            phase_names = ['']
-
+        phase_names = instrument_obj.phase_names
         for phase_name in phase_names:
             metadata['phase_name'] = phase_name
 
