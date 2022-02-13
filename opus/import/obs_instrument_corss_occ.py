@@ -5,9 +5,9 @@
 # CORSS_8001.
 ################################################################################
 
-from config_targets import DSN_NAMES
+import opus_support
 
-from import_util import cached_tai_from_iso
+from config_targets import DSN_NAMES
 from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
 
 
@@ -138,7 +138,7 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
         return sc_cvt
 
@@ -150,23 +150,17 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
-            import_util.log_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-                 +'are in the wrong order - setting to count1')
+            self._log_warning(
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
+                f'({sc_cvt}) are in the wrong order - setting to count1')
             sc_cvt = sc1
 
         return sc_cvt
-
-    def field_obs_mission_cassini_mission_phase_name(self):
-        mp = self._supp_index_col('MISSION_PHASE_NAME')
-        if mp.upper() == 'NULL':
-            return None
-        return mp.replace('_', ' ')
 
     def field_obs_mission_cassini_ert1(self):
         return self._time_from_supp_index(column='EARTH_RECEIVED_START_TIME')

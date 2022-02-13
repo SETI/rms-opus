@@ -5,7 +5,6 @@
 # VGISS instrument in VG_2810.
 ################################################################################
 
-from import_util import cached_tai_from_iso
 from obs_instrument_vg28xx import ObsInstrumentVG28xx
 
 

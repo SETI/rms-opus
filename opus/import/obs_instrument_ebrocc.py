@@ -14,9 +14,8 @@
 # Observer elevation = 90 - incidence angle
 ################################################################################
 
-################################################################################
-
 from obs_common import ObsCommon
+
 
 class ObsInstrumentEBROCC(ObsCommon):
     def __init__(self, *args, **kwargs):
@@ -81,8 +80,7 @@ class ObsInstrumentEBROCC(ObsCommon):
 
         if target_name != 'S RINGS':
             self._log_nonrepeating_error(
-                f'Ground-based mission targets "{target_name}" instead of "S RINGS"'
-            )
+                f'Ground-based mission targets "{target_name}" instead of "S RINGS"')
 
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:

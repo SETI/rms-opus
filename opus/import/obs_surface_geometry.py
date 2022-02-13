@@ -6,7 +6,6 @@
 ################################################################################
 
 import impglobals
-
 from obs_base import ObsBase
 
 
@@ -63,7 +62,7 @@ class ObsSurfaceGeometry(ObsBase):
                         used_target_list.remove(planet)
                 used_str = ','.join(sorted(used_target_list))
                 if ret != used_str:
-                    import_util.log_nonrepeating_warning(
+                    self._log_nonrepeating_warning(
                         f'Inventory and surface geo differ: {ret} vs {used_str}')
 
         return ret

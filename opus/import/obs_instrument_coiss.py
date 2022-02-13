@@ -7,7 +7,6 @@
 
 import opus_support
 
-from import_util import cached_tai_from_iso
 from obs_mission_cassini import (ObsMissionCassini,
                                  COISS_TARGET_DESC_MAPPING)
 
@@ -285,7 +284,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
             return 512
         if inst_mode == 'SUM4':
             return 256
-        self._log_nonrepeating_error(f'Unknown INSTRUMENT_MODE_ID "{exposure}"')
+        self._log_nonrepeating_error(f'Unknown INSTRUMENT_MODE_ID "{inst_mode}"')
         return None
 
     def field_obs_type_image_lesser_pixel_size(self):
@@ -366,7 +365,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
         return sc_cvt
 
@@ -378,22 +377,22 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
-            import_util.log_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-                 +'are in the wrong order - setting to count1')
+            self._log_nonrepeating_warning(
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
+                f'({sc_cvt}) are in the wrong order - setting to count1')
             sc_cvt = sc1
         else:
             image_number = self._index_col('IMAGE_NUMBER')
             sc2_int = int(sc_cvt)
             if int(image_number) != sc2_int:
-                self._log_warning(
-                     f'spacecraft_clock_count2 ({sc_cvt}) and COISS IMAGE_NUMBER '
-                    +f'({image_number}) don\'t match')
+                self._log_nonrepeating_warning(
+                     f'spacecraft_clock_count2 ({sc_cvt}) and COISS IMAGE_NUMBER '+
+                     f'({image_number}) don\'t match')
 
         return sc_cvt
 

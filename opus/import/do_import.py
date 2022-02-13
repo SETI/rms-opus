@@ -592,7 +592,6 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
                      volume_label_path):
     """Import the observations given a single primary index file."""
     instrument_class = vol_info['instrument_class']
-    volset = volume_pdsfile.volset
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:

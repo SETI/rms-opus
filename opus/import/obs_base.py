@@ -159,32 +159,15 @@ class ObsBase(object):
             pdsf = self._pdsfile_from_filespec(full_filespec)
         except KeyError:
             self._log_nonrepeating_warning(
-                        'Unable to create OPUS_ID from index '+
-                       f'using filespec {full_filespec} - internal PdsFile crash')
+                    'Unable to create OPUS_ID from index '+
+                    f'using filespec {full_filespec} - internal PdsFile crash')
             return None
         opus_id = pdsf.opus_id
         if not opus_id:
             self._log_nonrepeating_warning(
-                        'Unable to create OPUS_ID from index '+
-                       f'using filespec {full_filespec}')
+                    f'Unable to create OPUS_ID from index using filespec {full_filespec}')
             return None
         return opus_id
-
-    def is_main_index_row(self, row):
-        opus_id = self.opus_id_from_index_row(row)
-        primary_filespec = self.primary_filespec_from_index_row(row)
-        if opus_id is None or primary_filespec is None:
-            return False
-        try:
-            trial_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
-        except ValueError:
-            self._log_nonrepeating_warning(
-                f'Unable to convert OPUS ID "{opus_id}" for '+
-                f'filespec "{primary_filespec}"')
-            return False
-        primary_filespec = self.convert_filespec_from_lbl(primary_filespec)
-        print(primary_filespec, trial_filespec)
-        return primary_filespec in trial_filespec
 
     def convert_filespec_from_lbl(self, filespec):
         # If necessary, convert a primary filespec from a .LBL file to some other
@@ -366,7 +349,7 @@ class ObsBase(object):
         try:
             time_sec = cached_tai_from_iso(the_time)
         except Exception as e:
-            self._log_nonrepeating_error(f'Bad {name} format "{the_time}": {e}')
+            self._log_nonrepeating_error(f'Bad {column} format "{the_time}": {e}')
             return None
 
         return time_sec
@@ -387,9 +370,9 @@ class ObsBase(object):
             return None
 
         if start_time_sec is not None and stop_time_sec < start_time_sec:
-            start_time = safe_column(index_row, column1)
-            self._log_warning(f'{column} start ({start_time}) and end ({stop_time}) '
-                              'are in the wrong order - setting to start time')
+            self._log_nonrepeating_warning(
+                        f'{column} start and end ({stop_time}) '+
+                        'are in the wrong order - setting to start time')
             stop_time_sec = start_time_sec
 
         return stop_time_sec

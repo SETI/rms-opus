@@ -5,8 +5,6 @@
 # common to the ObsInstrumentCOUVISOcc and ObsInstrumentCOVIMSOcc classes.
 ################################################################################
 
-import opus_support
-
 from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
 
 

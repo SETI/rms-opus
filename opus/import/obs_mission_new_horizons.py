@@ -86,15 +86,15 @@ class ObsMissionNewHorizons(ObsCommon):
         try:
             sc_cvt = opus_support.parse_new_horizons_sclk(sc)
         except Exception as e:
-            import_util.log_nonrepeating_error(
+            self._log_nonrepeating_error(
                 f'Unable to parse New Horizons SCLK "{sc}": {e}')
             return None
 
         sc1 = self.field_obs_mission_new_horizons_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
-            import_util.log_warning(
-        f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-        +'are in the wrong order - setting to count1')
+            self._log_nonrepeating_warning(
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
+                +'are in the wrong order - setting to count1')
             sc_cvt = sc1
 
         return sc_cvt

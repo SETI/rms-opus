@@ -7,7 +7,6 @@
 
 import opus_support
 
-from import_util import cached_tai_from_iso
 from obs_common import ObsCommon
 
 
@@ -101,10 +100,10 @@ class ObsMissionVoyager(ObsCommon):
 
         sc1 = self.field_obs_mission_voyager_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
-            self._log_warning(
+            self._log_nonrepeating_warning(
                     f'spacecraft_clock_count1 ({sc1}) and '+
                     f'spacecraft_clock_count2 ({sc_cvt}) '+
-                     'are in the wrong order - setting to count1')
+                    'are in the wrong order - setting to count1')
             sc_cvt = sc1
 
         return sc_cvt

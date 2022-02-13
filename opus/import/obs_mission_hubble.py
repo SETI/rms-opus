@@ -132,7 +132,8 @@ class ObsMissionHubble(ObsCommon):
             return None
         # This is necessary because in some cases these are backwards in the table!
         if wl1 > wl2:
-            import_util.log_warning('MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
+            self._log_nonrepeating_warning(
+                        'MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
             return wl2
         return wl1
 
@@ -143,7 +144,8 @@ class ObsMissionHubble(ObsCommon):
             return None
         # This is necessary because in some cases these are backwards in the table!
         if wl1 > wl2:
-            import_util.log_warning('MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
+            self._log_nonrepeating_warning(
+                        'MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
             return wl1
         return wl2
 

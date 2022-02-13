@@ -62,7 +62,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
             return False
 
         if not self._has_supp_index():
-            self._log_nonrepeating_warning(
+            self._log_nonrepeating_error(
                 '_is_image has channel EUV or FUV but no DATA_OBJECT_TYPE available')
             return False
 
@@ -251,7 +251,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         if channel == 'FUV':
             return 0.11 + band1 * 0.000078125
 
-        self._log_nonrepeating_warning(f'wavelength1 has unknown channel type {channel}')
+        self._log_nonrepeating_error(f'wavelength1 has unknown channel type {channel}')
         return None
 
     def field_obs_wavelength_wavelength2(self):
@@ -263,7 +263,6 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
 
         if not self._has_supp_index():
             return None
-        band1 = self._supp_index_col('MINIMUM_BAND_NUMBER')
         band2 = self._supp_index_col('MAXIMUM_BAND_NUMBER')
         if band2 is None:
             return None
@@ -273,7 +272,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         if channel == 'FUV':
             return 0.11 + (band2+1) * 0.000078125
 
-        self._log_nonrepeating_warning(f'wavelength2 has unknown channel type {channel}')
+        self._log_nonrepeating_error(f'wavelength2 has unknown channel type {channel}')
         return None
 
     def field_obs_wavelength_wave_res1(self):
@@ -339,13 +338,13 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
         if not sc.startswith('1/'):
-            self._log_nonrepeating_warning(
+            self._log_nonrepeating_error(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
         return sc_cvt
 

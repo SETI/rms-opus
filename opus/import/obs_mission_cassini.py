@@ -9,9 +9,9 @@ import re
 
 import opus_support
 
-from import_util import cached_tai_from_iso
 from config_targets import (TARGET_NAME_INFO,
                             TARGET_NAME_MAPPING)
+from import_util import cached_tai_from_iso
 from obs_common import ObsCommon
 
 
@@ -343,7 +343,7 @@ class ObsMissionCassini(ObsCommon):
         try:
             rev_no_cvt = opus_support.parse_cassini_orbit(rev_no[0])
         except Exception as e:
-            self._log_nonrepeating_warning(
+            self._log_nonrepeating_error(
                 f'Unable to parse Cassini orbit "{rev_no}": {e}')
             return None
         return rev_no_cvt

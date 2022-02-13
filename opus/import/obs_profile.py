@@ -6,7 +6,6 @@
 ################################################################################
 
 from config_targets import STAR_RA_DEC
-
 from obs_base import ObsBase
 
 
@@ -29,7 +28,7 @@ class ObsProfile(ObsBase):
         if target_name is None:
             return None, None, None, None
         if target_name not in STAR_RA_DEC:
-            self._log_nonrepeating_warning(
+            self._log_nonrepeating_error(
                 f'Star "{target_name}" missing RA and DEC information'
             )
             return None, None, None, None

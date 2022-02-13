@@ -134,8 +134,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     def field_obs_general_time1(self):
         exposure = self._index_col('EXPOSURE_DURATION')
         if exposure is None:
-            self._log_nonrepeating_warning(
-                f'Null exposure time for {self.opus_id}')
+            self._log_nonrepeating_warning(f'Null exposure time for {self.opus_id}')
             exposure = 0
         return self.field_obs_general_time2() - exposure/1000
 

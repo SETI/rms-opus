@@ -5,6 +5,8 @@
 # import each volume.
 ################################################################################
 
+# flake8: noqa
+
 from obs_instrument_coiss              import ObsInstrumentCOISS
 from obs_instrument_corss_occ          import ObsInstrumentCORSSOcc
 from obs_instrument_couvis             import ObsInstrumentCOUVIS

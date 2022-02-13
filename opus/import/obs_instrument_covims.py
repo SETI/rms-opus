@@ -5,8 +5,6 @@
 # obs_instrument_covims table.
 ################################################################################
 
-import os
-
 import opus_support
 
 from obs_mission_cassini import ObsMissionCassini
@@ -168,13 +166,13 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
             if ir_exp is None:
                 return None
             if ir_exp < 0:
-                import_util.log_nonrepeating_warning(f'IR Exposure {ir_exp} is < 0')
+                self._log_nonrepeating_warning(f'IR Exposure {ir_exp} is < 0')
                 return None
             return ir_exp/1000
         if vis_exp is None:
             return None
         if vis_exp < 0:
-            import_util.log_nonrepeating_warning(f'VIS Exposure {vis_exp} is < 0')
+            self._log_nonrepeating_warning(f'VIS Exposure {vis_exp} is < 0')
             return None
         return vis_exp/1000
 
@@ -243,7 +241,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
         return sc_cvt
 
@@ -253,14 +251,14 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
-            import_util.log_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-                 +'are in the wrong order - setting to count1')
+            self._log_warning(
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
+                f'({sc_cvt}) are in the wrong order - setting to count1')
             sc_cvt = sc1
 
         return sc_cvt

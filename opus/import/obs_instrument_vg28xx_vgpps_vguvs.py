@@ -7,7 +7,6 @@
 # identical import functions except for the instrument_id.
 ################################################################################
 
-from import_util import cached_tai_from_iso
 from obs_instrument_vg28xx import (ObsInstrumentVG28xx,
                                    THRESHOLD_START_TIME_VG_AT_NORTH)
 

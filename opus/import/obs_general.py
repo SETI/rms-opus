@@ -51,7 +51,8 @@ class ObsGeneral(ObsBase):
 
     def field_obs_general_preview_images(self):
         ### XXX Review this
-        pdsf = self._pdsfile_from_filespec(self.primary_filespec)
+        filespec = self.primary_filespec
+        pdsf = self._pdsfile_from_filespec(filespec)
 
         try:
             viewset = pdsf.viewset

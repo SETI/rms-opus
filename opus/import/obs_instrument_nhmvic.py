@@ -5,10 +5,6 @@
 # obs_instrument_nhmvic table.
 ################################################################################
 
-import numpy as np
-
-import opus_support
-
 from obs_mission_new_horizons import ObsMissionNewHorizons
 
 

@@ -79,7 +79,7 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
         return sc_cvt
 
@@ -94,14 +94,14 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)+1 # Round up
         except Exception as e:
-            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
-            import_util.log_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-                 +'are in the wrong order - setting to count1')
+            self._log_nonrepeating_warning(
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
+                f'({sc_cvt}) are in the wrong order - setting to count1')
             sc_cvt = sc1
 
         return sc_cvt
