@@ -7,6 +7,7 @@
 
 # flake8: noqa
 
+from obs_instrument_cocirs             import ObsInstrumentCOCIRS
 from obs_instrument_coiss              import ObsInstrumentCOISS
 from obs_instrument_corss_occ          import ObsInstrumentCORSSOcc
 from obs_instrument_couvis             import ObsInstrumentCOUVIS
@@ -47,13 +48,10 @@ from obs_instrument_vg28xx_vgrss       import ObsInstrumentVG28xxVGRSS
 #       import.
 
 VOLUME_INFO = [
-    (r'EBROCC_0001',
-        # We would like to get rid of this profile_index, but the normal index
-        # has "UNK" for the start/stop times for LICK. Once this is fixed we can
-        # revisit.
-        {'primary_index': '<VOLUME>_profile_index.lbl',
+    (r'COCIRS_[56]\d\d\d',
+        {'primary_index': 'OBSINDEX.LBL',
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentEBROCC},
+         'instrument_class': ObsInstrumentCOCIRS},
     ),
     (r'COISS_[12]\d\d\d',
         {'primary_index': '<VOLUME>_index.lbl',
@@ -84,6 +82,14 @@ VOLUME_INFO = [
         {'primary_index': '<VOLUME>_index.lbl',
          'validate_index_rows': True,
          'instrument_class': ObsInstrumentCOVIMSOcc},
+    ),
+    (r'EBROCC_0001',
+        # We would like to get rid of this profile_index, but the normal index
+        # has "UNK" for the start/stop times for LICK. Once this is fixed we can
+        # revisit.
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'validate_index_rows': False,
+         'instrument_class': ObsInstrumentEBROCC},
     ),
     (r'GO_00\d\d',
         {'primary_index': '<VOLUME>_index.lbl',
@@ -130,6 +136,9 @@ VOLUME_INFO = [
          'validate_index_rows': False,
          'instrument_class': ObsInstrumentVGISS},
     ),
+    # We would like to get rid of these profile_indexes, but the supplemental
+    # indexes have errors that were corrected in the profile_index and not
+    # back-propagated.
     (r'VG_2801',
         {'primary_index': '<VOLUME>_profile_index.lbl',
          'validate_index_rows': False,

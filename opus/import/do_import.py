@@ -561,25 +561,28 @@ def import_one_volume(volume_id):
 
     primary_index_name = vol_info['primary_index'].replace('<VOLUME>', volume_id)
 
-    metadata_paths = volume_pdsfile.associated_abspaths('metadata',
-                                                        must_exist=True)
-    for metadata_path in metadata_paths:
-        if not os.path.exists(metadata_path):
+    # These are the metadata directories
+    paths = volume_pdsfile.associated_abspaths('metadata', must_exist=True)
+    # These are the plain volume/index directories for volumes that don't have
+    # a separate metadata directory
+    paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
+    paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
+    for path in paths:
+        if not os.path.exists(path):
             continue
-        basenames = os.listdir(metadata_path)
-        for basename in basenames:
-            if basename == primary_index_name:
-                volume_label_path = os.path.join(metadata_path, basename)
-                ret = import_one_index(volume_id,
-                                       vol_info,
-                                       volume_pdsfile,
-                                       metadata_paths,
-                                       volume_label_path)
-                impglobals.LOGGER.close()
-                impglobals.CURRENT_VOLUME_ID = None
-                impglobals.CURRENT_INDEX_ROW_NUMBER = None
-                impglobals.CURRENT_PRIMARY_FILESPEC = None
-                return ret
+        basenames = os.listdir(path)
+        if primary_index_name in basenames:
+            volume_label_path = os.path.join(path, primary_index_name)
+            ret = import_one_index(volume_id,
+                                   vol_info,
+                                   volume_pdsfile,
+                                   paths,
+                                   volume_label_path)
+            impglobals.LOGGER.close()
+            impglobals.CURRENT_VOLUME_ID = None
+            impglobals.CURRENT_INDEX_ROW_NUMBER = None
+            impglobals.CURRENT_PRIMARY_FILESPEC = None
+            return ret
 
     impglobals.LOGGER.log('error', f'No index label file found: "{volume_id}"')
     impglobals.LOGGER.close()
@@ -843,9 +846,12 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
         # don't have yet, so we can't look it up until later.
         impglobals.CURRENT_PRIMARY_FILESPEC = None
 
-        # For supplemental_index
-        primary_filespec = instrument_obj.primary_filespec_from_index_row(
-                                                        index_row, convert_lbl=True)
+        # For supplemental_index and logging
+        # Note we don't use primary_filespec_from_index_row here because that doesn't
+        # currently work with CIRS, which makes the logging not give full
+        # row information.
+        primary_filespec = instrument_obj.primary_filespec
+        primary_filespec = instrument_obj.convert_filespec_from_lbl(primary_filespec)
         impglobals.CURRENT_PRIMARY_FILESPEC = primary_filespec
         if 'supp_index' in metadata:
             supp_index = metadata['supp_index']

@@ -60,7 +60,6 @@ class ObsBase(object):
 
     @property
     def primary_filespec(self):
-
         raise NotImplementedError
 
 
@@ -99,6 +98,8 @@ class ObsBase(object):
         self._opus_id_cached = opus_id
         return opus_id
 
+    # Warning: This doesn't work for COCIRS. That's OK for now because there is
+    # no supplemental metadata for those volumes.
     def primary_filespec_from_index_row(self, row, convert_lbl=False,
                                         add_phase_from_row=False,
                                         add_phase_from_inst=False):
