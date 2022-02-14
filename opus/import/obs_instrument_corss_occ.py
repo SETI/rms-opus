@@ -2,7 +2,8 @@
 # obs_instrument_corss_occ.py
 #
 # Defines the ObsInstrumentCORSSOcc class, which encapsulates fields for
-# CORSS_8001.
+# common and obs_mission_cassini for CORSS_8001 (there is no RSS instrument
+# table).
 ################################################################################
 
 import opus_support

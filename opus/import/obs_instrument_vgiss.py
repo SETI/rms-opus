@@ -2,7 +2,8 @@
 # obs_instrument_vgiss.py
 #
 # Defines the ObsInstrumentVGISS class, which encapsulates fields in the
-# obs_instrument_vgiss table.
+# common, obs_mission_voyager, and obs_instrument_vgiss tables for
+# VGISS_[5678]xxx.
 ################################################################################
 
 from obs_mission_voyager import ObsMissionVoyager
@@ -10,7 +11,7 @@ from obs_mission_voyager import ObsMissionVoyager
 
 # Data from: https://pds-rings.seti.org/voyager/iss/inst_cat_wa1.html#inst_info
 # (WL MIN, WL MAX)
-_VGISS_FILTER_WAVELENGTHS = { # XXX
+_VGISS_FILTER_WAVELENGTHS = {
     'CLEAR':  (280, 640),
     'VIOLET': (350, 450),
     'GREEN':  (530, 640),
@@ -173,9 +174,9 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         return self._index_col('MISSION_PHASE_NAME')
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_vgiss ###
+    ##############################################
 
     def field_obs_instrument_vgiss_opus_id(self):
         return self.opus_id

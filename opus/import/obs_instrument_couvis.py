@@ -2,7 +2,7 @@
 # obs_instrument_couvis.py
 #
 # Defines the ObsInstrumentCOUVIS class, which encapsulates fields in the
-# obs_instrument_couvis table.
+# common, obs_mission_cassini, and obs_instrument_couvis tables for COUVIS_0xxx.
 ################################################################################
 
 import os
@@ -360,9 +360,9 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         return self._cassini_mission_phase_name()
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ###############################################
+    ### FIELD METHODS FOR obs_instrument_couvis ###
+    ###############################################
 
     def field_obs_instrument_couvis_opus_id(self):
         return self.opus_id

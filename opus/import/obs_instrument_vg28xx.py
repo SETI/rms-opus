@@ -4,7 +4,8 @@
 # Defines the ObsInstrumentVG28xx class, the parent for the
 # ObsInstrumentVG28xxVGISS, ObsInstrumentVG28xxVGPPS, ObsInstrumentVG28xxVGRSS,
 # and ObsInstrumentVG28xxVGUVS classes, which encapsulate
-# fields in the obs_instrument_vgiss/pps/rss/uvs tables for the VG_28XX volume.
+# fields in the common, obs_mission_voyager, and (sometimes)
+# obs_instrument_vgiss tables for the VG_28XX volumes.
 ################################################################################
 
 import julian

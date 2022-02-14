@@ -2,7 +2,7 @@
 # obs_instrument_vg28xx_vgrss.py
 #
 # Defines the ObsInstrumentVG28xxRSS class, which encapsulates fields for the
-# VGRSS instrument in VG_2803.
+# common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
 ################################################################################
 
 from config_targets import DSN_NAMES

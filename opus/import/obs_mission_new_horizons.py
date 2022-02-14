@@ -2,7 +2,7 @@
 # obs_mission_new_horizons.py
 #
 # Defines the ObsMissionNewHorizons class, which encapsulates fields in the
-# obs_mission_new_horizons table.
+# common and obs_mission_new_horizons tables.
 ################################################################################
 
 import opus_support

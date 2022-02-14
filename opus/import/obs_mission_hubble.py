@@ -2,8 +2,8 @@
 # obs_mission_hubble.py
 #
 # Defines the ObsMissionHubble class, which encapsulates fields in the
-# obs_mission_hubble table. Note HST does not have separate tables for each
-# instrument but combines them all together.
+# common and obs_mission_hubble tables. Note HST does not have separate tables
+# for each instrument but combines them all together.
 ################################################################################
 
 from obs_common import ObsCommon

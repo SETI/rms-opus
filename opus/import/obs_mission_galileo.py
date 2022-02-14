@@ -2,7 +2,7 @@
 # obs_mission_galileo.py
 #
 # Defines the ObsMissionGalileo class, which encapsulates fields in the
-# obs_mission_galileo table.
+# common and obs_mission_galileo tables.
 ################################################################################
 
 from obs_common import ObsCommon
@@ -13,9 +13,9 @@ class ObsMissionGalileo(ObsCommon):
         super().__init__(*args, **kwargs)
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    #############################################
+    ### FIELD METHODS FOR obs_mission_galileo ###
+    #############################################
 
     def field_obs_mission_galileo_opus_id(self):
         return self.opus_id

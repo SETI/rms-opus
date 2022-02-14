@@ -2,7 +2,8 @@
 # obs_instrument_nhmvic.py
 #
 # Defines the ObsInstrumentNHMVIC class, which encapsulates fields in the
-# obs_instrument_nhmvic table.
+# common, obs_mission_new_horizons, and obs_instrument_nhmvic tables for
+# NHxxMV_xxxx.
 ################################################################################
 
 from obs_mission_new_horizons import ObsMissionNewHorizons
@@ -148,9 +149,9 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         return self.field_obs_wavelength_wave_no_res1()
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ###############################################
+    ### FIELD METHODS FOR obs_instrument_nhmvic ###
+    ###############################################
 
     def field_obs_instrument_nhmvic_opus_id(self):
         return self.opus_id

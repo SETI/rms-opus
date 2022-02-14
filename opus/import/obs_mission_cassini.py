@@ -2,7 +2,7 @@
 # obs_mission_cassini.py
 #
 # Defines the ObsMissionCassini class, which encapsulates fields in the
-# obs_mission_cassini table.
+# common and obs_mission_cassini tables.
 ################################################################################
 
 import re
@@ -310,9 +310,9 @@ class ObsMissionCassini(ObsCommon):
         return self.volume + '/' + filespec
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    #############################################
+    ### FIELD METHODS FOR obs_mission_cassini ###
+    #############################################
 
     def field_obs_mission_cassini_opus_id(self):
         return self.opus_id

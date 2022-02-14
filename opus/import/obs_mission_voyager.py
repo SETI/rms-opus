@@ -2,7 +2,7 @@
 # obs_mission_voyager.py
 #
 # Defines the ObsMissionVoyager class, which encapsulates fields in the
-# obs_mission_voyager table.
+# common and obs_mission_voyager tables.
 ################################################################################
 
 import opus_support

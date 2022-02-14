@@ -2,7 +2,8 @@
 # obs_instrument_covims_occ.py
 #
 # Defines the ObsInstrumentCOVIMSOcc class, which encapsulates fields in the
-# obs_instrument_covims table for COVIMS_8001 occultations.
+# common, obs_mission_cassini, and obs_instrument_covims tables for COVIMS_8001
+# occultations.
 ################################################################################
 
 import opus_support
@@ -110,9 +111,9 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         return self._cassini_mission_phase_name()
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ###############################################
+    ### FIELD METHODS FOR obs_instrument_covims ###
+    ###############################################
 
     def field_obs_instrument_covims_opus_id(self):
         return self.opus_id

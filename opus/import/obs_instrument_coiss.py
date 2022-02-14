@@ -2,7 +2,8 @@
 # obs_instrument_coiss.py
 #
 # Defines the ObsInstrumentCOISS class, which encapsulates fields in the
-# obs_instrument_coiss table.
+# common, obs_mission_cassini, and obs_instrument_coiss tables for
+# COISS_[12]xxx.
 ################################################################################
 
 import opus_support
@@ -413,9 +414,9 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return self._index_col('SEQUENCE_ID')
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_coiss ###
+    ##############################################
 
     def field_obs_instrument_coiss_opus_id(self):
         return self.opus_id

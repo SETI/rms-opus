@@ -2,7 +2,7 @@
 # obs_instrument_gossi.py
 #
 # Defines the ObsInstrumentGOSSI class, which encapsulates fields in the
-# obs_instrument_gossi table.
+# common, obs_mission_galileo, and obs_instrument_gossi tables for GO_0xxx.
 ################################################################################
 
 import numpy as np
@@ -241,9 +241,9 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return self.field_obs_mission_galileo_spacecraft_clock_count1()
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_gossi ###
+    ##############################################
 
     def field_obs_instrument_gossi_opus_id(self):
         return self.opus_id

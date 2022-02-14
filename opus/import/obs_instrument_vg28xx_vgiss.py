@@ -2,7 +2,8 @@
 # obs_instrument_vg28xx_vgiss.py
 #
 # Defines the ObsInstrumentVG28xxISS class, which encapsulates fields for the
-# VGISS instrument in VG_2810.
+# common, obs_mission_voyager, and obs_instrument_vgiss tables for VG_2810
+# radial profiles.
 ################################################################################
 
 from obs_instrument_vg28xx import ObsInstrumentVG28xx
@@ -153,9 +154,9 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
         return 90. - self._index_col('MINIMUM_EMISSION_ANGLE')
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_vgiss ###
+    ##############################################
 
     def field_obs_instrument_vgiss_opus_id(self):
         return self.opus_id

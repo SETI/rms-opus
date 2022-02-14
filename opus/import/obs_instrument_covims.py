@@ -2,7 +2,8 @@
 # obs_instrument_covims.py
 #
 # Defines the ObsInstrumentCOVIMS class, which encapsulates fields in the
-# obs_instrument_covims table.
+# common, obs_mission_cassini, and obs_instrument_covims tables for COVIMS_8xxx
+# occultations.
 ################################################################################
 
 import opus_support
@@ -270,9 +271,9 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return self._index_col('SEQ_ID')
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ###############################################
+    ### FIELD METHODS FOR obs_instrument_covims ###
+    ###############################################
 
     def field_obs_instrument_covims_opus_id(self):
         return self.opus_id

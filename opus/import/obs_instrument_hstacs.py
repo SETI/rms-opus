@@ -2,8 +2,9 @@
 # obs_instrument_hstacs.py
 #
 # Defines the ObsInstrumentHSTACS class, which encapsulates fields in the
-# obs_mission_hubble table for the HST ACS instrument. Note HST does not have
-# separate tables for each instrument but combines them all together.
+# common and obs_mission_hubble tables for the HST ACS instrument for
+# HSTJx_xxxx. Note HST does not have separate tables for each instrument but
+# combines them all together.
 ################################################################################
 
 from obs_mission_hubble import ObsMissionHubble

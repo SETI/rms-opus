@@ -1,21 +1,22 @@
 ################################################################################
 # obs_instrument_ebrocc.py
 #
-# Defines the ObsInstrumentEBROCC class. There is no associated table so this
-# just overrides methods. This class supports multiple instruments in a single
-# volume.
-#
-# XXX NOTE THIS ONLY WORKS FOR 28 SGR RIGHT NOW.
-# On 1989-07-03, 28 Sgr incidence angle was 64.627 on the south side
-# North-based incidence angle was 180-64.627 = 115.373
-# The north side of the rings were illuminated by the Sun
-# Earth was viewing the north side of the rings
-# Emission angle and north-based emission angle = incidence angle
-# Observer elevation = 90 - incidence angle
+# Defines the ObsInstrumentEBROCC class, which encapsulates fields for
+# the common tables for EBROCC_0001. This class supports multiple instruments
+# in a single volume.
 ################################################################################
 
 from obs_common import ObsCommon
 
+
+# XXX NOTE THIS ONLY WORKS FOR 28 SGR RIGHT NOW.
+# On 1989-07-03:
+# * 28 Sgr incidence angle was 64.627 on the south side
+# * North-based incidence angle was 180-64.627 = 115.373
+# * The north side of the rings were illuminated by the Sun
+# * Earth was viewing the north side of the rings
+# * Emission angle and north-based emission angle = incidence angle
+# * Observer elevation = 90 - incidence angle
 
 class ObsInstrumentEBROCC(ObsCommon):
     def __init__(self, *args, **kwargs):

@@ -2,7 +2,8 @@
 # obs_instrument_nhlorri.py
 #
 # Defines the ObsInstrumentNHLORRI class, which encapsulates fields in the
-# obs_instrument_nhlorri table.
+# common, obs_mission_new_horizons, and obs_instrument_nhlorri tables for
+# NHxxLO_xxxx.
 ################################################################################
 
 from obs_mission_new_horizons import ObsMissionNewHorizons
@@ -146,9 +147,9 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
         return self.field_obs_wavelength_wave_no_res1()
 
 
-    ####################################
-    ### FIELD METHODS FOR THIS TABLE ###
-    ####################################
+    ################################################
+    ### FIELD METHODS FOR obs_instrument_nhlorri ###
+    ################################################
 
     def field_obs_instrument_nhlorri_opus_id(self):
         return self.opus_id

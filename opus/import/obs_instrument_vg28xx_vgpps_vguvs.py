@@ -2,9 +2,10 @@
 # obs_instrument_vg28xx_vgpps_vguvs.py
 #
 # Defines the ObsInstrumentVG28xxPPS and ObsInstrumentVG28xxUVS classes, which
-# encapsulate fields for the VGPPS instrument in VG_2801 and VGUVS instrument
-# in VG_2802. We put these instruments in the same file because they have
-# identical import functions except for the instrument_id.
+# encapsulate fields for the common and obs_mission_voyager tables for VGPPS
+# occultations in VG_2801 and VGUVS occultations in VG_2802. We put these
+# instruments in the same file because they have identical import functions
+# except for the instrument_id. Neither has a dedicated instrument table.
 ################################################################################
 
 from obs_instrument_vg28xx import (ObsInstrumentVG28xx,
