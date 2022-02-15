@@ -403,7 +403,7 @@ def log_nonrepeating_warning(msg):
         impglobals.LOGGER.log('warning', _format_vol_line()+msg)
 
 def log_unknown_target_name(target_name):
-    msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
+    msg = f'Unknown TARGET_NAME "{target_name}" - edit config_targets.py'
     log_nonrepeating_error(msg)
 
 

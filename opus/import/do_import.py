@@ -568,6 +568,7 @@ def import_one_volume(volume_id):
     # a separate metadata directory
     index_paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
     index_paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
+    found_in_this_dir = False
     for path in index_paths:
         if not os.path.exists(path):
             continue
@@ -647,7 +648,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
             good_row = None
             for row_no in row_nos:
                 orig_filespec = instrument_obj.primary_filespec_from_index_row(
-                                                obs_rows[row_no], convert_lbl=True)
+                                        obs_rows[row_no], convert_lbl=True)
                 try:
                     deriv_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
                 except ValueError:
@@ -705,7 +706,10 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
     if index_paths:
         for index_path in index_paths:
             assoc_pdsfile = pdsfile.PdsFile.from_abspath(index_path)
-            basenames = assoc_pdsfile.childnames
+            try:
+                basenames = assoc_pdsfile.childnames
+            except KeyError:
+                continue
             for basename in basenames:
                 if basename.find('999') != -1:
                     # These are cumulative geo files
@@ -776,6 +780,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                         if key is None:
                             # Error will already be logged
                             continue
+                        key = key.upper()
 
                         if (assoc_type == 'ring_geo' or
                             assoc_type == 'inventory'):
@@ -807,6 +812,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                                                                 row, convert_lbl=True)
                         if key is not None:
                             # Error will already be logged if key is None
+                            key = key.upper()
                             assoc_dict[key] = row
 
                 # We need to be able to look things up in both the main tab file and
@@ -859,6 +865,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
         primary_filespec = instrument_obj.primary_filespec
         primary_filespec = instrument_obj.convert_filespec_from_lbl(primary_filespec)
         impglobals.CURRENT_PRIMARY_FILESPEC = primary_filespec
+        primary_filespec = primary_filespec.upper()
         if 'supp_index' in metadata:
             supp_index = metadata['supp_index']
             if primary_filespec in supp_index:
@@ -881,6 +888,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
             primary_filespec_phase = instrument_obj.primary_filespec_from_index_row(
                                                             index_row, convert_lbl=True,
                                                             add_phase_from_inst=True)
+            primary_filespec_phase = primary_filespec_phase.upper()
             if 'ring_geo' in metadata:
                 ring_geo = metadata['ring_geo'].get(primary_filespec_phase, None)
                 metadata['ring_geo_row'] = ring_geo
@@ -889,7 +897,6 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                     import_util.log_warning(
                         'RING GEO metadata missing for "{primary_filespec_phase}"')
             if 'surface_geo' in metadata:
-                # print(primary_filespec_phase, list(metadata['surface_geo'].keys())[:5])
                 body_geo = metadata['surface_geo'].get(primary_filespec_phase)
                 metadata['surface_geo_row'] = body_geo
 
@@ -1336,8 +1343,10 @@ def import_run_field_function(instrument_obj,
         res = func()
     except Exception:
         tb = traceback.format_exc()
+        class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
-            f'Import of volume {instrument_obj.volume} failed with exception:\n{tb}')
+            f'Execution of field function {class_name}::{func_name} failed with '+
+            f'exception:\n{tb}')
         return False, None
     return (True, res)
 

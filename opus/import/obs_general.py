@@ -40,8 +40,10 @@ class ObsGeneral(ObsBase):
         return self.mission_id
 
     def field_obs_general_target_class(self):
-        target_name = self.field_obs_general_target_name()[0]
-        target_name, target_info = self._get_target_info(target_name)
+        target_name = self.field_obs_general_target_name()
+        if target_name is None:
+            return None
+        target_name, target_info = self._get_target_info(target_name[0])
         if target_info is None:
             return None
         return target_info[1]
