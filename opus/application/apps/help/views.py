@@ -297,7 +297,7 @@ def api_api_guide(request, fmt):
                       +r'op-api-guide-code"><pre><code>',
                       text)
         text = re.sub(r'%ENDCODE%', r'</code></pre></div>', text)
-        guide = mistune.Markdown().output(text)
+        guide = mistune.html(text)
         guide = guide.replace('%ADDCLASS%', '<div class="')
         guide = guide.replace('%ENDADDCLASS%', '">')
         guide = guide.replace('%ENDCLASS%', '</div>')

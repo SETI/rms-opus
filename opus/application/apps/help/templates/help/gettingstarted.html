@@ -42,7 +42,7 @@ data OPUS has to offer.</p>
                 missions and instruments by abstracting away details about what
                 portion of the electromagnetic spectrum the observation
                 encodes, such as wavelength range and polarization.</li>
-            <li><b>Occultation or Reflectance Profiles Constraints</b> permits easy searching on
+            <li><b>Occultation/Reflectance Profiles Constraints</b> permits easy searching on
                 the common attributes of both spacecraft-based and ground-based
                 occultation profiles.</li>
             <li><b>Surface Geometry Constraints</b> allows searching on the
@@ -220,13 +220,15 @@ data OPUS has to offer.</p>
     can be changed by clicking on <b>Select Metadata</b> at the top. Fields may
     be added or removed by clicking on them on the left or removed by clicking
     on the <i class="far fa-trash-alt"></i> on the right, and may be reordered
-    by dragging. Fields can also be added or removed in the table view by
+    by dragging. Fields can be added or removed in the table view by
     hovering over the column header; click on the <i class="far fa-trash-alt"></i>
     to remove a field or the <i class="fas fa-plus"></i> to add a new
-    field before or after the column. The fields selected here also affect what
+    field before or after the column. Finally, fields can also be added,
+    removed, or reordered in the slideshow view by clicking on
+    <i class="fas fa-pencil-alt"></i>Edit. The fields selected here also affect what
     is included in a CSV file when using <b>Download CSV (all results)</b> at the
     top or the <b>Download CSV of selected metadata</b> menu option, as well as
-    what is included in downloaded CSV, data, and URL archive zip files available
+    what is included in downloaded CSV, data, and URL archive zip/tar/tgz files available
     on the <b>Cart</b> tab. A button is available to conveniently create a CSV
     file directly from the <b>Select Metadata</b> dialog without having to
     save the selected fields first.</p>
@@ -268,24 +270,29 @@ data OPUS has to offer.</p>
 
 <ol>
     <li>A <b>Data Archive</b> includes all of the selected data products in
-        a single zip file. Also included are a metadata CSV file (data.csv),
+        a single zip, tar, or tgz file. The data products can be laid out in a flat
+        directory structure with all files in the root directory of the archive
+        file, or in a hierarchy that echoes the directory structure in the main
+        Ring-Moon Systems Node holdings.
+        Also included in the archive file are a metadata CSV file (data.csv),
         a manifest file (manifest.csv) showing which files are included along
         with their details (including checksums and sizes), and a file
         containing the URLs for each data product (urls.txt). On the
         <b>Cart</b> tab, the <i class="fas fa-download"></i>
         <b>Data Archive</b> button will produce a zip file containing all
-        observations in the cart. You may also download a data archive of all
+        observations in the cart. You may also download a zipped data archive of all
         relevant products for a single observation using the
-        <i class="fas fa-bars fa-xs"></i> menu.</li>
+        <i class="fas fa-bars fa-xs"></i> menu anywhere it is available.</li>
     <li>A <b>URL Archive</b> is similar to a data archive, but includes only
         the non-product files (metadata, manifest, and URLs) in a
-        single zip file. This results in a very small download. The actual data
+        single zip, tar, or tgz file. This results in a very small download. The actual data
         products can then be retrieved using a command-line utility such as
         <b>wget</b>:
         <pre>    wget -i urls.txt</pre></li>
     <li>A <b>Metadata CSV</b> is a comma-separated value (CSV) text file
         containing one row per observation. The rows contain all of the
-        metadata fields selected using the <b>Select Metadata</b> option. On
+        metadata fields selected using the <b>Select Metadata</b> option
+        (or other technique, as described earlier). On
         the <b>Cart</b> tab, the <i class="fas fa-file-csv"></i> <b>Metadata
         CSV</b> button will include all of the observations in the cart.
         On the <b>Browse</b> tab, the
@@ -293,7 +300,7 @@ data OPUS has to offer.</p>
         option will include <em>all</em> of the observations in the result set
         (which may be a lot!).
         The <i class="fas fa-bars fa-xs"></i> menu may also be used to create
-        a metadata CSV file for a single observation.</li>
+        a metadata CSV file for a single observation anywhere it is available.</li>
 </ol>
 
 <h3>Observation Details</h3>
@@ -310,8 +317,10 @@ the available metadata for an observation by using the <b>Detail</b> tab.</p>
 
 <ol>
     <li>The OPUS ID you are viewing.</li>
-    <li>Links to download a data archive or URL archive for the observation.
-        </li>
+    <li>A button to add or remove this observation from the cart.</li>
+    <li>A <i class="fas fa-share"></i>SHARE button that copies the short URL of
+        this <b>Detail</b> tab (without any search details) to the clipboard.</li>
+    <li>Links to download a data archive or URL archive for the observation.</li>
     <li>A list of all available PDS product types for the observation, along
         with all files that are available for each. Multiple versions
         are offered if available. If an <b>Index</b> file has an active
@@ -337,9 +346,14 @@ the available metadata for an observation by using the <b>Detail</b> tab.</p>
 <ul>
     <li><b>About</b> describes OPUS and gives a summary of the missions and
         instruments we support.</li>
+    <li><b>Getting Started</b> shows this introductory guide.</li>
+    <li><b>Tutorial Videos</b> opens a new browser tab showing our YouTube
+        channel, which contains tutorial videos for OPUS.</li>
     <li><b>FAQ</b> gives detailed answers to various frequently asked
         questions. It is a good place to look after completing this
         <b>Getting Started</b> page.</li>
+    <li><b>Interpreting Preview Images</b> gives quick links to documents
+        describing the details of the thumbnails for various instruments.</li>
     <li><b>Recent Announcements</b> (or selecting <b>Recent Announcements</b> at
         the top) will take you to the OPUS blog, where we announce changes to
         OPUS. You may also subscribe to our Twitter feed at
@@ -350,7 +364,7 @@ the available metadata for an observation by using the <b>Detail</b> tab.</p>
     <li><b>API Guide</b> gives the details of our publicly-available RESTful
         API that allows third-party software to use OPUS to search for
         and retrieve data.</li>
-    <li><b>Welcome Guide</b> redisplays the initial welcome message shown to
+    <li><b>Welcome Message</b> redisplays the initial welcome message shown to
         new users.</li>
     <li><b>Citing OPUS</b> gives information about how to cite OPUS
         in your papers, posters, or presentations and also provides QR codes
