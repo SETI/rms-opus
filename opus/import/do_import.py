@@ -542,7 +542,7 @@ def import_one_volume(volume_id):
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
 
     if not volume_pdsfile.is_volume:
-        impglobals.LOGGER.log('error', f'{volume_id} is not a volume!')
+        import_util.log_error(f'{volume_id} is not a volume!')
         impglobals.LOGGER.close()
         impglobals.CURRENT_VOLUME_ID = None
         return False
@@ -554,12 +554,12 @@ def import_one_volume(volume_id):
 
     vol_info = _lookup_vol_info(volume_id)
     if vol_info is None:
-        impglobals.LOGGER.log('error', f'No VOLUME_INFO entry for {volume_id}!')
+        import_util.log_error(f'No VOLUME_INFO entry for {volume_id}!')
         impglobals.LOGGER.close()
         impglobals.CURRENT_VOLUME_ID = None
         return False
     if vol_info['instrument_class'] is None:
-        impglobals.LOGGER.log('info', f'Ignoring import of {volume_id}')
+        import_util.log_debug(f'Ignoring import of {volume_id}')
         impglobals.LOGGER.close()
         impglobals.CURRENT_VOLUME_ID = None
         return True
@@ -582,7 +582,7 @@ def import_one_volume(volume_id):
         for basename in basenames:
             if basename in primary_index_names:
                 volume_label_path = os.path.join(path, basename)
-                impglobals.LOGGER.log('debug', f'Using index: {volume_label_path}')
+                import_util.log_debug(f'Using index: {volume_label_path}')
                 found_in_this_dir = True
                 ret = ret and import_one_index(volume_id,
                                                vol_info,
@@ -596,7 +596,7 @@ def import_one_volume(volume_id):
             impglobals.CURRENT_PRIMARY_FILESPEC = None
             return ret
 
-    impglobals.LOGGER.log('error', f'No index label file found: "{volume_id}"')
+    import_util.log_error(f'No index label file found: "{volume_id}"')
     impglobals.LOGGER.close()
     impglobals.CURRENT_VOLUME_ID = None
 
@@ -610,7 +610,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:
-        impglobals.LOGGER.log('error', f'Read failed: "{volume_label_path}"')
+        import_util.log_error(f'Read failed: "{volume_label_path}"')
         return False
 
     import_util.log_info(f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')

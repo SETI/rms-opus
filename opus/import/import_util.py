@@ -176,10 +176,9 @@ def yield_import_volume_ids(arguments):
 
 def log_accumulated_warnings(title):
     if len(impglobals.PYTHON_WARNING_LIST) > 0:
-        impglobals.LOGGER.log('error',
-                   f'Warnings found during {title}:')
+        log_error(f'Warnings found during {title}:')
         for w in impglobals.PYTHON_WARNING_LIST:
-            impglobals.LOGGER.log('error', '  '+w)
+            log_error('  '+w)
         impglobals.PYTHON_WARNING_LIST = []
         impglobals.IMPORT_HAS_BAD_DATA = True
         return True
@@ -216,7 +215,7 @@ def safe_pdstable_read(filename):
         msg = f'Exception during reading of "{filename}"'
         if not impglobals.ARGUMENTS.log_suppress_traceback:
             msg += ':\n' + traceback.format_exc()
-        impglobals.LOGGER.log('error', msg)
+        log_error(msg)
         return None, None
 
     if log_accumulated_warnings(f'table import of {filename}'):
@@ -313,7 +312,7 @@ def read_schema_for_table(table_name, replace=[]):
                 contents = contents.replace(r[0], r[1])
             return json.loads(contents)
         except json.decoder.JSONDecodeError:
-            impglobals.LOGGER.log('debug', f'Was reading table "{table_name}"')
+            log_debug(f'Was reading table "{table_name}"')
             raise
         except:
             raise
@@ -368,13 +367,13 @@ def log_debug(msg, *args):
 def log_nonrepeating_error(msg):
     if msg not in impglobals.LOGGED_IMPORT_ERRORS:
         impglobals.LOGGED_IMPORT_ERRORS.append(msg)
-        impglobals.LOGGER.log('error', _format_vol_line()+msg)
+        log_error(_format_vol_line()+msg)
         impglobals.IMPORT_HAS_BAD_DATA = True
 
 def log_nonrepeating_warning(msg):
     if msg not in impglobals.LOGGED_IMPORT_WARNINGS:
         impglobals.LOGGED_IMPORT_WARNINGS.append(msg)
-        impglobals.LOGGER.log('warning', _format_vol_line()+msg)
+        log_warning('warning', _format_vol_line()+msg)
 
 def log_unknown_target_name(target_name):
     msg = f'Unknown TARGET_NAME "{target_name}" - edit config_targets.py'
