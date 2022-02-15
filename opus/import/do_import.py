@@ -558,6 +558,11 @@ def import_one_volume(volume_id):
         impglobals.LOGGER.close()
         impglobals.CURRENT_VOLUME_ID = None
         return False
+    if vol_info['instrument_class'] is None:
+        impglobals.LOGGER.log('info', f'Ignoring import of {volume_id}')
+        impglobals.LOGGER.close()
+        impglobals.CURRENT_VOLUME_ID = None
+        return True
 
     primary_index_names = [
         x.replace('<VOLUME>', volume_id) for x in vol_info['primary_index']]

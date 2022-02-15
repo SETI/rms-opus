@@ -66,7 +66,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         # This is because this (and the subsequent creation of opus_id) is used
         # to actually find the matching row in the supplemental index dictionary.
         # Format: GO_0017/J0/OPNAV/C0347569700R.IMG
-        return self._index_col('FILE_SPECIFICATION_NAME')
+        return self.volume + '/' + self._index_col('FILE_SPECIFICATION_NAME')
 
 
     ################################

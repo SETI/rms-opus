@@ -5,7 +5,7 @@
 # common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
 ################################################################################
 
-from config_targets import DSN_NAMES
+from config_data import DSN_NAMES
 from obs_instrument_vg28xx import ObsInstrumentVG28xx
 
 

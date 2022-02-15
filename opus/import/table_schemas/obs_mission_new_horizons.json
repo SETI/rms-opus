@@ -92,7 +92,7 @@
     },
     {
         "field_name": "mission_phase",
-        "field_type": "char22",
+        "field_type": "char32",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",

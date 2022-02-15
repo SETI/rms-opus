@@ -10,6 +10,16 @@ import opus_support
 from obs_common import ObsCommon
 
 
+_MISSION_PHASE_NAMES = {
+    'JUPITER ENCOUNTER':              'Jupiter Encounter',
+    'PLUTO CRUISE':                   'Pluto Cruise',
+    'PLUTO ENCOUNTER':                'Pluto Encounter',
+    'POST-LAUNCH CHECKOUT':           'Post-Launch Checkout',
+    'CRUISE TO FIRST KBO EN':         'Cruise to First KBO Encounter',
+    'CRUISE TO FIRST KBO ENCOUNTER':  'Cruise to First KBO Encounter',
+    'KEM1 ENCOUNTER':                 'KEM1 Encounter',
+}
+
 class ObsMissionNewHorizons(ObsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -28,10 +38,12 @@ class ObsMissionNewHorizons(ObsCommon):
         mp = self._supp_index_col('MISSION_PHASE_NAME').upper()
         if mp == 'JUPITER ENCOUNTER':
             return 'JUP'
-        if (mp == 'PLUTO CRUISE' or
-            mp == 'PLUTO ENCOUNTER'):
+        if mp in ('PLUTO CRUISE', 'PLUTO ENCOUNTER'):
             return 'PLU'
-        if mp == 'POST-LAUNCH CHECKOUT':
+        if mp in ('POST-LAUNCH CHECKOUT',
+                  'CRUISE TO FIRST KBO EN',
+                  'CRUISE TO FIRST KBO ENCOUNTER',
+                  'KEM1 ENCOUNTER'):
             return 'OTH'
 
         self._log_nonrepeating_error(f'Unknown MISSION_PHASE_NAME "{mp}"')
@@ -100,4 +112,5 @@ class ObsMissionNewHorizons(ObsCommon):
         return sc_cvt
 
     def field_obs_mission_new_horizons_mission_phase(self):
-        return self._supp_index_col('MISSION_PHASE_NAME')
+        mp = self._supp_index_col('MISSION_PHASE_NAME')
+        return mp, _MISSION_PHASE_NAMES[mp]

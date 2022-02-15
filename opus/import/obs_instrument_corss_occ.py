@@ -8,7 +8,7 @@
 
 import opus_support
 
-from config_targets import DSN_NAMES
+from config_data import DSN_NAMES
 from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
 
 

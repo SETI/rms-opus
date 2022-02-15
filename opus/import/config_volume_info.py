@@ -49,7 +49,12 @@ from obs_instrument_vg28xx_vgrss       import ObsInstrumentVG28xxVGRSS
 #       import.
 
 VOLUME_INFO = [
-    (r'COCIRS_[01]\d\d\d',
+    (r'COCIRS_0[0123]\d\d|COCIRS_0401',     # We ignore these volumes from early
+        {'primary_index': None,             # in the cruise without metadata
+         'validate_index_rows': False,
+         'instrument_class': None},
+    ),
+    (r'COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d\d',  # COCIRS_0402 onward
         {'primary_index': ('<VOLUME>_cube_equi_index.lbl',
                            '<VOLUME>_cube_point_index.lbl',
                            '<VOLUME>_cube_ring_index.lbl'),
@@ -129,15 +134,20 @@ VOLUME_INFO = [
          'validate_index_rows': False,
          'instrument_class': ObsInstrumentHSTWFPC2},
     ),
-    (r'NH..LO_[12]001',
+    (r'NH..LO_1001',
         {'primary_index': ('<VOLUME>_index.lbl',),
          'validate_index_rows': True,
          'instrument_class': ObsInstrumentNHLORRI},
     ),
-    (r'NH..MV_[12]001',
+    (r'NH..MV_1001',
         {'primary_index': ('<VOLUME>_index.lbl',),
          'validate_index_rows': True,
          'instrument_class': ObsInstrumentNHMVIC},
+    ),
+    (r'NH...._2\d\d\d',  # Ignore these volumes - we only import 1001
+        {'primary_index': None,
+         'validate_index_rows': False,
+         'instrument_class': None},
     ),
     (r'VGISS_[5678]\d\d\d',
         {'primary_index': ('<VOLUME>_raw_image_index.lbl',),

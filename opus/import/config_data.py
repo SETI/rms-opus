@@ -142,56 +142,18 @@ INSTRUMENT_ID_TO_INSTRUMENT_NAME = {
     'PAL200CIRC':  'Palomar Observatory 200-Inch Cassegrain IR Camera'
 }
 
-# VGISS: RAW_IMAGE_INDEX
-# COCIRS: OBSINDEX
-# EBROCC: PROFILE_INDEX
-    # 'VG':     {
-    #     'VG_2801': 'VGPPS',
-    #     'VG_2802': 'VGUVS',
-    #     'VG_2803': 'VGRSS',
-    #     'VG_2810': 'VGISS',
-    # }
-# Keywords in supplemental index filenames that indicate they contain surface
-# geo info in the absence of an actual surface geo summary file.
-# SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = [
-#     'CUBE_EQUI'
-# ]
-
-
-# Mapping from VOLUME root to observation type
-VOLUME_ID_ROOT_TO_TYPE = {
-    'COCIRS_0xxx': 'CUBE',
-    'COCIRS_1xxx': 'CUBE',
-    'COCIRS_5xxx': 'OBS',
-    'COCIRS_6xxx': 'OBS',
-    'COISS_1xxx':  'OBS',
-    'COISS_2xxx':  'OBS',
-    'CORSS_8xxx':  'PROF',
-    'COUVIS_0xxx': 'OBS',
-    'COUVIS_8xxx': 'PROF',
-    'COVIMS_0xxx': 'OBS',
-    'COVIMS_8xxx': 'PROF',
-    'EBROCC_xxxx': 'PROF',
-    'GO_0xxx':     'OBS',
-    'HSTIx_xxxx':  'OBS',
-    'HSTJx_xxxx':  'OBS',
-    'HSTNx_xxxx':  'OBS',
-    'HSTOx_xxxx':  'OBS',
-    'HSTUx_xxxx':  'OBS',
-    'NHxxLO_xxxx': 'OBS',
-    'NHxxMV_xxxx': 'OBS',
-    'VG_28xx':     'PROF',
-    'VGISS_5xxx':  'OBS',
-    'VGISS_6xxx':  'OBS',
-    'VGISS_7xxx':  'OBS',
-    'VGISS_8xxx':  'OBS'
-}
-
-
-# A Dictionary that stores the desired volumes in a volset.
-# {volset: pattern of desired volumes}
-# If the pattern is not matched, we will skip importing that specific volume.
-DESIRED_VOLUMES_IN_VOLSET = {
-    # we will ignore volumes smaller than 0402 for COCIRS_0xxx
-    'COCIRS_0xxx': r'(COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d{2})$',
+DSN_NAMES = {
+    14: 'Goldstone 14m',
+    15: 'Goldstone 34m',
+    24: 'Goldstone 34m',
+    25: 'Goldstone 34m',
+    26: 'Goldstone 34m',
+    34: 'Canberra 34m',
+    35: 'Canberra 34m',
+    36: 'Canberra 34m',
+    43: 'Canberra 70m',
+    54: 'Madrid 34m',
+    55: 'Madrid 34m',
+    63: 'Madrid 70m',
+    65: 'Madrid 34m'
 }
