@@ -283,8 +283,12 @@ class ObsMissionCassini(ObsCommon):
         if count.endswith('.973'):
             count = count.replace('.973', '.000')
 
-        return count
+        ### UVIS
+        # See pds-opus issue #443
+        if count.endswith('.324'):
+            count = count.replace('.324', '.000')
 
+        return count
 
 
     #############################

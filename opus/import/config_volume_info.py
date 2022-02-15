@@ -54,7 +54,7 @@ VOLUME_INFO = [
          'validate_index_rows': False,
          'instrument_class': None},
     ),
-    (r'COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d\d',  # COCIRS_0402 onward
+    (r'COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d\d|COCIRS_1\d\d\d', # COCIRS_0402->
         {'primary_index': ('<VOLUME>_cube_equi_index.lbl',
                            '<VOLUME>_cube_point_index.lbl',
                            '<VOLUME>_cube_ring_index.lbl'),
@@ -104,7 +104,12 @@ VOLUME_INFO = [
          'validate_index_rows': False,
          'instrument_class': ObsInstrumentEBROCC},
     ),
-    (r'GO_00\d\d',
+    (r'GO_000\d|GO_001[0-6]',
+        {'primary_index': None,
+         'validate_index_rows': False,
+         'instrument_class': None},
+    ),
+    (r'GO_001[7-9]|GO_002\d',
         {'primary_index': ('<VOLUME>_index.lbl',),
          'validate_index_rows': True,
          'instrument_class': ObsInstrumentGOSSI},

@@ -333,6 +333,7 @@ class ObsBase(object):
         # Example: ('JUP', 'IRR_SAT', 'Callirrhoe')
         if target_name is None:
             return None, None
+        target_name = target_name.upper()
         if target_name in TARGET_NAME_MAPPING:
             target_name = TARGET_NAME_MAPPING[target_name]
         if target_name not in TARGET_NAME_INFO:

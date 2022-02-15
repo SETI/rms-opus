@@ -367,13 +367,13 @@ def log_debug(msg, *args):
 def log_nonrepeating_error(msg):
     if msg not in impglobals.LOGGED_IMPORT_ERRORS:
         impglobals.LOGGED_IMPORT_ERRORS.append(msg)
-        log_error(_format_vol_line()+msg)
+        log_error(msg)
         impglobals.IMPORT_HAS_BAD_DATA = True
 
 def log_nonrepeating_warning(msg):
     if msg not in impglobals.LOGGED_IMPORT_WARNINGS:
         impglobals.LOGGED_IMPORT_WARNINGS.append(msg)
-        log_warning('warning', _format_vol_line()+msg)
+        log_warning(msg)
 
 def log_unknown_target_name(target_name):
     msg = f'Unknown TARGET_NAME "{target_name}" - edit config_targets.py'

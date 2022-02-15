@@ -70,7 +70,7 @@ class ObsMissionVoyager(ObsCommon):
         if not self._col_in_index('EARTH_RECEIVED_TIME'):
             return None
         ert_time = self._index_col('EARTH_RECEIVED_TIME')
-        if ert_time == 'UNKNOWN':
+        if ert_time.startswith('UNK'):
             return None
         return self._time_from_index(column='EARTH_RECEIVED_TIME')
 

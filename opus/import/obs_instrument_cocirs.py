@@ -135,30 +135,29 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        if not sc.startswith('1/'):
-            self._log_nonrepeating_error(
+        if not sc.startswith('1/') or sc[2] == ' ':
+            self._log_nonrepeating_warning(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
         return sc_cvt
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self):
         sc = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        if not sc.startswith('1/'):
-            self._log_nonrepeating_error(
+        if not sc.startswith('1/') or sc[2] == ' ':
+            self._log_nonrepeating_warning(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
-        return sc_cvt
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
