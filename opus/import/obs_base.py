@@ -178,7 +178,19 @@ class ObsBase(object):
 
     @property
     def phase_names(self):
+        # Return a list of names of phases that each row in the index file should go
+        # through. Normally this is just a single empty string, but in cases like
+        # COVIMS, each index row actually represents two observations - IR and VIS -
+        # which would count as two phases. Instruments can override this list as
+        # necessary.
         return ['']
+
+    def surface_geo_target_list(self):
+        # If the surface_geo info exists somewhere other than in separate summary
+        # files, we can give a list of targets this observation supports here.
+        # This instrument's surface geo field methods will then be called on
+        # each target.
+        return None
 
 
     ### Helpers for other data_sources ###
@@ -277,7 +289,9 @@ class ObsBase(object):
     def _col_in_some_index(self, col):
         # Figure out if col is in the supplemental index or normal index
         # and return the index name as appropriate. If not found anywhere,
-        # return None.
+        # return None. Very important: We prioritize the supplemental index
+        # if the field exists in both. This makes a difference for
+        # COCIRS_[01]xxx.
         for index in ['supp_index_row', 'index_row']:
             if index in self._metadata and col in self._metadata[index]:
                 return index

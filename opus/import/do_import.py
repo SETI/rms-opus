@@ -548,9 +548,9 @@ def import_one_volume(volume_id):
         return False
 
 
-    ###############################
-    ### FIND PRIMARY INDEX FILE ###
-    ###############################
+    ##################################
+    ### FIND PRIMARY INDEX FILE(s) ###
+    ##################################
 
     vol_info = _lookup_vol_info(volume_id)
     if vol_info is None:
@@ -559,25 +559,31 @@ def import_one_volume(volume_id):
         impglobals.CURRENT_VOLUME_ID = None
         return False
 
-    primary_index_name = vol_info['primary_index'].replace('<VOLUME>', volume_id)
+    primary_index_names = [
+        x.replace('<VOLUME>', volume_id) for x in vol_info['primary_index']]
 
     # These are the metadata directories
-    paths = volume_pdsfile.associated_abspaths('metadata', must_exist=True)
+    index_paths = volume_pdsfile.associated_abspaths('metadata', must_exist=True)
     # These are the plain volume/index directories for volumes that don't have
     # a separate metadata directory
-    paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
-    paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
-    for path in paths:
+    index_paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
+    index_paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
+    for path in index_paths:
         if not os.path.exists(path):
             continue
         basenames = os.listdir(path)
-        if primary_index_name in basenames:
-            volume_label_path = os.path.join(path, primary_index_name)
-            ret = import_one_index(volume_id,
-                                   vol_info,
-                                   volume_pdsfile,
-                                   paths,
-                                   volume_label_path)
+        ret = True
+        for basename in basenames:
+            if basename in primary_index_names:
+                volume_label_path = os.path.join(path, basename)
+                impglobals.LOGGER.log('debug', f'Using index: {volume_label_path}')
+                found_in_this_dir = True
+                ret = ret and import_one_index(volume_id,
+                                               vol_info,
+                                               volume_pdsfile,
+                                               index_paths,
+                                               volume_label_path)
+        if found_in_this_dir:
             impglobals.LOGGER.close()
             impglobals.CURRENT_VOLUME_ID = None
             impglobals.CURRENT_INDEX_ROW_NUMBER = None
@@ -591,7 +597,7 @@ def import_one_volume(volume_id):
     return False
 
 
-def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
+def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                      volume_label_path):
     """Import the observations given a single primary index file."""
     instrument_class = vol_info['instrument_class']
@@ -696,9 +702,9 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
     # All of these files are cross-indexed with the primary index file based on
     # the primary filespec.
 
-    if metadata_paths:
-        for metadata_path in metadata_paths:
-            assoc_pdsfile = pdsfile.PdsFile.from_abspath(metadata_path)
+    if index_paths:
+        for index_path in index_paths:
+            assoc_pdsfile = pdsfile.PdsFile.from_abspath(index_path)
             basenames = assoc_pdsfile.childnames
             for basename in basenames:
                 if basename.find('999') != -1:
@@ -711,7 +717,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
                     not basename_upper.endswith('SUPPLEMENTAL_INDEX.LBL') and
                     not basename_upper.endswith('INVENTORY.LBL')):
                     continue
-                assoc_label_path = os.path.join(metadata_path, basename)
+                assoc_label_path = os.path.join(index_path, basename)
                 if basename_upper.endswith('INVENTORY.LBL'):
                     # The inventory files are in CSV format, but the pdstable.py
                     # module can't read non-fixed-length records so we fake it up
@@ -956,6 +962,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
                                                             new_target_name)
                         metadata['surface_geo_row'] = target_dict[
                                                                 target_name]
+                        metadata['surface_geo_target_name'] = target_name
 
                         row = import_observation_table(instrument_obj,
                                                        new_table_name,
@@ -966,6 +973,45 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, metadata_paths,
                             import_util.log_debug(
                               f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(row)
+
+            if instrument_obj.surface_geo_target_list():
+                # The are some cases (like COCIRS_[01]xxx) where the index files
+                # contain the surface geo information instead of a separate
+                # summary file. In these cases we ask the instrument for the list of
+                # targets and process them directly.
+                for table_name in table_names_in_order:
+                    if not table_name.startswith('obs_surface_geometry_'):
+                        # Deal with obs_surface_geometry_name and
+                        # obs_surface_geometry__<TARGET> only
+                        continue
+                    # Here we are handling both obs_surface_geometry_name and
+                    # obs_surface_geometry as well as all of the
+                    # obs_surface_geometry__<TARGET> tables
+
+                    for target_name in instrument_obj.surface_geo_target_list():
+                        used_targets.add(target_name)
+                        # Note the following only affects
+                        # obs_surface_geometry__<T> not the generalized
+                        # obs_surface_geometry. This is fine because we want the
+                        # generalized obs_surface_geometry to include all the
+                        # targets.
+                        new_target_name = import_util.table_name_for_sfc_target(
+                                                                target_name)
+                        new_table_name = table_name.replace('<TARGET>',
+                                                            new_target_name)
+                        metadata['surface_geo_row'] = None
+                        metadata['surface_geo_target_name'] = target_name
+
+                        row = import_observation_table(instrument_obj,
+                                                       new_table_name,
+                                                       table_schemas[table_name],
+                                                       metadata)
+                        if new_table_name not in table_rows:
+                            table_rows[new_table_name] = []
+                            import_util.log_debug(
+                              f'Creating surface geo table for new target {target_name}')
+                        table_rows[new_table_name].append(row)
+
 
             # Handle obs_surface_geometry
             # We have to do this later than the other obs_ tables because only

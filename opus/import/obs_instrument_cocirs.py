@@ -1,10 +1,9 @@
-1
 ################################################################################
 # obs_instrument_cocirs.py
 #
 # Defines the ObsInstrumentCOCIRS class, which encapsulates fields in the
 # common, obs_mission_cassini, and obs_instrument_cocirs tables for volumes
-# COCIRS_[56]xxx. There is no CIRS instrument table.
+# COCIRS_[56]xxx.
 ################################################################################
 
 import opus_support
