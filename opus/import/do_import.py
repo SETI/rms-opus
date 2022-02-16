@@ -659,7 +659,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                 except ValueError:
                     import_util.log_nonrepeating_warning(
                         f'Unable to convert OPUS ID "{opus_id}" for '+
-                        f'filespec "{primary_filespec}"')
+                        f'filespec "{orig_filespec}"')
                 else:
                     orig_filespec = instrument_obj.convert_filespec_from_lbl(
                                                                         orig_filespec)

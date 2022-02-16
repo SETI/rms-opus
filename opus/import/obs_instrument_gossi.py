@@ -132,13 +132,18 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     # If we don't have exposure, we just set them equal so we can still search
     # cleanly.
     def field_obs_general_time1(self):
+        time2 = self.field_obs_general_time2()
+        if time2 is None:
+            return None
         exposure = self._index_col('EXPOSURE_DURATION')
         if exposure is None:
             self._log_nonrepeating_warning(f'Null exposure time for {self.opus_id}')
             exposure = 0
-        return self.field_obs_general_time2() - exposure/1000
+        return time2 - exposure/1000
 
     def field_obs_general_time2(self):
+        if self._index_col('IMAGE_TIME') == 'UNK':
+            return None
         return self._time2_from_index(None, column='IMAGE_TIME')
 
     def field_obs_general_quantity(self):
@@ -225,7 +230,10 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     #######################################
 
     def field_obs_mission_galileo_orbit_number(self):
-        return str(self._index_col('ORBIT_NUMBER'))
+        orbit = self._index_col('ORBIT_NUMBER')
+        if orbit is None:
+            return None
+        return str(orbit)
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
