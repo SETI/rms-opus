@@ -12,6 +12,36 @@ class ObsWavelength(ObsBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    # Helpers for wavelength
+
+    def _wave_res_from_full_bandwidth(self):
+        wl1 = self.field_obs_wavelength_wavelength1()
+        wl2 = self.field_obs_wavelength_wavelength2()
+        if wl1 is None or wl2 is None:
+            return None
+        return wl2 - wl1
+
+    def _wave_no_res_from_full_bandwidth(self):
+        wno1 = self.field_obs_wavelength_wave_no1()
+        wno2 = self.field_obs_wavelength_wave_no2()
+        if wno1 is None or wno2 is None:
+            return None
+        return wno2 - wno1
+
+    def _wave_no_res1_from_wave_res(self):
+        wave_res2 = self.field_obs_wavelength_wave_res2()
+        wl2 = self.field_obs_wavelength_wavelength2()
+        if wave_res2 is None or wl2 is None:
+            return None
+        return wave_res2 * 10000. / (wl2*wl2)
+
+    def _wave_no_res2_from_wave_res(self):
+        wave_res1 = self.field_obs_wavelength_wave_res1()
+        wl1 = self.field_obs_wavelength_wavelength1()
+        if wave_res1 is None or wl1 is None:
+            return None
+        return wave_res1 * 10000. / (wl1*wl1)
+
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###

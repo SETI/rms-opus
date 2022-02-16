@@ -155,12 +155,8 @@ class ObsMissionHubble(ObsCommon):
     def field_obs_wavelength_wave_res2(self):
         return self._index_col('WAVELENGTH_RESOLUTION')
 
-    def field_obs_wavelength_wave_no_res1(self): # XXX
-        wno1 = self.field_obs_wavelength_wave_no1()
-        wno2 = self.field_obs_wavelength_wave_no2()
-        if wno1 is None or wno2 is None:
-            return None
-        return wno2 - wno1
+    def field_obs_wavelength_wave_no_res1(self):
+        return self._wave_no_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_no_res2(self):
         return self.field_obs_wavelength_wave_no_res1()

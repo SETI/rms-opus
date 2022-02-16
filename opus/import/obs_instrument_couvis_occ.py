@@ -24,20 +24,6 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
     def instrument_id(self):
         return 'COUVIS'
 
-    @property
-    def opus_id(self):
-        opus_id = super().opus_id
-
-        # We do this because the filenames are wrong in the archive XXX
-        # if opus_id == 'co-uvis-occ-2005-139-psicen-e':
-        #     opus_id = 'co-uvis-occ-2007-038-psicen-e'
-        # elif opus_id == 'co-uvis-occ-2005-139-thehya-e':
-        #     opus_id = 'co-uvis-occ-2009-062-thehya-e'
-        # elif opus_id == 'co-uvis-occ-2007-038-sao205839-i':
-        #     opus_id = 'co-uvis-occ-2008-026-sao205839-i'
-
-        return opus_id
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###

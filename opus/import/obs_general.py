@@ -8,7 +8,7 @@
 import json
 import os
 
-import impglobals # XXX
+import impglobals # It would be nice to have a better way to pass in cmd line args
 
 from obs_base import ObsBase
 

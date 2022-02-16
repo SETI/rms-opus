@@ -66,7 +66,7 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
         return band
 
     def field_obs_profile_source(self):
-        return ('CASSINI', 'Cassini', '!Cassini') # XXX
+        return ('CASSINI', 'Cassini', '!Cassini') # Force Cassini to be before all stars
 
     def field_obs_profile_host(self):
         dsn = self._supp_index_col('DSN_STATION_NUMBER')

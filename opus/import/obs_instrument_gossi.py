@@ -114,15 +114,14 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return dec + np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
     def field_obs_general_ring_obs_id(self):
+        if self._index_col('ORBIT_NUMBER') is None:
+            return None
         image_num = self._index_col('SPACECRAFT_CLOCK_START_COUNT').replace('.', '')
         return 'J_IMG_GO_SSI_' + image_num
 
     def field_obs_general_planet_id(self):
-        # WARNING: This will need to be changed if we ever get additional volumes
-        # for Galileo. Right now we set everything to Jupiter rather than basing
-        # it on the target name because we only have volumes for the time Galileo
-        # was in Jupiter orbit (GO_0017 to GO_0023).
-        # XXX Update for new GOSSI volume list
+        if self._index_col('ORBIT_NUMBER') is None:
+            return 'OTH'
         return 'JUP'
 
     # We actually have no idea what IMAGE_TIME represents - start, mid, stop?

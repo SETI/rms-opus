@@ -13,6 +13,18 @@ class ObsPds(ObsBase):
         super().__init__(*args, **kwargs)
 
 
+    # Product creation time helpers
+
+    def _product_creation_time_from_index(self):
+        return self._time_from_index(column='PRODUCT_CREATION_TIME')
+
+    def _product_creation_time_from_supp_index(self):
+        return self._time_from_supp_index(column='PRODUCT_CREATION_TIME')
+
+    def _product_creation_time_from_some_index(self):
+        return self._time_from_some_index(column='PRODUCT_CREATION_TIME')
+
+
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
