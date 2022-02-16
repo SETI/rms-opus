@@ -657,6 +657,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                 try:
                     deriv_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
                 except ValueError:
+                    impglobals.CURRENT_INDEX_ROW_NUMBER = row_no
                     import_util.log_nonrepeating_warning(
                         f'Unable to convert OPUS ID "{opus_id}" for '+
                         f'filespec "{orig_filespec}"')
@@ -671,6 +672,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                                 f'{opus_id}: {good_row} and {row_no}')
                         good_row = row_no
             if good_row is None:
+                impglobals.CURRENT_INDEX_ROW_NUMBER = row_nos[0]
                 import_util.log_nonrepeating_error(
                     f'No row found that reverse matches opus_id {opus_id}')
             else:
