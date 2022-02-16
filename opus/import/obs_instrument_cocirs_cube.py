@@ -295,12 +295,12 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
             return None
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
 
-    def field_obs_surface_geometry_target_sub_solar_iau_longitude(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE')
 
-    def field_obs_surface_geometry_target_sub_observer_iau_longitude(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')

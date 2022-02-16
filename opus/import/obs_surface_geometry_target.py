@@ -28,6 +28,42 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def field_obs_surface_geometry_target_instrument_id(self):
         return self.instrument_id
 
+    def field_obs_surface_geometry_target_iau_east_longitude1(self):
+        long = self.field_obs_surface_geometry_target_iau_west_longitude2()
+        if long is None:
+            return None
+        return 360. - long
+
+    def field_obs_surface_geometry_target_iau_east_longitude2(self):
+        long = self.field_obs_surface_geometry_target_iau_west_longitude1()
+        if long is None:
+            return None
+        return 360. - long
+
+    def field_obs_surface_geometry_target_sub_solar_iau_east_longitude(self):
+        long = self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude()
+        if long is None:
+            return None
+        return 360. - long
+
+    def field_obs_surface_geometry_target_sub_observer_iau_east_longitude(self):
+        long = self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude()
+        if long is None:
+            return None
+        return 360. - long
+
+    def field_obs_surface_geometry_target_observer_east_longitude1(self):
+        long = self.field_obs_surface_geometry_target_observer_west_longitude2()
+        if long is None:
+            return None
+        return -long
+
+    def field_obs_surface_geometry_target_observer_east_longitude2(self):
+        long = self.field_obs_surface_geometry_target_observer_west_longitude1()
+        if long is None:
+            return None
+        return -long
+
 
     ################################
     ### ! Might override these ! ###
@@ -62,10 +98,10 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def field_obs_surface_geometry_target_solar_hour_angle2(self):
         return self._surface_geo_index_col('MAXIMUM_LOCAL_HOUR_ANGLE')
 
-    def field_obs_surface_geometry_target_observer_longitude1(self):
+    def field_obs_surface_geometry_target_observer_west_longitude1(self):
         return self._surface_geo_index_col('MINIMUM_LONGITUDE_WRT_OBSERVER')
 
-    def field_obs_surface_geometry_target_observer_longitude2(self):
+    def field_obs_surface_geometry_target_observer_west_longitude2(self):
         return self._surface_geo_index_col('MAXIMUM_LONGITUDE_WRT_OBSERVER')
 
     def field_obs_surface_geometry_target_finest_resolution1(self):
@@ -116,10 +152,10 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude(self):
         return self._surface_geo_index_col('SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_solar_iau_longitude(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude(self):
         return self._surface_geo_index_col('SUB_SOLAR_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_sub_observer_iau_longitude(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude(self):
         return self._surface_geo_index_col('SUB_OBSERVER_IAU_LONGITUDE')
 
     def field_obs_surface_geometry_target_center_resolution(self):
