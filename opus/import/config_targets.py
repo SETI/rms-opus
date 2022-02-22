@@ -1,3 +1,12 @@
+################################################################################
+# config_targets.py
+#
+# Define information about all supported targets. This includes mapping of
+# non-standard target names to standard target names, info about each target,
+# and RA/DEC of each star.
+################################################################################
+
+
 # Some instruments (I'm looking at you, Cassini) don't use the official IAU
 # names for targets, but we want to in OPUS.
 TARGET_NAME_MAPPING = {

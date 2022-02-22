@@ -1,8 +1,7 @@
 ################################################################################
-# data_config.py
+# config_data.py
 #
-# These configuration parameters are specific to the data sets that are being
-# imported. See also mult_config.py.
+# Define general constants and mappings useful throughout the import process.
 ################################################################################
 
 
