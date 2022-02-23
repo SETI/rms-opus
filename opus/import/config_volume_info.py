@@ -100,8 +100,8 @@ VOLUME_INFO = [
         # We would like to get rid of this profile_index, but the normal index
         # has "UNK" for the start/stop times for LICK. Once this is fixed we can
         # revisit.
-        {'primary_index': ('<VOLUME>_profile_index.lbl',),
-         'validate_index_rows': False,
+        {'primary_index': ('<VOLUME>_index.lbl',),
+         'validate_index_rows': True,
          'instrument_class': ObsInstrumentEBROCC},
     ),
     (r'GO_0001',

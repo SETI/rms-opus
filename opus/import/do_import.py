@@ -651,17 +651,17 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
             for row_no in row_nos:
                 valid_rows[row_no] = False
             good_row = None
-            for row_no in row_nos:
-                orig_filespec = instrument_obj.primary_filespec_from_index_row(
-                                        obs_rows[row_no], convert_lbl=True)
-                try:
-                    deriv_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
-                except ValueError:
-                    impglobals.CURRENT_INDEX_ROW_NUMBER = row_no
-                    import_util.log_nonrepeating_warning(
-                        f'Unable to convert OPUS ID "{opus_id}" for '+
-                        f'filespec "{orig_filespec}"')
-                else:
+            try:
+                deriv_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
+            except ValueError:
+                impglobals.CURRENT_INDEX_ROW_NUMBER = row_no
+                import_util.log_nonrepeating_warning(
+                    f'Unable to convert OPUS ID "{opus_id}" for '+
+                    f'filespec "{orig_filespec}"')
+            else:
+                for row_no in row_nos:
+                    orig_filespec = instrument_obj.primary_filespec_from_index_row(
+                                            obs_rows[row_no], convert_lbl=True)
                     orig_filespec = instrument_obj.convert_filespec_from_lbl(
                                                                         orig_filespec)
                     if orig_filespec in deriv_filespec:
