@@ -129,8 +129,8 @@
         "RINGGEOedgeonradialresolution2": null,
         "RINGGEOedgeonaltitude1": null,
         "RINGGEOedgeonaltitude2": null,
-        "RINGGEOringintercepttime1": null,
-        "RINGGEOringintercepttime2": null
+        "RINGGEOringintercepttime1": "1981-08-25T17:55:08.343",
+        "RINGGEOringintercepttime2": "1981-08-25T18:59:09.283"
     },
     "Voyager Mission Constraints": {
         "VOYAGERmissionphasename": "Saturn Encounter",

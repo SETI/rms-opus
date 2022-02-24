@@ -656,8 +656,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
             except ValueError:
                 impglobals.CURRENT_INDEX_ROW_NUMBER = row_no
                 import_util.log_nonrepeating_warning(
-                    f'Unable to convert OPUS ID "{opus_id}" for '+
-                    f'filespec "{orig_filespec}"')
+                    f'Unable to convert OPUS ID "{opus_id}" to filespec')
             else:
                 for row_no in row_nos:
                     orig_filespec = instrument_obj.primary_filespec_from_index_row(
@@ -673,7 +672,10 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                         good_row = row_no
             if good_row is None:
                 impglobals.CURRENT_INDEX_ROW_NUMBER = row_nos[0]
-                import_util.log_nonrepeating_error(
+                # This isn't always an error because sometimes we actually do have
+                # an opud_id that can't be properly reverse-mapped, like
+                # vg-pps-2-u-occ-1986-024-betper-lambda-i
+                import_util.log_nonrepeating_warning(
                     f'No row found that reverse matches opus_id {opus_id}')
             else:
                 valid_rows[good_row] = True

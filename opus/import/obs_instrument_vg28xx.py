@@ -71,7 +71,7 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     ############################
 
     def field_obs_pds_product_creation_time(self):
-        return self._product_creation_time_from_index()
+        return self._product_creation_time_from_supp_index()
 
 
     ###################################
@@ -79,10 +79,10 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     ###################################
 
     def field_obs_wavelength_wavelength1(self):
-        return self._index_col('MINIMUM_WAVELENGTH')
+        return self._supp_index_col('MINIMUM_WAVELENGTH')
 
     def field_obs_wavelength_wavelength2(self):
-        return self._index_col('MAXIMUM_WAVELENGTH')
+        return self._supp_index_col('MAXIMUM_WAVELENGTH')
 
     def field_obs_wavelength_wave_res1(self):
         return self._wave_res_from_full_bandwidth()
@@ -102,8 +102,8 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     ################################
 
     def field_obs_profile_wl_band(self):
-        wl_band1 = self._index_col('WAVELENGTH_BAND_1')
-        wl_band2 = self._index_col('WAVELENGTH_BAND_2')
+        wl_band1 = self._supp_index_col('WAVELENGTH_BAND_1')
+        wl_band2 = self._supp_index_col('WAVELENGTH_BAND_2')
 
         if wl_band2 is not None and wl_band2 != 'N/A':
             if wl_band1 != wl_band2:
@@ -119,8 +119,8 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
         return wl_band1
 
     def field_obs_profile_source(self):
-        src_name1 = self._index_col('SIGNAL_SOURCE_NAME_1')
-        src_name2 = self._index_col('SIGNAL_SOURCE_NAME_2')
+        src_name1 = self._supp_index_col('SIGNAL_SOURCE_NAME_1')
+        src_name2 = self._supp_index_col('SIGNAL_SOURCE_NAME_2')
 
         if src_name2 is not None and src_name1 != src_name2:
             self._log_nonrepeating_error(
@@ -135,22 +135,22 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     #####################################
 
     def field_obs_ring_geometry_ring_radius1(self):
-        return self._index_col('MINIMUM_RING_RADIUS')
+        return self._supp_index_col('MINIMUM_RING_RADIUS')
 
     def field_obs_ring_geometry_ring_radius2(self):
-        return self._index_col('MAXIMUM_RING_RADIUS')
+        return self._supp_index_col('MAXIMUM_RING_RADIUS')
 
     def field_obs_ring_geometry_resolution1(self):
-        return self._index_col('MINIMUM_RADIAL_RESOLUTION')
+        return self._supp_index_col('MINIMUM_RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_resolution2(self):
-        return self._index_col('MAXIMUM_RADIAL_RESOLUTION')
+        return self._supp_index_col('MAXIMUM_RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
-        return self._index_col('MINIMUM_RADIAL_RESOLUTION')
+        return self._supp_index_col('MINIMUM_RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_projected_radial_resolution2(self):
-        return self._index_col('MAXIMUM_RADIAL_RESOLUTION')
+        return self._supp_index_col('MAXIMUM_RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_ring_center_phase1(self):
         return self.field_obs_ring_geometry_phase1()
@@ -183,10 +183,10 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
         return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
-        return self._time_from_index(column='RING_EVENT_START_TIME')
+        return self._time_from_supp_index(column='RING_EVENT_START_TIME')
 
     def field_obs_ring_geometry_ring_intercept_time2(self):
-        return self._time2_from_index(self.field_obs_ring_geometry_ring_intercept_time1(),
+        return self._time2_from_supp_index(self.field_obs_ring_geometry_ring_intercept_time1(),
                                       column='RING_EVENT_STOP_TIME')
 
 

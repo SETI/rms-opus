@@ -25,7 +25,7 @@ class ObsMissionVoyager(ObsCommon):
 
     @property
     def inst_host_id(self):
-        inst_host = self._index_col('INSTRUMENT_HOST_NAME')
+        inst_host = self._some_index_col('INSTRUMENT_HOST_NAME')
         assert inst_host in ['VOYAGER 1', 'VOYAGER 2']
         return 'VG'+inst_host[-1]
 

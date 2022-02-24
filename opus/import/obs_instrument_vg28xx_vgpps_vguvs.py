@@ -28,16 +28,16 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         return 'OCC'
 
     def field_obs_general_right_asc1(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[0]
+        return self._prof_ra_dec_helper('supp_index_row', 'SIGNAL_SOURCE_NAME_1')[0]
 
     def field_obs_general_right_asc2(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[1]
+        return self._prof_ra_dec_helper('supp_index_row', 'SIGNAL_SOURCE_NAME_1')[1]
 
     def field_obs_general_declination1(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[2]
+        return self._prof_ra_dec_helper('supp_index_row', 'SIGNAL_SOURCE_NAME_1')[2]
 
     def field_obs_general_declination2(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[3]
+        return self._prof_ra_dec_helper('supp_index_row', 'SIGNAL_SOURCE_NAME_1')[3]
 
 
     ################################
@@ -51,16 +51,16 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         return self._index_col('RING_OCCULTATION_DIRECTION')[0]
 
     def field_obs_profile_body_occ_flag(self):
-        return self._index_col('PLANETARY_OCCULTATION_FLAG')
+        return self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
 
     def field_obs_profile_temporal_sampling(self):
-        return self._index_col('TEMPORAL_SAMPLING_INTERVAL')
+        return self._supp_index_col('TEMPORAL_SAMPLING_INTERVAL')
 
     def field_obs_profile_quality_score(self):
         return 'GOOD'
 
     def field_obs_profile_host(self):
-        return self._index_col('RECEIVER_HOST_NAME')
+        return self._supp_index_col('RECEIVER_HOST_NAME')
 
 
     #####################################
@@ -75,7 +75,7 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     #     - Source is SIGMA SGR (Target N RINGS)
     #     - Source is BETA PER (Target U RINGS)
     def _is_voyager_at_north(self):
-        src_name = self._index_col('SIGNAL_SOURCE_NAME_1')
+        src_name = self._supp_index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
         start_time = self.field_obs_general_time1()
@@ -102,7 +102,7 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         return is_at_north
 
     def _is_voyager_at_north_except_uranus(self):
-        src_name = self._index_col('SIGNAL_SOURCE_NAME_1')
+        src_name = self._supp_index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
         start_time = self.field_obs_general_time1()
@@ -176,8 +176,8 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     # Emission angle is 90-180 (dark side), so incidence angle is 180 - emission
     # angle.
     def field_obs_ring_geometry_incidence1(self):
-        inc = self._index_col('INCIDENCE_ANGLE')
-        max_ea = self._index_col('MAXIMUM_EMISSION_ANGLE')
+        inc = self._supp_index_col('INCIDENCE_ANGLE')
+        max_ea = self._supp_index_col('MAXIMUM_EMISSION_ANGLE')
         cal_inc = 180 - max_ea
         if abs(cal_inc - inc) >= 0.005:
             self._log_nonrepeating_error(
@@ -185,8 +185,8 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         return cal_inc
 
     def field_obs_ring_geometry_incidence2(self):
-        inc = self._index_col('INCIDENCE_ANGLE')
-        max_ea = self._index_col('MINIMUM_EMISSION_ANGLE')
+        inc = self._supp_index_col('INCIDENCE_ANGLE')
+        max_ea = self._supp_index_col('MINIMUM_EMISSION_ANGLE')
         cal_inc = 180 - max_ea
         if abs(cal_inc - inc) >= 0.005:
             self._log_nonrepeating_error(
@@ -198,10 +198,10 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     # lit side of the ring, and 90-180 when it's at the dark side.
     # Since observer is on the dark side, ea is between 90-180
     def field_obs_ring_geometry_emission1(self):
-        return self._index_col('MINIMUM_EMISSION_ANGLE')
+        return self._supp_index_col('MINIMUM_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_emission2(self):
-        return self._index_col('MAXIMUM_EMISSION_ANGLE')
+        return self._supp_index_col('MAXIMUM_EMISSION_ANGLE')
 
     # North based inc: the angle between the point where incoming source photons hit
     # the ring to the normal vector on the NORTH side of the ring. 0-90 when north

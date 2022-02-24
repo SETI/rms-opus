@@ -58,6 +58,9 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
             return None
         return (self._index_col('TARGET_NAME'), )
 
+    def convert_filespec_from_lbl(self, filespec):
+        return filespec.replace('.LBL', '.tar.gz')
+
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###

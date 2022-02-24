@@ -68,7 +68,7 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
         return None
 
     def field_obs_profile_host(self):
-        return self._index_col('RECEIVER_HOST_NAME')
+        return self._supp_index_col('RECEIVER_HOST_NAME')
 
 
     #####################################
@@ -87,10 +87,10 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     # and north side of Uranus. In this volume, source is at north of Saturn,
     # so ring elevation will be the same as opening angle.
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        return 90. - self._index_col('INCIDENCE_ANGLE')
+        return 90. - self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return 90. - self._index_col('INCIDENCE_ANGLE')
+        return 90. - self._supp_index_col('INCIDENCE_ANGLE')
 
     # Ring elevation to observer, same to opening angle except, it's positive if
     # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -98,43 +98,43 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     # and north side of Uranus. In this volume, observer is at the south of Saturn,
     # so ring elevation will be the same as opening angle.
     def field_obs_ring_geometry_observer_ring_elevation1(self):
-        return 90. - self._index_col('MAXIMUM_EMISSION_ANGLE')
+        return 90. - self._supp_index_col('MAXIMUM_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_elevation2(self):
-        return 90. - self._index_col('MINIMUM_EMISSION_ANGLE')
+        return 90. - self._supp_index_col('MINIMUM_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_phase1(self):
-        return self._index_col('MINIMUM_PHASE_ANGLE')
+        return self._supp_index_col('MINIMUM_PHASE_ANGLE')
 
     def field_obs_ring_geometry_phase2(self):
-        return self._index_col('MAXIMUM_PHASE_ANGLE')
+        return self._supp_index_col('MAXIMUM_PHASE_ANGLE')
 
     def field_obs_ring_geometry_incidence1(self):
-        return self._index_col('INCIDENCE_ANGLE')
+        return self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_incidence2(self):
-        return self._index_col('INCIDENCE_ANGLE')
+        return self._supp_index_col('INCIDENCE_ANGLE')
 
     # Emission angle: the angle between the normal vector on the LIT side, to the
     # direction where outgoing photons to the observer. 0-90 when observer is at the
     # lit side of the ring, and 90-180 when it's at the dark side.
     def field_obs_ring_geometry_emission1(self):
-        return self._index_col('MINIMUM_EMISSION_ANGLE')
+        return self._supp_index_col('MINIMUM_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_emission2(self):
-        return self._index_col('MAXIMUM_EMISSION_ANGLE')
+        return self._supp_index_col('MAXIMUM_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_north_based_incidence1(self):
-        return self._index_col('INCIDENCE_ANGLE')
+        return self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_north_based_incidence2(self):
-        return self._index_col('INCIDENCE_ANGLE')
+        return self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_north_based_emission1(self):
-        return self._index_col('MINIMUM_EMISSION_ANGLE')
+        return self._supp_index_col('MINIMUM_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_north_based_emission2(self):
-        return self._index_col('MAXIMUM_EMISSION_ANGLE')
+        return self._supp_index_col('MAXIMUM_EMISSION_ANGLE')
 
     # Opening angle to Sun: the angle between the ring surface to the direction
     # where incoming photons from the source. Positive if source is at the north
@@ -142,16 +142,16 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     # is at the north side, so it's 90 - inc. For reference, if source is at the
     # south side, then oa is - (90 - inc).
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return 90. - self._index_col('INCIDENCE_ANGLE')
+        return 90. - self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return 90. - self._index_col('INCIDENCE_ANGLE')
+        return 90. - self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        return 90. - self._index_col('MAXIMUM_EMISSION_ANGLE')
+        return 90. - self._supp_index_col('MAXIMUM_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        return 90. - self._index_col('MINIMUM_EMISSION_ANGLE')
+        return 90. - self._supp_index_col('MINIMUM_EMISSION_ANGLE')
 
 
     ##############################################
@@ -168,25 +168,25 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
         return self.instrument_id
 
     def field_obs_instrument_vgiss_image_id(self):
-        return self._index_col('IMAGE_ID')
+        return 'N/A'
 
     def field_obs_instrument_vgiss_scan_mode(self):
-        return self._index_col('SCAN_MODE')
+        return '1:1'
 
     def field_obs_instrument_vgiss_shutter_mode(self):
-        return self._index_col('SHUTTER_MODE')
+        return 'NAONLY'
 
     def field_obs_instrument_vgiss_gain_mode(self):
-        return self._index_col('GAIN_MODE')
+        return 'LOW'
 
     def field_obs_instrument_vgiss_edit_mode(self):
-        return self._index_col('EDIT_MODE')
+        return '1:1'
 
     def field_obs_instrument_vgiss_filter_name(self):
-        return self._index_col('FILTER_NAME')
+        return 'CLEAR'
 
     def field_obs_instrument_vgiss_filter_number(self):
-        return self._index_col('FILTER_NUMBER')
+        return 0
 
     def field_obs_instrument_vgiss_camera(self):
         # Narrow angle camera

@@ -8,8 +8,8 @@
         "instrument": "Voyager PPS",
         "observationtype": "Occultation Profile",
         "time1": "1981-08-26T00:00:39.342",
-        "time2": "1981-08-26T00:12:50.417",
-        "observationduration": "731.075",
+        "time2": "1981-08-26T01:55:00.793",
+        "observationduration": "6861.451",
         "quantity": "Optical Depth",
         "rightasc1": "240.083355",
         "rightasc2": "240.083355",
@@ -19,9 +19,9 @@
     "PDS Constraints": {
         "volumeid": "VG_2801",
         "datasetid": "VG2-SR/UR/NR-PPS-2/4-OCC-V1.0",
-        "productid": "KM000_2/PS1P0107.TAB",
+        "productid": "KM005/PS1P01.TAB",
         "productcreationtime": "2003-09-29T16:00:00.000",
-        "primaryfilespec": "VG_2801/EASYDATA/KM000_2/PS1P0107.LBL",
+        "primaryfilespec": "VG_2801/EASYDATA/KM005/PS1P01.LBL",
         "opusid": "vg-pps-2-s-occ-1981-238-delsco-e",
         "note": null
     },
@@ -57,7 +57,7 @@
         "occsource": "Delta Sco",
         "occreceiverhost": "Voyager 2",
         "RINGGEOringradius1": "72000",
-        "RINGGEOringradius2": "79999.8",
+        "RINGGEOringradius2": "142500",
         "RINGGEOsolarringopeningangle1": "-28.69",
         "RINGGEOsolarringopeningangle2": "-28.69",
         "RINGGEOobserverringopeningangle1": "28.69",
@@ -68,7 +68,7 @@
     },
     "Ring Geometry Constraints": {
         "RINGGEOringradius1": "72000",
-        "RINGGEOringradius2": "79999.8",
+        "RINGGEOringradius2": "142500",
         "RINGGEOJ2000longitude1": null,
         "RINGGEOJ2000longitude2": null,
         "RINGGEOsubsolarringlong1": null,
@@ -85,10 +85,10 @@
         "RINGGEOrangetoringintercept2": null,
         "RINGGEOringcenterdistance1": null,
         "RINGGEOringcenterdistance2": null,
-        "RINGGEOresolution1": "0.2",
-        "RINGGEOresolution2": "0.2",
-        "RINGGEOprojectedradialresolution1": "0.2",
-        "RINGGEOprojectedradialresolution2": "0.2",
+        "RINGGEOresolution1": "5",
+        "RINGGEOresolution2": "5",
+        "RINGGEOprojectedradialresolution1": "5",
+        "RINGGEOprojectedradialresolution2": "5",
         "RINGGEOphase1": "180",
         "RINGGEOphase2": "180",
         "RINGGEOincidence1": "61.31",
@@ -130,12 +130,12 @@
         "RINGGEOedgeonaltitude1": null,
         "RINGGEOedgeonaltitude2": null,
         "RINGGEOringintercepttime1": "1981-08-26T00:00:38.420",
-        "RINGGEOringintercepttime2": "1981-08-26T00:12:49.524"
+        "RINGGEOringintercepttime2": "1981-08-26T01:55:00.193"
     },
     "Voyager Mission Constraints": {
         "VOYAGERmissionphasename": "Saturn Encounter",
         "VOYAGERspacecraftclockcount1": "44001:22:666",
-        "VOYAGERspacecraftclockcount2": "44001:38:051",
+        "VOYAGERspacecraftclockcount2": "44003:45:624",
         "VOYAGERert": null
     }
 }
