@@ -38,6 +38,15 @@ _GOSSI_FILTER_WAVELENGTHS = {
 }
 
 
+# GO_0016 has a bunch of SL9 observations that have the same primary filespec.
+# This causes problems because they map to the same opus id. We have fixed this
+# by creating a separate go_0016_sl9_index.tab file that summaries these by group,
+# replacing single scalar fields like IMAGE_TIME and SPACECRAFT_CLOCK_START_COUNT
+# with MINIMUM_* and MAXIMUM_* versions. We ignore the SL9 files in the main
+# index by returning a NULL opus id, and then handle them from the sl9_index by
+# looking to see where there is a <field> or MINIMUM/MAXIMUM_<field> in the index.
+# What a mess for only 13 observations...
+
 class ObsInstrumentGOSSI(ObsMissionGalileo):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -68,18 +77,19 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         # Format: GO_0017/J0/OPNAV/C0347569700R.IMG
         return self.volume + '/' + self._index_col('FILE_SPECIFICATION_NAME')
 
+    def opus_id_from_index_row(self, row):
+        # SL9 entries from the main index are ignored because those are in the
+        # sl9_index file.
+        if 'SPACECRAFT_CLOCK_START_COUNT' in row:
+            # We're looking at the main index
+            if 'SL9' in row['FILE_SPECIFICATION_NAME']:
+                return None
+        return super().opus_id_from_index_row(row)
+
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
-
-    def field_obs_general_observation_duration(self):
-        exposure = self._index_col('EXPOSURE_DURATION')
-        if exposure is None:
-            # Error will be reported under field_obs_general_time1
-            return None
-        return exposure / 1000
-
 
     # We only have the center point for RA,DEC so derive the edges by using the
     # FOV
@@ -116,6 +126,8 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     def field_obs_general_ring_obs_id(self):
         if self._index_col('ORBIT_NUMBER') is None:
             return None
+        if not self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
+            return None # SL9 - they didn't exist before anyway
         image_num = self._index_col('SPACECRAFT_CLOCK_START_COUNT').replace('.', '')
         return 'J_IMG_GO_SSI_' + image_num
 
@@ -130,8 +142,12 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     # So we compute start time by taking IMAGE_TIME and subtracting exposure.
     # If we don't have exposure, we just set them equal so we can still search
     # cleanly.
+    # For SL9, we have a min/max for IMAGE_TIME, but play the same game.
     def field_obs_general_time1(self):
-        time2 = self.field_obs_general_time2()
+        if self._col_in_index('IMAGE_TIME'):
+            time2 = self.field_obs_general_time2()
+        else:
+            time2 = self._time_from_index(column='MINIMUM_IMAGE_TIME')
         if time2 is None:
             return None
         exposure = self._index_col('EXPOSURE_DURATION')
@@ -141,9 +157,21 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return time2 - exposure/1000
 
     def field_obs_general_time2(self):
-        if self._index_col('IMAGE_TIME') == 'UNK':
-            return None
-        return self._time2_from_index(None, column='IMAGE_TIME')
+        if self._col_in_index('IMAGE_TIME'):
+            if self._index_col('IMAGE_TIME') == 'UNK':
+                return None
+            return self._time2_from_index(None, column='IMAGE_TIME')
+        return self._time2_from_index(None, column='MAXIMUM_IMAGE_TIME')
+
+    def field_obs_general_observation_duration(self):
+        time1 = self.field_obs_general_time1()
+        time2 = self.field_obs_general_time2()
+        if time1 is None or time2 is None:
+            exposure = self._index_col('EXPOSURE_DURATION')
+            if exposure is None:
+                return None
+            return exposure/1000
+        return max(time2 - time1, 0)
 
     def field_obs_general_quantity(self):
         return 'REFLECT'
@@ -180,7 +208,10 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return 'FRAM'
 
     def field_obs_type_image_duration(self):
-        return self.field_obs_general_observation_duration()
+        exposure = self._index_col('EXPOSURE_DURATION')
+        if exposure is None:
+            return self.field_obs_general_observation_duration()
+        return exposure/1000
 
     def field_obs_type_image_levels(self):
         return 256
@@ -235,7 +266,10 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return str(orbit)
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
-        sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
+        if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
+            sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
+        else:
+            sc = self._index_col('MINIMUM_SPACECRAFT_CLOCK_START_COUNT')
         try:
             sc_cvt = opus_support.parse_galileo_sclk(sc)
         except Exception as e:
@@ -244,8 +278,17 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return sc_cvt
 
     def field_obs_mission_galileo_spacecraft_clock_count2(self):
-        # There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
-        return self.field_obs_mission_galileo_spacecraft_clock_count1()
+        if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
+            # There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
+            return self.field_obs_mission_galileo_spacecraft_clock_count1()
+        # This is the maximum start count, which is the best we can do
+        sc = self._index_col('MAXIMUM_SPACECRAFT_CLOCK_START_COUNT') # SL9
+        try:
+            sc_cvt = opus_support.parse_galileo_sclk(sc)
+        except Exception as e:
+            self._log_nonrepeating_error(f'Unable to parse Galileo SCLK "{sc}": {e}')
+            return None
+        return sc_cvt
 
 
     ##############################################
@@ -265,7 +308,12 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return self._index_col('OBSERVATION_ID')
 
     def field_obs_instrument_gossi_image_id(self):
-        return self._index_col('IMAGE_ID')
+        if self._col_in_index('IMAGE_ID'):
+            return self._index_col('IMAGE_ID')
+        min_id = self._index_col('MINIMUM_IMAGE_ID')
+        max_id = self._index_col('MAXIMUM_IMAGE_ID')
+        # For SL9, give the range MIN-MAX as a string
+        return f'{min_id}-{max_id}'
 
     def field_obs_instrument_gossi_filter_name(self):
         return self._index_col('FILTER_NAME')

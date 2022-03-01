@@ -110,7 +110,7 @@ VOLUME_INFO = [
          'instrument_class': None},
     ),
     (r'GO_000[2-9]|GO_001\d|GO_002\d',
-        {'primary_index': ('<VOLUME>_index.lbl',),
+        {'primary_index': ('<VOLUME>_index.lbl', '<VOLUME>_sl9_index.lbl'),
          'validate_index_rows': True,
          'instrument_class': ObsInstrumentGOSSI},
     ),

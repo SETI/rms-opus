@@ -201,6 +201,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "gossi_sl9",
+        "definition": "Raw image files (*.IMG) with white text overlay for Galileo SSI. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are RTLMTAB.FMT, which describes the format of the VICAR binary header, and RLINEPRX.FMT, which describes the format of the binary prefix at the beginning of each line of imaging data."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "gossi_raw_alternate",
         "definition": "Raw image files (*.IMG) for Galileo SSI. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are RTLMTAB.FMT, which describes the format of the VICAR binary header, and RLINEPRX.FMT, which describes the format of the binary prefix at the beginning of each line of imaging data. The superseded processing files are included here when available."
     },

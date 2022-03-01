@@ -43,6 +43,8 @@ if __name__ == "__main__":
         # 'go-ssi-c0349761213',
         # 'go-ssi-c0359986600',
         # 'go-ssi-c0368977800',
+        # 'go-ssi-c0248807000',
+        # 'go-ssi-c0202540045',
         # 'hst-05642-wfpc2-u2fi0c05t',
         # 'hst-05642-wfpc2-u2fi0o0bt',
         # 'hst-05642-wfpc2-u2fi1901t',
