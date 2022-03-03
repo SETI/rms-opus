@@ -113,4 +113,5 @@ class ObsMissionNewHorizons(ObsCommon):
 
     def field_obs_mission_new_horizons_mission_phase(self):
         mp = self._supp_index_col('MISSION_PHASE_NAME')
-        return mp, _MISSION_PHASE_NAMES[mp]
+        good_mp = _MISSION_PHASE_NAMES[mp]
+        return good_mp.upper(), good_mp
