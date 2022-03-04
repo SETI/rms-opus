@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +36,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -56,10 +44,7 @@
         "field_type": "char3",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_occ_type_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "An occultation is a measurement in which a source signal passes through a medium before being observed. Radio means the source is an artificially-emitted radio signal. Solar means the source is the Sun. Stellar means the source is a star other than the Sun. A reflectance profile is a measurement in which a source signal is reflected from a surface and a 1-D slice is recorded.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
@@ -88,10 +73,7 @@
         "field_type": "char1",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_occ_dir_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "Ingress means that, from the observer's point of view, the source moves inward from the periphery toward the center of the medium. Egress means the source moves outward. Both means the source moves both inward and outward within a single observation.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
@@ -119,10 +101,7 @@
         "field_type": "flag_yesno",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_body_occ_flag_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "A flag indicating whether the source passes behind a any planet or other body as seen by the observer during the observation.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
@@ -144,10 +123,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_temporal_sampling_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "pi_category_name": "obs_profile",
@@ -171,10 +147,7 @@
         "field_type": "char16",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_quality_score_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "A subjective rating of quality of the occultation or reflectance profile.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
@@ -196,10 +169,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_optical_depth_min_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "pi_category_name": "obs_profile",
@@ -226,10 +196,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_optical_depth_max_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "pi_category_name": "obs_profile",
@@ -253,10 +220,7 @@
         "field_type": "char6",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_wl_band_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "The wavelength band at which an observation was made.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
@@ -287,10 +251,7 @@
         "field_type": "char40",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_source_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "The name of the star or artificial transmitter that emitted the source signal.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
@@ -312,10 +273,7 @@
         "field_type": "char100",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_occultation_<INST>_host_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "The name of the observatory or spacecraft at which the signal was observed.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
@@ -382,10 +340,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

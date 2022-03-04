@@ -99,8 +99,8 @@
         "RINGGEOnorthbasedincidence2": "81.95",
         "RINGGEOnorthbasedemission1": "66.22",
         "RINGGEOnorthbasedemission2": "67.08",
-        "RINGGEOsolarringelev1": "8.05",
-        "RINGGEOsolarringelev2": "8.05",
+        "RINGGEOsolarringelevation1": "8.05",
+        "RINGGEOsolarringelevation2": "8.05",
         "RINGGEOobserverringelevation1": "22.92",
         "RINGGEOobserverringelevation2": "23.78",
         "RINGGEOringcenterphase1": "45.74",
@@ -129,8 +129,8 @@
         "RINGGEOedgeonradialresolution2": null,
         "RINGGEOedgeonaltitude1": null,
         "RINGGEOedgeonaltitude2": null,
-        "RINGGEOringintercepttime1": null,
-        "RINGGEOringintercepttime2": null
+        "RINGGEOringintercepttime1": "1981-08-25T17:55:08.343",
+        "RINGGEOringintercepttime2": "1981-08-25T18:59:09.283"
     },
     "Voyager Mission Constraints": {
         "VOYAGERmissionphasename": "Saturn Encounter",

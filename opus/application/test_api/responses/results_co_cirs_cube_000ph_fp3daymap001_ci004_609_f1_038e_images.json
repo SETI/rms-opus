@@ -7,27 +7,27 @@
     "data": [
         {
             "opus_id": "co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e",
-            "thumb_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_thumb.jpg",
+            "thumb_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_thumb.jpg",
             "thumb_alt_text": "000PH_FP3DAYMAP001_CI004_609_F1_038E_thumb.jpg",
             "thumb_size_bytes": 2754,
             "thumb_width": 100,
             "thumb_height": 79,
-            "small_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_small.jpg",
+            "small_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_small.jpg",
             "small_alt_text": "000PH_FP3DAYMAP001_CI004_609_F1_038E_small.jpg",
             "small_size_bytes": 9518,
             "small_width": 256,
             "small_height": 203,
-            "med_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_med.jpg",
+            "med_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_med.jpg",
             "med_alt_text": "000PH_FP3DAYMAP001_CI004_609_F1_038E_med.jpg",
             "med_size_bytes": 26112,
             "med_width": 512,
             "med_height": 407,
-            "full_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_full.jpg",
+            "full_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_full.jpg",
             "full_alt_text": "000PH_FP3DAYMAP001_CI004_609_F1_038E_full.jpg",
             "full_size_bytes": 95232,
             "full_width": 1248,
             "full_height": 992,
-            "ring_obs_id": "S_SPEC_CO_CIRS_H_FP3DAYMA_FP1"
+            "ring_obs_id": null
         }
     ]
 }

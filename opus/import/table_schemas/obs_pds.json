@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "OPUS_ID",
@@ -47,10 +41,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "VOLUME_ID",
@@ -72,10 +63,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -83,10 +71,7 @@
         "field_type": "char40",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_pds_<INST>_data_set_id_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "DATA_SET_ID",
@@ -107,10 +92,7 @@
         "field_type": "char50",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_pds_<INST>_product_id_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "PRODUCT_ID",
@@ -131,11 +113,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_pds_<INST>_product_creation_time_<TYPE>"
-        ],
-        "data_source_order": 10,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "PRODUCT_CREATION_TIME",
@@ -155,15 +133,11 @@
         "pi_tooltip": null
     },
     {
-        "field_name": "primary_file_spec",
+        "field_name": "primary_filespec",
         "field_type": "char240",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_pds_<INST>_primary_file_spec_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "FILE_SPECIFICATION_NAME",
@@ -184,11 +158,7 @@
         "field_type": "char255",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_pds_<INST>_note_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "NOTE",
@@ -212,10 +182,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

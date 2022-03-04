@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,20 +28,14 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_compression_type",
         "field_type": "char10",
         "field_notnull": true,
-        "data_source": [
-            "TAB:supp_index",
-            "INSTRUMENT_COMPRESSION_TYPE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_nhlorri",
         "pi_dict_context": "NHLORRI",
         "pi_dict_name": "INSTRUMENT_COMPRESSION_TYPE",
@@ -75,10 +63,7 @@
         "field_type": "enum",
         "field_enum_options": "'1x1','4x4'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:supp_index",
-            "BINNING_MODE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_nhlorri",
         "pi_dict_context": "NHLORRI",
         "pi_dict_name": "BINNING_MODE",
@@ -115,10 +100,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

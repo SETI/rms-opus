@@ -6,6 +6,8 @@
 
 import csv
 import os
+import re
+import traceback
 
 import pdsfile
 
@@ -13,63 +15,35 @@ from opus_support import (get_single_parse_function,
                           parse_form_type)
 
 from config_data import *
+from config_targets import *
+import config_volume_info
 import do_cart
 import do_django
 import impglobals
 import import_util
-
-from populate_obs_general import *
-from populate_obs_pds import *
-
-from populate_obs_mission_cassini import *
-from populate_obs_instrument_COCIRS_cube import *
-from populate_obs_instrument_COCIRS_obs import *
-from populate_obs_instrument_COISS import *
-from populate_obs_instrument_CORSS_prof import *
-from populate_obs_instrument_COUVIS import *
-from populate_obs_instrument_COUVIS_prof import *
-from populate_obs_instrument_COVIMS import *
-from populate_obs_instrument_COVIMS_prof import *
-
-from populate_obs_mission_galileo import *
-from populate_obs_instrument_GOSSI import *
-
-from populate_obs_mission_hubble import *
-
-from populate_obs_mission_new_horizons import *
-from populate_obs_instrument_NHLORRI import *
-from populate_obs_instrument_NHMVIC import *
-
-from populate_obs_mission_voyager import *
-from populate_obs_instrument_VGISS_obs import *
-from populate_obs_instrument_VGPPS_prof import *
-from populate_obs_instrument_VGUVS_prof import *
-from populate_obs_instrument_VGRSS_prof import *
-from populate_obs_instrument_VGISS_prof import *
-
-from populate_obs_mission_groundbased_prof import *
-from populate_obs_instrument_GB_prof import *
-
-from populate_obs_surface_geo import *
 
 
 ################################################################################
 # TABLE PREPARATION
 ################################################################################
 
+def _lookup_vol_info(volume_id):
+    for vol_info in config_volume_info.VOLUME_INFO:
+        if re.fullmatch(vol_info[0], volume_id) is not None:
+            return vol_info[1]
+    return None
+
+
 def delete_all_obs_mult_tables(namespace):
-    """Delete ALL import or permanent (as specified by namespace)
-    obs_ and mult_ tables."""
+    """Delete ALL import or permanent obs_ and mult_ tables."""
 
     table_names = impglobals.DATABASE.table_names(namespace,
-                                                  prefix=['obs_', 'mult_',
-                                                          'cart'])
+                                                  prefix=['obs_', 'mult_', 'cart'])
     table_names = sorted(table_names)
     # This has to happen in four phases to handle foreign key contraints:
     # 1. All obs_ tables except obs_general
     for table_name in table_names:
-        if (table_name.startswith('obs_') and
-            table_name != 'obs_general'):
+        if (table_name.startswith('obs_') and table_name != 'obs_general'):
             impglobals.DATABASE.drop_table(namespace, table_name)
 
     # 2. cart
@@ -87,13 +61,11 @@ def delete_all_obs_mult_tables(namespace):
 
 
 def delete_volume_from_obs_tables(volume_id, namespace):
-    "Delete a single volume from all import or permanent obs tables."
+    """Delete a single volume from all import or permanent obs tables."""
 
-    impglobals.LOGGER.log('info',
-        f'Deleting volume "{volume_id}" from {namespace} tables')
+    import_util.log_info(f'Deleting volume "{volume_id}" from {namespace} tables')
 
-    table_names = impglobals.DATABASE.table_names(namespace,
-                                                  prefix=['obs_', 'mult_'])
+    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_', 'mult_'])
     table_names = sorted(table_names)
     q = impglobals.DATABASE.quote_identifier
     where = f'{q("volume_id")}="{volume_id}"'
@@ -101,8 +73,7 @@ def delete_volume_from_obs_tables(volume_id, namespace):
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
     for table_name in table_names:
-        if (table_name.startswith('obs_') and
-            table_name != 'obs_general'):
+        if (table_name.startswith('obs_') and table_name != 'obs_general'):
             impglobals.DATABASE.delete_rows(namespace, table_name, where)
 
     # 2. obs_general
@@ -121,28 +92,26 @@ def find_duplicate_opus_ids():
         return []
 
     imp_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-            'import', 'obs_general')
+                                                            'import', 'obs_general')
     perm_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-            'perm', 'obs_general')
+                                                            'perm', 'obs_general')
 
     q = impglobals.DATABASE.quote_identifier
     cmd = f"""
-    og.{q('opus_id')} FROM
-    {q(perm_obs_general_table_name)} og,
-    {q(imp_obs_general_table_name)} iog WHERE
-    og.{q('opus_id')} = iog.{q('opus_id')}"""
+        og.{q('opus_id')} FROM
+        {q(perm_obs_general_table_name)} og,
+        {q(imp_obs_general_table_name)} iog WHERE
+        og.{q('opus_id')} = iog.{q('opus_id')}"""
     res = impglobals.DATABASE.general_select(cmd)
     return [x[0] for x in res]
 
 
 def delete_opus_id_from_obs_tables(opus_id, namespace):
-    "Delete a single opus_id from all import or permanent obs tables."
+    """Delete a single opus_id from all import or permanent obs tables."""
 
-    impglobals.LOGGER.log('info',
-        f'Deleting opus_id "{opus_id}" from {namespace} tables')
+    import_util.log_info(f'Deleting opus_id "{opus_id}" from {namespace} tables')
 
-    table_names = impglobals.DATABASE.table_names(namespace,
-                                                  prefix=['obs_', 'mult_'])
+    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_', 'mult_'])
     table_names = sorted(table_names)
     q = impglobals.DATABASE.quote_identifier
     where = f'{q("opus_id")}="{opus_id}"'
@@ -150,8 +119,7 @@ def delete_opus_id_from_obs_tables(opus_id, namespace):
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
     for table_name in table_names:
-        if (table_name.startswith('obs_') and
-            table_name != 'obs_general'):
+        if (table_name.startswith('obs_') and table_name != 'obs_general'):
             impglobals.DATABASE.delete_rows(namespace, table_name, where)
 
     # 2. obs_general
@@ -160,6 +128,7 @@ def delete_opus_id_from_obs_tables(opus_id, namespace):
 
 
 def delete_duplicate_opus_id_from_perm_tables():
+    """Find duplicate opus_ids and delete them from the permanent obs tables."""
     opus_ids = find_duplicate_opus_ids()
     for opus_id in opus_ids:
         delete_opus_id_from_obs_tables(opus_id, 'perm')
@@ -170,29 +139,24 @@ def create_tables_for_import(volume_id, namespace):
        reference. This does NOT create the target-specific obs_surface_geometry
        tables because we don't yet know what target names we have."""
 
-    volume_id_prefix = volume_id[:volume_id.find('_')]
-    instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
-
-    if instrument_name is None:
-        instrument_name = 'GB'
-    elif type(instrument_name) != str:
-        instrument_name = instrument_name[volume_id]
-
-    mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
-    mission_name = MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev]
+    vol_info = _lookup_vol_info(volume_id)
+    instrument_obj = vol_info['instrument_class'](volume=volume_id)
+    mission_id = instrument_obj.mission_id
+    instrument_id = instrument_obj.instrument_id
+    mission_name = MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
 
     mult_table_schema = import_util.read_schema_for_table('mult_template')
 
     # This is an awful hack because this one mult table has an extra field
     # in it. Yuck! XXX
-    mult_target_name_table_schema = (
-                import_util.read_schema_for_table(
-                        'mult_target_name_template'))
+    mult_target_name_table_schema = (import_util.read_schema_for_table(
+                                                'mult_target_name_template'))
 
     table_schemas = {}
     table_names_in_order = []
     for table_name in TABLES_TO_POPULATE:
-        table_name = table_name.replace('<INST>', instrument_name.lower())
+        if instrument_id is not None:
+            table_name = table_name.replace('<INST>', instrument_id.lower())
         table_name = table_name.replace('<MISSION>', mission_name.lower())
 
         if table_name.startswith('obs_surface_geometry__'):
@@ -230,13 +194,11 @@ def create_tables_for_import(volume_id, namespace):
                     schema = mult_target_name_table_schema
                 else:
                     schema = mult_table_schema
-                if (impglobals.DATABASE.create_table(namespace, mult_name,
-                                                    schema) and
+                if (impglobals.DATABASE.create_table(namespace, mult_name, schema) and
                     namespace == 'import'):
                     _CREATED_IMP_MULT_TABLES.add(mult_name)
 
-        impglobals.DATABASE.create_table(namespace, table_name,
-                                         table_schema)
+        impglobals.DATABASE.create_table(namespace, table_name, table_schema)
 
     return table_schemas, table_names_in_order
 
@@ -247,18 +209,16 @@ def copy_volume_from_import_to_permanent(volume_id):
        exist. As usual, we have to treat the obs_surface_geometry__<T> tables
        specially."""
 
-    impglobals.LOGGER.log('info',
-        f'Copying volume "{volume_id}" from import to permanent')
+    import_util.log_info(f'Copying volume "{volume_id}" from import to permanent')
 
     q = impglobals.DATABASE.quote_identifier
 
-    table_schemas, table_names_in_order = create_tables_for_import(
-                                                    volume_id,
-                                                    namespace='perm')
+    table_schemas, table_names_in_order = create_tables_for_import(volume_id,
+                                                                   namespace='perm')
     for table_name in table_names_in_order:
         if table_name.startswith('obs_surface_geometry__'):
             continue
-        impglobals.LOGGER.log('debug', f'Copying table "{table_name}"')
+        import_util.log_debug(f'Copying table "{table_name}"')
         where = f'{q("volume_id")}="{volume_id}"'
         impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
                                                          table_name,
@@ -280,7 +240,7 @@ def copy_volume_from_import_to_permanent(volume_id):
                ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
                ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))])
             impglobals.DATABASE.create_table('perm', table_name, table_schema)
-        impglobals.LOGGER.log('debug', f'Copying table "{table_name}"')
+        import_util.log_debug(f'Copying table "{table_name}"')
         where = f'{q("volume_id")}="{volume_id}"'
         impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
                                                          table_name,
@@ -289,7 +249,7 @@ def copy_volume_from_import_to_permanent(volume_id):
 def read_existing_import_opus_id():
     """Return a list of all opus_id used in the import tables. Used to check
        for duplicates during import."""
-    impglobals.LOGGER.log('debug', 'Collecting previous import opus_ids')
+    import_util.log_debug('Collecting previous import opus_ids')
 
     imp_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
                                                         'import', 'obs_general')
@@ -310,8 +270,7 @@ def analyze_all_tables(namespace):
     """Analyze ALL import or permanent (as specified by namespace)
     obs_ and mult_ tables."""
 
-    table_names = impglobals.DATABASE.table_names(namespace,
-                                                  prefix=['obs_', 'mult_'])
+    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_', 'mult_'])
     table_names = sorted(table_names)
     for table_name in table_names:
         impglobals.DATABASE.analyze_table(namespace, table_name)
@@ -365,11 +324,9 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
     if 'mult_options' in table_column:
         if not impglobals.ARGUMENTS.import_suppress_mult_messages:
-            impglobals.LOGGER.log('debug',
-                      f'Using preprogrammed mult table "{mult_table_name}"')
-        mult_rows = _convert_sql_response_to_mult_table(
-                            mult_table_name,
-                            table_column['mult_options'])
+            import_util.log_debug(f'Using preprogrammed mult table "{mult_table_name}"')
+        mult_rows = _convert_sql_response_to_mult_table(mult_table_name,
+                                                        table_column['mult_options'])
         _MULT_TABLE_CACHE[mult_table_name] = mult_rows
         _MODIFIED_MULT_TABLES[mult_table_name] = table_column
         return mult_rows
@@ -398,17 +355,13 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
     if use_namespace is not None:
         ns_mult_table_name = (
-            impglobals.DATABASE.convert_raw_to_namespace(use_namespace,
-                                                         mult_table_name))
+            impglobals.DATABASE.convert_raw_to_namespace(use_namespace, mult_table_name))
         if not impglobals.ARGUMENTS.import_suppress_mult_messages:
-            impglobals.LOGGER.log('debug',
-                      f'Reading from mult table "{ns_mult_table_name}"')
-        rows = impglobals.DATABASE.read_rows(
-                    use_namespace,
-                    mult_table_name,
-                    _mult_table_column_names(mult_table_name))
-        mult_rows = _convert_sql_response_to_mult_table(mult_table_name,
-                                                        rows)
+            import_util.log_debug(f'Reading from mult table "{ns_mult_table_name}"')
+        rows = impglobals.DATABASE.read_rows(use_namespace,
+                                             mult_table_name,
+                                             _mult_table_column_names(mult_table_name))
+        mult_rows = _convert_sql_response_to_mult_table(mult_table_name, rows)
         _MULT_TABLE_CACHE[mult_table_name] = mult_rows
         return mult_rows
 
@@ -442,8 +395,7 @@ def update_mult_table(table_name, field_name, table_column, val, label,
         # No disp_order specified, so make one up
         # Update the display_order
         (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(
-                            table_column['pi_form_type'])
+         form_type_unit_id) = parse_form_type(table_column['pi_form_type'])
         parse_func = get_single_parse_function(form_type_unit_id)
 
         # See if all values in the mult table are numeric
@@ -524,9 +476,8 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
 
     _MODIFIED_MULT_TABLES[mult_table_name] = table_column
     if not impglobals.ARGUMENTS.import_suppress_mult_messages:
-        impglobals.LOGGER.log('info',
-            f'Added new value "{val}" ("{label}") to mult table '+
-            f'"{mult_table_name}"')
+        import_util.log_info(f'Added new value "{val}" ("{label}") to mult table '+
+                             f'"{mult_table_name}"')
 
     return next_id
 
@@ -538,9 +489,8 @@ def dump_import_mult_tables():
         rows = _MULT_TABLE_CACHE[mult_table_name]
         # Insert or update all the rows
         imp_mult_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-                'import', mult_table_name)
-        impglobals.LOGGER.log('debug',
-            f'Writing mult table "{imp_mult_table_name}"')
+                                                        'import', mult_table_name)
+        import_util.log_debug(f'Writing mult table "{imp_mult_table_name}"')
         impglobals.DATABASE.upsert_rows('import', mult_table_name, 'id', rows)
         # If we wrote out a mult table, that means we didn't just create it
         # empty anymore, so remove it from _CREATED_IMP_MULT_TABLES.
@@ -557,14 +507,11 @@ def copy_mult_from_import_to_permanent():
     table_names = impglobals.DATABASE.table_names('import', prefix='mult_')
     for table_name in table_names:
         imp_mult_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-                'import', table_name)
-        impglobals.LOGGER.log('debug',
-                              f'Copying mult table "{imp_mult_table_name}"')
+                                                            'import', table_name)
+        import_util.log_debug(f'Copying mult table "{imp_mult_table_name}"')
         # Read the import mult table
         column_list = _mult_table_column_names(table_name)
-        rows = impglobals.DATABASE.read_rows(
-                    'import', table_name,
-                    column_list)
+        rows = impglobals.DATABASE.read_rows('import', table_name, column_list)
         mult_rows = _convert_sql_response_to_mult_table(table_name, rows)
         # Write the permanent table
         impglobals.DATABASE.upsert_rows('perm', table_name, 'id', mult_rows)
@@ -577,10 +524,9 @@ def copy_mult_from_import_to_permanent():
 def import_one_volume(volume_id):
     """Read the PDS data and perform all import functions for one volume.
        The results are left in the import namespace."""
-    impglobals.LOGGER.open(
-            f'Importing {volume_id}',
-            limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                    'debug': impglobals.ARGUMENTS.log_debug_limit})
+    impglobals.LOGGER.open(f'Importing {volume_id}',
+                           limits={'info': impglobals.ARGUMENTS.log_info_limit,
+                                   'debug': impglobals.ARGUMENTS.log_debug_limit})
 
     # Start fresh
     global _MULT_TABLE_CACHE, _MODIFIED_MULT_TABLES
@@ -591,165 +537,167 @@ def import_one_volume(volume_id):
     impglobals.MAX_TABLE_ID_CACHE = {}
     impglobals.CURRENT_VOLUME_ID = volume_id
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
+    impglobals.CURRENT_PRIMARY_FILESPEC = None
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
 
-    # Check if we want to ignore this specific volume in a volset
-    volset = volume_pdsfile.volset
-    if volset in DESIRED_VOLUMES_IN_VOLSET.keys():
-        if not re.match(DESIRED_VOLUMES_IN_VOLSET[volset], volume_id):
-            impglobals.LOGGER.close()
-            impglobals.CURRENT_VOLUME_ID = None
-            return True
-
     if not volume_pdsfile.is_volume:
-        impglobals.LOGGER.log('error', f'{volume_id} is not a volume!')
+        import_util.log_error(f'{volume_id} is not a volume!')
         impglobals.LOGGER.close()
         impglobals.CURRENT_VOLUME_ID = None
         return False
 
 
-    #################################
-    ### FIND RELEVANT INDEX FILES ###
-    #################################
+    ##################################
+    ### FIND PRIMARY INDEX FILE(s) ###
+    ##################################
 
-    # Look through these paths, in order, for index files of various types:
-    # 1) metadata
-    # 2) index (or INDEX)
+    vol_info = _lookup_vol_info(volume_id)
+    if vol_info is None:
+        import_util.log_error(f'No VOLUME_INFO entry for {volume_id}!')
+        impglobals.LOGGER.close()
+        impglobals.CURRENT_VOLUME_ID = None
+        return False
+    if vol_info['instrument_class'] is None:
+        import_util.log_debug(f'Ignoring import of {volume_id}')
+        impglobals.LOGGER.close()
+        impglobals.CURRENT_VOLUME_ID = None
+        return True
 
-    paths = []
-    metadata_paths = volume_pdsfile.associated_logical_paths('metadata',
-                                                             must_exist=True)
-    for path in metadata_paths:
-        paths.append(pdsfile.PdsFile.from_path(path).abspath)
-    if not impglobals.ARGUMENTS.import_force_metadata_index:
-        paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
-        paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
+    primary_index_names = [
+        x.replace('<VOLUME>', volume_id) for x in vol_info['primary_index']]
 
-    for path in paths:
+    # These are the metadata directories
+    index_paths = volume_pdsfile.associated_abspaths('metadata', must_exist=True)
+    # These are the plain volume/index directories for volumes that don't have
+    # a separate metadata directory
+    index_paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
+    index_paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
+    found_in_this_dir = False
+    for path in index_paths:
         if not os.path.exists(path):
             continue
-        found_in_this_dir = False
         basenames = os.listdir(path)
-        volume_label_path = None
-        vol_prefix = ''
-
-        # First look for higher-priority versions of the index file.
-        # If these exist, then there's only one of them.
+        ret = True
         for basename in basenames:
-            # Give preference to non-standard index files first.
-            # VGISS - the normal index file contains lots of data products like
-            # calibrated files. We want just the single raw file for each
-            # product, and that's in the RAW_IMAGE_INDEX
-            if (basename.upper().endswith('_RAW_IMAGE_INDEX.LBL') and
-                basename.find('999') == -1):
+            if basename in primary_index_names:
                 volume_label_path = os.path.join(path, basename)
-                vol_prefix = basename.replace('_raw_image_index.lbl', '')
-                vol_prefix = vol_prefix.replace('_RAW_IMAGE_INDEX.LBL', '')
-                impglobals.LOGGER.log('debug',
-                    'Using RAW_IMAGE_INDEX metadata version of main index: '+
-                    f'{volume_label_path}')
-                break
-
-        if volume_label_path is None:
-            # COCIRS - give preference to OBSINDEX over INDEX
-            for basename in basenames:
-                if basename.upper() == 'OBSINDEX.LBL':
-                    volume_label_path = os.path.join(path, basename)
-                    impglobals.LOGGER.log('debug',
-                        'Using OBSINDEX version of main index: '+
-                        f'{volume_label_path}')
-                    break
-
-        # if volume_label_path is None:
-        #     # GOSSI - give preference to IMGINDEX over INDEX
-        #     for basename in basenames:
-        #         if (volume_label_path is None and
-        #             basename.upper().endswith('IMGINDEX.LBL')):
-        #             volume_label_path = os.path.join(path, basename)
-        #             impglobals.LOGGER.log('debug',
-        #                 f'Using IMGINDEX version of main index: '+
-        #                 f'{volume_label_path}')
-        #             break
-
-        if volume_label_path is not None:
-            # Found that one and only label
-            ret = import_one_index(volume_id,
-                                   volume_pdsfile,
-                                   vol_prefix,
-                                   metadata_paths,
-                                   volume_label_path)
+                import_util.log_debug(f'Using index: {volume_label_path}')
+                found_in_this_dir = True
+                ret = ret and import_one_index(volume_id,
+                                               vol_info,
+                                               volume_pdsfile,
+                                               index_paths,
+                                               volume_label_path)
+        if found_in_this_dir:
             impglobals.LOGGER.close()
             impglobals.CURRENT_VOLUME_ID = None
             impglobals.CURRENT_INDEX_ROW_NUMBER = None
+            impglobals.CURRENT_PRIMARY_FILESPEC = None
             return ret
 
-        # For the remaining, there might be more than one index file (like
-        # for EBROCC), but we still give priority.
-
-        # EBROCC - give preference to PROFILE_INDEX over INDEX
-        # Otherwise just use normal INDEX
-        ret = True
-        for index_name in ('_PROFILE_INDEX.LBL', '_INDEX.LBL'):
-            for basename in basenames:
-                if (basename.upper().endswith(index_name) and
-                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL') and
-                    basename.find('999') == -1):
-                    volume_label_path = os.path.join(path, basename)
-                    impglobals.LOGGER.log('debug',
-                        f'Using index: {volume_label_path}')
-                    found_in_this_dir = True
-                    vol_prefix = basename.replace(index_name, '')
-                    vol_prefix = vol_prefix.replace(index_name.lower(), '')
-                    ret = ret and import_one_index(volume_id,
-                                                   volume_pdsfile,
-                                                   vol_prefix,
-                                                   metadata_paths,
-                                                   volume_label_path)
-
-            if found_in_this_dir:
-                impglobals.LOGGER.close()
-                impglobals.CURRENT_VOLUME_ID = None
-                impglobals.CURRENT_INDEX_ROW_NUMBER = None
-                return ret
-
-    impglobals.LOGGER.log('error',
-        f'No appropriate label file found: "{volume_id}"')
+    import_util.log_error(f'No index label file found: "{volume_id}"')
     impglobals.LOGGER.close()
     impglobals.CURRENT_VOLUME_ID = None
 
     return False
 
 
-def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
+def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                      volume_label_path):
-    volume_id_prefix = volume_id[:volume_id.find('_')]
-
-    instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
-    if instrument_name is not None and type(instrument_name) != str:
-        instrument_name = instrument_name[volume_id]
-
-    mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
-    volset = volume_pdsfile.volset
+    """Import the observations given a single primary index file."""
+    instrument_class = vol_info['instrument_class']
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:
-        impglobals.LOGGER.log('error', f'Read failed: "{volume_label_path}"')
+        import_util.log_error(f'Read failed: "{volume_label_path}"')
         return False
 
-    impglobals.LOGGER.log('info',
-               f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
+    import_util.log_info(f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
 
-    metadata = {}
+    metadata = {'phase_name': None}
+
+    # Instantiate the appropriate class that knows how to import this instrument
+    instrument_obj = instrument_class(
+        volume=volume_id,
+        metadata=metadata
+    )
+
+    # We need to validate index rows for volumes where there can be more than one
+    # row in the index file for a single opus_id. We first compute the opus_id for
+    # each row (which is a fast operation), looking for duplicates. When we find
+    # duplicates, we collect them into a dictionary. Then we go through the duplicates,
+    # if any, and do the reverse mapping opus_id -> filespec, seeing if the result
+    # is the same. If it is, that's the row we want to use.
+    # We do this complicated process because from_opus_id is a slow operation so we
+    # don't want to do it unless absolutely necessary.
+    valid_rows = None
+    if vol_info['validate_index_rows']:
+        opus_ids = {}
+        valid_rows = [True] * len(obs_rows)
+        for row_no, row in enumerate(obs_rows):
+            opus_id = instrument_obj.opus_id_from_index_row(row)
+            if opus_id is None:
+                # Error already reported
+                valid_rows[row_no] = False
+                continue
+            if opus_id not in opus_ids:
+                opus_ids[opus_id] = []
+            opus_ids[opus_id].append(row_no)
+        for opus_id, row_nos in opus_ids.items():
+            if len(row_nos) == 1: # Only one row means not ambiguous
+                continue
+            # Mark them all invalid to start
+            for row_no in row_nos:
+                valid_rows[row_no] = False
+            good_row = None
+            try:
+                deriv_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
+            except ValueError:
+                impglobals.CURRENT_INDEX_ROW_NUMBER = row_no
+                import_util.log_nonrepeating_warning(
+                    f'Unable to convert OPUS ID "{opus_id}" to filespec')
+            else:
+                for row_no in row_nos:
+                    orig_filespec = instrument_obj.primary_filespec_from_index_row(
+                                            obs_rows[row_no], convert_lbl=True)
+                    orig_filespec = instrument_obj.convert_filespec_from_lbl(
+                                                                        orig_filespec)
+                    if orig_filespec in deriv_filespec:
+                        # Found it!
+                        if good_row is not None:
+                            import_util.log_nonrepeating_error(
+                                f'Found multiple rows that map from the same opus_id '
+                                f'{opus_id}: {good_row} and {row_no}')
+                        good_row = row_no
+            if good_row is None:
+                impglobals.CURRENT_INDEX_ROW_NUMBER = row_nos[0]
+                # This isn't always an error because sometimes we actually do have
+                # an opud_id that can't be properly reverse-mapped, like
+                # vg-pps-2-u-occ-1986-024-betper-lambda-i
+                import_util.log_nonrepeating_warning(
+                    f'No row found that reverse matches opus_id {opus_id}')
+            else:
+                valid_rows[good_row] = True
+                import_util.log_info('Resolving OPUS ID ambiguity:')
+                for row_no in row_nos:
+                    orig_filespec = instrument_obj.primary_filespec_from_index_row(
+                                                    obs_rows[row_no], convert_lbl=True)
+                    sfx = ' (chosen)' if row_no == good_row else ''
+                    import_util.log_info('  '+orig_filespec+sfx)
+
+        old_obs_rows = obs_rows
+        obs_rows = []
+        for row_no, row in enumerate(old_obs_rows):
+            if valid_rows[row_no]:
+                obs_rows.append(row)
+            else:
+                import_util.log_info('Dropping index row '+
+                                     instrument_obj.primary_filespec_from_index_row(row))
+
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
 
-    volume_type = VOLUME_ID_ROOT_TO_TYPE[volume_pdsfile.volset]
-    # This is used to check against these lists: VOLSETS_WITH_RING_GEO and
-    # VOLSETS_WITH_SURFACE_GEO. Most of the time, volset_info will just be the
-    # same as volset, but for cases like COCIRS_0xxx/1xxx, it will have info
-    # about the part of volume (cube_equi) that includes ring/geo info.
-    volset_info = volset
 
     ######################################
     ### FIND ASSOCIATED METADATA FILES ###
@@ -761,30 +709,32 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     #   <vol>_moon_summary.lbl
     #   <vol>_<planet>_summary.lbl
     #   <vol>_supplemental_index.lbl
+    # All of these files are cross-indexed with the primary index file based on
+    # the primary filespec.
 
-    if metadata_paths:
-        for path in metadata_paths:
-            assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
-            basenames = assoc_pdsfile.childnames
+    if index_paths:
+        for index_path in index_paths:
+            assoc_pdsfile = pdsfile.PdsFile.from_abspath(index_path)
+            try:
+                basenames = assoc_pdsfile.childnames
+            except KeyError:
+                continue
             for basename in basenames:
                 if basename.find('999') != -1:
                     # These are cumulative geo files
                     continue
-                if vol_prefix != '' and not basename.startswith(vol_prefix):
+                if not basename.startswith(volume_id):
                     continue
-                if (not basename.upper().endswith('SUMMARY.LBL') and
-                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL') and
-                    not basename.upper().endswith('INVENTORY.LBL')):
+                basename_upper = basename.upper()
+                if (not basename_upper.endswith('SUMMARY.LBL') and
+                    not basename_upper.endswith('SUPPLEMENTAL_INDEX.LBL') and
+                    not basename_upper.endswith('INVENTORY.LBL')):
                     continue
-                assoc_label_path = os.path.join(assoc_pdsfile.abspath,
-                                                basename)
-                if not basename.upper().endswith('INVENTORY.LBL'):
-                    (assoc_rows,
-                     assoc_label_dict) = import_util.safe_pdstable_read(
-                                                            assoc_label_path)
-                else:
-                    # The pdstable.py module can't read non-fixed-length records
-                    # so we fake it up ourselves here.
+                assoc_label_path = os.path.join(index_path, basename)
+                if basename_upper.endswith('INVENTORY.LBL'):
+                    # The inventory files are in CSV format, but the pdstable.py
+                    # module can't read non-fixed-length records so we fake it up
+                    # ourselves here.
                     table_filename = (assoc_label_path.replace('.LBL', '.CSV')
                                       .replace('.lbl', '.csv'))
                     assoc_rows = []
@@ -801,96 +751,54 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                                      csv_ringobsid.strip(),
                                         'TARGET_LIST': csv_targets}
                             assoc_rows.append(row_dict)
+                else:
+                    (assoc_rows,
+                     assoc_label_dict) = import_util.safe_pdstable_read(assoc_label_path)
+
                 if not assoc_rows:
                     # No need to report an error here because safe_pdstable_read
                     # will have already done so
-                    # impglobals.LOGGER.log('error',
-                    #                       f'Read failed: "{assoc_label_path}"')
-                    if impglobals.ARGUMENTS.import_ignore_errors:
-                        impglobals.IMPORT_HAS_BAD_DATA = True
-                        continue
                     return False
 
-                # This is used to determine if we need to create body surface
-                # geo table when *_summary doesn't exist under metadata.
-                sub_assoc_type = None
-
-                if 'RING_SUMMARY' in basename.upper():
+                if 'RING_SUMMARY' in basename_upper:
                     assoc_type = 'ring_geo'
-                elif 'SUPPLEMENTAL_INDEX' in basename.upper():
+                elif 'SUPPLEMENTAL_INDEX' in basename_upper:
                     assoc_type = 'supp_index'
-                    # Check if the supplemental index file contains surface geo
-                    # info, and if so, mark the sub_assoc_type accordingly.
-                    for f in SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO:
-                        if f in basename.upper():
-                            sub_assoc_type = 'body_surface_geo'
-                            volset_info = volset + f'_{f}'
-                            break
-
-                elif 'INVENTORY' in basename.upper():
+                elif 'INVENTORY' in basename_upper:
                     assoc_type = 'inventory'
                 else:
-                    assoc_type = 'body_surface_geo'
-                impglobals.LOGGER.log('info',
-        f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
+                    assoc_type = 'surface_geo'
+
+                # Now that we have the data from the associated file, we need to go
+                # through and cross-reference it with the primary index based on the
+                # primary filespec.
+                import_util.log_info(
+                        f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
                 assoc_dict = metadata.get(assoc_type, {})
                 if (assoc_type == 'ring_geo' or
-                    assoc_type == 'body_surface_geo' or
+                    assoc_type == 'surface_geo' or
                     assoc_type == 'inventory'):
                     for row in assoc_rows:
-                        key = None
-                        geo_vol = row.get('VOLUME_ID', None)
-                        if geo_vol != volume_id:
-                            import_util.log_nonrepeating_error(
-        f'{assoc_label_path} VOLUME_ID "{geo_vol}" does not match current '+
-        f'import volume "{volume_id}"')
-                            geo_vol = volume_id # XXX FOR NOW BECAUSE OF NH
-                        if geo_vol is None:
-                            import_util.log_nonrepeating_error(
-                               f'{assoc_label_path} is missing VOLUME_ID field')
-                            break
-                        geo_file_spec = row.get('FILE_SPECIFICATION_NAME',
-                                                None)
-                        if geo_file_spec is None:
-                            import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
-                            break
-                        geo_full_file_spec = geo_vol+'/'+geo_file_spec
-                        geo_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                geo_full_file_spec,
-                                                fix_case=True)
-                        key = geo_pdsfile.opus_id
-                        if not key:
-                            import_util.log_nonrepeating_error(
-            f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
-            f'for {assoc_label_path}')
+                        # We use add_phase_from_row=True here because in COVIMS_0xxx
+                        # there are both _IR and _VIS versions of each geo row and we
+                        # need a way to distinguish between them. It does nothing
+                        # for other cases.
+                        key = instrument_obj.primary_filespec_from_index_row(
+                                                                row, convert_lbl=True,
+                                                                add_phase_from_row=True)
+                        if key is None:
+                            # Error will already be logged
                             continue
-                        key = key.replace('.', '-')
-                        # WARNING: HACK FOR VIMS
-                        # The current VIMS geo and inventory tables have entries
-                        # for VIS and IR but the only way to distinguish
-                        # between them is to look at the OPUS_ID field.
-                        if geo_vol.startswith('COVIMS'):
-                            opus_id = row.get('OPUS_ID', None)
-                            if opus_id is None:
-                                import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing OPUS_ID field')
-                                break
-                            if opus_id.endswith('ir'):
-                                key += '_ir'
-                            elif opus_id.endswith('vis'):
-                                key += '_vis'
-                            else:
-                                import_util.log_nonrepeating_error(
-                 f'{assoc_label_path} has bad OPUS_ID for '+
-                 f'file_spec "{geo_full_file_spec}"')
+                        key = key.upper()
+
                         if (assoc_type == 'ring_geo' or
                             assoc_type == 'inventory'):
                             # RING_GEO and INVENTORY are easy - there is at most
                             # a single entry per observation, so we just create
                             # a dictionary keyed by opus_id.
                             assoc_dict[key] = row
-                        elif assoc_type == 'body_surface_geo':
+
+                        elif assoc_type == 'surface_geo':
                             # SURFACE_GEO is more complicated, because there can
                             # be more than one entry per observation, since
                             # there is one for each target. We create a
@@ -900,113 +808,27 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             key2 = row.get('TARGET_NAME', None)
                             if key2 is None:
                                 import_util.log_nonrepeating_error(
-                        f'{assoc_label_path} is missing TARGET_NAME field')
+                                    f'{assoc_label_path} is missing TARGET_NAME field')
                                 break
                             if key not in assoc_dict:
                                 assoc_dict[key] = {}
                             assoc_dict[key][key2] = row
+
                 else:
                     assert assoc_type == 'supp_index'
-                    if volset == 'COUVIS_0xxx':
-                        # The COUVIS_0xxx supplemental index is keyed by a
-                        # combination of VOLUME_ID (COUVIS_0001) and
-                        # FILE_SPECIFICATION_NAME
-                        # (DATA/D2000_153/EUV2000_153_15_52.LBL)
-                        # that maps to the FILE_NAME field in the main index
-                        # (/COUVIS_0001/DATA/D2000_153/EUV2000_153_15_52.LBL).
-                        # It's too much of a pain to calculate the opus_id
-                        # here to use that as a key, so we just stick with the
-                        # filename.
-                        for row in assoc_rows:
-                            key1 = row.get('VOLUME_ID', None)
-                            key2 = row.get('FILE_SPECIFICATION_NAME',
-                                           None).upper()
-                            if key1 is None or key2 is None:
-                                import_util.log_nonrepeating_error(
-                        f'{assoc_label_path} is missing VOLUME_ID or '+
-                         'FILE_SPECIFICATION_NAME fields')
-                                break
-                            key = f'/{key1}/{key2}'
-                            assoc_dict[key] = row
-                    else:
-                        # All other supplemental indexes are
-                        # keyed by FILE_SPECIFICATION_NAME
-                        # (DATA/C13854XX/C1385455_RAW.LBL)
-                        # that maps to the FILE_SPECIFICATION_NAME field in the
-                        # main index.
-                        for row in assoc_rows:
-                            key = row.get('FILE_SPECIFICATION_NAME', None)
-                            if key is None:
-                                import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
-                                break
+                    for row in assoc_rows:
+                        key = instrument_obj.primary_filespec_from_index_row(
+                                                                row, convert_lbl=True)
+                        if key is not None:
+                            # Error will already be logged if key is None
                             key = key.upper()
                             assoc_dict[key] = row
 
-                    # Construct the surface geo dict for supplemental index
-                    # files that contain surface geo info. The only metadata we
-                    # put in the surface geo dict is the target name, relying
-                    # on populate functions to retrieve the necessary metadata
-                    # later.
-                    # Format: {opus_id: {target: {'TARGET_NAME': target}}}
-                    if sub_assoc_type == 'body_surface_geo':
-                        obs_rows = metadata['index']
-                        sub_assoc_dict = metadata.get(sub_assoc_type, {})
-                        for row in obs_rows:
-                            vol_id = row.get('VOLUME_ID', None)
-                            file_spec_name = row.get('FILE_SPECIFICATION_NAME',
-                                                     None).upper()
-                            data_file_spec = vol_id+'/'+file_spec_name
-                            data_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                    data_file_spec,
-                                                    fix_case=True)
-                            opus_id = data_pdsfile.opus_id
-                            target = row.get('TARGET_NAME')
-                            sub_assoc_dict[opus_id] = {}
-                            sub_assoc_dict[opus_id][target] = {
-                                'TARGET_NAME': target
-                            }
-                        metadata[sub_assoc_type] = sub_assoc_dict
-
+                # We need to be able to look things up in both the main tab file and
+                # also the associate label, because different instruments store
+                # useful data in both places.
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type+'_label'] = assoc_label_dict
-
-    # Check to see if we have ring or surface geo when the instrument
-    # supports it - but it isn't a fatal error if we don't because sometimes
-    # the geo files are generated later
-    if ('ring_geo' not in metadata and
-        volset_info in VOLSETS_WITH_RING_GEO):
-        impglobals.LOGGER.log('warning',
-            f'Volume "{volume_id}" is missing ring geometry files')
-    elif ('ring_geo' in metadata and
-        volset_info not in VOLSETS_WITH_RING_GEO):
-        impglobals.LOGGER.log('warning',
-            f'Volume "{volume_id}" has unexpected ring geometry files')
-    if ('body_surface_geo' not in metadata and
-        volset_info in VOLSETS_WITH_SURFACE_GEO):
-        impglobals.LOGGER.log('warning',
-            f'Volume "{volume_id}" is missing body surface geometry files')
-    elif ('body_surface_geo' in metadata and
-        volset_info not in VOLSETS_WITH_SURFACE_GEO):
-        impglobals.LOGGER.log('warning',
-            f'Volume "{volume_id}" has unexpected body surface geometry files')
-
-    if 'ring_geo' in metadata:
-        li = len(metadata['index'])
-        lr = len(metadata['ring_geo'])
-        diff = li - lr
-        if diff:
-            impglobals.LOGGER.log('debug',
-                f'Volume "{volume_id}" is missing {diff} RING_GEO entries '+
-                f'({li} vs. {lr})')
-
-    if 'index' in metadata and 'supp_index' in metadata:
-        li = len(metadata['index'])
-        ls = len(metadata['supp_index'])
-        if li != ls:
-            impglobals.LOGGER.log('warning',
-                f'Volume "{volume_id}" has {li} index entries but '+
-                f'{ls} supplemental_index entries')
 
     table_schemas, table_names_in_order = create_tables_for_import(volume_id,
                                                                    'import')
@@ -1014,17 +836,12 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     # It's time to actually compute the values that will go in the database!
     # Start with the obs_general table, because other tables reference
     # it with foreign keys. Then do general, mission, and instrument in that
-    # order so that each row processor can access values computed for the
-    # more general ones. Later come things like type_id, wavelength, and
-    # ring_geo. Finally take care of surface geometry, which has to be done
-    # once for each target in the image, so is handled separately.
+    # order. Later come things like type_id, wavelength, and ring_geo. Finally
+    # take care of surface geometry, which has to be done once for each target
+    # in the image, so is handled separately.
     table_rows = {}
     for table_name in table_names_in_order:
         table_rows[table_name] = []
-
-    # Keep track of opus_id and check for duplicates. This happens, e.g.
-    # in GOSSI every now and then. Yuck.
-    used_opus_id_this_vol = set()
 
     # Also look for duplicates in the existing import tables
     if impglobals.ARGUMENTS.import_check_duplicate_id:
@@ -1034,7 +851,6 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
     used_targets = set()
 
-
     ##############################################
     ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
     ##############################################
@@ -1042,99 +858,60 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
         metadata['index_row_num'] = index_row_num+1
+        metadata['phase_name'] = None
         obs_general_row = None
         obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
-        # The COVIMS_0xxx index file doesn't use FILE_SPECIFICATION_NAME
-        # (thanks VIMS team) but that's how we match across (supplemental) index
-        # files, so it's easier just to fake one here rather than special-case
-        # all the uses of FILE_SPECIFICATION_NAME later.
-        if volset == 'COVIMS_0xxx':
-            vims_filename = index_row['FILE_NAME']
-            vims_path = index_row['PATH_NAME']
-            if vims_path[0] == '/':
-                vims_path = vims_path[1:]
-            filespec = vims_path + '/' + vims_filename.replace('.qub', '.lbl')
-            index_row['FILE_SPECIFICATION_NAME'] = filespec
+        # Sometimes the primary_filespec is taken from the supplemental index, which we
+        # don't have yet, so we can't look it up until later.
+        impglobals.CURRENT_PRIMARY_FILESPEC = None
 
-        if 'supp_index' in metadata and volset == 'COUVIS_0xxx':
-            # Match up the FILENAME with the key we generated earlier
-            couvis_filename = index_row['FILE_NAME'].upper()
+        # For supplemental_index and logging
+        # Note we don't use primary_filespec_from_index_row here because that doesn't
+        # currently work with CIRS, which makes the logging not give full
+        # row information.
+        primary_filespec = instrument_obj.primary_filespec
+        primary_filespec = instrument_obj.convert_filespec_from_lbl(primary_filespec)
+        impglobals.CURRENT_PRIMARY_FILESPEC = primary_filespec
+        primary_filespec = primary_filespec.upper()
+        if 'supp_index' in metadata:
             supp_index = metadata['supp_index']
-            if couvis_filename in supp_index:
-                metadata['supp_index_row'] = supp_index[couvis_filename]
+            if primary_filespec in supp_index:
+                metadata['supp_index_row'] = supp_index[primary_filespec]
             else:
-                import_util.log_nonrepeating_error(
-                    f'File "{couvis_filename}" is missing supplemental data')
+                import_util.log_nonrepeating_warning(
+                    f'FILESPEC "{primary_filespec}" is missing supplemental data')
                 metadata['supp_index_row'] = None
-                continue # We don't process entries without supp_index
-        elif ('supp_index' in metadata and
-              instrument_name in ['NHLORRI', 'NHMVIC']):
-            # Match up the PATH_NAME + FILE_NAME with FILE_SPECIFICATION_NAME
-            path_name = index_row['PATH_NAME']
-            file_name = index_row['FILE_NAME']
-            file_spec_name = path_name+file_name
-            file_spec_name = file_spec_name.upper()
-            supp_index = metadata['supp_index']
-            if file_spec_name in supp_index:
-                metadata['supp_index_row'] = supp_index[file_spec_name]
-            else:
-                import_util.log_nonrepeating_error(
-                    f'File "{file_spec_name}" is missing supplemental data')
-                metadata['supp_index_row'] = None
-                continue # We don't process entries without supp_index
-        elif 'supp_index' in metadata:
-            # Match up the FILENAME
-            filename = index_row['FILE_SPECIFICATION_NAME'].upper()
-            supp_index = metadata['supp_index']
-            if filename in supp_index:
-                metadata['supp_index_row'] = supp_index[filename]
-            else:
-                import_util.log_nonrepeating_error(
-                    f'File "{filename}" is missing supplemental data')
-                metadata['supp_index_row'] = None
-                continue # We don't process entries without supp_index
-
-        # This is used to make all ground-based observations look like they were
-        # done by a single instrument to make writing the populate_* functions
-        # easier.
-        func_instrument_name = instrument_name
-        derived_instrument_name = instrument_name
-        if instrument_name is None:
-            # There could be multiple instruments in a single index file.
-            # We assume this only happens for ground-based instruments.
-            if ('supp_index_row' not in metadata or
-                metadata['supp_index_row'] is None):
-                filename = index_row['FILE_SPECIFICATION_NAME'].upper()
-                import_util.log_nonrepeating_error(
-                    f'Missing supplemental index information for "{filename}"'
-                )
-            else:
-                supp_index_row = metadata['supp_index_row']
-                derived_instrument_name = (supp_index_row['INSTRUMENT_HOST_ID']
-                                           +supp_index_row['INSTRUMENT_ID'])
-                func_instrument_name = 'GB'
 
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
         # here and then process the row as many times as necessary.
-        if volset == 'COVIMS_0xxx':
-            phase_names = []
-            if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
-                phase_names.append('VIS')
-            if index_row['IR_SAMPLING_MODE_ID'] != 'N/A':
-                phase_names.append('IR')
-        else:
-            phase_names = ['NORMAL']
-
+        phase_names = instrument_obj.phase_names
         for phase_name in phase_names:
             metadata['phase_name'] = phase_name
 
+            # For the geo indexes - we have to add in the phase because COVIMS_0xxx has
+            # separate rows for IR and VIS
+            primary_filespec_phase = instrument_obj.primary_filespec_from_index_row(
+                                                            index_row, convert_lbl=True,
+                                                            add_phase_from_inst=True)
+            primary_filespec_phase = primary_filespec_phase.upper()
+            if 'ring_geo' in metadata:
+                ring_geo = metadata['ring_geo'].get(primary_filespec_phase, None)
+                metadata['ring_geo_row'] = ring_geo
+                if (ring_geo is None and
+                    impglobals.ARGUMENTS.import_report_missing_ring_geo):
+                    import_util.log_warning(
+                        'RING GEO metadata missing for "{primary_filespec_phase}"')
+            if 'surface_geo' in metadata:
+                body_geo = metadata['surface_geo'].get(primary_filespec_phase)
+                metadata['surface_geo_row'] = body_geo
+
             # Handle everything except surface_geo
 
-            for table_num, table_name in enumerate(table_names_in_order):
+            for table_name in table_names_in_order:
                 if table_name.startswith('obs_surface_geometry'):
                     # Deal with surface geometry a little later
                     continue
@@ -1145,12 +922,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 if table_name not in table_schemas:
                     # Table not relevant for this product
                     continue
-                row = import_observation_table(volume_id,
-                                               volset,
-                                               derived_instrument_name,
-                                               func_instrument_name,
-                                               mission_abbrev,
-                                               volume_type,
+                row = import_observation_table(instrument_obj,
                                                table_name,
                                                table_schemas[table_name],
                                                metadata)
@@ -1159,16 +931,6 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 if table_name == 'obs_general':
                     obs_general_row = row
                     opus_id = row['opus_id']
-                    if opus_id in used_opus_id_this_vol:
-                        # Some of the GO_xxxx volumes have duplicate
-                        # observations within a single volume. In these cases
-                        # we have to use the NEW one and delete the old one.
-                        impglobals.LOGGER.log('info',
-                                f'Duplicate opus_id "{opus_id}" within '+
-                                 'volume - removing previous one')
-                        remove_opus_id_from_tables(table_rows,
-                                                      opus_id)
-                    used_opus_id_this_vol.add(opus_id)
                     if opus_id in used_opus_id_prev_vol:
                         # Some of the GO_xxxx and COUVIS_xxxx volumes have
                         # duplicate observations across volumes. In these cases
@@ -1189,8 +951,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
             # obs_surface_geometry__<TARGET>
 
             target_dict = {}
-            if 'body_surface_geo' in metadata:
-                surface_geo_dict = metadata['body_surface_geo']
+            if 'surface_geo' in metadata:
+                surface_geo_dict = metadata['surface_geo']
                 for table_name in table_names_in_order:
                     if not table_name.startswith('obs_surface_geometry_'):
                         # Deal with obs_surface_geometry_name and
@@ -1202,8 +964,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
                     # Retrieve the opus_id from obs_general to find the
                     # surface_geo
-                    opus_id = obs_general_row['opus_id']
-                    target_dict = surface_geo_dict.get(opus_id, {})
+                    target_dict = surface_geo_dict.get(primary_filespec_phase, {})
                     for target_name in sorted(target_dict.keys()):
                         used_targets.add(target_name)
                         # Note the following only affects
@@ -1215,23 +976,58 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                                                 target_name)
                         new_table_name = table_name.replace('<TARGET>',
                                                             new_target_name)
-                        metadata['body_surface_geo_row'] = target_dict[
+                        metadata['surface_geo_row'] = target_dict[
                                                                 target_name]
+                        metadata['surface_geo_target_name'] = target_name
 
-                        row = import_observation_table(volume_id,
-                                                       volset,
-                                                       derived_instrument_name,
-                                                       func_instrument_name,
-                                                       mission_abbrev,
-                                                       volume_type,
+                        row = import_observation_table(instrument_obj,
                                                        new_table_name,
-                                                      table_schemas[table_name],
+                                                       table_schemas[table_name],
                                                        metadata)
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
-                            impglobals.LOGGER.log('debug',
-                f'Creating surface geo table for new target {target_name}')
+                            import_util.log_debug(
+                              f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(row)
+
+            if instrument_obj.surface_geo_target_list():
+                # The are some cases (like COCIRS_[01]xxx) where the index files
+                # contain the surface geo information instead of a separate
+                # summary file. In these cases we ask the instrument for the list of
+                # targets and process them directly.
+                for table_name in table_names_in_order:
+                    if not table_name.startswith('obs_surface_geometry_'):
+                        # Deal with obs_surface_geometry_name and
+                        # obs_surface_geometry__<TARGET> only
+                        continue
+                    # Here we are handling both obs_surface_geometry_name and
+                    # obs_surface_geometry as well as all of the
+                    # obs_surface_geometry__<TARGET> tables
+
+                    for target_name in instrument_obj.surface_geo_target_list():
+                        used_targets.add(target_name)
+                        # Note the following only affects
+                        # obs_surface_geometry__<T> not the generalized
+                        # obs_surface_geometry. This is fine because we want the
+                        # generalized obs_surface_geometry to include all the
+                        # targets.
+                        new_target_name = import_util.table_name_for_sfc_target(
+                                                                target_name)
+                        new_table_name = table_name.replace('<TARGET>',
+                                                            new_target_name)
+                        metadata['surface_geo_row'] = None
+                        metadata['surface_geo_target_name'] = target_name
+
+                        row = import_observation_table(instrument_obj,
+                                                       new_table_name,
+                                                       table_schemas[table_name],
+                                                       metadata)
+                        if new_table_name not in table_rows:
+                            table_rows[new_table_name] = []
+                            import_util.log_debug(
+                              f'Creating surface geo table for new target {target_name}')
+                        table_rows[new_table_name].append(row)
+
 
             # Handle obs_surface_geometry
             # We have to do this later than the other obs_ tables because only
@@ -1240,8 +1036,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
             surface_target_list = None
             if 'inventory' in metadata:
                 inventory = metadata['inventory']
-                if opus_id in inventory:
-                    surface_target_list = inventory[opus_id]['TARGET_LIST']
+                if primary_filespec_phase in inventory:
+                    surface_target_list = inventory[primary_filespec_phase]['TARGET_LIST']
             metadata['inventory_list'] = surface_target_list
             metadata['used_surface_geo_targets'] = list(target_dict.keys())
 
@@ -1252,12 +1048,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 # This is used to populate the surface geo target_list
                 # field
 
-                row = import_observation_table(volume_id,
-                                               volset,
-                                               derived_instrument_name,
-                                               func_instrument_name,
-                                               mission_abbrev,
-                                               volume_type,
+                row = import_observation_table(instrument_obj,
                                                table_name,
                                                table_schemas[table_name],
                                                metadata)
@@ -1274,7 +1065,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     # Deal with obs_files only
                     continue
                 rows = get_pdsfile_rows_for_filespec(
-                                obs_pds_row['primary_file_spec'],
+                                obs_pds_row['primary_filespec'],
                                 obs_general_row['id'],
                                 obs_general_row['opus_id'],
                                 obs_general_row['volume_id'],
@@ -1286,6 +1077,9 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     ### DONE COMPUTING ROW CONTENTS - CREATE MULTS AND DUMP TO DB ###
     #################################################################
 
+    impglobals.CURRENT_INDEX_ROW_NUMBER = None
+    impglobals.CURRENT_PRIMARY_FILESPEC = None
+
     # Now that we have all the values, we have to dump out the mult tables
     # because they are referenced as foreign keys
     dump_import_mult_tables()
@@ -1294,59 +1088,41 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     # is referenced by foreign keys.
     for table_name in table_names_in_order:
         if table_name.find('<TARGET>') == -1:
-            imp_name = impglobals.DATABASE.convert_raw_to_namespace(
-                                'import', table_name)
-            impglobals.LOGGER.log('debug',
-                f'Inserting into obs table "{imp_name}"')
-            impglobals.DATABASE.insert_rows('import', table_name,
-                                            table_rows[table_name])
+            imp_name = impglobals.DATABASE.convert_raw_to_namespace('import', table_name)
+            import_util.log_debug(f'Inserting into obs table "{imp_name}"')
+            impglobals.DATABASE.insert_rows('import', table_name, table_rows[table_name])
         else:
             for target_name in sorted(used_targets):
                 new_table_name = table_name.replace(
                             '<TARGET>',
                             import_util.table_name_for_sfc_target(target_name))
-                imp_name = impglobals.DATABASE.convert_raw_to_namespace(
-                                    'import', new_table_name)
-                impglobals.LOGGER.log('debug',
-                    f'Inserting into obs table "{imp_name}"')
+                imp_name = impglobals.DATABASE.convert_raw_to_namespace('import',
+                                                                        new_table_name)
+                import_util.log_debug(f'Inserting into obs table "{imp_name}"')
                 surface_geo_schema = import_util.read_schema_for_table(
                                             'obs_surface_geometry_target',
                                             replace=[
-            ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
-            ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))])
+                    ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
+                    ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))])
                 # We can finally get around to creating the
                 # obs_surface_geometry_<T> tables now that we know what targets
                 # we have
                 impglobals.DATABASE.create_table('import', new_table_name,
                                                  surface_geo_schema)
                 impglobals.DATABASE.insert_rows('import', new_table_name,
-                    table_rows[new_table_name])
+                                                table_rows[new_table_name])
 
     return True # SUCCESS!
 
 
-def import_observation_table(volume_id,
-                             volset,
-                             instrument_name,
-                             func_instrument_name,
-                             mission_abbrev,
-                             volume_type,
+def import_observation_table(instrument_obj,
                              table_name,
                              table_schema,
                              metadata):
     "Import the data from a row from a PDS file into a single table."
     new_row = {}
 
-    # So it can be accessed by populate_*
     metadata[table_name+'_row'] = new_row
-
-    # Compute the columns in the specified order because some populate_*
-    # functions rely on previous ones having already been run.
-
-    ordered_table_schema = [(x.get('data_source_order', 0), x)
-                            for x in table_schema]
-    ordered_table_schema.sort(key=lambda x: x[0])
-    ordered_columns = [x[1] for x in ordered_table_schema]
 
     # Run through all the based columns and compute their values.
     # Always skip "id" for tables other than obs_general, because this is just
@@ -1356,7 +1132,7 @@ def import_observation_table(volume_id,
     # Skip "mult_" tables because they are handled separately when the search
     # type is a GROUP-type.
 
-    for table_column in ordered_columns:
+    for table_column in table_schema:
         if (table_column.get('put_mults_here', False) or
             table_column.get('pi_referred_slug', False)):
             continue
@@ -1369,8 +1145,8 @@ def import_observation_table(volume_id,
         if field_name == 'timestamp':
             continue
 
-        data_source_tuple = table_column.get('data_source', None)
-        if not data_source_tuple:
+        data_source = table_column.get('data_source', None)
+        if not data_source:
             import_util.log_nonrepeating_warning(
                 f'No data source for column "{field_name}" in table '+
                 f'"{table_name}"')
@@ -1379,125 +1155,26 @@ def import_observation_table(volume_id,
 
             ### COMPUTE THE NEW COLUMN VALUE ###
 
-            processed = False
             column_val = None
             mult_label = None
             mult_label_set = False
             disp_order = None # Might be set with mult_label but not otherwise
 
-            # Collect all the error messages in case we never find a valid
-            # data source, in which case we display all of them
-            error_list = []
+            if data_source == 'OBS_GENERAL_ID':
+                obs_general_row = metadata['obs_general_row']
+                column_val = import_util.safe_column(obs_general_row,
+                                                     'id')
 
-            data_source_offset = 0
-            while data_source_offset < len(data_source_tuple):
-                data_source_cmd = data_source_tuple[data_source_offset]
-                if data_source_cmd.find(':') != -1:
-                    (data_source_cmd_prefix,
-                     data_source_cmd_param) = data_source_cmd.split(':')
-                else:
-                    data_source_cmd_prefix = data_source_cmd
-                    data_source_cmd_param = None
-
-                if data_source_cmd_prefix == 'IGNORE':
-                    processed = True
-                    break
-
-                data_source_data = data_source_tuple[data_source_offset+1]
-
-                if data_source_cmd_prefix.startswith('TAB'):
-                    data_source_offset += 2
-                    ref_index_row = None
-                    if data_source_cmd_param+'_row' not in metadata:
-                        if data_source_cmd_param != 'ring_geo':
-                            # If we don't have ring_geo for this volume, don't
-                            # bitch about it because we already did earlier.
-                            error_list.append(
-                                'Unknown internal metadata name '+
-                                f'"{data_source_cmd_param}"'+
-                                f' while processing column "{field_name}" in '+
-                                f'table "{table_name}"')
-                        continue
-                    ref_index_row = metadata[data_source_cmd_param+'_row']
-                    if ref_index_row is None:
-                        import_util.log_nonrepeating_warning(
-                            'Missing row in metadata file '+
-                            f'"{data_source_cmd_param}"')
-                        processed = True
-                        break
-                    if data_source_data not in ref_index_row:
-                        error_list.append(
-                                'Unknown referenced column '+
-                                f'"{data_source_data}" '+
-                                f'while processing column "{field_name}" in '+
-                                f'table "{table_name}"')
-                        continue
-                    column_val = import_util.safe_column(ref_index_row,
-                                                         data_source_data)
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix.startswith('ARRAY'):
-                    data_source_offset += 2
-                    (ref_index_name,
-                     array_index) = data_source_cmd_param.split('.')
-                    array_index = int(array_index)
-                    ref_index_row = None
-                    if ref_index_name+'_row' not in metadata:
-                        if data_source_cmd_param != 'ring_geo':
-                            # If we don't have ring_geo for this volume, don't
-                            # bitch about it because we already did earlier.
-                            error_list.append(
-                                'Unknown internal metadata name '+
-                                f'"{ref_index_name}"'+
-                                f' while processing column "{field_name}" in '+
-                                f'table "{table_name}"')
-                        continue
-                    ref_index_row = metadata[ref_index_name+'_row']
-                    if ref_index_row is None:
-                        import_util.log_nonrepeating_warning(
-                            'Missing row in metadata file '+
-                            f'"{data_source_cmd_param}"')
-                        processed = True
-                        break
-                    if data_source_data not in ref_index_row:
-                        error_list.append(
-                                'Unknown referenced column '+
-                                f'"{data_source_data}" '+
-                                f'while processing table "{table_name}"')
-                        continue
-                    if (array_index < 0 or
-                        array_index >=
-                            len(ref_index_row[data_source_data])):
-                        import_util.log_nonrepeating_error(
-                            f'Bad array index "{array_index}" for column '+
-                            f'"{field_name}" in table "{table_name}"')
-                        processed = True
-                        break
-                    column_val = import_util.safe_column(ref_index_row,
-                                                         data_source_data,
-                                                         array_index)
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix == 'FUNCTION':
-                    data_source_offset += 2
-                    ok, ret = import_run_field_function(data_source_data,
-                                                        volume_id,
-                                                        volset,
-                                                        instrument_name,
-                                                        func_instrument_name,
-                                                        mission_abbrev,
-                                                        volume_type,
-                                                        table_name,
-                                                        table_schema,
-                                                        metadata,
-                                                        field_name)
-                    if not ok:
-                        # Function doesn't exist
-                        # An error will already have been logged
-                        continue
-                    if isinstance(ret, tuple) or isinstance(ret, list):
+            elif data_source == 'COMPUTE':
+                ok, ret = import_run_field_function(instrument_obj,
+                                                    table_name,
+                                                    table_schema,
+                                                    metadata,
+                                                    field_name)
+                if ok:
+                    # If the function doesn't exist, an error will already
+                    # have been logged
+                    if isinstance(ret, (tuple, list)):
                         column_val = ret[0]
                         mult_label = ret[1]
                         if len(ret) == 3:
@@ -1505,43 +1182,25 @@ def import_observation_table(volume_id,
                         mult_label_set = True
                     else:
                         column_val = ret
-                    processed = True
-                    break
 
-                if data_source_cmd_prefix == 'MAX_ID':
-                    if table_name not in impglobals.MAX_TABLE_ID_CACHE:
-                        impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                            import_util.find_max_table_id(table_name))
+            elif data_source == 'LONGITUDE_FIELD':
+                column_val = instrument_obj.compute_longitude_field()
+
+            elif data_source == 'D_LONGITUDE_FIELD':
+                column_val = instrument_obj.compute_d_longitude_field()
+
+            elif data_source == 'MAX_ID':
+                if table_name not in impglobals.MAX_TABLE_ID_CACHE:
                     impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                        impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
-                    column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
-                    processed = True
-                    break
+                        import_util.find_max_table_id(table_name))
+                impglobals.MAX_TABLE_ID_CACHE[table_name] = (
+                    impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
+                column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
 
-                if data_source_cmd_prefix == 'VALUESTR':
-                    column_val = data_source_data
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix == 'VALUEREAL':
-                    column_val = float(data_source_data)
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix == 'VALUEINT':
-                    column_val = int(data_source_data)
-                    processed = True
-                    break
-
+            else:
                 import_util.log_nonrepeating_error(
-                    f'Unknown data_source type "{data_source_cmd}" for'+
+                    f'Unknown data_source type "{data_source}" for '+
                     f'"{field_name}" in table "{table_name}"')
-                processed = True
-                break
-
-            if not processed:
-                for error_str in error_list:
-                    import_util.log_nonrepeating_error(error_str)
 
         ### VALIDATE THE COLUMN VALUE ###
 
@@ -1629,7 +1288,7 @@ def import_observation_table(volume_id,
                                    f'"{table_name}" has minimum value '+
                                    f'{val_min} but {column_val} is too small -'+
                                    ' substituting NULL')
-                            impglobals.LOGGER.log('debug', msg)
+                            import_util.log_debug(msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has minimum value '+
@@ -1642,7 +1301,7 @@ def import_observation_table(volume_id,
                                    f'"{table_name}" has maximum value {val_max}'+
                                    f' but {column_val} is too large - '+
                                    'substituting NULL')
-                            impglobals.LOGGER.log('debug', msg)
+                            import_util.log_debug(msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value '+
@@ -1674,56 +1333,31 @@ def import_observation_table(volume_id,
                                        column_val, mult_label, disp_order)
             new_row[mult_column_name] = id_num
 
-        ### A BIT OF TRICKERY - WE CAN'T RETRIEVE THE RING OR SURFACE GEO
-        ### METADATA UNTIL WE KNOW THE OPUS_ID, WHICH IS COMPUTED
-        ### WHILE PROCESSING OBS_GENERAL
-
-        if table_name == 'obs_general' and field_name == 'opus_id':
-            opus_id = new_row[field_name]
-            if 'ring_geo' in metadata:
-                ring_geo = metadata['ring_geo'].get(opus_id, None)
-                metadata['ring_geo_row'] = ring_geo
-                if (ring_geo is None and
-                    impglobals.ARGUMENTS.import_report_missing_ring_geo):
-                    impglobals.LOGGER.log('warning',
-                        'RING GEO metadata available but missing for '+
-                        f'opus_id "{opus_id}"')
-            if 'body_surface_geo' in metadata:
-                body_geo = metadata['body_surface_geo'].get(opus_id)
-                metadata['body_surface_geo_row'] = body_geo
-
     return new_row
 
-def import_run_field_function(func_name_suffix, volume_id,
-                              volset,
-                              instrument_name,
-                              func_instrument_name,
-                              mission_abbrev,
-                              volume_type,
+def import_run_field_function(instrument_obj,
                               table_name, table_schema, metadata,
                               field_name):
     "Call the Python function used to populate a single field in a table."
-    not_exists_is_ok = False
-    if func_name_suffix[0] == '~':
-        not_exists_is_ok = True
-        func_name_suffix = func_name_suffix[1:]
-
-    func_name = 'populate_'+func_name_suffix
-    func_name = func_name.replace('<INST>', func_instrument_name)
-    func_name = func_name.replace('<MISSION>', mission_abbrev)
-    func_name = func_name.replace('<TYPE>', volume_type)
-    if func_name not in globals():
-        if not not_exists_is_ok:
-            import_util.log_nonrepeating_error(
-                f'Unknown table populate function "{func_name}" for '+
-                f'"{field_name}" in table "{table_name}"')
+    if table_name.startswith('obs_surface_geometry__'):
+        table_name = 'obs_surface_geometry_target'
+    func_name = 'field_'+table_name+'_'+field_name
+    if (not hasattr(instrument_obj, func_name) or
+        not callable(func := getattr(instrument_obj, func_name))):
+        class_name = type(instrument_obj).__name__
+        import_util.log_nonrepeating_error(
+            f'Unknown table field func "{class_name}::{func_name}"')
         return (False, None)
-    func = globals()[func_name]
-    return (True, func(volume_id=volume_id, volset=volset,
-                       instrument_name=instrument_name,
-                       mission_abbrev=mission_abbrev,
-                       table_name=table_name, table_schema=table_schema,
-                       metadata=metadata))
+    try:
+        res = func()
+    except Exception:
+        tb = traceback.format_exc()
+        class_name = type(instrument_obj).__name__
+        import_util.log_nonrepeating_error(
+            f'Execution of field function {class_name}::{func_name} failed with '+
+            f'exception:\n{tb}')
+        return False, None
+    return (True, res)
 
 def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                                   instrument_id):
@@ -1733,7 +1367,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
         pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     except ValueError:
         import_util.log_nonrepeating_error(
-                                    f'Failed to convert file_spec "{file_spec}"')
+                                    f'Failed to convert filespec "{filespec}"')
         return
 
     products = pdsf.opus_products()
@@ -1748,11 +1382,6 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     for product_type in products:
         (category, sort_order_num, short_name,
          full_name, default_checked) = product_type
-
-        # We will skip all the diagrams of COUVIS_8xxx for now.
-        if (volume_id.startswith('COUVIS_8') and
-            full_name.find('Browse Diagram') != -1):
-            continue
 
         if category == 'standard':
             pref = 'ZZZZZ1'
@@ -1874,9 +1503,8 @@ def remove_opus_id_from_tables(table_rows, opus_id):
         while i < len(rows):
             if ('opus_id' in rows[i] and
                 rows[i]['opus_id'] == opus_id):
-                impglobals.LOGGER.log('debug',
-                    f'Removing "{opus_id}" from unwritten table '+
-                    f'"{table_name}"')
+                import_util.log_debug(f'Removing "{opus_id}" from unwritten table '+
+                                      f'"{table_name}"')
                 del rows[i]
                 continue # There might be more than one in obs_surface_geometry
             i += 1
@@ -1905,7 +1533,7 @@ def do_import_steps():
     old_imp_tables_dropped = False
     if (impglobals.ARGUMENTS.drop_old_import_tables and
         not impglobals.ARGUMENTS.leave_old_import_tables):
-        impglobals.LOGGER.log('info', 'Deleting all old import tables')
+        import_util.log_info('Deleting all old import tables')
         delete_all_obs_mult_tables('import')
         old_imp_tables_dropped = True
 
@@ -1916,7 +1544,7 @@ def do_import_steps():
     old_perm_tables_dropped = False
     if (impglobals.ARGUMENTS.drop_permanent_tables and
         impglobals.ARGUMENTS.scorched_earth):
-        impglobals.LOGGER.log('warning', '** DELETING ALL PERMANENT TABLES **')
+        import_util.log_warning('** DELETING ALL PERMANENT TABLES **')
         delete_all_obs_mult_tables('perm')
         old_perm_tables_dropped = True
 
@@ -1942,8 +1570,7 @@ def do_import_steps():
     if (impglobals.ARGUMENTS.do_import or
         impglobals.ARGUMENTS.delete_import_volumes):
         if not old_imp_tables_dropped:
-            impglobals.LOGGER.log('warning',
-                                  'Importing on top of previous import tables!')
+            import_util.log_warning('Importing on top of previous import tables!')
             for volume_id in import_util.yield_import_volume_ids(
                                                     impglobals.ARGUMENTS):
                 delete_volume_from_obs_tables(volume_id, 'import')
@@ -1979,8 +1606,8 @@ def do_import_steps():
         if not old_perm_tables_dropped:
             # Don't bother if there's nothing there!
             if not impglobals.ARGUMENTS.create_cart:
-                impglobals.LOGGER.log('warning',
-        'Deleting volumes from perm tables but cart table not wiped')
+                import_util.log_warning(
+                        'Deleting volumes from perm tables but cart table not wiped')
             for volume_id in import_volume_ids:
                 delete_volume_from_obs_tables(volume_id, 'perm')
 
@@ -1996,10 +1623,10 @@ def do_import_steps():
         for volume_id in import_volume_ids:
             create_tables_for_import(volume_id, 'perm')
 
-        impglobals.LOGGER.log('info', 'Deleting duplicate opus_ids')
+        import_util.log_info('Deleting duplicate opus_ids')
         delete_duplicate_opus_id_from_perm_tables()
 
-        impglobals.LOGGER.log('info', 'Copying import mult tables to permanent')
+        import_util.log_info('Copying import mult tables to permanent')
         copy_mult_from_import_to_permanent()
 
         for volume_id in import_volume_ids:
@@ -2007,10 +1634,10 @@ def do_import_steps():
 
     # If --drop-new-import-tables is given, delete the new import tables
     if impglobals.ARGUMENTS.drop_new_import_tables:
-        impglobals.LOGGER.log('info', 'Deleting all new import tables')
+        import_util.log_info('Deleting all new import tables')
         delete_all_obs_mult_tables('import')
 
     # If --analyze-permanent-tables is given, analyze the permanent tables
     if impglobals.ARGUMENTS.analyze_permanent_tables:
-        impglobals.LOGGER.log('info', 'Analyzing all permanent tables')
+        import_util.log_info('Analyzing all permanent tables')
         analyze_all_tables('perm')

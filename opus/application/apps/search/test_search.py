@@ -3076,12 +3076,12 @@ class searchTests(TestCase):
 
     def test__construct_query_string_string(self):
         "[test_search.py] construct_query_string: a string"
-        selections = {'obs_pds.primary_file_spec': ['C11399XX']}
+        selections = {'obs_pds.primary_filespec': ['C11399XX']}
         extras = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_pds`.`primary_file_spec` LIKE %s'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_pds`.`primary_filespec` LIKE %s'
         expected_params = ['%C11399XX%']
         print(expected)
         print(expected_params)
@@ -3169,12 +3169,12 @@ class searchTests(TestCase):
 
     def test__construct_query_string_string_with_qtype(self):
         "[test_search.py] construct_query_string: a string and qtype"
-        selections = {'obs_pds.primary_file_spec': ['C11399XX']}
-        extras = {'qtypes': {'obs_pds.primary_file_spec': ['begins']}}
+        selections = {'obs_pds.primary_filespec': ['C11399XX']}
+        extras = {'qtypes': {'obs_pds.primary_filespec': ['begins']}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_pds`.`primary_file_spec` LIKE %s'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_pds`.`primary_filespec` LIKE %s'
         expected_params = ['C11399XX%']
         print(expected)
         print(expected_params)
@@ -3183,12 +3183,12 @@ class searchTests(TestCase):
 
     def test__construct_query_string_string_with_qtype_clause(self):
         "[test_search.py] construct_query_string: a string and qtype clause"
-        selections = {'obs_pds.primary_file_spec': ['C11399XX', 'C11399YY']}
-        extras = {'qtypes': {'obs_pds.primary_file_spec': ['begins', 'ends']}}
+        selections = {'obs_pds.primary_filespec': ['C11399XX', 'C11399YY']}
+        extras = {'qtypes': {'obs_pds.primary_filespec': ['begins', 'ends']}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_pds`.`primary_file_spec` LIKE %s) OR (`obs_pds`.`primary_file_spec` LIKE %s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_pds`.`primary_filespec` LIKE %s) OR (`obs_pds`.`primary_filespec` LIKE %s)'
         expected_params = ['C11399XX%', '%C11399YY']
         print(expected)
         print(expected_params)

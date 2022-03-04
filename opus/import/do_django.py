@@ -9,7 +9,7 @@ import import_util
 
 
 def drop_cache_tables():
-    impglobals.LOGGER.log('info', 'Dropping cache tables')
+    import_util.log_debug('Dropping cache tables')
     table_names = impglobals.DATABASE.table_names('all',
                                                   prefix='cache_')
     for table_name in table_names:

@@ -130,9 +130,9 @@ def get_pds_products(opus_id_list,
             results[opus_id][version_name][product_type] = []
 
         if path:
-            path = settings.PDS_DATA_DIR + '/' + path
+            path = settings.PDS_DATA_DIR.rstrip('/') + '/' + path
         if url:
-            url = settings.PRODUCT_HTTP_PATH + url
+            url = settings.PRODUCT_HTTP_PATH.rstrip('/') + '/' + url
 
         if loc_type == 'path':
             res = path
@@ -224,7 +224,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                 width = 0
                 height = 0
             else:
-                url = settings.PRODUCT_HTTP_PATH + viewable.url
+                url = settings.PRODUCT_HTTP_PATH.strip('/') + viewable.url
                 alt_text = viewable.alt
                 byte_size = viewable.bytes
                 width = viewable.width

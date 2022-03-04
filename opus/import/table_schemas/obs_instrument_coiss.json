@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -46,10 +37,7 @@
         "field_enum_options": "'12BIT','8LSB','TABLE'",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "DATA_CONVERSION_TYPE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "DATA_CONVERSION_TYPE",
@@ -78,10 +66,7 @@
         "field_enum_options": "'LOSSLESS','LOSSY','NOTCOMP'",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "INST_CMPRS_TYPE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "COMPRESSION_TYPE",
@@ -110,10 +95,7 @@
         "field_enum_options": "'12 ELECTRONS PER DN','29 ELECTRONS PER DN','95 ELECTRONS PER DN','215 ELECTRONS PER DN'",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "GAIN_MODE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "GAIN_MODE_ID",
@@ -142,10 +124,7 @@
         "field_type": "char48",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_coiss_image_observation_type"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "IMAGE_OBSERVATION_TYPE",
@@ -180,10 +159,7 @@
         "field_type": "int2",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "MISSING_LINES"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1024,
         "val_sentinel": [ -2147483648, 2147483647, -1e32 ],
@@ -210,10 +186,7 @@
         "field_enum_options": "'NACONLY','WACONLY','BOTSIM'",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "SHUTTER_MODE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "SHUTTER_MODE_ID",
@@ -242,10 +215,7 @@
         "field_enum_options": "'DISABLED','ENABLED'",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "SHUTTER_STATE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "SHUTTER_STATE_ID",
@@ -272,10 +242,7 @@
         "field_type": "int4",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "IMAGE_NUMBER"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "IMAGE_NUMBER",
@@ -297,10 +264,7 @@
         "field_type": "enum",
         "field_enum_options": "'FULL','SUM2','SUM4'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "INSTRUMENT_MODE_ID",
@@ -327,10 +291,7 @@
         "field_type": "char75",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_coiss_target_desc"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "TARGET_DESC",
@@ -352,10 +313,7 @@
         "field_type": "char30",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_coiss_combined_filter"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "NORMALIZED_FILTER_NAME",
@@ -378,10 +336,7 @@
         "field_type": "enum",
         "field_notnull": true,
         "field_enum_options": "'W','N'",
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_coiss_camera"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
         "pi_dict_name": "CAMERA",
@@ -418,10 +373,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

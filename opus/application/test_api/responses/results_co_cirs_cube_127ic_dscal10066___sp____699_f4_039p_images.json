@@ -7,27 +7,27 @@
     "data": [
         {
             "opus_id": "co-cirs-cube-127ic_dscal10066___sp____699_f4_039p",
-            "thumb_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_thumb.jpg",
+            "thumb_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_thumb.jpg",
             "thumb_alt_text": "127IC_DSCAL10066___SP____699_F4_039P_thumb.jpg",
             "thumb_size_bytes": 1673,
             "thumb_width": 27,
             "thumb_height": 100,
-            "small_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_small.jpg",
+            "small_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_small.jpg",
             "small_alt_text": "127IC_DSCAL10066___SP____699_F4_039P_small.jpg",
             "small_size_bytes": 6206,
             "small_width": 70,
             "small_height": 256,
-            "med_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_med.jpg",
+            "med_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_med.jpg",
             "med_alt_text": "127IC_DSCAL10066___SP____699_F4_039P_med.jpg",
             "med_size_bytes": 18847,
             "med_width": 140,
             "med_height": 512,
-            "full_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_full.jpg",
+            "full_url": "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/POINT_PERSPECTIVE/127IC_DSCAL10066___SP____699_F4_039P_full.jpg",
             "full_alt_text": "127IC_DSCAL10066___SP____699_F4_039P_full.jpg",
             "full_size_bytes": 51223,
             "full_width": 272,
             "full_height": 992,
-            "ring_obs_id": "S_SPEC_CO_CIRS_C_DSCAL100_FP4"
+            "ring_obs_id": null
         }
     ]
 }

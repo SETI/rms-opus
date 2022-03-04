@@ -4,7 +4,7 @@
     "data_set_id": "HST-M-ACS-5-ID9975-V1.1",
     "product_id": "J8N410LBQ",
     "product_creation_time": "2013-06-17T12:57:23.000",
-    "primary_file_spec": "HSTJ0_9975/DATA/VISIT_10/J8N410LBQ.LBL",
+    "primary_filespec": "HSTJ0_9975/DATA/VISIT_10/J8N410LBQ.LBL",
     "opus_id": "hst-09975-acs-j8n410lbq",
     "note": null
   }

@@ -1296,8 +1296,8 @@ def get_search_results_chunk(request, use_cart=None,
                             This is a list of opus_ids 1:1 with the returned
                             data.
         return_ringobsids   Include 'ring_obs_ids' in the returned aux dict.
-        return_filespecs    Include 'file_specs' in the returned aux dict.
-                            This is a list of primary_file_specs 1:1 with the
+        return_filespecs    Include 'filespecs' in the returned aux dict.
+                            This is a list of primary_filespecs 1:1 with the
                             returned data.
         return_cart_states
                             Include 'cart_states' in the returned aux
@@ -1400,8 +1400,8 @@ def get_search_results_chunk(request, use_cart=None,
             column_names.append('obs_general.ring_obs_id')
             added_extra_columns += 1 # So we know to strip it off later
     if return_filespecs:
-        if 'obs_general.primary_file_spec' not in column_names:
-            column_names.append('obs_general.primary_file_spec')
+        if 'obs_general.primary_filespec' not in column_names:
+            column_names.append('obs_general.primary_filespec')
             added_extra_columns += 1 # So we know to strip it off later
     if return_cart_states:
         column_names.append('cart.opus_id')
@@ -1669,9 +1669,9 @@ def get_search_results_chunk(request, use_cart=None,
         ring_obs_ids = [o[ring_obs_id_index] for o in results]
 
     if return_filespecs:
-        # For retrieving preview images, obs_general.primary_file_spec
-        file_spec_index = column_names.index('obs_general.primary_file_spec')
-        file_specs = [o[file_spec_index] for o in results]
+        # For retrieving preview images, obs_general.primary_filespec
+        filespec_index = column_names.index('obs_general.primary_filespec')
+        filespecs = [o[filespec_index] for o in results]
 
     if return_cart_states:
         # For retrieving cart states
@@ -1710,7 +1710,7 @@ def get_search_results_chunk(request, use_cart=None,
     if return_ringobsids:
         aux_dict['ring_obs_ids'] = ring_obs_ids
     if return_filespecs:
-        aux_dict['file_specs'] = file_specs
+        aux_dict['filespecs'] = filespecs
     if return_cart_states:
         aux_dict['cart_states'] = cart_states
 

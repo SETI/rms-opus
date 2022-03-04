@@ -1,0 +1,33 @@
+{
+    "start_obs": 1,
+    "limit": 100,
+    "count": 1,
+    "available": 1,
+    "order": "time1,opusid",
+    "data": [
+        {
+            "opus_id": "go-ssi-c0248807000",
+            "thumb_url": "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/SL9/C0248807000R_thumb.jpg",
+            "thumb_alt_text": "C0248807000R_thumb.jpg",
+            "thumb_size_bytes": 2266,
+            "thumb_width": 100,
+            "thumb_height": 100,
+            "small_url": "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/SL9/C0248807000R_small.jpg",
+            "small_alt_text": "C0248807000R_small.jpg",
+            "small_size_bytes": 6527,
+            "small_width": 200,
+            "small_height": 200,
+            "med_url": "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/SL9/C0248807000R_med.jpg",
+            "med_alt_text": "C0248807000R_med.jpg",
+            "med_size_bytes": 20285,
+            "med_width": 400,
+            "med_height": 400,
+            "full_url": "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/SL9/C0248807000R_full.jpg",
+            "full_alt_text": "C0248807000R_full.jpg",
+            "full_size_bytes": 64413,
+            "full_width": 800,
+            "full_height": 800,
+            "ring_obs_id": null
+        }
+    ]
+}

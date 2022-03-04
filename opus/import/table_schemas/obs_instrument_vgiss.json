@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,20 +28,14 @@
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "image_id",
         "field_type": "char10",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "IMAGE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "IMAGE_ID",
@@ -69,10 +57,7 @@
         "field_type": "enum",
         "field_enum_options": "'1:1','2:1','3:1','5:1','10:1'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "SCAN_MODE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "SCAN_MODE_ID",
@@ -101,10 +86,7 @@
         "field_type": "enum",
         "field_enum_options": "'BODARK','BOTALT','BOTSIM','BSIMAN','NAONLY','NOSHUT','WAONLY','N/A'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "SHUTTER_MODE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "SHUTTER_MODE_ID",
@@ -136,10 +118,7 @@
         "field_type": "enum",
         "field_enum_options": "'LOW','HIGH'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "GAIN_MODE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "GAIN_MODE_ID",
@@ -165,10 +144,7 @@
         "field_type": "enum",
         "field_enum_options": "'1:1','3:4','2:3','3:5','1:2','2:5','1:3','1:5','1:10','1:32'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "EDIT_MODE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "EDIT_MODE_ID",
@@ -202,10 +178,7 @@
         "field_type": "enum",
         "field_enum_options": "'BLUE','CH4_JS','CH4_U','CLEAR','GREEN','ORANGE','SODIUM','UV','VIOLET'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "FILTER_NAME"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "FILTER_NAME",
@@ -237,10 +210,7 @@
         "field_name": "filter_number",
         "field_type": "int1",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "FILTER_NUMBER"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "FILTER_NUMBER",
@@ -272,10 +242,7 @@
         "field_type": "enum",
         "field_enum_options": "'W','N'",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_vgiss_camera_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "CAMERA",
@@ -301,10 +268,7 @@
         "field_type": "int2",
         "field_notnull": false,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_vgiss_usable_lines_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 800,
         "pi_category_name": "obs_instrument_vgiss",
@@ -328,10 +292,7 @@
         "field_type": "int2",
         "field_notnull": false,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_vgiss_usable_samples_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 800,
         "pi_category_name": "obs_instrument_vgiss",
@@ -365,10 +326,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",
