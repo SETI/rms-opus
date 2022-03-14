@@ -30,7 +30,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Min, Count
 from django.http import Http404, HttpResponseServerError
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
 from cart.models import Cart
@@ -132,7 +132,9 @@ def api_get_result_count(request, fmt, internal=False):
     if fmt == 'json':
         ret = json_response({'data': [data]})
     elif fmt == 'html':
-        ret = render_to_response('metadata/result_count.html', {'data': data})
+        ret = render(request,
+                     'metadata/result_count.html',
+                     {'data': data})
     elif fmt == 'csv':
         ret = csv_response('result_count', [['result count', count]])
     else: # pragma: no cover
@@ -323,7 +325,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
     if fmt == 'json':
         ret = json_response(data)
     elif fmt == 'html':
-        ret = render_to_response('metadata/mults.html', data)
+        ret = render(request, 'metadata/mults.html', data)
     elif fmt == 'csv':
         ret = csv_response(slug, [list(mults.values())],
                            column_names=list(mults.keys()))
@@ -541,8 +543,9 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     if fmt == 'json':
         ret = json_response(range_endpoints)
     elif fmt == 'html':
-        ret = render_to_response('metadata/endpoints.html',
-                                 {'data': range_endpoints})
+        ret = render(request,
+                     'metadata/endpoints.html',
+                     {'data': range_endpoints})
     elif fmt == 'csv':
         ret = csv_response(slug, [[range_endpoints['min'],
                                    range_endpoints['max'],

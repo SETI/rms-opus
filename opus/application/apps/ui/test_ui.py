@@ -37,9 +37,16 @@ class uiTests(TestCase):
 
     def test__api_notifications_no_request(self):
         "[test_ui.py] api_notifications: no request"
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__notifications.json'):
-            api_notifications(None)
+        try:
+            with self.assertRaisesRegex(Http404,
+                r'Internal error \(No request was provided\) for /__notifications.json'):
+                api_notifications(None)
+        except TypeError as e:
+            # In Django 4.0, never_cache will raise an error when no request is passed in.
+            if "didn't receive an HttpRequest" in str(e):
+                assert True
+            else:
+                assert False, "Unexpected error when no request was provided."
 
     def test__api_notifications_no_get(self):
         "[test_ui.py] api_notifications: no GET"

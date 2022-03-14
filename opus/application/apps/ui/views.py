@@ -108,7 +108,6 @@ def api_notifications(request):
         }
     """
     api_code = enter_api_call('api_notifications', request)
-
     if not request or request.GET is None:
         ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
