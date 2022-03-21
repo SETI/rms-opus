@@ -78,10 +78,13 @@ MIDDLEWARE = (
 
 ROOT_URLCONF = 'urls'
 
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            PROJECT_ROOT + '/templates',
             PROJECT_ROOT + '/apps/',
             PROJECT_ROOT + '/apps/ui/templates/',
             PROJECT_ROOT + '/apps/dictionary/templates/',
@@ -90,6 +93,7 @@ TEMPLATES = [
             PROJECT_ROOT + '/apps/quide/templates/',
             PROJECT_ROOT + '/apps/search/templates/',
         ],
+        # 'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
@@ -121,6 +125,7 @@ INSTALLED_APPS = (
     # 'django_nose',
     'django_memcached',
     'django.contrib.admindocs',
+    'django.forms',
     'storages',
     'search',
     'paraminfo',
