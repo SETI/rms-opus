@@ -167,7 +167,7 @@ CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
 INTERNAL_IPS = ('127.0.0.1',)
 
-# TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
 

@@ -97,7 +97,7 @@ def api_view_cart(request):
     """
     api_code = enter_api_call('api_view_cart', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__cart/view.html'))
         exit_api_call(api_code, ret)
         raise ret
@@ -187,7 +187,7 @@ def api_cart_status(request):
     """
     api_code = enter_api_call('api_cart_status', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__cart/status.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -242,7 +242,7 @@ def api_get_cart_csv(request):
     """
     api_code = enter_api_call('api_get_cart_csv', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__cart/data.csv'))
         exit_api_call(api_code, ret)
         raise ret
@@ -326,7 +326,7 @@ def api_edit_cart(request, action, **kwargs):
     """
     api_code = enter_api_call('api_edit_cart', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/__cart/{action}.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -452,7 +452,7 @@ def api_reset_session(request):
     """
     api_code = enter_api_call('api_reset_session', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__cart/reset.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -524,7 +524,7 @@ def api_create_download(request, opus_id=None, fmt=None):
     """
     api_code = enter_api_call('api_create_download', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         if opus_id:
             ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.{fmt}'))
         else:

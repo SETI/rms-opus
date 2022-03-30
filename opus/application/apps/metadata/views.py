@@ -108,7 +108,7 @@ def api_get_result_count(request, fmt, internal=False):
     """
     api_code = enter_api_call('api_get_result_count', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/meta/result_count.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -184,7 +184,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
     """
     api_code = enter_api_call('api_get_mult_counts', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/meta/mults/{slug}.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -387,7 +387,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     """
     api_code = enter_api_call('api_get_range_endpoints', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(
                                     f'/api/meta/range/endpoints/{slug}.{fmt}'))
         exit_api_call(api_code, ret)
@@ -610,7 +610,7 @@ def api_get_fields(request, fmt, slug=None):
     """
     api_code = enter_api_call('api_get_fields', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/fields/{slug}.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
