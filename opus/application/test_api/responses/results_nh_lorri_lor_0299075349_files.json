@@ -150,11 +150,11 @@
                 ]
             },
             "1": {
-                "nh_lorri_raw_alternate": [
+                "nh_lorri_raw": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx_v1/NHPELO_1001/data/20150713_029907/lor_0299075349_0x632_eng.fit",
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx_v1/NHPELO_1001/data/20150713_029907/lor_0299075349_0x632_eng.lbl"
                 ],
-                "nh_lorri_calib_alternate": [
+                "nh_lorri_calib": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx_v1/NHPELO_2001/data/20150713_029907/lor_0299075349_0x632_sci.fit",
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx_v1/NHPELO_2001/data/20150713_029907/lor_0299075349_0x632_sci.lbl"
                 ]

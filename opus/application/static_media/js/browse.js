@@ -571,7 +571,6 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
             if ($("#op-metadata-detail-view").hasClass("show")) {
-                e.preventDefault();
                 if (o_browse.pageLoaderSpinnerTimer === null) {
                     /*  Catch the right/left arrow and spacebar while in the modal
                         Up: 38
@@ -617,6 +616,7 @@ var o_browse = {
                             // fixes the bug that prevented click on the slide to open a full size image
                             return true;
                     }
+                    e.preventDefault();
                 }
                 return false;
             }
