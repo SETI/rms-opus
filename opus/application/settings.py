@@ -93,7 +93,6 @@ TEMPLATES = [
             PROJECT_ROOT + '/apps/quide/templates/',
             PROJECT_ROOT + '/apps/search/templates/',
         ],
-        # 'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
@@ -122,7 +121,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    # 'django_nose',
     'django_memcached',
     'django.contrib.admindocs',
     'django.forms',
@@ -166,8 +164,6 @@ else:
 CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
 INTERNAL_IPS = ('127.0.0.1',)
-
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
 
