@@ -1012,6 +1012,11 @@ button.op-mini-thumbnail-zoom {
     padding-top: 0 !important;
 }
 
+a.op-submenu-category,
+.list-group-item a {
+    text-decoration: none;
+}
+
 /* Make sure the a tags for categories take up full width in select metadata
    and search sidebar menu */
 .op-submenu-category {

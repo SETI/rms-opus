@@ -8,7 +8,7 @@
         <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info op-no-select">
             <div class="container-fluid">
                 <a class="op-reset-opus navbar-brand" href="#" title="Reset OPUS to its default state">OPUS3</a>
-                <ul class="op-tab nav navbar-nav mr-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
+                <ul class="op-tab nav navbar-nav me-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link" href="#search" data-bs-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
                     </li>
@@ -33,7 +33,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="op-main-nav-collapse">
-                    <ul class="op-tab nav navbar-nav mr-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
+                    <ul class="op-tab nav navbar-nav me-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
                         <li class="nav-item external-link blogspot">
                             <a class="nav-link op-blog-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
                                 <div id="op-last-blog-update-date" class="container align-items-center d-flex h-100 my-auto" data-bs-toggle="tooltip" data-placement="bottom" title="">
@@ -79,13 +79,13 @@
         <div class="tab-content border-0 container-fluid tab-full-width">
             <div id="search" class="tab-pane op-no-select" role="tabpanel" aria-labelledby="search-tab">
                 <div class="row flex-nowrap">
-                    <div class="col pr-0 sidebar-area border-right">
+                    <div class="col pe-0 sidebar-area border-end">
                         <div id="sidebar-container" class="sidebar_wrapper ps-scrollbar">
                             <div id="sidebar">
                                 {% include "ui/menu.html" %}
                             </div>
                         </div>
-                        <hr class="shadow-divider my-0 ml-0 mr-3">
+                        <hr class="op-shadow-divider my-0 ms-0 me-3">
                         <div class="op-reset-button">
                                 <button type="button" class="btn btn-sm btn-secondary op-reset-search" data-bs-target="#op-reset-search-modal" title="Reset all search params" disabled>Reset Search</button>
                                 <button type="button" class="btn btn-sm btn-secondary op-reset-search-metadata" data-bs-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata" disabled>Reset Search and Metadata</button>
@@ -105,7 +105,7 @@
                 <div class="panel">
                     <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                         <div class="browse-nav-container">
-                            <ul class="navbar-nav mr-auto">
+                            <ul class="navbar-nav me-auto">
                                 <li class="nav-item">
                                     <a href="#" class="op-browse-view nav-link" data-view="data"><i class="far fa-list-alt"></i></a>
                                 </li>
@@ -118,7 +118,7 @@
                             </ul>
                             <ul class="op-slider-nav">
                                 <li class="nav-item">
-                                    <span class="op-observation-text mr-2">Observation #</span>
+                                    <span class="op-observation-text me-2">Observation #</span>
                                     <div class="op-observation-slider">
                                         <div class="ui-slider-handle op-slider-pointer" data-bs-target="#browse"><div class="op-observation-number"></div></div>
                                     </div>
@@ -139,7 +139,7 @@
                             or click on the Reset Search button to reset the search criteria to default.</p>
                         </div>
                         <div class="justify-content-start op-gallery-view mx-0">
-                            <div class="mr-0 gallery gallery-scroll">
+                            <div class="me-0 gallery gallery-scroll">
                             </div>
                             <div class="op-gallery-view-docked panel">CONTENTS</div>
                         </div>
@@ -165,9 +165,9 @@
                     </div>
                     <div class="op-edit-field-tool dropdown-menu dropdown-menu-sm border-top-0 border-dark mt-0" data-bs-toggle="dropdown" aria-labelledby="op-edit-field-tool" aria-haspopup="true" aria-expanded="false">
                         <div class="d-flex justify-content-between">
-                            <a href="#" class="op-metadata-detail-add" data-bs-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus pl-1"></i></a>
+                            <a href="#" class="op-metadata-detail-add" data-bs-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus ps-1"></i></a>
                             <a href="#" class="op-metadata-detail-remove" data-bs-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
-                            <a href="#" class="op-metadata-detail-add" data-bs-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pr-1"></i></a>
+                            <a href="#" class="op-metadata-detail-add" data-bs-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pe-1"></i></a>
                         </div>
                     </div>
                 </div>
@@ -175,14 +175,14 @@
 
             <div id="cart" class="tab-pane op-no-select" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
-                    <div class="col op-cart-details pr-0">
-                        <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
+                    <div class="col op-cart-details pe-0">
+                        <div id="op-download-options-container" class="sidebar_wrapper mt-0 pe-0"></div>
                     </div>
-                    <div class="col pl-0 op-cart-gallery-side">
+                    <div class="col ps-0 op-cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container">
                                 <div class="op-cart-nav-container">
-                                    <ul class="navbar-nav mr-auto">
+                                    <ul class="navbar-nav me-auto">
                                         <li class="nav-item flex-sm-row">
                                             <a href="#" class="op-browse-view nav-link" data-bs-toggle="modal" data-bs-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
                                         </li>
@@ -192,7 +192,7 @@
                                     </ul>
                                     <ul class="op-slider-nav">
                                         <li class="nav-item">
-                                            <span class="op-observation-text mr-2">Observation #</span>
+                                            <span class="op-observation-text me-2">Observation #</span>
                                             <div class="op-observation-slider">
                                                 <div class="ui-slider-handle op-slider-pointer" data-bs-target="#cart"><div class="op-observation-number"></div></div>
                                             </div>
@@ -209,11 +209,11 @@
                             <div class="op-cart-actions-group">
                                 <div class="op-cart-actions">
                                     <li class="list-inline-item">
-                                        <a href="#" class="text-info mr-3" data-bs-toggle="modal" data-bs-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
+                                        <a href="#" class="text-info me-3" data-bs-toggle="modal" data-bs-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
                                             &nbsp;Empty Cart</a>
                                     </li>
                                     <li class="list-inline-item">
-                                        <a href="#" class="text-info mr-3" data-bs-toggle="modal" data-bs-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
+                                        <a href="#" class="text-info me-3" data-bs-toggle="modal" data-bs-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
                                             &nbsp;Empty Recycle Bin</a>
                                     </li>
                                     <li class="list-inline-item">
@@ -236,8 +236,8 @@
                                 at the top of the page, mouse over the thumbnail gallery images to reveal the tools,
                                 then click on the cart icon.  </p>
                             </div>
-                            <div class="justify-content-start op-gallery-view mr-0 ml-1">
-                                <div class="mr-0 gallery gallery-scroll">
+                            <div class="justify-content-start op-gallery-view me-0 ms-1">
+                                <div class="me-0 gallery gallery-scroll">
                                 </div>
                             </div>
                             <div class="op-data-table-view mx-0">
@@ -262,9 +262,9 @@
                         </div>
                         <div class="op-edit-field-tool dropdown-menu dropdown-menu-sm border-top-0 border-dark mt-0" data-bs-toggle="dropdown" aria-labelledby="op-edit-field-tool" aria-haspopup="true" aria-expanded="false">
                             <div class="d-flex justify-content-between">
-                                <a href="#" class="op-metadata-detail-add" data-bs-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus pl-1"></i></a>
+                                <a href="#" class="op-metadata-detail-add" data-bs-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus ps-1"></i></a>
                                 <a href="#" class="op-metadata-detail-remove" data-bs-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
-                                <a href="#" class="op-metadata-detail-add" data-bs-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pr-1"></i></a>
+                                <a href="#" class="op-metadata-detail-add" data-bs-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pe-1"></i></a>
                             </div>
                         </div>
                     </div>
@@ -274,7 +274,7 @@
                         <h3 class="op-header-text"></h3>
                         <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
                      </div>
-                    <div class="card-body bg-white pr-0">
+                    <div class="card-body bg-white pe-0">
                         <div class="op-card-contents">
                             Loading... please wait.
                         </div>
@@ -358,7 +358,7 @@
                                         <div class="op-metadata-detail-edit-message text-secondary">Drag to reorder</div>
                                     </div>
                                     <div class="op-metadata-details">
-                                        <div class="contents mr-2"></div>
+                                        <div class="contents me-2"></div>
                                     </div>
                                 </div>
                                 <div class="row bottom"></div>

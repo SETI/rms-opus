@@ -1054,7 +1054,7 @@ var o_search = {
                             $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let footerHeight = $(".app-footer").outerHeight();
         let resetButtonHeight = $(".op-reset-button").outerHeight();
-        let dividerHeight = $(".shadow-divider").outerHeight();
+        let dividerHeight = $(".op-shadow-divider").outerHeight();
         let offset = mainNavHeight + footerHeight + resetButtonHeight + dividerHeight;
         return $("#search").height() - offset;
     },
