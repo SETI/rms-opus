@@ -1,5 +1,5 @@
 # ui/urls.py
-from django.conf.urls import url
+from django.urls import re_path
 from django.contrib import admin
 
 from ui.views import (
@@ -13,14 +13,14 @@ from ui.views import (
 )
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^__notifications.json$', api_notifications),
-    url(r'^__menu.json$', api_get_menu),
-    url(r'^__metadata_selector.json$', api_get_metadata_selector),
-    url(r'^__widget/(?P<slug>[-\w]+).html$', api_get_widget),
-    url(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
-    url(r'^__normalizeurl.json$', api_normalize_url),
-    url(r'^__dummy.json$', api_dummy),
-    url(r'^__fake/__viewmetadatamodal/(?P<opus_id>[-\w]+).json$', api_dummy),
-    url(r'^__fake/__selectmetadatamodal.json$', api_dummy)
+    re_path(r'^admin/', admin.site.urls),
+    re_path(r'^__notifications.json$', api_notifications),
+    re_path(r'^__menu.json$', api_get_menu),
+    re_path(r'^__metadata_selector.json$', api_get_metadata_selector),
+    re_path(r'^__widget/(?P<slug>[-\w]+).html$', api_get_widget),
+    re_path(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
+    re_path(r'^__normalizeurl.json$', api_normalize_url),
+    re_path(r'^__dummy.json$', api_dummy),
+    re_path(r'^__fake/__viewmetadatamodal/(?P<opus_id>[-\w]+).json$', api_dummy),
+    re_path(r'^__fake/__selectmetadatamodal.json$', api_dummy)
 ]

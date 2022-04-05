@@ -108,8 +108,7 @@ def api_notifications(request):
         }
     """
     api_code = enter_api_call('api_notifications', request)
-
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -654,7 +653,7 @@ def api_normalize_url(request):
 
     api_code = enter_api_call('api_normalize_url', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
         exit_api_call(api_code, ret)
         raise ret

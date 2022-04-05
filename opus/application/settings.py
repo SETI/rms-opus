@@ -78,10 +78,13 @@ MIDDLEWARE = (
 
 ROOT_URLCONF = 'urls'
 
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            PROJECT_ROOT + '/templates',
             PROJECT_ROOT + '/apps/',
             PROJECT_ROOT + '/apps/ui/templates/',
             PROJECT_ROOT + '/apps/dictionary/templates/',
@@ -99,6 +102,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
@@ -117,9 +121,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'django_nose',
     'django_memcached',
     'django.contrib.admindocs',
+    'django.forms',
     'storages',
     'search',
     'paraminfo',
@@ -160,8 +164,6 @@ else:
 CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
 INTERNAL_IPS = ('127.0.0.1',)
-
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
 
@@ -369,3 +371,5 @@ DOWNLOAD_FORMATS = {
     'tar': ('application/x-tar', 'w', 'r'),
     'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

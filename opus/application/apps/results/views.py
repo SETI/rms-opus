@@ -154,7 +154,7 @@ def api_get_data_and_images(request):
     """
     api_code = enter_api_call('api_get_data_and_images', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__api/dataimages.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -339,7 +339,7 @@ def api_get_data(request, fmt):
     """
     api_code = enter_api_call('api_get_data', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/data.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -495,7 +495,7 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
 def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
         # don't care.
@@ -777,7 +777,7 @@ def api_get_image(request, opus_id, size, fmt):
     """
     api_code = enter_api_call('api_get_image', request)
 
-    if request is not None and request.GET is not None:
+    if request is not None and request.GET is not None or request.META is None:
         request.GET = request.GET.copy()
         request.GET['opusid'] = opus_id
         request.GET['qtype-opusid'] = 'matches'
@@ -787,7 +787,7 @@ def api_get_image(request, opus_id, size, fmt):
     return ret
 
 def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
         # don't care.
@@ -934,7 +934,7 @@ def api_get_files(request, opus_id=None):
     """
     api_code = enter_api_call('api_get_files', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/files/{opus_id}.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1015,7 +1015,7 @@ def api_get_categories_for_opus_id(request, opus_id):
     """
     api_code = enter_api_call('api_get_categories_for_opus_id', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/categories/{opus_id}.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1071,7 +1071,7 @@ def api_get_categories_for_search(request):
     """
     api_code = enter_api_call('api_get_categories_for_search', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/api/categories.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1115,7 +1115,7 @@ def api_get_product_types_for_opus_id(request, opus_id):
     """
     api_code = enter_api_call('api_get_product_types_for_opus_id', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/product_types/{opus_id}.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1178,7 +1178,7 @@ def api_get_product_types_for_search(request):
     """
     api_code = enter_api_call('api_get_product_types_for_search', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/api/product_types.json'))
         exit_api_call(api_code, ret)
         raise ret

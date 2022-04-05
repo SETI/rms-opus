@@ -14,7 +14,7 @@ from tools.app_utils import (HTTP404_BAD_COLLAPSE,
                              HTTP404_UNKNOWN_UNITS,
                              HTTP404_UNKNOWN_SLUG)
 
-from api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper
 
 import settings
 
