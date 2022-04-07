@@ -1,5 +1,5 @@
 # help/urls.py
-from django.conf.urls import url
+from django.urls import re_path
 
 from help.views import (
     api_about,
@@ -12,12 +12,12 @@ from help.views import (
 )
 
 urlpatterns = [
-    url(r'^__help/about.(?P<fmt>html|pdf)$', api_about),
-    url(r'^__help/volumes.(?P<fmt>html|pdf)$', api_volumes),
-    url(r'^__help/faq.(?P<fmt>html|pdf)$', api_faq),
-    url(r'^__help/gettingstarted.(?P<fmt>html|pdf)$', api_gettingstarted),
-    url(r'^__help/splash.html$', api_splash),
-    url(r'^apiguide.(?P<fmt>pdf)$', api_api_guide), # Public entrypoint
-    url(r'^__help/apiguide.(?P<fmt>html|pdf)$', api_api_guide),
-    url(r'^__help/citing.(?P<fmt>html|pdf)$', api_citing_opus),
+    re_path(r'^__help/about.(?P<fmt>html|pdf)$', api_about),
+    re_path(r'^__help/volumes.(?P<fmt>html|pdf)$', api_volumes),
+    re_path(r'^__help/faq.(?P<fmt>html|pdf)$', api_faq),
+    re_path(r'^__help/gettingstarted.(?P<fmt>html|pdf)$', api_gettingstarted),
+    re_path(r'^__help/splash.html$', api_splash),
+    re_path(r'^apiguide.(?P<fmt>pdf)$', api_api_guide), # Public entrypoint
+    re_path(r'^__help/apiguide.(?P<fmt>html|pdf)$', api_api_guide),
+    re_path(r'^__help/citing.(?P<fmt>html|pdf)$', api_citing_opus),
 ]
