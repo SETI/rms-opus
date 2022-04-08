@@ -30,7 +30,7 @@ let o_sortMetadata = {
             stop: function(event, ui) {
                 // rebuild new search order and reload page
                 let newOrder = [];
-                $(this).find(".list-inline-item span.badge-pill").each(function(index, obj) {
+                $(this).find(".list-inline-item span.rounded-pill ").each(function(index, obj) {
                     let slug = $(obj).data("slug");
                     let descending = ($(obj).data("descending") === true ? "-" : "");
                     newOrder.push(`${descending}${slug}`);
@@ -254,7 +254,7 @@ let o_sortMetadata = {
             let itemClasses = (slug === "opusid" ? "op-sort-last" : "list-inline-item op-sort-only");
 
             let listHtml = `<div class='${itemClasses}'>`;
-            listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;
+            listHtml += `<span class='badge rounded-pill bg-light' data-slug="${slug}" data-descending="${isDescending}">`;
             if (removeable) {
                 listHtml += "<span class='op-remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }

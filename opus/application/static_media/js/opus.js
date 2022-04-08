@@ -590,7 +590,7 @@ var opus = {
         /**
          * Set the height of the "Help" panel based on the browser size.
          */
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let cardHeaderHeight = $("#op-help-panel .card-header").outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + cardHeaderHeight;

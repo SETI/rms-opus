@@ -30,7 +30,13 @@
   --cui-danger: #f86c6b;
   --cui-light: #f0f3f5;
   --cui-dark: #2f353a;
+  --cui-muted: #73818f;
+  --cui-hr-color: #23282c;
+  --cui-link-color: #20a8d8;
+  --cui-link-hover-color: #167495;
   --cui-nav-pills-link-active-bg: #20a8d8;
+  --cui-nav-link-hover-color: rgba(255, 255, 255, 0.75);
+  --cui-btn-font-size: 0.765625rem;
   --cui-breakpoint-xs: 0;
   --cui-breakpoint-sm: 576px;
   --cui-breakpoint-md: 768px;
@@ -3497,9 +3503,9 @@ html:not([dir=rtl]) .form-check-inline .form-check-input ~ .invalid-feedback {
 }
 
 .btn-secondary {
-  --cui-btn-bg: #9da5b1;
-  --cui-btn-border-color: #9da5b1;
-  --cui-btn-color: #000015;
+  --cui-btn-bg: #c8ced3;
+  --cui-btn-border-color: #c8ced3;
+  --cui-btn-color: #23282c;
   --cui-btn-hover-bg: #acb3bd;
   --cui-btn-hover-border-color: #a7aeb9;
   --cui-btn-hover-color: rgba(44, 56, 74, 0.95);
@@ -3828,7 +3834,7 @@ html:not([dir=rtl]) .form-check-inline .form-check-input ~ .invalid-feedback {
 
 .btn-sm, .btn-group-sm > .btn {
   padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--cui-btn-font-size, 0.875rem);
   border-radius: 0.2rem;
 }
 

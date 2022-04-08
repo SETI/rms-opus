@@ -359,7 +359,7 @@ var o_selectMetadata = {
          */
         $(".op-select-metadata-headers").show(); // Show now so computations are accurate
         $(".op-select-metadata-headers-hr").show();
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $(".op-reset-opus").outerHeight() +
                             $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let modalHeaderHeight = $("#op-select-metadata .modal-header").outerHeight();

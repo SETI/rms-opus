@@ -1394,10 +1394,10 @@ var o_browse = {
         if ((width <= 480 && height > 400) || (width <= 450)) {
             // once the modal narrows, we don't need this to wrap so remove it
             $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
-            $(".op-metadata-detail-edit-message").removeClass("pl-0");
+            $(".op-metadata-detail-edit-message").removeClass("ps-0");
 
             $("#op-metadata-detail-view-content .row").addClass("flex-column");
-            $(".op-metadata-details-container, .op-metadata-details, .op-metadata-detail-add").addClass("pl-3");
+            $(".op-metadata-details-container, .op-metadata-details, .op-metadata-detail-add").addClass("ps-3");
             let paddingBottom = (height <= 360 ? "pb-2" : "pb-3");
             $("#op-metadata-detail-view-content .row.bottom").addClass(paddingBottom);
             $("#op-metadata-detail-view-content .left").removeClass("col-lg-7");
@@ -1408,13 +1408,13 @@ var o_browse = {
             if ((resizeSmall && width <= 650) || (!resizeSmall && width <= 750)) {
                 // wrap the edit message if it exists when narrow
                 $(".op-metadata-detail-edit").addClass("op-metadata-detail-edit-wrap");
-                $(".op-metadata-detail-edit-message").addClass("pl-0");
+                $(".op-metadata-detail-edit-message").addClass("ps-0");
             } else {
                 $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
-                $(".op-metadata-detail-edit-message").removeClass("pl-0");
+                $(".op-metadata-detail-edit-message").removeClass("ps-0");
             }
             $("#op-metadata-detail-view-content .row").removeClass("flex-column");
-            $(".op-metadata-details-container, .op-metadata-details, .op-metadata-detail-add").removeClass("pl-3");
+            $(".op-metadata-details-container, .op-metadata-details, .op-metadata-detail-add").removeClass("ps-3");
             $("#op-metadata-detail-view-content .left").addClass("col-lg-7");
             $("#op-metadata-detail-view-content .left").removeClass("col-lg-5 pt-4 pb-3");
             $("#op-metadata-detail-view-content .right").addClass("col-lg-5");
@@ -2472,12 +2472,12 @@ var o_browse = {
     // calculate the height of the gallery by removing all the non-gallery contaniner elements
     calculateGalleryHeight: function(view) {
         let tab = opus.getViewTab(view);
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
         // The main navbar (#op-main-nav) and the 2nd navbar (.panel-heading) have an overlapping
         // area, need to take this overlapped height into consideration when doing the calculation.
-        // This will make sure there is no gap between the end of .op-gallery-contents and .app-footer.
+        // This will make sure there is no gap between the end of .op-gallery-contents and .footer.
         let navOverlappedHeight = $("#op-main-nav").offset().top + mainNavHeight -
                                   $(`${tab} .panel-heading`).offset().top;
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight - navOverlappedHeight;
@@ -2541,7 +2541,7 @@ var o_browse = {
             }
             $(".op-download-links-btn").html("Download Not Available");
             $(".op-download-links-btn").addClass("op-a-tag-btn-disabled");
-            $(".app-footer .op-download-links-btn").popover("hide");
+            $(".footer .op-download-links-btn").popover("hide");
         } else {
             $(".op-download-links-btn").html("Download Links History");
             if ($(".op-zipped-files > li").length > 1) {
@@ -2861,7 +2861,7 @@ var o_browse = {
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools mr-2">` +
                          `<a href="#" class="op-metadata-detail-remove" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
-        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pe-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
@@ -2904,7 +2904,7 @@ var o_browse = {
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col"><a href="#" class="menu pr-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            html += `<div class="col"><a href="#" class="menu pe-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-metadata-detail-view-body .bottom").html(html);
 
             // update the binoculars here

@@ -13,20 +13,20 @@
                         {% for name, info in menu.data.items %}
                             {% if name == div.table_name %}  {# this param_name IS contained in this div #}
                                 {% if info.menu_help %}
-                                    <li class="list-group-item list-group-item-action py-0 pl-0 bg-white"><div class="menu_help text-info">{{ info.menu_help }}</div></li>
+                                    <li class="list-group-item list-group-item-action py-0 ps-0 bg-white"><div class="menu_help text-info">{{ info.menu_help }}</div></li>
                                 {% endif %}
 
                                 {% if info.has_sub_heading %}
                                     {#  this div has sub_headings, level-3 menu sections... start sub_heading loop  #}
                                     {% for sub_head,params in info.data.items %}
-                                        <li class="list-group-item py-0 pl-0">
+                                        <li class="list-group-item py-0 ps-0">
                                             <a href="#{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle op-submenu-category {{ sub_head.1 }}" data-bs-cat="{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}">
                                                 <span class="menu-text title">{{ sub_head.0 }}&nbsp;<span class="op-menu-arrow"></span></span>
                                             </a>
                                             <ul class="list-group list-group-flush submenu collapse {{ sub_head.2 }}" id="{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}">
                                                 {% for p in params %}
                                                     {% if p.cat_name == sub_head.0.slugify %}
-                                                        <li class="list-group-item py-0 pl-0">
+                                                        <li class="list-group-item py-0 ps-0">
                                                             <a data-label="
                                                                 {% if menu.data.labels_view == 'selector' %}
                                                                     {{ p.label_results }}
@@ -62,7 +62,7 @@
 
                                     {# this div does not have sub_headings, list the params #}
                                     {% for p in info.data %}
-                                        <li class="list-group-item py-0 pl-0">
+                                        <li class="list-group-item py-0 ps-0">
                                             <a data-label="
                                                 {% if menu.data.labels_view == 'selector' %}
                                                     {{ p.label_results }}

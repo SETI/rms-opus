@@ -188,7 +188,7 @@ var o_detail = {
     },
 
     adjustDetailHeight: function() {
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let detailTabPaddingTop = ($("#detail").outerHeight() - $("#detail").height())/2;
         let detailHeaderHeight = $(".op-detail-metadata-header h1").outerHeight(true) + $(".op-detail-metadata-header .row").outerHeight(true);
