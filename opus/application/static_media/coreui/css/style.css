@@ -45,10 +45,12 @@
   --cui-breakpoint-xxl: 1400px;
   --cui-mobile-breakpoint: md;
   --cui-font-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --cui-font-sans-container-fluid: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --cui-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --cui-font-size-base: 0.875rem;
   --cui-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
   --cui-body-color: rgba(44, 56, 74, 0.95);
+  --cui-border-color: #63c2de;
   --cui-card-border-color: #c8ced3;
 }
 
@@ -5197,7 +5199,7 @@ html:not([dir=rtl]) .pagination-sm .page-item:last-child .page-link {
 
 .badge {
   display: inline-block;
-  padding: 0.35em 0.65em;
+  padding: 0.25em 0.4em;
   font-size: 0.75em;
   font-weight: 700;
   line-height: 1;

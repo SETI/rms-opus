@@ -49,9 +49,9 @@ a:hover {
 }
 
 /* Make the main nav bar just a little taller than normal (style says 8px) */
-#op-main-nav {
-    padding-top: 0.7rem;
-    padding-bottom: 1.3rem;
+#op-main-nav  {
+    padding-top: 10px;
+    padding-bottom: 22px;
 }
 
 /* Keep the horizontal spacing between Search/Browse Results/Cart/Detail the same
@@ -81,7 +81,7 @@ even when the browser size is narrow. */
 
 /* Remove annoying dotted border in Firefox */
 #op-main-nav .navbar-nav .nav-link {
-    outline: none; !important
+    outline: none !important;
 }
 
 #op-main-nav .op-nav-detail-image {
@@ -470,6 +470,8 @@ to 100%, this will make the shrinking look smoother */
 hr.op-shadow-divider {
     height: 10px;
     border: 0;
+    background-color: rgba(0,0,0,0);
+    opacity: 1;
     box-shadow: 0 9px 9px -10px #8c8b8b inset;
 }
 
