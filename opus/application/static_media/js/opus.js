@@ -417,6 +417,8 @@ var opus = {
          */
 
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
+        // $('.nav-item a[href="#'+opus.prefs.view+'"]').addClass("active");
+
     },
 
     updateNotifications: function() {
@@ -815,6 +817,7 @@ var opus = {
                 return true;  // they clicked the brand icon, take them to its link
             }
 
+            $(this).find("a").addClass("active");
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
             return opus.changeTab(tab);
