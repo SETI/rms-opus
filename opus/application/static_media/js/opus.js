@@ -417,7 +417,6 @@ var opus = {
          */
 
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
-
     },
 
     updateNotifications: function() {
