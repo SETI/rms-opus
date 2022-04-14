@@ -262,6 +262,7 @@ var opus = {
 
         // Start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        $(`a[href="#${opus.getCurrentTab()}"]`).addClass("active");
 
         // Start the observation number slider spinner - no point in doing a flash here
         // and only set the spinner for the #browse tab, as changing search parameters does not affect the cart

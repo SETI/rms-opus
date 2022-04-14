@@ -32,7 +32,6 @@ a:hover {
 
 .container-fluid {
     padding: 0;
-    margin-bottom: -12px;
 }
 
 .dictionary {
@@ -51,7 +50,7 @@ a:hover {
 /* Make the main nav bar just a little taller than normal (style says 8px) */
 #op-main-nav  {
     padding-top: 10px;
-    padding-bottom: 22px;
+    padding-bottom: 10px;
 }
 
 /* Keep the horizontal spacing between Search/Browse Results/Cart/Detail the same
@@ -108,10 +107,6 @@ even when the browser size is narrow. */
     #op-main-nav-collapse.show, #op-main-nav-collapse.collapsing {
         display: flex;
     }
-}
-
-.tab-content .tab-pane {
-    display: none;
 }
 
 /* Make sure the height of top navbar will not change when "Recent Announcement"
@@ -2372,6 +2367,10 @@ footer {
     z-index: 9999;
     padding: 0 !important;
     min-height: 1rem !important;
+}
+
+footer p {
+    margin-bottom: 0.25rem;
 }
 
 .op-twitter {
