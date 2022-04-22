@@ -28,7 +28,7 @@
                 </div>
             </div>
             <span class="float-right border-left border-dark">
-                <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
+                <a href="#card__{{ slug }}" data-bs-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
                     <i class="icon-action fa fa-chevron-down pull-right"></i>
                 </a>
                 <a href="#" data-action="close" data-slug="{{ slug }}" class="close_card">
@@ -62,8 +62,8 @@
                     <div class="op-preprogrammed-ranges">
                         <ul class="dropdown-menu op-scrollable-menu ps-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
                             {% for range_data_entry in ranges %}
-                                <li class="mr-0 d-block" data-category="{{ range_data_entry.cat_name|slugify }}">
-                                    <a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#{{ range_data_entry.cat_name|slugify }}" role="button" aria-expanded="false" aria-controls="{{ range_data_entry.cat_name|slugify }}">{{ range_data_entry.cat_name }}</a>
+                                <li class="me-0 d-block" data-category="{{ range_data_entry.cat_name|slugify }}">
+                                    <a class="dropdown-item bg-light dropdown-toggle collapsed" data-bs-toggle="collapse" href="#{{ range_data_entry.cat_name|slugify }}" role="button" aria-expanded="false" aria-controls="{{ range_data_entry.cat_name|slugify }}">{{ range_data_entry.cat_name }}</a>
                                     <div class="container collapse" id="{{ range_data_entry.cat_name|slugify }}" data-widget="widget__{{ slug }}" data-mininput="{{ slug }}1">
                                         <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
                                             <div class="col-4">

@@ -541,12 +541,12 @@ var o_browse = {
             max: 1000,
             step: o_browse.gallerySliderStep,
             slide: function(event, ui) {
-                let tab = ui.handle.dataset.target;
+                let tab = ui.handle.dataset.bsTarget;
                 o_browse.onSliderHandleMoving(tab, ui.value);
                 o_browse.hideMenus();
             },
             stop: function(event, ui) {
-                let tab = ui.handle.dataset.target;
+                let tab = ui.handle.dataset.bsTarget;
                 o_browse.onSliderHandleStop(tab, ui.value);
             }
         });
@@ -1876,7 +1876,7 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart-modal' " +
+        // let addallIcon = "<button type='button' data-bs-toggle='modal' data-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
                          "class='op-table-header-addall btn btn-link'" +
                          " title='Add All Results to Cart'>" +
@@ -1902,7 +1902,7 @@ var o_browse = {
             let icon = "";
             let columnSorting = "none";
             let columnOrderPostion = "";
-            let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
+            let positionIndicatorClasses = "op-sort-position-indicator text-primary ms-1 font-xs";
             //let reorderTip = "Drag to reorder\n";
             let reorderTip = "";
             let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
@@ -2859,9 +2859,9 @@ var o_browse = {
         // list columns + values
         let html = "";
         let selectMetadataTitle = "Add metadata field after the current field";
-        let removeTool = `<li class="op-metadata-details-tools mr-2">` +
-                         `<a href="#" class="op-metadata-detail-remove" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
-        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pe-1"> Add field here</i></a>`;
+        let removeTool = `<li class="op-metadata-details-tools me-2">` +
+                         `<a href="#" class="op-metadata-detail-remove" me-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-bs-toggle="dropdown" role="button"><i class="fas fa-plus pe-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
@@ -2872,7 +2872,7 @@ var o_browse = {
                 html += `<ul class="list-inline mb-2" data-slug="${slug}">${removeTool}`;
                 html += `<li class="op-metadata-detail-item">`;
                 html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div>`;
-                html += `<div class="op-metadata-data ml-0">${value}${addTool}</div>`;
+                html += `<div class="op-metadata-data ms-0">${value}${addTool}</div>`;
                 html += `</li></ul>`;
             }
         });
@@ -2904,7 +2904,7 @@ var o_browse = {
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col"><a href="#" class="menu pe-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            html += `<div class="col"><a href="#" class="menu pe-3 float-right text-center" data-bs-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-metadata-detail-view-body .bottom").html(html);
 
             // update the binoculars here

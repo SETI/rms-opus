@@ -1211,7 +1211,7 @@ var o_widgets = {
                 let qtypeValue = $(`#widget__${slug} .op-widget-main select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
-                                    <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
+                                    <a class="text-dark" tabindex="0" data-bs-toggle="popover" data-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
 
                     // Make sure help icon is attached to the end of each set of inputs
@@ -1303,7 +1303,7 @@ var o_widgets = {
 
                 // Close dropdown list when ps scrolling is happening in widget container
                 if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
-                    // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
+                    // Note: the selector to toggle dropdown should be the one with data-bs-toggle="dropdown"
                     // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
                     $(`#${widget} input.op-range-input-min`).dropdown("toggle");
                 }
@@ -1311,7 +1311,7 @@ var o_widgets = {
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
                 let addInputIcon = ('<li class="op-add-inputs">' +
-                                    '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
+                                    '<button type="button" class="ms-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
                                     title="Add a new set of search inputs"' +
                                     `data-widget="widget__${slug}" data-slug="${slug}">` +
                                     `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`);

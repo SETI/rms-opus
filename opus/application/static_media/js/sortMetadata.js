@@ -260,7 +260,7 @@ let o_sortMetadata = {
             }
             listHtml += `<span class='op-flip-sort' title='${orderTooltip}'>`;
             listHtml += label;
-            listHtml += (isDescending ? `<i class="${pillSortUpArrow} ml-1"></i>` : `<i class="${pillSortDownArrow} ml-1"></i>`);
+            listHtml += (isDescending ? `<i class="${pillSortUpArrow} ms-1"></i>` : `<i class="${pillSortDownArrow} ms-1"></i>`);
             listHtml += "</span></span></div>";
 
             let fullSlug = slug;

@@ -1857,11 +1857,11 @@ panel are properly separated */
     display: inline-flex;
     padding-left: 0.5em;
     margin-top: 0.35em;
+    color: var(--cui-navbar-color);
     /* padding-top: 0.5em; */
 }
 
 .op-sort-order-icon {
-    opacity: 0.5 !important;
     vertical-align: middle;
     padding-right: 0.3em;
     white-space: nowrap;
@@ -1883,6 +1883,10 @@ panel are properly separated */
 .op-sort-contents .list-inline-item {
     opacity: 0.7;
     margin-bottom: -10px;
+}
+
+.op-sort-contents span {
+    color: var(--cui-dark);
 }
 
 .op-sort-last {
@@ -1926,17 +1930,27 @@ panel are properly separated */
     is wider */
     width: calc(90% - 9rem);
     height: .1em;
+    font-size: 1.1em;
+    font-family: Verdana,Arial,sans-serif;
+}
+
+.op-observation-slider .ui-state-focus {
+    outline: none;
+    background: inherit;
+    border: 1px solid #c5c5c5;
+    color:
 }
 
 .op-observation-text {
     margin-left: 45px;
     padding-right: .5em;
-    opacity: 0.5;
+    color: var(--cui-navbar-color);
 }
 
 .op-observation-number {
     text-align: center;
     vertical-align: middle;
+    color: var(--cui-dark);
 }
 
 .ui-slider-horizontal .ui-slider-handle {
