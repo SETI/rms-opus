@@ -2177,6 +2177,12 @@ even when screen is narrow */
     padding-left: 0;
 }
 
+/* For widget with a mix of grouping and non-grouping checkboxes, left align
+grouping icon with non-grouping checkboxes */
+#widget__instrument .mult_group_label_container {
+    padding-left: 1%;
+}
+
 /* detail tab */
 .op-detail-metadata {
     /* Make detail left pane shrink proportionally when window is narrow
