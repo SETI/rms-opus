@@ -24,7 +24,8 @@ TABLES_TO_POPULATE = ['obs_general',
                       'obs_surface_geometry__<TARGET>']
 
 # These mult tables have an extra column to allow for target_name grouping
-MULT_TABLES_WITH_TARGET_GROUPING = ['mult_obs_general_target_name',
+MULT_TABLES_WITH_TARGET_GROUPING = ['mult_obs_general_instrument_id',
+                                    'mult_obs_general_target_name',
                                     'mult_obs_surface_geometry_name_target_name']
 
 # Also modify populate_obs_general_preview_images as necessary

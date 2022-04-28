@@ -244,6 +244,23 @@ def api_get_widget(request, **kwargs):
     Arguments: slug=<slug>
                addlink=true|false XXX???
     """
+
+    def update_form_with_grouping(form, form_vals, glabel, gvalue):
+        form += ("\n\n"
+                 +'<div class="mult_group_label_container'
+                 +' mult_group_' + str(glabel) + '">'
+                 +'<span class="indicator fa fa-plus">'
+                 +'</span>'
+                 +'<span class="mult_group_label">'
+                 +str(glabel) + '</span></div>'
+                 +'<ul class="mult_group"'
+                 +' data-group=' + str(glabel) + '>'
+                 +SearchForm(form_vals,
+                             auto_id='%s_' + str(gvalue),
+                             grouping=gvalue).as_ul()
+                 +'</ul>')
+        return form
+
     api_code = enter_api_call('api_get_widget', request, kwargs)
 
     slug = strip_numeric_suffix(kwargs['slug'])
@@ -389,6 +406,10 @@ def api_get_widget(request, **kwargs):
             values = selections[param_qualified_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
         mult_param = get_mult_name(param_qualified_name)
+        print("###########")
+        print(f"param_qualified_name: {param_qualified_name}")
+        print(f"mult_param: {mult_param}")
+        print("###########")
         model = apps.get_model('search',mult_param.title().replace('_',''))
 
         if values is not None:
@@ -405,31 +426,33 @@ def api_get_widget(request, **kwargs):
 
         # XXX It's horrible that this whole section is inside a try/except
         try:
-            _ = model.objects.distinct().values('grouping')
-            grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
-            grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
-            for group_info in grouping_model.objects.order_by('disp_order'):
-                gvalue = group_info.value
-                glabel = group_info.label if group_info.label else 'Other'
-                if glabel == 'NULL':
-                    glabel = 'Other'
-                if model.objects.filter(grouping=gvalue)[0:1]:
-                    form += ("\n\n"
-                             +'<div class="mult_group_label_container'
-                             +' mult_group_' + str(glabel) + '">'
-                             +'<span class="indicator fa fa-plus">'
-                             +'</span>'
-                             +'<span class="mult_group_label">'
-                             +str(glabel) + '</span></div>'
-                             +'<ul class="mult_group"'
-                             +' data-group=' + str(glabel) + '>'
-                             +SearchForm(form_vals,
-                                         auto_id='%s_' + str(gvalue),
-                                         grouping=gvalue).as_ul()
-                             +'</ul>')
+            grouping_entries = model.objects.distinct().values('grouping')
+
+            # Handle the form with a mix of grouping and non-grouping entries.
+            if model.objects.filter(grouping=None):
+                # For entries with "None" grouping value, we don't group them.
+                form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
+                # Group the entries with the same grouping values.
+                for entry in grouping_entries:
+                    glabel = entry['grouping']
+                    if glabel != None and glabel != 'NULL':
+                        if model.objects.filter(grouping=glabel)[0:1]:
+                            form = update_form_with_grouping(form, form_vals,
+                                                             glabel, glabel)
+            else: # handle the form with grouping entries only.
+                grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
+                grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
+                for group_info in grouping_model.objects.order_by('disp_order'):
+                    gvalue = group_info.value
+                    glabel = group_info.label if group_info.label else 'Other'
+                    if glabel == 'NULL':
+                        glabel = 'Other'
+                    if model.objects.filter(grouping=gvalue)[0:1]:
+                        form = update_form_with_grouping(form, form_vals,
+                                                         glabel, gvalue)
 
         except FieldError:
-            # this model does not have grouping
+            # # this model does not have grouping
             form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     else:  # all other form types

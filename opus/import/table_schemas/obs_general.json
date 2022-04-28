@@ -74,12 +74,12 @@
               [  14,    "HSTWFPC2",           "Hubble WFPC2", "150", "Y", null],
               [  15,     "NHLORRI",     "New Horizons LORRI", "160", "Y", null],
               [  16,      "NHMVIC",      "New Horizons MVIC", "170", "Y", null],
-              [  17,   "ESO1MAPPH",         "ESO 1-m ApPhot", "180", "Y", null],
-              [  18,  "ESO22MAPPH",       "ESO 2.2-m ApPhot", "190", "Y", null],
-              [  19,    "IRTFURAC",         "NASA IRTF URAC", "200", "Y", null],
-              [  20,  "LICK1MCCDC",           "Lick 1-m CCD", "210", "Y", null],
-              [  21, "MCD27MIIRAR",    "McDonald 2.7-m INSB", "220", "Y", null],
-              [  22,  "PAL200CIRC", "Palomar 200-in Cass IR", "230", "Y", null]
+              [  17,   "ESO1MAPPH",         "ESO 1-m ApPhot", "180", "Y", "Ground-based"],
+              [  18,  "ESO22MAPPH",       "ESO 2.2-m ApPhot", "190", "Y", "Ground-based"],
+              [  19,    "IRTFURAC",         "NASA IRTF URAC", "200", "Y", "Ground-based"],
+              [  20,  "LICK1MCCDC",           "Lick 1-m CCD", "210", "Y", "Ground-based"],
+              [  21, "MCD27MIIRAR",    "McDonald 2.7-m INSB", "220", "Y", "Ground-based"],
+              [  22,  "PAL200CIRC", "Palomar 200-in Cass IR", "230", "Y", "Ground-based"]
           ]
     },
     {

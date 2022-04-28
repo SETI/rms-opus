@@ -29,7 +29,7 @@
     },
     {
         "field_name": "grouping",
-        "field_type": "char7",
+        "field_type": "char20",
         "field_default": null
     },
     {

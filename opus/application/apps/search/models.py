@@ -193,6 +193,7 @@ class MultObsGeneralInstrumentId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    grouping = models.CharField(max_length=7, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
