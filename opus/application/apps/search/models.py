@@ -193,7 +193,7 @@ class MultObsGeneralInstrumentId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=7, blank=True, null=True)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -272,7 +272,7 @@ class MultObsGeneralTargetName(models.Model):
     label = models.CharField(max_length=30)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=7, blank=True, null=True)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1300,7 +1300,7 @@ class MultObsSurfaceGeometryNameTargetName(models.Model):
     label = models.CharField(max_length=30)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=7, blank=True, null=True)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:

@@ -448,7 +448,7 @@ def api_get_widget(request, **kwargs):
                                                           glabel, gvalue)
 
         except FieldError:
-            # # this model does not have grouping
+            # this model does not have grouping
             form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     else:  # all other form types
