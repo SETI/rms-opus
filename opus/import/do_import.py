@@ -147,11 +147,6 @@ def create_tables_for_import(volume_id, namespace):
 
     mult_table_schema = import_util.read_schema_for_table('mult_template')
 
-    # This is an awful hack because this one mult table has an extra field
-    # in it. Yuck! XXX
-    mult_target_name_table_schema = (import_util.read_schema_for_table(
-                                                'mult_target_name_template'))
-
     table_schemas = {}
     table_names_in_order = []
     for table_name in TABLES_TO_POPULATE:
@@ -190,10 +185,7 @@ def create_tables_for_import(volume_id, namespace):
                 pi_form_type = pi_form_type[:pi_form_type.find(':')]
             if pi_form_type in GROUP_FORM_TYPES:
                 mult_name = import_util.table_name_mult(table_name, field_name)
-                if mult_name in MULT_TABLES_WITH_TARGET_GROUPING:
-                    schema = mult_target_name_table_schema
-                else:
-                    schema = mult_table_schema
+                schema = mult_table_schema
                 if (impglobals.DATABASE.create_table(namespace, mult_name, schema) and
                     namespace == 'import'):
                     _CREATED_IMP_MULT_TABLES.add(mult_name)
@@ -291,9 +283,7 @@ def _mult_table_column_names(table_name):
        constant because various *_target_name tables have an extra
        column used for target name grouping."""
 
-    column_list = ['id', 'value', 'label', 'disp_order', 'display']
-    if table_name in MULT_TABLES_WITH_TARGET_GROUPING:
-        column_list.append('grouping')
+    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping']
     return column_list
 
 def _convert_sql_response_to_mult_table(mult_table_name, rows):
@@ -302,16 +292,15 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
 
     mult_rows = []
     for row in rows:
-        id_num, value, label, disp_order, display = row[:5]
+        id_num, value, label, disp_order, display, grouping = row
         row_dict = {
             'id': id_num,
             'value': value,
             'label': str(label),
             'disp_order': disp_order,
-            'display': display
+            'display': display,
+            'grouping': grouping
         }
-        if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
-            row_dict['grouping'] = row[5]
         mult_rows.append(row_dict)
     return mult_rows
 
@@ -457,21 +446,22 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         next_id = max([x['id'] for x in mult_table])+1
     if label is None:
         label = 'N/A'
+
+    if val not in TARGET_NAME_INFO:
+        planet_id = 'OTHER'
+    else:
+        planet_id = TARGET_NAME_INFO[val][0]
+        if planet_id is None:
+            planet_id = 'OTHER'
+
     new_entry = {
         'id': next_id,
         'value': val,
         'label': label,
         'disp_order': disp_order,
-        'display': 'Y' # if label is not None else 'N'
+        'display': 'Y', # if label is not None else 'N'
+        'grouping': planet_id
     }
-    if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
-        if val not in TARGET_NAME_INFO:
-            planet_id = 'OTHER'
-        else:
-            planet_id = TARGET_NAME_INFO[val][0]
-            if planet_id is None:
-                planet_id = 'OTHER'
-        new_entry['grouping'] = planet_id
     mult_table.append(new_entry)
 
     _MODIFIED_MULT_TABLES[mult_table_name] = table_column
@@ -1179,6 +1169,11 @@ def import_observation_table(instrument_obj,
                         mult_label = ret[1]
                         if len(ret) == 3:
                             disp_order = ret[2]
+                        mult_label_set = True
+                    elif isinstance(ret, dict):
+                        column_val = ret["target_name"]
+                        mult_label = ret["disp_name"]
+                        disp_order = ret.get("disp_order", None)
                         mult_label_set = True
                     else:
                         column_val = ret

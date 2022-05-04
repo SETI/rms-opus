@@ -420,37 +420,18 @@ def api_get_widget(request, **kwargs):
                 new_values.append(val)
             form_vals = {slug: new_values}
 
-        # XXX It's horrible that this whole section is inside a try/except
-        try:
-            grouping_entries = model.objects.distinct().values('grouping')
+        # For entries with "None" grouping value, we don't group them.
+        if model.objects.filter(grouping=None):
+            form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
 
-            # Handle the form with a mix of grouping and non-grouping entries.
-            if model.objects.filter(grouping=None):
-                # For entries with "None" grouping value, we don't group them.
-                form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
-                # Group the entries with the same grouping values.
-                for entry in grouping_entries:
-                    glabel = entry['grouping']
-                    if glabel is not None and glabel != 'NULL':
-                        if model.objects.filter(grouping=glabel)[0:1]:
-                            form = _update_form_with_grouping(form, form_vals,
-                                                              glabel, glabel)
-            else: # handle the form with grouping entries only.
-                grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
-                grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
-                for group_info in grouping_model.objects.order_by('disp_order'):
-                    gvalue = group_info.value
-                    glabel = group_info.label if group_info.label else 'Other'
-                    if glabel == 'NULL':
-                        glabel = 'Other'
-                    if model.objects.filter(grouping=gvalue)[0:1]:
-                        form = _update_form_with_grouping(form, form_vals,
-                                                          glabel, gvalue)
-
-        except FieldError:
-            # this model does not have grouping
-            form = SearchForm(form_vals, auto_id=auto_id).as_ul()
-
+        # Group the entries with the same grouping values.
+        grouping_entries = model.objects.distinct().values('grouping')
+        for entry in grouping_entries:
+            glabel = entry['grouping']
+            if glabel is not None and glabel != 'NULL':
+                if model.objects.filter(grouping=glabel)[0:1]:
+                    form = _update_form_with_grouping(form, form_vals,
+                                                      glabel, glabel)
     else:  # all other form types
         if param_qualified_name in selections:
             form_vals = {slug:selections[param_qualified_name]}

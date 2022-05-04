@@ -162,24 +162,13 @@ class ZZDjangoSite(models.Model):
         db_table = 'django_site'
 
 
-class ZZGroupingTargetName(models.Model):
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=30, blank=True, null=True)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'grouping_target_name'
-
-
 class MultObsGeneralInstHostId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -207,6 +196,7 @@ class MultObsGeneralMissionId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -220,6 +210,7 @@ class MultObsGeneralObservationType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -233,6 +224,7 @@ class MultObsGeneralPlanetId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -246,6 +238,7 @@ class MultObsGeneralQuantity(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -259,6 +252,7 @@ class MultObsGeneralTargetClass(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    grouping = models.CharField(max_length=20, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:

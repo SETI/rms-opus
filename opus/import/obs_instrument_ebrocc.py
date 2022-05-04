@@ -86,7 +86,13 @@ class ObsInstrumentEBROCC(ObsCommon):
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return None
-        return target_name, target_info[2]
+
+        target_dict = {}
+        target_dict['target_name'] = target_name
+        target_dict['key'] = target_info[0]
+        target_dict['target_class'] = target_info[1]
+        target_dict['disp_name'] = target_info[2]
+        return target_dict
 
     def field_obs_general_quantity(self):
         return 'OPDEPTH'

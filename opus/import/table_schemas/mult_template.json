@@ -28,6 +28,11 @@
         "field_notnull": true
     },
     {
+        "field_name": "grouping",
+        "field_type": "char20",
+        "field_default": null
+    },
+    {
         "field_name": "timestamp",
         "field_type": "timestamp"
     }

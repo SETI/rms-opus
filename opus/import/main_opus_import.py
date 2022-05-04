@@ -488,8 +488,8 @@ try: # Top-level exception handling so we always log what's going on
             do_partables.do_partables()
         if impglobals.ARGUMENTS.create_table_names:
             do_table_names.do_table_names()
-        if impglobals.ARGUMENTS.create_grouping_target_name:
-            do_grouping_target_name.do_grouping_target_name()
+        # if impglobals.ARGUMENTS.create_grouping_target_name:
+        #     do_grouping_target_name.do_grouping_target_name()
 
         impglobals.LOGGER.close()
 

@@ -64,7 +64,8 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
 
 
     def _is_voyager_at_uranus(self):
-        return self.field_obs_general_target_name()[0] == 'U RINGS'
+        return (self.field_obs_general_target_name()[target_name["target_name"]]
+                == 'U RINGS')
 
     # Source: Voyager RSS is at south, observer: earth is at north.
     # Note: we searched VGISS start_time in OPUS and looked at north based emssion
