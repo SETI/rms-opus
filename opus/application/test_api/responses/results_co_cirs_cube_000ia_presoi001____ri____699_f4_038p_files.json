@@ -1,0 +1,78 @@
+{
+    "data": {
+        "co-cirs-cube-000ia_presoi001____ri____699_f4_038p": {
+            "cocirs_cube": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+            ],
+            "cocirs_extra": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+            ],
+            "cube_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.lbl"
+            ],
+            "supplemental_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.lbl"
+            ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_thumb.jpg"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_small.jpg"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_med.jpg"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_full.jpg"
+            ]
+        }
+    },
+    "versions": {
+        "co-cirs-cube-000ia_presoi001____ri____699_f4_038p": {
+            "Current": {
+                "cocirs_cube": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+                ],
+                "cocirs_extra": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+                ],
+                "cube_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.lbl"
+                ],
+                "supplemental_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.lbl"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_thumb.jpg"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_small.jpg"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_med.jpg"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_full.jpg"
+                ]
+            },
+            "3": {
+                "cocirs_cube": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+                ],
+                "cocirs_extra": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+                ]
+            }
+        }
+    }
+}

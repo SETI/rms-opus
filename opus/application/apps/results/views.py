@@ -154,7 +154,7 @@ def api_get_data_and_images(request):
     """
     api_code = enter_api_call('api_get_data_and_images', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__api/dataimages.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -293,7 +293,7 @@ def api_get_data(request, fmt):
     "page" is not documented in the API Guide.
 
     Format: api/data.(?P<fmt>json|html|csv)
-            __data/data.(?P<fmt>csv)
+            __api/data.(?P<fmt>csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -339,7 +339,7 @@ def api_get_data(request, fmt):
     """
     api_code = enter_api_call('api_get_data', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/data.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -495,7 +495,7 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
 def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
         # don't care.
@@ -728,6 +728,7 @@ def api_get_images_by_size(request, size, fmt):
     This is a PUBLIC API.
 
     Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
+            __api/images/(?P<size>thumb|small|med|full).(?P<fmt>json)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -776,7 +777,7 @@ def api_get_image(request, opus_id, size, fmt):
     """
     api_code = enter_api_call('api_get_image', request)
 
-    if request is not None and request.GET is not None:
+    if request is not None and request.GET is not None or request.META is None:
         request.GET = request.GET.copy()
         request.GET['opusid'] = opus_id
         request.GET['qtype-opusid'] = 'matches'
@@ -786,7 +787,7 @@ def api_get_image(request, opus_id, size, fmt):
     return ret
 
 def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
         # don't care.
@@ -811,7 +812,7 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
                                             ignore_missing=True)
     else:
         image_list = get_pds_preview_images(opus_ids, preview_jsons,
-                                            sizes=[size], ignore_missing=True)
+                                            sizes=[size])
 
     if not image_list:
         log.error('_api_get_images: No image found for: %s', str(opus_ids[:50]))
@@ -933,7 +934,7 @@ def api_get_files(request, opus_id=None):
     """
     api_code = enter_api_call('api_get_files', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/files/{opus_id}.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1014,7 +1015,7 @@ def api_get_categories_for_opus_id(request, opus_id):
     """
     api_code = enter_api_call('api_get_categories_for_opus_id', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/categories/{opus_id}.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1070,7 +1071,7 @@ def api_get_categories_for_search(request):
     """
     api_code = enter_api_call('api_get_categories_for_search', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/api/categories.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1114,7 +1115,7 @@ def api_get_product_types_for_opus_id(request, opus_id):
     """
     api_code = enter_api_call('api_get_product_types_for_opus_id', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(f'/api/product_types/{opus_id}.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1177,7 +1178,7 @@ def api_get_product_types_for_search(request):
     """
     api_code = enter_api_call('api_get_product_types_for_search', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/api/product_types.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1295,8 +1296,8 @@ def get_search_results_chunk(request, use_cart=None,
                             This is a list of opus_ids 1:1 with the returned
                             data.
         return_ringobsids   Include 'ring_obs_ids' in the returned aux dict.
-        return_filespecs    Include 'file_specs' in the returned aux dict.
-                            This is a list of primary_file_specs 1:1 with the
+        return_filespecs    Include 'filespecs' in the returned aux dict.
+                            This is a list of primary_filespecs 1:1 with the
                             returned data.
         return_cart_states
                             Include 'cart_states' in the returned aux
@@ -1399,8 +1400,8 @@ def get_search_results_chunk(request, use_cart=None,
             column_names.append('obs_general.ring_obs_id')
             added_extra_columns += 1 # So we know to strip it off later
     if return_filespecs:
-        if 'obs_general.primary_file_spec' not in column_names:
-            column_names.append('obs_general.primary_file_spec')
+        if 'obs_general.primary_filespec' not in column_names:
+            column_names.append('obs_general.primary_filespec')
             added_extra_columns += 1 # So we know to strip it off later
     if return_cart_states:
         column_names.append('cart.opus_id')
@@ -1668,9 +1669,9 @@ def get_search_results_chunk(request, use_cart=None,
         ring_obs_ids = [o[ring_obs_id_index] for o in results]
 
     if return_filespecs:
-        # For retrieving preview images, obs_general.primary_file_spec
-        file_spec_index = column_names.index('obs_general.primary_file_spec')
-        file_specs = [o[file_spec_index] for o in results]
+        # For retrieving preview images, obs_general.primary_filespec
+        filespec_index = column_names.index('obs_general.primary_filespec')
+        filespecs = [o[filespec_index] for o in results]
 
     if return_cart_states:
         # For retrieving cart states
@@ -1709,7 +1710,7 @@ def get_search_results_chunk(request, use_cart=None,
     if return_ringobsids:
         aux_dict['ring_obs_ids'] = ring_obs_ids
     if return_filespecs:
-        aux_dict['file_specs'] = file_specs
+        aux_dict['filespecs'] = filespecs
     if return_cart_states:
         aux_dict['cart_states'] = cart_states
 

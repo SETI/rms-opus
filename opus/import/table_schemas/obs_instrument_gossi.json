@@ -8,25 +8,19 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +36,7 @@
         "field_type": "char20",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "OBSERVATION_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "OBSERVATION_ID",
@@ -68,12 +56,9 @@
     },
     {
         "field_name": "image_id",
-        "field_type": "char7",
+        "field_type": "char15",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "IMAGE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "IMAGE_ID",
@@ -97,10 +82,7 @@
         "field_enum_options": "'CLEAR','GREEN','IR-7270','IR-7560','IR-8890','IR-9680','RED','VIOLET'",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "FILTER_NAME"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "FILTER_NAME",
@@ -133,10 +115,7 @@
         "field_type": "int1",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "FILTER_NUMBER"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 7,
         "pi_category_name": "obs_instrument_gossi",
@@ -161,10 +140,7 @@
         "field_type": "enum",
         "field_enum_options": "'400K','100K','40K','10K'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "GAIN_MODE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "GAIN_MODE_ID",
@@ -192,10 +168,7 @@
         "field_name": "frame_duration",
         "field_type": "real8",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "FRAME_DURATION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 2,
         "val_max": 61,
         "definition": "The scan rate of the camera readout in seconds. Values are 2.333, 8.667, 15.166, 30.333, and 60.667.",
@@ -220,10 +193,7 @@
         "field_type": "enum",
         "field_enum_options": "'POSSIBLE','NOT POSSIBLE','PRESENCE VERIFIED'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "OBSTRUCTION_ID"
-        ],
+        "data_source": "COMPUTE",
         "definition": "Identifies if a boom or other type of obstruction was obscuring the view of the camera during the exposure. Values are Possible, Not Possible, or Presence Verified.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
@@ -251,10 +221,7 @@
         "field_type": "enum",
         "field_enum_options": "'BARC RATE CONTROL','HUFFMAN','INTEGER COSINE TRANSFORM','NONE'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "COMPRESSION_TYPE"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "COMPRESSION_TYPE",
@@ -293,10 +260,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

@@ -4,21 +4,14 @@
         "field_type": "uint4",
         "field_notnull": true,
         "field_key": "primary",
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_notnull": true,
         "field_key": "unique",
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_opus_id_<TYPE>"
-        ],
-        "data_source_order": 30,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "OPUS_ID",
@@ -40,22 +33,14 @@
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_volume_id"
-        ],
-        "data_source_order": 0
+        "data_source": "COMPUTE"
     },
     {
         "field_name": "instrument_id",
         "field_type": "char12",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_instrument_id"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "INSTRUMENT_ID",
@@ -79,19 +64,22 @@
               [   4,      "COVIMS",           "Cassini VIMS", "050", "Y", null],
               [   5,       "GOSSI",            "Galileo SSI", "060", "Y", null],
               [   6,       "VGISS",            "Voyager ISS", "070", "Y", null],
-              [   7,      "HSTACS",             "Hubble ACS", "080", "Y", null],
-              [   8,   "HSTNICMOS",          "Hubble NICMOS", "090", "Y", null],
-              [   9,     "HSTSTIS",            "Hubble STIS", "100", "Y", null],
-              [  10,     "HSTWFC3",            "Hubble WFC3", "110", "Y", null],
-              [  11,    "HSTWFPC2",           "Hubble WFPC2", "120", "Y", null],
-              [  12,     "NHLORRI",     "New Horizons LORRI", "130", "Y", null],
-              [  13,      "NHMVIC",      "New Horizons MVIC", "140", "Y", null],
-              [  14,   "ESO1MAPPH",         "ESO 1-m ApPhot", "150", "Y", null],
-              [  15,  "ESO22MAPPH",       "ESO 2.2-m ApPhot", "160", "Y", null],
-              [  16,    "IRTFURAC",         "NASA IRTF URAC", "170", "Y", null],
-              [  17,  "LICK1MCCDC",           "Lick 1-m CCD", "180", "Y", null],
-              [  18, "MCD27MIIRAR",    "McDonald 2.7-m INSB", "190", "Y", null],
-              [  19,  "PAL200CIRC", "Palomar 200-in Cass IR", "200", "Y", null]
+              [   7,       "VGPPS",            "Voyager PPS", "080", "Y", null],
+              [   8,       "VGRSS",            "Voyager RSS", "090", "Y", null],
+              [   9,       "VGUVS",            "Voyager UVS", "100", "Y", null],
+              [  10,      "HSTACS",             "Hubble ACS", "110", "Y", null],
+              [  11,   "HSTNICMOS",          "Hubble NICMOS", "120", "Y", null],
+              [  12,     "HSTSTIS",            "Hubble STIS", "130", "Y", null],
+              [  13,     "HSTWFC3",            "Hubble WFC3", "140", "Y", null],
+              [  14,    "HSTWFPC2",           "Hubble WFPC2", "150", "Y", null],
+              [  15,     "NHLORRI",     "New Horizons LORRI", "160", "Y", null],
+              [  16,      "NHMVIC",      "New Horizons MVIC", "170", "Y", null],
+              [  17,   "ESO1MAPPH",         "ESO 1-m ApPhot", "180", "Y", null],
+              [  18,  "ESO22MAPPH",       "ESO 2.2-m ApPhot", "190", "Y", null],
+              [  19,    "IRTFURAC",         "NASA IRTF URAC", "200", "Y", null],
+              [  20,  "LICK1MCCDC",           "Lick 1-m CCD", "210", "Y", null],
+              [  21, "MCD27MIIRAR",    "McDonald 2.7-m INSB", "220", "Y", null],
+              [  22,  "PAL200CIRC", "Palomar 200-in Cass IR", "230", "Y", null]
           ]
     },
     {
@@ -99,11 +87,7 @@
         "field_type": "char3",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_mission_id"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL_SEARCH",
         "pi_dict_name": "MISSION_NAME",
@@ -136,11 +120,7 @@
         "field_type": "char3",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_inst_host_id_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "INSTRUMENT_HOST_NAME",
@@ -171,11 +151,7 @@
         "field_type": "char3",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<MISSION>_planet_id_<TYPE>"
-        ],
-        "data_source_order": 20,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL_SEARCH",
         "pi_dict_name": "PLANET_NAME",
@@ -210,11 +186,7 @@
         "field_type": "char20",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_target_name_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL_SEARCH",
         "pi_dict_name": "TARGET_NAME",
@@ -238,11 +210,7 @@
         "field_type": "char12",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_target_class"
-        ],
-        "data_source_order": 1,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "definition": "The general class of object indicated by the Intended Target Name. Possible values include Planet, Regular Satellite, Irregular Satellite, Ring, Sky, Calibration, and Other.",
         "pi_dict_context": "OPUS_GENERAL",
@@ -272,11 +240,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_time1_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "val_min": -664500621.0,
         "val_max": 978220837.0,
         "pi_category_name": "obs_general",
@@ -303,11 +267,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_time2_<TYPE>"
-        ],
-        "data_source_order": 1,
+        "data_source": "COMPUTE",
         "val_min": -664500621.0,
         "val_max": 978220837.0,
         "pi_category_name": "obs_general",
@@ -331,11 +291,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_observation_duration_<TYPE>"
-        ],
-        "data_source_order": 12,
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e8,
         "pi_category_name": "obs_general",
@@ -359,11 +315,7 @@
         "field_type": "char25",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_quantity_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "MEASUREMENT_QUANTITY_NAME",
@@ -390,11 +342,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_right_asc1_<TYPE>"
-        ],
-        "data_source_order": 100,
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": [-999, 1e32],
@@ -422,11 +370,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_right_asc2_<TYPE>"
-        ],
-        "data_source_order": 100,
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": [-999, 1e32],
@@ -451,11 +395,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 110,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -464,11 +404,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 110,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -477,11 +413,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_declination1_<TYPE>"
-        ],
-        "data_source_order": 100,
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": [-999, 1e32],
@@ -509,11 +441,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_declination2_<TYPE>"
-        ],
-        "data_source_order": 100,
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": [-999, 1e32],
@@ -537,11 +465,7 @@
         "field_name": "observation_type",
         "field_type": "char3",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_observation_type_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "OBSERVATION_TYPE",
@@ -564,18 +488,15 @@
               [   3, "SCU",        "Spectral Cube", "040", "Y", null],
               [   4,  "TS",          "Time Series", "050", "Y", null],
               [   5, "STS", "Spectral Time Series", "060", "Y", null],
-              [   6, "OCC",  "Occultation Profile", "070", "Y", null]
+              [   6, "OCC",  "Occultation Profile", "070", "Y", null],
+              [   7, "REF",  "Reflectance Profile", "080", "Y", null]
         ]
     },
     {
         "field_name": "ring_obs_id",
         "field_type": "char40",
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_ring_obs_id_<TYPE>"
-        ],
-        "data_source_order": 40,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "RING_OBS_ID",
@@ -592,15 +513,11 @@
         "pi_tooltip": null
     },
     {
-        "field_name": "primary_file_spec",
+        "field_name": "primary_filespec",
         "field_type": "char240",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_<INST>_primary_file_spec_<TYPE>"
-        ],
-        "data_source_order": 40,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": null,
         "pi_dict_name": null,
@@ -621,11 +538,7 @@
         "field_type": "json",
         "field_notnull": true,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "obs_general_preview_images"
-        ],
-        "data_source_order": 50,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": null,
         "pi_dict_name": null,

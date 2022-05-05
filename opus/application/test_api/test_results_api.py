@@ -14,7 +14,7 @@ from tools.app_utils import (HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_UNKNOWN_RING_OBS_ID,
                              HTTP404_UNKNOWN_SLUG)
 
-from api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper
 
 import settings
 
@@ -726,13 +726,13 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_categories_vg_iss_2_s_c4360004(self):
         "[test_results_api.py] /api/categories: vg-iss-2-s-c4360004"
         url = '/api/categories/vg-iss-2-s-c4360004.json'
-        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_occultation", "label": "Occultation Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__saturn", "label": "Saturn Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__titan", "label": "Titan Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_voyager", "label": "Voyager Mission Constraints"}, {"table_name": "obs_instrument_vgiss", "label": "Voyager ISS Constraints"}]
+        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_profile", "label": "Occultation/Reflectance Profiles Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__saturn", "label": "Saturn Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__titan", "label": "Titan Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_voyager", "label": "Voyager Mission Constraints"}, {"table_name": "obs_instrument_vgiss", "label": "Voyager ISS Constraints"}]
         self._run_json_equal(url, expected)
 
     def test__api_categories_COISS_2002(self):
         "[test_results_api.py] /api/categories: COISS_2002"
         url = '/api/categories.json?volumeid=COISS_2002'
-        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_occultation", "label": "Occultation Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_cassini", "label": "Cassini Mission Constraints"}, {"table_name": "obs_instrument_coiss", "label": "Cassini ISS Constraints"}]
+        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_profile", "label": "Occultation/Reflectance Profiles Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_cassini", "label": "Cassini Mission Constraints"}, {"table_name": "obs_instrument_coiss", "label": "Cassini ISS Constraints"}]
         self._run_json_equal(url, expected)
 
 

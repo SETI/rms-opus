@@ -65,6 +65,8 @@ var o_cart = {
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     galleryBoundingRect: {'x': 0, 'yCell': 0, 'yFloor': 0, 'yPartial': 0, 'trFloor': 0},
     gallerySliderStep: 10,
+    // opusID of the last slide show/gallery view modal after it is closed
+    lastMetadataDetailOpusId: "",
 
     // unique to o_cart
     lastRequestNo: 0,           // for status
@@ -305,7 +307,7 @@ var o_cart = {
             $(".op-download-panel-title").hide();
         } else {
             opus.hideHelpAndCartPanels();
-            $(".cart_details").html(html);
+            $(".op-cart-details").html(html);
             $(".op-download-panel-title").show();
         }
         o_cart.adjustProductInfoHeight();
@@ -438,7 +440,7 @@ var o_cart = {
         let downloadOptionsScrollableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
                                                productTypesTableHeader - downloadContainerTopPadding);
 
-        $("#cart .gallery-contents").height(containerHeight);
+        $("#cart .op-gallery-contents").height(containerHeight);
         if ($(window).width() < cartLeftPaneThreshold) {
             downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
             downloadOptionsScrollableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
@@ -594,7 +596,7 @@ var o_cart = {
     emptyCartOrRecycleBin: function(what) {
         // to disable clicks:
         o_utils.disableUserInteraction();
-        o_browse.hideGalleryViewModal();
+        o_browse.hideMetadataDetailModal();
         o_cart.showCartCountSpinner();
         o_cart.showDownloadSpinner();
 
@@ -653,12 +655,12 @@ var o_cart = {
         let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo["#cart"].title);
-        $(`#cart .op-thumbnail-container`).addClass("op-in-cart");
-        $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
-        $(`#cart tr[data-id]`).removeClass("text-success op-recycled");
-        $(`#cart .op-thumbnail-container[data-id] .op-recycle-overlay`).addClass("op-hide-element");
-        $(`#galleryViewContents .op-cart-toggle`).attr("title", `${buttonInfo[tab].title} (spacebar)`);
-        $(`#galleryViewContents .op-cart-toggle`).html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
+        $("#cart .op-thumbnail-container").addClass("op-in-cart");
+        $("#cart .op-thumbnail-container .op-recycle-overlay").addClass("op-hide-element");
+        $("#cart tr[data-id]").removeClass("text-success op-recycled");
+        $("#cart .op-thumbnail-container[data-id] .op-recycle-overlay").addClass("op-hide-element");
+        $(".op-gallery-view-body .op-cart-toggle").attr("title", `${buttonInfo[tab].title} (spacebar)`);
+        $(".op-gallery-view-body .op-cart-toggle").html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
     },
 
     // action = add/remove/addrange/removerange/addall
@@ -803,15 +805,15 @@ var o_cart = {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
                         $(`#cart tr[data-id=${opusId}]`).removeClass("text-success op-recycled");
                         $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).addClass("op-hide-element");
-                        if ($(`#galleryViewContents .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
-                            $("#galleryViewContents .op-metadata-details .op-recycle-modal").addClass("op-hide-element");
+                        if ($(`.op-gallery-view-body .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
+                            $(".op-gallery-view-body .op-metadata-details .op-recycle-modal").addClass("op-hide-element");
                         }
                     } else {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
                         $(`#cart tr[data-id=${opusId}]`).addClass("text-success op-recycled");
                         $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).removeClass("op-hide-element");
-                        if ($(`#galleryViewContents .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
-                            $("#galleryViewContents .op-metadata-details .op-recycle-modal").removeClass("op-hide-element");
+                        if ($(`.op-gallery-view-body .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
+                            $(".op-gallery-view-body .op-metadata-details .op-recycle-modal").removeClass("op-hide-element");
                         }
                     }
                     $("input[name="+opusId+"]").prop("checked", checked);
@@ -821,7 +823,7 @@ var o_cart = {
                     let buttonInfo = o_browse.cartButtonInfo(action);
                     let newAction = buttonInfo["#browse"].rangeTitle.split(" ")[0];
                     let opusId = $(".op-detail-cart a").data("id");
-                    $(".op-detail-cart").html(`<a href="#" data-icon="cart" data-action="${newAction}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon} fa-xs"></i></a>`);
+                    $(".op-detail-cart").html(`<a href="#" data-icon="cart" data-action="${newAction}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon}"></i></a>`);
                 }
             }
             o_cart.updateCartStatus(statusData);

@@ -17,11 +17,11 @@
         "declination2": "21.5003"
     },
     "PDS Constraints": {
-        "volumeid": "GO_0017",
+        "volumeid": "GO_0018",
         "datasetid": "GO-J/JSA-SSI-2-REDR-V1.0",
         "productid": "IMG",
         "productcreationtime": null,
-        "primaryfilespec": "GO_0017/C3/JUPITER/C0368977800R.IMG",
+        "primaryfilespec": "GO_0018/REDO/C3/JUPITER/C0368977800R.IMG",
         "opusid": "go-ssi-c0368977800",
         "note": null
     },
@@ -45,7 +45,7 @@
         "specsize": null,
         "polarizationtype": "None"
     },
-    "Occultation Constraints": {
+    "Occultation/Reflectance Profiles Constraints": {
         "occtype": null,
         "occdir": null,
         "bodyoccflag": null,
@@ -99,8 +99,8 @@
         "RINGGEOnorthbasedincidence2": null,
         "RINGGEOnorthbasedemission1": null,
         "RINGGEOnorthbasedemission2": null,
-        "RINGGEOsolarringelev1": null,
-        "RINGGEOsolarringelev2": null,
+        "RINGGEOsolarringelevation1": null,
+        "RINGGEOsolarringelevation2": null,
         "RINGGEOobserverringelevation1": null,
         "RINGGEOobserverringelevation2": null,
         "RINGGEOringcenterphase1": null,
@@ -143,7 +143,7 @@
         "GOSSIcompressiontype": "Integer Cosine Transform",
         "GOSSIgainmode": "10K",
         "GOSSIobstruction": "Not Possible",
-        "GOSSIframeduration": "60.667",
+        "GOSSIframeduration": "15.166",
         "GOSSIimageid": "C3J0120",
         "GOSSIobservationid": "C3JSAURORA02",
         "duration": "51.1958"

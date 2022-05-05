@@ -8,25 +8,19 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +36,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -56,10 +44,7 @@
         "field_type": "char30",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_obs_name"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "OBSERVATION_NAME",
@@ -84,11 +69,7 @@
         "field_type": "char3",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_rev_no"
-        ],
-        "data_source_order": 10,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "ORBIT_NUMBER",
@@ -111,11 +92,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_rev_no_cvt"
-        ],
-        "data_source_order": 11,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "ORBIT_NUMBER_INT",
@@ -139,11 +116,7 @@
         "field_name": "is_prime",
         "field_type": "flag_yesno",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_is_prime"
-        ],
-        "data_source_order": 10,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "IS_PRIME_FLAG",
@@ -166,10 +139,7 @@
         "field_type": "char6",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_prime_inst_id"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "PRIMARY_INSTRUMENT_ID",
@@ -201,11 +171,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-              "FUNCTION",
-              "obs_mission_cassini_<INST>_spacecraft_clock_count1_<TYPE>"
-        ],
-        "data_source_order": 10,
+        "data_source": "COMPUTE",
         "val_min": 1.28e9,
         "val_max": 2.2e9,
         "pi_category_name": "obs_mission_cassini",
@@ -233,11 +199,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-              "FUNCTION",
-              "obs_mission_cassini_<INST>_spacecraft_clock_count2_<TYPE>"
-        ],
-        "data_source_order": 20,
+        "data_source": "COMPUTE",
         "val_min": 1.28e9,
         "val_max": 2.2e9,
         "pi_category_name": "obs_mission_cassini",
@@ -262,11 +224,7 @@
         "field_type": "real8",
         "field_key": true,
         "field_default": null,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_<INST>_ert1_<TYPE>"
-        ],
-        "data_source_order": 10,
+        "data_source": "COMPUTE",
         "val_min": -94607970.0,
         "val_max": 560044837.0,
         "pi_category_name": "obs_mission_cassini",
@@ -294,11 +252,7 @@
         "field_type": "real8",
         "field_key": true,
         "field_default": null,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_<INST>_ert2_<TYPE>"
-        ],
-        "data_source_order": 11,
+        "data_source": "COMPUTE",
         "val_min": -94607970.0,
         "val_max": 560044837.0,
         "pi_category_name": "obs_mission_cassini",
@@ -323,10 +277,7 @@
         "field_type": "char50",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_cassini_target_code"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "CASSINI_TARGET_CODE",
@@ -348,10 +299,7 @@
         "field_type": "char50",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_cassini_target_name"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "CASSINI_TARGET_NAME",
@@ -372,10 +320,7 @@
         "field_name": "activity_name",
         "field_type": "char9",
         "field_key": true,
-        "data_source": [
-              "FUNCTION",
-              "obs_mission_cassini_activity_name"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "ACTIVITY_NAME",
@@ -397,10 +342,7 @@
         "field_type": "char32",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_<INST>_mission_phase_name_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "MISSION_PHASE_NAME",
@@ -421,10 +363,7 @@
         "field_name": "sequence_id",
         "field_type": "char4",
         "field_default": null,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_cassini_<INST>_sequence_id_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "SEQUENCE_ID",
@@ -449,10 +388,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

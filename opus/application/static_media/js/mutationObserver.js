@@ -61,7 +61,7 @@ var o_mutationObserver = {
         let adjustSelectMetadataHeight = _.debounce(o_selectMetadata.adjustHeight, 200);
         let hideOrShowSelectMetadataMenuPS = _.debounce(o_selectMetadata.hideOrShowMenuPS, 200);
         let hideOrShowSelectedMetadataPS = _.debounce(o_selectMetadata.hideOrShowPS, 200);
-        let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
+        let adjustMetadataDetailDialogPS = _.debounce(o_browse.adjustMetadataDetailDialogPS, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
         let switchTabObserver = new MutationObserver(function(mutationsList) {
@@ -244,7 +244,7 @@ var o_mutationObserver = {
 
         // ps in browse dialog
         let browseDialogObserver = new MutationObserver(function(mutationsList) {
-            adjustBrowseDialogPS();
+            adjustMetadataDetailDialogPS();
         });
 
         //#BROWSE
@@ -290,8 +290,8 @@ var o_mutationObserver = {
         let helpPanel = $("#op-help-panel")[0];
         let selectMetadata = $("#op-select-metadata")[0];
         let selectMetadataContents = $("#op-select-metadata-contents")[0];
-        let browseDialogModal = $("#galleryView.modal")[0];
-        let browseDialogModalDetails = $("#galleryView.modal .op-metadata-details")[0];
+        let browseDialogModal = $("#op-metadata-detail-view.modal")[0];
+        let browseDialogModalDetails = $("#op-metadata-detail-view.modal .op-metadata-details")[0];
 
         let browseGalleryView = $("#browse .gallery")[0];
         let browseTableView = $("#browse .op-data-table")[0];

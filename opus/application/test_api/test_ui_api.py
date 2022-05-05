@@ -8,7 +8,7 @@ from unittest import TestCase
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
-from api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper
 
 import settings
 
@@ -723,7 +723,7 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_widgets_default(self):
         "[test_ui_api.py] /__normalizeurl: widgets default"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=planet,target'
+        url = '/__normalizeurl.json?widgets=instrument,observationtype,target'
         new_slugs['widgets'] = settings.DEFAULT_WIDGETS
         self._run_url_slugs_equal(url, new_slugs)
 

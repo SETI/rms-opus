@@ -14,7 +14,7 @@ from tools.app_utils import (HTTP404_BAD_COLLAPSE,
                              HTTP404_UNKNOWN_UNITS,
                              HTTP404_UNKNOWN_SLUG)
 
-from api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper
 
 import settings
 
@@ -670,7 +670,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
 
     def test__api_meta_range_endpoints_levels1_COVIMS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 COVIMS"
-        url = '/api/meta/range/endpoints/levels.json?instrument=Cassini+VIMS&observationtype=Spectral+Cube,Time+Series'
+        url = '/api/meta/range/endpoints/levels.json?instrument=Cassini+VIMS&observationtype=Spectral+Cube,Time+Series&imagetype=Raster+Scan'
         expected = {'min': '4096', 'max': '4096', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 

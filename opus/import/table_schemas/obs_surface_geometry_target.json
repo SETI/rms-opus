@@ -8,25 +8,19 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +36,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -56,10 +44,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_PLANETOCENTRIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -88,10 +73,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_PLANETOCENTRIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -117,10 +99,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_PLANETOGRAPHIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -149,10 +128,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_PLANETOGRAPHIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -178,19 +154,16 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_IAU_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "IAU_LONGITUDE",
+        "pi_dict_name": "IAU_WEST_LONGITUDE",
         "definition": "The range of IAU longitudes in the field of view. IAU longitude is the longitude at the surface intercept point on the planet or a specified target body. Longitudes increase toward the west, in the rotating coordinate frame defined by the IAU. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. Note that IAU longitude wraps around from 360 to 0 and thus both minimum and maximum values must be specified for a valid search. OPUS will also allow you to search from a larger number to a smaller number, implying the IAU longitude must wrap around. Both the minimum and maximum IAU longitudes are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
         "pi_dict_context_results": "SURFACE_GEO",
-        "pi_dict_name_results": "MINIMUM_IAU_LONGITUDE",
+        "pi_dict_name_results": "MINIMUM_IAU_WEST_LONGITUDE",
         "definition_results": "The minimum IAU longitude in the field of view. IAU longitude is the longitude at the surface intercept point on the planet or a specified target body. Longitudes increase toward the west, in the rotating coordinate frame defined by the IAU. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. For fields of view that cross the prime meridian, the tabulated minimum value will be greater than the maximum.",
         "pi_disp_order": 500,
         "pi_display": 1,
@@ -201,7 +174,7 @@
         "pi_label_results": "Observed IAU West Longitude (Min)",
         "pi_old_slug": "SURFACEGEO<SLUGTARGET>IAUwestlongitude1",
         "pi_slug": "SURFACEGEO<SLUGTARGET>_IAUwestlongitude1",
-        "pi_sub_heading": "Longitude",
+        "pi_sub_heading": "West Longitude",
         "pi_tooltip": "",
         "comments": "Definition is from SURFACE_GEO label file."
     },
@@ -210,16 +183,13 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_IAU_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context_results": "SURFACE_GEO",
-        "pi_dict_name_results": "MAXIMUM_IAU_LONGITUDE",
+        "pi_dict_name_results": "MAXIMUM_IAU_WEST_LONGITUDE",
         "definition_results": "The maximum IAU longitude in the field of view. IAU longitude is the longitude at the surface intercept point on the planet or a specified target body. Longitudes increase toward the west, in the rotating coordinate frame defined by the IAU. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. For fields of view that cross the prime meridian, the tabulated minimum value will be greater than the maximum.",
         "pi_disp_order": 501,
         "pi_display": 0,
@@ -230,7 +200,7 @@
         "pi_label_results": "Observed IAU West Longitude (Max)",
         "pi_old_slug": "SURFACEGEO<SLUGTARGET>IAUwestlongitude2",
         "pi_slug": "SURFACEGEO<SLUGTARGET>_IAUwestlongitude2",
-        "pi_sub_heading": "Longitude",
+        "pi_sub_heading": "West Longitude",
         "pi_tooltip": "",
         "comments": "Definition is from SURFACE_GEO label file."
     },
@@ -239,11 +209,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -252,11 +218,78 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
+        "val_min": 0,
+        "val_max": 180
+    },
+    {
+        "field_name": "iau_east_longitude1",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "COMPUTE",
+        "val_min": 0,
+        "val_max": 360,
+        "val_sentinel": -999,
+        "pi_category_name": "obs_surface_geometry__<TARGET>",
+        "pi_dict_context": "SURFACE_GEO",
+        "pi_dict_name": "IAU_EAST_LONGITUDE",
+        "definition": "The range of IAU east longitudes in the field of view. IAU east longitude is the longitude at the surface intercept point on the planet or a specified target body. Longitudes increase toward the east, in the rotating coordinate frame defined by the IAU. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. Note that IAU east longitude wraps around from 360 to 0 and thus both minimum and maximum values must be specified for a valid search. OPUS will also allow you to search from a larger number to a smaller number, implying the IAU east longitude must wrap around. Both the minimum and maximum IAU east longitudes are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "pi_dict_context_results": "SURFACE_GEO",
+        "pi_dict_name_results": "MINIMUM_IAU_EAST_LONGITUDE",
+        "definition_results": "The minimum IAU east longitude in the field of view. IAU east longitude is the longitude at the surface intercept point on the planet or a specified target body. Longitudes increase toward the east, in the rotating coordinate frame defined by the IAU. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. For fields of view that cross the prime meridian, the tabulated minimum value will be greater than the maximum.",
+        "pi_disp_order": 550,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "LONG%.3f:longitude",
+        "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
+        "pi_label": "Observed IAU East Longitude",
+        "pi_label_results": "Observed IAU East Longitude (Min)",
+        "pi_slug": "SURFACEGEO<SLUGTARGET>_IAUeastlongitude1",
+        "pi_sub_heading": "East Longitude",
+        "pi_tooltip": "",
+        "comments": "Definition is from SURFACE_GEO label file."
+    },
+    {
+        "field_name": "iau_east_longitude2",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "COMPUTE",
+        "val_min": 0,
+        "val_max": 360,
+        "val_sentinel": -999,
+        "pi_category_name": "obs_surface_geometry__<TARGET>",
+        "pi_dict_context_results": "SURFACE_GEO",
+        "pi_dict_name_results": "MAXIMUM_IAU_EAST_LONGITUDE",
+        "definition_results": "The maximum IAU east longitude in the field of view. IAU east longitude is the longitude at the surface intercept point on the planet or a specified target body. Longitudes increase toward the east, in the rotating coordinate frame defined by the IAU. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. For fields of view that cross the prime meridian, the tabulated minimum value will be greater than the maximum.",
+        "pi_disp_order": 551,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "LONG%.3f:longitude",
+        "pi_intro": null,
+        "pi_label": "Observed IAU East Longitude",
+        "pi_label_results": "Observed IAU East Longitude (Max)",
+        "pi_slug": "SURFACEGEO<SLUGTARGET>_IAUeastlongitude2",
+        "pi_sub_heading": "East Longitude",
+        "pi_tooltip": "",
+        "comments": "Definition is from SURFACE_GEO label file."
+    },
+    {
+        "field_name": "iau_east_longitude",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "LONGITUDE_FIELD",
+        "val_min": 0,
+        "val_max": 360
+    },
+    {
+        "field_name": "d_iau_east_longitude",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -265,10 +298,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_LOCAL_HOUR_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -297,10 +327,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_LOCAL_HOUR_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -326,11 +353,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -339,98 +362,151 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
     {
-        "field_name": "observer_longitude1",
+        "field_name": "observer_west_longitude1",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_LONGITUDE_WRT_OBSERVER"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "LONGITUDE_WRT_OBSERVER",
+        "pi_dict_name": "WEST_LONGITUDE_WRT_OBSERVER",
         "definition": "The range of longitudes with respect to the observer in the field of view. This alternative definition of longitude is measured relative to the direction toward the observer. Values increase westward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. Note that longitude wraps around from 180 to -180 and thus both minimum and maximum values must be specified for a valid search. OPUS will also allow you to search from a larger number to a smaller number, implying the longitude must wrap around. Both the minimum and maximum longitudes are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
         "pi_dict_context_results": "SURFACE_GEO",
-        "pi_dict_name_results": "MINIMUM_LONGITUDE_WRT_OBSERVER",
+        "pi_dict_name_results": "MINIMUM_WEST_LONGITUDE_WRT_OBSERVER",
         "definition_results": "The minimum longitude with respect to the observer in the field of view. This alternative definition of longitude is measured relative to the direction toward the observer. Values increase westward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.",
-        "pi_disp_order": 530,
+        "pi_disp_order": 504,
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
-        "pi_label": "Longitude WRT Observer",
-        "pi_label_results": "Longitude WRT Observer (Min)",
+        "pi_label": "West Longitude WRT Observer",
+        "pi_label_results": "West Longitude WRT Observer (Min)",
         "pi_old_slug": "SURFACEGEO<SLUGTARGET>observerlongitude1",
         "pi_slug": "SURFACEGEO<SLUGTARGET>_observerlongitude1",
-        "pi_sub_heading": "Longitude",
+        "pi_sub_heading": "West Longitude",
         "pi_tooltip": "",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
-        "field_name": "observer_longitude2",
+        "field_name": "observer_west_longitude2",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_LONGITUDE_WRT_OBSERVER"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context_results": "SURFACE_GEO",
-        "pi_dict_name_results": "MAXIMUM_LONGITUDE_WRT_OBSERVER",
+        "pi_dict_name_results": "MAXIMUM_WEST_LONGITUDE_WRT_OBSERVER",
         "definition_results": "The maximum longitude with respect to the observer in the field of view. This alternative definition of longitude is measured relative to the direction toward the observer. Values increase westward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.",
-        "pi_disp_order": 540,
+        "pi_disp_order": 505,
         "pi_display": 0,
         "pi_display_results": 1,
         "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": null,
-        "pi_label": "Longitude WRT Observer",
-        "pi_label_results": "Longitude WRT Observer (Max)",
+        "pi_label": "West Longitude WRT Observer",
+        "pi_label_results": "West Longitude WRT Observer (Max)",
         "pi_old_slug": "SURFACEGEO<SLUGTARGET>observerlongitude2",
         "pi_slug": "SURFACEGEO<SLUGTARGET>_observerlongitude2",
-        "pi_sub_heading": "Longitude",
+        "pi_sub_heading": "West Longitude",
         "pi_tooltip": "",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
-        "field_name": "observer_longitude",
+        "field_name": "observer_west_longitude",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
     {
-        "field_name": "d_observer_longitude",
+        "field_name": "d_observer_west_longitude",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
+        "val_min": 0,
+        "val_max": 180
+    },
+    {
+        "field_name": "observer_east_longitude1",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "COMPUTE",
+        "val_min": -180,
+        "val_max": 180,
+        "val_sentinel": -999,
+        "pi_category_name": "obs_surface_geometry__<TARGET>",
+        "pi_dict_context": "SURFACE_GEO",
+        "pi_dict_name": "EAST_LONGITUDE_WRT_OBSERVER",
+        "definition": "The range of longitudes with respect to the observer in the field of view. This alternative definition of longitude is measured relative to the direction toward the observer. Values increase eastward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored. Note that longitude wraps around from 180 to -180 and thus both minimum and maximum values must be specified for a valid search. OPUS will also allow you to search from a larger number to a smaller number, implying the longitude must wrap around. Both the minimum and maximum longitudes are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "pi_dict_context_results": "SURFACE_GEO",
+        "pi_dict_name_results": "MINIMUM_EAST_LONGITUDE_WRT_OBSERVER",
+        "definition_results": "The minimum longitude with respect to the observer in the field of view. This alternative definition of longitude is measured relative to the direction toward the observer. Values increase eastward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.",
+        "pi_disp_order": 554,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "LONG%.3f:longitude",
+        "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
+        "pi_label": "East Longitude WRT Observer",
+        "pi_label_results": "East Longitude WRT Observer (Min)",
+        "pi_slug": "SURFACEGEO<SLUGTARGET>_observereastlongitude1",
+        "pi_sub_heading": "East Longitude",
+        "pi_tooltip": "",
+        "comments": "Definition is from SURFACE_GEO label file."
+    },
+    {
+        "field_name": "observer_east_longitude2",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "COMPUTE",
+        "val_min": -180,
+        "val_max": 180,
+        "val_sentinel": -999,
+        "pi_category_name": "obs_surface_geometry__<TARGET>",
+        "pi_dict_context_results": "SURFACE_GEO",
+        "pi_dict_name_results": "MAXIMUM_EAST_LONGITUDE_WRT_OBSERVER",
+        "definition_results": "The maximum longitude with respect to the observer in the field of view. This alternative definition of longitude is measured relative to the direction toward the observer. Values increase eastward. Unlike other longitudes, this quantity ranges from -180 to 180 degrees instead of 0 to 360 degrees. The surface has been modeled as an ellipsoid. Surface intercept points that are obscured by the planet or another moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), the night side of the target body is also ignored.",
+        "pi_disp_order": 555,
+        "pi_display": 0,
+        "pi_display_results": 1,
+        "pi_form_type": "LONG%.3f:longitude",
+        "pi_intro": null,
+        "pi_label": "East Longitude WRT Observer",
+        "pi_label_results": "East Longitude WRT Observer (Max)",
+        "pi_slug": "SURFACEGEO<SLUGTARGET>_observereastlongitude2",
+        "pi_sub_heading": "East Longitude",
+        "pi_tooltip": "",
+        "comments": "Definition is from SURFACE_GEO label file."
+    },
+    {
+        "field_name": "observer_east_longitude",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "LONGITUDE_FIELD",
+        "val_min": 0,
+        "val_max": 360
+    },
+    {
+        "field_name": "d_observer_east_longitude",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -439,10 +515,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_FINEST_SURFACE_RESOLUTION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -471,10 +544,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_FINEST_SURFACE_RESOLUTION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -500,10 +570,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_COARSEST_SURFACE_RESOLUTION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e6,
         "val_sentinel": -999,
@@ -533,10 +600,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_COARSEST_SURFACE_RESOLUTION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e6,
         "val_sentinel": -999,
@@ -563,10 +627,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_SURFACE_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -595,10 +656,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_SURFACE_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -624,10 +682,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_PHASE_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -656,10 +711,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_PHASE_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -685,10 +737,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_INCIDENCE_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -717,10 +766,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_INCIDENCE_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -746,10 +792,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_EMISSION_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -778,10 +821,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_EMISSION_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -807,10 +847,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_SOLAR_PLANETOCENTRIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -836,10 +873,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_SOLAR_PLANETOGRAPHIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -865,10 +899,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_OBSERVER_PLANETOCENTRIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -894,10 +925,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -919,22 +947,19 @@
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
-        "field_name": "sub_solar_iau_longitude",
+        "field_name": "sub_solar_iau_west_longitude",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_SOLAR_IAU_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "SUB_SOLAR_IAU_LONGITUDE",
+        "pi_dict_name": "SUB_SOLAR_IAU_WEST_LONGITUDE",
         "definition": "Longitude of the sub-solar point on the surface of the planet or specified target body. Longitudes increase toward the west from the IAU-defined prime meridian. This value is defined by the instantaneous geometry at the time of the observation; it is independent of the field of view.",
-        "pi_disp_order": 510,
+        "pi_disp_order": 502,
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "LONG%.3f:longitude",
@@ -943,27 +968,49 @@
         "pi_label_results": "Sub-Solar IAU West Longitude",
         "pi_old_slug": "SURFACEGEO<SLUGTARGET>subsolarIAUlongitude",
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subsolarIAUlongitude",
-        "pi_sub_heading": "Longitude",
+        "pi_sub_heading": "West Longitude",
         "pi_tooltip": "",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
-        "field_name": "sub_observer_iau_longitude",
+        "field_name": "sub_solar_iau_east_longitude",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_OBSERVER_IAU_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "SUB_OBSERVER_IAU_LONGITUDE",
+        "pi_dict_name": "SUB_SOLAR_IAU_EAST_LONGITUDE",
+        "definition": "Longitude of the sub-solar point on the surface of the planet or specified target body. Longitudes increase toward the east from the IAU-defined prime meridian. This value is defined by the instantaneous geometry at the time of the observation; it is independent of the field of view.",
+        "pi_disp_order": 552,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "LONG%.3f:longitude",
+        "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
+        "pi_label": "Sub-Solar IAU East Longitude",
+        "pi_label_results": "Sub-Solar IAU East Longitude",
+        "pi_slug": "SURFACEGEO<SLUGTARGET>_subsolarIAUeastlongitude",
+        "pi_sub_heading": "East Longitude",
+        "pi_tooltip": "",
+        "comments": "Definition is from SURFACE_GEO label file."
+    },
+    {
+        "field_name": "sub_observer_iau_west_longitude",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "COMPUTE",
+        "val_min": 0,
+        "val_max": 360,
+        "val_sentinel": -999,
+        "pi_category_name": "obs_surface_geometry__<TARGET>",
+        "pi_dict_context": "SURFACE_GEO",
+        "pi_dict_name": "SUB_OBSERVER_IAU_WEST_LONGITUDE",
         "definition": "Longitude of the sub-observer point on the surface of the planet or specified target body. Longitudes increase toward the west from the IAU-defined prime meridian. This value is defined by the instantaneous geometry at the time of the observation; it is independent of the field of view.",
-        "pi_disp_order": 520,
+        "pi_disp_order": 503,
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "LONG%.3f:longitude",
@@ -972,7 +1019,32 @@
         "pi_label_results": "Sub-Observer IAU West Longitude",
         "pi_old_slug": "SURFACEGEO<SLUGTARGET>subobserverIAUlongitude",
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subobserverIAUlongitude",
-        "pi_sub_heading": "Longitude",
+        "pi_sub_heading": "West Longitude",
+        "pi_tooltip": "",
+        "comments": "Definition is from SURFACE_GEO label file."
+    },
+    {
+        "field_name": "sub_observer_iau_east_longitude",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": true,
+        "data_source": "COMPUTE",
+        "val_min": 0,
+        "val_max": 360,
+        "val_sentinel": -999,
+        "pi_category_name": "obs_surface_geometry__<TARGET>",
+        "pi_dict_context": "SURFACE_GEO",
+        "pi_dict_name": "SUB_OBSERVER_IAU_EAST_LONGITUDE",
+        "definition": "Longitude of the sub-observer point on the surface of the planet or specified target body. Longitudes increase toward the east from the IAU-defined prime meridian. This value is defined by the instantaneous geometry at the time of the observation; it is independent of the field of view.",
+        "pi_disp_order": 553,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "LONG%.3f:longitude",
+        "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
+        "pi_label": "Sub-Observer IAU East Longitude",
+        "pi_label_results": "Sub-Observer IAU East Longitude",
+        "pi_slug": "SURFACEGEO<SLUGTARGET>_subobserverIAUeastlongitude",
+        "pi_sub_heading": "East Longitude",
         "pi_tooltip": "",
         "comments": "Definition is from SURFACE_GEO label file."
     },
@@ -981,10 +1053,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "CENTER_RESOLUTION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -1010,10 +1079,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "CENTER_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -1039,10 +1105,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "CENTER_PHASE_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1068,10 +1131,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

@@ -7,7 +7,7 @@ from unittest import TestCase
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
-from api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper
 
 import settings
 

@@ -14,7 +14,7 @@ from tools.app_utils import (HTTP404_BAD_OR_MISSING_RANGE,
                              HTTP404_SEARCH_PARAMS_INVALID,
                              HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT)
 
-from api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper
 
 import settings
 

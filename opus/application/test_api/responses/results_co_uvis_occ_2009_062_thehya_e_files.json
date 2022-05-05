@@ -1,0 +1,100 @@
+{
+    "data": {
+        "co-uvis-occ-2009-062-thehya-e": {
+            "couvis_occ_01": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU01KM.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU01KM.LBL"
+            ],
+            "couvis_occ_10": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU10KM.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU10KM.LBL"
+            ],
+            "rms_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl"
+            ],
+            "profile_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.lbl"
+            ],
+            "supplemental_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl"
+            ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_thumb.jpg"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_small.jpg"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_med.jpg"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_full.jpg"
+            ],
+            "diagram_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_thumb.jpg"
+            ],
+            "diagram_small": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_small.jpg"
+            ],
+            "diagram_medium": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_med.jpg"
+            ],
+            "diagram_full": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_full.jpg"
+            ]
+        }
+    },
+    "versions": {
+        "co-uvis-occ-2009-062-thehya-e": {
+            "Current": {
+                "couvis_occ_01": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU01KM.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU01KM.LBL"
+                ],
+                "couvis_occ_10": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU10KM.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU10KM.LBL"
+                ],
+                "rms_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl"
+                ],
+                "profile_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.lbl"
+                ],
+                "supplemental_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_thumb.jpg"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_small.jpg"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_med.jpg"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_full.jpg"
+                ],
+                "diagram_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_thumb.jpg"
+                ],
+                "diagram_small": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_small.jpg"
+                ],
+                "diagram_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_med.jpg"
+                ],
+                "diagram_full": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_full.jpg"
+                ]
+            }
+        }
+    }
+}

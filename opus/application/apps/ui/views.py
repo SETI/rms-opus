@@ -79,6 +79,7 @@ class main_site(TemplateView):
         context['default_widgets'] = settings.DEFAULT_WIDGETS
         context['default_sort_order'] = settings.DEFAULT_SORT_ORDER
         context['max_selections_allowed'] = settings.MAX_SELECTIONS_ALLOWED
+        context['preview_guides'] = str(settings.PREVIEW_GUIDES).strip('"')
         context['menu'] = menu['menu']
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_git_version()
@@ -107,8 +108,7 @@ def api_notifications(request):
         }
     """
     api_code = enter_api_call('api_notifications', request)
-
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -522,7 +522,7 @@ def api_init_detail_page(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
     instrument_id = obs_general.instrument_id
-    filespec = obs_general.primary_file_spec
+    filespec = obs_general.primary_filespec
     selection = filespec.split('/')[-1].split('.')[0]
 
     # See if this opus_id is in the cart
@@ -653,7 +653,7 @@ def api_normalize_url(request):
 
     api_code = enter_api_call('api_normalize_url', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
         exit_api_call(api_code, ret)
         raise ret

@@ -71,6 +71,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cube_index",
+        "definition": "Text files ([volume]_cube_equi/point/ring_index.tab) that tabulate information about the cube image with different map projections for each observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "planet_geometry",
         "definition": "Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
     },
@@ -193,6 +198,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "gossi_raw",
         "definition": "Raw image files (*.IMG) for Galileo SSI. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are RTLMTAB.FMT, which describes the format of the VICAR binary header, and RLINEPRX.FMT, which describes the format of the binary prefix at the beginning of each line of imaging data."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "gossi_sl9",
+        "definition": "Raw image files (*.IMG) with white text overlay for Galileo SSI. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are RTLMTAB.FMT, which describes the format of the VICAR binary header, and RLINEPRX.FMT, which describes the format of the binary prefix at the beginning of each line of imaging data."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -333,6 +343,16 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cocirs_browse_pan",
         "definition": "Diagrams (POI*_FPx_618.PNG) showing the footprint of the spectra in a CIRS observation on Pan. Associated labels (POI*_FPx_618.LBL) are text files that contain information about the footprint diagrams."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cocirs_cube",
+        "definition": "Compressed tar archives (*.tar.gz) that contain spectral image cube information for COCIRS. Associated labels (*.LBL) describe the contents of the archive files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cocirs_extra",
+        "definition": "Supplemental viewable images (*.JPG) that contain spectral image cube information for COCIRS. Associated labels (*.LBL) describe the contents of the supplemental files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -518,5 +538,325 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims_occ_10",
         "definition": "Text files (*.TAB) that tabulate an occultation profile with 10km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_best",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with the finest available resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_all",
+        "definition": "Text files (*.TAB) that tabulate an overview of a calibrated occultation profile. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_0_2",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 200m resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_0_5",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 500m resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_01",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 1km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_02",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 2km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_05",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 5km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_10",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 10km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_20",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 20km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_50",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 50km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_test",
+        "definition": "Data files (*.DAT) that contain additional calibration information derived from stellar observations taken after the occultation was complete. Associated labels (*.LBL) are text files that contain information about the data files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_raw",
+        "definition": "Edited data files (*.DAT) that contain reliable data records extracted from the corresponding raw data files with missing data filled in. Associated labels (*.LBL) are text files that contain information about the edited data files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_cal",
+        "definition": "Text files (*.TAB) that tabulate calibration parameters as a function of record index; this same index can be used to identify the corresponding data samples in one of the data files. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_geo",
+        "definition": "Text files (*.TAB) that tabulate geometric parameters as a function of PPS record index; this same index can be used to identify the corresponding data samples in one of the data files. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_img",
+        "definition": "Raw image files (*.IMG) that are obtained by the Voyager cameras in support of the stellar occultation experiments. All show the associated target star near the center of the field of view. Images are in VICAR2 format. Associated labels (*.LBL) are text files that contain information about the images."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_jit",
+        "definition": "Text files (*.TAB) that contain descriptions of the instrument pointing as a function of time during the ring occultation experiments. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_j2000",
+        "definition": "Text files (*.TAB) that contain time and position information for Voyager and for the ring intercept point, referenced to the J2000 frame. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgpps_occ_ring",
+        "definition": "Text files (*.TAB) that contain time and position information for Voyager and for the ring intercept point, referenced to the ring frame. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_full_res",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile sampled at full resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_sampled_2",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile subsampled by a factor of two. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_sampled_3",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile subsampled by a factor of three. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_sampled_4",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile subsampled by a factor of four. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_sampled_5",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile subsampled by a factor of five. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_0_2",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 200m resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_0_5",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 500m resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_01",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 1km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_02",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 2km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_05",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 5km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_10",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 10km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_20",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 20km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_50",
+        "definition": "Text files (*.TAB) that tabulate a calibrated occultation profile with 50km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_coadd",
+        "definition": "Edited data files (*.DAT) that contain raw coadded spectra extracted from the corresponding raw data files. Associated labels (*.LBL) are text files that contain information about the edited data files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_spec",
+        "definition": "Edited data files (*.DAT) that contain raw spectra extracted from the corresponding raw data files. Associated labels (*.LBL) are text files that contain information about the edited data files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_cal",
+        "definition": "Text files (*.TAB) that tabulate calibration parameters as a function of UVS spectrum index; this same index can be used to identify the corresponding data samples in one of the data files. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_geo",
+        "definition": "Text files (*.TAB) that tabulate geometric parameters of the ring intercept point as a function of UVS spectrum index; this same index can be used to identify the corresponding data samples in one of the data files. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_img",
+        "definition": "Raw image files (*.IMG) that are obtained by the Voyager cameras in support of the stellar occultation experiments. All show the associated target star near the center of the field of view. Images are in VICAR2 format. Associated labels (*.LBL) are text files that contain information about the images."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_j2000",
+        "definition": "Text files (*.TAB) that contain time and position information for Voyager and for the ring intercept point, referenced to the J2000 frame. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vguvs_occ_ring",
+        "definition": "Text files (*.TAB) that contain time and position information for Voyager and for the ring intercept point, referenced to the ring frame. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv0_05",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 50m resolution using the old pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv0_2",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 200m resolution using the old pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv0_4",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 400m resolution using the old pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv0_5",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 500m resolution using the old pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv01",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 1km resolution using the old pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv05",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 5km resolution using the old pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam0_025",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 25m and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam0_05",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 50m and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam0_1",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 100m and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam0_2",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 200m and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam0_25",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 250m and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam0_5",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 500m and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam01",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 1km and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam02",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 2km and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam02_5",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 2.5km and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam05",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 5km and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam10",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 10km and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam20",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 20km and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_sam50",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile resampled at 50km and radially adjusted for the new pole. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_prof_02",
+        "definition": "Text files (*.TAB) that tabulate an intensity profile with 2km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_prof_04",
+        "definition": "Text files (*.TAB) that tabulate an intensity profile with 4km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_prof_10",
+        "definition": "Text files (*.TAB) that tabulate an intensity profile with 10km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_prof_20",
+        "definition": "Text files (*.TAB) that tabulate an intensity profile with 20km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_prof_img_ann",
+        "definition": "Annotated image files (*.TIF) that serve to document some of the details in the conversion from an image to a radial scan. Associated labels (*.LBL) describe the contents of the image files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_prof_img_raw",
+        "definition": "Raw image files (*_RAW.IMG) for Voyager ISS that were used to create a radial scan. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_prof_img_cal",
+        "definition": "Calibrated and geometrically corrected image files (*_GEOMED.IMG) for Voyager ISS that were used to create a radial scan. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG)."
     }
 ]

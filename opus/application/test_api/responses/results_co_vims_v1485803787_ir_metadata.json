@@ -29,7 +29,7 @@
         "duration": null,
         "greaterpixelsize": null,
         "lesserpixelsize": null,
-        "levels": "4096",
+        "levels": null,
         "imagetype": null
     },
     "Wavelength Constraints": {
@@ -45,7 +45,7 @@
         "specsize": "256",
         "polarizationtype": "None"
     },
-    "Occultation Constraints": {
+    "Occultation/Reflectance Profiles Constraints": {
         "occtype": null,
         "occdir": null,
         "bodyoccflag": null,
@@ -81,6 +81,12 @@
         "SURFACEGEOsaturn_subobserverIAUlongitude": "213.828",
         "SURFACEGEOsaturn_observerlongitude1": null,
         "SURFACEGEOsaturn_observerlongitude2": null,
+        "SURFACEGEOsaturn_IAUeastlongitude1": null,
+        "SURFACEGEOsaturn_IAUeastlongitude2": null,
+        "SURFACEGEOsaturn_subsolarIAUeastlongitude": "222.851",
+        "SURFACEGEOsaturn_subobserverIAUeastlongitude": "146.172",
+        "SURFACEGEOsaturn_observereastlongitude1": null,
+        "SURFACEGEOsaturn_observereastlongitude2": null,
         "SURFACEGEOsaturn_rangetobody1": null,
         "SURFACEGEOsaturn_rangetobody2": null,
         "SURFACEGEOsaturn_centerdistance": "3557419.405",
@@ -132,8 +138,8 @@
         "RINGGEOnorthbasedincidence2": null,
         "RINGGEOnorthbasedemission1": null,
         "RINGGEOnorthbasedemission2": null,
-        "RINGGEOsolarringelev1": null,
-        "RINGGEOsolarringelev2": null,
+        "RINGGEOsolarringelevation1": null,
+        "RINGGEOsolarringelevation2": null,
         "RINGGEOobserverringelevation1": null,
         "RINGGEOobserverringelevation2": null,
         "RINGGEOringcenterphase1": "76.075",

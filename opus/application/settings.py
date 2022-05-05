@@ -78,10 +78,13 @@ MIDDLEWARE = (
 
 ROOT_URLCONF = 'urls'
 
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            PROJECT_ROOT + '/templates',
             PROJECT_ROOT + '/apps/',
             PROJECT_ROOT + '/apps/ui/templates/',
             PROJECT_ROOT + '/apps/dictionary/templates/',
@@ -99,6 +102,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
@@ -117,9 +121,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'django_nose',
     'django_memcached',
     'django.contrib.admindocs',
+    'django.forms',
     'storages',
     'search',
     'paraminfo',
@@ -160,8 +164,6 @@ else:
 CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
 INTERNAL_IPS = ('127.0.0.1',)
-
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
 
@@ -285,7 +287,7 @@ DATABASES = {
 # These tables are ALWAYS shown to the user and are not triggered.
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
                'obs_surface_geometry_name', 'obs_surface_geometry',
-               'obs_wavelength', 'obs_type_image', 'obs_occultation']
+               'obs_wavelength', 'obs_type_image', 'obs_profile']
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
@@ -305,7 +307,7 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
 # The search widgets selected when OPUS is first intialized
-DEFAULT_WIDGETS = 'planet,target'
+DEFAULT_WIDGETS = 'instrument,observationtype,target'
 
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.
@@ -369,3 +371,5 @@ DOWNLOAD_FORMATS = {
     'tar': ('application/x-tar', 'w', 'r'),
     'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

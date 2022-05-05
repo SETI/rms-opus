@@ -108,11 +108,11 @@
                 ]
             },
             "1": {
-                "nh_mvic_raw_alternate": [
+                "nh_mvic_raw": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxMV_xxxx_v1/NHLAMV_1001/data/20060321_000526/mc1_0005261846_0x537_eng_1.fit",
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxMV_xxxx_v1/NHLAMV_1001/data/20060321_000526/mc1_0005261846_0x537_eng_1.lbl"
                 ],
-                "nh_mvic_calib_alternate": [
+                "nh_mvic_calib": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxMV_xxxx_v1/NHLAMV_2001/data/20060321_000526/mc1_0005261846_0x537_sci_1.fit",
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxMV_xxxx_v1/NHLAMV_2001/data/20060321_000526/mc1_0005261846_0x537_sci_1.lbl"
                 ]

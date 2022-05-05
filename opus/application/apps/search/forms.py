@@ -162,9 +162,9 @@ class SearchForm(forms.Form):
                             attrs={'tabindex':0, 'class':"RANGE"}
                         ),
                     )
-                    self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
+                    self.field_order = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
                 else:
-                    self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2']  # makes sure min is first! boo ya!
+                    self.field_order = [slug_no_num+'1', slug_no_num+'2']  # makes sure min is first! boo ya!
 
             elif form_type in settings.MULT_FORM_TYPES:
                 # self.fields[slug]= MultiStringField(forms.Field)

@@ -74,6 +74,13 @@ even when the browser size is narrow. */
     outline: none; !important
 }
 
+#op-main-nav .op-nav-detail-image {
+    height: 20px;
+    width: 20px;
+    vertical-align: top;
+    margin-left: 0.3em;
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
@@ -133,12 +140,20 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     padding-right: 0.5rem;
 }
 
-@media (max-height: 490px) {
+#op-interpret-image-menu {
+    padding-left: 0.8em;
+}
+
+@media (max-height: 535px) {
     #op-help a {
         padding-top: 2px;
         padding-bottom: 2px;
         padding-left: 10px;
         padding-right: 10px;
+    }
+
+    #op-interpret-image-menu {
+        padding-left: 0.2em !important;
     }
 }
 
@@ -208,28 +223,25 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     margin-bottom: 0.5em;
     white-space: nowrap;
     display: inline-flex;
-    position: absolute;
-    top: -0.5em;
 }
 
 .op-metadata-detail-edit a:hover {
     text-decoration: none;
 }
 
+.op-metadata-detail-edit-wrap {
+    max-width: 10em;
+    flex-wrap: wrap;
+}
+
 .op-metadata-detail-edit-message {
     display: inline-flex;
-    float: right;
     padding-left: 2em;
 }
 
 .op-metadata-details-edit-enabled ul:hover {
     cursor: -webkit-grab;
     cursor: grabbing;
-}
-
-#galleryView .op-metadata-detail-add {
-    left: 0;
-    position: absolute;
 }
 
 .op-metadata-details-sortable {
@@ -601,6 +613,34 @@ ul.op-search-menu {
     z-index: 999;
 }
 
+.op-thumbnail-container .op-detail-overlay {
+    transform: translate(-50%, -50%);
+    filter: contrast(200%) drop-shadow(3px 2px 2px black);
+    opacity: 1;
+    z-index: 999;
+}
+
+.op-thumbnail-container .op-detail-overlay:after {
+    content: "DETAIL";
+    font-family: sans-serif;
+    position: absolute;
+    width: 100%;
+    left: 95%;
+}
+
+.op-thumbnail-container .op-last-modal-overlay {
+    filter: contrast(200%) drop-shadow(3px 2px 2px black);
+    opacity: 1;
+    z-index: 999;
+}
+
+.op-thumbnail-container .op-last-modal-overlay:after {
+    font-family: "Font Awesome 5 Free"; font-weight: 900; content: "\f1e5";
+    position: absolute;
+    width: 100%;
+    left: 5%;
+}
+
 .op-thumbnail-container .op-modal-show {
     z-index: 999;
     filter: contrast(200%) drop-shadow(3px 2px 2px black);
@@ -620,6 +660,12 @@ tr.op-modal-show {
 }
 
 .op-thumbnail-container .op-recycle-overlay.op-modal-show {
+    -webkit-transform: scale(0.4) translate(-210%, -270%);
+    -moz-transform: scale(0.4) translate(-210%, -270%);
+    transform: scale(0.4) translate(-210%, -270%);
+}
+
+.op-thumbnail-container .op-detail-overlay.op-modal-show {
     -webkit-transform: scale(0.4) translate(-210%, -270%);
     -moz-transform: scale(0.4) translate(-210%, -270%);
     transform: scale(0.4) translate(-210%, -270%);
@@ -718,11 +764,11 @@ th.sticky-header {
     text-decoration: none;
 }
 
-#op-edit-field-tool .dropdown-menu {
+.op-edit-field-tool .dropdown-menu {
     overflow-y: auto;
 }
 
-#op-edit-field-tool {
+.op-edit-field-tool {
     min-width: 0;
     background-color: black;
     border-top-left-radius: 0;
@@ -813,6 +859,10 @@ th.sticky-header {
 /* avoid seeing through ps__rail_x in table view */
 .op-data-table-view .ps__thumb-x {
     bottom: 1px;
+}
+
+.op-metadata-detail-view-docked {
+    display: none;
 }
 
 .op-sort-position-indicator {
@@ -1104,31 +1154,139 @@ img.op-slideshow-image-preview {
     max-height: 70vh !important;
 }
 
-/* make modal width shrink smoothly with screen */
-#galleryView .modal-dialog {
-    max-width: 92%;
+.op-resize-small {
+    font-size: 86%;
 }
 
-#galleryView .modal-content {
+/* The following will make sure vertical resizing of modal works properly
+without resizing image proportionally. */
+/* The following two stylings make sure children (img tag) stay inside of it */
+#op-metadata-detail-view .left a {
+    display: flex;
+    height: 100%;
+}
+#op-metadata-detail-view .left img {
+    object-fit: contain;
+}
+
+#op-metadata-detail-view .modal-dialog {
+    height: 80%;
+}
+
+#op-metadata-detail-view .modal-content {
+    /* these need to be here so the min/max size is calculated correctly when the modal is opened */
+    height: 100%;
+    max-height: 100%;
+}
+
+#op-metadata-detail-view {
+    height: 100%;
+}
+
+.op-tune-image-size {
+    height: 88% !important;
+}
+
+/* Edit button takes up 10% */
+.op-position-edit-button {
+    height: 10%;
+    top: 0;
+}
+/* Row of bottom icon takes up 10% */
+.op-position-modal-buttom {
+    height: 10% !important;
+    align-items: center !important;
+}
+
+/* prevent weird browser y-scrollbar */
+#op-metadata-detail-view {
+    overflow-y: hidden;
+    pointer-events: none;
+    /* Make sure metadata modal will not be covered by the main nav when screen
+    is short & narrow */
+    z-index: 1031;
+}
+
+#op-metadata-detail-view .modal-content {
     border: solid 2px #FFF;
+    min-width: 250px;
+    min-height: 240px;
+}
+
+#op-metadata-detail-view .modal-dialog:hover {
+    cursor: grab;
+}
+
+#op-metadata-detail-view-content {
+    top: 10%;
+}
+
+#op-metadata-detail-view-content .op-docking-tools {
+    position: absolute;
+    float: right;
+    top: 1em;
+    right: 4em;
+    z-index: 999;
+}
+
+.op-docking-tools a {
+    padding-right: 0.5em;
+}
+
+#op-metadata-detail-view-content div.close {
+    position: absolute;
+    float: right;
+    top: 0.4em;
+    right: 0.5em;
+    z-index: 999;
+    opacity: 1;
+    text-shadow: 0 1px 0 black;
+}
+
+.op-metadata-detail-view-body {
+    position: relative;
+    height: 100%;
+    border-radius: 1%;
+}
+
+.op-metadata-detail-view-body .contents:hover {
+    cursor: text;
+}
+
+/* Make sure image always stays at the left in metadata modal */
+.op-metadata-detail-view-body .row {
+    height: 100%;
 }
 
 /* make sure left/right hand icon in metadata dialog stay in the same line
 when window sized is narrow */
-#galleryView .op-obs-direction {
+.op-metadata-detail-view-body .op-obs-direction {
     flex-grow: 3;
+    width: 20em;
+    padding-right: 0;
+    padding-left: 0;
 }
 
-/* prevent modal from shirnking to a too small window when resizing horizontally */
-#galleryView .left, #galleryView .right {
-    min-height: 75vh;
+.op-metadata-detail-view-body .op-metadata-detail-add {
+    left: 0;
+    position: absolute;
 }
 
-#galleryViewContents .op-metadata-details {
+.op-metadata-detail-view-body .op-metadata-details-container {
     overflow-x: auto !important;
     overflow-y: hidden !important;
     overscroll-behavior: contain;
-    /* Make #galleryView modal right contents shrink vertically
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    right: 0;
+}
+
+.op-metadata-detail-view-body .op-metadata-details {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior: contain;
+    /* Make #op-metadata-detail-view modal right contents shrink vertically
     93% for the metadata info, 5% for the bottom icons, 2% for the gap between
     4% for the edit line & icon
     metadata and font awesome icons */
@@ -1136,16 +1294,15 @@ when window sized is narrow */
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
-    top: 1.5em;
     right: 0;
 }
 
-#galleryViewContents .op-metadata-details  .op-metadata-details-tools {
+.op-metadata-detail-view-body .op-metadata-details  .op-metadata-details-tools {
     float: left;
 }
 
 /* to account for empty field data */
-#galleryViewContents .op-metadata-details .op-metadata-data {
+.op-metadata-detail-view-body .op-metadata-details .op-metadata-data {
     min-height: 1.5em;
     /* Make sure info with long string like "Multiple Target List" is wrapped
     in metadata detail modal */
@@ -1154,33 +1311,21 @@ when window sized is narrow */
     line-break: anywhere;
 }
 
-/* prevent weird browser y-scrollbar */
-#galleryView {
-    overflow-y: hidden;
-    pointer-events: none;
-    /* Make sure metadata modal will not be covered by the main nav when screen
-    is short & narrow */
-    z-index: 1031;
+.op-metadata-detail-view-body .op-prev > i {
+    margin-right: .4em;
 }
 
-#galleryView button.close {
-    position: absolute;
-    float: right;
-    top: 0.4em;
-    right: 0.5em;
-    z-index: 999;
-}
-
-#galleryView .fa-cart-plus {
-    float: left;
-}
-
-#galleryView .bottom {
+.op-metadata-detail-view-body .bottom {
     position: absolute;
     padding-right: 1em;
     bottom: 0;
     width: 100%;
+    height: auto !important;
     z-index: 1030;
+    /* Make sure bottom icons will be vertically centered in metadata modal in
+    different browsers */
+    align-items: stretch;
+    padding-top: 0.3em;
     /* All icons in metadata display will stay at the bottom */
     align-items: flex-end;
     /* align-item for Safari */
@@ -1190,43 +1335,21 @@ when window sized is narrow */
     height: 5%;
 }
 
-#galleryView .op-obs-direction {
-    width: 20em;
+.op-metadata-detail-view-body .fa-cart-plus {
+    float: left;
 }
 
-#galleryView .op-prev > i {
-    margin-right: .4em;
+.op-metadata-detail-view-body a.menu {
+    width: 0px;
 }
 
-#galleryViewContents {
-    position: relative;
-    border-radius: 1%;
-}
-
-#galleryView .modal-dialog:hover {
-    cursor: grab;
-}
-
-#galleryViewContents .contents:hover {
-    cursor: text;
+.op-metadata-detail-view-body .ps__rail-y {
+    background-color: transparent !important;
 }
 
 /* note - this is here to allow the user-style to be overridden on the modal */
 a:-webkit-any-link, a::any-link {
     cursor: inherit;
-}
-
-#galleryViewContents .detail {
-    position: fixed;
-    bottom: 3.7em;
-}
-
-#galleryViewContents .ps__rail-y {
-    background-color: transparent !important;
-}
-
-#galleryViewContents a.menu {
-    width: 0px;
 }
 
 #op-add-metadata-fields {
@@ -1243,7 +1366,7 @@ a:-webkit-any-link, a::any-link {
     margin-left: 1.2em;
 }
 
-/* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page */
+/* this is used to disable clicking on modal (.op-metadata-detail-view-body) when infiniteScroll is still loading the next page */
 .op-disabled {
     pointer-events: none;
     cursor: default;
@@ -1317,7 +1440,7 @@ panel */
     overflow-y: hidden;
 }
 
-#cart .gallery-contents {
+#cart .op-gallery-contents {
     position: relative;
 }
 
@@ -1342,7 +1465,7 @@ panel */
     margin: 10px 0px 15px -20px;
 }
 
-.cart_details {
+.op-cart-details {
     border-left: .3em double black;
     padding-left: 2em;
     /* Fix the width of download data area */
@@ -1653,7 +1776,7 @@ to stay in one line */
 
 @media (max-width: 1100px) {
     /* Hide download data pane when the screen is too narrow */
-    .cart_details {
+    .op-cart-details {
         display: none;
         max-width: 40%;
         min-width: 10%;
@@ -1668,13 +1791,13 @@ to stay in one line */
         padding-top: 0.5em;
     }
 
-    /* Make sure gallery-contents not cut off by the right edge of the
+    /* Make sure op-gallery-contents not cut off by the right edge of the
     screen */
-    #cart .gallery-contents {
+    #cart .op-gallery-contents {
         padding-left: 10px;
     }
 
-    /* Remove the white space at the bottom of gallery-contents when screen
+    /* Remove the white space at the bottom of op-gallery-contents when screen
     is narrow */
     #cart .op-cart-gallery-side {
         height: 100vh;
@@ -1809,11 +1932,7 @@ panel are properly separated */
     min-width: .68em;
 }
 
-.table-page {
-    display: none;
-}
-
-.panel-body .gallery-contents {
+.panel-body .op-gallery-contents {
     position: fixed !important;
     overflow-y: auto;
 }
@@ -2196,6 +2315,11 @@ also set its min width to be 150px */
     max-height: 60vh;
     /* min-width: 150px;
     max-height: 70vh; */
+}
+
+.op-share-message {
+    display: none;
+    max-width: 7.5em;
 }
 
 .op-range-select-info-box {
@@ -2971,6 +3095,12 @@ when wrapping into the 2nd line */
         font-size: 75% !important;
     }
 
+    /* the metdata detail view slide needs to control it's own font size independent of the body */
+    #op-metadata-detail-view-content {
+        font-size: 100% !important;
+        top: 0;
+    }
+
     /* Need to use !important here so that the footer (inside a flex container)
     will not take up the space when hidden */
     .app-footer {
@@ -3080,7 +3210,7 @@ when wrapping into the 2nd line */
         transform: scale(2.5);
     }
 
-    #op-add-metadata-fields, #op-edit-field-tool {
+    #op-add-metadata-fields, .op-edit-field-tool {
         font-size: 75% !important;
     }
 
@@ -3110,18 +3240,17 @@ when wrapping into the 2nd line */
 
     /* Keep the spaces for detail metadata modal in browse & cart tab to have
     the pretty display when screen is narrow or short */
-    #galleryView .modal-header,
-    #galleryView .modal-body,
-    #galleryView .modal-footer {
+    #op-metadata-detail-view .modal-header,
+    #op-metadata-detail-view .modal-body {
         padding: 1.3em !important;
     }
 
     /* Reduce the size of font awesome icon in slide show */
-    #galleryView .close i {
+    #op-metadata-detail-view .close i {
         font-size: 1.1em;
     }
 
-    #galleryView .bottom i {
+    .op-metadata-detail-view-body .bottom i {
         font-size: 1.8em;
     }
 
@@ -3246,10 +3375,10 @@ when wrapping into the 2nd line */
     }
 
     /* Reduce spaces between each item in the help menu when screen is short */
-    .op-help-item {
+    .op-help-item, #op-interpret-image-menu {
         padding-top: 0.1em !important;
         padding-bottom: 0.1em !important;
-        font-size: 90%;
+        font-size: 81%;
     }
 }
 
@@ -3302,18 +3431,6 @@ when screen is narrow (cart tab) */
     .op-cart-toggle-download-panel {
         padding: 0;
     }
-}
-
-/* Make sure image always stays at the left in metadata modal */
-#galleryViewContents .row {
-    flex-wrap: nowrap !important;
-}
-
-/* Make sure bottom icons will be vertically centered in metadata modal in
-different browsers */
-#galleryViewContents .bottom {
-    align-items: stretch;
-    padding-top: 0.3em;
 }
 
 @media (max-width: 768px) and (max-height: 400px) {

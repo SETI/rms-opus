@@ -24,13 +24,13 @@ def create_cart():
         if impglobals.TRY_CART_LATER:
             # Oops! We've already been down this road once, and apparently the
             # creation of obs_general failed. So we can't do anything.
-            impglobals.LOGGER.log('error',
-    'Unable to create "cart" table because "obs_general" doesn\'t exist')
+            import_util.log_error(
+                'Unable to create "cart" table because "obs_general" doesn\'t exist')
             return
         impglobals.TRY_CART_LATER = True
-        impglobals.LOGGER.log('warning',
-    'Unable to create "cart" table because "obs_general" doesn\'t exist'
-    +' - Will try again later')
+        import_util.log_warning(
+                'Unable to create "cart" table because "obs_general" doesn\'t exist'
+                +' - Will try again later')
         return
     cart_schema = import_util.read_schema_for_table('cart')
     db.drop_table('perm', 'cart')

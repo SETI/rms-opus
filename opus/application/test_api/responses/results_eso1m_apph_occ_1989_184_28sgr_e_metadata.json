@@ -45,7 +45,7 @@
         "specsize": null,
         "polarizationtype": "None"
     },
-    "Occultation Constraints": {
+    "Occultation/Reflectance Profiles Constraints": {
         "occtype": "Stellar",
         "occdir": "Egress",
         "bodyoccflag": "No",
@@ -99,8 +99,8 @@
         "RINGGEOnorthbasedincidence2": "115.373",
         "RINGGEOnorthbasedemission1": "64.627",
         "RINGGEOnorthbasedemission2": "64.627",
-        "RINGGEOsolarringelev1": "-25.373",
-        "RINGGEOsolarringelev2": "-25.373",
+        "RINGGEOsolarringelevation1": "-25.373",
+        "RINGGEOsolarringelevation2": "-25.373",
         "RINGGEOobserverringelevation1": "25.373",
         "RINGGEOobserverringelevation2": "25.373",
         "RINGGEOringcenterphase1": "180",

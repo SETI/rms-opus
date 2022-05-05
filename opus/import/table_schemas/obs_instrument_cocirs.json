@@ -8,25 +8,19 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,20 +28,14 @@
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "detector_id",
         "field_type": "char3",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "DETECTOR_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
         "pi_dict_name": "DETECTOR_ID",
@@ -72,11 +60,7 @@
     {
         "field_name": "instrument_mode_blinking_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_BLINKING_FLAG"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
         "pi_dict_name": "BLINKING_MODE",
@@ -96,11 +80,7 @@
     {
         "field_name": "instrument_mode_even_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_EVEN_FLAG"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
         "pi_dict_name": "EVEN_MODE",
@@ -120,11 +100,7 @@
     {
         "field_name": "instrument_mode_odd_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_ODD_FLAG"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
         "pi_dict_name": "ODD_MODE",
@@ -144,11 +120,7 @@
     {
         "field_name": "instrument_mode_centers_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_CENTERS_FLAG"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
         "pi_dict_name": "CENTERS_MODE",
@@ -168,11 +140,7 @@
     {
         "field_name": "instrument_mode_pairs_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_PAIRS_FLAG"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
         "pi_dict_name": "PAIRS_MODE",
@@ -192,11 +160,7 @@
     {
         "field_name": "instrument_mode_all_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_ALL_FLAG"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
         "pi_dict_name": "ALL_MODE",
@@ -221,10 +185,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

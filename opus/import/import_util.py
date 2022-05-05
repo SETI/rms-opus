@@ -4,18 +4,22 @@
 # General utilities used by the import process.
 ################################################################################
 
+from functools import lru_cache
 import json
+import numpy as np
 import os
 import re
 import sys
 import traceback
 
+import julian
 import pdsfile
 import pdsparser
 import pdstable
 
 from opus_secrets import *
 from config_data import *
+from config_targets import *
 import impglobals
 import instruments
 
@@ -35,6 +39,8 @@ def yield_import_volume_ids(arguments):
                 if desc.upper() == 'ALL':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_0xxx')
+                    volume_descs.append('COCIRS_1xxx')
                     volume_descs.append('COCIRS_5xxx')
                     volume_descs.append('COCIRS_6xxx')
                     volume_descs.append('COUVIS_0xxx')
@@ -55,32 +61,12 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('CORSS_8xxx')
                     volume_descs.append('COUVIS_8xxx')
                     volume_descs.append('COVIMS_8xxx')
-                elif desc.upper() == 'ALLBUTNH':
-                    # This is useful because NH has duplicate opus_id that require
-                    # checking while the others don't.
-                    volume_descs.append('COISS_1xxx')
-                    volume_descs.append('COISS_2xxx')
-                    volume_descs.append('COCIRS_5xxx')
-                    volume_descs.append('COCIRS_6xxx')
-                    volume_descs.append('COUVIS_0xxx')
-                    volume_descs.append('COVIMS_0xxx')
-                    volume_descs.append('VGISS_5xxx')
-                    volume_descs.append('VGISS_6xxx')
-                    volume_descs.append('VGISS_7xxx')
-                    volume_descs.append('VGISS_8xxx')
-                    volume_descs.append('GO_0xxx')
-                    volume_descs.append('HSTIx_xxxx')
-                    volume_descs.append('HSTJx_xxxx')
-                    volume_descs.append('HSTNx_xxxx')
-                    volume_descs.append('HSTOx_xxxx')
-                    volume_descs.append('HSTUx_xxxx')
-                    volume_descs.append('EBROCC_xxxx')
-                    volume_descs.append('CORSS_8xxx')
-                    volume_descs.append('COUVIS_8xxx')
-                    volume_descs.append('COVIMS_8xxx')
+                    volume_descs.append('VG_28xx')
                 elif desc.upper() == 'CASSINI':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_0xxx')
+                    volume_descs.append('COCIRS_1xxx')
                     volume_descs.append('COCIRS_5xxx')
                     volume_descs.append('COCIRS_6xxx')
                     volume_descs.append('COUVIS_0xxx')
@@ -92,6 +78,8 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
                 elif desc.upper() == 'COCIRS':
+                    volume_descs.append('COCIRS_0xxx')
+                    volume_descs.append('COCIRS_1xxx')
                     volume_descs.append('COCIRS_5xxx')
                     volume_descs.append('COCIRS_6xxx')
                 elif desc.upper() == 'COUVIS':
@@ -102,11 +90,24 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'CORSS':
                     volume_descs.append('CORSS_8xxx')
-                elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
+                elif desc.upper() == 'VOYAGER':
                     volume_descs.append('VGISS_5xxx')
                     volume_descs.append('VGISS_6xxx')
                     volume_descs.append('VGISS_7xxx')
                     volume_descs.append('VGISS_8xxx')
+                    volume_descs.append('VG_28xx')
+                elif desc.upper() == 'VGISS':
+                    volume_descs.append('VGISS_5xxx')
+                    volume_descs.append('VGISS_6xxx')
+                    volume_descs.append('VGISS_7xxx')
+                    volume_descs.append('VGISS_8xxx')
+                    volume_descs.append('VG_2810')
+                elif desc.upper() == 'VGPPS':
+                    volume_descs.append('VG_2801')
+                elif desc.upper() == 'VGUVS':
+                    volume_descs.append('VG_2802')
+                elif desc.upper() == 'VGRSS':
+                    volume_descs.append('VG_2803')
                 elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
                     volume_descs.append('GO_0xxx')
                 elif desc.upper() == 'HST' or desc.upper() == 'HUBBLE':
@@ -175,10 +176,9 @@ def yield_import_volume_ids(arguments):
 
 def log_accumulated_warnings(title):
     if len(impglobals.PYTHON_WARNING_LIST) > 0:
-        impglobals.LOGGER.log('error',
-                   f'Warnings found during {title}:')
+        log_error(f'Warnings found during {title}:')
         for w in impglobals.PYTHON_WARNING_LIST:
-            impglobals.LOGGER.log('error', '  '+w)
+            log_error('  '+w)
         impglobals.PYTHON_WARNING_LIST = []
         impglobals.IMPORT_HAS_BAD_DATA = True
         return True
@@ -215,7 +215,7 @@ def safe_pdstable_read(filename):
         msg = f'Exception during reading of "{filename}"'
         if not impglobals.ARGUMENTS.log_suppress_traceback:
             msg += ':\n' + traceback.format_exc()
-        impglobals.LOGGER.log('error', msg)
+        log_error(msg)
         return None, None
 
     if log_accumulated_warnings(f'table import of {filename}'):
@@ -235,7 +235,7 @@ def safe_column(row, column_name, idx=None):
         return row[column_name][idx]
 
     if idx is None:
-        if row[column_name+'_mask']:
+        if np.any(row[column_name+'_mask']):
             return None
         return row[column_name]
 
@@ -243,17 +243,18 @@ def safe_column(row, column_name, idx=None):
         return None
     return row[column_name][idx]
 
+
 ################################################################################
 # TABLE MANIPULATION
 ################################################################################
 
 def table_name_obs_mission(mission_name):
-    assert mission_name in MISSION_ABBREV_TO_MISSION_TABLE_SFX
+    assert mission_name in MISSION_ID_TO_MISSION_TABLE_SFX
     return ('obs_mission_'+
-            MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_name].lower())
+            MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower())
 
 def table_name_obs_instrument(inst_name):
-    assert inst_name in INSTRUMENT_ABBREV_TO_MISSION_ABBREV
+    assert inst_name in INSTRUMENT_ID_TO_MISSION_ID
     return 'obs_instrument_'+inst_name.lower()
 
 def table_name_mult(table_name, field_name):
@@ -311,7 +312,7 @@ def read_schema_for_table(table_name, replace=[]):
                 contents = contents.replace(r[0], r[1])
             return json.loads(contents)
         except json.decoder.JSONDecodeError:
-            impglobals.LOGGER.log('debug', f'Was reading table "{table_name}"')
+            log_debug(f'Was reading table "{table_name}"')
             raise
         except:
             raise
@@ -344,6 +345,8 @@ def _format_vol_line():
         ret = impglobals.CURRENT_VOLUME_ID
         if impglobals.CURRENT_INDEX_ROW_NUMBER is not None:
             ret += ' index row '+str(impglobals.CURRENT_INDEX_ROW_NUMBER)
+        if impglobals.CURRENT_PRIMARY_FILESPEC is not None:
+            ret += f' "{impglobals.CURRENT_PRIMARY_FILESPEC}"'
     if ret != '':
         ret = '[' + ret + '] '
     return ret
@@ -355,20 +358,32 @@ def log_error(msg, *args):
 def log_warning(msg, *args):
     impglobals.LOGGER.log('warning', _format_vol_line()+msg, *args)
 
+def log_info(msg, *args):
+    impglobals.LOGGER.log('info', _format_vol_line()+msg, *args)
+
 def log_debug(msg, *args):
     impglobals.LOGGER.log('debug', _format_vol_line()+msg, *args)
 
 def log_nonrepeating_error(msg):
     if msg not in impglobals.LOGGED_IMPORT_ERRORS:
         impglobals.LOGGED_IMPORT_ERRORS.append(msg)
-        impglobals.LOGGER.log('error', _format_vol_line()+msg)
+        log_error(msg)
         impglobals.IMPORT_HAS_BAD_DATA = True
 
 def log_nonrepeating_warning(msg):
     if msg not in impglobals.LOGGED_IMPORT_WARNINGS:
         impglobals.LOGGED_IMPORT_WARNINGS.append(msg)
-        impglobals.LOGGER.log('warning', _format_vol_line()+msg)
+        log_warning(msg)
 
-def announce_unknown_target_name(target_name):
-    msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
+def log_unknown_target_name(target_name):
+    msg = f'Unknown TARGET_NAME "{target_name}" - edit config_targets.py'
     log_nonrepeating_error(msg)
+
+
+################################################################################
+# MISC UTILITIES
+################################################################################
+
+@lru_cache(maxsize=64)
+def cached_tai_from_iso(s):
+    return julian.tai_from_iso(s)

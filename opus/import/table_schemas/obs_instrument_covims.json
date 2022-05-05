@@ -8,25 +8,19 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,12 +36,7 @@
         "field_type": "enum",
         "field_enum_options": "'CAL_BACKGROUND','CAL_SOLAR','CAL_SPECTRAL','IMAGE','LINE','OCCULTATION','POINT'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "INSTRUMENT_MODE_ID",
-            "TAB:supp_index",
-            "INSTRUMENT_MODE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "INSTRUMENT_MODE_ID",
@@ -81,12 +67,7 @@
         "field_name": "spectral_editing",
         "field_type": "flag_yesno",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "SPECTRAL_EDITING",
-            "TAB:supp_index",
-            "SPECTRAL_EDITING"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "SPECTRAL_EDITING",
@@ -108,12 +89,7 @@
         "field_name": "spectral_summing",
         "field_type": "flag_yesno",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "SPECTRAL_SUMMING",
-            "TAB:supp_index",
-            "SPECTRAL_SUMMING"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "SPECTRAL_SUMMING",
@@ -135,12 +111,7 @@
         "field_name": "star_tracking",
         "field_type": "flag_onoff",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "STAR_TRACKING",
-            "TAB:supp_index",
-            "STAR_TRACKING"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "STAR_TRACKING",
@@ -162,12 +133,7 @@
         "field_type": "uint2",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "SWATH_WIDTH",
-            "TAB:supp_index",
-            "SWATH_WIDTH"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "SWATH_WIDTH",
@@ -189,12 +155,7 @@
         "field_type": "uint2",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:index",
-            "SWATH_LENGTH",
-            "TAB:supp_index",
-            "SWATH_LENGTH"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "SWATH_LENGTH",
@@ -216,10 +177,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_covims_ir_exposure_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e5,
         "val_sentinel": -999,
@@ -245,12 +203,7 @@
         "field_type": "enum",
         "field_enum_options": "'HI-RES','NORMAL','UNDER'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "IR_SAMPLING_MODE_ID",
-            "TAB:supp_index",
-            "IR_SAMPLING_MODE_ID"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "IR_SAMPLING_MODE_ID",
@@ -278,11 +231,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "~obs_instrument_covims_vis_exposure_<TYPE>",
-            "IGNORE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e5,
         "val_sentinel": -999,
@@ -308,12 +257,7 @@
         "field_type": "enum",
         "field_enum_options": "'HI-RES','N/A','NORMAL','UNK'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "VIS_SAMPLING_MODE_ID",
-            "VALUESTR",
-            "N/A"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "VIS_SAMPLING_MODE_ID",
@@ -342,10 +286,7 @@
         "field_type": "enum",
         "field_enum_options": "'IR','VIS'",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_covims_channel_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
         "pi_dict_name": "CHANNEL",
@@ -375,10 +316,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

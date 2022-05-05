@@ -1,0 +1,188 @@
+################################################################################
+# obs_instrument_INST.py
+#
+# Defines the ObsInstrumentINST class, which encapsulates fields in the
+# obs_instrument_INST table.
+################################################################################
+
+class ObsInstrumentINST(ObsMissionMISSION):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
+    ### Mandatory
+
+    @property
+    def instrument_id(self):
+
+    @property
+    def inst_host_id(self):
+
+    @property
+    def mission_id(self):
+
+    @property
+    def primary_filespec(self):
+        # Note it's very important that this can be calculated using ONLY
+        # the primary index, not the supplemental index!
+        # This is because this (and the subsequent creation of opus_id) is used
+        # to actually find the matching row in the supplemental index dictionary.
+
+
+    ################################
+    ### OVERRIDE FROM ObsGeneral ###
+    ################################
+
+    ### Optional
+
+    def field_obs_general_target_name(self):
+
+    def field_obs_general_time1(self):
+
+    def field_obs_general_time2(self):
+
+    def field_obs_general_observation_duration(self):
+
+    def field_obs_general_right_asc1(self):
+
+    def field_obs_general_right_asc2(self):
+
+    def field_obs_general_declination1(self):
+
+    def field_obs_general_declination2(self):
+
+    def field_obs_general_ring_obs_id(self):
+
+    ### Mandatory
+
+    def field_obs_general_planet_id(self):
+
+    def field_obs_general_quantity(self):
+
+    def field_obs_general_observation_type(self):
+
+
+    ############################
+    ### OVERRIDE FROM ObsPds ###
+    ############################
+
+    ### Optional
+
+    def field_obs_pds_data_set_id(self):
+
+    def field_obs_pds_product_id(self):
+
+    def field_obs_pds_product_creation_time(self):
+
+    def field_obs_pds_note(self):
+
+
+    ##################################
+    ### OVERRIDE FROM ObsTypeImage ###
+    ##################################
+
+    ### Optional
+
+    def field_obs_type_image_image_type_id(self):
+        return None
+
+    def field_obs_type_image_duration(self):
+        return None
+
+    def field_obs_type_image_levels(self):
+        return None
+
+    def field_obs_type_image_greater_pixel_size(self):
+        return None
+
+    def field_obs_type_image_lesser_pixel_size(self):
+        return None
+
+
+    ###################################
+    ### OVERRIDE FROM ObsWavelength ###
+    ###################################
+
+    ### Optional
+
+    def field_obs_wavelength_wavelength1(self):
+
+    def field_obs_wavelength_wavelength2(self):
+
+    def field_obs_wavelength_wave_res1(self):
+
+    def field_obs_wavelength_wave_res2(self):
+
+    def field_obs_wavelength_wave_no1(self):
+
+    def field_obs_wavelength_wave_no2(self):
+
+    def field_obs_wavelength_wave_no_res1(self):
+
+    def field_obs_wavelength_wave_no_res2(self):
+
+    def field_obs_wavelength_spec_flag(self):
+
+    def field_obs_wavelength_spec_size(self):
+
+    def field_obs_wavelength_polarization_type(self):
+
+
+    ################################
+    ### OVERRIDE FROM ObsProfile ###
+    ################################
+
+    ### Optional
+
+    def field_obs_profile_occ_type(self):
+
+    def field_obs_profile_occ_dir(self):
+
+    def field_obs_profile_body_occ_flag(self):
+
+    def field_obs_profile_temporal_sampling(self):
+
+    def field_obs_profile_quality_score(self):
+
+    def field_obs_profile_optical_depth1(self):
+
+    def field_obs_profile_optical_depth2(self):
+
+    def field_obs_profile_wl_band(self):
+
+    def field_obs_profile_source(self):
+
+    def field_obs_profile_host(self):
+
+
+    #####################################
+    ### OVERRIDE FROM ObsRingGeometry ###
+    #####################################
+
+    # Because overriding these is rare, please refer to obs_ring_geometry.py
+    # for the method list.
+
+
+    ##############################################
+    ### OVERRIDE FROM ObsSurfaceGeometryTarget ###
+    ##############################################
+
+    # Because overriding these is rare, please refer to obs_surface_geometry_target.py
+    # for the method list.
+
+    ####################################
+    ### FIELD METHODS FOR THIS TABLE ###
+    ####################################
+
+    def field_obs_instrument_INST_opus_id(self):
+        return self.opus_id
+
+    def field_obs_instrument_INST_volume_id(self):
+        return self.volume
+
+    def field_obs_instrument_INST_instrument_id(self):
+        return self.instrument_id
