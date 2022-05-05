@@ -421,13 +421,19 @@ def api_get_widget(request, **kwargs):
             form_vals = {slug: new_values}
 
         # For entries with "None" grouping value, we don't group them.
+        # None grouping values will be displayed before grouping values
         if model.objects.filter(grouping=None):
             form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
 
         # Group the entries with the same grouping values.
-        grouping_entries = model.objects.distinct().values('grouping')
+        # Different groups will be displayed based on group_disp_order
+        grouping_entries = (model.objects
+                            .order_by('group_disp_order')
+                            .distinct()
+                            .values('grouping'))
         for entry in grouping_entries:
             glabel = entry['grouping']
+            # glabel = entry.grouping
             if glabel is not None and glabel != 'NULL':
                 if model.objects.filter(grouping=glabel)[0:1]:
                     form = _update_form_with_grouping(form, form_vals,

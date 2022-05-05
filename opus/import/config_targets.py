@@ -923,3 +923,15 @@ STAR_RA_DEC = {
     'ZET_PER':              ( 58.533010313,  31.883633684),
     'ZET_PUP':              (120.896031417, -40.003147806),
 }
+
+TARGET_NAME_GROUP_MAPPING = {
+    'EAR':   'Earth',
+    'MAR':   'Mars',
+    'JUP':   'Jupiter',
+    'SAT':   'Saturn',
+    'URA':   'Uranus',
+    'NEP':   'Neptune',
+    'PLU':   'Pluto',
+    'OTHER': 'Other',
+     None:   'NULL'
+}

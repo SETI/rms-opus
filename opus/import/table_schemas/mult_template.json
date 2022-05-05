@@ -33,6 +33,11 @@
         "field_default": null
     },
     {
+        "field_name": "group_disp_order",
+        "field_type": "char100",
+        "field_notnull": false
+    },
+    {
         "field_name": "timestamp",
         "field_type": "timestamp"
     }

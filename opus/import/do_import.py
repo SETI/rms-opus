@@ -283,7 +283,7 @@ def _mult_table_column_names(table_name):
        constant because various *_target_name tables have an extra
        column used for target name grouping."""
 
-    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping']
+    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping', 'group_disp_order']
     return column_list
 
 def _convert_sql_response_to_mult_table(mult_table_name, rows):
@@ -292,14 +292,16 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
 
     mult_rows = []
     for row in rows:
-        id_num, value, label, disp_order, display, grouping = row
+        (id_num, value, label, disp_order,
+         display, grouping, group_disp_order) = row
         row_dict = {
             'id': id_num,
             'value': value,
             'label': str(label),
             'disp_order': disp_order,
             'display': display,
-            'grouping': grouping
+            'grouping': grouping,
+            'group_disp_order': group_disp_order
         }
         mult_rows.append(row_dict)
     return mult_rows
@@ -360,7 +362,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
 
 def update_mult_table(table_name, field_name, table_column, val, label,
-                      disp_order=None):
+                      disp_order=None, group_disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
@@ -453,6 +455,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         planet_id = TARGET_NAME_INFO[val][0]
         if planet_id is None:
             planet_id = 'OTHER'
+    grouping = TARGET_NAME_GROUP_MAPPING[planet_id]
 
     new_entry = {
         'id': next_id,
@@ -460,7 +463,8 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         'label': label,
         'disp_order': disp_order,
         'display': 'Y', # if label is not None else 'N'
-        'grouping': planet_id
+        'grouping': grouping,
+        'group_disp_order': group_disp_order
     }
     mult_table.append(new_entry)
 
@@ -1149,6 +1153,7 @@ def import_observation_table(instrument_obj,
             mult_label = None
             mult_label_set = False
             disp_order = None # Might be set with mult_label but not otherwise
+            group_disp_order = None
 
             if data_source == 'OBS_GENERAL_ID':
                 obs_general_row = metadata['obs_general_row']
@@ -1170,13 +1175,23 @@ def import_observation_table(instrument_obj,
                         if len(ret) == 3:
                             disp_order = ret[2]
                         mult_label_set = True
+                        print("111111111111")
+                        print(f"field_name: {field_name}")
+                        print(f"column_val: {column_val}")
                     elif isinstance(ret, dict):
                         column_val = ret["target_name"]
                         mult_label = ret["disp_name"]
                         disp_order = ret.get("disp_order", None)
+                        group_disp_order = ret.get("group_disp_order", None)
                         mult_label_set = True
+                        print("222222222222")
+                        print(f"field_name: {field_name}")
+                        print(f"column_val: {column_val}")
                     else:
                         column_val = ret
+                        print("333333333333")
+                        print(f"field_name: {field_name}")
+                        print(f"column_val: {column_val}")
 
             elif data_source == 'LONGITUDE_FIELD':
                 column_val = instrument_obj.compute_longitude_field()
@@ -1325,7 +1340,8 @@ def import_observation_table(instrument_obj,
                         # in all caps
                         mult_label = mult_label.title()
             id_num = update_mult_table(table_name, field_name, table_column,
-                                       column_val, mult_label, disp_order)
+                                       column_val, mult_label, disp_order,
+                                       group_disp_order)
             new_row[mult_column_name] = id_num
 
     return new_row
