@@ -512,7 +512,7 @@ class MultObsInstrumentCoissShutterStateId(models.Model):
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1
+    display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=20, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100)
     timestamp = models.DateTimeField(blank=True, null=True)
@@ -932,7 +932,7 @@ class MultObsInstrumentVgissFilterNumber(models.Model):
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1
+    display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=20, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100)
     timestamp = models.DateTimeField(blank=True, null=True)
