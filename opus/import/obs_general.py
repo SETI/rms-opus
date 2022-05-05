@@ -43,7 +43,7 @@ class ObsGeneral(ObsBase):
         target_name = self.field_obs_general_target_name()
         if target_name is None:
             return None
-        target_name, target_info = self._get_target_info(target_name["target_name"])
+        target_name, target_info = self._get_target_info(target_name['col_val'])
         if target_info is None:
             return None
         return target_info[1]
@@ -127,9 +127,9 @@ class ObsGeneral(ObsBase):
         if target_info is None:
             return None
         target_dict = {}
-        target_dict['target_name'] = target_name
+        target_dict['col_val'] = target_name
         target_dict['key'] = target_info[0]
-        target_dict['target_class'] = target_info[1]
+        target_dict['col_class'] = target_info[1]
         target_dict['disp_name'] = target_info[2]
         return target_dict
 

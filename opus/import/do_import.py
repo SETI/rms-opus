@@ -362,7 +362,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
 
 def update_mult_table(table_name, field_name, table_column, val, label,
-                      disp_order=None, group_disp_order=None):
+                      disp_order=None, grouping=None, group_disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
@@ -449,13 +449,10 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
     if label is None:
         label = 'N/A'
 
-    if val not in TARGET_NAME_INFO:
-        planet_id = 'OTHER'
-    else:
-        planet_id = TARGET_NAME_INFO[val][0]
-        if planet_id is None:
-            planet_id = 'OTHER'
-    grouping = TARGET_NAME_GROUP_MAPPING[planet_id]
+    # If we didn't specify the group_disp_order, we will order groups
+    # alphabetically
+    if grouping is not None and group_disp_order is None:
+        group_disp_order = grouping
 
     new_entry = {
         'id': next_id,
@@ -1153,6 +1150,7 @@ def import_observation_table(instrument_obj,
             mult_label = None
             mult_label_set = False
             disp_order = None # Might be set with mult_label but not otherwise
+            grouping = None
             group_disp_order = None
 
             if data_source == 'OBS_GENERAL_ID':
@@ -1167,31 +1165,15 @@ def import_observation_table(instrument_obj,
                                                     metadata,
                                                     field_name)
                 if ok:
-                    # If the function doesn't exist, an error will already
-                    # have been logged
-                    if isinstance(ret, (tuple, list)):
-                        column_val = ret[0]
-                        mult_label = ret[1]
-                        if len(ret) == 3:
-                            disp_order = ret[2]
+                    if isinstance(ret, dict):
+                        column_val = ret['col_val']
+                        mult_label = ret['disp_name']
+                        disp_order = ret.get('disp_order', None)
+                        grouping = ret.get('grouping', None)
+                        group_disp_order = ret.get('group_disp_order', None)
                         mult_label_set = True
-                        print("111111111111")
-                        print(f"field_name: {field_name}")
-                        print(f"column_val: {column_val}")
-                    elif isinstance(ret, dict):
-                        column_val = ret["target_name"]
-                        mult_label = ret["disp_name"]
-                        disp_order = ret.get("disp_order", None)
-                        group_disp_order = ret.get("group_disp_order", None)
-                        mult_label_set = True
-                        print("222222222222")
-                        print(f"field_name: {field_name}")
-                        print(f"column_val: {column_val}")
                     else:
                         column_val = ret
-                        print("333333333333")
-                        print(f"field_name: {field_name}")
-                        print(f"column_val: {column_val}")
 
             elif data_source == 'LONGITUDE_FIELD':
                 column_val = instrument_obj.compute_longitude_field()
@@ -1341,7 +1323,7 @@ def import_observation_table(instrument_obj,
                         mult_label = mult_label.title()
             id_num = update_mult_table(table_name, field_name, table_column,
                                        column_val, mult_label, disp_order,
-                                       group_disp_order)
+                                       grouping, group_disp_order)
             new_row[mult_column_name] = id_num
 
     return new_row

@@ -7,7 +7,7 @@
 ################################################################################
 
 from obs_common import ObsCommon
-
+from config_targets import *
 
 # XXX NOTE THIS ONLY WORKS FOR 28 SGR RIGHT NOW.
 # On 1989-07-03:
@@ -87,11 +87,21 @@ class ObsInstrumentEBROCC(ObsCommon):
         if target_info is None:
             return None
 
+        if target_name not in TARGET_NAME_INFO:
+            planet_id = 'OTHER'
+        else:
+            planet_id = TARGET_NAME_INFO[target_name][0]
+            if planet_id is None:
+                planet_id = 'OTHER'
+        group_info = TARGET_NAME_GROUP_MAPPING[planet_id]
+
         target_dict = {}
-        target_dict['target_name'] = target_name
+        target_dict['col_val'] = target_name
         target_dict['key'] = target_info[0]
-        target_dict['target_class'] = target_info[1]
+        target_dict['col_class'] = target_info[1]
         target_dict['disp_name'] = target_info[2]
+        target_dict['grouping'] = group_info['label']
+        target_dict['group_disp_order'] = group_info['disp_order']
         return target_dict
 
     def field_obs_general_quantity(self):
@@ -130,7 +140,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         return self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
 
     def field_obs_profile_quality_score(self):
-        return ("UNASSIGNED", "Unassigned")
+        return {'col_val': 'UNASSIGNED', 'disp_name': 'Unassigned'}
 
     def field_obs_profile_wl_band(self):
         wl = self._supp_index_col('WAVELENGTH') # microns
@@ -144,11 +154,11 @@ class ObsInstrumentEBROCC(ObsCommon):
         target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')
         if target_info is None:
             return None
-        return target_name, target_info[2]
+        return {'col_val': target_name, 'disp_name': target_info[2]}
 
     def field_obs_profile_host(self):
         insthost = self._supp_index_col('INSTRUMENT_HOST_NAME')
-        return (insthost, insthost)
+        return {'col_val': insthost, 'disp_name': insthost}
 
 
     #####################################

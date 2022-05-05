@@ -924,14 +924,21 @@ STAR_RA_DEC = {
     'ZET_PUP':              (120.896031417, -40.003147806),
 }
 
+# For non-preprogrammed mult, if we want to specify display order or group
+# display order, we have to know all the possible options. For now, we put it
+# here, and will re-organize it later.
+# TODO: this grouping info is needed when we want to specify the order and
+# display name of different groups for non-preprogrammed mult. Previously we
+# store the info in the db. Do we want to keep this info in db? Or should we
+# keep all the customized grouping info into another file?
 TARGET_NAME_GROUP_MAPPING = {
-    'EAR':   'Earth',
-    'MAR':   'Mars',
-    'JUP':   'Jupiter',
-    'SAT':   'Saturn',
-    'URA':   'Uranus',
-    'NEP':   'Neptune',
-    'PLU':   'Pluto',
-    'OTHER': 'Other',
-     None:   'NULL'
+    'EAR':   {'label': 'Earth',   'disp_order': '010'},
+    'MAR':   {'label': 'Mars',    'disp_order': '020'},
+    'JUP':   {'label': 'Jupiter', 'disp_order': '030'},
+    'SAT':   {'label': 'Saturn',  'disp_order': '040'},
+    'URA':   {'label': 'Uranus',  'disp_order': '050'},
+    'NEP':   {'label': 'Neptune', 'disp_order': '060'},
+    'PLU':   {'label': 'Pluto',   'disp_order': '070'},
+    'OTHER': {'label': 'Other',   'disp_order': '080'},
+    None:    {'label': 'NULL',    'disp_order': '090'}
 }
