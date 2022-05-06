@@ -63,16 +63,26 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
         output_generator: Iterable[str] = template.generate(context=self, host_infos_by_ip=self._host_infos_by_ip)
-        lines = (line.strip()
-                 for chunks in output_generator
-                 for line in chunks.split('\n') if line)
+
+        def get_lines():
+            # An iterator that breaks the results of the output_generator into lines.
+            # It's job is complicated in that chunks aren't guarenteed to end with '\n'.
+            text = ''
+            for chunk in itertools.chain(output_generator, ['\n']):
+                lines = (text + chunk).split('\n')
+                # line[-1] contains everything that comes after the final newline,
+                # so hold it until we get more input.
+                text = lines.pop()
+                yield from (line.strip() for line in lines if line)
+            assert text == ''
+
         directory = (f'{dirname(output.name)}/{self._sessions_relative_directory}'
                      if self._sessions_relative_directory else None)
         if directory:
             print(f'Writing sessions to {directory}')
         current_output = output
         file_output = None
-        for line in lines:
+        for line in get_lines():
             if line.startswith("<<<<"):
                 match = re.match(r"[<]+ ([\w\d]+) (.*)", line)
                 assert match
@@ -270,10 +280,17 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     def __create_statistics(data:Sequence[int]) -> Dict[str, Any]:
         if data:
             mean = int(statistics.mean(data))
-            gmean = int(math.exp(statistics.mean(map(math.log, filter(None, data)))))
+            try:
+                gmean = int(math.exp(statistics.mean(map(math.log, filter(None, data)))))
+            except statistics.StatisticsError:
+                gmean = 0
             median = int(statistics.median(data))
         else:
             mean = gmean = median = 0
+        data = list(filter(None, data))
+        if data:
+            gmean = int(math.exp(statistics.mean(map(math.log, filter(None, data)))))
+
         result = dict(data=data, count=len(data), sum=sum(data), zeros = data.count(0),
                       mean=mean, gmean=gmean, median=median)
         return result
