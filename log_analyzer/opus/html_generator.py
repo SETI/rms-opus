@@ -66,15 +66,17 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
 
         def get_lines():
             # An iterator that breaks the results of the output_generator into lines.
-            # It's job is complicated in that chunks aren't guarenteed to end with '\n'.
-            text = ''
+            # Its job is complicated in that chunks aren't guarenteed to end with '\n'.
+            leftover_text = ''
             for chunk in itertools.chain(output_generator, ['\n']):
-                lines = (text + chunk).split('\n')
+                # The chunk may be a Markup.  We make sure to convert it to a string first.
+                lines = (leftover_text + str(chunk)).split('\n')
                 # line[-1] contains everything that comes after the final newline,
                 # so hold it until we get more input.
-                text = lines.pop()
-                yield from (line.strip() for line in lines if line)
-            assert text == ''
+                leftover_text = lines.pop()
+                # Return all non-blank lines
+                yield from filter(None, (line.strip() for line in lines))
+            assert leftover_text == ''
 
         directory = (f'{dirname(output.name)}/{self._sessions_relative_directory}'
                      if self._sessions_relative_directory else None)
@@ -82,6 +84,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             print(f'Writing sessions to {directory}')
         current_output = output
         file_output = None
+
         for line in get_lines():
             if line.startswith("<<<<"):
                 match = re.match(r"[<]+ ([\w\d]+) (.*)", line)
