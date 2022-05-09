@@ -87,8 +87,8 @@
                         </div>
                         <hr class="op-shadow-divider my-0 ms-0 me-3">
                         <div class="op-reset-button">
-                                <button type="button" class="btn btn-sm btn-secondary op-reset-search" data-bs-target="#op-reset-search-modal" title="Reset all search params" disabled>Reset Search</button>
-                                <button type="button" class="btn btn-sm btn-secondary op-reset-search-metadata" data-bs-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata" disabled>Reset Search and Metadata</button>
+                            <button type="button" class="btn btn-sm btn-secondary op-reset-search" data-bs-toggle="modal" data-bs-target="#op-reset-search-modal" title="Reset all search params" disabled>Reset Search</button>
+                            <button type="button" class="btn btn-sm btn-secondary op-reset-search-metadata" data-bs-toggle="modal" data-bs-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata" disabled>Reset Search and Metadata</button>
                         </div>
                     </div>
 
@@ -222,7 +222,7 @@
                                     </li>
                                 </div>
                                 <div class="op-cart-toggle-download-panel">
-                                    <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download data panel">
+                                    <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark fw-bold p-1" title="Slide over download data panel">
                                        <i class="fas fa-arrow-left"></i>
                                        <span>&nbsp;Download Data</span>
                                    </button>
@@ -341,11 +341,9 @@
                         <a href="#" class="op-slide-maximize" aria-label="Maximize" title="Restore the slide to the default size"><i class="fas fa-expand-arrows-alt fa-lg"></i></a>
                         <!--a href="#" class="op-slide-dock" aria-label="Dock" title="Pin the slide to the right of the Browse view"><i class="fas fa-sign-in-alt fa-lg text-info"></i></a-->
                     </div>
-                    <div class="close">
-                        <a href="#" class="op-close-modal" data-dismiss="modal" aria-label="Close" title="Close the slide">
-                            <i class="far fa-times-circle fa-lg"></i>
-                        </a>
-                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close the slide">
+                        <i class="far fa-times-circle fa-lg text-light"></i>
+                    </button>
                     <div class="op-metadata-detail-view-body modal-body bg-dark">
                         <div class="row flex-nowrap">
                             <div class="left col-lg-7 col d-flex align-items-center justify-content-center mw-100 op-no-select"></div>
@@ -373,9 +371,9 @@
         <div id="op-select-metadata" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="op-select-metadataLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content op-no-select">
-                    <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
+                    <div class="modal-header bg-dark text-light fw-bold fs-6 py-3">
                         <div>Select Metadata</div>
-                        <button type="button" class="close" data-dismiss="modal" data-bs-target="op-close-metadata-modal"  aria-label="Close">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" data-bs-target="op-close-metadata-modal"  aria-label="Close">
                             <i class="far fa-times-circle fa-lg text-light"></i>
                         </button>
                     </div>
@@ -385,7 +383,7 @@
                             <button type="reset" class="btn btn-info">Reset to Default</button>
                         </div>
                         <div class="right-container">
-                            <button type="submit" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
+                            <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Save Changes</button>
                             <button type="cancel" class="btn btn-danger">Discard Changes</button>
                         </div>
                     </div>

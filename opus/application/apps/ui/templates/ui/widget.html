@@ -28,10 +28,10 @@
                 </div>
             </div>
             <span class="float-right border-left border-dark">
-                <a href="#card__{{ slug }}" data-bs-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
+                <a href="#card__{{ slug }}" data-bs-toggle="collapse" data-bs-target="#card__{{ slug }}" aria-expanded="true">
                     <i class="icon-action fa fa-chevron-down pull-right"></i>
                 </a>
-                <a href="#" data-action="close" data-slug="{{ slug }}" class="close_card">
+                <a href="#" data-bs-action="close" data-slug="{{ slug }}" class="close_card">
                     <i class="icon-action fa fa-times"></i>
                 </a>
             </span>
@@ -68,10 +68,10 @@
                                         <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
                                             <div class="col-4">
                                             </div>
-                                            <div class="col-4 font-weight-bold text-right">
+                                            <div class="col-4 fw-bold text-end">
                                                 {{ range_data_entry.heading1|safe }}
                                             </div>
-                                            <div class="col-4 font-weight-bold text-right">
+                                            <div class="col-4 fw-bold text-end">
                                                 {{ range_data_entry.heading2|safe }}
                                             </div>
                                         </div>
@@ -81,12 +81,12 @@
                                                     <div class="col-4 op-preprogrammed-ranges-data-name">
                                                         {{ range_info.name }}
                                                     </div>
-                                                    <div class="col-4 op-preprogrammed-ranges-min-data text-right">
+                                                    <div class="col-4 op-preprogrammed-ranges-min-data text-end">
                                                         {% if range_info.field1 %}
                                                             {{ val1|intcomma }}
                                                         {% endif %}
                                                     </div>
-                                                    <div class="col-4 op-preprogrammed-ranges-max-data text-right">
+                                                    <div class="col-4 op-preprogrammed-ranges-max-data text-end">
                                                         {% if range_info.field2 %}
                                                             {{ val2|intcomma }}
                                                         {% endif %}

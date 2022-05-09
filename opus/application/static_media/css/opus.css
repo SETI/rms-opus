@@ -21,10 +21,6 @@ a {
     text-decoration: none;
 }
 
-a:hover {
-  text-decoration: underline;
-}
-
 .app-body {
     margin-top: 3.8em !important;
     overflow: hidden;
@@ -588,12 +584,16 @@ ul.op-search-menu {
     border-width: 3px;
 }
 
+.modal-header .btn-close i {
+    font-size: 1.5rem;
+}
+
 .modal-content {
     border-radius: 1%;
 }
 
 /* Make sure "x" button in metadata-dialog is not cut off */
-.modal-content .close i {
+.modal-content .btn-close i {
     line-height: 1.1em;
 }
 
@@ -1249,7 +1249,7 @@ without resizing image proportionally. */
     padding-right: 0.5em;
 }
 
-#op-metadata-detail-view-content div.close {
+#op-metadata-detail-view-content .btn-close {
     position: absolute;
     float: right;
     top: 0.4em;
@@ -2387,6 +2387,10 @@ footer p {
     margin-bottom: 0.25rem;
 }
 
+footer a:hover {
+  text-decoration: underline;
+}
+
 .op-twitter {
     bottom: .15em;
     position: absolute;
@@ -2517,7 +2521,7 @@ footer p {
 }
 
 /* Center the "x" icon in help panel */
-#op-help-panel .close {
+#op-help-panel .btn-close {
     display: flex;
 }
 
@@ -3269,7 +3273,7 @@ when wrapping into the 2nd line */
     }
 
     /* Reduce the size of font awesome icon in slide show */
-    #op-metadata-detail-view .close i {
+    #op-metadata-detail-view .btn-close i {
         font-size: 1.1em;
     }
 
@@ -3313,8 +3317,8 @@ when wrapping into the 2nd line */
     }
 
     /* Shrink "x" icon in download & help panel when screen is narrow or short */
-    #op-cart-download-panel .close i,
-    #op-help-panel .close i {
+    #op-cart-download-panel .btn-close i,
+    #op-help-panel .btn-close i {
         font-size: 1.1em;
     }
 

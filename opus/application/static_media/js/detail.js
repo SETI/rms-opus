@@ -18,7 +18,7 @@ var o_detail = {
             $(this).attr("href", `/opus/__api/metadata_v2/${opusId}.csv?cols=${colStr}`);
         });
 
-        $("#detail").on("click", "a[data-action]", function() {
+        $("#detail").on("click", "a[data-bs-action]", function() {
             let action = $(this).data("action");
             let opusId = $(this).data("id");
             switch(action) {
@@ -79,7 +79,7 @@ var o_detail = {
                     return;
                 }
                 let urlToShare = `${window.location.origin}${window.location.pathname}#/view=detail&detail=${opusId}`;
-                $(".op-detail-share a[data-action='share']").attr("href", urlToShare);
+                $(".op-detail-share a[data-bs-action='share']").attr("href", urlToShare);
 
                 let colStr = opus.prefs.cols.join(',');
                 let arrOfDeferred = [];
