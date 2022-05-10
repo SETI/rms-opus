@@ -467,11 +467,11 @@ var o_cart = {
         }
 
         if (status.recycled_count === 0) {
-            $("[data-target='#op-empty-recycle-bin-modal']").addClass("op-button-disabled");
-            $("[data-target='#op-restore-recycle-bin-modal']").addClass("op-button-disabled");
+            $("[data-bs-target='#op-empty-recycle-bin-modal']").addClass("op-button-disabled");
+            $("[data-bs-target='#op-restore-recycle-bin-modal']").addClass("op-button-disabled");
         } else {
-            $("[data-target='#op-empty-recycle-bin-modal']").removeClass("op-button-disabled");
-            $("[data-target='#op-restore-recycle-bin-modal']").removeClass("op-button-disabled");
+            $("[data-bs-target='#op-empty-recycle-bin-modal']").removeClass("op-button-disabled");
+            $("[data-bs-target='#op-restore-recycle-bin-modal']").removeClass("op-button-disabled");
         }
 
         if (status.count === 0) {

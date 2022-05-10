@@ -147,7 +147,7 @@ class SearchForm(forms.Form):
                             'placeholder': hints,
                             'autocomplete': 'off',
                             'data-slugname': slug_no_num,
-                            'data-toggle': data_toggle,
+                            'data-bs-toggle': data_toggle,
                             'aria-haspopup': 'true',
                             'aria-expanded': 'false'
                         }

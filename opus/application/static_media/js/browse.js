@@ -1814,7 +1814,7 @@ var o_browse = {
                 let miniThumbnail = `<img src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 row += `<td class="op-mini-thumbnail op-mini-thumbnail-zoom"><div>${miniThumbnail}</div></td>`;
 
-                let tr = `<tr data-id="${opusId}" ${recycled} data-target="#op-metadata-detail-view" data-obs="${item.obs_num}" title="${mainTitle}">`;
+                let tr = `<tr data-id="${opusId}" ${recycled} data-bs-target="#op-metadata-detail-view" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(index, cell) {
                     let slug = slugs[index];
                     row += `<td class="op-metadata-value" data-slug="${slug}">${cell}</td>`;
@@ -1877,7 +1877,7 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        // let addallIcon = "<button type='button' data-bs-toggle='modal' data-target='#op-addall-to-cart-modal' " +
+        // let addallIcon = "<button type='button' data-bs-toggle='modal' data-bs-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
                          "class='op-table-header-addall btn btn-link'" +
                          " title='Add All Results to Cart'>" +

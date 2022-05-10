@@ -144,7 +144,7 @@ var o_widgets = {
                     o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "class");
                     o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "name");
                     o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "href");
-                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-target");
+                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-bs-target");
                     o_widgets.updateSURFACEGEOattrInPlace(closeIcon, newTargetSlug, "data-slug");
 
                     // Update attributes in card body
@@ -1211,7 +1211,7 @@ var o_widgets = {
                 let qtypeValue = $(`#widget__${slug} .op-widget-main select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
-                                    <a class="text-dark" tabindex="0" data-bs-toggle="popover" data-placement="left">\
+                                    <a class="text-dark" tabindex="0" data-bs-toggle="popover" data-bs-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
 
                     // Make sure help icon is attached to the end of each set of inputs

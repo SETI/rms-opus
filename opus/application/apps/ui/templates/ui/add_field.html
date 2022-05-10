@@ -3,7 +3,7 @@
         {% for div in menu.divs %}
             {% if div.table_name != 'search_fields' %}
                 <li class="list-group-item py-0 op-search-menu-category">
-                    <a href="#{{ which }}-mini-{{ div.table_name }}" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle py-2 op-submenu-category {{ div.collapsed }}" data-bs-cat="{{ div.table_name }}">
+                    <a href="#{{ which }}-mini-{{ div.table_name }}" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle py-2 op-submenu-category {{ div.collapsed }}" data-cat="{{ div.table_name }}">
                         <span class="title">{{ div.label }}&nbsp;<span class="op-menu-arrow"></span></span>
                     </a>
                     <ul class="list-group list-group-flush submenu collapse {{ div.show }}" id="{{ which }}-mini-{{ div.table_name }}">
@@ -20,7 +20,7 @@
                                     {#  this div has sub_headings, level-3 menu sections... start sub_heading loop  #}
                                     {% for sub_head,params in info.data.items %}
                                         <li class="list-group-item py-0 ps-0">
-                                            <a href="#{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle op-submenu-category {{ sub_head.1 }}" data-bs-cat="{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}">
+                                            <a href="#{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle op-submenu-category {{ sub_head.1 }}" data-cat="{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}">
                                                 <span class="menu-text title">{{ sub_head.0 }}&nbsp;<span class="op-menu-arrow"></span></span>
                                             </a>
                                             <ul class="list-group list-group-flush submenu collapse {{ sub_head.2 }}" id="{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head.0|slugify }}">
