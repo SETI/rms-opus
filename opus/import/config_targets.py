@@ -931,7 +931,7 @@ STAR_RA_DEC = {
 # display name of different groups for non-preprogrammed mult. Previously we
 # store the info in the db. Do we want to keep this info in db? Or should we
 # keep all the customized grouping info into another file?
-TARGET_NAME_GROUP_MAPPING = {
+PLANET_GROUP_MAPPING = {
     'EAR':   {'label': 'Earth',   'disp_order': '010'},
     'MAR':   {'label': 'Mars',    'disp_order': '020'},
     'JUP':   {'label': 'Jupiter', 'disp_order': '030'},

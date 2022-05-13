@@ -31,22 +31,22 @@ class ObsGeneral(ObsBase):
         return self.volume
 
     def field_obs_general_instrument_id(self):
-        return self.instrument_id
+        return self._create_mult(self.instrument_id)
 
     def field_obs_general_inst_host_id(self):
-        return self.inst_host_id
+        return self._create_mult(self.inst_host_id)
 
     def field_obs_general_mission_id(self):
-        return self.mission_id
+        return self._create_mult(self.mission_id)
 
     def field_obs_general_target_class(self):
         target_name = self.field_obs_general_target_name()
         if target_name is None:
-            return None
+            return self._create_mult(None)
         target_name, target_info = self._get_target_info(target_name['col_val'])
         if target_info is None:
-            return None
-        return target_info[1]
+            return self._create_mult(None)
+        return self._create_mult(target_info[1])
 
     def field_obs_general_primary_filespec(self):
         return self.primary_filespec
@@ -125,13 +125,15 @@ class ObsGeneral(ObsBase):
         target_name = self._some_index_or_label_col('TARGET_NAME')
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
-            return None
-        target_dict = {}
-        target_dict['col_val'] = target_name
-        target_dict['key'] = target_info[0]
-        target_dict['col_class'] = target_info[1]
-        target_dict['disp_name'] = target_info[2]
-        return target_dict
+            return self._create_mult(None)
+
+        data_dict = self._create_mult(
+            col_val=target_name,
+            key=target_info[0],
+            col_class=target_info[1],
+            disp_name=target_info[2],
+        )
+        return data_dict
 
     def field_obs_general_time1(self):
         return self._time_from_some_index()

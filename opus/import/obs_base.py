@@ -343,6 +343,34 @@ class ObsBase(object):
             return None, None
         return target_name, TARGET_NAME_INFO[target_name]
 
+    def _create_mult(
+        self, col_val, key=None, col_class=None, disp_name=None,
+        disp_order=None, grouping=None, group_disp_order=None
+    ):
+        # Handle the case when only col_val is set, rest of the keys are None
+        if (col_val and key is None and
+            col_class is None and disp_name is None and
+            grouping is None and group_disp_order is None):
+            if col_val is None:
+                disp_name = 'N/A'
+            else:
+                disp_name = str(col_val)
+                if (not disp_name[0].isdigit() or
+                    not disp_name[-1].isdigit()):
+                    # This catches things like 2014 MU69 and leaves them
+                    # in all caps
+                    disp_name = disp_name.title()
+
+        data_dict = {}
+        data_dict['col_val'] = col_val
+        data_dict['key'] = key
+        data_dict['col_class'] = col_class
+        data_dict['disp_name'] = disp_name
+        data_dict['disp_order'] = disp_order
+        data_dict['grouping'] = grouping
+        data_dict['group_disp_order'] = group_disp_order
+        return data_dict
+
     def _pdsfile_from_filespec(self, filespec):
         # Create a PdsFile object from a primary filespec.
         # The PDS3 filespec is often the .LBL file, but from_filespec doesn't

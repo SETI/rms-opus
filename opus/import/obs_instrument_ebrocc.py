@@ -74,7 +74,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[3]
 
     def field_obs_general_planet_id(self):
-        return 'SAT'
+        return self._create_mult('SAT')
 
     def field_obs_general_target_name(self):
         target_name = self._index_label_col('TARGET_NAME')
@@ -85,7 +85,7 @@ class ObsInstrumentEBROCC(ObsCommon):
 
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
-            return None
+            return self._create_mult(None)
 
         if target_name not in TARGET_NAME_INFO:
             planet_id = 'OTHER'
@@ -93,22 +93,23 @@ class ObsInstrumentEBROCC(ObsCommon):
             planet_id = TARGET_NAME_INFO[target_name][0]
             if planet_id is None:
                 planet_id = 'OTHER'
-        group_info = TARGET_NAME_GROUP_MAPPING[planet_id]
+        group_info = PLANET_GROUP_MAPPING[planet_id]
 
-        target_dict = {}
-        target_dict['col_val'] = target_name
-        target_dict['key'] = target_info[0]
-        target_dict['col_class'] = target_info[1]
-        target_dict['disp_name'] = target_info[2]
-        target_dict['grouping'] = group_info['label']
-        target_dict['group_disp_order'] = group_info['disp_order']
-        return target_dict
+        data_dict = self._create_mult(
+            col_val=target_name,
+            key=target_info[0],
+            col_class=target_info[1],
+            disp_name=target_info[2],
+            grouping=group_info['label'],
+            group_disp_order=group_info['disp_order']
+        )
+        return data_dict
 
     def field_obs_general_quantity(self):
-        return 'OPDEPTH'
+        return self._create_mult('OPDEPTH')
 
     def field_obs_general_observation_type(self):
-        return 'OCC'
+        return self._create_mult('OCC')
 
 
     ###################################
@@ -127,38 +128,52 @@ class ObsInstrumentEBROCC(ObsCommon):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'STE'
+        return self._create_mult('STE')
 
     def field_obs_profile_occ_dir(self):
         occ_dir = self._index_col('OCCULTATION_DIRECTION')
         if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
-            return occ_dir[0]
+            return self._create_mult(occ_dir[0])
         self._log_nonrepeating_error(f'Unknown OCCULTATION_DIRECTION "{occ_dir}"')
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_body_occ_flag(self):
-        return self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
+        body_occ_flag = self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
+        return self._create_mult(body_occ_flag)
 
     def field_obs_profile_quality_score(self):
-        return {'col_val': 'UNASSIGNED', 'disp_name': 'Unassigned'}
+        data_dict = self._create_mult(
+            col_val='UNASSIGNED',
+            disp_name='Unassigned',
+        )
+        return data_dict
 
     def field_obs_profile_wl_band(self):
         wl = self._supp_index_col('WAVELENGTH') # microns
+        wl_band = 'UV'
         if wl > 0.7:
-            return 'IR'
+            wl_band = 'IR'
         if wl > 0.4:
-            return 'VIS'
-        return 'UV'
+            wl_band = 'VI'
+        return self._create_mult(wl_band)
 
     def field_obs_profile_source(self):
         target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')
         if target_info is None:
-            return None
-        return {'col_val': target_name, 'disp_name': target_info[2]}
+            return self._create_mult(None)
+        data_dict = self._create_mult(
+            col_val=target_name,
+            disp_name=target_info[2]
+        )
+        return data_dict
 
     def field_obs_profile_host(self):
         insthost = self._supp_index_col('INSTRUMENT_HOST_NAME')
-        return {'col_val': insthost, 'disp_name': insthost}
+        data_dict = self._create_mult(
+            col_val=insthost,
+            disp_name=insthost
+        )
+        return data_dict
 
 
     #####################################
