@@ -48,7 +48,7 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         return self._wave_no_res2_from_wave_res()
 
     def field_obs_wavelength_spec_flag(self):
-        return 'Y'
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         return 256

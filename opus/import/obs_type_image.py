@@ -38,7 +38,7 @@ class ObsTypeImage(ObsBase):
     # override the methods.
 
     def field_obs_type_image_image_type_id(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_type_image_duration(self):
         # We don't make this field_obs_general_observation_duration by default because

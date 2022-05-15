@@ -124,7 +124,7 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
         return self._index_col('WAVENUMBER_RESOLUTION')
 
     def field_obs_wavelength_spec_flag(self):
-        return 'Y'
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         return self._index_col('SPECTRUM_SAMPLES')

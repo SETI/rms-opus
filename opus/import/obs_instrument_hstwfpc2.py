@@ -47,7 +47,7 @@ class ObsInstrumentHSTWFPC2(ObsMissionHubble):
     ###################################
 
     def field_obs_wavelength_spec_flag(self):
-        return 'N'
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         return None
@@ -55,8 +55,8 @@ class ObsInstrumentHSTWFPC2(ObsMissionHubble):
     def field_obs_wavelength_polarization_type(self):
         filter_name = self._index_col('FILTER_NAME')
         if filter_name.find('POL') == -1:
-            return 'NONE'
-        return 'LINEAR'
+            return self._create_mult('NONE')
+        return self._create_mult('LINEAR')
 
 
     ######################################

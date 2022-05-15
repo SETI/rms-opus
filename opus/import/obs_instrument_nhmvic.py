@@ -107,7 +107,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'PUSH'
+        return self._create_mult('PUSH')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()

@@ -94,8 +94,8 @@ class ObsMissionHubble(ObsCommon):
 
     def field_obs_type_image_image_type_id(self):
         if not self._is_image():
-            return None
-        return 'FRAM'
+            return self._create_mult(None)
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         if not self._is_image():

@@ -205,7 +205,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'FRAM'
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         exposure = self._index_col('EXPOSURE_DURATION')

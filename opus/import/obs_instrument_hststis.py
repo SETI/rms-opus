@@ -85,8 +85,8 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
 
     def field_obs_wavelength_spec_flag(self):
         if self._stis_spec_flag():
-            return 'Y'
-        return 'N'
+            return self._create_mult('Y')
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         if not self._stis_spec_flag():
@@ -103,7 +103,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
         return max(lines, samples, x1d_size)
 
     def field_obs_wavelength_polarization_type(self):
-        return 'NONE'
+        return self._create_mult('NONE')
 
 
     ######################################

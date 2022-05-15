@@ -270,7 +270,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'FRAM'
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()
@@ -352,8 +352,8 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     def field_obs_wavelength_polarization_type(self):
         the_filter = self.field_obs_instrument_coiss_combined_filter()[0]
         if the_filter.find('P') != -1:
-            return 'LINEAR'
-        return 'NONE'
+            return self._create_mult('LINEAR')
+        return _create_mult('NONE'
 
 
     #######################################

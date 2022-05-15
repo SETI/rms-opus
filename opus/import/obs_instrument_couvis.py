@@ -190,8 +190,8 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
 
     def field_obs_type_image_image_type_id(self):
         if self._is_image():
-            return 'PUSH'
-        return None
+            return self._create_mult('PUSH')
+        return self._create_mult(None)
 
     def field_obs_type_image_duration(self):
         if not self._is_image():
@@ -312,8 +312,8 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
     def field_obs_wavelength_spec_flag(self):
         spec_size = self.field_obs_wavelength_spec_size()
         if spec_size is None or spec_size < 1:
-            return 'N'
-        return 'Y'
+            return self._create_mult('N')
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         channel, image_time = self._channel_time_helper()

@@ -56,8 +56,8 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
 
     def field_obs_wavelength_spec_flag(self):
         if self._acs_spec_flag()[0]:
-            return 'Y'
-        return 'N'
+            return self._create_mult('Y')
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         spec_flag, filter1, filter2 = self._acs_spec_flag()
@@ -100,8 +100,8 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
     def field_obs_wavelength_polarization_type(self):
         filter1, filter2 = self._decode_filters()
         if filter2 is not None and filter2.startswith('POL'):
-            return 'LINEAR'
-        return 'NONE'
+            return self._create_mult('LINEAR')
+        return self._create_mult('NONE')
 
 
     ######################################

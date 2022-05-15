@@ -138,7 +138,7 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
         return self._supp_index_col('BAND_BIN_WIDTH')
 
     def field_obs_wavelength_spec_flag(self):
-        return 'Y'
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         return self._supp_index_col('BANDS')

@@ -154,10 +154,10 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
     def field_obs_type_image_image_type_id(self):
         inst_mod = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mod != 'IMAGE':
-            return None
+            return self._create_mult(None)
         if self.phase_name == 'VIS':
-            return 'PUSH'
-        return 'RAST'
+            return self._create_mult('PUSH')
+        return self._create_mult('RAST')
 
     def field_obs_type_image_duration(self):
         if not self._is_image():
@@ -226,7 +226,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return self._wave_no_res2_from_wave_res()
 
     def field_obs_wavelength_spec_flag(self):
-        return 'Y'
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         if self.phase_name == 'IR':

@@ -55,8 +55,8 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
 
     def field_obs_wavelength_spec_flag(self):
         if self._nicmos_spec_flag()[0]:
-            return 'Y'
-        return 'N'
+            return self._create_mult('Y')
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         spec_flag, filter1, filter2 = self._nicmos_spec_flag()
@@ -81,8 +81,8 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
     def field_obs_wavelength_polarization_type(self):
         filter_name = self._index_col('FILTER_NAME')
         if filter_name.find('POL') == -1:
-            return 'NONE'
-        return 'LINEAR'
+            return self._create_mult('NONE')
+        return self._create_mult('LINEAR')
 
 
     ######################################

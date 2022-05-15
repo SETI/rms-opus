@@ -58,8 +58,8 @@ class ObsInstrumentHSTWFC3(ObsMissionHubble):
 
     def field_obs_wavelength_spec_flag(self):
         if self._wfc3_spec_flag()[0]:
-            return 'Y'
-        return 'N'
+            return self._create_mult('Y')
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         spec_flag, filter1, filter2 = self._wfc3_spec_flag()
@@ -92,7 +92,7 @@ class ObsInstrumentHSTWFC3(ObsMissionHubble):
         return min(max(lines, samples), spec_size)
 
     def field_obs_wavelength_polarization_type(self):
-        return 'NONE'
+        return self._create_mult('NONE')
 
 
     ######################################
