@@ -353,7 +353,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         the_filter = self.field_obs_instrument_coiss_combined_filter()[0]
         if the_filter.find('P') != -1:
             return self._create_mult('LINEAR')
-        return _create_mult('NONE'
+        return _create_mult('NONE')
 
 
     #######################################
