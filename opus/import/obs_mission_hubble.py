@@ -79,13 +79,13 @@ class ObsMissionHubble(ObsCommon):
         wl2 = self._index_col('MAXIMUM_WAVELENGTH')
 
         if wl1 is None or wl2 is None:
-            return 'REFLECT'
+            return self._create_mult('REFLECT')
 
         # We call it "EMISSION" if at least 3/4 of the passband is below 350 nm
         # and the high end of the passband is below 400 nm.
         if wl2 < 0.4 and (3*wl1+wl2)/4 < 0.35:
-            return 'EMISSION'
-        return 'REFLECT'
+            return self._create_mult('EMISSION')
+        return self._create_mult('REFLECT')
 
 
     ##################################
