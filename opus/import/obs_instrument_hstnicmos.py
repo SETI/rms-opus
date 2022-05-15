@@ -35,8 +35,8 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
 
     def field_obs_general_observation_type(self):
         if self._nicmos_spec_flag()[0]:
-            return 'SPI'
-        return 'IMG'
+            return self._create_mult('SPI')
+        return self._create_mult('IMG')
 
 
     ##################################

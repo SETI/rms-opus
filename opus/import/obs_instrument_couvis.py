@@ -86,7 +86,8 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
     ################################
 
     def field_obs_general_target_name(self):
-        return self._cassini_intended_target_name()
+        col_val, disp_name = self._cassini_intended_target_name()
+        return self._create_mult(col_val=col_val, disp_name=disp_name)
 
     def field_obs_general_time2(self):
         channel, image_time = self._channel_time_helper()
@@ -151,23 +152,24 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         return f'{pl_str}_CO_UVIS_{image_time_str}_{image_camera}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        planet_id = self._cassini_planet_id()
+        return self._create_mult(planet_id)
 
     def field_obs_general_quantity(self):
         if not self._has_supp_index():
-            return None
+            return self._create_mult(None)
         description = self._supp_index_col('DESCRIPTION').upper()
         if (description.find('OCCULTATION') != -1 and
             description.find('CALIBRATION') == -1):
-            return 'OPDEPTH'
-        return 'EMISSION'
+            return self._create_mult('OPDEPTH')
+        return self._create_mult('EMISSION')
 
     def field_obs_general_observation_type(self):
         channel, image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
-            return 'TS' # Time Series
+            return self._create_mult('TS') # Time Series
         assert channel == 'EUV' or channel == 'FUV'
-        return 'SCU' # Spectral Cube
+        return self._create_mult('SCU') # Spectral Cube
 
 
     ############################

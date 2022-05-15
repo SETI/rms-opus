@@ -50,7 +50,7 @@ class ObsMissionVoyager(ObsCommon):
 
         assert pl in ['JUP', 'SAT', 'URA', 'NEP']
 
-        return pl
+        return self._create_mult(pl)
 
 
     ####################################

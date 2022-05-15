@@ -22,10 +22,10 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_general_quantity(self):
-        return 'OPDEPTH'
+        return self._create_mult('OPDEPTH')
 
     def field_obs_general_observation_type(self):
-        return 'OCC'
+        return self._create_mult('OCC')
 
     def field_obs_general_right_asc1(self):
         return self._prof_ra_dec_helper('supp_index_row', 'SIGNAL_SOURCE_NAME_1')[0]

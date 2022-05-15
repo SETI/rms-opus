@@ -26,16 +26,27 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
 
     def field_obs_general_target_name(self):
         target_name, target_info = self._get_target_info('S RINGS')
-        return target_name, target_info[2]
+        group_info = self._get_planet_group_info(target_name)
+
+        data_dict = self._create_mult(
+            col_val=target_name,
+            key=target_info[0],
+            col_class=target_info[1],
+            disp_name=target_info[2],
+            grouping=group_info['label'],
+            group_disp_order=group_info['disp_order']
+        )
+        return data_dict
+
 
     def field_obs_general_planet_id(self):
-        return 'SAT'
+        return self._create_mult('SAT')
 
     def field_obs_general_quantity(self):
-        return 'OPDEPTH'
+        return self._create_mult('OPDEPTH')
 
     def field_obs_general_observation_type(self):
-        return 'OCC'
+        return self._create_mult('OCC')
 
 
     ################################

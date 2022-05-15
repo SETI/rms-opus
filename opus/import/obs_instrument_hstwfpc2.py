@@ -29,7 +29,7 @@ class ObsInstrumentHSTWFPC2(ObsMissionHubble):
     ################################
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ##################################

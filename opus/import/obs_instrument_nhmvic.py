@@ -96,10 +96,10 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         return f'{pl_str}_IMG_NH_MVIC_{image_num}_{camera}'
 
     def field_obs_general_quantity(self):
-        return 'REFLECT'
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ##################################

@@ -55,16 +55,18 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
         return f'{pl_str}_SPEC_CO_CIRS_{image_num}_{instrument_id}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        planet_id = self._cassini_planet_id()
+        return self._create_mult(planet_id)
 
     def field_obs_general_target_name(self):
-        return self._cassini_intended_target_name()
+        col_val, disp_name = self._cassini_intended_target_name()
+        return self._create_mult(col_val=col_val, disp_name=disp_name)
 
     def field_obs_general_quantity(self):
-        return 'THERMAL'
+        return self._create_mult('THERMAL')
 
     def field_obs_general_observation_type(self):
-        return 'STS' # Spectral Time Series
+        return self._create_mult('STS') # Spectral Time Series
 
 
     ############################

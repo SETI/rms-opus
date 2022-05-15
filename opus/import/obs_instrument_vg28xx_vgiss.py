@@ -28,10 +28,10 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_general_quantity(self):
-        return 'REFLECT'
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'REF'
+        return self._create_mult('REF')
 
 
     ##################################

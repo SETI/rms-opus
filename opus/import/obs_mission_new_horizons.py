@@ -37,14 +37,14 @@ class ObsMissionNewHorizons(ObsCommon):
         #   Post-Launch Checkout
         mp = self._supp_index_col('MISSION_PHASE_NAME').upper()
         if mp == 'JUPITER ENCOUNTER':
-            return 'JUP'
+            return self._create_mult('JUP')
         if mp in ('PLUTO CRUISE', 'PLUTO ENCOUNTER'):
-            return 'PLU'
+            return self._create_mult('PLU')
         if mp in ('POST-LAUNCH CHECKOUT',
                   'CRUISE TO FIRST KBO EN',
                   'CRUISE TO FIRST KBO ENCOUNTER',
                   'KEM1 ENCOUNTER'):
-            return 'OTH'
+            return self._create_mult('OTH')
 
         self._log_nonrepeating_error(f'Unknown MISSION_PHASE_NAME "{mp}"')
         return 'OTH'

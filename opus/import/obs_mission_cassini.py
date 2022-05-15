@@ -252,7 +252,7 @@ class ObsMissionCassini(ObsCommon):
             self._announce_unknown_target_name(target_name)
             if self._ignore_errors:
                 return 'None'
-            return None
+            return None, None
         target_info = TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]
 

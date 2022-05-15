@@ -81,7 +81,7 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         image_num = filename[1:8]
         inst_host_num = self._index_col('INSTRUMENT_HOST_NAME')[-1]
         camera = self._index_col('INSTRUMENT_NAME')[0]
-        planet = self.field_obs_general_planet_id()
+        planet = self.field_obs_general_planet_id()['col_val']
         if planet is None:
             pl_str = ''
         else:
@@ -92,11 +92,11 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
     def field_obs_general_quantity(self):
         filter_name = self._index_col('FILTER_NAME')
         if filter_name == 'UV':
-            return 'EMISSION'
-        return 'REFLECT'
+            return self._create_mult('EMISSION')
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ############################

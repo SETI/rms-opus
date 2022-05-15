@@ -240,19 +240,21 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return f'{pl_str}_IMG_CO_ISS_{image_num}_{camera}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        planet_id = self._cassini_planet_id()
+        return self._create_mult(planet_id)
 
     def field_obs_general_target_name(self):
-        return self._cassini_intended_target_name()
+        col_val, disp_name = self._cassini_intended_target_name()
+        return self._create_mult(col_val=col_val, disp_name=disp_name)
 
     def field_obs_general_quantity(self):
         filter1, filter2 = self._index_col('FILTER_NAME')
         if filter1.startswith('UV') or filter2.startswith('UV'):
-            return 'EMISSION'
-        return 'REFLECT'
+            return self._create_mult('EMISSION')
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG' # Image
+        return self._create_mult('IMG') # Image
 
 
     ############################

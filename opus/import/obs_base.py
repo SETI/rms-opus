@@ -343,6 +343,16 @@ class ObsBase(object):
             return None, None
         return target_name, TARGET_NAME_INFO[target_name]
 
+    def _get_planet_group_info(self, target_name):
+        # Return the planet group info for a passed in target_name
+        if target_name not in TARGET_NAME_INFO:
+            planet_id = 'OTHER'
+        else:
+            planet_id = TARGET_NAME_INFO[target_name][0]
+            if planet_id is None:
+                planet_id = 'OTHER'
+        return PLANET_GROUP_MAPPING[planet_id]
+
     def _create_mult(
         self, col_val, key=None, col_class=None, disp_name=None,
         disp_order=None, grouping=None, group_disp_order=None

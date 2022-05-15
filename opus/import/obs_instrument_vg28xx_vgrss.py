@@ -28,10 +28,10 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_general_quantity(self):
-        return 'OPDEPTH'
+        return self._create_mult('OPDEPTH')
 
     def field_obs_general_observation_type(self):
-        return 'OCC'
+        return self._create_mult('OCC')
 
 
     ################################

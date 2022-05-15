@@ -86,14 +86,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return self._create_mult(None)
-
-        if target_name not in TARGET_NAME_INFO:
-            planet_id = 'OTHER'
-        else:
-            planet_id = TARGET_NAME_INFO[target_name][0]
-            if planet_id is None:
-                planet_id = 'OTHER'
-        group_info = PLANET_GROUP_MAPPING[planet_id]
+        group_info = self._get_planet_group_info(target_name)
 
         data_dict = self._create_mult(
             col_val=target_name,

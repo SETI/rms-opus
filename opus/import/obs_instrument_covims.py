@@ -63,7 +63,8 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
     ################################
 
     def field_obs_general_target_name(self):
-        return self._cassini_intended_target_name()
+        col_val, disp_name = self._cassini_intended_target_name()
+        return self._create_mult(col_val=col_val, disp_name=disp_name)
 
     # We occasionally don't bother to generate ring_geo data for COVIMS, like during
     # cruise, so just use the given RA/DEC from the index if needed. We don't make
@@ -122,19 +123,20 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return f'{pl_str}_CO_UVIS_{image_time_str}_{image_camera}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        planet_id = self._cassini_planet_id()
+        return self._create_mult(planet_id)
 
     def field_obs_general_quantity(self):
         inst_mod = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mod == 'OCCULTATION':
-            return 'OPDEPTH'
-        return 'REFLECT'
+            return self._create_mult('OPDEPTH')
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
         inst_mod = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mod == 'OCCULTATION':
-            return 'TS' # Time Series
-        return 'SCU' # Spectral Cube
+            return self._create_mult('TS') # Time Series
+        return self._create_mult('SCU') # Spectral Cube
 
 
     ############################

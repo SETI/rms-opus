@@ -70,16 +70,17 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
         return None
 
     def field_obs_general_planet_id(self):
-        return 'SAT'
+        return self._create_mult('SAT')
 
     def field_obs_general_target_name(self):
-        return self._cassini_intended_target_name()
+        col_val, disp_name = self._cassini_intended_target_name()
+        return self._create_mult(col_val=col_val, disp_name=disp_name)
 
     def field_obs_general_quantity(self):
-        return 'THERMAL'
+        return self._create_mult('THERMAL')
 
     def field_obs_general_observation_type(self):
-        return 'SCU' # Spectral Cube
+        return self._create_mult('SCU') # Spectral Cube
 
 
     ############################

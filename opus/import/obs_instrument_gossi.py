@@ -133,8 +133,8 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
 
     def field_obs_general_planet_id(self):
         if self._index_col('ORBIT_NUMBER') is None:
-            return 'OTH'
-        return 'JUP'
+            return self._create_mult('OTH')
+        return self._create_mult('JUP')
 
     # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
     # We assume it means stop time like it does for Voyager, and because Mark
@@ -174,10 +174,10 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return max(time2 - time1, 0)
 
     def field_obs_general_quantity(self):
-        return 'REFLECT'
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ############################

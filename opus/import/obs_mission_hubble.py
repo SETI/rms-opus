@@ -21,7 +21,7 @@ class ObsMissionHubble(ObsCommon):
         return filter_name.split('+')
 
     def _is_image(self):
-        obs_type = self.field_obs_general_observation_type()
+        obs_type = self.field_obs_general_observation_type()['col_val']
         assert obs_type in ('IMG', 'SPE', 'SPI')
         return obs_type == 'IMG' or obs_type == 'SPI'
 
@@ -60,7 +60,7 @@ class ObsMissionHubble(ObsCommon):
         instrument_id = self._index_col('INSTRUMENT_ID')
         image_date = self._index_col('START_TIME')[:10]
         filename = self._index_col('PRODUCT_ID')
-        planet = self.field_obs_general_planet_id()
+        planet = self.field_obs_general_planet_id()['col_val']
         if planet == 'OTH':
             pl_str = ''
         else:
@@ -71,8 +71,8 @@ class ObsMissionHubble(ObsCommon):
         planet_name = self._index_col('PLANET_NAME')
         if planet_name not in ['VENUS', 'EARTH', 'MARS', 'JUPITER', 'SATURN',
                                'URANUS', 'NEPTUNE', 'PLUTO']:
-            return 'OTH'
-        return planet_name[:3]
+            return self._create_mult('OTH')
+        return self._create_mult(planet_name[:3])
 
     def field_obs_general_quantity(self):
         wl1 = self._index_col('MINIMUM_WAVELENGTH')
