@@ -110,13 +110,13 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
                 self._log_nonrepeating_error(
                     f'Mismatched WAVELENGTH_BAND_1 "{wl_band1}" and '+
                     f'WAVELENGTH_BAND_2 "{wl_band2}"')
-                return None
+                return self._create_mult(None)
         if '-BAND' in wl_band1:
             wl_band1 = wl_band1[0]
         if 'VISUAL' in wl_band1:
             wl_band1 = 'VI'
 
-        return wl_band1
+        return self._create_mult(wl_band1)
 
     def field_obs_profile_source(self):
         src_name1 = self._supp_index_col('SIGNAL_SOURCE_NAME_1')
@@ -127,7 +127,7 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
                 f'Mismatched SIGNAL_SOURCE_NAME_1 "{src_name1}" and '+
                 f'SIGNAL_SOURCE_NAME_2 "{src_name2}"')
 
-        return src_name1
+        return self._create_mult(src_name1)
 
 
     #####################################
@@ -195,5 +195,6 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     #######################################
 
     def field_obs_mission_voyager_mission_phase_name(self):
-        target_name = self._index_col('TARGET_NAME').upper()
-        return _VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
+        target_name = self._index_col('TARGET_NAME').upper
+        mission_phase = _VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
+        return self._create_mult(mission_phase)

@@ -62,7 +62,7 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         return self._supp_index_col('IR_EXPOSURE') / 1000 # msec -> sec
 
     def field_obs_profile_wl_band(self):
-        return 'IR'
+        return self._create_mult('IR')
 
 
     #######################################

@@ -54,24 +54,37 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'RAD'
+        return self._create_mult('RAD')
 
     def field_obs_profile_quality_score(self):
-        return ("UNASSIGNED", "Unassigned")
+        data_dict = self._create_mult(
+            col_val='UNASSIGNED',
+            disp_name='Unassigned',
+        )
+        return data_dict
 
     def field_obs_profile_wl_band(self):
         band = self._index_col('BAND_NAME')
         if band == 'K':
             band = 'KA'
-        return band
+        return self._create_mult(band)
 
     def field_obs_profile_source(self):
-        return ('CASSINI', 'Cassini', '!Cassini') # Force Cassini to be before all stars
+        data_dict = self._create_mult(
+            col_val='CASSINI',
+            disp_name='Cassini',
+            disp_order='!Cassini' # Force Cassini to be before all stars
+        )
+        return data_dict
 
     def field_obs_profile_host(self):
         dsn = self._supp_index_col('DSN_STATION_NUMBER')
         ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
-        return (ret, ret)
+        data_dict = self._create_mult(
+            col_val=ret,
+            disp_name=ret
+        )
+        return data_dict
 
 
     #####################################

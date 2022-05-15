@@ -56,7 +56,7 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
         return self._supp_index_col('INTEGRATION_DURATION') / 1000 # msec -> sec
 
     def field_obs_profile_wl_band(self):
-        return 'UV'
+        return self._create_mult('UV')
 
 
     #######################################

@@ -59,16 +59,16 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'REF'
+        return self._create_mult('REF')
 
     def field_obs_profile_quality_score(self):
-        return 'GOOD'
+        return self._create_mult('GOOD')
 
     def field_obs_profile_source(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_host(self):
-        return self._supp_index_col('RECEIVER_HOST_NAME')
+        return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME'))
 
 
     #####################################

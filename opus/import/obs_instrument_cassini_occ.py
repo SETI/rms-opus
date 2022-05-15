@@ -59,15 +59,15 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
         # We don't allow "Both" as a direction since these are always split into
         # separate files.
         if '_I_' in filespec:
-            return 'I'
+            return self._create_mult('I')
         if '_E_' in filespec:
-            return 'E'
+            return self._create_mult('E')
         self._log_nonrepeating_error(
             f'Unknown ring occultation direction in filespec "{filespec}"')
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_body_occ_flag(self):
-        return self._index_col('PLANETARY_OCCULTATION_FLAG')
+        return self._create_mult(self._index_col('PLANETARY_OCCULTATION_FLAG'))
 
     def field_obs_profile_optical_depth1(self):
         return self._supp_index_col('LOWEST_DETECTABLE_OPACITY')

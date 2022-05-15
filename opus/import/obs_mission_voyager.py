@@ -45,7 +45,7 @@ class ObsMissionVoyager(ObsCommon):
     ################################
 
     def field_obs_general_planet_id(self):
-        mp = self.field_obs_mission_voyager_mission_phase_name()
+        mp = self.field_obs_mission_voyager_mission_phase_name()['col_val']
         pl = mp[:3].upper()
 
         assert pl in ['JUP', 'SAT', 'URA', 'NEP']

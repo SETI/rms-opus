@@ -39,23 +39,29 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'RAD'
+        return self._create_mult('RAD')
 
     def field_obs_profile_occ_dir(self):
-        return self._index_col('RING_OCCULTATION_DIRECTION')[0]
+        occ_dir = self._index_col('RING_OCCULTATION_DIRECTION')[0]
+        return self._create_mult(occ_dir)
 
     def field_obs_profile_body_occ_flag(self):
-        return self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
+        occ_flag = self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
+        return self._create_mult(occ_flag)
 
     def field_obs_profile_quality_score(self):
-        return 'GOOD'
+        return self._create_mult('GOOD')
 
     def field_obs_profile_host(self):
         receiver_host = self._supp_index_col('RECEIVER_HOST_NAME')
         dsn = int(receiver_host[-2:])
 
         ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
-        return (ret, ret)
+        data_dict = self._create_mult(
+            col_val=ret,
+            disp_name=ret
+        )
+        return data_dict
 
 
     #####################################
