@@ -267,7 +267,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._cassini_mission_phase_name()
+        return self._create_mult(self._cassini_mission_phase_name())
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._index_col('SEQ_ID')
@@ -287,16 +287,16 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return self.instrument_id
 
     def field_obs_instrument_covims_instrument_mode_id(self):
-        return self._index_col('INSTRUMENT_MODE_ID')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 
     def field_obs_instrument_covims_spectral_editing(self):
-        return self._index_col('SPECTRAL_EDITING')
+        return self._create_mult(self._index_col('SPECTRAL_EDITING'))
 
     def field_obs_instrument_covims_spectral_summing(self):
-        return self._index_col('SPECTRAL_SUMMING')
+        return self._create_mult(self._index_col('SPECTRAL_SUMMING'))
 
     def field_obs_instrument_covims_star_tracking(self):
-        return self._index_col('STAR_TRACKING')
+        return self._create_mult(self._index_col('STAR_TRACKING'))
 
     def field_obs_instrument_covims_swath_width(self):
         return self._index_col('SWATH_WIDTH')
@@ -311,7 +311,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return ir_exp / 1000.
 
     def field_obs_instrument_covims_ir_sampling_mode_id(self):
-        return self._index_col('IR_SAMPLING_MODE_ID')
+        return self._create_mult(self._index_col('IR_SAMPLING_MODE_ID'))
 
     def field_obs_instrument_covims_vis_exposure(self):
         vis_exp = self._index_col('VIS_EXPOSURE')
@@ -320,7 +320,11 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return vis_exp / 1000.
 
     def field_obs_instrument_covims_vis_sampling_mode_id(self):
-        return self._index_col('VIS_SAMPLING_MODE_ID')
+        return self._create_mult(self._index_col('VIS_SAMPLING_MODE_ID'))
 
     def field_obs_instrument_covims_channel(self):
-        return (self.phase_name, self.phase_name)
+        data_dict = self._create_mult(
+            col_val=self.phase_name,
+            disp_name=self.phase_name
+        )
+        return data_dict

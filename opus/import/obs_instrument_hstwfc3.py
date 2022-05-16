@@ -105,22 +105,22 @@ class ObsInstrumentHSTWFC3(ObsMissionHubble):
         # WFC3 doesn't do filter stacking
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
-            return None
+            return self._create_mult(None)
 
         if filter1.startswith('FR'):
-            return 'FR'
+            return self._create_mult('FR')
         if filter1.startswith('G'):
-            return 'SP'
+            return self._create_mult('SP')
         if filter1.endswith('N'):
-            return 'N'
+            return self._create_mult('N')
         if filter1.endswith('M'):
-            return 'M'
+            return self._create_mult('M')
         if filter1.endswith('W'):
-            return 'W'
+            return self._create_mult('W')
         if filter1.endswith('LP'):
-            return 'LP'
+            return self._create_mult('LP')
         if filter1.endswith('X'):
-            return 'X'
+            return self._create_mult('X')
 
         self._log_nonrepeating_error(f'Unknown filter "{filter1}"')
-        return None
+        return self._create_mult(None)

@@ -161,7 +161,8 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
         return self.instrument_id
 
     def field_obs_instrument_nhlorri_instrument_compression_type(self):
-        return self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
+        compression_type = self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
+        return self._create_mult(compression_type)
 
     def field_obs_instrument_nhlorri_binning_mode(self):
-        return self._supp_index_col('BINNING_MODE')
+        return self._create_mult(self._supp_index_col('BINNING_MODE'))

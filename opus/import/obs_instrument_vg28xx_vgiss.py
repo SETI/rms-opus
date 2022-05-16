@@ -171,26 +171,26 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
         return 'N/A'
 
     def field_obs_instrument_vgiss_scan_mode(self):
-        return '1:1'
+        return self._create_mult('1:1')
 
     def field_obs_instrument_vgiss_shutter_mode(self):
-        return 'NAONLY'
+        return self._create_mult('NAONLY')
 
     def field_obs_instrument_vgiss_gain_mode(self):
-        return 'LOW'
+        return self._create_mult('LOW')
 
     def field_obs_instrument_vgiss_edit_mode(self):
-        return '1:1'
+        return self._create_mult('1:1')
 
     def field_obs_instrument_vgiss_filter_name(self):
-        return 'CLEAR'
+        return self._create_mult('CLEAR')
 
     def field_obs_instrument_vgiss_filter_number(self):
-        return 0
+        return self._create_mult(0)
 
     def field_obs_instrument_vgiss_camera(self):
         # Narrow angle camera
-        return 'N'
+        return self._create_mult('N')
 
     def field_obs_instrument_vgiss_usable_lines(self):
         return 800

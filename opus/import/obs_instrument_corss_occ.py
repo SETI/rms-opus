@@ -186,5 +186,5 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._supp_index_col('MISSION_PHASE_NAME')
         if mp.upper() == 'NULL':
-            return None
-        return mp.replace('_', ' ')
+            return self._create_mult(None)
+        return self._create_mult(mp.replace('_', ' '))

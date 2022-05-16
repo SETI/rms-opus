@@ -70,7 +70,7 @@ class ObsInstrumentHSTWFPC2(ObsMissionHubble):
             filter2 = ''
 
         if filter1.startswith('FR') or filter2.startswith('FR'):
-            return 'FR' # Ramp overrides everything
+            return self._create_mult('FR') # Ramp overrides everything
 
         if filter1.startswith('FQ') or filter1 == 'F160BN15':
             filter1 = 'N'
@@ -80,31 +80,31 @@ class ObsInstrumentHSTWFPC2(ObsMissionHubble):
         # Start from narrowest band - paired filters take the type of the smallest
         # bandpass
         if filter1.endswith('N') or filter2.endswith('N'):
-            return 'N'
+            return self._create_mult('N')
         if filter1.endswith('M') or filter2.endswith('M'):
-            return 'M'
+            return self._create_mult('M')
         if filter1.endswith('W') or filter2.endswith('W'):
-            return 'W'
+            return self._create_mult('W')
         if filter1.endswith('LP') or filter2.endswith('LP'):
-            return 'LP'
+            return self._create_mult('LP')
 
         self._log_nonrepeating_error(f'Unknown filter combination "{filter1}+{filter2}"')
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_pc1_flag(self):
-        return self._index_col('PC1_FLAG')
+        return self._create_mult(self._index_col('PC1_FLAG'))
 
     def field_obs_mission_hubble_wf2_flag(self):
-        return self._index_col('WF2_FLAG')
+        return self._create_mult(self._index_col('WF2_FLAG'))
 
     def field_obs_mission_hubble_wf3_flag(self):
-        return self._index_col('WF3_FLAG')
+        return self._create_mult(self._index_col('WF3_FLAG'))
 
     def field_obs_mission_hubble_wf4_flag(self):
-        return self._index_col('WF4_FLAG')
+        return self._create_mult(self._index_col('WF4_FLAG'))
 
     def field_obs_mission_hubble_targeted_detector_id(self):
         targeted_detector_id = self._index_col('TARGETED_DETECTOR_ID')
         if targeted_detector_id == '':
             self._log_nonrepeating_error('Empty targeted detector ID')
-        return targeted_detector_id
+        return self._create_mult(targeted_detector_id)

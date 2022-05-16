@@ -367,8 +367,8 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._supp_index_col('MISSION_PHASE_NAME')
         if mp.upper() == 'NULL':
-            return None
-        return mp.replace('_', ' ')
+            return self._create_mult(None)
+        return self._create_mult(mp.replace('_', ' '))
 
 
     ###############################################
@@ -385,22 +385,22 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
         return self.instrument_id
 
     def field_obs_instrument_cocirs_detector_id(self):
-        return self._supp_index_col('DETECTOR_ID')
+        return self._create_mult(self._supp_index_col('DETECTOR_ID'))
 
     def field_obs_instrument_cocirs_instrument_mode_blinking_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_even_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_odd_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_centers_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_pairs_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_all_flag(self):
-        return None
+        return self._create_mult(None)

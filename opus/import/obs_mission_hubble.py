@@ -187,9 +187,9 @@ class ObsMissionHubble(ObsCommon):
     def field_obs_mission_hubble_detector_id(self):
         detector_id = self._index_col('DETECTOR_ID')
         if detector_id == '':
-            return 'UNKNOWN'
+            return self._create_mult('UNKNOWN')
         ret = self.instrument_id[3:] + '-' + detector_id
-        return (ret, ret)
+        return self._create_mult(col_val=ret, disp_name=ret)
 
     def field_obs_mission_hubble_publication_date(self):
         return self._time_from_index(column='PUBLICATION_DATE')
@@ -198,7 +198,8 @@ class ObsMissionHubble(ObsCommon):
         return self._index_col('HST_TARGET_NAME')
 
     def field_obs_mission_hubble_fine_guidance_system_lock_type(self):
-        return self._index_col('FINE_GUIDANCE_SYSTEM_LOCK_TYPE')
+        lock_type = self._index_col('FINE_GUIDANCE_SYSTEM_LOCK_TYPE')
+        return self._create_mult(lock_type)
 
     def field_obs_mission_hubble_filter_name(self):
         instrument = self.instrument_id
@@ -208,7 +209,7 @@ class ObsMissionHubble(ObsCommon):
         else:
             filter_name = filter_name.replace('_', ' ')
         ret = instrument[3:] + '-' + filter_name
-        return (ret, ret)
+        return self._create_mult(col_val=ret, disp_name=ret)
 
     def field_obs_mission_hubble_filter_type(self):
         raise NotImplementedError # Required
@@ -217,34 +218,34 @@ class ObsMissionHubble(ObsCommon):
         instrument = self.instrument_id
         aperture = self._index_col('APERTURE_TYPE')
         ret = instrument[3:] + '-' + aperture
-        return (ret, ret)
+        return self._create_mult(col_val=ret, disp_name=ret)
 
     def field_obs_mission_hubble_proposed_aperture_type(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_exposure_type(self):
-        return self._index_col('EXPOSURE_TYPE')
+        return self._create_mult(self._index_col('EXPOSURE_TYPE'))
 
     def field_obs_mission_hubble_gain_mode_id(self):
-        return self._index_col('GAIN_MODE_ID')
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
 
     def field_obs_mission_hubble_instrument_mode_id(self):
-        return self._index_col('INSTRUMENT_MODE_ID')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 
     def field_obs_mission_hubble_pc1_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_wf2_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_wf3_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_wf4_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_targeted_detector_id(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_optical_element(self):
-        return None
+        return self._create_mult(None)

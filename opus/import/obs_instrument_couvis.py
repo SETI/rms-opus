@@ -359,7 +359,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         return sc_cvt + time2-time1
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._cassini_mission_phase_name()
+        return self._create_mult(self._cassini_mission_phase_name())
 
 
     ###############################################
@@ -379,32 +379,32 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         obstype = self._index_col('OBSERVATION_TYPE')
         if obstype == '' or obstype == 'NULL':
             obstype = 'NONE'
-        return obstype.upper()
+        return self._create_mult(obstype.upper())
 
     def field_obs_instrument_couvis_integration_duration(self):
         return self._integration_duration_helper()
 
     def field_obs_instrument_couvis_compression_type(self):
-        return self._index_col('COMPRESSION_TYPE')
+        return self._create_mult(self._index_col('COMPRESSION_TYPE'))
 
     def field_obs_instrument_couvis_occultation_port_state(self):
         occ_state = self._index_col('OCCULTATION_PORT_STATE')
         if occ_state == 'NULL':
             occ_state = 'N/A'
-        return occ_state.upper()
+        return self._create_mult(occ_state.upper())
 
     def field_obs_instrument_couvis_slit_state(self):
-        return self._index_col('SLIT_STATE')
+        return self._create_mult(self._index_col('SLIT_STATE'))
 
     def field_obs_instrument_couvis_test_pulse_state(self):
-        return self._index_col('TEST_PULSE_STATE')
+        return self._create_mult(self._index_col('TEST_PULSE_STATE'))
 
     def field_obs_instrument_couvis_dwell_time(self):
-        return self._index_col('DWELL_TIME')
+        return self._create_mult(self._index_col('DWELL_TIME'))
 
     def field_obs_instrument_couvis_channel(self):
         channel, image_time = self._channel_time_helper()
-        return (channel, channel)
+        return self._create_mult(col_val=channel,disp_name=channel)
 
     def field_obs_instrument_couvis_band1(self):
         return self._supp_index_col('MINIMUM_BAND_NUMBER')

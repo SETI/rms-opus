@@ -262,8 +262,8 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     def field_obs_mission_galileo_orbit_number(self):
         orbit = self._index_col('ORBIT_NUMBER')
         if orbit is None:
-            return None
-        return str(orbit)
+            return self._create_mult(None)
+        return self._create_mult(str(orbit))
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
         if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
@@ -316,19 +316,19 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return f'{min_id}-{max_id}'
 
     def field_obs_instrument_gossi_filter_name(self):
-        return self._index_col('FILTER_NAME')
+        return self._create_mult(self._index_col('FILTER_NAME'))
 
     def field_obs_instrument_gossi_filter_number(self):
         return self._index_col('FILTER_NUMBER')
 
     def field_obs_instrument_gossi_gain_mode_id(self):
-        return self._index_col('GAIN_MODE_ID')
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
 
     def field_obs_instrument_gossi_frame_duration(self):
-        return self._index_col('FRAME_DURATION')
+        return self._create_mult(self._index_col('FRAME_DURATION'))
 
     def field_obs_instrument_gossi_obstruction_id(self):
-        return self._index_col('OBSTRUCTION_ID')
+        return self._create_mult(self._index_col('OBSTRUCTION_ID'))
 
     def field_obs_instrument_gossi_compression_type(self):
-        return self._index_col('COMPRESSION_TYPE')
+        return self._create_mult(self._index_col('COMPRESSION_TYPE'))

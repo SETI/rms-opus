@@ -108,7 +108,7 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._cassini_mission_phase_name()
+        return self._create_mult(self._cassini_mission_phase_name())
 
 
     ###############################################
@@ -125,16 +125,16 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         return self.instrument_id
 
     def field_obs_instrument_covims_instrument_mode_id(self):
-        return self._supp_index_col('INSTRUMENT_MODE_ID')
+        return self._create_mult(self._supp_index_col('INSTRUMENT_MODE_ID'))
 
     def field_obs_instrument_covims_spectral_editing(self):
-        return self._supp_index_col('SPECTRAL_EDITING')
+        return self._create_mult(self._supp_index_col('SPECTRAL_EDITING'))
 
     def field_obs_instrument_covims_spectral_summing(self):
-        return self._supp_index_col('SPECTRAL_SUMMING')
+        return self._create_mult(self._supp_index_col('SPECTRAL_SUMMING'))
 
     def field_obs_instrument_covims_star_tracking(self):
-        return self._supp_index_col('STAR_TRACKING')
+        return self._create_mult(self._supp_index_col('STAR_TRACKING'))
 
     def field_obs_instrument_covims_swath_width(self):
         return self._supp_index_col('SWATH_WIDTH')
@@ -149,13 +149,13 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         return ir_exp / 1000.
 
     def field_obs_instrument_covims_ir_sampling_mode_id(self):
-        return self._supp_index_col('IR_SAMPLING_MODE_ID')
+        return self._create_mult(self._supp_index_col('IR_SAMPLING_MODE_ID'))
 
     def field_obs_instrument_covims_vis_exposure(self):
         return None
 
     def field_obs_instrument_covims_vis_sampling_mode_id(self):
-        return 'N/A'
+        return self._create_mult('N/A')
 
     def field_obs_instrument_covims_channel(self):
-        return 'IR'
+        return self._create_mult('IR')

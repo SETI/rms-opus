@@ -95,25 +95,27 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
         # NICMOS doesn't do filter stacking
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
-            return None
+            return self._create_mult(None)
 
         if filter1.startswith('G'):
-            return 'SP'
+            return self._create_mult('SP')
         if filter1.endswith('N'):
-            return 'N'
+            return self._create_mult('N')
         if filter1.endswith('M'):
-            return 'M'
+            return self._create_mult('M')
         if filter1.endswith('W'):
-            return 'W'
+            return self._create_mult('W')
 
         if filter1.startswith('POL'):
             if filter1.endswith('S'):
-                return 'W' # POLxS is 0.8-1.3, about the same as wide filters
+                # POLxS is 0.8-1.3, about the same as wide filters
+                return self._create_mult('W')
             elif filter1.endswith('L'):
-                return 'M' # POLxL is 1.89-2.1, about the same as medium filters
+                # POLxL is 1.89-2.1, about the same as medium filters
+                return self._create_mult('M')
 
         if filter1 == 'BLANK': # Opaque
-            return 'OT'
+            return self._create_mult('OT')
 
         self._log_nonrepeating_error(f'Unknown filter "{filter1}"')
-        return None
+        return self._create_mult(None)

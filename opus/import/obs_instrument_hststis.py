@@ -16,7 +16,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
 
 
     def _stis_spec_flag(self):
-        obs_type = self.field_obs_general_observation_type()["col_val"]
+        obs_type = self.field_obs_general_observation_type()['col_val']
         return obs_type == 'SPE'
 
 
@@ -116,21 +116,21 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
         # STIS doesn't do filter stacking
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
-            return None
+            return self._create_mult(None)
 
         if filter1 in ('CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS',
                        'STRONTIUM_FLUORIDE', 'ND_3'):
-            return 'LP'
+            return self._create_mult('LP')
         if filter1 == 'LYMAN_ALPHA':
-            return 'N'
+            return self._create_mult('N')
 
         self._log_nonrepeating_error(f'Unknown filter "{filter1}"')
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_proposed_aperture_type(self):
         aperture = self._index_col('PROPOSED_APERTURE_TYPE').upper()
-        return (aperture, aperture)
+        return self._create_mult(col_val=aperture, disp_name=aperture)
 
     def field_obs_mission_hubble_optical_element(self):
         element = self._index_col('OPTICAL_ELEMENT_NAME').upper()
-        return (element, element)
+        return self._create_mult(col_val=element, disp_name=element)

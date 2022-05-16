@@ -1310,16 +1310,7 @@ def import_observation_table(instrument_obj,
         if form_type in GROUP_FORM_TYPES:
             mult_column_name = import_util.table_name_mult(table_name,
                                                            field_name)
-            # if not mult_label_set:
-            #     if column_val is None:
-            #         mult_label = 'N/A'
-            #     else:
-            #         mult_label = str(column_val)
-            #         if (not mult_label[0].isdigit() or
-            #             not mult_label[-1].isdigit()):
-            #             # This catches things like 2014 MU69 and leaves them
-            #             # in all caps
-            #             mult_label = mult_label.title()
+
             id_num = update_mult_table(table_name, field_name, table_column,
                                        column_val, mult_label, disp_order,
                                        grouping, group_disp_order)

@@ -409,8 +409,8 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._index_col('MISSION_PHASE_NAME')
         if mp.upper() == 'NULL':
-            return None
-        return mp.replace('_', ' ')
+            return self._create_mult(None)
+        return self._create_mult(mp.replace('_', ' '))
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._index_col('SEQUENCE_ID')
@@ -430,13 +430,13 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return self.instrument_id
 
     def field_obs_instrument_coiss_data_conversion_type(self):
-        return self._index_col('DATA_CONVERSION_TYPE')
+        return self._create_mult(self._index_col('DATA_CONVERSION_TYPE'))
 
     def field_obs_instrument_coiss_compression_type(self):
-        return self._index_col('INST_CMPRS_TYPE')
+        return self._create_mult(self._index_col('INST_CMPRS_TYPE'))
 
     def field_obs_instrument_coiss_gain_mode_id(self):
-        return self._index_col('GAIN_MODE_ID')
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
 
     def field_obs_instrument_coiss_image_observation_type(self):
         obs_type = self._index_col('IMAGE_OBSERVATION_TYPE')
@@ -464,30 +464,30 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         if len(ret) != len(obs_type.replace('UNK','UNKNOWN')):
             self._log_nonrepeating_error(
                 f'Unknown format for COISS image_observation_type: "{obs_type}"')
-            return None
+            return self._create_mult(None)
 
-        return ret
+        return self._create_mult(ret)
 
     def field_obs_instrument_coiss_missing_lines(self):
         return self._index_col('MISSING_LINES')
 
     def field_obs_instrument_coiss_shutter_mode_id(self):
-        return self._index_col('SHUTTER_MODE_ID')
+        return self._create_mult(self._index_col('SHUTTER_MODE_ID'))
 
     def field_obs_instrument_coiss_shutter_state_id(self):
-        return self._index_col('SHUTTER_STATE_ID')
+        return self._create_mult(self._index_col('SHUTTER_STATE_ID'))
 
     def field_obs_instrument_coiss_image_number(self):
         return self._index_col('IMAGE_NUMBER')
 
     def field_obs_instrument_coiss_instrument_mode_id(self):
-        return self._index_col('INSTRUMENT_MODE_ID')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 
     def field_obs_instrument_coiss_target_desc(self):
         target_desc = self._index_col('TARGET_DESC').upper()
         if target_desc in COISS_TARGET_DESC_MAPPING:
             target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
-        return target_desc
+        return self._create_mult(target_desc)
 
     def field_obs_instrument_coiss_combined_filter(self):
         camera = self._index_col('INSTRUMENT_ID')[3]
@@ -524,4 +524,4 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     def field_obs_instrument_coiss_camera(self):
         camera = self._index_col('INSTRUMENT_ID')[3]
         assert camera in ('N', 'W')
-        return camera
+        return self._create_mult(camera)
