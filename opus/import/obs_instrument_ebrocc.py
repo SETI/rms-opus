@@ -143,12 +143,11 @@ class ObsInstrumentEBROCC(ObsCommon):
 
     def field_obs_profile_wl_band(self):
         wl = self._supp_index_col('WAVELENGTH') # microns
-        wl_band = 'UV'
         if wl > 0.7:
-            wl_band = 'IR'
+            return self._create_mult('IR')
         if wl > 0.4:
-            wl_band = 'VI'
-        return self._create_mult(wl_band)
+            return self._create_mult('VIS')
+        return self._create_mult('UV')
 
     def field_obs_profile_source(self):
         target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')

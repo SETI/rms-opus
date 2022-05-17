@@ -319,7 +319,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return self._create_mult(self._index_col('FILTER_NAME'))
 
     def field_obs_instrument_gossi_filter_number(self):
-        return self._index_col('FILTER_NUMBER')
+        return self._create_mult(self._index_col('FILTER_NUMBER'))
 
     def field_obs_instrument_gossi_gain_mode_id(self):
         return self._create_mult(self._index_col('GAIN_MODE_ID'))

@@ -60,7 +60,7 @@ class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
             return self._create_mult(None)
         data_dict = self._create_mult(
             col_val=target_name,
-            disp_name=target_info[2]
+            disp_name=target_name_info[2]
         )
         return data_dict
 

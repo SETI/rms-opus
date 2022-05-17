@@ -8,7 +8,8 @@
 import pdsfile
 
 from config_targets import (TARGET_NAME_INFO,
-                            TARGET_NAME_MAPPING)
+                            TARGET_NAME_MAPPING,
+                            PLANET_GROUP_MAPPING)
 from import_util import (cached_tai_from_iso,
                          log_nonrepeating_error,
                          log_warning,
@@ -357,20 +358,6 @@ class ObsBase(object):
         self, col_val, key=None, col_class=None, disp_name=None,
         disp_order=None, grouping=None, group_disp_order=None
     ):
-        # Handle the case when only col_val is set, rest of the keys are None
-        if (col_val and key is None and
-            col_class is None and disp_name is None and
-            grouping is None and group_disp_order is None):
-            if col_val is None:
-                disp_name = 'N/A'
-            else:
-                disp_name = str(col_val)
-                if (not disp_name[0].isdigit() or
-                    not disp_name[-1].isdigit()):
-                    # This catches things like 2014 MU69 and leaves them
-                    # in all caps
-                    disp_name = disp_name.title()
-
         data_dict = {}
         data_dict['col_val'] = col_val
         data_dict['key'] = key
