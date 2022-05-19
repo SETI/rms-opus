@@ -129,7 +129,6 @@ class ObsGeneral(ObsBase):
 
         data_dict = self._create_mult(
             col_val=target_name,
-            col_class=target_info[1],
             disp_name=target_info[2],
         )
         return data_dict

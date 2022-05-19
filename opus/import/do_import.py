@@ -1167,7 +1167,6 @@ def import_observation_table(instrument_obj,
                 if ok:
                     if isinstance(ret, dict):
                         column_val = ret['col_val']
-                        col_class = ret['col_class']
                         mult_label = ret['disp_name']
                         disp_order = ret['disp_order']
                         grouping = ret['grouping']
@@ -1315,9 +1314,8 @@ def import_observation_table(instrument_obj,
             # Handle the case when only column_val is set, and rest of the mult
             # data are None. This stays here because mult_label gets updated
             # based on column_val after column_val is validated. (ex: flag)
-            if (disp_order is None and col_class is None and
-                mult_label is None and grouping is None and
-                group_disp_order is None):
+            if (disp_order is None and mult_label is None and
+                grouping is None and group_disp_order is None):
                 if column_val is None:
                     mult_label = 'N/A'
                 else:

@@ -88,13 +88,10 @@ class ObsInstrumentEBROCC(ObsCommon):
             return self._create_mult(None)
         group_info = self._get_planet_group_info(target_name)
 
-        data_dict = self._create_mult(
-            col_val=target_name,
-            col_class=target_info[1],
-            disp_name=target_info[2],
-            grouping=group_info['label'],
-            group_disp_order=group_info['disp_order']
-        )
+        data_dict = self._create_mult(col_val=target_name,
+                                      disp_name=target_info[2],
+                                      grouping=group_info['label'],
+                                      group_disp_order=group_info['disp_order'])
         return data_dict
 
     def field_obs_general_quantity(self):
