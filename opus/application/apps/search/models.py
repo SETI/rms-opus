@@ -168,8 +168,8 @@ class MultObsGeneralInstHostId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -183,8 +183,8 @@ class MultObsGeneralInstrumentId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -198,8 +198,8 @@ class MultObsGeneralMissionId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -213,8 +213,8 @@ class MultObsGeneralObservationType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -228,8 +228,8 @@ class MultObsGeneralPlanetId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -243,8 +243,8 @@ class MultObsGeneralQuantity(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -258,8 +258,8 @@ class MultObsGeneralTargetClass(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -273,8 +273,8 @@ class MultObsGeneralTargetName(models.Model):
     label = models.CharField(max_length=30)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -288,8 +288,8 @@ class MultObsInstrumentCocirsDetectorId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -303,8 +303,8 @@ class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -318,8 +318,8 @@ class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -333,8 +333,8 @@ class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -348,8 +348,8 @@ class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -363,8 +363,8 @@ class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -378,8 +378,8 @@ class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -393,8 +393,8 @@ class MultObsInstrumentCoissCamera(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -408,8 +408,8 @@ class MultObsInstrumentCoissCombinedFilter(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -423,8 +423,8 @@ class MultObsInstrumentCoissCompressionType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -438,8 +438,8 @@ class MultObsInstrumentCoissDataConversionType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -453,8 +453,8 @@ class MultObsInstrumentCoissGainModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -468,8 +468,8 @@ class MultObsInstrumentCoissImageObservationType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -483,8 +483,8 @@ class MultObsInstrumentCoissInstrumentModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -498,8 +498,8 @@ class MultObsInstrumentCoissShutterModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -513,8 +513,8 @@ class MultObsInstrumentCoissShutterStateId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -528,8 +528,8 @@ class MultObsInstrumentCoissTargetDesc(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -543,8 +543,8 @@ class MultObsInstrumentCouvisChannel(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -558,8 +558,8 @@ class MultObsInstrumentCouvisCompressionType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -573,8 +573,8 @@ class MultObsInstrumentCouvisDwellTime(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -588,8 +588,8 @@ class MultObsInstrumentCouvisObservationType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -603,8 +603,8 @@ class MultObsInstrumentCouvisOccultationPortState(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -618,8 +618,8 @@ class MultObsInstrumentCouvisSlitState(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -633,8 +633,8 @@ class MultObsInstrumentCouvisTestPulseState(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -648,8 +648,8 @@ class MultObsInstrumentCovimsChannel(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -663,8 +663,8 @@ class MultObsInstrumentCovimsInstrumentModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -678,8 +678,8 @@ class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -693,8 +693,8 @@ class MultObsInstrumentCovimsSpectralEditing(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -708,8 +708,8 @@ class MultObsInstrumentCovimsSpectralSumming(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -723,8 +723,8 @@ class MultObsInstrumentCovimsStarTracking(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -738,8 +738,8 @@ class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -753,8 +753,8 @@ class MultObsInstrumentGossiCompressionType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -768,8 +768,8 @@ class MultObsInstrumentGossiFilterName(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -783,8 +783,8 @@ class MultObsInstrumentGossiFilterNumber(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -798,8 +798,8 @@ class MultObsInstrumentGossiFrameDuration(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -813,8 +813,8 @@ class MultObsInstrumentGossiGainModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -828,8 +828,8 @@ class MultObsInstrumentGossiObstructionId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -843,8 +843,8 @@ class MultObsInstrumentNhlorriBinningMode(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -858,8 +858,8 @@ class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -873,8 +873,8 @@ class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -888,8 +888,8 @@ class MultObsInstrumentVgissCamera(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -903,8 +903,8 @@ class MultObsInstrumentVgissEditMode(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -918,8 +918,8 @@ class MultObsInstrumentVgissFilterName(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -933,8 +933,8 @@ class MultObsInstrumentVgissFilterNumber(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -948,8 +948,8 @@ class MultObsInstrumentVgissGainMode(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -963,8 +963,8 @@ class MultObsInstrumentVgissScanMode(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -978,8 +978,8 @@ class MultObsInstrumentVgissShutterMode(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -993,8 +993,8 @@ class MultObsMissionCassiniCassiniTargetCode(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1008,8 +1008,8 @@ class MultObsMissionCassiniCassiniTargetName(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1023,8 +1023,8 @@ class MultObsMissionCassiniIsPrime(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1038,8 +1038,8 @@ class MultObsMissionCassiniMissionPhaseName(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1053,8 +1053,8 @@ class MultObsMissionCassiniPrimeInstId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1068,8 +1068,8 @@ class MultObsMissionCassiniRevNo(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1083,8 +1083,8 @@ class MultObsMissionGalileoOrbitNumber(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1098,8 +1098,8 @@ class MultObsMissionHubbleApertureType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1113,8 +1113,8 @@ class MultObsMissionHubbleDetectorId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1128,8 +1128,8 @@ class MultObsMissionHubbleExposureType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1143,8 +1143,8 @@ class MultObsMissionHubbleFilterName(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1158,8 +1158,8 @@ class MultObsMissionHubbleFilterType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1173,8 +1173,8 @@ class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1188,8 +1188,8 @@ class MultObsMissionHubbleGainModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1203,8 +1203,8 @@ class MultObsMissionHubbleInstrumentModeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1218,8 +1218,8 @@ class MultObsMissionHubbleOpticalElement(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1233,8 +1233,8 @@ class MultObsMissionHubblePc1Flag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1248,8 +1248,8 @@ class MultObsMissionHubbleProposedApertureType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1263,8 +1263,8 @@ class MultObsMissionHubbleTargetedDetectorId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1278,8 +1278,8 @@ class MultObsMissionHubbleWf2Flag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1293,8 +1293,8 @@ class MultObsMissionHubbleWf3Flag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1308,8 +1308,8 @@ class MultObsMissionHubbleWf4Flag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1323,8 +1323,8 @@ class MultObsMissionNewHorizonsMissionPhase(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1338,8 +1338,8 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1353,8 +1353,8 @@ class MultObsProfileBodyOccFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1368,8 +1368,8 @@ class MultObsProfileHost(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1383,8 +1383,8 @@ class MultObsProfileOccDir(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1398,8 +1398,8 @@ class MultObsProfileOccType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1413,8 +1413,8 @@ class MultObsProfileQualityScore(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1428,8 +1428,8 @@ class MultObsProfileSource(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1443,8 +1443,8 @@ class MultObsProfileWlBand(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1458,8 +1458,8 @@ class MultObsSurfaceGeometryNameTargetName(models.Model):
     label = models.CharField(max_length=30)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1473,8 +1473,8 @@ class MultObsTypeImageImageTypeId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1488,8 +1488,8 @@ class MultObsWavelengthPolarizationType(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1503,8 +1503,8 @@ class MultObsWavelengthSpecFlag(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=20, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100)
+    grouping = models.CharField(max_length=100, blank=True, null=True)
+    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
