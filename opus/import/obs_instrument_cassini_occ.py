@@ -30,7 +30,6 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
 
         data_dict = self._create_mult(
             col_val=target_name,
-            key=target_info[0],
             col_class=target_info[1],
             disp_name=target_info[2],
             grouping=group_info['label'],
