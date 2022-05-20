@@ -129,8 +129,8 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
 
     def field_obs_mission_hubble_proposed_aperture_type(self):
         aperture = self._index_col('PROPOSED_APERTURE_TYPE').upper()
-        return self._create_mult(col_val=aperture, disp_name=aperture)
+        return self._create_mult_keep_case(aperture)
 
     def field_obs_mission_hubble_optical_element(self):
         element = self._index_col('OPTICAL_ELEMENT_NAME').upper()
-        return self._create_mult(col_val=element, disp_name=element)
+        return self._create_mult_keep_case(element)

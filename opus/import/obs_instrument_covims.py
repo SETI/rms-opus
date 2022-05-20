@@ -323,8 +323,4 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return self._create_mult(self._index_col('VIS_SAMPLING_MODE_ID'))
 
     def field_obs_instrument_covims_channel(self):
-        data_dict = self._create_mult(
-            col_val=self.phase_name,
-            disp_name=self.phase_name
-        )
-        return data_dict
+        return self._create_mult_keep_case(self.phase_name)

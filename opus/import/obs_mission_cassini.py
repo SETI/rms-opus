@@ -338,7 +338,7 @@ class ObsMissionCassini(ObsCommon):
         rev_no = obs_parts[1][:3]
         if rev_no[0] == 'C':
             return self._create_mult(None)
-        return self._create_mult(col_val=rev_no, disp_name=rev_no)
+        return self._create_mult_keep_case(rev_no)
 
     def field_obs_mission_cassini_rev_no_int(self):
         rev_no = self.field_obs_mission_cassini_rev_no()['col_val']
@@ -421,11 +421,8 @@ class ObsMissionCassini(ObsCommon):
         obs_parts = obs_name.split('_')
         target_code = obs_parts[1][-2:]
         if target_code in _CASSINI_TARGET_CODE_MAPPING:
-            data_dict = self._create_mult(
-                col_val=target_code,
-                disp_name=_CASSINI_TARGET_CODE_MAPPING[target_code]
-            )
-            return data_dict
+            return self._create_mult(col_val=target_code,
+                                     disp_name=_CASSINI_TARGET_CODE_MAPPING[target_code])
 
         return self._create_mult(None)
 
@@ -436,11 +433,7 @@ class ObsMissionCassini(ObsCommon):
         target_name = target_name.replace(':', '') # Bug in COUVIS_0053 index
         if target_name == 'N/A':
             return self._create_mult(None)
-        data_dict = self._create_mult(
-            col_val=target_name,
-            disp_name=target_name
-        )
-        return data_dict
+        return self._create_mult_keep_case(target_name)
 
     def field_obs_mission_cassini_activity_name(self):
         obs_name = self._some_index_col('OBSERVATION_ID')

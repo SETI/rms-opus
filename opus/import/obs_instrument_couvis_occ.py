@@ -118,7 +118,7 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
 
     def field_obs_instrument_couvis_compression_type(self):
         comp = self._supp_index_col('COMPRESSION_TYPE')
-        return self._create_mult(col_val=comp, disp_name=comp)
+        return self._create_mult_keep_case(comp)
 
     def field_obs_instrument_couvis_occultation_port_state(self):
         return self._create_mult('N/A')
@@ -133,7 +133,7 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
         return self._create_mult(None)
 
     def field_obs_instrument_couvis_channel(self):
-        return self._create_mult(col_val='HSP',disp_name='HSP')
+        return self._create_mult_keep_case('HSP')
 
     def field_obs_instrument_couvis_band1(self):
         return None

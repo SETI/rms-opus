@@ -404,7 +404,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
 
     def field_obs_instrument_couvis_channel(self):
         channel, image_time = self._channel_time_helper()
-        return self._create_mult(col_val=channel,disp_name=channel)
+        return self._create_mult_keep_case(channel)
 
     def field_obs_instrument_couvis_band1(self):
         return self._supp_index_col('MINIMUM_BAND_NUMBER')

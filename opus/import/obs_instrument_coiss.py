@@ -519,7 +519,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
                     filter1, filter2 = filter2, filter1
                 new_filter = filter1 + '+' + filter2
 
-        return self._create_mult(col_val=new_filter, disp_name=new_filter)
+        return self._create_mult_keep_case(new_filter)
 
     def field_obs_instrument_coiss_camera(self):
         camera = self._index_col('INSTRUMENT_ID')[3]

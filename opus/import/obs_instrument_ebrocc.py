@@ -88,11 +88,9 @@ class ObsInstrumentEBROCC(ObsCommon):
             return self._create_mult(None)
         group_info = self._get_planet_group_info(target_name)
 
-        data_dict = self._create_mult(col_val=target_name,
-                                      disp_name=target_info[2],
-                                      grouping=group_info['label'],
-                                      group_disp_order=group_info['disp_order'])
-        return data_dict
+        return self._create_mult(col_val=target_name, disp_name=target_info[2],
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
 
     def field_obs_general_quantity(self):
         return self._create_mult('OPDEPTH')
@@ -131,11 +129,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         return self._create_mult(body_occ_flag)
 
     def field_obs_profile_quality_score(self):
-        data_dict = self._create_mult(
-            col_val='UNASSIGNED',
-            disp_name='Unassigned',
-        )
-        return data_dict
+        return self._create_mult('UNASSIGNED')
 
     def field_obs_profile_wl_band(self):
         wl = self._supp_index_col('WAVELENGTH') # microns
@@ -149,19 +143,11 @@ class ObsInstrumentEBROCC(ObsCommon):
         target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')
         if target_info is None:
             return self._create_mult(None)
-        data_dict = self._create_mult(
-            col_val=target_name,
-            disp_name=target_info[2]
-        )
-        return data_dict
+        return self._create_mult(col_val=target_name, disp_name=target_info[2])
 
     def field_obs_profile_host(self):
         insthost = self._supp_index_col('INSTRUMENT_HOST_NAME')
-        data_dict = self._create_mult(
-            col_val=insthost,
-            disp_name=insthost
-        )
-        return data_dict
+        return self._create_mult_keep_case(insthost)
 
 
     #####################################
