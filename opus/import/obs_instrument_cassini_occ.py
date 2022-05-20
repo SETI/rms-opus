@@ -28,12 +28,9 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
         target_name, target_info = self._get_target_info('S RINGS')
         group_info = self._get_planet_group_info(target_name)
 
-        data_dict = self._create_mult(
-            col_val=target_name,
-            disp_name=target_info[2],
-            grouping=group_info['label'],
-            group_disp_order=group_info['disp_order']
-        )
+        data_dict = self._create_mult(col_val=target_name, disp_name=target_info[2],
+                                      grouping=group_info['label'],
+                                      group_disp_order=group_info['disp_order'])
         return data_dict
 
 

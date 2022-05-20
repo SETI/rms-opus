@@ -38,7 +38,6 @@ from config_data import * # noqa: E402
 import do_cart # noqa: E402
 import do_dictionary # noqa: E402
 import do_django # noqa: E402
-import do_grouping_target_name # noqa: E402
 import do_import # noqa: E402
 import do_param_info # noqa: E402
 import do_partables # noqa: E402
@@ -90,7 +89,6 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
-            --create-grouping-target-name
             --create-cart
             --drop-cache-tables
          """
@@ -115,7 +113,6 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
-            --create-grouping-target-name
             --create-cart
             --drop-cache-tables
          """
@@ -127,7 +124,6 @@ parser.add_argument(
             --create-param-info
             --create-partables
             --create-table-names
-            --create-grouping-target-name
             --create-cart
             --drop-cache-tables
          """
@@ -243,11 +239,6 @@ parser.add_argument(
 parser.add_argument(
     '--create-table-names', action='store_true', default=False,
     help='Create the table_names table; includes copying to permanent table'
-)
-parser.add_argument(
-    '--create-grouping-target-name', action='store_true', default=False,
-    help="""Create the grouping_target_name table;
-            includes copying to permanent table"""
 )
 parser.add_argument(
     '--update-mult-info', action='store_true', default=False,
@@ -488,8 +479,6 @@ try: # Top-level exception handling so we always log what's going on
             do_partables.do_partables()
         if impglobals.ARGUMENTS.create_table_names:
             do_table_names.do_table_names()
-        # if impglobals.ARGUMENTS.create_grouping_target_name:
-        #     do_grouping_target_name.do_grouping_target_name()
 
         impglobals.LOGGER.close()
 

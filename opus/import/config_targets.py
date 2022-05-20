@@ -924,13 +924,6 @@ STAR_RA_DEC = {
     'ZET_PUP':              (120.896031417, -40.003147806),
 }
 
-# For non-preprogrammed mult, if we want to specify display order or group
-# display order, we have to know all the possible options. For now, we put it
-# here, and will re-organize it later.
-# TODO: this grouping info is needed when we want to specify the order and
-# display name of different groups for non-preprogrammed mult. Previously we
-# store the info in the db. Do we want to keep this info in db? Or should we
-# keep all the customized grouping info into another file?
 PLANET_GROUP_MAPPING = {
     'EAR':   {'label': 'Earth',   'disp_order': '010'},
     'MAR':   {'label': 'Mars',    'disp_order': '020'},

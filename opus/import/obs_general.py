@@ -126,12 +126,7 @@ class ObsGeneral(ObsBase):
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return self._create_mult(None)
-
-        data_dict = self._create_mult(
-            col_val=target_name,
-            disp_name=target_info[2],
-        )
-        return data_dict
+        return self._create_mult(col_val=target_name, disp_name=target_info[2])
 
     def field_obs_general_time1(self):
         return self._time_from_some_index()
