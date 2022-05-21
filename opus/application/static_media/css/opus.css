@@ -43,6 +43,36 @@ a {
     width: 3em !important;
 }
 
+.dropdown-menu {
+    padding: 0 0;
+}
+
+.dropdown-item {
+  position: relative;
+  padding: 10px 20px;
+  border-bottom: 1px solid #c8ced3;
+}
+
+.dropdown-item:last-child {
+  border-bottom: 0;
+}
+
+.dropdown-item i {
+  display: inline-block;
+  width: 20px;
+  margin-right: 10px;
+  margin-left: -10px;
+  color: #c8ced3;
+  text-align: center;
+}
+
+.dropdown-header {
+  font-size: 0.765625rem;
+  padding: 8px 20px;
+  background: #e4e7ea;
+  border-bottom: 1px solid #c8ced3;
+}
+
 /* Make the main nav bar just a little taller than normal (style says 8px) */
 #op-main-nav  {
     padding-top: 10px;
@@ -665,7 +695,7 @@ ul.op-search-menu {
 }
 
 tr.op-modal-show {
-    color: #167495;
+    color: #167495 !important;
     opacity: 0.92;
     filter: alpha(opacity=92);
 }
@@ -759,6 +789,10 @@ th.sticky-header {
 
 .op-data-table  {
     padding: 0;
+}
+
+.op-data-table tbody {
+    color: var(--cui-table-border-color);
 }
 
 .op-data-table th {

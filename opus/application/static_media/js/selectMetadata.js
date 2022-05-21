@@ -56,7 +56,7 @@ var o_selectMetadata = {
             });
         });
 
-        $("#op-select-metadata .close").on("click", function(e) {
+        $("#op-select-metadata .btn-close").on("click", function(e) {
             clickedX = true;
         });
 
@@ -66,7 +66,7 @@ var o_selectMetadata = {
                 // only pop up the confirm modal if the user clicked the 'X' in the corner
                 if (clickedX) {
                     clickedX = false;
-                    let targetModal = $(this).find("[data-bs-target]").data("target");
+                    let targetModal = $(this).find("[data-bs-target]").data("bs-target");
                     $(`#${targetModal}`).modal("show");
                 } else {
                     o_selectMetadata.saveChanges();

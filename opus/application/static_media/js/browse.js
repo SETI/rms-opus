@@ -1479,14 +1479,14 @@ var o_browse = {
         let action = (o_cart.isIn(opusId) ? "" : "remove");
         let buttonInfo = o_browse.cartButtonInfo(action);
         $("#op-obs-menu .dropdown-header").html(opusId);
-        $("#op-obs-menu [data-bs-action='cart']").html(`<i class="${buttonInfo[tab].icon}"></i>${buttonInfo[tab].title}`);
-        $("#op-obs-menu [data-bs-action='cart']").attr("data-id", opusId);
-        $("#op-obs-menu [data-bs-action='info']").attr("data-id", opusId);
-        $("#op-obs-menu [data-bs-action='info']").attr("href", o_browse.getDetailURL(opusId));
-        $("#op-obs-menu [data-bs-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
-        $("#op-obs-menu [data-bs-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
-        $("#op-obs-menu [data-bs-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
-        $("#op-obs-menu [data-bs-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
+        $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo[tab].icon}"></i>${buttonInfo[tab].title}`);
+        $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
+        $("#op-obs-menu [data-action='info']").attr("data-id", opusId);
+        $("#op-obs-menu [data-action='info']").attr("href", o_browse.getDetailURL(opusId));
+        $("#op-obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
+        $("#op-obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
+        $("#op-obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
+        $("#op-obs-menu [data-action='downloadURL']").attr("href",`/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
 
         // use the state of the current selected observation to set the icons if one has been selected,
         // otherwise use the state of the current observation - this will identify what will happen to the range
@@ -1499,7 +1499,7 @@ var o_browse = {
             rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${buttonInfo[tab].rangeTitle}`;
         }
 
-        $("#op-obs-menu .dropdown-item[data-bs-action='range']").html(rangeText);
+        $("#op-obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
         let menu = {"height":$("#op-obs-menu").innerHeight(), "width":$("#op-obs-menu").innerWidth()};
         let top = ($(tab).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
@@ -1881,7 +1881,7 @@ var o_browse = {
         let addallIcon = "<button type='button'" +
                          "class='op-table-header-addall btn btn-link'" +
                          " title='Add All Results to Cart'>" +
-                         "<i class='fas fa-cart-plus' data-bs-action='addall'></i></button>";
+                         "<i class='fas fa-cart-plus' data-action='addall'></i></button>";
 
         let tableHeaderFirstCol = `<th scope='col' class='sticky-header op-table-first-col'><div>${addallIcon}</div></th>`;
         // note: this column header will be empty
@@ -2271,9 +2271,9 @@ var o_browse = {
 
         // Only show "Add all results to cart" in browse tab.
         if (tab === "#cart") {
-            $("#op-obs-menu .dropdown-item[data-bs-action='addall']").addClass("op-hide-element");
+            $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
         } else {
-            $("#op-obs-menu .dropdown-item[data-bs-action='addall']").removeClass("op-hide-element");
+            $("#op-obs-menu .dropdown-item[data-action='addall']").removeClass("op-hide-element");
         }
 
         if (!viewNamespace.reloadObservationData) {

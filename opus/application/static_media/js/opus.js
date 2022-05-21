@@ -854,7 +854,7 @@ var opus = {
 
         // Clicking on either of the Reset buttons
         $(".op-reset-button button").on("click", function() {
-            let targetModal = $(this).data("target");
+            let targetModal = $(this).data("bs-target");
 
             if (!$.isEmptyObject(opus.selections) || !opus.isDrawnWidgetsListDefault()) {
                 $(targetModal).modal("show");
@@ -909,7 +909,7 @@ var opus = {
 
         // Handle the Submit or Cancel buttons for the various confirm modals we can pop up
         $(".op-confirm-modal").on("click", ".btn", function() {
-            let target = $(this).data("target");
+            let target = $(this).data("bs-target");
             switch ($(this).attr("type")) {
                 case "submit":
                     switch(target) {
@@ -1071,9 +1071,9 @@ var opus = {
                 return;
         }
         let buttons = '<div class="op-open-help">';
-        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-bs-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
+        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
         if (pdfURL) {
-            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-bs-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
+            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
         }
         buttons += "</div>";
 
