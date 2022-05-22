@@ -7,7 +7,6 @@
 ################################################################################
 
 from obs_common import ObsCommon
-from config_targets import *
 
 # XXX NOTE THIS ONLY WORKS FOR 28 SGR RIGHT NOW.
 # On 1989-07-03:

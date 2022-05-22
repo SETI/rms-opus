@@ -330,18 +330,22 @@ class ObsMissionCassini(ObsCommon):
     def field_obs_mission_cassini_obs_name(self):
         return self._some_index_col('OBSERVATION_ID')
 
-    def field_obs_mission_cassini_rev_no(self):
+    def _rev_no(self):
         obs_name = self._some_index_col('OBSERVATION_ID')
         if not self._cassini_valid_obs_name(obs_name):
-            return self._create_mult(None)
+            return None
         obs_parts = obs_name.split('_')
         rev_no = obs_parts[1][:3]
         if rev_no[0] == 'C':
-            return self._create_mult(None)
+            return None
+        return rev_no
+
+    def field_obs_mission_cassini_rev_no(self):
+        rev_no = self._rev_no()
         return self._create_mult_keep_case(rev_no)
 
     def field_obs_mission_cassini_rev_no_int(self):
-        rev_no = self.field_obs_mission_cassini_rev_no()['col_val']
+        rev_no = self._rev_no()
         if rev_no is None:
             return None
         try:
@@ -353,7 +357,7 @@ class ObsMissionCassini(ObsCommon):
         return rev_no_cvt
 
     def field_obs_mission_cassini_is_prime(self):
-        prime_inst = self.field_obs_mission_cassini_prime_inst_id()['col_val']
+        prime_inst = self._prime_inst_id()
         inst_id = self.instrument_id
 
         # Change COISS to ISS, etc.
@@ -362,13 +366,13 @@ class ObsMissionCassini(ObsCommon):
             return self._create_mult('Yes')
         return self._create_mult('No')
 
-    def field_obs_mission_cassini_prime_inst_id(self):
+    def _prime_inst_id(self):
         obs_name = self._some_index_col('OBSERVATION_ID')
         if obs_name is None:
-            return self._create_mult('UNK')
+            return 'UNK'
 
         if not self._cassini_valid_obs_name(obs_name):
-            return self._create_mult('UNK')
+            return 'UNK'
 
         obs_parts = obs_name.split('_')
         first = obs_parts[0]
@@ -398,6 +402,10 @@ class ObsMissionCassini(ObsCommon):
         if prime_inst_id not in ('CIRS', 'ISS', 'RSS', 'UVIS', 'VIMS'):
             prime_inst_id = 'OTHER'
 
+        return prime_inst_id
+
+    def field_obs_mission_cassini_prime_inst_id(self):
+        prime_inst_id = self._prime_inst_id()
         return self._create_mult(prime_inst_id)
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):

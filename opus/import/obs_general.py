@@ -41,7 +41,7 @@ class ObsGeneral(ObsBase):
 
     def field_obs_general_target_class(self):
         target_name = self.field_obs_general_target_name()
-        if target_name is None:
+        if target_name['col_val'] is None:
             return self._create_mult(None)
         target_name, target_info = self._get_target_info(target_name['col_val'])
         if target_info is None:
@@ -121,12 +121,16 @@ class ObsGeneral(ObsBase):
     ### ! Might override these ! ###
     ################################
 
-    def field_obs_general_target_name(self):
+    def _target_name(self):
         target_name = self._some_index_or_label_col('TARGET_NAME')
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
-            return self._create_mult(None)
-        return self._create_mult(col_val=target_name, disp_name=target_info[2])
+            return None, None
+        return target_name, target_info[2]
+
+    def field_obs_general_target_name(self):
+        target_name, target_disp_name = self._target_name()
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name)
 
     def field_obs_general_time1(self):
         return self._time_from_some_index()

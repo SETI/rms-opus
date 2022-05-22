@@ -317,7 +317,6 @@ if impglobals.ARGUMENTS.do_it_all:
     impglobals.ARGUMENTS.create_param_info = True
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
-    impglobals.ARGUMENTS.create_grouping_target_name = True
     impglobals.ARGUMENTS.create_cart = True
     impglobals.ARGUMENTS.drop_cache_tables = True
 
@@ -334,7 +333,6 @@ if impglobals.ARGUMENTS.do_import_finalization:
     impglobals.ARGUMENTS.create_param_info = True
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
-    impglobals.ARGUMENTS.create_grouping_target_name = True
     impglobals.ARGUMENTS.create_cart = True
     impglobals.ARGUMENTS.drop_cache_tables = True
 
@@ -342,7 +340,6 @@ if impglobals.ARGUMENTS.cleanup_aux_tables:
     impglobals.ARGUMENTS.create_param_info = True
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
-    impglobals.ARGUMENTS.create_grouping_target_name = True
     impglobals.ARGUMENTS.create_cart = True
     impglobals.ARGUMENTS.drop_cache_tables = True
 
@@ -466,8 +463,7 @@ try: # Top-level exception handling so we always log what's going on
 
     if (impglobals.ARGUMENTS.create_param_info or
         impglobals.ARGUMENTS.create_partables or
-        impglobals.ARGUMENTS.create_table_names or
-        impglobals.ARGUMENTS.create_grouping_target_name):
+        impglobals.ARGUMENTS.create_table_names):
         impglobals.LOGGER.open(
                 'Creating auxiliary tables',
                 limits={'info': impglobals.ARGUMENTS.log_info_limit,

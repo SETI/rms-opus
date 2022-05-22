@@ -194,7 +194,11 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
     ### OVERRIDE FROM ObsMissionVoyager ###
     #######################################
 
-    def field_obs_mission_voyager_mission_phase_name(self):
+    def _mission_phase_name(self):
         target_name = self._index_col('TARGET_NAME').upper()
         mission_phase = _VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
+        return mission_phase
+
+    def field_obs_mission_voyager_mission_phase_name(self):
+        mission_phase = self._mission_phase_name()
         return self._create_mult(mission_phase)

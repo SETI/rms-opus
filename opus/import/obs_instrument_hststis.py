@@ -16,7 +16,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
 
 
     def _stis_spec_flag(self):
-        obs_type = self.field_obs_general_observation_type()['col_val']
+        obs_type = self._observation_type()
         return obs_type == 'SPE'
 
 
@@ -33,14 +33,18 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_observation_type(self):
+    def _observation_type(self):
         obs_type = self._index_col('OBSERVATION_TYPE')
         if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'):
             self._log_nonrepeating_error(f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
-            return self._create_mult(None)
+            return None
         if obs_type.startswith('SPEC'): # SPECTRUM or SPECTROSCOPIC
-            return self._create_mult('SPE') # Spectrum (1-D with spectral information)
-        return self._create_mult('IMG') # Image
+            return 'SPE' # Spectrum (1-D with spectral information)
+        return 'IMG' # Image
+
+    def field_obs_general_observation_type(self):
+        obs_type = self._observation_type()
+        return self._create_mult(obs_type)
 
 
     ##################################

@@ -350,7 +350,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return self.field_obs_wavelength_wave_no_res1()
 
     def field_obs_wavelength_polarization_type(self):
-        the_filter = self.field_obs_instrument_coiss_combined_filter()['col_val']
+        the_filter = self._combined_filter()
         if the_filter.find('P') != -1:
             return self._create_mult('LINEAR')
         return self._create_mult('NONE')
@@ -489,7 +489,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
             target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
         return self._create_mult(target_desc)
 
-    def field_obs_instrument_coiss_combined_filter(self):
+    def _combined_filter(self):
         camera = self._index_col('INSTRUMENT_ID')[3]
         filter1, filter2 = self._index_col('FILTER_NAME')
 
@@ -519,6 +519,10 @@ class ObsInstrumentCOISS(ObsMissionCassini):
                     filter1, filter2 = filter2, filter1
                 new_filter = filter1 + '+' + filter2
 
+        return new_filter
+
+    def field_obs_instrument_coiss_combined_filter(self):
+        new_filter = self._combined_filter()
         return self._create_mult_keep_case(new_filter)
 
     def field_obs_instrument_coiss_camera(self):

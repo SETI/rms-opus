@@ -81,7 +81,7 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         image_num = filename[1:8]
         inst_host_num = self._index_col('INSTRUMENT_HOST_NAME')[-1]
         camera = self._index_col('INSTRUMENT_NAME')[0]
-        planet = self.field_obs_general_planet_id()['col_val']
+        planet = self._planet_id()
         if planet is None:
             pl_str = ''
         else:
@@ -170,8 +170,12 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
     ### OVERRIDE FROM ObsMissionVoyager ###
     #######################################
 
+    def _mission_phase_name(self):
+        return self._index_col('MISSION_PHASE_NAME')
+
     def field_obs_mission_voyager_mission_phase_name(self):
-        return self._create_mult(self._index_col('MISSION_PHASE_NAME'))
+        mission_phase = self._mission_phase_name()
+        return self._create_mult(mission_phase)
 
 
     ##############################################

@@ -28,8 +28,12 @@ class ObsInstrumentHSTWFPC2(ObsMissionHubble):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
+    def _observation_type(self):
+        return 'IMG'
+
     def field_obs_general_observation_type(self):
-        return self._create_mult('IMG')
+        obs_type = self._observation_type()
+        return self._create_mult(obs_type)
 
 
     ##################################

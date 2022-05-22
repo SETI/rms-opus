@@ -34,10 +34,14 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_observation_type(self):
+    def _observation_type(self):
         if self._acs_spec_flag()[0]:
-            return self._create_mult('SPI')
-        return self._create_mult('IMG')
+            return 'SPI'
+        return 'IMG'
+
+    def field_obs_general_observation_type(self):
+        obs_type = self._observation_type()
+        return self._create_mult(obs_type)
 
 
     ##################################
