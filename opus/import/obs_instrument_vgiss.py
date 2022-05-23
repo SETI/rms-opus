@@ -174,8 +174,7 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         return self._index_col('MISSION_PHASE_NAME')
 
     def field_obs_mission_voyager_mission_phase_name(self):
-        mission_phase = self._mission_phase_name()
-        return self._create_mult(mission_phase)
+        return self._create_mult(self._mission_phase_name())
 
 
     ##############################################

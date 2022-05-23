@@ -75,8 +75,7 @@ class ObsMissionHubble(ObsCommon):
         return planet_name[:3]
 
     def field_obs_general_planet_id(self):
-        planet_id = self._planet_id()
-        return self._create_mult(planet_id)
+        return self._create_mult(self._planet_id())
 
     def field_obs_general_quantity(self):
         wl1 = self._index_col('MINIMUM_WAVELENGTH')

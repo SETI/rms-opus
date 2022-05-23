@@ -341,8 +341,7 @@ class ObsMissionCassini(ObsCommon):
         return rev_no
 
     def field_obs_mission_cassini_rev_no(self):
-        rev_no = self._rev_no()
-        return self._create_mult_keep_case(rev_no)
+        return self._create_mult_keep_case(self._rev_no())
 
     def field_obs_mission_cassini_rev_no_int(self):
         rev_no = self._rev_no()
@@ -405,8 +404,7 @@ class ObsMissionCassini(ObsCommon):
         return prime_inst_id
 
     def field_obs_mission_cassini_prime_inst_id(self):
-        prime_inst_id = self._prime_inst_id()
-        return self._create_mult(prime_inst_id)
+        return self._create_mult(self._prime_inst_id())
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         return None

@@ -16,8 +16,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
 
 
     def _stis_spec_flag(self):
-        obs_type = self._observation_type()
-        return obs_type == 'SPE'
+        return self._observation_type() == 'SPE'
 
 
     #############################
@@ -43,8 +42,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
         return 'IMG' # Image
 
     def field_obs_general_observation_type(self):
-        obs_type = self._observation_type()
-        return self._create_mult(obs_type)
+        return self._create_mult(self._observation_type())
 
 
     ##################################

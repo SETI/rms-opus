@@ -40,10 +40,10 @@ class ObsGeneral(ObsBase):
         return self._create_mult(self.mission_id)
 
     def field_obs_general_target_class(self):
-        target_name = self.field_obs_general_target_name()
-        if target_name['col_val'] is None:
+        target_name, _ = self._target_name()
+        if target_name is None:
             return self._create_mult(None)
-        target_name, target_info = self._get_target_info(target_name['col_val'])
+        target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return self._create_mult(None)
         return self._create_mult(target_info[1])

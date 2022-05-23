@@ -51,8 +51,7 @@ class ObsMissionVoyager(ObsCommon):
         return pl
 
     def field_obs_general_planet_id(self):
-        planet_id = self._planet_id()
-        return self._create_mult(planet_id)
+        return self._create_mult(self._planet_id())
 
 
     ####################################

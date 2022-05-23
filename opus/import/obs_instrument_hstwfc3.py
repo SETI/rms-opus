@@ -42,8 +42,7 @@ class ObsInstrumentHSTWFC3(ObsMissionHubble):
         return 'IMG'
 
     def field_obs_general_observation_type(self):
-        obs_type = self._observation_type()
-        return self._create_mult(obs_type)
+        return self._create_mult(self._observation_type())
 
 
     ##################################

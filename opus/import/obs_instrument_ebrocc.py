@@ -124,8 +124,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         return self._create_mult(None)
 
     def field_obs_profile_body_occ_flag(self):
-        body_occ_flag = self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
-        return self._create_mult(body_occ_flag)
+        return self._create_mult(self._supp_index_col('PLANETARY_OCCULTATION_FLAG'))
 
     def field_obs_profile_quality_score(self):
         return self._create_mult('UNASSIGNED')
@@ -145,8 +144,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         return self._create_mult(col_val=target_name, disp_name=target_info[2])
 
     def field_obs_profile_host(self):
-        insthost = self._supp_index_col('INSTRUMENT_HOST_NAME')
-        return self._create_mult_keep_case(insthost)
+        return self._create_mult_keep_case(self._supp_index_col('INSTRUMENT_HOST_NAME'))
 
 
     #####################################

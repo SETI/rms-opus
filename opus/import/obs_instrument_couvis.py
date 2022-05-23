@@ -152,8 +152,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         return f'{pl_str}_CO_UVIS_{image_time_str}_{image_camera}'
 
     def field_obs_general_planet_id(self):
-        planet_id = self._cassini_planet_id()
-        return self._create_mult(planet_id)
+        return self._create_mult(self._cassini_planet_id())
 
     def field_obs_general_quantity(self):
         if not self._has_supp_index():

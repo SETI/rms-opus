@@ -240,8 +240,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return f'{pl_str}_IMG_CO_ISS_{image_num}_{camera}'
 
     def field_obs_general_planet_id(self):
-        planet_id = self._cassini_planet_id()
-        return self._create_mult(planet_id)
+        return self._create_mult(self._cassini_planet_id())
 
     def field_obs_general_target_name(self):
         col_val, disp_name = self._cassini_intended_target_name()
