@@ -1148,7 +1148,6 @@ def import_observation_table(instrument_obj,
 
             column_val = None
             mult_label = None
-            mult_label_set = False
             disp_order = None # Might be set with mult_label but not otherwise
             grouping = None
             group_disp_order = None
