@@ -93,7 +93,6 @@ class ObsInstrumentEBROCC(ObsCommon):
         if target_name is None:
             return self._create_mult(None)
         group_info = self._get_planet_group_info(target_name)
-
         return self._create_mult(col_val=target_name, disp_name=target_disp_name,
                                  grouping=group_info['label'],
                                  group_disp_order=group_info['disp_order'])

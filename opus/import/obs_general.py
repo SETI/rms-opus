@@ -130,7 +130,10 @@ class ObsGeneral(ObsBase):
 
     def field_obs_general_target_name(self):
         target_name, target_disp_name = self._target_name()
-        return self._create_mult(col_val=target_name, disp_name=target_disp_name)
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
 
     def field_obs_general_time1(self):
         return self._time_from_some_index()
