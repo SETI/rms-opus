@@ -212,7 +212,7 @@ class ObsMissionHubble(ObsCommon):
         else:
             filter_name = filter_name.replace('_', ' ')
         ret = instrument[3:] + '-' + filter_name
-        return self._create_mult_keep_case(ret)
+        return self._create_mult(col_val=ret, disp_name=ret, grouping=instrument[3:])
 
     def field_obs_mission_hubble_filter_type(self):
         raise NotImplementedError # Required
@@ -221,7 +221,7 @@ class ObsMissionHubble(ObsCommon):
         instrument = self.instrument_id
         aperture = self._index_col('APERTURE_TYPE')
         ret = instrument[3:] + '-' + aperture
-        return self._create_mult_keep_case(ret)
+        return self._create_mult(col_val=ret, disp_name=ret, grouping=instrument[3:])
 
     def field_obs_mission_hubble_proposed_aperture_type(self):
         return self._create_mult(None)
