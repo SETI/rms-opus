@@ -23,12 +23,14 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
+    def _target_name(self):
+        target_name, target_info = self._get_target_info('S RINGS')
+        return target_name, target_info[2]
 
     def field_obs_general_target_name(self):
-        target_name, target_info = self._get_target_info('S RINGS')
+        target_name, target_disp_name = self._target_name()
         group_info = self._get_planet_group_info(target_name)
-
-        return self._create_mult(col_val=target_name, disp_name=target_info[2],
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
                                  grouping=group_info['label'],
                                  group_disp_order=group_info['disp_order'])
 

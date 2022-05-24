@@ -57,8 +57,11 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
     def field_obs_general_planet_id(self):
         return self._create_mult(self._cassini_planet_id())
 
+    def _target_name(self):
+        return self._cassini_intended_target_name()
+
     def field_obs_general_target_name(self):
-        col_val, disp_name = self._cassini_intended_target_name()
+        col_val, disp_name = self._target_name()
         return self._create_mult(col_val=col_val, disp_name=disp_name)
 
     def field_obs_general_quantity(self):
