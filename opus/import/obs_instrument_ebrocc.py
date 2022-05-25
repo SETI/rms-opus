@@ -147,10 +147,13 @@ class ObsInstrumentEBROCC(ObsCommon):
         target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')
         if target_info is None:
             return self._create_mult(None)
-        return self._create_mult(col_val=target_name, disp_name=target_info[2])
+        return self._create_mult(col_val=target_name, disp_name=target_info[2],
+                                 grouping='Stars')
 
     def field_obs_profile_host(self):
-        return self._create_mult_keep_case(self._supp_index_col('INSTRUMENT_HOST_NAME'))
+        ret = self._supp_index_col('INSTRUMENT_HOST_NAME')
+        return self._create_mult(col_val=ret, disp_name=ret,
+                                 grouping='Ground-based Telescopes')
 
 
     #####################################

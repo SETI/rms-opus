@@ -127,7 +127,10 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
                 f'Mismatched SIGNAL_SOURCE_NAME_1 "{src_name1}" and '+
                 f'SIGNAL_SOURCE_NAME_2 "{src_name2}"')
 
-        return self._create_mult(src_name1)
+        if src_name1.upper().startswith('VOYAGER'):
+            return self._create_mult(src_name1)
+        return self._create_mult(col_val=src_name1, disp_name=src_name1.title(),
+                                 grouping='Stars')
 
 
     #####################################

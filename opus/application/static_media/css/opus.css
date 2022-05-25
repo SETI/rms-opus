@@ -2179,7 +2179,9 @@ even when screen is narrow */
 
 /* For widget with a mix of grouping and non-grouping checkboxes, left align
 grouping icon with non-grouping checkboxes */
-#widget__instrument .mult_group_label_container {
+#widget__instrument .mult_group_label_container,
+#widget__occreceiverhost .mult_group_label_container,
+#widget__occsource .mult_group_label_container {
     padding-left: 1%;
 }
 

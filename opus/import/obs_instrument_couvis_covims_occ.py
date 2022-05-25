@@ -58,7 +58,10 @@ class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
         target_name, target_name_info = self._star_name_helper('index_row', 'STAR_NAME')
         if target_name_info is None:
             return self._create_mult(None)
-        return self._create_mult(col_val=target_name, disp_name=target_name_info[2])
+        if target_name.upper().startswith('CASSINI'):
+            return self._create_mult(col_val=target_name, disp_name=target_name_info[2])
+        return self._create_mult(col_val=target_name, disp_name=target_name_info[2],
+                                 grouping='Stars')
 
     def field_obs_profile_host(self):
         return self._create_mult('Cassini')
