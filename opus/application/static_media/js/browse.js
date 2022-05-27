@@ -1397,7 +1397,11 @@ var o_browse = {
             $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
             $(".op-metadata-detail-edit-message").removeClass("ps-0");
 
-            $("#op-metadata-detail-view-content .row").addClass("flex-column");
+            $("#op-metadata-detail-view-content .row:not('.bottom')").addClass("flex-column");
+            $("#op-metadata-detail-view-content .right").addClass("op-remove-col");
+            $("#op-metadata-detail-view-content .row.bottom").addClass("py-0");
+            $(".op-metadata-detail-view-body").addClass("py-0");
+
             $(".op-metadata-details-container, .op-metadata-details, .op-metadata-detail-add").addClass("ps-3");
             let paddingBottom = (height <= 360 ? "pb-2" : "pb-3");
             $("#op-metadata-detail-view-content .row.bottom").addClass(paddingBottom);
@@ -1414,7 +1418,11 @@ var o_browse = {
                 $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
                 $(".op-metadata-detail-edit-message").removeClass("ps-0");
             }
-            $("#op-metadata-detail-view-content .row").removeClass("flex-column");
+            $("#op-metadata-detail-view-content .row:not('.bottom')").removeClass("flex-column");
+            $("#op-metadata-detail-view-content .right").removeClass("op-remove-col");
+            $("#op-metadata-detail-view-content .row.bottom").removeClass("py-0");
+            $(".op-metadata-detail-view-body").removeClass("py-0");
+
             $(".op-metadata-details-container, .op-metadata-details, .op-metadata-detail-add").removeClass("ps-3");
             $("#op-metadata-detail-view-content .left").addClass("col-lg-7");
             $("#op-metadata-detail-view-content .left").removeClass("col-lg-5 pt-4 pb-3");
@@ -2905,7 +2913,7 @@ var o_browse = {
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col"><a href="#" class="menu pe-3 float-right text-center" data-bs-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            html += `<div class="col text-start"><a href="#" class="menu pe-3 float-end text-center" data-bs-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-metadata-detail-view-body .bottom").html(html);
 
             // update the binoculars here

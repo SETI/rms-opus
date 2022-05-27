@@ -55,7 +55,7 @@
   --cui-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --cui-font-size-base: 0.875rem;
   --cui-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
-  --cui-body-color: rgba(44, 56, 74, 0.95);
+  --cui-body-color: rgb(35, 40, 44);
   --cui-card-border-color: #c8ced3;
   --bs-body-text-align: left;
 }
@@ -3507,7 +3507,7 @@ html:not([dir=rtl]) .form-check-inline .form-check-input ~ .invalid-feedback {
   --cui-btn-disabled-bg: var(--cui-primary,#321fdb);
   --cui-btn-disabled-border-color: var(--cui-primary,#321fdb);
   --cui-btn-disabled-color: rgba(255, 255, 255, 0.87);
-  --cui-btn-shadow: var(rgba(32, 168, 216, 0.5),rgba(50, 31, 219, 0.5));
+  --cui-btn-shadow: rgba(32, 168, 216, 0.5);
 }
 
 .btn-secondary {
@@ -3554,7 +3554,7 @@ html:not([dir=rtl]) .form-check-inline .form-check-input ~ .invalid-feedback {
   --cui-btn-active-color: #000015;
   --cui-btn-disabled-bg: #e55353;
   --cui-btn-disabled-border-color: #e55353;
-  --cui-btn-disabled-color: #000015;
+  --cui-btn-disabled-color: rgba(255, 255, 255, 0.87);
   --cui-btn-shadow: rgba(229, 83, 83, 0.5);
 }
 
@@ -3632,7 +3632,7 @@ html:not([dir=rtl]) .form-check-inline .form-check-input ~ .invalid-feedback {
   --cui-btn-active-border-color: rgb(32, 168, 216);
   --cui-btn-active-color: rgba(255, 255, 255, 0.87);
   --cui-btn-disabled-color: #321fdb;
-  --cui-btn-shadow: 0 0 0 0.2rem rgba(32, 168, 216, 0.5);
+  --cui-btn-shadow: rgba(32, 168, 216, 0.5);
 }
 
 .btn-outline-secondary {

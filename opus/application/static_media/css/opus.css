@@ -73,6 +73,18 @@ a {
   border-bottom: 1px solid #c8ced3;
 }
 
+.no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.no-gutters > .col,
+.no-gutters > [class*="col-"] {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+
 /* Make the main nav bar just a little taller than normal (style says 8px) */
 #op-main-nav  {
     padding-top: 10px;
@@ -694,8 +706,8 @@ ul.op-search-menu {
     opacity: 1;
 }
 
-tr.op-modal-show {
-    color: #167495 !important;
+tr.op-modal-show  > * {
+    color: var(--cui-btn-link-hover-color) !important;
     opacity: 0.92;
     filter: alpha(opacity=92);
 }
@@ -1229,10 +1241,6 @@ without resizing image proportionally. */
     max-height: 100%;
 }
 
-#op-metadata-detail-view {
-    height: 100%;
-}
-
 .op-tune-image-size {
     height: 88% !important;
 }
@@ -1250,11 +1258,9 @@ without resizing image proportionally. */
 
 /* prevent weird browser y-scrollbar */
 #op-metadata-detail-view {
+    height: 100%;
     overflow-y: hidden;
     pointer-events: none;
-    /* Make sure metadata modal will not be covered by the main nav when screen
-    is short & narrow */
-    z-index: 1031;
 }
 
 #op-metadata-detail-view .modal-content {
@@ -1283,20 +1289,38 @@ without resizing image proportionally. */
     padding-right: 0.5em;
 }
 
+/* Make sure the right part of the slide modal will take proper space when slide
+modal is narrow */
+.op-remove-col {
+    flex: 1 0 auto !important;
+    width: 100%
+}
+
 #op-metadata-detail-view-content .btn-close {
     position: absolute;
     float: right;
-    top: 0.4em;
-    right: 0.5em;
+    top: 0.2em;
+    right: 0.6em;
     z-index: 999;
     opacity: 1;
     text-shadow: 0 1px 0 black;
+    color: var(--cui-btn-link-color);
+    font-size: 1.5em;
 }
 
 .op-metadata-detail-view-body {
     position: relative;
     height: 100%;
     border-radius: 1%;
+}
+
+.op-metadata-detail-view-body .right {
+    position: relative;
+}
+
+/* set the font color for metadata slide modal */
+.op-metadata-details .list-inline {
+    color: #ffffff;
 }
 
 .op-metadata-detail-view-body .contents:hover {
@@ -3038,7 +3062,7 @@ at the right of -- OR -- label. */
 
 /* Make sure hamburger menu will not be covered by metadata modal */
 #op-obs-menu {
-    z-index: 1032;
+    z-index: 1100;
 }
 
 /* Styling for the first column of table header in browse tab */
