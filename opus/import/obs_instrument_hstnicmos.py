@@ -33,10 +33,14 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_observation_type(self):
+    def _observation_type(self):
         if self._nicmos_spec_flag()[0]:
             return 'SPI'
         return 'IMG'
+
+
+    def field_obs_general_observation_type(self):
+        return self._create_mult(self._observation_type())
 
 
     ##################################
@@ -55,8 +59,8 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
 
     def field_obs_wavelength_spec_flag(self):
         if self._nicmos_spec_flag()[0]:
-            return 'Y'
-        return 'N'
+            return self._create_mult('Y')
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         spec_flag, filter1, filter2 = self._nicmos_spec_flag()
@@ -81,8 +85,8 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
     def field_obs_wavelength_polarization_type(self):
         filter_name = self._index_col('FILTER_NAME')
         if filter_name.find('POL') == -1:
-            return 'NONE'
-        return 'LINEAR'
+            return self._create_mult('NONE')
+        return self._create_mult('LINEAR')
 
 
     ######################################
@@ -95,25 +99,27 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
         # NICMOS doesn't do filter stacking
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
-            return None
+            return self._create_mult(None)
 
         if filter1.startswith('G'):
-            return 'SP'
+            return self._create_mult('SP')
         if filter1.endswith('N'):
-            return 'N'
+            return self._create_mult('N')
         if filter1.endswith('M'):
-            return 'M'
+            return self._create_mult('M')
         if filter1.endswith('W'):
-            return 'W'
+            return self._create_mult('W')
 
         if filter1.startswith('POL'):
             if filter1.endswith('S'):
-                return 'W' # POLxS is 0.8-1.3, about the same as wide filters
+                # POLxS is 0.8-1.3, about the same as wide filters
+                return self._create_mult('W')
             elif filter1.endswith('L'):
-                return 'M' # POLxL is 1.89-2.1, about the same as medium filters
+                # POLxL is 1.89-2.1, about the same as medium filters
+                return self._create_mult('M')
 
         if filter1 == 'BLANK': # Opaque
-            return 'OT'
+            return self._create_mult('OT')
 
         self._log_nonrepeating_error(f'Unknown filter "{filter1}"')
-        return None
+        return self._create_mult(None)

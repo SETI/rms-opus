@@ -62,8 +62,15 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_target_name(self):
+    def _target_name(self):
         return self._cassini_intended_target_name()
+
+    def field_obs_general_target_name(self):
+        target_name, target_disp_name = self._target_name()
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
 
     # We occasionally don't bother to generate ring_geo data for COVIMS, like during
     # cruise, so just use the given RA/DEC from the index if needed. We don't make
@@ -122,19 +129,19 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return f'{pl_str}_CO_UVIS_{image_time_str}_{image_camera}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        return self._create_mult(self._cassini_planet_id())
 
     def field_obs_general_quantity(self):
         inst_mod = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mod == 'OCCULTATION':
-            return 'OPDEPTH'
-        return 'REFLECT'
+            return self._create_mult('OPDEPTH')
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
         inst_mod = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mod == 'OCCULTATION':
-            return 'TS' # Time Series
-        return 'SCU' # Spectral Cube
+            return self._create_mult('TS') # Time Series
+        return self._create_mult('SCU') # Spectral Cube
 
 
     ############################
@@ -152,10 +159,10 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
     def field_obs_type_image_image_type_id(self):
         inst_mod = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mod != 'IMAGE':
-            return None
+            return self._create_mult(None)
         if self.phase_name == 'VIS':
-            return 'PUSH'
-        return 'RAST'
+            return self._create_mult('PUSH')
+        return self._create_mult('RAST')
 
     def field_obs_type_image_duration(self):
         if not self._is_image():
@@ -224,7 +231,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return self._wave_no_res2_from_wave_res()
 
     def field_obs_wavelength_spec_flag(self):
-        return 'Y'
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         if self.phase_name == 'IR':
@@ -265,7 +272,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._cassini_mission_phase_name()
+        return self._create_mult(self._cassini_mission_phase_name())
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._index_col('SEQ_ID')
@@ -285,16 +292,16 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return self.instrument_id
 
     def field_obs_instrument_covims_instrument_mode_id(self):
-        return self._index_col('INSTRUMENT_MODE_ID')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 
     def field_obs_instrument_covims_spectral_editing(self):
-        return self._index_col('SPECTRAL_EDITING')
+        return self._create_mult(self._index_col('SPECTRAL_EDITING'))
 
     def field_obs_instrument_covims_spectral_summing(self):
-        return self._index_col('SPECTRAL_SUMMING')
+        return self._create_mult(self._index_col('SPECTRAL_SUMMING'))
 
     def field_obs_instrument_covims_star_tracking(self):
-        return self._index_col('STAR_TRACKING')
+        return self._create_mult(self._index_col('STAR_TRACKING'))
 
     def field_obs_instrument_covims_swath_width(self):
         return self._index_col('SWATH_WIDTH')
@@ -309,7 +316,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return ir_exp / 1000.
 
     def field_obs_instrument_covims_ir_sampling_mode_id(self):
-        return self._index_col('IR_SAMPLING_MODE_ID')
+        return self._create_mult(self._index_col('IR_SAMPLING_MODE_ID'))
 
     def field_obs_instrument_covims_vis_exposure(self):
         vis_exp = self._index_col('VIS_EXPOSURE')
@@ -318,7 +325,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return vis_exp / 1000.
 
     def field_obs_instrument_covims_vis_sampling_mode_id(self):
-        return self._index_col('VIS_SAMPLING_MODE_ID')
+        return self._create_mult(self._index_col('VIS_SAMPLING_MODE_ID'))
 
     def field_obs_instrument_covims_channel(self):
-        return (self.phase_name, self.phase_name)
+        return self._create_mult_keep_case(self.phase_name)

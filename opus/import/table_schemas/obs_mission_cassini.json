@@ -157,13 +157,13 @@
         "pi_tooltip": "",
         "comments": "",
         "mult_options": [
-              [   0,  "CIRS",    "CIRS", "010", "Y", null],
-              [   1,   "ISS",     "ISS", "020", "Y", null],
-              [   2,   "RSS",     "RSS", "030", "Y", null],
-              [   3,  "UVIS",    "UVIS", "040", "Y", null],
-              [   4,  "VIMS",    "VIMS", "050", "Y", null],
-              [   5, "OTHER",   "Other", "060", "Y", null],
-              [   6,   "UNK", "Unknown", "070", "Y", null]
+              [   0,  "CIRS",    "CIRS", "010", "Y", null, null],
+              [   1,   "ISS",     "ISS", "020", "Y", null, null],
+              [   2,   "RSS",     "RSS", "030", "Y", null, null],
+              [   3,  "UVIS",    "UVIS", "040", "Y", null, null],
+              [   4,  "VIMS",    "VIMS", "050", "Y", null, null],
+              [   5, "OTHER",   "Other", "060", "Y", null, null],
+              [   6,   "UNK", "Unknown", "070", "Y", null, null]
           ]
     },
     {

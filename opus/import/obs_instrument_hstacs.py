@@ -34,10 +34,13 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_observation_type(self):
+    def _observation_type(self):
         if self._acs_spec_flag()[0]:
             return 'SPI'
         return 'IMG'
+
+    def field_obs_general_observation_type(self):
+        return self._create_mult(self._observation_type())
 
 
     ##################################
@@ -56,8 +59,8 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
 
     def field_obs_wavelength_spec_flag(self):
         if self._acs_spec_flag()[0]:
-            return 'Y'
-        return 'N'
+            return self._create_mult('Y')
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         spec_flag, filter1, filter2 = self._acs_spec_flag()
@@ -100,8 +103,8 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
     def field_obs_wavelength_polarization_type(self):
         filter1, filter2 = self._decode_filters()
         if filter2 is not None and filter2.startswith('POL'):
-            return 'LINEAR'
-        return 'NONE'
+            return self._create_mult('LINEAR')
+        return self._create_mult('NONE')
 
 
     ######################################
@@ -121,25 +124,25 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
         if filter1 in ('F475W', 'F625W', 'F775W', 'F850LP', 'F435W', 'F555W',
                        'F550M', 'F606W', 'F814W', 'F220W', 'F250W', 'F330W',
                        'CLEAR'):
-            return 'W'
+            return self._create_mult('W')
 
         if filter1 in ('F658N', 'F502N', 'F660N', 'F344N', 'F892N'):
-            return 'N'
+            return self._create_mult('N')
 
         if filter1.startswith('FR'):
-            return 'FR'
+            return self._create_mult('FR')
 
         if filter1 in ('G800L', 'PR200L', 'PR110L', 'PR130L'):
-            return 'SP'
+            return self._create_mult('SP')
 
         if filter1 == 'F122M':
-            return 'M'
+            return self._create_mult('M')
 
         if filter1 in ('F115LP', 'F125LP', 'F140LP', 'F150LP', 'F165LP'):
-            return 'LP'
+            return self._create_mult('LP')
 
         # ACS doesn't have any CH4 filters
 
         self._log_nonrepeating_error(
             f'Unknown filter {filter1} while determining filter type')
-        return None
+        return self._create_mult(None)

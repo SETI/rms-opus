@@ -28,10 +28,10 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_general_quantity(self):
-        return 'REFLECT'
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'REF'
+        return self._create_mult('REF')
 
 
     ##################################
@@ -39,7 +39,7 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'FRAM'
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         return 0.72
@@ -59,16 +59,16 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'REF'
+        return self._create_mult('REF')
 
     def field_obs_profile_quality_score(self):
-        return 'GOOD'
+        return self._create_mult('GOOD')
 
     def field_obs_profile_source(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_host(self):
-        return self._supp_index_col('RECEIVER_HOST_NAME')
+        return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME'))
 
 
     #####################################
@@ -171,26 +171,26 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
         return 'N/A'
 
     def field_obs_instrument_vgiss_scan_mode(self):
-        return '1:1'
+        return self._create_mult('1:1')
 
     def field_obs_instrument_vgiss_shutter_mode(self):
-        return 'NAONLY'
+        return self._create_mult('NAONLY')
 
     def field_obs_instrument_vgiss_gain_mode(self):
-        return 'LOW'
+        return self._create_mult('LOW')
 
     def field_obs_instrument_vgiss_edit_mode(self):
-        return '1:1'
+        return self._create_mult('1:1')
 
     def field_obs_instrument_vgiss_filter_name(self):
-        return 'CLEAR'
+        return self._create_mult('CLEAR')
 
     def field_obs_instrument_vgiss_filter_number(self):
-        return 0
+        return self._create_mult(0)
 
     def field_obs_instrument_vgiss_camera(self):
         # Narrow angle camera
-        return 'N'
+        return self._create_mult('N')
 
     def field_obs_instrument_vgiss_usable_lines(self):
         return 800

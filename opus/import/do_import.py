@@ -147,11 +147,6 @@ def create_tables_for_import(volume_id, namespace):
 
     mult_table_schema = import_util.read_schema_for_table('mult_template')
 
-    # This is an awful hack because this one mult table has an extra field
-    # in it. Yuck! XXX
-    mult_target_name_table_schema = (import_util.read_schema_for_table(
-                                                'mult_target_name_template'))
-
     table_schemas = {}
     table_names_in_order = []
     for table_name in TABLES_TO_POPULATE:
@@ -190,10 +185,7 @@ def create_tables_for_import(volume_id, namespace):
                 pi_form_type = pi_form_type[:pi_form_type.find(':')]
             if pi_form_type in GROUP_FORM_TYPES:
                 mult_name = import_util.table_name_mult(table_name, field_name)
-                if mult_name in MULT_TABLES_WITH_TARGET_GROUPING:
-                    schema = mult_target_name_table_schema
-                else:
-                    schema = mult_table_schema
+                schema = mult_table_schema
                 if (impglobals.DATABASE.create_table(namespace, mult_name, schema) and
                     namespace == 'import'):
                     _CREATED_IMP_MULT_TABLES.add(mult_name)
@@ -291,9 +283,7 @@ def _mult_table_column_names(table_name):
        constant because various *_target_name tables have an extra
        column used for target name grouping."""
 
-    column_list = ['id', 'value', 'label', 'disp_order', 'display']
-    if table_name in MULT_TABLES_WITH_TARGET_GROUPING:
-        column_list.append('grouping')
+    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping', 'group_disp_order']
     return column_list
 
 def _convert_sql_response_to_mult_table(mult_table_name, rows):
@@ -302,16 +292,17 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
 
     mult_rows = []
     for row in rows:
-        id_num, value, label, disp_order, display = row[:5]
+        (id_num, value, label, disp_order,
+         display, grouping, group_disp_order) = row
         row_dict = {
             'id': id_num,
             'value': value,
             'label': str(label),
             'disp_order': disp_order,
-            'display': display
+            'display': display,
+            'grouping': grouping,
+            'group_disp_order': group_disp_order
         }
-        if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
-            row_dict['grouping'] = row[5]
         mult_rows.append(row_dict)
     return mult_rows
 
@@ -371,7 +362,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
 
 def update_mult_table(table_name, field_name, table_column, val, label,
-                      disp_order=None):
+                      disp_order=None, grouping=None, group_disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
@@ -457,21 +448,21 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         next_id = max([x['id'] for x in mult_table])+1
     if label is None:
         label = 'N/A'
+
+    # If we didn't specify the group_disp_order, we will order groups
+    # alphabetically
+    if grouping is not None and group_disp_order is None:
+        group_disp_order = grouping
+
     new_entry = {
         'id': next_id,
         'value': val,
         'label': label,
         'disp_order': disp_order,
-        'display': 'Y' # if label is not None else 'N'
+        'display': 'Y', # if label is not None else 'N'
+        'grouping': grouping,
+        'group_disp_order': group_disp_order
     }
-    if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
-        if val not in TARGET_NAME_INFO:
-            planet_id = 'OTHER'
-        else:
-            planet_id = TARGET_NAME_INFO[val][0]
-            if planet_id is None:
-                planet_id = 'OTHER'
-        new_entry['grouping'] = planet_id
     mult_table.append(new_entry)
 
     _MODIFIED_MULT_TABLES[mult_table_name] = table_column
@@ -1157,8 +1148,9 @@ def import_observation_table(instrument_obj,
 
             column_val = None
             mult_label = None
-            mult_label_set = False
             disp_order = None # Might be set with mult_label but not otherwise
+            grouping = None
+            group_disp_order = None
 
             if data_source == 'OBS_GENERAL_ID':
                 obs_general_row = metadata['obs_general_row']
@@ -1172,14 +1164,12 @@ def import_observation_table(instrument_obj,
                                                     metadata,
                                                     field_name)
                 if ok:
-                    # If the function doesn't exist, an error will already
-                    # have been logged
-                    if isinstance(ret, (tuple, list)):
-                        column_val = ret[0]
-                        mult_label = ret[1]
-                        if len(ret) == 3:
-                            disp_order = ret[2]
-                        mult_label_set = True
+                    if isinstance(ret, dict):
+                        column_val = ret['col_val']
+                        mult_label = ret['disp_name']
+                        disp_order = ret['disp_order']
+                        grouping = ret['grouping']
+                        group_disp_order = ret['group_disp_order']
                     else:
                         column_val = ret
 
@@ -1319,7 +1309,11 @@ def import_observation_table(instrument_obj,
         if form_type in GROUP_FORM_TYPES:
             mult_column_name = import_util.table_name_mult(table_name,
                                                            field_name)
-            if not mult_label_set:
+
+            # Handle the case when display value is not set. This stays here because
+            # mult_label gets updated based on column_val after column_val is validated.
+            # (ex: flag)
+            if mult_label is None:
                 if column_val is None:
                     mult_label = 'N/A'
                 else:
@@ -1329,8 +1323,10 @@ def import_observation_table(instrument_obj,
                         # This catches things like 2014 MU69 and leaves them
                         # in all caps
                         mult_label = mult_label.title()
+
             id_num = update_mult_table(table_name, field_name, table_column,
-                                       column_val, mult_label, disp_order)
+                                       column_val, mult_label, disp_order,
+                                       grouping, group_disp_order)
             new_row[mult_column_name] = id_num
 
     return new_row

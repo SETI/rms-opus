@@ -53,9 +53,9 @@
         "pi_tooltip": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
-              [   0,  "LOSSLESS",       "Lossless", "010", "Y", null],
-              [   1,     "LOSSY",          "Lossy", "020", "Y", null],
-              [   2,   "NOTCOMP", "Not Compressed", "030", "Y", null]
+              [   0,  "LOSSLESS",       "Lossless", "010", "Y", null, null],
+              [   1,     "LOSSY",          "Lossy", "020", "Y", null, null],
+              [   2,   "NOTCOMP", "Not Compressed", "030", "Y", null, null]
           ]
     },
     {
@@ -81,8 +81,8 @@
         "pi_tooltip": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
-              [   0, "1x1", "1x1", "010", "Y", null],
-              [   1, "4x4", "4x4", "020", "Y", null]
+              [   0, "1x1", "1x1", "010", "Y", null, null],
+              [   1, "4x4", "4x4", "020", "Y", null, null]
           ]
     },
     {

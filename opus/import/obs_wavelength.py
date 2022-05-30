@@ -98,10 +98,10 @@ class ObsWavelength(ObsBase):
         return None
 
     def field_obs_wavelength_spec_flag(self):
-        return 'N'
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         return None
 
     def field_obs_wavelength_polarization_type(self):
-        return 'NONE'
+        return self._create_mult('NONE')

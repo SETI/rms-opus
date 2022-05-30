@@ -54,13 +54,13 @@
         "pi_tooltip": "",
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0,          "IMAGE",          "IMAGE", "010", "Y", null],
-              [   1,           "LINE",           "LINE", "020", "Y", null],
-              [   2,    "OCCULTATION",    "OCCULTATION", "030", "Y", null],
-              [   3,          "POINT",          "POINT", "040", "Y", null],
-              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND", "050", "Y", null],
-              [   5,      "CAL_SOLAR",      "CAL_SOLAR", "060", "Y", null],
-              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL", "070", "Y", null]
+              [   0,          "IMAGE",          "IMAGE", "010", "Y", null, null],
+              [   1,           "LINE",           "LINE", "020", "Y", null, null],
+              [   2,    "OCCULTATION",    "OCCULTATION", "030", "Y", null, null],
+              [   3,          "POINT",          "POINT", "040", "Y", null, null],
+              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND", "050", "Y", null, null],
+              [   5,      "CAL_SOLAR",      "CAL_SOLAR", "060", "Y", null, null],
+              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL", "070", "Y", null, null]
           ]
     },
     {
@@ -221,9 +221,9 @@
         "pi_tooltip": "",
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0, "HI-RES", "Hi-Res", "010", "Y", null],
-              [   1, "NORMAL", "Normal", "020", "Y", null],
-              [   2,  "UNDER",  "Under", "030", "Y", null]
+              [   0, "HI-RES", "Hi-Res", "010", "Y", null, null],
+              [   1, "NORMAL", "Normal", "020", "Y", null, null],
+              [   2,  "UNDER",  "Under", "030", "Y", null, null]
           ]
     },
     {
@@ -275,10 +275,10 @@
         "pi_tooltip": "",
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0, "HI-RES",  "Hi-Res", "010", "Y", null],
-              [   1, "NORMAL",  "Normal", "020", "Y", null],
-              [   2,    "UNK", "Unknown", "030", "Y", null],
-              [   3,    "N/A",     "N/A", "040", "Y", null]
+              [   0, "HI-RES",  "Hi-Res", "010", "Y", null, null],
+              [   1, "NORMAL",  "Normal", "020", "Y", null, null],
+              [   2,    "UNK", "Unknown", "030", "Y", null, null],
+              [   3,    "N/A",     "N/A", "040", "Y", null, null]
           ]
     },
     {
@@ -304,8 +304,8 @@
         "pi_tooltip": null,
         "comments": null,
         "mult_options": [
-              [   0,  "IR",  "IR", "010", "Y", null],
-              [   1, "VIS", "VIS", "020", "Y", null]
+              [   0,  "IR",  "IR", "010", "Y", null, null],
+              [   1, "VIS", "VIS", "020", "Y", null, null]
           ]
     },
     {

@@ -44,13 +44,14 @@ class ObsMissionVoyager(ObsCommon):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_planet_id(self):
-        mp = self.field_obs_mission_voyager_mission_phase_name()
+    def _planet_id(self):
+        mp = self._mission_phase_name()
         pl = mp[:3].upper()
-
         assert pl in ['JUP', 'SAT', 'URA', 'NEP']
-
         return pl
+
+    def field_obs_general_planet_id(self):
+        return self._create_mult(self._planet_id())
 
 
     ####################################

@@ -8,7 +8,8 @@
 import pdsfile
 
 from config_targets import (TARGET_NAME_INFO,
-                            TARGET_NAME_MAPPING)
+                            TARGET_NAME_MAPPING,
+                            PLANET_GROUP_MAPPING)
 from import_util import (cached_tai_from_iso,
                          log_nonrepeating_error,
                          log_warning,
@@ -342,6 +343,32 @@ class ObsBase(object):
                 return 'OTHER'
             return None, None
         return target_name, TARGET_NAME_INFO[target_name]
+
+    def _get_planet_group_info(self, target_name):
+        # Return the planet group info for a passed in target_name
+        if target_name not in TARGET_NAME_INFO:
+            planet_id = 'OTHER'
+        else:
+            planet_id = TARGET_NAME_INFO[target_name][0]
+            if planet_id is None:
+                planet_id = 'OTHER'
+        return PLANET_GROUP_MAPPING[planet_id]
+
+    def _create_mult(self, col_val, disp_name=None, disp_order=None,
+                     grouping=None, group_disp_order=None):
+        data_dict = {}
+        data_dict['col_val'] = col_val
+        data_dict['disp_name'] = disp_name
+        data_dict['disp_order'] = disp_order
+        data_dict['grouping'] = grouping
+        data_dict['group_disp_order'] = group_disp_order
+        return data_dict
+
+    def _create_mult_keep_case(self, col_val, disp_order=None, grouping=None,
+                               group_disp_order=None):
+        return self._create_mult(col_val=col_val, disp_name=col_val, 
+                                 disp_order=disp_order, grouping=grouping,
+                                 group_disp_order=group_disp_order)
 
     def _pdsfile_from_filespec(self, filespec):
         # Create a PdsFile object from a primary filespec.
