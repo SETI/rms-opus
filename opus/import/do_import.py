@@ -1310,11 +1310,10 @@ def import_observation_table(instrument_obj,
             mult_column_name = import_util.table_name_mult(table_name,
                                                            field_name)
 
-            # Handle the case when only column_val is set, and rest of the mult
-            # data are None. This stays here because mult_label gets updated
-            # based on column_val after column_val is validated. (ex: flag)
-            if (disp_order is None and mult_label is None and
-                grouping is None and group_disp_order is None):
+            # Handle the case when display value is not set. This stays here because
+            # mult_label gets updated based on column_val after column_val is validated.
+            # (ex: flag)
+            if mult_label is None:
                 if column_val is None:
                     mult_label = 'N/A'
                 else:

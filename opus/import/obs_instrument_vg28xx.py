@@ -129,8 +129,7 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
 
         if src_name1.upper().startswith('VOYAGER'):
             return self._create_mult(src_name1)
-        return self._create_mult(col_val=src_name1, disp_name=src_name1.title(),
-                                 grouping='Stars')
+        return self._create_mult(col_val=src_name1, grouping='Stars')
 
 
     #####################################

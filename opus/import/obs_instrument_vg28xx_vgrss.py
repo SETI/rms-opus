@@ -55,7 +55,7 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
         dsn = int(receiver_host[-2:])
 
         ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
-        return self._create_mult(col_val=ret, disp_name=ret, grouping='DSNs')
+        return self._create_mult_keep_case(col_val=ret, grouping='DSNs')
 
 
     #####################################

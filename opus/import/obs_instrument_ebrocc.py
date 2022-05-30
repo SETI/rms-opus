@@ -152,8 +152,8 @@ class ObsInstrumentEBROCC(ObsCommon):
 
     def field_obs_profile_host(self):
         ret = self._supp_index_col('INSTRUMENT_HOST_NAME')
-        return self._create_mult(col_val=ret, disp_name=ret,
-                                 grouping='Ground-based Telescopes')
+        return self._create_mult_keep_case(col_val=ret,
+                                           grouping='Ground-based Telescopes')
 
 
     #####################################
