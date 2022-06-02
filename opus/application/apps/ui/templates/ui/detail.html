@@ -6,7 +6,7 @@
                 <div class="row mb-3">
                     <div class="col-auto"><b>OPUS ID: </b>{{ opus_id }}</div>
                     <div class="op-detail-cart col col-1">
-                        <a href="#" data-icon="cart" data-action="{{ cart.action }}" data-id="{{ opus_id }}" title="{{ cart.title }}">
+                        <a class="op-detail-tooltip" href="#" data-icon="cart" data-action="{{ cart.action }}" data-id="{{ opus_id }}" title="{{ cart.title }}">
                             <i class="{{ cart.icon_class }}"></i>
                         </a>
                     </div>
@@ -29,7 +29,7 @@
                             {% for product_type, product_type_info in version_items.items %}
                                 <li class="op-detail-entry">
                                     {% if product_type_info.tooltip %}
-                                        <i class="fas fa-info-circle op-detail-entry-icon" title="{{ product_type_info.tooltip }}"></i>&nbsp;
+                                        <i class="fas fa-info-circle op-detail-entry-icon op-detail-tooltip" title="{{ product_type_info.tooltip }}"></i>&nbsp;
                                     {% endif %}
                                     <div>
                                         {% if product_type_info.product_link %}
@@ -65,7 +65,7 @@
         <div class="col-12 op-detail-img pt-5">
           <div class="op-no-select">
                 <a href="{{ preview_full_url }}" target="_blank">
-                    <img src="{{ preview_med_url }}" alt="Preview image of {{ opus_id }}" title="Click for full-size version">
+                    <img class="op-detail-tooltip" src="{{ preview_med_url }}" alt="Preview image of {{ opus_id }}" title="Click for full-size version">
                 </a>
                 <div>
                     <p>

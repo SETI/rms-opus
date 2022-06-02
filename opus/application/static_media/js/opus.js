@@ -151,6 +151,11 @@ var opus = {
 
     oldSurfacegeoTarget: null,
 
+    // Tooltipster settings
+    tooltips_max_width: 300,
+    tooltips_theme: "tooltipster-light",
+    tooltips_delay: 1500,
+
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
     //------------------------------------------------------------------------------------
@@ -1070,9 +1075,9 @@ var opus = {
                 return;
         }
         let buttons = '<div class="op-open-help">';
-        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
+        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab op-help-tooltip" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
         if (pdfURL) {
-            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
+            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf op-help-tooltip" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
         }
         buttons += "</div>";
 
@@ -1125,6 +1130,14 @@ var opus = {
                             backgroundColor: "inherit"
                         });
                 });
+
+                // Initialize atooltips using tooltipster in the help menu
+                $(".op-help-tooltip").tooltipster({
+                    maxWidth: opus.tooltips_max_width,
+                    theme: opus.tooltips_theme,
+                    delay: opus.tooltips_delay,
+                });
+
                 $(".op-open-help-pdf").on("click", function(e) {
                     let pdfURL = $(".op-open-help-pdf").data("action");
                     window.open(pdfURL, "_blank");
@@ -1495,4 +1508,11 @@ $(document).ready(function() {
     // Call normalized url api first
     // Rest of initialization process will be performed afterwards
     opus.normalizedURLAPICall();
+    // Initialize all tooltips using tooltipster in base.html
+    $(".op-base-tooltip, .op-browse-view-tooltip").tooltipster({
+        maxWidth: opus.tooltips_max_width,
+        theme: opus.tooltips_theme,
+        delay: opus.tooltips_delay,
+        debug: false,
+    });
 });

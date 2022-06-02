@@ -355,20 +355,21 @@ class ObsBase(object):
         return PLANET_GROUP_MAPPING[planet_id]
 
     def _create_mult(self, col_val, disp_name=None, disp_order=None,
-                     grouping=None, group_disp_order=None):
+                     grouping=None, group_disp_order=None, tooltip=None):
         data_dict = {}
         data_dict['col_val'] = col_val
         data_dict['disp_name'] = disp_name
         data_dict['disp_order'] = disp_order
         data_dict['grouping'] = grouping
         data_dict['group_disp_order'] = group_disp_order
+        data_dict['tooltip'] = tooltip
         return data_dict
 
     def _create_mult_keep_case(self, col_val, disp_order=None, grouping=None,
-                               group_disp_order=None):
-        return self._create_mult(col_val=col_val, disp_name=col_val, 
+                               group_disp_order=None, tooltip=None):
+        return self._create_mult(col_val=col_val, disp_name=col_val,
                                  disp_order=disp_order, grouping=grouping,
-                                 group_disp_order=group_disp_order)
+                                 group_disp_order=group_disp_order, tooltip=tooltip)
 
     def _pdsfile_from_filespec(self, filespec):
         # Create a PdsFile object from a primary filespec.

@@ -3475,3 +3475,17 @@ when screen is narrow (cart tab) */
     padding-left: 0.2em;
     padding-right: 0.2em;
 }
+
+/* Stylings for customized tooltips */
+.tooltip-templates {
+    display: none;
+}
+
+.op-mult-tooltip-link {
+    color: #FFFFFF;
+}
+
+/* Make sure tooltipster tooltip is not covered by popover */
+.tooltipster-show {
+    z-index: 2000000002 !important;
+}

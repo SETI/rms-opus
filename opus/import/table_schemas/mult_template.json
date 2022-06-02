@@ -38,6 +38,11 @@
         "field_default": null
     },
     {
+        "field_name": "tooltip",
+        "field_type": "text",
+        "field_default": null
+    },
+    {
         "field_name": "timestamp",
         "field_type": "timestamp"
     }

@@ -243,6 +243,17 @@ def safe_column(row, column_name, idx=None):
         return None
     return row[column_name][idx]
 
+def get_mult_tooltip(table_name, field_name, option_val):
+    "Get the tooltip for mult options from TOOLTIPS_FOR_MULT"
+    tooltip = None
+    mult_column_name = table_name_mult(table_name, field_name)
+    try:
+        if (mult_column_name in TOOLTIPS_FOR_MULT and
+            option_val in TOOLTIPS_FOR_MULT[mult_column_name]):
+            tooltip = TOOLTIPS_FOR_MULT[mult_column_name][option_val]
+    except KeyError:
+        tooltip = None
+    return tooltip
 
 ################################################################################
 # TABLE MANIPULATION

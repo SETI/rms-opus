@@ -53,17 +53,17 @@
                                                             </span>
                                                             {% if menu.data.labels_view == 'selector' %}
                                                                 {% if p.get_tooltip_results %}
-                                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
+                                                                    <i class="fas fa-info-circle op-menu-tooltip" title="{{ p.get_tooltip_results }}"></i>
                                                                 {% endif %}
                                                                 <span>{{ p.label_results }}</span>
                                                             {% else %}
                                                                 {% if p.get_tooltip %}
-                                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
+                                                                    <i class="fas fa-info-circle op-menu-tooltip" title="{{ p.get_tooltip }}"></i>
                                                                 {% endif %}
                                                                 <span>{{ p.label }}</span>
                                                             {% endif %}
                                                             {% if p.referred_slug %}
-                                                                <i class="fas fa-link op-referred-link" title="{{ p.get_link_tooltip }}"></i>
+                                                                <i class="fas fa-link op-referred-link op-menu-tooltip" title="{{ p.get_link_tooltip }}"></i>
                                                             {% endif %}
                                                         </span>
                                                     </a>
@@ -98,7 +98,7 @@
                                             </span>
                                             {% if menu.data.labels_view == 'selector' %}
                                                 {% if p.get_tooltip_results %}
-                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
+                                                    <i class="fas fa-info-circle op-menu-tooltip" title="{{ p.get_tooltip_results }}"></i>
                                                 {% endif %}
                                                 {% if div.table_name == 'search_fields' %}
                                                     <span>{{ p.body_qualified_label_results }}</span>
@@ -107,12 +107,12 @@
                                                 {% endif %}
                                             {% else %}
                                                 {% if p.get_tooltip %}
-                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
+                                                    <i class="fas fa-info-circle op-menu-tooltip" title="{{ p.get_tooltip }}"></i>
                                                 {% endif %}
                                                 <span>{{ p.label }}</span>
                                             {% endif %}
                                             {% if p.referred_slug %}
-                                                <i class="fas fa-link op-referred-link" title="{{ p.get_link_tooltip }}"></i>
+                                                <i class="fas fa-link op-referred-link op-menu-tooltip" title="{{ p.get_link_tooltip }}"></i>
                                             {% endif %}
                                         </span>
                                     </a>

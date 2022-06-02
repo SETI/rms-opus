@@ -4,7 +4,7 @@
         <li class="op-detail-entry">
             {% for param, values in entry.items %}
                 {% if values.1.get_tooltip_results %}
-                    <i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
+                    <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-toggle="tooltip"
                         title="{{ values.1.get_tooltip_results|striptags }}"></i>&nbsp;
                 {% endif %}
                 <div>
@@ -13,7 +13,7 @@
                         {% if values.1.is_string_or_mult %}
                             <a href="/opus/#/{{ values.1.slug }}={{ values.0|encode_value }}{% if values.1.is_string %}&qtype-{{ values.1.slug }}=matches{% endif %}{% if url_cols %}&cols={{ url_cols }}{% endif %}"
                                     target="_blank">
-                                <i class="fas fa-search"
+                                <i class="fas fa-search op-detail-metadata-tooltip"
                                     title='Open a new browser tab containing OPUS that searches for "{{ values.1.label_results }}" equal to "{{ values.0 }}"'></i>
                             </a>
                         {% endif %}

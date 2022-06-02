@@ -170,6 +170,7 @@ class MultObsGeneralInstHostId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -185,6 +186,7 @@ class MultObsGeneralInstrumentId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -200,6 +202,7 @@ class MultObsGeneralMissionId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -215,6 +218,7 @@ class MultObsGeneralObservationType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -230,6 +234,7 @@ class MultObsGeneralPlanetId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -245,6 +250,7 @@ class MultObsGeneralQuantity(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -260,6 +266,7 @@ class MultObsGeneralTargetClass(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -275,6 +282,7 @@ class MultObsGeneralTargetName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -290,6 +298,7 @@ class MultObsInstrumentCocirsDetectorId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -305,6 +314,7 @@ class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -320,6 +330,7 @@ class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -335,6 +346,7 @@ class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -350,6 +362,7 @@ class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -365,6 +378,7 @@ class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -380,6 +394,7 @@ class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -395,6 +410,7 @@ class MultObsInstrumentCoissCamera(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -410,6 +426,7 @@ class MultObsInstrumentCoissCombinedFilter(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -425,6 +442,7 @@ class MultObsInstrumentCoissCompressionType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -440,6 +458,7 @@ class MultObsInstrumentCoissDataConversionType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -455,6 +474,7 @@ class MultObsInstrumentCoissGainModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -470,6 +490,7 @@ class MultObsInstrumentCoissImageObservationType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -485,6 +506,7 @@ class MultObsInstrumentCoissInstrumentModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -500,6 +522,7 @@ class MultObsInstrumentCoissShutterModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -515,6 +538,7 @@ class MultObsInstrumentCoissShutterStateId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -530,6 +554,7 @@ class MultObsInstrumentCoissTargetDesc(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -545,6 +570,7 @@ class MultObsInstrumentCouvisChannel(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -560,6 +586,7 @@ class MultObsInstrumentCouvisCompressionType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -575,6 +602,7 @@ class MultObsInstrumentCouvisDwellTime(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -590,6 +618,7 @@ class MultObsInstrumentCouvisObservationType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -605,6 +634,7 @@ class MultObsInstrumentCouvisOccultationPortState(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -620,6 +650,7 @@ class MultObsInstrumentCouvisSlitState(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -635,6 +666,7 @@ class MultObsInstrumentCouvisTestPulseState(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -650,6 +682,7 @@ class MultObsInstrumentCovimsChannel(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -665,6 +698,7 @@ class MultObsInstrumentCovimsInstrumentModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -680,6 +714,7 @@ class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -695,6 +730,7 @@ class MultObsInstrumentCovimsSpectralEditing(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -710,6 +746,7 @@ class MultObsInstrumentCovimsSpectralSumming(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -725,6 +762,7 @@ class MultObsInstrumentCovimsStarTracking(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -740,6 +778,7 @@ class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -755,6 +794,7 @@ class MultObsInstrumentGossiCompressionType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -770,6 +810,7 @@ class MultObsInstrumentGossiFilterName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -785,6 +826,7 @@ class MultObsInstrumentGossiFilterNumber(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -800,6 +842,7 @@ class MultObsInstrumentGossiFrameDuration(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -815,6 +858,7 @@ class MultObsInstrumentGossiGainModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -830,6 +874,7 @@ class MultObsInstrumentGossiObstructionId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -845,6 +890,7 @@ class MultObsInstrumentNhlorriBinningMode(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -860,6 +906,7 @@ class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -875,6 +922,7 @@ class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -890,6 +938,7 @@ class MultObsInstrumentVgissCamera(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -905,6 +954,7 @@ class MultObsInstrumentVgissEditMode(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -920,6 +970,7 @@ class MultObsInstrumentVgissFilterName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -935,6 +986,7 @@ class MultObsInstrumentVgissFilterNumber(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -950,6 +1002,7 @@ class MultObsInstrumentVgissGainMode(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -965,6 +1018,7 @@ class MultObsInstrumentVgissScanMode(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -980,6 +1034,7 @@ class MultObsInstrumentVgissShutterMode(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -995,6 +1050,7 @@ class MultObsMissionCassiniCassiniTargetCode(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1010,6 +1066,7 @@ class MultObsMissionCassiniCassiniTargetName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1025,6 +1082,7 @@ class MultObsMissionCassiniIsPrime(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1040,6 +1098,7 @@ class MultObsMissionCassiniMissionPhaseName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1055,6 +1114,7 @@ class MultObsMissionCassiniPrimeInstId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1070,6 +1130,7 @@ class MultObsMissionCassiniRevNo(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1085,6 +1146,7 @@ class MultObsMissionGalileoOrbitNumber(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1100,6 +1162,7 @@ class MultObsMissionHubbleApertureType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1115,6 +1178,7 @@ class MultObsMissionHubbleDetectorId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1130,6 +1194,7 @@ class MultObsMissionHubbleExposureType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1145,6 +1210,7 @@ class MultObsMissionHubbleFilterName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1160,6 +1226,7 @@ class MultObsMissionHubbleFilterType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1175,6 +1242,7 @@ class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1190,6 +1258,7 @@ class MultObsMissionHubbleGainModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1205,6 +1274,7 @@ class MultObsMissionHubbleInstrumentModeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1220,6 +1290,7 @@ class MultObsMissionHubbleOpticalElement(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1235,6 +1306,7 @@ class MultObsMissionHubblePc1Flag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1250,6 +1322,7 @@ class MultObsMissionHubbleProposedApertureType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1265,6 +1338,7 @@ class MultObsMissionHubbleTargetedDetectorId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1280,6 +1354,7 @@ class MultObsMissionHubbleWf2Flag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1295,6 +1370,7 @@ class MultObsMissionHubbleWf3Flag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1310,6 +1386,7 @@ class MultObsMissionHubbleWf4Flag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1325,6 +1402,7 @@ class MultObsMissionNewHorizonsMissionPhase(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1340,6 +1418,7 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1355,6 +1434,7 @@ class MultObsProfileBodyOccFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1370,6 +1450,7 @@ class MultObsProfileHost(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1385,6 +1466,7 @@ class MultObsProfileOccDir(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1400,6 +1482,7 @@ class MultObsProfileOccType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1415,6 +1498,7 @@ class MultObsProfileQualityScore(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1430,6 +1514,7 @@ class MultObsProfileSource(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1445,6 +1530,7 @@ class MultObsProfileWlBand(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1460,6 +1546,7 @@ class MultObsSurfaceGeometryNameTargetName(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1475,6 +1562,7 @@ class MultObsTypeImageImageTypeId(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1490,6 +1578,7 @@ class MultObsWavelengthPolarizationType(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1505,6 +1594,7 @@ class MultObsWavelengthSpecFlag(models.Model):
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
     group_disp_order = models.CharField(max_length=100, blank=True, null=True)
+    tooltip = models.TextField()
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:

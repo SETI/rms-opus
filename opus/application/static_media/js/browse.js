@@ -57,6 +57,11 @@ var o_browse = {
     pageLoaderSpinnerTimer: null,   // used to apply a small delay to the loader spinner
     loadDataInProgress: false,
     infiniteScrollLoadInProgress: false,
+
+    // the x coordinate of the current cursor when moving mouse in the table view
+    mouseX: 0,
+    // The timer we used to detect the stop of mouse moving action in the table view
+    timer: null,
     /**
     *
     *  all the things that happen on the browse tab
@@ -64,6 +69,22 @@ var o_browse = {
     **/
     addBrowseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
+
+        // Get the x coordinate of the current cursor when moving mouse in the table view.
+        // Also when moving around in the same table row, reposition the tooltip so that
+        // it stays right next to the cursor. Work for both browse/cart data table.
+        $(".op-data-table tbody").on("mousemove", function(e) {
+            // We will wait for the stop of mouse moving, and then show the tooltip
+            // after the amount of delay we set.
+            clearTimeout(o_browse.timer);
+            o_browse.mouseX = e.clientX;
+            o_browse.timer = setTimeout(function() {
+                let tableRow = $(e.target).parent("tr");
+                if (tableRow.length) {
+                    tableRow.tooltipster("instance").reposition();
+                }
+            }, opus.tooltips_delay);
+        });
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);
         // Mouse wheel up will also trigger ps-scroll-up.
@@ -1663,8 +1684,10 @@ var o_browse = {
             $(`${tab} .op-gallery-view`).fadeIn("done", function() {o_browse.fading = false;});
 
             browseViewSelector.html("<i class='far fa-list-alt'></i>&nbsp;View Table");
-            browseViewSelector.attr("title", "View sortable metadata table");
             browseViewSelector.data("view", "data");
+            // After tooltipster is initialized, if we want to change the title, we need to do it
+            // by changing the content instead of updating the title attribute.
+            $(".op-browse-view-tooltip").tooltipster("content", "View sortable metadata table");
 
             suppressScrollY = false;
         } else {
@@ -1672,8 +1695,10 @@ var o_browse = {
             $(`${tab} .op-data-table-view`).fadeIn("done", function() {o_browse.fading = false;});
 
             browseViewSelector.html("<i class='far fa-images'></i>&nbsp;View Gallery");
-            browseViewSelector.attr("title", "View sortable thumbnail gallery");
             browseViewSelector.data("view", "gallery");
+            // After tooltipster is initialized, if we want to change the title, we need to do it
+            // by changing the content instead of updating the title attribute.
+            $(".op-browse-view-tooltip").tooltipster("content", "View sortable thumbnail gallery");
 
             suppressScrollY = true;
         }
@@ -1768,7 +1793,7 @@ var o_browse = {
                 viewNamespace.observationData[opusId] = item.metadata;    // for op-metadata-detail-view, store in global array
                 let buttonInfo = o_browse.cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
 
-                let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge (slideshow mode)\r\Ctrl+click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range`;
+                let mainTitle = `#${item.obs_num}: ${opusId}<br>Click to enlarge (slideshow mode)<br>Ctrl+click to ${buttonInfo[tab].title.toLowerCase()}<br>Shift+click to start/end range`;
 
                 // gallery
                 let images = item.images;
@@ -1777,7 +1802,7 @@ var o_browse = {
                 // DEBBY
                 galleryHtml += `<div class="op-thumbnail-container ${(item.cart_state === "cart" ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
                 galleryHtml += `<a href="${url}" class="thumbnail" data-image="${images.full.url}">`;
-                galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
+                galleryHtml += `<img class="img-thumbnail img-fluid op-browse-gallery-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
 
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 galleryHtml += '<div class="op-modal-overlay">';
@@ -1786,7 +1811,7 @@ var o_browse = {
                 galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element" title="Last viewed in slideshow mode"></div>`;
 
                 // recycle bin icon container
-                galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')}" title="${mainTitle}">`;
+                galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')} op-browse-gallery-tooltip" title="${mainTitle}">`;
                 galleryHtml += '<p class="content-text"><i class="fas fa-recycle fa-4x text-success" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
 
@@ -1796,10 +1821,10 @@ var o_browse = {
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
-                galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
+                galleryHtml += '<a class="op-browse-gallery-tooltip" href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
-                galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo[tab].title}"><i class="${buttonInfo[tab].icon} fa-xs"></i></a>`;
-                galleryHtml +=     '<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
+                galleryHtml += `<a class="op-browse-gallery-tooltip" href="#" data-icon="cart" title="${buttonInfo[tab].title}"><i class="${buttonInfo[tab].icon} fa-xs"></i></a>`;
+                galleryHtml += '<a class="op-browse-gallery-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
                 galleryHtml += '</div></div>';
 
@@ -1807,13 +1832,13 @@ var o_browse = {
                 let checked = item.cart_state === "cart" ? " checked" : "";
                 let recycled = (tab === "#cart" && item.cart_state === "recycle") ? "class='text-success op-recycled'" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
-                let minimenu = `<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
-                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="Click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                let minimenu = `<a class="op-browse-table-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
+                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group op-browse-table-tooltip" title="Click to ${buttonInfo[tab].title.toLowerCase()}<br>Shift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
 
-                let miniThumbnail = `<img src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
+                let miniThumbnail = `<img class="op-browse-table-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 row += `<td class="op-mini-thumbnail op-mini-thumbnail-zoom"><div>${miniThumbnail}</div></td>`;
 
-                let tr = `<tr data-id="${opusId}" ${recycled} data-target="#op-metadata-detail-view" data-obs="${item.obs_num}" title="${mainTitle}">`;
+                let tr = `<tr class="op-browse-table-tooltip" data-id="${opusId}" ${recycled} data-target="#op-metadata-detail-view" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(index, cell) {
                     let slug = slugs[index];
                     row += `<td class="op-metadata-value" data-slug="${slug}">${cell}</td>`;
@@ -1858,6 +1883,46 @@ var o_browse = {
         o_browse.hidePageLoaderSpinner();
         o_browse.updateSliderHandle(view);
         o_hash.updateURLFromCurrentHash();
+
+        // Initialize tooltips using tooltipster in browse gallery and table
+        $(".op-browse-gallery-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+            debug: false,
+            contentAsHTML: true,
+        });
+        $(".op-browse-table-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+            debug: false,
+            contentAsHTML: true,
+            functionBefore: function(instance, helper){
+                // Make sure all other tooltips is closed before a new one is open
+                // in table view.
+                $.each($.tooltipster.instances(), function(i, inst){
+                    inst.close();
+                });
+            },
+            // Make sure the tooltip position is next to the cursor when users
+            // move around the same row in the browse table view.
+            functionPosition: function(instance, helper, position){
+                let tooltipWidth = position.size.width;
+                let offsetToRightWindow = 5;
+                let windowWidth = helper.geo.window.size.width;
+                // When the cursor is very close to the right edget of the window, we have
+                // to move the tooltip position to the right so that it won't get cut off
+                // by the window.
+                if ((o_browse.mouseX + tooltipWidth) + offsetToRightWindow > windowWidth) {
+                    position.coord.left = o_browse.mouseX - tooltipWidth;
+                } else {
+                    position.coord.left = o_browse.mouseX;
+                }
+                position.target = o_browse.mouseX;
+                return position;
+            }
+        });
     },
 
     initTable: function(tab, columns, columnsNoUnits) {
@@ -1878,7 +1943,7 @@ var o_browse = {
         // check all box
         // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
-                         "class='op-table-header-addall btn btn-link'" +
+                         "class='op-table-header-addall btn btn-link op-addall-icon-tooltip'" +
                          " title='Add All Results to Cart'>" +
                          "<i class='fas fa-cart-plus' data-action='addall'></i></button>";
 
@@ -1905,7 +1970,7 @@ var o_browse = {
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
             //let reorderTip = "Drag to reorder\n";
             let reorderTip = "";
-            let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
+            let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field<br>Ctrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
                 orderToolTip = `title='${reorderTip}Change to descending sort'`;
@@ -1924,13 +1989,21 @@ var o_browse = {
             let spacing = headerArr.length ? "&nbsp;" : "";
             let lastWordWrappingGroup = `${headerArr.join(" ")}${spacing}<span class="op-last-word-group">${lastWord}` +
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
-            let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
+            let columnOrdering = `<a class="op-data-table-tooltip" href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
             $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
         //o_browse.initDraggableColumn(tab);
+
+        // Init addall icon tooltip in the browse table
+        $(".op-addall-icon-tooltip, .op-data-table-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+            contentAsHTML: true,
+        });
     },
 
     initResizableColumn: function(tab) {
@@ -2860,8 +2933,8 @@ var o_browse = {
         let html = "";
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools mr-2">` +
-                         `<a href="#" class="op-metadata-detail-remove" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
-        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
+                         `<a href="#" class="op-metadata-detail-remove op-metadatabox-tooltip" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add op-metadatabox-tooltip" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
@@ -2877,6 +2950,13 @@ var o_browse = {
             }
         });
         $(".op-metadata-detail-view-body .op-metadata-details .contents").html(html);
+
+        // Initialize tooltips for add and remove icons in metadata box
+        $(".op-metadatabox-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+        });
 
         // if it was last in edit mode, open in edit mode...
         if (viewNamespace.metadataDetailEdit) {
@@ -2895,16 +2975,16 @@ var o_browse = {
             let buttonInfo = o_browse.cartButtonInfo(action);
 
             // prev/next buttons - put this in op-metadata-detail-view html...
-            let html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            let html = `<div class="col"><a href="#" class="op-cart-toggle op-metadatabox-tooltip" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
             html += `<div class="col text-center op-obs-direction">`;
             let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
             let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-            html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
-            html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
+            html += `<a href="#" class="op-prev text-center ${opPrevDisabled} op-metadatabox-tooltip" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
+            html += `<a href="#" class="op-next ${opNextDisabled} op-metadatabox-tooltip" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col"><a href="#" class="menu pr-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            html += `<div class="col"><a href="#" class="menu pr-3 float-right text-center op-metadatabox-tooltip" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-metadata-detail-view-body .bottom").html(html);
 
             // update the binoculars here
@@ -2915,11 +2995,19 @@ var o_browse = {
             $(tab).find(`[data-id='${opusId}'] div.op-recycle-overlay`).addClass("op-modal-show");
 
             let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
-            let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
+            let title = `#${obsNum}: ${opusId}<br>Click for full-size image`;
 
             o_browse.metadataboxHtml(opusId);
-            $(".op-metadata-detail-view-body .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
-            $(".op-metadata-detail-view-body .op-obs-direction a").data("obs", obsNum);
+            $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview op-metadatabox-tooltip"/></a>`);
+            $("#galleryViewContents .op-obs-direction a").data("obs", obsNum);
+
+            // Initialize tooltips for add and remove icons in metadata box
+            $(".op-metadatabox-tooltip").tooltipster({
+                maxWidth: opus.tooltips_max_width,
+                theme: opus.tooltips_theme,
+                delay: opus.tooltips_delay,
+                contentAsHTML: true,
+            });
         }
     },
 

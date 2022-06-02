@@ -283,6 +283,14 @@ def api_get_widget(request, **kwargs):
     auto_id = True
     selections = {}
     extras = {}
+    customized_input = slug in settings.MULT_WIDGETS_WITH_TOOLTIPS
+    # Mult options that will be passed to the template for customized mult input
+    # HTML.
+    options = []
+    # Dictionary keyed by group names, and the value will a list mult options
+    # corresponding to each group.
+    grouped_options = {}
+    is_grouped_mult = False
 
     if request and request.GET is not None:
         (selections, extras) = url_to_search_params(request.GET,
@@ -425,6 +433,21 @@ def api_get_widget(request, **kwargs):
         if model.objects.filter(grouping=None):
             form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
 
+            if customized_input:
+                count = 0
+                for mult in (model.objects.filter(display='Y')
+                                          .order_by('disp_order')):
+                    tp_id = mult.label
+                    # If there is any invalid characters for HTML class/id
+                    # we will replace invalid characters in the mult options
+                    # with '_'. This will make sure we don't assign invalid
+                    # characters to HTML class/id for customized tooltips.
+                    for ch in settings.INVALID_CLASS_CHAR:
+                        if ch in tp_id:
+                            tp_id = tp_id.replace(ch, '-')
+                    options.append((count, mult.label, mult.tooltip, tp_id))
+                    count += 1
+
         # Group the entries with the same grouping values.
         # Different groups will be displayed based on group_disp_order
         grouping_entries = (model.objects
@@ -432,12 +455,31 @@ def api_get_widget(request, **kwargs):
                             .distinct()
                             .values('grouping'))
         for entry in grouping_entries:
+            options_of_a_group = []
             glabel = entry['grouping']
             # glabel = entry.grouping
             if glabel is not None and glabel != 'NULL':
                 if model.objects.filter(grouping=glabel)[0:1]:
                     form = _update_form_with_grouping(form, form_vals,
                                                       glabel, glabel)
+
+                    if customized_input:
+                        count = 0
+                        for mult in (model.objects.filter(grouping=glabel,
+                                                          display='Y')
+                                                  .order_by('disp_order')):
+                            # TODO: We don't include mult.tooltip here because
+                            # there is no mult_options in table schema. Need to
+                            # figure out a proper way to generate the tooltip,
+                            # it's created by populate functions
+                            tp_id = mult.label
+                            for ch in settings.INVALID_CLASS_CHAR:
+                                if ch in tp_id:
+                                    tp_id = tp_id.replace(ch, '-')
+                            options_of_a_group.append((count, mult.label,
+                                                       mult.tooltip, tp_id))
+                            count += 1
+                        grouped_options[(glabel,glabel)] = options_of_a_group
     else:  # all other form types
         if param_qualified_name in selections:
             form_vals = {slug:selections[param_qualified_name]}
@@ -478,6 +520,12 @@ def api_get_widget(request, **kwargs):
                                                   form_type_unit_id, unit))
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
+    # Get the current selections for customized widget inputs, need to pass into
+    # template and check the selected checkboxes.
+    try:
+        current_selections = form_vals[slug]
+    except KeyError:
+        current_selections = []
     # If we don't want to display this group of units on the search tab, then
     # don't pass it to the template
     if not display_search_unit(form_type_unit_id):
@@ -493,8 +541,18 @@ def api_get_widget(request, **kwargs):
         "range_form_types": settings.RANGE_FORM_TYPES,
         "mult_form_types": settings.MULT_FORM_TYPES,
         "units": units,
-        "ranges": ranges
+        "ranges": ranges,
+        "customized_input": customized_input,
+        "grouped_options": grouped_options,
+        "options": options,
+        "is_grouped_mult": is_grouped_mult,
+        "selections": current_selections,
     }
+    if slug == 'mission':
+        print("================")
+        print(f"customized_input: {customized_input}")
+        print(f"is_grouped_mult: {is_grouped_mult}")
+        print(f"options: {options}")
     ret = render(request, template, context)
 
     exit_api_call(api_code, ret)
