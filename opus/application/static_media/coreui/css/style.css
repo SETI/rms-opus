@@ -42,7 +42,7 @@
   --cui-dropdown-border-color: #c8ced3;
   --cui-dropdown-header-color: rgb(115, 129, 143);
   --cui-dropdown-link-active-bg: #20a8d8;
-  --cui-dropdown-font-size: 0.875rem;
+  --cui-dropdown-link-hover-bg: #f0f3f5;
   --cui-breakpoint-xs: 0;
   --cui-breakpoint-sm: 576px;
   --cui-breakpoint-md: 768px;
@@ -9777,6 +9777,7 @@ html:not([dir=rtl]) .text-center {
 }
 
 .bg-primary {
+  --cui-badge-color: rgb(255, 255, 255);
   background-color: var(--cui-primary, #321fdb) !important;
 }
 
