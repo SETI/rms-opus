@@ -52,9 +52,9 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "FP1", "FP1", "010", "Y", null],
-              [   1, "FP3", "FP3", "020", "Y", null],
-              [   2, "FP4", "FP4", "030", "Y", null]
+              [   0, "FP1", "FP1", "010", "Y", null, null],
+              [   1, "FP3", "FP3", "020", "Y", null, null],
+              [   2, "FP4", "FP4", "030", "Y", null, null]
           ]
     },
     {

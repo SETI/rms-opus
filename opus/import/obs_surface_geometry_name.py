@@ -34,5 +34,8 @@ class ObsSurfaceGeometryName(ObsBase):
         target_name = self._metadata['surface_geo_target_name'].upper()
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
-            return None
-        return target_name, target_info[2]
+            return self._create_mult(None)
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_info[2],
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])

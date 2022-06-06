@@ -61,11 +61,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "RAD",        "Radio",   "010", "Y", null],
-              [   1, "STE",      "Stellar",   "020", "Y", null],
-              [   2, "SOL",        "Solar",   "030", "Y", null],
-              [   3, "REF",  "Reflectance",   "040", "Y", null],
-              [   4,  null,          "N/A",   "050", "Y", null]
+              [   0, "RAD",        "Radio",   "010", "Y", null, null],
+              [   1, "STE",      "Stellar",   "020", "Y", null, null],
+              [   2, "SOL",        "Solar",   "030", "Y", null, null],
+              [   3, "REF",  "Reflectance",   "040", "Y", null, null],
+              [   4,  null,          "N/A",   "050", "Y", null, null]
         ]
     },
     {
@@ -90,10 +90,10 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "I", "Ingress",   "010", "Y", null],
-              [   1, "E",  "Egress",   "020", "Y", null],
-              [   2, "B",    "Both",   "030", "Y", null],
-              [   3,  null,   "N/A",   "040", "Y", null]
+              [   0, "I", "Ingress",   "010", "Y", null, null],
+              [   1, "E",  "Egress",   "020", "Y", null, null],
+              [   2, "B",    "Both",   "030", "Y", null, null],
+              [   3,  null,   "N/A",   "040", "Y", null, null]
         ]
     },
     {
@@ -237,13 +237,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "S",      "S",       "010", "Y", null],
-              [   1, "X",      "X",       "020", "Y", null],
-              [   2, "KA",     "Ka",      "030", "Y", null],
-              [   3, "IR",     "IR",      "040", "Y", null],
-              [   4, "VI",     "Visible", "050", "Y", null],
-              [   5, "UV",     "UV",      "060", "Y", null],
-              [   6,  null,    "N/A",     "070", "Y", null]
+              [   0, "S",      "S",       "010", "Y", null, null],
+              [   1, "X",      "X",       "020", "Y", null, null],
+              [   2, "KA",     "Ka",      "030", "Y", null, null],
+              [   3, "IR",     "IR",      "040", "Y", null, null],
+              [   4, "VI",     "Visible", "050", "Y", null, null],
+              [   5, "UV",     "UV",      "060", "Y", null, null],
+              [   6,  null,    "N/A",     "070", "Y", null, null]
         ]
     },
     {

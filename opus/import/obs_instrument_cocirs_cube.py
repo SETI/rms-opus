@@ -70,16 +70,23 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
         return None
 
     def field_obs_general_planet_id(self):
-        return 'SAT'
+        return self._create_mult('SAT')
 
-    def field_obs_general_target_name(self):
+    def _target_name(self):
         return self._cassini_intended_target_name()
 
+    def field_obs_general_target_name(self):
+        target_name, target_disp_name = self._target_name()
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
+
     def field_obs_general_quantity(self):
-        return 'THERMAL'
+        return self._create_mult('THERMAL')
 
     def field_obs_general_observation_type(self):
-        return 'SCU' # Spectral Cube
+        return self._create_mult('SCU') # Spectral Cube
 
 
     ############################
@@ -137,7 +144,7 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
         return self._supp_index_col('BAND_BIN_WIDTH')
 
     def field_obs_wavelength_spec_flag(self):
-        return 'Y'
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         return self._supp_index_col('BANDS')
@@ -366,8 +373,8 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._supp_index_col('MISSION_PHASE_NAME')
         if mp.upper() == 'NULL':
-            return None
-        return mp.replace('_', ' ')
+            return self._create_mult(None)
+        return self._create_mult(mp.replace('_', ' '))
 
 
     ###############################################
@@ -384,22 +391,22 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
         return self.instrument_id
 
     def field_obs_instrument_cocirs_detector_id(self):
-        return self._supp_index_col('DETECTOR_ID')
+        return self._create_mult(self._supp_index_col('DETECTOR_ID'))
 
     def field_obs_instrument_cocirs_instrument_mode_blinking_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_even_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_odd_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_centers_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_pairs_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_cocirs_instrument_mode_all_flag(self):
-        return None
+        return self._create_mult(None)

@@ -176,10 +176,13 @@ var o_widgets = {
 
                 // Update widgets array in opus.prefs
                 $.each(opus.prefs.widgets, function(widgetIdx, widget) {
-                    if (widget.startsWith(oldTargetStr)) {
-                        let newWidget = widget.replace(oldTargetStr, newTargetStr);
-                        opus.prefs.widgets[widgetIdx] = newWidget;
-                    }
+                    o_widgets.updateWidgetsArray(widget, widgetIdx, opus.prefs.widgets, oldTargetStr, newTargetStr);
+                });
+
+                // Update widgets drawn so that widgets on the new target can be properly closed
+                // when clicking on search menu.
+                $.each(opus.widgetsDrawn, function(idx, widgetDrawn) {
+                    o_widgets.updateWidgetsArray(widgetDrawn, idx, opus.widgetsDrawn, oldTargetStr, newTargetStr);
                 });
 
                 // Update metadata selections
@@ -274,6 +277,13 @@ var o_widgets = {
                 dataObj[newSlug] = dataObj[oldTargetSlug];
                 delete dataObj[oldTargetSlug];
             }
+        }
+    },
+
+    updateWidgetsArray: function(currentWidget, idx, targetWidgetsArray, oldTargetStr, newTargetStr) {
+        if (currentWidget.startsWith(oldTargetStr)) {
+            let newWidget = currentWidget.replace(oldTargetStr, newTargetStr);
+            targetWidgetsArray[idx] = newWidget;
         }
     },
 

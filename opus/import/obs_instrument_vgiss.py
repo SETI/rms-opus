@@ -81,7 +81,7 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         image_num = filename[1:8]
         inst_host_num = self._index_col('INSTRUMENT_HOST_NAME')[-1]
         camera = self._index_col('INSTRUMENT_NAME')[0]
-        planet = self.field_obs_general_planet_id()
+        planet = self._planet_id()
         if planet is None:
             pl_str = ''
         else:
@@ -92,11 +92,11 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
     def field_obs_general_quantity(self):
         filter_name = self._index_col('FILTER_NAME')
         if filter_name == 'UV':
-            return 'EMISSION'
-        return 'REFLECT'
+            return self._create_mult('EMISSION')
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ############################
@@ -112,7 +112,7 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'FRAM'
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()
@@ -170,8 +170,11 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
     ### OVERRIDE FROM ObsMissionVoyager ###
     #######################################
 
-    def field_obs_mission_voyager_mission_phase_name(self):
+    def _mission_phase_name(self):
         return self._index_col('MISSION_PHASE_NAME')
+
+    def field_obs_mission_voyager_mission_phase_name(self):
+        return self._create_mult(self._mission_phase_name())
 
 
     ##############################################
@@ -191,27 +194,27 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         return self._index_col('IMAGE_ID')
 
     def field_obs_instrument_vgiss_scan_mode(self):
-        return self._index_col('SCAN_MODE')
+        return self._create_mult(self._index_col('SCAN_MODE'))
 
     def field_obs_instrument_vgiss_shutter_mode(self):
-        return self._index_col('SHUTTER_MODE')
+        return self._create_mult(self._index_col('SHUTTER_MODE'))
 
     def field_obs_instrument_vgiss_gain_mode(self):
-        return self._index_col('GAIN_MODE')
+        return self._create_mult(self._index_col('GAIN_MODE'))
 
     def field_obs_instrument_vgiss_edit_mode(self):
-        return self._index_col('EDIT_MODE')
+        return self._create_mult(self._index_col('EDIT_MODE'))
 
     def field_obs_instrument_vgiss_filter_name(self):
-        return self._index_col('FILTER_NAME')
+        return self._create_mult(self._index_col('FILTER_NAME'))
 
     def field_obs_instrument_vgiss_filter_number(self):
-        return self._index_col('FILTER_NUMBER')
+        return self._create_mult(self._index_col('FILTER_NUMBER'))
 
     def field_obs_instrument_vgiss_camera(self):
         camera = self._index_col('INSTRUMENT_NAME')
         assert camera in ['NARROW ANGLE CAMERA', 'WIDE ANGLE CAMERA']
-        return camera[0]
+        return self._create_mult(camera[0])
 
     def field_obs_instrument_vgiss_usable_lines(self):
         line1 = self._supp_index_col('FIRST_LINE')

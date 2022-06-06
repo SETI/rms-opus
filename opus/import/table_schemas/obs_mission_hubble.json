@@ -127,18 +127,18 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0,       "ACS-HRC",       "ACS-HRC", "010", "Y", null],
-              [   1,       "ACS-SBC",       "ACS-SBC", "020", "Y", null],
-              [   2,       "ACS-WFC",       "ACS-WFC", "030", "Y", null],
-              [   3,   "NICMOS-NIC1",   "NICMOS-NIC1", "040", "Y", null],
-              [   4,   "NICMOS-NIC2",   "NICMOS-NIC2", "050", "Y", null],
-              [   5,   "NICMOS-NIC3",   "NICMOS-NIC3", "060", "Y", null],
-              [   6,      "STIS-CCD",      "STIS-CCD", "070", "Y", null],
-              [   7, "STIS-FUV-MAMA", "STIS-FUV-MAMA", "080", "Y", null],
-              [   8, "STIS-NUV-MAMA", "STIS-NUV-MAMA", "090", "Y", null],
-              [   9,       "WFC3-IR",       "WFC3-IR", "100", "Y", null],
-              [  10,     "WFC3-UVIS",     "WFC3-UVIS", "110", "Y", null],
-              [  11,       "UNKNOWN",       "Unknown", "120", "Y", null]
+              [   0,       "ACS-HRC",       "ACS-HRC", "010", "Y", null, null],
+              [   1,       "ACS-SBC",       "ACS-SBC", "020", "Y", null, null],
+              [   2,       "ACS-WFC",       "ACS-WFC", "030", "Y", null, null],
+              [   3,   "NICMOS-NIC1",   "NICMOS-NIC1", "040", "Y", null, null],
+              [   4,   "NICMOS-NIC2",   "NICMOS-NIC2", "050", "Y", null, null],
+              [   5,   "NICMOS-NIC3",   "NICMOS-NIC3", "060", "Y", null, null],
+              [   6,      "STIS-CCD",      "STIS-CCD", "070", "Y", null, null],
+              [   7, "STIS-FUV-MAMA", "STIS-FUV-MAMA", "080", "Y", null, null],
+              [   8, "STIS-NUV-MAMA", "STIS-NUV-MAMA", "090", "Y", null, null],
+              [   9,       "WFC3-IR",       "WFC3-IR", "100", "Y", null, null],
+              [  10,     "WFC3-UVIS",     "WFC3-UVIS", "110", "Y", null, null],
+              [  11,       "UNKNOWN",       "Unknown", "120", "Y", null, null]
           ]
     },
     {
@@ -210,11 +210,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0,    "COARSE",    "Coarse", "010", "Y", null],
-              [   1,      "FINE",      "Fine", "020", "Y", null],
-              [   2,     "GYROS",     "Gyros", "030", "Y", null],
-              [   3, "FINE/GYRO", "Fine/Gyro", "040", "Y", null],
-              [   4,       "UNK",   "Unknown", "050", "Y", null]
+              [   0,    "COARSE",    "Coarse", "010", "Y", null, null],
+              [   1,      "FINE",      "Fine", "020", "Y", null, null],
+              [   2,     "GYROS",     "Gyros", "030", "Y", null, null],
+              [   3, "FINE/GYRO", "Fine/Gyro", "040", "Y", null, null],
+              [   4,       "UNK",   "Unknown", "050", "Y", null, null]
           ]
     },
     {
@@ -260,14 +260,14 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0, "LP",      "Long Pass", "010", "Y", null],
-              [   1,  "X", "Extremely Wide", "020", "Y", null],
-              [   2,  "W",      "Broadband", "030", "Y", null],
-              [   3,  "M",    "Medium Band", "040", "Y", null],
-              [   4,  "N",     "Narrowband", "050", "Y", null],
-              [   5, "FR",           "Ramp", "060", "Y", null],
-              [   6, "SP",  "Spectroscopic", "070", "Y", null],
-              [   7, "OT",          "Other", "080", "Y", null]
+              [   0, "LP",      "Long Pass", "010", "Y", null, null],
+              [   1,  "X", "Extremely Wide", "020", "Y", null, null],
+              [   2,  "W",      "Broadband", "030", "Y", null, null],
+              [   3,  "M",    "Medium Band", "040", "Y", null, null],
+              [   4,  "N",     "Narrowband", "050", "Y", null, null],
+              [   5, "FR",           "Ramp", "060", "Y", null, null],
+              [   6, "SP",  "Spectroscopic", "070", "Y", null, null],
+              [   7, "OT",          "Other", "080", "Y", null, null]
           ]
     },
     {
@@ -335,12 +335,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0,   "EXCESSIVE DOWNTIME",   "Excessive Downtime", "010", "Y", null],
-              [   1,        "INDETERMINATE",        "Indeterminate", "020", "Y", null],
-              [   2,          "INTERRUPTED",          "Interrupted", "030", "Y", null],
-              [   3,               "NORMAL",               "Normal", "040", "Y", null],
-              [   4, "TDF-DOWN AT EXPSTART", "TDF-Down At Expstart", "050", "Y", null],
-              [   5,              "UNKNOWN",              "Unknown", "060", "Y", null]
+              [   0,   "EXCESSIVE DOWNTIME",   "Excessive Downtime", "010", "Y", null, null],
+              [   1,        "INDETERMINATE",        "Indeterminate", "020", "Y", null, null],
+              [   2,          "INTERRUPTED",          "Interrupted", "030", "Y", null, null],
+              [   3,               "NORMAL",               "Normal", "040", "Y", null, null],
+              [   4, "TDF-DOWN AT EXPSTART", "TDF-Down At Expstart", "050", "Y", null, null],
+              [   5,              "UNKNOWN",              "Unknown", "060", "Y", null, null]
           ]
     },
     {
@@ -364,12 +364,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0,  "A2D0",  "A2D0", "010", "Y", null],
-              [   1,  "A2D1",  "A2D1", "020", "Y", null],
-              [   2,  "A2D4",  "A2D4", "030", "Y", null],
-              [   3,  "A2D7",  "A2D7", "040", "Y", null],
-              [   4, "A2D15", "A2D15", "050", "Y", null],
-              [   5,   "N/A",   "N/A", "060", "Y", null]
+              [   0,  "A2D0",  "A2D0", "010", "Y", null, null],
+              [   1,  "A2D1",  "A2D1", "020", "Y", null, null],
+              [   2,  "A2D4",  "A2D4", "030", "Y", null, null],
+              [   3,  "A2D7",  "A2D7", "040", "Y", null, null],
+              [   4, "A2D15", "A2D15", "050", "Y", null, null],
+              [   5,   "N/A",   "N/A", "060", "Y", null, null]
           ]
     },
     {
@@ -394,14 +394,14 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0,      "ACCUM",      "ACCUM", "010", "Y", null],
-              [   1, "MULTIACCUM", "MULTIACCUM", "020", "Y", null],
-              [   2,        "ACQ",        "ACQ", "030", "Y", null],
-              [   3,   "ACQ/PEAK",   "ACQ/PEAK", "040", "Y", null],
-              [   4,       "FULL",       "FULL", "050", "Y", null],
-              [   5,       "AREA",       "AREA", "060", "Y", null],
-              [   6,       "CCUM",       "CCUM", "070", "Y", null],
-              [   7,   "TIME-TAG",   "TIME-TAG", "080", "Y", null]
+              [   0,      "ACCUM",      "ACCUM", "010", "Y", null, null],
+              [   1, "MULTIACCUM", "MULTIACCUM", "020", "Y", null, null],
+              [   2,        "ACQ",        "ACQ", "030", "Y", null, null],
+              [   3,   "ACQ/PEAK",   "ACQ/PEAK", "040", "Y", null, null],
+              [   4,       "FULL",       "FULL", "050", "Y", null, null],
+              [   5,       "AREA",       "AREA", "060", "Y", null, null],
+              [   6,       "CCUM",       "CCUM", "070", "Y", null, null],
+              [   7,   "TIME-TAG",   "TIME-TAG", "080", "Y", null, null]
           ]
     },
     {
@@ -510,11 +510,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0, "PC1", "PC1", "010", "Y", null],
-              [   1, "WF2", "WF2", "020", "Y", null],
-              [   2, "WF3", "WF3", "030", "Y", null],
-              [   3, "WF4", "WF4", "040", "Y", null],
-              [   4,  null, "N/A", "050", "Y", null]
+              [   0, "PC1", "PC1", "010", "Y", null, null],
+              [   1, "WF2", "WF2", "020", "Y", null, null],
+              [   2, "WF3", "WF3", "030", "Y", null, null],
+              [   3, "WF4", "WF4", "040", "Y", null, null],
+              [   4,  null, "N/A", "050", "Y", null, null]
           ]
     },
     {

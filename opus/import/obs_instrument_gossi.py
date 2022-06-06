@@ -133,8 +133,8 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
 
     def field_obs_general_planet_id(self):
         if self._index_col('ORBIT_NUMBER') is None:
-            return 'OTH'
-        return 'JUP'
+            return self._create_mult('OTH')
+        return self._create_mult('JUP')
 
     # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
     # We assume it means stop time like it does for Voyager, and because Mark
@@ -174,10 +174,10 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return max(time2 - time1, 0)
 
     def field_obs_general_quantity(self):
-        return 'REFLECT'
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ############################
@@ -205,7 +205,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'FRAM'
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         exposure = self._index_col('EXPOSURE_DURATION')
@@ -262,8 +262,8 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     def field_obs_mission_galileo_orbit_number(self):
         orbit = self._index_col('ORBIT_NUMBER')
         if orbit is None:
-            return None
-        return str(orbit)
+            return self._create_mult(None)
+        return self._create_mult(str(orbit))
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
         if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
@@ -316,19 +316,19 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return f'{min_id}-{max_id}'
 
     def field_obs_instrument_gossi_filter_name(self):
-        return self._index_col('FILTER_NAME')
+        return self._create_mult(self._index_col('FILTER_NAME'))
 
     def field_obs_instrument_gossi_filter_number(self):
-        return self._index_col('FILTER_NUMBER')
+        return self._create_mult(self._index_col('FILTER_NUMBER'))
 
     def field_obs_instrument_gossi_gain_mode_id(self):
-        return self._index_col('GAIN_MODE_ID')
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
 
     def field_obs_instrument_gossi_frame_duration(self):
-        return self._index_col('FRAME_DURATION')
+        return self._create_mult(self._index_col('FRAME_DURATION'))
 
     def field_obs_instrument_gossi_obstruction_id(self):
-        return self._index_col('OBSTRUCTION_ID')
+        return self._create_mult(self._index_col('OBSTRUCTION_ID'))
 
     def field_obs_instrument_gossi_compression_type(self):
-        return self._index_col('COMPRESSION_TYPE')
+        return self._create_mult(self._index_col('COMPRESSION_TYPE'))
