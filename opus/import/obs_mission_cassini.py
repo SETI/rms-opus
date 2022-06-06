@@ -252,7 +252,7 @@ class ObsMissionCassini(ObsCommon):
             self._announce_unknown_target_name(target_name)
             if self._ignore_errors:
                 return 'None'
-            return None
+            return None, None
         target_info = TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]
 
@@ -330,7 +330,7 @@ class ObsMissionCassini(ObsCommon):
     def field_obs_mission_cassini_obs_name(self):
         return self._some_index_col('OBSERVATION_ID')
 
-    def field_obs_mission_cassini_rev_no(self):
+    def _rev_no(self):
         obs_name = self._some_index_col('OBSERVATION_ID')
         if not self._cassini_valid_obs_name(obs_name):
             return None
@@ -338,14 +338,17 @@ class ObsMissionCassini(ObsCommon):
         rev_no = obs_parts[1][:3]
         if rev_no[0] == 'C':
             return None
-        return rev_no, rev_no
+        return rev_no
+
+    def field_obs_mission_cassini_rev_no(self):
+        return self._create_mult_keep_case(self._rev_no())
 
     def field_obs_mission_cassini_rev_no_int(self):
-        rev_no = self.field_obs_mission_cassini_rev_no()
+        rev_no = self._rev_no()
         if rev_no is None:
             return None
         try:
-            rev_no_cvt = opus_support.parse_cassini_orbit(rev_no[0])
+            rev_no_cvt = opus_support.parse_cassini_orbit(rev_no)
         except Exception as e:
             self._log_nonrepeating_error(
                 f'Unable to parse Cassini orbit "{rev_no}": {e}')
@@ -353,16 +356,16 @@ class ObsMissionCassini(ObsCommon):
         return rev_no_cvt
 
     def field_obs_mission_cassini_is_prime(self):
-        prime_inst = self.field_obs_mission_cassini_prime_inst_id()
+        prime_inst = self._prime_inst_id()
         inst_id = self.instrument_id
 
         # Change COISS to ISS, etc.
         inst_id = inst_id.replace('CO', '')
         if prime_inst == inst_id:
-            return 'Yes'
-        return 'No'
+            return self._create_mult('Yes')
+        return self._create_mult('No')
 
-    def field_obs_mission_cassini_prime_inst_id(self):
+    def _prime_inst_id(self):
         obs_name = self._some_index_col('OBSERVATION_ID')
         if obs_name is None:
             return 'UNK'
@@ -400,6 +403,9 @@ class ObsMissionCassini(ObsCommon):
 
         return prime_inst_id
 
+    def field_obs_mission_cassini_prime_inst_id(self):
+        return self._create_mult(self._prime_inst_id())
+
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         return None
 
@@ -415,24 +421,25 @@ class ObsMissionCassini(ObsCommon):
     def field_obs_mission_cassini_cassini_target_code(self):
         obs_name = self._some_index_col('OBSERVATION_ID')
         if obs_name is None:
-            return None
+            return self._create_mult(None)
         if not self._cassini_valid_obs_name(obs_name):
-            return None
+            return self._create_mult(None)
         obs_parts = obs_name.split('_')
         target_code = obs_parts[1][-2:]
         if target_code in _CASSINI_TARGET_CODE_MAPPING:
-            return target_code, _CASSINI_TARGET_CODE_MAPPING[target_code]
+            return self._create_mult(col_val=target_code,
+                                     disp_name=_CASSINI_TARGET_CODE_MAPPING[target_code])
 
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_cassini_cassini_target_name(self):
         if 'TARGET_NAME' not in self._metadata['index_row']: # RSS
-            return None
+            return self._create_mult(None)
         target_name = self._index_col('TARGET_NAME').title()
         target_name = target_name.replace(':', '') # Bug in COUVIS_0053 index
         if target_name == 'N/A':
-            return None
-        return target_name, target_name
+            return self._create_mult(None)
+        return self._create_mult_keep_case(target_name)
 
     def field_obs_mission_cassini_activity_name(self):
         obs_name = self._some_index_col('OBSERVATION_ID')

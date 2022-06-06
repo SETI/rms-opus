@@ -21,7 +21,7 @@ class ObsMissionHubble(ObsCommon):
         return filter_name.split('+')
 
     def _is_image(self):
-        obs_type = self.field_obs_general_observation_type()
+        obs_type = self._observation_type()
         assert obs_type in ('IMG', 'SPE', 'SPI')
         return obs_type == 'IMG' or obs_type == 'SPI'
 
@@ -60,32 +60,35 @@ class ObsMissionHubble(ObsCommon):
         instrument_id = self._index_col('INSTRUMENT_ID')
         image_date = self._index_col('START_TIME')[:10]
         filename = self._index_col('PRODUCT_ID')
-        planet = self.field_obs_general_planet_id()
+        planet = self._planet_id()
         if planet == 'OTH':
             pl_str = ''
         else:
             pl_str = planet[0]
         return f'{pl_str}_IMG_HST_{instrument_id}_{image_date}_{filename}'
 
-    def field_obs_general_planet_id(self):
+    def _planet_id(self):
         planet_name = self._index_col('PLANET_NAME')
         if planet_name not in ['VENUS', 'EARTH', 'MARS', 'JUPITER', 'SATURN',
                                'URANUS', 'NEPTUNE', 'PLUTO']:
             return 'OTH'
         return planet_name[:3]
 
+    def field_obs_general_planet_id(self):
+        return self._create_mult(self._planet_id())
+
     def field_obs_general_quantity(self):
         wl1 = self._index_col('MINIMUM_WAVELENGTH')
         wl2 = self._index_col('MAXIMUM_WAVELENGTH')
 
         if wl1 is None or wl2 is None:
-            return 'REFLECT'
+            return self._create_mult('REFLECT')
 
         # We call it "EMISSION" if at least 3/4 of the passband is below 350 nm
         # and the high end of the passband is below 400 nm.
         if wl2 < 0.4 and (3*wl1+wl2)/4 < 0.35:
-            return 'EMISSION'
-        return 'REFLECT'
+            return self._create_mult('EMISSION')
+        return self._create_mult('REFLECT')
 
 
     ##################################
@@ -94,8 +97,8 @@ class ObsMissionHubble(ObsCommon):
 
     def field_obs_type_image_image_type_id(self):
         if not self._is_image():
-            return None
-        return 'FRAM'
+            return self._create_mult(None)
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         if not self._is_image():
@@ -187,9 +190,9 @@ class ObsMissionHubble(ObsCommon):
     def field_obs_mission_hubble_detector_id(self):
         detector_id = self._index_col('DETECTOR_ID')
         if detector_id == '':
-            return 'UNKNOWN'
+            return self._create_mult('UNKNOWN')
         ret = self.instrument_id[3:] + '-' + detector_id
-        return (ret, ret)
+        return self._create_mult_keep_case(ret)
 
     def field_obs_mission_hubble_publication_date(self):
         return self._time_from_index(column='PUBLICATION_DATE')
@@ -198,7 +201,8 @@ class ObsMissionHubble(ObsCommon):
         return self._index_col('HST_TARGET_NAME')
 
     def field_obs_mission_hubble_fine_guidance_system_lock_type(self):
-        return self._index_col('FINE_GUIDANCE_SYSTEM_LOCK_TYPE')
+        lock_type = self._index_col('FINE_GUIDANCE_SYSTEM_LOCK_TYPE')
+        return self._create_mult(lock_type)
 
     def field_obs_mission_hubble_filter_name(self):
         instrument = self.instrument_id
@@ -208,7 +212,7 @@ class ObsMissionHubble(ObsCommon):
         else:
             filter_name = filter_name.replace('_', ' ')
         ret = instrument[3:] + '-' + filter_name
-        return (ret, ret)
+        return self._create_mult_keep_case(col_val=ret, grouping=instrument[3:])
 
     def field_obs_mission_hubble_filter_type(self):
         raise NotImplementedError # Required
@@ -217,34 +221,34 @@ class ObsMissionHubble(ObsCommon):
         instrument = self.instrument_id
         aperture = self._index_col('APERTURE_TYPE')
         ret = instrument[3:] + '-' + aperture
-        return (ret, ret)
+        return self._create_mult_keep_case(col_val=ret, grouping=instrument[3:])
 
     def field_obs_mission_hubble_proposed_aperture_type(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_exposure_type(self):
-        return self._index_col('EXPOSURE_TYPE')
+        return self._create_mult(self._index_col('EXPOSURE_TYPE'))
 
     def field_obs_mission_hubble_gain_mode_id(self):
-        return self._index_col('GAIN_MODE_ID')
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
 
     def field_obs_mission_hubble_instrument_mode_id(self):
-        return self._index_col('INSTRUMENT_MODE_ID')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 
     def field_obs_mission_hubble_pc1_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_wf2_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_wf3_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_wf4_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_targeted_detector_id(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_optical_element(self):
-        return None
+        return self._create_mult(None)

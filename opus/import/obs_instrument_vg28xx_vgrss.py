@@ -28,10 +28,10 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_general_quantity(self):
-        return 'OPDEPTH'
+        return self._create_mult('OPDEPTH')
 
     def field_obs_general_observation_type(self):
-        return 'OCC'
+        return self._create_mult('OCC')
 
 
     ################################
@@ -39,23 +39,23 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'RAD'
+        return self._create_mult('RAD')
 
     def field_obs_profile_occ_dir(self):
-        return self._index_col('RING_OCCULTATION_DIRECTION')[0]
+        return self._create_mult(self._index_col('RING_OCCULTATION_DIRECTION')[0])
 
     def field_obs_profile_body_occ_flag(self):
-        return self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
+        return self._create_mult(self._supp_index_col('PLANETARY_OCCULTATION_FLAG'))
 
     def field_obs_profile_quality_score(self):
-        return 'GOOD'
+        return self._create_mult('GOOD')
 
     def field_obs_profile_host(self):
         receiver_host = self._supp_index_col('RECEIVER_HOST_NAME')
         dsn = int(receiver_host[-2:])
 
         ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
-        return (ret, ret)
+        return self._create_mult_keep_case(col_val=ret, grouping='DSNs')
 
 
     #####################################
@@ -64,7 +64,8 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
 
 
     def _is_voyager_at_uranus(self):
-        return self.field_obs_general_target_name()[0] == 'U RINGS'
+        target_name, target_disp_name = self._target_name()
+        return target_name == 'U RINGS'
 
     # Source: Voyager RSS is at south, observer: earth is at north.
     # Note: we searched VGISS start_time in OPUS and looked at north based emssion

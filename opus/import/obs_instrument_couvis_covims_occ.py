@@ -49,19 +49,22 @@ class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'STE'
+        return self._create_mult('STE')
 
     def field_obs_profile_quality_score(self):
-        return self._supp_index_col('DATA_QUALITY_SCORE')
+        return self._create_mult(self._supp_index_col('DATA_QUALITY_SCORE'))
 
     def field_obs_profile_source(self):
         target_name, target_name_info = self._star_name_helper('index_row', 'STAR_NAME')
         if target_name_info is None:
-            return None
-        return target_name, target_name_info[2]
+            return self._create_mult(None)
+        if target_name.upper().startswith('CASSINI'):
+            return self._create_mult(col_val=target_name, disp_name=target_name_info[2])
+        return self._create_mult(col_val=target_name, disp_name=target_name_info[2],
+                                 grouping='Stars')
 
     def field_obs_profile_host(self):
-        return 'Cassini'
+        return self._create_mult('Cassini')
 
 
     #####################################

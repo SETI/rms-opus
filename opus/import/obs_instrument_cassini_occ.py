@@ -23,19 +23,25 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
-
-    def field_obs_general_target_name(self):
+    def _target_name(self):
         target_name, target_info = self._get_target_info('S RINGS')
         return target_name, target_info[2]
 
+    def field_obs_general_target_name(self):
+        target_name, target_disp_name = self._target_name()
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
+
     def field_obs_general_planet_id(self):
-        return 'SAT'
+        return self._create_mult('SAT')
 
     def field_obs_general_quantity(self):
-        return 'OPDEPTH'
+        return self._create_mult('OPDEPTH')
 
     def field_obs_general_observation_type(self):
-        return 'OCC'
+        return self._create_mult('OCC')
 
 
     ################################
@@ -48,15 +54,15 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
         # We don't allow "Both" as a direction since these are always split into
         # separate files.
         if '_I_' in filespec:
-            return 'I'
+            return self._create_mult('I')
         if '_E_' in filespec:
-            return 'E'
+            return self._create_mult('E')
         self._log_nonrepeating_error(
             f'Unknown ring occultation direction in filespec "{filespec}"')
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_body_occ_flag(self):
-        return self._index_col('PLANETARY_OCCULTATION_FLAG')
+        return self._create_mult(self._index_col('PLANETARY_OCCULTATION_FLAG'))
 
     def field_obs_profile_optical_depth1(self):
         return self._supp_index_col('LOWEST_DETECTABLE_OPACITY')

@@ -96,10 +96,10 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         return f'{pl_str}_IMG_NH_MVIC_{image_num}_{camera}'
 
     def field_obs_general_quantity(self):
-        return 'REFLECT'
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ##################################
@@ -107,7 +107,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'PUSH'
+        return self._create_mult('PUSH')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()
@@ -163,4 +163,5 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         return self.instrument_id
 
     def field_obs_instrument_nhmvic_instrument_compression_type(self):
-        return self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
+        compression_type = self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
+        return self._create_mult(compression_type)

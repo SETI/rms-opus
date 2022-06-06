@@ -85,8 +85,15 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_target_name(self):
+    def _target_name(self):
         return self._cassini_intended_target_name()
+
+    def field_obs_general_target_name(self):
+        target_name, target_disp_name = self._target_name()
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
 
     def field_obs_general_time2(self):
         channel, image_time = self._channel_time_helper()
@@ -151,23 +158,23 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         return f'{pl_str}_CO_UVIS_{image_time_str}_{image_camera}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        return self._create_mult(self._cassini_planet_id())
 
     def field_obs_general_quantity(self):
         if not self._has_supp_index():
-            return None
+            return self._create_mult(None)
         description = self._supp_index_col('DESCRIPTION').upper()
         if (description.find('OCCULTATION') != -1 and
             description.find('CALIBRATION') == -1):
-            return 'OPDEPTH'
-        return 'EMISSION'
+            return self._create_mult('OPDEPTH')
+        return self._create_mult('EMISSION')
 
     def field_obs_general_observation_type(self):
         channel, image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
-            return 'TS' # Time Series
+            return self._create_mult('TS') # Time Series
         assert channel == 'EUV' or channel == 'FUV'
-        return 'SCU' # Spectral Cube
+        return self._create_mult('SCU') # Spectral Cube
 
 
     ############################
@@ -188,8 +195,8 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
 
     def field_obs_type_image_image_type_id(self):
         if self._is_image():
-            return 'PUSH'
-        return None
+            return self._create_mult('PUSH')
+        return self._create_mult(None)
 
     def field_obs_type_image_duration(self):
         if not self._is_image():
@@ -310,8 +317,8 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
     def field_obs_wavelength_spec_flag(self):
         spec_size = self.field_obs_wavelength_spec_size()
         if spec_size is None or spec_size < 1:
-            return 'N'
-        return 'Y'
+            return self._create_mult('N')
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         channel, image_time = self._channel_time_helper()
@@ -357,7 +364,7 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         return sc_cvt + time2-time1
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._cassini_mission_phase_name()
+        return self._create_mult(self._cassini_mission_phase_name())
 
 
     ###############################################
@@ -377,32 +384,32 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         obstype = self._index_col('OBSERVATION_TYPE')
         if obstype == '' or obstype == 'NULL':
             obstype = 'NONE'
-        return obstype.upper()
+        return self._create_mult(obstype.upper())
 
     def field_obs_instrument_couvis_integration_duration(self):
         return self._integration_duration_helper()
 
     def field_obs_instrument_couvis_compression_type(self):
-        return self._index_col('COMPRESSION_TYPE')
+        return self._create_mult(self._index_col('COMPRESSION_TYPE'))
 
     def field_obs_instrument_couvis_occultation_port_state(self):
         occ_state = self._index_col('OCCULTATION_PORT_STATE')
         if occ_state == 'NULL':
             occ_state = 'N/A'
-        return occ_state.upper()
+        return self._create_mult(occ_state.upper())
 
     def field_obs_instrument_couvis_slit_state(self):
-        return self._index_col('SLIT_STATE')
+        return self._create_mult(self._index_col('SLIT_STATE'))
 
     def field_obs_instrument_couvis_test_pulse_state(self):
-        return self._index_col('TEST_PULSE_STATE')
+        return self._create_mult(self._index_col('TEST_PULSE_STATE'))
 
     def field_obs_instrument_couvis_dwell_time(self):
-        return self._index_col('DWELL_TIME')
+        return self._create_mult(self._index_col('DWELL_TIME'))
 
     def field_obs_instrument_couvis_channel(self):
         channel, image_time = self._channel_time_helper()
-        return (channel, channel)
+        return self._create_mult_keep_case(channel)
 
     def field_obs_instrument_couvis_band1(self):
         return self._supp_index_col('MINIMUM_BAND_NUMBER')

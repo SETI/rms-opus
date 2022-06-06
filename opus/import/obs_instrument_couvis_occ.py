@@ -56,7 +56,7 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
         return self._supp_index_col('INTEGRATION_DURATION') / 1000 # msec -> sec
 
     def field_obs_profile_wl_band(self):
-        return 'UV'
+        return self._create_mult('UV')
 
 
     #######################################
@@ -94,7 +94,7 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._cassini_mission_phase_name()
+        return self._create_mult(self._cassini_mission_phase_name())
 
 
     ###############################################
@@ -111,29 +111,29 @@ class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
         return self.instrument_id
 
     def field_obs_instrument_couvis_observation_type(self):
-        return 'NONE'
+        return self._create_mult('NONE')
 
     def field_obs_instrument_couvis_integration_duration(self):
         return self.field_obs_profile_temporal_sampling()
 
     def field_obs_instrument_couvis_compression_type(self):
         comp = self._supp_index_col('COMPRESSION_TYPE')
-        return (comp, comp)
+        return self._create_mult_keep_case(comp)
 
     def field_obs_instrument_couvis_occultation_port_state(self):
-        return 'N/A'
+        return self._create_mult('N/A')
 
     def field_obs_instrument_couvis_slit_state(self):
-        return 'NULL'
+        return self._create_mult('NULL')
 
     def field_obs_instrument_couvis_test_pulse_state(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_couvis_dwell_time(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_instrument_couvis_channel(self):
-        return ('HSP', 'HSP')
+        return self._create_mult_keep_case('HSP')
 
     def field_obs_instrument_couvis_band1(self):
         return None

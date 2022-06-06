@@ -16,8 +16,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
 
 
     def _stis_spec_flag(self):
-        obs_type = self.field_obs_general_observation_type()
-        return obs_type == 'SPE'
+        return self._observation_type() == 'SPE'
 
 
     #############################
@@ -33,7 +32,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_observation_type(self):
+    def _observation_type(self):
         obs_type = self._index_col('OBSERVATION_TYPE')
         if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'):
             self._log_nonrepeating_error(f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
@@ -41,6 +40,9 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
         if obs_type.startswith('SPEC'): # SPECTRUM or SPECTROSCOPIC
             return 'SPE' # Spectrum (1-D with spectral information)
         return 'IMG' # Image
+
+    def field_obs_general_observation_type(self):
+        return self._create_mult(self._observation_type())
 
 
     ##################################
@@ -85,8 +87,8 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
 
     def field_obs_wavelength_spec_flag(self):
         if self._stis_spec_flag():
-            return 'Y'
-        return 'N'
+            return self._create_mult('Y')
+        return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
         if not self._stis_spec_flag():
@@ -103,7 +105,7 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
         return max(lines, samples, x1d_size)
 
     def field_obs_wavelength_polarization_type(self):
-        return 'NONE'
+        return self._create_mult('NONE')
 
 
     ######################################
@@ -116,21 +118,21 @@ class ObsInstrumentHSTSTIS(ObsMissionHubble):
         # STIS doesn't do filter stacking
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
-            return None
+            return self._create_mult(None)
 
         if filter1 in ('CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS',
                        'STRONTIUM_FLUORIDE', 'ND_3'):
-            return 'LP'
+            return self._create_mult('LP')
         if filter1 == 'LYMAN_ALPHA':
-            return 'N'
+            return self._create_mult('N')
 
         self._log_nonrepeating_error(f'Unknown filter "{filter1}"')
-        return None
+        return self._create_mult(None)
 
     def field_obs_mission_hubble_proposed_aperture_type(self):
         aperture = self._index_col('PROPOSED_APERTURE_TYPE').upper()
-        return (aperture, aperture)
+        return self._create_mult_keep_case(aperture)
 
     def field_obs_mission_hubble_optical_element(self):
         element = self._index_col('OPTICAL_ELEMENT_NAME').upper()
-        return (element, element)
+        return self._create_mult_keep_case(element)

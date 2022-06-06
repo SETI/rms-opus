@@ -61,10 +61,10 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "FRAM",       "Frame",   "010", "Y", null],
-              [   1, "RAST", "Raster Scan",   "020", "Y", null],
-              [   2, "PUSH",   "Pushbroom",   "030", "Y", null],
-              [   3,   null,         "N/A",   "040", "Y", null]
+              [   0, "FRAM",       "Frame",   "010", "Y", null, null],
+              [   1, "RAST", "Raster Scan",   "020", "Y", null, null],
+              [   2, "PUSH",   "Pushbroom",   "030", "Y", null, null],
+              [   3,   null,         "N/A",   "040", "Y", null, null]
           ]
     },
     {

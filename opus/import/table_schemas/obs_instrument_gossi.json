@@ -100,14 +100,14 @@
         "pi_tooltip": "",
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
-              [   0,    "CLEAR",                        "Clear", "010", "Y", null],
-              [   1,   "VIOLET",                       "Violet", "020", "Y", null],
-              [   2,    "GREEN",                        "Green", "030", "Y", null],
-              [   3,      "RED",                          "Red", "040", "Y", null],
-              [   4,   "IR-7270",           "Methane [IR-7270]", "050", "Y", null],
-              [   5,   "IR-7560", "Methane Continuum [IR-7560]", "060", "Y", null],
-              [   6,   "IR-8890",           "Methane [IR-8890]", "070", "Y", null],
-              [   7,   "IR-9680",          "Infrared [IR-9680]", "080", "Y", null]
+              [   0,    "CLEAR",                        "Clear", "010", "Y", null, null],
+              [   1,   "VIOLET",                       "Violet", "020", "Y", null, null],
+              [   2,    "GREEN",                        "Green", "030", "Y", null, null],
+              [   3,      "RED",                          "Red", "040", "Y", null, null],
+              [   4,   "IR-7270",           "Methane [IR-7270]", "050", "Y", null, null],
+              [   5,   "IR-7560", "Methane Continuum [IR-7560]", "060", "Y", null, null],
+              [   6,   "IR-8890",           "Methane [IR-8890]", "070", "Y", null, null],
+              [   7,   "IR-9680",          "Infrared [IR-9680]", "080", "Y", null, null]
           ]
     },
     {
@@ -158,10 +158,10 @@
         "pi_tooltip": "",
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
-              [   0,  "10K",  "10K", "010", "Y", null],
-              [   1,  "40K",  "40K", "020", "Y", null],
-              [   2, "100K", "100K", "030", "Y", null],
-              [   3, "400K", "400K", "040", "Y", null]
+              [   0,  "10K",  "10K", "010", "Y", null, null],
+              [   1,  "40K",  "40K", "020", "Y", null, null],
+              [   2, "100K", "100K", "030", "Y", null, null],
+              [   3, "400K", "400K", "040", "Y", null, null]
           ]
     },
     {
@@ -211,9 +211,9 @@
         "pi_tooltip": "",
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
-              [   0,          "POSSIBLE",          "Possible", "010", "Y", null],
-              [   1,      "NOT POSSIBLE",      "Not Possible", "020", "Y", null],
-              [   2, "PRESENCE VERIFIED", "Presence Verified", "030", "Y", null]
+              [   0,          "POSSIBLE",          "Possible", "010", "Y", null, null],
+              [   1,      "NOT POSSIBLE",      "Not Possible", "020", "Y", null, null],
+              [   2, "PRESENCE VERIFIED", "Presence Verified", "030", "Y", null, null]
           ]
     },
     {
@@ -239,10 +239,10 @@
         "pi_tooltip": "",
         "comments": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one.",
         "mult_options": [
-              [   0,        "BARC RATE CONTROL",                     "BARC", "010", "Y", null],
-              [   1,                  "HUFFMAN",                  "Huffman", "020", "Y", null],
-              [   2, "INTEGER COSINE TRANSFORM", "Integer Cosine Transform", "030", "Y", null],
-              [   3,                     "NONE",                     "None", "040", "Y", null]
+              [   0,        "BARC RATE CONTROL",                     "BARC", "010", "Y", null, null],
+              [   1,                  "HUFFMAN",                  "Huffman", "020", "Y", null, null],
+              [   2, "INTEGER COSINE TRANSFORM", "Integer Cosine Transform", "030", "Y", null, null],
+              [   3,                     "NONE",                     "None", "040", "Y", null, null]
           ]
     },
     {

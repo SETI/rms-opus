@@ -22,7 +22,7 @@ import settings
 import os
 
 from django.apps import apps
-from django.core.exceptions import FieldError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import render
 from django.template.loader import get_template
@@ -108,8 +108,7 @@ def api_notifications(request):
         }
     """
     api_code = enter_api_call('api_notifications', request)
-
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -245,6 +244,23 @@ def api_get_widget(request, **kwargs):
     Arguments: slug=<slug>
                addlink=true|false XXX???
     """
+
+    def _update_form_with_grouping(form, form_vals, glabel, gvalue):
+        form += ("\n\n"
+                 +'<div class="mult_group_label_container'
+                 +' mult_group_' + str(glabel) + '">'
+                 +'<span class="indicator fa fa-plus">'
+                 +'</span>'
+                 +'<span class="mult_group_label">'
+                 +str(glabel) + '</span></div>'
+                 +'<ul class="mult_group"'
+                 +' data-group=' + str(glabel) + '>'
+                 +SearchForm(form_vals,
+                             auto_id='%s_' + str(gvalue),
+                             grouping=gvalue).as_ul()
+                 +'</ul>')
+        return form
+
     api_code = enter_api_call('api_get_widget', request, kwargs)
 
     slug = strip_numeric_suffix(kwargs['slug'])
@@ -404,35 +420,24 @@ def api_get_widget(request, **kwargs):
                 new_values.append(val)
             form_vals = {slug: new_values}
 
-        # XXX It's horrible that this whole section is inside a try/except
-        try:
-            _ = model.objects.distinct().values('grouping')
-            grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
-            grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
-            for group_info in grouping_model.objects.order_by('disp_order'):
-                gvalue = group_info.value
-                glabel = group_info.label if group_info.label else 'Other'
-                if glabel == 'NULL':
-                    glabel = 'Other'
-                if model.objects.filter(grouping=gvalue)[0:1]:
-                    form += ("\n\n"
-                             +'<div class="mult_group_label_container'
-                             +' mult_group_' + str(glabel) + '">'
-                             +'<span class="indicator fa fa-plus">'
-                             +'</span>'
-                             +'<span class="mult_group_label">'
-                             +str(glabel) + '</span></div>'
-                             +'<ul class="mult_group"'
-                             +' data-group=' + str(glabel) + '>'
-                             +SearchForm(form_vals,
-                                         auto_id='%s_' + str(gvalue),
-                                         grouping=gvalue).as_ul()
-                             +'</ul>')
+        # For entries with "None" grouping value, we don't group them.
+        # None grouping values will be displayed before grouping values
+        if model.objects.filter(grouping=None):
+            form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
 
-        except FieldError:
-            # this model does not have grouping
-            form = SearchForm(form_vals, auto_id=auto_id).as_ul()
-
+        # Group the entries with the same grouping values.
+        # Different groups will be displayed based on group_disp_order
+        grouping_entries = (model.objects
+                            .order_by('group_disp_order')
+                            .distinct()
+                            .values('grouping'))
+        for entry in grouping_entries:
+            glabel = entry['grouping']
+            # glabel = entry.grouping
+            if glabel is not None and glabel != 'NULL':
+                if model.objects.filter(grouping=glabel)[0:1]:
+                    form = _update_form_with_grouping(form, form_vals,
+                                                      glabel, glabel)
     else:  # all other form types
         if param_qualified_name in selections:
             form_vals = {slug:selections[param_qualified_name]}
@@ -654,7 +659,7 @@ def api_normalize_url(request):
 
     api_code = enter_api_call('api_normalize_url', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
         exit_api_call(api_code, ret)
         raise ret

@@ -57,29 +57,29 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,      "COCIRS",           "Cassini CIRS", "010", "Y", null],
-              [   1,       "COISS",            "Cassini ISS", "020", "Y", null],
-              [   2,       "CORSS",            "Cassini RSS", "030", "Y", null],
-              [   3,      "COUVIS",           "Cassini UVIS", "040", "Y", null],
-              [   4,      "COVIMS",           "Cassini VIMS", "050", "Y", null],
-              [   5,       "GOSSI",            "Galileo SSI", "060", "Y", null],
-              [   6,       "VGISS",            "Voyager ISS", "070", "Y", null],
-              [   7,       "VGPPS",            "Voyager PPS", "080", "Y", null],
-              [   8,       "VGRSS",            "Voyager RSS", "090", "Y", null],
-              [   9,       "VGUVS",            "Voyager UVS", "100", "Y", null],
-              [  10,      "HSTACS",             "Hubble ACS", "110", "Y", null],
-              [  11,   "HSTNICMOS",          "Hubble NICMOS", "120", "Y", null],
-              [  12,     "HSTSTIS",            "Hubble STIS", "130", "Y", null],
-              [  13,     "HSTWFC3",            "Hubble WFC3", "140", "Y", null],
-              [  14,    "HSTWFPC2",           "Hubble WFPC2", "150", "Y", null],
-              [  15,     "NHLORRI",     "New Horizons LORRI", "160", "Y", null],
-              [  16,      "NHMVIC",      "New Horizons MVIC", "170", "Y", null],
-              [  17,   "ESO1MAPPH",         "ESO 1-m ApPhot", "180", "Y", null],
-              [  18,  "ESO22MAPPH",       "ESO 2.2-m ApPhot", "190", "Y", null],
-              [  19,    "IRTFURAC",         "NASA IRTF URAC", "200", "Y", null],
-              [  20,  "LICK1MCCDC",           "Lick 1-m CCD", "210", "Y", null],
-              [  21, "MCD27MIIRAR",    "McDonald 2.7-m INSB", "220", "Y", null],
-              [  22,  "PAL200CIRC", "Palomar 200-in Cass IR", "230", "Y", null]
+              [   0,      "COCIRS",           "Cassini CIRS", "010", "Y",           null,  null],
+              [   1,       "COISS",            "Cassini ISS", "020", "Y",           null,  null],
+              [   2,       "CORSS",            "Cassini RSS", "030", "Y",           null,  null],
+              [   3,      "COUVIS",           "Cassini UVIS", "040", "Y",           null,  null],
+              [   4,      "COVIMS",           "Cassini VIMS", "050", "Y",           null,  null],
+              [   5,       "GOSSI",            "Galileo SSI", "060", "Y",           null,  null],
+              [   6,       "VGISS",            "Voyager ISS", "070", "Y",           null,  null],
+              [   7,       "VGPPS",            "Voyager PPS", "080", "Y",           null,  null],
+              [   8,       "VGRSS",            "Voyager RSS", "090", "Y",           null,  null],
+              [   9,       "VGUVS",            "Voyager UVS", "100", "Y",           null,  null],
+              [  10,      "HSTACS",             "Hubble ACS", "110", "Y",           null,  null],
+              [  11,   "HSTNICMOS",          "Hubble NICMOS", "120", "Y",           null,  null],
+              [  12,     "HSTSTIS",            "Hubble STIS", "130", "Y",           null,  null],
+              [  13,     "HSTWFC3",            "Hubble WFC3", "140", "Y",           null,  null],
+              [  14,    "HSTWFPC2",           "Hubble WFPC2", "150", "Y",           null,  null],
+              [  15,     "NHLORRI",     "New Horizons LORRI", "160", "Y",           null,  null],
+              [  16,      "NHMVIC",      "New Horizons MVIC", "170", "Y",           null,  null],
+              [  17,   "ESO1MAPPH",         "ESO 1-m ApPhot", "180", "Y", "Ground-based", "010"],
+              [  18,  "ESO22MAPPH",       "ESO 2.2-m ApPhot", "190", "Y", "Ground-based", "010"],
+              [  19,    "IRTFURAC",         "NASA IRTF URAC", "200", "Y", "Ground-based", "010"],
+              [  20,  "LICK1MCCDC",           "Lick 1-m CCD", "210", "Y", "Ground-based", "010"],
+              [  21, "MCD27MIIRAR",    "McDonald 2.7-m INSB", "220", "Y", "Ground-based", "010"],
+              [  22,  "PAL200CIRC", "Palomar 200-in Cass IR", "230", "Y", "Ground-based", "010"]
           ]
     },
     {
@@ -107,12 +107,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,  "CO",      "Cassini", "010", "Y", null],
-              [   1,  "GO",      "Galileo", "020", "Y", null],
-              [   2, "HST",       "Hubble", "030", "Y", null],
-              [   3,  "NH", "New Horizons", "040", "Y", null],
-              [   4,  "VG",      "Voyager", "050", "Y", null],
-              [   5,  "GB", "Ground-based", "060", "Y", null]
+              [   0,  "CO",      "Cassini", "010", "Y", null, null],
+              [   1,  "GO",      "Galileo", "020", "Y", null, null],
+              [   2, "HST",       "Hubble", "030", "Y", null, null],
+              [   3,  "NH", "New Horizons", "040", "Y", null, null],
+              [   4,  "VG",      "Voyager", "050", "Y", null, null],
+              [   5,  "GB", "Ground-based", "060", "Y", null, null]
           ]
     },
     {
@@ -137,13 +137,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,  "CO",      "Cassini", "010", "Y", null],
-              [   1,  "GO",      "Galileo", "020", "Y", null],
-              [   2, "HST",       "Hubble", "030", "Y", null],
-              [   3,  "NH", "New Horizons", "040", "Y", null],
-              [   4, "VG1",    "Voyager 1", "050", "Y", null],
-              [   5, "VG2",    "Voyager 2", "060", "Y", null],
-              [   6,  "GB", "Ground-based", "070", "Y", null]
+              [   0,  "CO",      "Cassini", "010", "Y", null, null],
+              [   1,  "GO",      "Galileo", "020", "Y", null, null],
+              [   2, "HST",       "Hubble", "030", "Y", null, null],
+              [   3,  "NH", "New Horizons", "040", "Y", null, null],
+              [   4, "VG1",    "Voyager 1", "050", "Y", null, null],
+              [   5, "VG2",    "Voyager 2", "060", "Y", null, null],
+              [   6,  "GB", "Ground-based", "070", "Y", null, null]
           ]
     },
     {
@@ -170,15 +170,15 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "VEN",   "Venus", "010", "Y", null],
-              [   1, "EAR",   "Earth", "020", "Y", null],
-              [   2, "MAR",    "Mars", "030", "Y", null],
-              [   3, "JUP", "Jupiter", "040", "Y", null],
-              [   4, "SAT",  "Saturn", "050", "Y", null],
-              [   5, "URA",  "Uranus", "060", "Y", null],
-              [   6, "NEP", "Neptune", "070", "Y", null],
-              [   7, "PLU",   "Pluto", "080", "Y", null],
-              [   8, "OTH",   "Other", "090", "Y", null]
+              [   0, "VEN",   "Venus", "010", "Y", null, null],
+              [   1, "EAR",   "Earth", "020", "Y", null, null],
+              [   2, "MAR",    "Mars", "030", "Y", null, null],
+              [   3, "JUP", "Jupiter", "040", "Y", null, null],
+              [   4, "SAT",  "Saturn", "050", "Y", null, null],
+              [   5, "URA",  "Uranus", "060", "Y", null, null],
+              [   6, "NEP", "Neptune", "070", "Y", null, null],
+              [   7, "PLU",   "Pluto", "080", "Y", null, null],
+              [   8, "OTH",   "Other", "090", "Y", null, null]
           ]
     },
     {
@@ -226,13 +226,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,     "PLANET",               "Planet", "010", "Y", null],
-              [   1,     "REG_SAT",   "Regular Satellite", "020", "Y", null],
-              [   2,     "IRR_SAT", "Irregular Satellite", "030", "Y", null],
-              [   3,        "RING",                "Ring", "040", "Y", null],
-              [   4,         "SKY",                 "Sky", "050", "Y", null],
-              [   5, "CALIBRATION",         "Calibration", "060", "Y", null],
-              [   6,       "OTHER",               "Other", "070", "Y", null]
+              [   0,     "PLANET",               "Planet", "010", "Y", null, null],
+              [   1,     "REG_SAT",   "Regular Satellite", "020", "Y", null, null],
+              [   2,     "IRR_SAT", "Irregular Satellite", "030", "Y", null, null],
+              [   3,        "RING",                "Ring", "040", "Y", null, null],
+              [   4,         "SKY",                 "Sky", "050", "Y", null, null],
+              [   5, "CALIBRATION",         "Calibration", "060", "Y", null, null],
+              [   6,       "OTHER",               "Other", "070", "Y", null, null]
           ]
     },
     {
@@ -331,10 +331,10 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,  "REFLECT",     "Reflectivity", "010", "Y", null],
-              [   1,  "THERMAL", "Thermal Emission", "020", "Y", null],
-              [   2,  "OPDEPTH",    "Optical Depth", "030", "Y", null],
-              [   3, "EMISSION",         "Emission", "040", "Y", null]
+              [   0,  "REFLECT",     "Reflectivity", "010", "Y", null, null],
+              [   1,  "THERMAL", "Thermal Emission", "020", "Y", null, null],
+              [   2,  "OPDEPTH",    "Optical Depth", "030", "Y", null, null],
+              [   3, "EMISSION",         "Emission", "040", "Y", null, null]
           ]
     },
     {
@@ -482,14 +482,14 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0, "IMG",                "Image", "010", "Y", null],
-              [   1, "SPE",             "Spectrum", "020", "Y", null],
-              [   2, "SPI",       "Spectral Image", "030", "Y", null],
-              [   3, "SCU",        "Spectral Cube", "040", "Y", null],
-              [   4,  "TS",          "Time Series", "050", "Y", null],
-              [   5, "STS", "Spectral Time Series", "060", "Y", null],
-              [   6, "OCC",  "Occultation Profile", "070", "Y", null],
-              [   7, "REF",  "Reflectance Profile", "080", "Y", null]
+              [   0, "IMG",                "Image", "010", "Y", null, null],
+              [   1, "SPE",             "Spectrum", "020", "Y", null, null],
+              [   2, "SPI",       "Spectral Image", "030", "Y", null, null],
+              [   3, "SCU",        "Spectral Cube", "040", "Y", null, null],
+              [   4,  "TS",          "Time Series", "050", "Y", null, null],
+              [   5, "STS", "Spectral Time Series", "060", "Y", null, null],
+              [   6, "OCC",  "Occultation Profile", "070", "Y", null, null],
+              [   7, "REF",  "Reflectance Profile", "080", "Y", null, null]
         ]
     },
     {

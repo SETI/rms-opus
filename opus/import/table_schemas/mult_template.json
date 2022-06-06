@@ -28,6 +28,16 @@
         "field_notnull": true
     },
     {
+        "field_name": "grouping",
+        "field_type": "char100",
+        "field_default": null
+    },
+    {
+        "field_name": "group_disp_order",
+        "field_type": "char100",
+        "field_default": null
+    },
+    {
         "field_name": "timestamp",
         "field_type": "timestamp"
     }

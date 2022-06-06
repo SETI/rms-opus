@@ -37,9 +37,11 @@ class cartTests(TestCase):
 
     def test__api_view_cart_no_request(self):
         "[test_cart.py] api_view_cart: no request"
+        no_request = self.factory.get('dummy')
+        no_request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__cart/view.html'):
-            api_view_cart(None)
+            api_view_cart(no_request)
 
     def test__api_view_cart_no_get(self):
         "[test_cart.py] api_view_cart: no GET"
@@ -56,9 +58,11 @@ class cartTests(TestCase):
 
     def test__api_cart_status_no_request(self):
         "[test_cart.py] api_cart_status: no request"
+        no_request = self.factory.get('dummy')
+        no_request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__cart/status.json'):
-            api_cart_status(None)
+            api_cart_status(no_request)
 
     def test__api_cart_status_no_get(self):
         "[test_cart.py] api_cart_status: no GET"
@@ -75,9 +79,11 @@ class cartTests(TestCase):
 
     def test__api_get_cart_csv_no_request(self):
         "[test_cart.py] api_get_cart_csv: no request"
+        no_request = self.factory.get('dummy')
+        no_request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__cart/data.csv'):
-            api_get_cart_csv(None)
+            api_get_cart_csv(no_request)
 
     def test__api_get_cart_csv_no_get(self):
         "[test_cart.py] api_get_cart_csv: no GET"
@@ -94,9 +100,11 @@ class cartTests(TestCase):
 
     def test__api_edit_cart_no_request(self):
         "[test_cart.py] api_edit_cart: no request"
+        no_request = self.factory.get('dummy')
+        no_request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__cart/add.json'):
-            api_edit_cart(None, 'add')
+            api_edit_cart(no_request, 'add')
 
     def test__api_edit_cart_no_get(self):
         "[test_cart.py] api_edit_cart: no GET"
@@ -113,9 +121,11 @@ class cartTests(TestCase):
 
     def test__api_reset_session_no_request(self):
         "[test_cart.py] api_reset_session: no request"
+        no_request = self.factory.get('dummy')
+        no_request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__cart/reset.json'):
-            api_reset_session(None)
+            api_reset_session(no_request)
 
     def test__api_reset_session_no_get(self):
         "[test_cart.py] api_reset_session: no GET"
@@ -132,9 +142,11 @@ class cartTests(TestCase):
 
     def test__api_create_download_no_request(self):
         "[test_cart.py] api_create_download: no request"
+        no_request = self.factory.get('dummy')
+        no_request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__cart/download.json'):
-            api_create_download(None)
+            api_create_download(no_request)
 
     def test__api_create_download_no_get(self):
         "[test_cart.py] api_create_download: no GET"

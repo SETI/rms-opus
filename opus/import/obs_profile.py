@@ -64,19 +64,19 @@ class ObsProfile(ObsBase):
     # override the methods.
 
     def field_obs_profile_occ_type(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_occ_dir(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_body_occ_flag(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_temporal_sampling(self):
         return None
 
     def field_obs_profile_quality_score(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_optical_depth1(self):
         return None
@@ -85,10 +85,10 @@ class ObsProfile(ObsBase):
         return None
 
     def field_obs_profile_wl_band(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_source(self):
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_host(self):
-        return None
+        return self._create_mult(None)

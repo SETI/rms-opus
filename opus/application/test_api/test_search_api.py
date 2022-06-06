@@ -16,7 +16,7 @@ from tools.app_utils import (HTTP404_BAD_LIMIT,
                              HTTP404_UNKNOWN_RING_OBS_ID,
                              HTTP404_UNKNOWN_SLUG)
 
-from api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper
 
 import settings
 

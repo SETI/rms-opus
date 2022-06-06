@@ -55,16 +55,23 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
         return f'{pl_str}_SPEC_CO_CIRS_{image_num}_{instrument_id}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        return self._create_mult(self._cassini_planet_id())
 
-    def field_obs_general_target_name(self):
+    def _target_name(self):
         return self._cassini_intended_target_name()
 
+    def field_obs_general_target_name(self):
+        target_name, target_disp_name = self._target_name()
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
+
     def field_obs_general_quantity(self):
-        return 'THERMAL'
+        return self._create_mult('THERMAL')
 
     def field_obs_general_observation_type(self):
-        return 'STS' # Spectral Time Series
+        return self._create_mult('STS') # Spectral Time Series
 
 
     ############################
@@ -122,7 +129,7 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
         return self._index_col('WAVENUMBER_RESOLUTION')
 
     def field_obs_wavelength_spec_flag(self):
-        return 'Y'
+        return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
         return self._index_col('SPECTRUM_SAMPLES')
@@ -171,8 +178,8 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._index_col('MISSION_PHASE_NAME')
         if mp.upper() == 'NULL':
-            return None
-        return mp.replace('_', ' ')
+            return self._create_mult(None)
+        return self._create_mult(mp.replace('_', ' '))
 
 
     ###############################################
@@ -189,22 +196,24 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
         return self.instrument_id
 
     def field_obs_instrument_cocirs_detector_id(self):
-        return self._index_col('DETECTOR_ID')
+        return self._create_mult(self._index_col('DETECTOR_ID'))
 
     def field_obs_instrument_cocirs_instrument_mode_blinking_flag(self):
-        return self._index_col('INSTRUMENT_MODE_BLINKING_FLAG')
+        blinking_flag = self._index_col('INSTRUMENT_MODE_BLINKING_FLAG')
+        return self._create_mult(blinking_flag)
 
     def field_obs_instrument_cocirs_instrument_mode_even_flag(self):
-        return self._index_col('INSTRUMENT_MODE_EVEN_FLAG')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_EVEN_FLAG'))
 
     def field_obs_instrument_cocirs_instrument_mode_odd_flag(self):
-        return self._index_col('INSTRUMENT_MODE_ODD_FLAG')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ODD_FLAG'))
 
     def field_obs_instrument_cocirs_instrument_mode_centers_flag(self):
-        return self._index_col('INSTRUMENT_MODE_CENTERS_FLAG')
+        center_flag = self._index_col('INSTRUMENT_MODE_CENTERS_FLAG')
+        return self._create_mult(center_flag)
 
     def field_obs_instrument_cocirs_instrument_mode_pairs_flag(self):
-        return self._index_col('INSTRUMENT_MODE_PAIRS_FLAG')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_PAIRS_FLAG'))
 
     def field_obs_instrument_cocirs_instrument_mode_all_flag(self):
-        return self._index_col('INSTRUMENT_MODE_ALL_FLAG')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ALL_FLAG'))

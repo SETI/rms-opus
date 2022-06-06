@@ -22,10 +22,10 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_general_quantity(self):
-        return 'OPDEPTH'
+        return self._create_mult('OPDEPTH')
 
     def field_obs_general_observation_type(self):
-        return 'OCC'
+        return self._create_mult('OCC')
 
     def field_obs_general_right_asc1(self):
         return self._prof_ra_dec_helper('supp_index_row', 'SIGNAL_SOURCE_NAME_1')[0]
@@ -45,22 +45,22 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     ################################
 
     def field_obs_profile_occ_type(self):
-        return 'STE'
+        return self._create_mult('STE')
 
     def field_obs_profile_occ_dir(self):
-        return self._index_col('RING_OCCULTATION_DIRECTION')[0]
+        return self._create_mult(self._index_col('RING_OCCULTATION_DIRECTION')[0])
 
     def field_obs_profile_body_occ_flag(self):
-        return self._supp_index_col('PLANETARY_OCCULTATION_FLAG')
+        return self._create_mult(self._supp_index_col('PLANETARY_OCCULTATION_FLAG'))
 
     def field_obs_profile_temporal_sampling(self):
         return self._supp_index_col('TEMPORAL_SAMPLING_INTERVAL')
 
     def field_obs_profile_quality_score(self):
-        return 'GOOD'
+        return self._create_mult('GOOD')
 
     def field_obs_profile_host(self):
-        return self._supp_index_col('RECEIVER_HOST_NAME')
+        return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME'))
 
 
     #####################################

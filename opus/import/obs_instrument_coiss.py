@@ -240,19 +240,26 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return f'{pl_str}_IMG_CO_ISS_{image_num}_{camera}'
 
     def field_obs_general_planet_id(self):
-        return self._cassini_planet_id()
+        return self._create_mult(self._cassini_planet_id())
+
+    def _target_name(self):
+        return self._cassini_intended_target_name()
 
     def field_obs_general_target_name(self):
-        return self._cassini_intended_target_name()
+        target_name, target_disp_name = self._target_name()
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
+                                 grouping=group_info['label'],
+                                 group_disp_order=group_info['disp_order'])
 
     def field_obs_general_quantity(self):
         filter1, filter2 = self._index_col('FILTER_NAME')
         if filter1.startswith('UV') or filter2.startswith('UV'):
-            return 'EMISSION'
-        return 'REFLECT'
+            return self._create_mult('EMISSION')
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG' # Image
+        return self._create_mult('IMG') # Image
 
 
     ############################
@@ -268,7 +275,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'FRAM'
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()
@@ -348,10 +355,10 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return self.field_obs_wavelength_wave_no_res1()
 
     def field_obs_wavelength_polarization_type(self):
-        the_filter = self.field_obs_instrument_coiss_combined_filter()[0]
+        the_filter = self._combined_filter()
         if the_filter.find('P') != -1:
-            return 'LINEAR'
-        return 'NONE'
+            return self._create_mult('LINEAR')
+        return self._create_mult('NONE')
 
 
     #######################################
@@ -407,8 +414,8 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._index_col('MISSION_PHASE_NAME')
         if mp.upper() == 'NULL':
-            return None
-        return mp.replace('_', ' ')
+            return self._create_mult(None)
+        return self._create_mult(mp.replace('_', ' '))
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._index_col('SEQUENCE_ID')
@@ -428,13 +435,13 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         return self.instrument_id
 
     def field_obs_instrument_coiss_data_conversion_type(self):
-        return self._index_col('DATA_CONVERSION_TYPE')
+        return self._create_mult(self._index_col('DATA_CONVERSION_TYPE'))
 
     def field_obs_instrument_coiss_compression_type(self):
-        return self._index_col('INST_CMPRS_TYPE')
+        return self._create_mult(self._index_col('INST_CMPRS_TYPE'))
 
     def field_obs_instrument_coiss_gain_mode_id(self):
-        return self._index_col('GAIN_MODE_ID')
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
 
     def field_obs_instrument_coiss_image_observation_type(self):
         obs_type = self._index_col('IMAGE_OBSERVATION_TYPE')
@@ -462,32 +469,32 @@ class ObsInstrumentCOISS(ObsMissionCassini):
         if len(ret) != len(obs_type.replace('UNK','UNKNOWN')):
             self._log_nonrepeating_error(
                 f'Unknown format for COISS image_observation_type: "{obs_type}"')
-            return None
+            return self._create_mult(None)
 
-        return ret
+        return self._create_mult(ret)
 
     def field_obs_instrument_coiss_missing_lines(self):
         return self._index_col('MISSING_LINES')
 
     def field_obs_instrument_coiss_shutter_mode_id(self):
-        return self._index_col('SHUTTER_MODE_ID')
+        return self._create_mult(self._index_col('SHUTTER_MODE_ID'))
 
     def field_obs_instrument_coiss_shutter_state_id(self):
-        return self._index_col('SHUTTER_STATE_ID')
+        return self._create_mult(self._index_col('SHUTTER_STATE_ID'))
 
     def field_obs_instrument_coiss_image_number(self):
         return self._index_col('IMAGE_NUMBER')
 
     def field_obs_instrument_coiss_instrument_mode_id(self):
-        return self._index_col('INSTRUMENT_MODE_ID')
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 
     def field_obs_instrument_coiss_target_desc(self):
         target_desc = self._index_col('TARGET_DESC').upper()
         if target_desc in COISS_TARGET_DESC_MAPPING:
             target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
-        return target_desc
+        return self._create_mult(target_desc)
 
-    def field_obs_instrument_coiss_combined_filter(self):
+    def _combined_filter(self):
         camera = self._index_col('INSTRUMENT_ID')[3]
         filter1, filter2 = self._index_col('FILTER_NAME')
 
@@ -517,9 +524,13 @@ class ObsInstrumentCOISS(ObsMissionCassini):
                     filter1, filter2 = filter2, filter1
                 new_filter = filter1 + '+' + filter2
 
-        return new_filter, new_filter
+        return new_filter
+
+    def field_obs_instrument_coiss_combined_filter(self):
+        new_filter = self._combined_filter()
+        return self._create_mult_keep_case(new_filter)
 
     def field_obs_instrument_coiss_camera(self):
         camera = self._index_col('INSTRUMENT_ID')[3]
         assert camera in ('N', 'W')
-        return camera
+        return self._create_mult(camera)

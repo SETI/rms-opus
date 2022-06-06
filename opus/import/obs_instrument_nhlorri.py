@@ -94,10 +94,10 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
         return f'{pl_str}_IMG_NH_LORRI_{image_num}'
 
     def field_obs_general_quantity(self):
-        return 'REFLECT'
+        return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        return 'IMG'
+        return self._create_mult('IMG')
 
 
     ##################################
@@ -105,7 +105,7 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return 'FRAM'
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()
@@ -161,7 +161,8 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
         return self.instrument_id
 
     def field_obs_instrument_nhlorri_instrument_compression_type(self):
-        return self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
+        compression_type = self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
+        return self._create_mult(compression_type)
 
     def field_obs_instrument_nhlorri_binning_mode(self):
-        return self._supp_index_col('BINNING_MODE')
+        return self._create_mult(self._supp_index_col('BINNING_MODE'))
