@@ -350,6 +350,14 @@ var o_selectMetadata = {
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
         o_utils.disableUserInteraction();
         o_selectMetadata.reRender();
+        // if the metadata is no longer default, we need to enable the reset button on the Search tab
+        if (!opus.isMetadataDefault()) {
+            $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
+        } else {
+            if ($(".op-reset-button .op-reset-search").prop("disabled")) {
+                $(".op-reset-button .op-reset-search-metadata").prop("disabled", true);
+            }
+        }
         o_browse.loadData(opus.prefs.view, false);
     },
 
