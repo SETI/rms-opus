@@ -835,8 +835,12 @@ var opus = {
 
         // Behavior for help submenu
         $("#op-help .dropdown-submenu .dropdown-item").on("click", function(e) {
-            $(this).next(".dropdown-menu").toggle("show");
             e.stopPropagation();
+            if($(this).hasClass("show")) {
+                $(this).next(".dropdown-menu").show();
+            } else {
+                $(this).next(".dropdown-menu").hide();
+            }
         });
 
         // Click on items inside submenu, we execute something and close the whole dropdown.
