@@ -448,7 +448,6 @@ def api_get_widget(request, **kwargs):
                             tp_id = tp_id.replace(ch, '-')
                     mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_'+slug.upper())
                     options.append((count, mult.label, mult_tooltip, tp_id))
-                    # options.append((count, mult.label, mult.tooltip, tp_id))
                     count += 1
 
         # Group the entries with the same grouping values.
@@ -471,10 +470,6 @@ def api_get_widget(request, **kwargs):
                         for mult in (model.objects.filter(grouping=glabel,
                                                           display='Y')
                                                   .order_by('disp_order')):
-                            # TODO: We don't include mult.tooltip here because
-                            # there is no mult_options in table schema. Need to
-                            # figure out a proper way to generate the tooltip,
-                            # it's created by populate functions
                             tp_id = mult.label
                             for ch in settings.INVALID_CLASS_CHAR:
                                 if ch in tp_id:
@@ -483,8 +478,6 @@ def api_get_widget(request, **kwargs):
                                                                'MULT_'+slug.upper())
                             options_of_a_group.append((count, mult.label,
                                                        mult_tooltip, tp_id))
-                            # options_of_a_group.append((count, mult.label,
-                            #                            mult.tooltip, tp_id))
                             count += 1
                         grouped_options[(glabel,glabel)] = options_of_a_group
     else:  # all other form types
