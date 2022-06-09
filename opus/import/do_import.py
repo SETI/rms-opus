@@ -283,26 +283,18 @@ def _mult_table_column_names(table_name):
        constant because various *_target_name tables have an extra
        column used for target name grouping."""
 
-    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping', 'group_disp_order', 'tooltip']
+    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping',
+                   'group_disp_order']
     return column_list
 
 def _convert_sql_response_to_mult_table(mult_table_name, rows):
     """Given a set of rows from an SQL query of a mult table, convert it into
        our internal dictionary representation."""
-    # print('========================')
-    # print(f'mult_table_name: {mult_table_name}')
     mult_rows = []
     for row in rows:
-        if len(row) == 7:
-            (id_num, value, label, disp_order,
-             display, grouping, group_disp_order) = row
-            tooltip = None
-        elif len(row) == 8:
-            (id_num, value, label, disp_order,
-             display, grouping, group_disp_order, tooltip) = row
-        # TODO: remove above temp hack, and use the following to unpack
-        # (id_num, value, label, disp_order,
-        #  display, grouping, group_disp_order, tooltip) = row
+        (id_num, value, label, disp_order,
+         display, grouping, group_disp_order) = row
+
         row_dict = {
             'id': id_num,
             'value': value,
@@ -310,8 +302,7 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
             'disp_order': disp_order,
             'display': display,
             'grouping': grouping,
-            'group_disp_order': group_disp_order,
-            'tooltip': tooltip
+            'group_disp_order': group_disp_order
         }
         mult_rows.append(row_dict)
     return mult_rows
@@ -372,8 +363,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
 
 def update_mult_table(table_name, field_name, table_column, val, label,
-                      disp_order=None, grouping=None, group_disp_order=None,
-                      tooltip=None):
+                      disp_order=None, grouping=None, group_disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
@@ -472,8 +462,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         'disp_order': disp_order,
         'display': 'Y', # if label is not None else 'N'
         'grouping': grouping,
-        'group_disp_order': group_disp_order,
-        'tooltip': tooltip
+        'group_disp_order': group_disp_order
     }
     mult_table.append(new_entry)
 
@@ -1163,7 +1152,6 @@ def import_observation_table(instrument_obj,
             disp_order = None # Might be set with mult_label but not otherwise
             grouping = None
             group_disp_order = None
-            tooltip = None
 
             if data_source == 'OBS_GENERAL_ID':
                 obs_general_row = metadata['obs_general_row']
@@ -1183,7 +1171,6 @@ def import_observation_table(instrument_obj,
                         disp_order = ret['disp_order']
                         grouping = ret['grouping']
                         group_disp_order = ret['group_disp_order']
-                        tooltip = ret['tooltip']
                     else:
                         column_val = ret
 
@@ -1340,7 +1327,7 @@ def import_observation_table(instrument_obj,
 
             id_num = update_mult_table(table_name, field_name, table_column,
                                        column_val, mult_label, disp_order,
-                                       grouping, group_disp_order, tooltip)
+                                       grouping, group_disp_order)
             new_row[mult_column_name] = id_num
 
     return new_row

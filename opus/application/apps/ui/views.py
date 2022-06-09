@@ -34,6 +34,7 @@ from django.views.generic import TemplateView
 
 from cart.models import Cart
 from dictionary.models import Definitions
+from dictionary.views import get_def_for_tooltip
 from paraminfo.models import ParamInfo
 from results.views import get_triggered_tables
 from search.forms import SearchForm
@@ -445,7 +446,9 @@ def api_get_widget(request, **kwargs):
                     for ch in settings.INVALID_CLASS_CHAR:
                         if ch in tp_id:
                             tp_id = tp_id.replace(ch, '-')
-                    options.append((count, mult.label, mult.tooltip, tp_id))
+                    mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_'+slug.upper())
+                    options.append((count, mult.label, mult_tooltip, tp_id))
+                    # options.append((count, mult.label, mult.tooltip, tp_id))
                     count += 1
 
         # Group the entries with the same grouping values.
@@ -476,8 +479,12 @@ def api_get_widget(request, **kwargs):
                             for ch in settings.INVALID_CLASS_CHAR:
                                 if ch in tp_id:
                                     tp_id = tp_id.replace(ch, '-')
+                            mult_tooltip = get_def_for_tooltip(mult.value,
+                                                               'MULT_'+slug.upper())
                             options_of_a_group.append((count, mult.label,
-                                                       mult.tooltip, tp_id))
+                                                       mult_tooltip, tp_id))
+                            # options_of_a_group.append((count, mult.label,
+                            #                            mult.tooltip, tp_id))
                             count += 1
                         grouped_options[(glabel,glabel)] = options_of_a_group
     else:  # all other form types
@@ -550,8 +557,6 @@ def api_get_widget(request, **kwargs):
     }
     if slug == 'mission':
         print("================")
-        print(f"customized_input: {customized_input}")
-        print(f"is_grouped_mult: {is_grouped_mult}")
         print(f"options: {options}")
     ret = render(request, template, context)
 

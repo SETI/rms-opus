@@ -1,32 +1,32 @@
 [
     {
-        "pi_dict_context": "MULT_MISSION_ID",
-        "pi_dict_name": "cassini",
+        "pi_dict_context": "MULT_MISSION",
+        "pi_dict_name": "CO",
         "definition": "Mission Cassini Tooltip Definition"
     },
     {
-        "pi_dict_context": "MULT_MISSION_ID",
-        "pi_dict_name": "galileo",
-        "definition": "Mission Galileo Tooltip Definition"
+        "pi_dict_context": "MULT_MISSION",
+        "pi_dict_name": "GO",
+        "definition": "Mission <b>Galileo</b> Tooltip Definition"
     },
     {
-        "pi_dict_context": "MULT_MISSION_ID",
-        "pi_dict_name": "hubble",
-        "definition": "Mission Hubble Tooltip Definition"
+        "pi_dict_context": "MULT_MISSION",
+        "pi_dict_name": "HST",
+        "definition": "Mission 'Hubble' Tooltip Definition"
     },
     {
-        "pi_dict_context": "MULT_MISSION_ID",
-        "pi_dict_name": "new horizons",
-        "definition": "Mission New Horizons Tooltip Definition"
+        "pi_dict_context": "MULT_MISSION",
+        "pi_dict_name": "NH",
+        "definition": "Mission New <a href='https://opus.pds-rings.seti.org/opus/#'>Horizons</a> Tooltip Definition"
     },
     {
-        "pi_dict_context": "MULT_MISSION_ID",
-        "pi_dict_name": "voyager",
+        "pi_dict_context": "MULT_MISSION",
+        "pi_dict_name": "VG",
         "definition": "Mission Voyager Tooltip Definition"
     },
     {
-        "pi_dict_context": "MULT_MISSION_ID",
-        "pi_dict_name": "ground-based",
+        "pi_dict_context": "MULT_MISSION",
+        "pi_dict_name": "GB",
         "definition": "Mission Ground-based Tooltip Definition"
     }
 ]

@@ -21,4 +21,4 @@ NEWHORIZONS,New Horizons Mission,OPUS_GENERAL
 NHLORRI,New Horizons Long-Range Reconnaissance Imager (LORRI),NEWHORIZONS
 NHMVIC,New Horizons Multispectral Visible Imaging Camera (MVIC),NEWHORIZONS
 OPUS_PRODUCT_TYPE,OPUS Product Types,NULL
-MULT_MISSION_ID,OPUS Mission Ids,NULL
+MULT_MISSION,OPUS Mission Ids,NULL
