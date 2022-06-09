@@ -17,7 +17,7 @@
                 {% if tooltip %}
                     <div class="tooltip-templates">
                         <span id="tooltip-content-{{ slug }}-{{ tp_id }}">
-                            <strong>{{ tooltip }}</strong>
+                            <strong>{{ tooltip|safe }}</strong>
                             <!-- <a class="op-mult-tooltip-link" href="https://pds-rings.seti.org/" target="_blank"><strong>{{ tooltip }}</strong></a> -->
                         </span>
                     </div>
