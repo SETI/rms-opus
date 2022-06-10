@@ -626,7 +626,7 @@ var opus = {
         if (!o_utils.areObjectsEqual(opus.prefs.cols, opus.defaultColumns)) {
             if (resetMetadata) {
                 opus.prefs.cols = [];
-                o_browse.resetMetadata(opus.defaultColumns, true);
+                o_selectMetadata.resetMetadata(opus.defaultColumns, true);
                 $(".op-reset-button button").prop("disabled", true);
             } else {
                 $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);

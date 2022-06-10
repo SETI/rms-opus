@@ -30,3 +30,5 @@ log_analyzer/.logs
 TODO
 mypy.ini
 ignored-errors
+venv38/
+opus/application/static_media/coreui/css/style-old.css
