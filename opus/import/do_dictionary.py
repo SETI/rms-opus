@@ -31,9 +31,9 @@ def create_import_definitions_table():
     json_def_path = (opus_secrets.DICTIONARY_JSON_SCHEMA_PATH +
                      '/internal_def*.json')
     json_list += glob.glob(json_def_path)
-    # Tooltips for mult 
+    # Tooltips for mults
     json_tooltips_def_path = (opus_secrets.DICTIONARY_JSON_SCHEMA_PATH +
-                     '/mult_tooltips.json')
+                     '/mult_tooltips*.json')
     json_list += glob.glob(json_tooltips_def_path)
     rows = []
 
