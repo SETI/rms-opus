@@ -1205,17 +1205,17 @@ def import_observation_table(instrument_obj,
             if field_type.startswith('flag'):
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
                     if field_type == 'flag_onoff':
-                        column_val, mult_label = 'Off', 'Off'
+                        column_val = 'Off'
                     else:
-                        column_val, mult_label = 'No', 'No'
+                        column_val = 'No'
                 elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
                                     'ON']:
                     if field_type == 'flag_onoff':
-                        column_val, mult_label = 'On', 'On'
+                        column_val = 'On'
                     else:
-                        column_val, mult_label = 'Yes', 'Yes'
+                        column_val = 'Yes'
                 elif column_val in ['N/A', 'UNK', 'NULL']:
-                    column_val, mult_label = None, 'N/A'
+                    column_val = None
                 else:
                     import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+

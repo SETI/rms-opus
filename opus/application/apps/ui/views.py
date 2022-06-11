@@ -284,7 +284,7 @@ def api_get_widget(request, **kwargs):
     auto_id = True
     selections = {}
     extras = {}
-    customized_input = slug in settings.MULT_WIDGETS_WITH_TOOLTIPS
+    customized_input = False
     # Mult options that will be passed to the template for customized mult input
     # HTML.
     options = []
@@ -433,22 +433,21 @@ def api_get_widget(request, **kwargs):
         # None grouping values will be displayed before grouping values
         if model.objects.filter(grouping=None):
             form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
-
-            if customized_input:
-                count = 0
-                for mult in (model.objects.filter(display='Y')
-                                          .order_by('disp_order')):
-                    tp_id = mult.label
-                    # If there is any invalid characters for HTML class/id
-                    # we will replace invalid characters in the mult options
-                    # with '_'. This will make sure we don't assign invalid
-                    # characters to HTML class/id for customized tooltips.
-                    for ch in settings.INVALID_CLASS_CHAR:
-                        if ch in tp_id:
-                            tp_id = tp_id.replace(ch, '-')
-                    mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_'+slug.upper())
-                    options.append((count, mult.label, mult_tooltip, tp_id))
-                    count += 1
+            count = 0
+            for mult in (model.objects.filter(display='Y')
+                                      .order_by('disp_order')):
+                tp_id = mult.label
+                # If there is any invalid characters for HTML class/id
+                # we will replace invalid characters in the mult options
+                # with '_'. This will make sure we don't assign invalid
+                # characters to HTML class/id for customized tooltips.
+                for ch in settings.INVALID_CLASS_CHAR:
+                    if ch in tp_id:
+                        tp_id = tp_id.replace(ch, '-')
+                mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_'+slug.upper())
+                customized_input = True if mult_tooltip is not None
+                options.append((count, mult.label, mult_tooltip, tp_id))
+                count += 1
 
         # Group the entries with the same grouping values.
         # Different groups will be displayed based on group_disp_order
@@ -464,22 +463,21 @@ def api_get_widget(request, **kwargs):
                 if model.objects.filter(grouping=glabel)[0:1]:
                     form = _update_form_with_grouping(form, form_vals,
                                                       glabel, glabel)
-
-                    if customized_input:
-                        count = 0
-                        for mult in (model.objects.filter(grouping=glabel,
-                                                          display='Y')
-                                                  .order_by('disp_order')):
-                            tp_id = mult.label
-                            for ch in settings.INVALID_CLASS_CHAR:
-                                if ch in tp_id:
-                                    tp_id = tp_id.replace(ch, '-')
-                            mult_tooltip = get_def_for_tooltip(mult.value,
-                                                               'MULT_'+slug.upper())
-                            options_of_a_group.append((count, mult.label,
-                                                       mult_tooltip, tp_id))
-                            count += 1
-                        grouped_options[(glabel,glabel)] = options_of_a_group
+                    count = 0
+                    for mult in (model.objects.filter(grouping=glabel,
+                                                      display='Y')
+                                              .order_by('disp_order')):
+                        tp_id = mult.label
+                        for ch in settings.INVALID_CLASS_CHAR:
+                            if ch in tp_id:
+                                tp_id = tp_id.replace(ch, '-')
+                        mult_tooltip = get_def_for_tooltip(mult.value,
+                                                           'MULT_'+slug.upper())
+                        customized_input = True if mult_tooltip is not None
+                        options_of_a_group.append((count, mult.label,
+                                                   mult_tooltip, tp_id))
+                        count += 1
+                    grouped_options[(glabel,glabel)] = options_of_a_group
     else:  # all other form types
         if param_qualified_name in selections:
             form_vals = {slug:selections[param_qualified_name]}
@@ -548,9 +546,7 @@ def api_get_widget(request, **kwargs):
         "is_grouped_mult": is_grouped_mult,
         "selections": current_selections,
     }
-    if slug == 'mission':
-        print("================")
-        print(f"options: {options}")
+
     ret = render(request, template, context)
 
     exit_api_call(api_code, ret)

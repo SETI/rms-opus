@@ -9,7 +9,7 @@
                     {% else %}
                         <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}">
                     {% endif %}
-                <!-- Assign an unique html structure to data-tooltip-content for each different individual tooltip-->
+                <!-- Assign a unique html structure to data-tooltip-content for each different individual tooltip-->
                 <span class="op-choice-label-name op-mult-tooltip-{{ slug }}" data-tooltip-content="#tooltip-content-{{ slug }}-{{ tp_id }}">
                     {{ choice }}
                 </span>
@@ -18,7 +18,6 @@
                     <div class="tooltip-templates">
                         <span id="tooltip-content-{{ slug }}-{{ tp_id }}">
                             <strong>{{ tooltip|safe }}</strong>
-                            <!-- <a class="op-mult-tooltip-link" href="https://pds-rings.seti.org/" target="_blank"><strong>{{ tooltip }}</strong></a> -->
                         </span>
                     </div>
                 {% endif %}

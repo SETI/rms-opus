@@ -374,7 +374,5 @@ DOWNLOAD_FORMATS = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-# Mult widgets that required tooltips
-MULT_WIDGETS_WITH_TOOLTIPS = ['mission']
 # We don't want to have these characters in HTML class or ID
 INVALID_CLASS_CHAR = '~!@$%^&*()+=,./;:"?><[]\{}|`# '

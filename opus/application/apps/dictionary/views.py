@@ -14,7 +14,7 @@ def get_def_for_tooltip(term, context):
         return entry.definition
     except Definitions.DoesNotExist:
         # We allow mult tooltips to be None
-        if not context.startswith('MULT'):
+        if not context.startswith('MULT_'):
             log.error('No tooltip definition for context "%s" term "%s"',
                       context, term)
         return None
