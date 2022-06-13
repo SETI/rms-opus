@@ -34,7 +34,9 @@ def create_import_definitions_table():
     # Tooltips for mults
     json_tooltips_def_path = (opus_secrets.DICTIONARY_JSON_SCHEMA_PATH +
                      '/mult_tooltips*.json')
-    json_list += glob.glob(json_tooltips_def_path)
+    mult_tooltips_json_list = glob.glob(json_tooltips_def_path)
+    json_list += mult_tooltips_json_list
+
     rows = []
 
     logger.log('info', f'Importing {pds_file}')
@@ -93,6 +95,18 @@ def create_import_definitions_table():
     if bad_db:
         return False
 
+    # create entries in contexts table for mults tooltips
+    mult_tp_ctx_rows = []
+    for li in mult_tooltips_json_list:
+        slug = li[li.rindex('_')+1:-5]
+        new_row = {
+            'name': f'MULT_{slug.upper()}',
+            'description': f'OPUS {slug.title()}',
+            'parent': 'NULL'
+        }
+        mult_tp_ctx_rows.append(new_row)
+
+    db.insert_rows('import', 'contexts', mult_tp_ctx_rows)
     db.insert_rows('import', 'definitions', rows)
 
     return True
