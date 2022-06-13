@@ -437,7 +437,7 @@ var o_widgets = {
             } else {
                 lastExistingSetOfInputs.append(orLabel);
                 cloneInputs.find(".op-or-labels").remove();
-                // remove the cloned trash icon, and attach a new so that the tooltipster
+                // remove the cloned trash icon, and attach a new one so that the tooltipster
                 // can be initialized.
                 cloneInputs.find(".op-remove-inputs").remove();
                 cloneInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
@@ -1468,7 +1468,7 @@ var o_widgets = {
                 interactive: true,
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
-                delay: opus.tooltips_delay,
+                delay: opus.mult_tooltips_delay,
             });
             $(`.op-widget-tooltip-${slug}`).tooltipster({
                 maxWidth: opus.tooltips_max_width,

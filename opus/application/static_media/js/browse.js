@@ -74,7 +74,7 @@ var o_browse = {
         // Also when moving around in the same table row, reposition the tooltip so that
         // it stays right next to the cursor. Work for both browse/cart data table.
         $(".op-data-table tbody").on("mousemove", function(e) {
-            // We will wait for the stop of mouse moving, and then show the tooltip
+            // We will wait for mouse moving to stop, and then show the tooltip
             // after the amount of delay we set.
             clearTimeout(o_browse.timer);
             o_browse.mouseX = e.clientX;
@@ -1899,7 +1899,7 @@ var o_browse = {
             debug: false,
             contentAsHTML: true,
             functionBefore: function(instance, helper){
-                // Make sure all other tooltips is closed before a new one is open
+                // Make sure all other tooltips are closed before a new one is opened
                 // in table view.
                 $.each($.tooltipster.instances(), function(i, inst){
                     inst.close();
@@ -1911,7 +1911,7 @@ var o_browse = {
                 let tooltipWidth = position.size.width;
                 let offsetToRightWindow = 5;
                 let windowWidth = helper.geo.window.size.width;
-                // When the cursor is very close to the right edget of the window, we have
+                // When the cursor is very close to the right edge of the window, we have
                 // to move the tooltip position to the right so that it won't get cut off
                 // by the window.
                 if ((o_browse.mouseX + tooltipWidth) + offsetToRightWindow > windowWidth) {

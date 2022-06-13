@@ -445,7 +445,8 @@ def api_get_widget(request, **kwargs):
                     if ch in tp_id:
                         tp_id = tp_id.replace(ch, '-')
                 mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_'+slug.upper())
-                customized_input = True if mult_tooltip is not None
+                if mult_tooltip is not None:
+                    customized_input = True
                 options.append((count, mult.label, mult_tooltip, tp_id))
                 count += 1
 
@@ -473,7 +474,8 @@ def api_get_widget(request, **kwargs):
                                 tp_id = tp_id.replace(ch, '-')
                         mult_tooltip = get_def_for_tooltip(mult.value,
                                                            'MULT_'+slug.upper())
-                        customized_input = True if mult_tooltip is not None
+                        if mult_tooltip is not None:
+                            customized_input = True
                         options_of_a_group.append((count, mult.label,
                                                    mult_tooltip, tp_id))
                         count += 1
