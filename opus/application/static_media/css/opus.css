@@ -2589,6 +2589,14 @@ footer a:hover {
 /* Center the "x" icon in help panel */
 #op-help-panel .btn-close {
     display: flex;
+    content: "\f057";
+    float: right;
+    font-size: 1.3125rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
 }
 
 #op-help-panel .card-body {

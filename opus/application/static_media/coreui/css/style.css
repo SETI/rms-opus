@@ -39,6 +39,7 @@
   --cui-btn-link-color: #20a8d8;
   --cui-btn-link-hover-color: #167495;
   --cui-btn-close-color: rgb(240, 243, 245);
+  --cui-btn-close-bg: "";
   --cui-dropdown-border-color: #c8ced3;
   --cui-dropdown-header-color: rgb(115, 129, 143);
   --cui-dropdown-link-active-bg: #20a8d8;
@@ -5839,8 +5840,9 @@ html:not([dir=rtl]) .list-group-horizontal > .list-group-item + .list-group-item
   border-radius: 0.25rem;
   opacity: 0.5;
 }
+
 .btn-close:hover {
-  color: var(--cui-btn-close-color, rgba(44, 56, 74, 0.95));
+  color: var(#000, rgba(44, 56, 74, 0.95));
   text-decoration: none;
   opacity: 0.75;
 }

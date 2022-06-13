@@ -627,7 +627,7 @@ var opus = {
         if (!o_utils.areObjectsEqual(opus.prefs.cols, opus.defaultColumns)) {
             if (resetMetadata) {
                 opus.prefs.cols = [];
-                o_browse.resetMetadata(opus.defaultColumns, true);
+                o_selectMetadata.resetMetadata(opus.defaultColumns, true);
                 $(".op-reset-button button").prop("disabled", true);
             } else {
                 $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
@@ -828,7 +828,7 @@ var opus = {
         });
 
         // Clicking on the "X" in the corner of the help pane
-        $("#op-help-panel .close, .op-overlay").on("click", function() {
+        $("#op-help-panel .btn-close, .op-overlay").on("click", function() {
             opus.hideHelpAndCartPanels();
             return false;
         });
@@ -1083,7 +1083,7 @@ var opus = {
 
         $("#op-help-panel").addClass("op-no-select");
         $(".op-cite-opus-btn").addClass(".op-prevent-pointer-events");
-        $("#op-help-panel .op-header-text").html(`<h2>${header}</h2>`);
+        $("#op-help-panel .op-header-text").html(`${header}`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
 
