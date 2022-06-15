@@ -3489,3 +3489,9 @@ when screen is narrow (cart tab) */
 .tooltipster-show {
     z-index: 2000000002 !important;
 }
+
+/* set font size and color of the tooltips contents */
+.tooltipster-content {
+    font-size: 12px;
+    color: #000000 !important;
+}
