@@ -237,3 +237,18 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
         image_list.append(data)
 
     return image_list
+
+def get_displayed_browse_products(opus_id, version_name='Current'):
+    """Given an opus_ids, return a list of browse products urls displayed
+       in detail tab.
+    """
+    browse_products = get_pds_products(opus_id_list=opus_id,
+                                       product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
+    selected_browse_products = browse_products[opus_id][version_name]
+    res = []
+    for p in selected_browse_products:
+        browse_med_url = selected_browse_products[p][0]
+        browse_full_url = selected_browse_products[p][0].replace('_med.', '_full.')
+        res.append((browse_med_url, browse_full_url))
+
+    return res

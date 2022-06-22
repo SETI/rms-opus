@@ -366,7 +366,7 @@ class ObsBase(object):
 
     def _create_mult_keep_case(self, col_val, disp_order=None, grouping=None,
                                group_disp_order=None):
-        return self._create_mult(col_val=col_val, disp_name=col_val, 
+        return self._create_mult(col_val=col_val, disp_name=col_val,
                                  disp_order=disp_order, grouping=grouping,
                                  group_disp_order=group_disp_order)
 
