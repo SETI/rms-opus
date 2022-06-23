@@ -39,11 +39,12 @@
   --cui-btn-link-color: #20a8d8;
   --cui-btn-link-hover-color: #167495;
   --cui-btn-close-color: rgb(240, 243, 245);
-  --cui-btn-close-bg: "";
+  --cui-btn-close-bg: "\f057";
   --cui-dropdown-border-color: #c8ced3;
   --cui-dropdown-header-color: rgb(115, 129, 143);
   --cui-dropdown-link-active-bg: #20a8d8;
   --cui-dropdown-link-hover-bg: #f0f3f5;
+  --cui-dropdown-font-size: 0.875rem;
   --cui-breakpoint-xs: 0;
   --cui-breakpoint-sm: 576px;
   --cui-breakpoint-md: 768px;

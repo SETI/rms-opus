@@ -64,7 +64,7 @@
                             {% for range_data_entry in ranges %}
                                 <li class="me-0 d-block" data-category="{{ range_data_entry.cat_name|slugify }}">
                                     <a class="dropdown-item bg-light dropdown-toggle collapsed" data-bs-toggle="collapse" href="#{{ range_data_entry.cat_name|slugify }}" role="button" aria-expanded="false" aria-controls="{{ range_data_entry.cat_name|slugify }}">{{ range_data_entry.cat_name }}</a>
-                                    <div class="container collapse" id="{{ range_data_entry.cat_name|slugify }}" data-widget="widget__{{ slug }}" data-mininput="{{ slug }}1">
+                                    <div class="container collapse g-sm-3" id="{{ range_data_entry.cat_name|slugify }}" data-widget="widget__{{ slug }}" data-mininput="{{ slug }}1">
                                         <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
                                             <div class="col-4">
                                             </div>

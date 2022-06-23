@@ -220,7 +220,7 @@ var o_widgets = {
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
                 o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                 // close dropdown and trigger the search
-                $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`).dropdown("toggle");
+                $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`).toggleClass("show");
                 $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).trigger("change");
 
                 let minInput = $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`);
@@ -1315,7 +1315,7 @@ var o_widgets = {
                 if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
                     // Note: the selector to toggle dropdown should be the one with data-bs-toggle="dropdown"
                     // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
-                    $(`#${widget} input.op-range-input-min`).dropdown("toggle");
+                    $(`#${widget} input.op-range-input-min`).toggleClass("show");
                 }
             });
 

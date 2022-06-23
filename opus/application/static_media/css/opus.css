@@ -2246,6 +2246,11 @@ even when screen is narrow */
     margin-bottom: 1em;
 }
 
+.badge.rounded-pill {
+  padding-right: 0.6em;
+  padding-left: 0.6em;
+}
+
 .badge-xlg {
     font-size:115%;
     font-weight:bold;
@@ -2615,6 +2620,7 @@ gap next to ps */
 
 .op-overlay {
     display: none;
+    top: 0;
     position: fixed;
     /* full screen */
     width: 100vw;
@@ -2919,11 +2925,6 @@ ul.ui-autocomplete a.ui-state-active {
     .op-preprogrammed-ranges-data-name {
         white-space: normal !important;
     }
-}
-
-.op-preprogrammed-ranges-data-name {
-    /* white-space: nowrap; */
-    width: 100%;
 }
 
 /* Hide values for different units in preprogrammed ranges */

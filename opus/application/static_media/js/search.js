@@ -101,7 +101,7 @@ var o_search = {
                 (!currentValue || o_search.rangesNameTotalMatchedCounter[slugWithId] > 0) &&
                 !preprogrammedRangesDropdown.hasClass("show") && !o_widgets.isReFocusingBackToInput) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
-                $(this).dropdown("toggle");
+                preprogrammedRangesDropdown.toggleClass("show");
             }
         });
 
@@ -147,7 +147,7 @@ var o_search = {
                                                .find(".op-scrollable-menu"));
             if (preprogrammedRangesDropdown.length !== 0 &&
                 preprogrammedRangesDropdown.hasClass("show")) {
-                $(this).dropdown("toggle");
+                preprogrammedRangesDropdown.toggleClass("show");
             }
 
             o_widgets.isKeepingRangesDropdownOpen = false;
@@ -264,7 +264,7 @@ var o_search = {
                             o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                             o_search.rangesNameTotalMatchedCounter[slugWithId] = 0;
                             // close dropdown and trigger the search
-                            $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).dropdown("toggle");
+                            $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).toggleClass("show");;
                             $(`#${widgetId} input.RANGE[name="${inputName}"]`).trigger("change");
                             let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
                             $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`).trigger("change");
@@ -281,7 +281,7 @@ var o_search = {
                                                    .find(".op-scrollable-menu"));
 
                 if (preprogrammedRangesDropdown.hasClass("show")) {
-                    inputToTriggerDropdown.dropdown("toggle");
+                    inputToTriggerDropdown.toggleClass("show");
                 }
             }
 
@@ -800,11 +800,11 @@ var o_search = {
 
         if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
-                inputToTriggerDropdown.dropdown("toggle");
+                inputToTriggerDropdown.toggleClass("show");;
             }
         } else {
             if (!preprogrammedRangesDropdown.hasClass("show")) {
-                inputToTriggerDropdown.dropdown("toggle");
+                inputToTriggerDropdown.toggleClass("show");
             }
         }
     },
