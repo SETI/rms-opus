@@ -246,9 +246,12 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
                                        product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
     selected_browse_products = browse_products[opus_id][version_name]
     res = []
+    # One opus id could have multiple previews, for example:
+    # co-rss-occ-2008-039-rev058c-x43-i
+    # co-uvis-occ-2005-232-alpsco-i
     for p in selected_browse_products:
-        browse_med_url = selected_browse_products[p][0]
-        browse_full_url = selected_browse_products[p][0].replace('_med.', '_full.')
-        res.append((browse_med_url, browse_full_url))
+        for browse_med_url in selected_browse_products[p]:
+            browse_full_url = browse_med_url.replace('_med.', '_full.')
+            res.append((browse_med_url, browse_full_url))
 
     return res

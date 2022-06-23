@@ -2281,12 +2281,14 @@ to the left pane when screen is getting too wide */
         flex-wrap: wrap-reverse;
     }
 
-    /* Set detail image size when it's above the left pane */
+    /* Set detail image size when it's above the left pane, use !important to override
+    the styling from flexslider */
     .op-detail-img img {
-        height: 150px;
+        height: 150px !important;
     }
 
-    /* Reduce the top space above the detail image when screen */
+    /* Reduce the top space above the detail image when screen, use !important to override
+    the styling from flexslider */
     .op-detail-img {
         padding-top: 0 !important;
     }
@@ -2297,8 +2299,9 @@ to the left pane when screen is getting too wide */
         margin-bottom: -1em;
     }
 
+    /* use !important to override the styling from flexslider  */
     .op-detail-img img {
-        height: 100px;
+        height: 100px !important;
     }
 }
 
@@ -2316,13 +2319,38 @@ to the left pane when screen is getting too wide */
 }
 
 /* Make detail image shrink proportionally when screen is resized, and
-also set its min width to be 150px */
+also set its min width to be 90px */
 .op-detail-img img {
     max-width: 100%;
     min-width: 90px;
     max-height: 60vh;
-    /* min-width: 150px;
-    max-height: 70vh; */
+    /* Make sure image under flexslider is not taking up the full width of
+    the container */
+    width: fit-content !important;
+}
+
+/* Align the children img tags with the nav buttons */
+.op-detail-img li {
+    text-align: -webkit-center;
+}
+
+.op-detail-img .flexslider {
+    margin-bottom: 1.5rem;
+}
+
+/* Properly position the nav buttons under preview image in detail tab */
+.op-detail-img .flex-control-nav {
+    bottom: -30px;
+}
+
+/* Align preview guide text with preview images */
+.op-detail-img .op-preview-guide {
+    text-align: -webkit-center;
+}
+
+/* Fine tune the position of preview images nav buttons */
+.op-detail-img .flex-next, .op-detail-img .flex-prev {
+    height: 50px;
 }
 
 .op-share-message {

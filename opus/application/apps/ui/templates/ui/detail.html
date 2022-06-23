@@ -63,11 +63,19 @@
             </div>
         </div>
         <div class="col-12 op-detail-img pt-5">
-          <div class="op-no-select">
-                <a href="{{ preview_full_url }}" target="_blank">
-                    <img src="{{ preview_med_url }}" alt="Preview image of {{ opus_id }}" title="Click for full-size version">
-                </a>
-                <div>
+            <div class="op-no-select">
+                <div class="flexslider">
+                    <ul class="slides">
+                    {% for preview_med_url, preview_full_url in preview_urls %}
+                        <li>
+                            <a href="{{ preview_full_url }}" target="_blank">
+                                <img src="{{ preview_med_url }}" alt="Preview image of {{ opus_id }}" title="Click for full-size version">
+                            </a>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                <div class="op-preview-guide">
                     <p>
                         {% if preview_guide_url %}
                             Read about <a href="{{ preview_guide_url }}" target="_blank">how to interpret {{ instrument_id }} preview images</a>

@@ -81,6 +81,12 @@ var o_detail = {
                 let urlToShare = `${window.location.origin}${window.location.pathname}#/view=detail&detail=${opusId}`;
                 $(".op-detail-share a[data-action='share']").attr("href", urlToShare);
 
+                // Init flexslider
+                $('.flexslider').flexslider({
+                    pauseOnHover: true,
+                    slideshow: false,
+                });
+
                 let colStr = opus.prefs.cols.join(',');
                 let arrOfDeferred = [];
                 // get the column metadata, this part is fast
