@@ -2333,12 +2333,13 @@ also set its min width to be 90px */
     max-height: 60vh;
     /* Make sure image under flexslider is not taking up the full width of
     the container */
-    width: fit-content !important;
+    width: auto !important;
 }
 
 /* Align the children img tags with the nav buttons */
 .op-detail-img li {
     text-align: -webkit-center;
+    text-align: -moz-center;
 }
 
 .op-detail-img .flexslider {
