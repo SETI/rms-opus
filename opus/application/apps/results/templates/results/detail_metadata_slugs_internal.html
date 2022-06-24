@@ -7,7 +7,7 @@
                     <i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
                         title="{{ values.1.get_tooltip_results|striptags }}"></i>&nbsp;
                 {% endif %}
-                <div>
+                <div class="op-detail-entry-values-wrapper">
                     {{ param }}:&nbsp;
                     <span class="op-detail-entry-values">{{ values.0 }}
                         {% if values.1.is_string_or_mult %}

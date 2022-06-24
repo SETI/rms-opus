@@ -11,7 +11,7 @@
                                     <i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
                                         title="{{ param_info.get_tooltip_results|striptags }}"></i>&nbsp;
                                 {% endif %}
-                                <div>
+                                <div class="op-detail-entry-values-wrapper">
                                     {% if param_info.get_units %}
                                         {% if param_info.referred_slug %}
                                             {{ param_info.label_results }} {{ param_info.get_units }}<i class="fas fa-link op-referred-link" title="{{ param_info.get_link_tooltip }}"></i>:&nbsp;
