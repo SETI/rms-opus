@@ -2787,6 +2787,19 @@ ul.ui-autocomplete a.ui-state-active {
     left: -2.5em !important;
 }
 
+/* Keep the trainsition animation of the preview images nav buttons when they are at 
+the right container of the detail tab. */
+@media (min-width: 767px) and (max-width: 860px) {
+  .flexslider .flex-direction-nav .flex-prev {
+    opacity: 0;
+    left: -50px;
+  }
+  .flexslider .flex-direction-nav .flex-next {
+    opacity: 0;
+    right: -50px;
+  }
+}
+
 @media (max-width: 680px) {
     /* When browser is narrow, we increase the width to squeeze in the long numbers */
     .op-preprogrammed-ranges .op-scrollable-menu {
