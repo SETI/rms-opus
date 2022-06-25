@@ -2787,9 +2787,9 @@ ul.ui-autocomplete a.ui-state-active {
     left: -2.5em !important;
 }
 
-/* Keep the trainsition animation of the preview images nav buttons when they are at 
+/* Keep the trainsition animation of the preview images nav buttons when they are at
 the right container of the detail tab. */
-@media (min-width: 767px) and (max-width: 860px) {
+@media (min-width: 768px) and (max-width: 860px) {
   .flexslider .flex-direction-nav .flex-prev {
     opacity: 0;
     left: -50px;
