@@ -2996,8 +2996,8 @@ var o_browse = {
             let title = `#${obsNum}: ${opusId}<br>Click for full-size image`;
 
             o_browse.metadataboxHtml(opusId);
-            $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview op-metadatabox-tooltip"/></a>`);
-            $("#galleryViewContents .op-obs-direction a").data("obs", obsNum);
+            $(".op-metadata-detail-view-body .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview op-metadatabox-tooltip"/></a>`);
+            $(".op-metadata-detail-view-body .op-obs-direction a").data("obs", obsNum);
 
             // Initialize tooltips for add and remove icons in metadata box
             $(".op-metadatabox-tooltip").tooltipster({
