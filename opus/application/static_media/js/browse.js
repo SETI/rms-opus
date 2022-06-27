@@ -2949,8 +2949,26 @@ var o_browse = {
         });
         $(".op-metadata-detail-view-body .op-metadata-details .contents").html(html);
 
-        // Initialize tooltips for add and remove icons in metadata box
+        // Initialize tooltips for "+" and "trash" icons in the edit menu of metadata box
         $(".op-metadatabox-edit-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+        });
+        // Initialize tooltips for "x" icon in the metadata box
+        $(".op-close-modal").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+        });
+        // Initialize tooltips for the minimize icon in the metadata box
+        $(".op-slide-minimize").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+        });
+        // Initialize tooltips for the maximize icon in the metadata box
+        $(".op-slide-maximize").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
@@ -2999,12 +3017,11 @@ var o_browse = {
             $(".op-metadata-detail-view-body .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview op-metadatabox-tooltip"/></a>`);
             $(".op-metadata-detail-view-body .op-obs-direction a").data("obs", obsNum);
 
-            // Initialize tooltips for add and remove icons in metadata box
+            // Initialize tooltips for cart, hamburger, prev, and next icons in metadata box
             $(".op-metadatabox-tooltip").tooltipster({
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
                 delay: opus.tooltips_delay,
-                // contentAsHTML: true,
             });
         }
     },

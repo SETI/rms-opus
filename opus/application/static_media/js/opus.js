@@ -156,6 +156,11 @@ var opus = {
     tooltips_theme: "tooltipster-light",
     tooltips_delay: 500,
     mult_tooltips_delay: 1500,
+    op_base_tooltips_settings: {
+        maxWidth: opus.tooltips_max_width,
+        theme: opus.tooltips_theme,
+        delay: opus.tooltips_delay,
+    },
 
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
