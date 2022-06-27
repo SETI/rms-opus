@@ -1885,6 +1885,8 @@ var o_browse = {
         o_hash.updateURLFromCurrentHash();
 
         // Initialize tooltips using tooltipster in browse gallery and table
+        // Since we didn't set functionPosition, the tooltip will always open
+        // in the middle of the gallery view's top edge.
         $(".op-browse-gallery-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
@@ -1904,7 +1906,8 @@ var o_browse = {
                 });
             },
             // Make sure the tooltip position is next to the cursor when users
-            // move around the same row in the browse table view.
+            // move around the same row in the browse table view. Without this 
+            // function, the tooltip will always open in the middle of the row.
             functionPosition: function(instance, helper, position){
                 let tooltipWidth = position.size.width;
                 let offsetToRightWindow = 5;
