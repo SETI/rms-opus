@@ -3225,6 +3225,10 @@ when wrapping into the 2nd line */
     #op-add-metadata-fields .op-select-list {
         height: 30vh;
     }
+
+    .tooltipster-content {
+        font-size: 90% !important;
+    }
 }
 
 @media (max-width: 560px), (max-height: 630px) {

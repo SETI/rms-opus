@@ -1514,6 +1514,5 @@ $(document).ready(function() {
         maxWidth: opus.tooltips_max_width,
         theme: opus.tooltips_theme,
         delay: opus.tooltips_delay,
-        debug: false,
     });
 });

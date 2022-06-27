@@ -24,7 +24,6 @@ let o_sortMetadata = {
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
-            debug: false,
             content: "Results are sorted by these metadata fields\nClick to reset sort fields to default",
         });
         // $(".op-browse-sort-tooltip").tooltipster("content", "Results are sorted by these metadata fields\nClick to reset sort fields to default");

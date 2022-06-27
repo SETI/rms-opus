@@ -465,7 +465,6 @@ var o_widgets = {
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
                 delay: opus.tooltips_delay,
-                debug: false,
             });
             // Prevent overscrolling for newly added dropdown.
             let newlyAddedDropdown = $(`#${widgetId} .op-search-inputs-set:last .op-scrollable-menu`);
@@ -1387,7 +1386,6 @@ var o_widgets = {
                 $(".op-input-action-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
-                    debug: false,
                 });
             }
 
@@ -1462,7 +1460,6 @@ var o_widgets = {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
-            // TESTING
             // Activate tooltipster after html is fully loaded
             $(`.op-mult-tooltip-${slug}`).tooltipster({
                 interactive: true,

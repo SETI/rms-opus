@@ -1889,14 +1889,12 @@ var o_browse = {
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
-            debug: false,
             contentAsHTML: true,
         });
         $(".op-browse-table-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
-            debug: false,
             contentAsHTML: true,
             functionBefore: function(instance, helper){
                 // Make sure all other tooltips are closed before a new one is opened
@@ -1943,7 +1941,7 @@ var o_browse = {
         // check all box
         // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
-                         "class='op-table-header-addall btn btn-link op-addall-icon-tooltip'" +
+                         "class='op-table-header-addall btn btn-link op-icon-tooltip-addall'" +
                          " title='Add All Results to Cart'>" +
                          "<i class='fas fa-cart-plus' data-action='addall'></i></button>";
 
@@ -1998,7 +1996,7 @@ var o_browse = {
         //o_browse.initDraggableColumn(tab);
 
         // Init addall icon tooltip in the browse table
-        $(".op-addall-icon-tooltip, .op-data-table-tooltip").tooltipster({
+        $(".op-icon-tooltip-addall, .op-data-table-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
@@ -2289,7 +2287,7 @@ var o_browse = {
                 loadPrevPage: false,
                 // store the most top left obsNum in gallery or the most top obsNum in table
                 obsNum: 1,
-                debug: false,
+
                 loadOnScroll: true,
             });
 
