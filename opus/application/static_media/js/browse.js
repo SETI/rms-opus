@@ -1885,7 +1885,6 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        // let addallIcon = "<button type='button' data-bs-toggle='modal' data-bs-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
                          "class='op-table-header-addall btn btn-link'" +
                          " title='Add All Results to Cart'>" +

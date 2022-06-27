@@ -24,22 +24,22 @@ const downloadLinksPBMaxHeight = 200;
 // is no proper way to distinguish between them because the 2nd one is the duplicate of
 // the 1st one).
 const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
-                                     "<div class='arrow'></div>" +
+                                     "<div class='popover-arrow'></div>" +
                                      "<h3 class='popover-header'></h3>" +
                                      "<div class='popover-body'></div>" +
                                      "<div class='popover-footer'>" +
                                      "<a tabindex='0' role='button' class='op-cite-opus-btn op-no-select'>" +
                                      "How to Cite OPUS" +
                                      "</a>" +
-                                     "<button class='op-clear-history-btn btn btn-sm btn-secondary'" +
-                                     "type='button' title='Clear all history' disabled>Clear All</button></div>" +
+                                     "<a class='op-clear-history-btn btn btn-sm btn-secondary'" +
+                                     "type='button' title='Clear all history' disabled>Clear All</a></div>" +
                                      "</div>";
 const downloadLinksPopoverTitle = "Download Archive Links" +
-                                  "<button " +
-                                  "class='close-download-links-history btn-sm py-0 pe-0 ps-2 border-0' " +
+                                  "<a " +
+                                  "class='op-close-download-links-history btn-sm py-0 pe-0 ps-2 border-0' " +
                                   "type='button'>&nbsp;" +
                                   "<i class='fas fa-times'></i>" +
-                                  "</button>";
+                                  "</a>";
 
 /* jshint varstmt: false */
 var o_cart = {
@@ -196,6 +196,7 @@ var o_cart = {
             // add event handler manually, we need to click the button twice to close a
             // manually open popover.
             trigger: "manual",
+            customClass: "op-links-popover",
             content: function() {
                 return $("#op-download-links").html();
             }
@@ -207,7 +208,7 @@ var o_cart = {
         });
 
         // Close popover when clicking "x" button on the popover title
-        $(document).on("click", ".close-download-links-history", function() {
+        $(document).on("click", ".op-close-download-links-history", function() {
             $(".footer .op-download-links-btn").popover("hide");
         });
 

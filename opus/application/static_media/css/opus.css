@@ -1596,16 +1596,14 @@ panel */
 }
 
 /* Make the "x" button in download links popover stays at the right. */
-.close-download-links-history {
+.op-close-download-links-history {
     float: right;
-    /* We didn't use bg-light class from bootstrap because bootstrap popover
-    header background has a different color (not belong to any bootstrap color
-    class) from bg-light. */
-    background-color: #F7F7F7;
+    --cui-link-color: var(--cui-popover-header-color);
+    --cui-link-hover-color: var(--cui-popover-header-color);
 }
 
 /* Remove the outline for "x" icon in download history window when it's clicked. */
-.close-download-links-history:focus {
+.op-close-download-links-history:focus {
     outline: none;
 }
 
@@ -1620,6 +1618,12 @@ footer for popover window */
     justify-content: space-between;
     padding: 0.2rem;
     border-top: 1px solid #e4e7ea;
+}
+
+.op-links-popover {
+  --bs-popover-border-color: var(--bs-primary);
+  --bs-popover-header-bg: var(--bs-primary);
+  --bs-popover-header-color: var(--bs-white);
 }
 
 .op-zipped-files {
@@ -1996,7 +2000,6 @@ panel are properly separated */
     outline: none;
     background: inherit;
     border: 1px solid #c5c5c5;
-    color:
 }
 
 .op-observation-text {
