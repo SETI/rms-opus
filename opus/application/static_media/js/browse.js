@@ -2931,8 +2931,8 @@ var o_browse = {
         let html = "";
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools mr-2">` +
-                         `<a href="#" class="op-metadata-detail-remove op-metadatabox-tooltip" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
-        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add op-metadatabox-tooltip" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
+                         `<a href="#" class="op-metadata-detail-remove op-metadatabox-edit-tooltip" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add op-metadatabox-edit-tooltip" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
@@ -2950,7 +2950,7 @@ var o_browse = {
         $(".op-metadata-detail-view-body .op-metadata-details .contents").html(html);
 
         // Initialize tooltips for add and remove icons in metadata box
-        $(".op-metadatabox-tooltip").tooltipster({
+        $(".op-metadatabox-edit-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
@@ -3004,7 +3004,7 @@ var o_browse = {
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
                 delay: opus.tooltips_delay,
-                contentAsHTML: true,
+                // contentAsHTML: true,
             });
         }
     },
