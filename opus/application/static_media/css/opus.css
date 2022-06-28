@@ -2364,9 +2364,25 @@ guid message and the nav buttons */
     margin-top: 2.5rem;
 }
 
-/* Fine tune the position of preview images nav buttons */
-.op-detail-img .flex-next, .op-detail-img .flex-prev {
+/* The following "left" & "right" settings in the next four stylings will fix the
+twitching issue when the cursor is at the border of preview image and nav buttons */
+/* Fine tune the position of preview images prev button "<" */
+.op-detail-img .flex-direction-nav .flex-prev {
     height: 50px;
+    left: 0px;
+}
+
+/* Fine tune the position of preview images next button ">" */
+.op-detail-img .flex-direction-nav .flex-next {
+    height: 50px;
+    right: 0px;
+}
+
+.op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
+  left: 25px;
+}
+.op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
+  right: 25px;
 }
 
 .op-share-message {
@@ -2794,16 +2810,23 @@ ul.ui-autocomplete a.ui-state-active {
     left: -2.5em !important;
 }
 
-/* Keep the trainsition animation of the preview images nav buttons when they are at
-the right container of the detail tab. */
+/* Keep the trainsition animation of the preview images nav buttons running when they
+are at the right container of the detail tab. "left" & "right" settings here will fix
+the twitching issue when the cursor is at the border of preview image and nav buttons. */
 @media (min-width: 768px) and (max-width: 860px) {
   .flexslider .flex-direction-nav .flex-prev {
     opacity: 0;
-    left: -50px;
+    left: 0px;
   }
   .flexslider .flex-direction-nav .flex-next {
     opacity: 0;
-    right: -50px;
+    right: 0px;
+  }
+  .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
+    left: 15px;
+  }
+  .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
+    right: 15px;
   }
 }
 
