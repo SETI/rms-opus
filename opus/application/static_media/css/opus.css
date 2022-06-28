@@ -2344,12 +2344,16 @@ also set its min width to be 90px */
 
 .op-detail-img .flexslider {
     margin-bottom: 1.5rem;
+    /* Center the detail preview image and nav buttons horizontally */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Properly position the nav buttons under preview image in detail tab */
+/* Make sure nav buttons of the detail preview images won't be wrapped into two rows when
+the screen is narrow  */
 .op-detail-img .flex-control-nav {
-    bottom: -30px;
-    font-size: 6px;
+    width: 120%;
 }
 
 /* Align preview guide text with preview images and set proper spacing between preview
