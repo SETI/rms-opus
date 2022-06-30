@@ -489,6 +489,10 @@ ul.op-search-menu {
     cursor: grab;
 }
 
+.widget .fa-info-circle:hover {
+    cursor: default;
+}
+
 /* Rotate the chevron on a widget header to indicate its open/closed status */
 .widget .card-header .icon-action {
     transition: .3s;
@@ -3485,17 +3489,35 @@ when screen is narrow (cart tab) */
     display: none;
 }
 
-.op-mult-tooltip-link {
-    color: #FFFFFF;
-}
-
 /* Make sure tooltipster tooltip is not covered by popover */
 .tooltipster-show {
     z-index: 2000000002 !important;
 }
 
 /* set font size and color of the tooltips contents */
-.tooltipster-content {
+.op-custom-tooltip-theme .tooltipster-content {
     font-size: 13px;
     color: #000000 !important;
+}
+
+/* Styling for main tooltip box */
+.op-custom-tooltip-theme .tooltipster-box{
+    border-radius: 3px !important;
+    border:1px solid #000000 !important;
+    background:#FFFFFF !important;
+}
+
+/* Background of the tooltip arrow */
+.op-custom-tooltip-theme.tooltipster-top .tooltipster-arrow-background {
+    border-top-color: #FFFFFF !important;
+    top: -1px !important;
+}
+
+/* Border of the tooltip arrow */
+.op-custom-tooltip-theme .tooltipster-top .tooltipster-arrow-border {
+    border-top-color: #000000 !important;
+}
+
+.op-custom-tooltip-theme .tooltipster-arrow{
+    height:9px !important;
 }
