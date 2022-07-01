@@ -1808,7 +1808,7 @@ var o_browse = {
                 galleryHtml += '<div class="op-modal-overlay">';
                 galleryHtml += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
-                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element" title="Last viewed in slideshow mode"></div>`;
+                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element op-browse-gallery-tooltip" title="Last viewed in slideshow mode"></div>`;
 
                 // recycle bin icon container
                 galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')} op-browse-gallery-tooltip" title="${mainTitle}">`;
@@ -1817,7 +1817,7 @@ var o_browse = {
 
                 // detail overlay
                 let hideDetail = (opus.prefs.detail === opusId ?  "" : "op-hide-element");
-                galleryHtml += `<div class="op-detail-overlay text-success ${hideDetail}" title="Shown on Detail tab"></div>`;
+                galleryHtml += `<div class="op-detail-overlay text-success op-browse-gallery-tooltip ${hideDetail}" title="Shown on Detail tab"></div>`;
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
@@ -1906,7 +1906,7 @@ var o_browse = {
                 });
             },
             // Make sure the tooltip position is next to the cursor when users
-            // move around the same row in the browse table view. Without this 
+            // move around the same row in the browse table view. Without this
             // function, the tooltip will always open in the middle of the row.
             functionPosition: function(instance, helper, position){
                 let tooltipWidth = position.size.width;
@@ -2952,26 +2952,12 @@ var o_browse = {
         });
         $(".op-metadata-detail-view-body .op-metadata-details .contents").html(html);
 
-        // Initialize tooltips for "+" and "trash" icons in the edit menu of metadata box
-        $(".op-metadatabox-edit-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
-        });
-        // Initialize tooltips for "x" icon in the metadata box
-        $(".op-close-modal").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
-        });
-        // Initialize tooltips for the minimize icon in the metadata box
-        $(".op-slide-minimize").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
-        });
-        // Initialize tooltips for the maximize icon in the metadata box
-        $(".op-slide-maximize").tooltipster({
+        // Initialize tooltips for:
+        // - "+" and "trash" icons in the edit menu of metadata box
+        // - "x" icon in the metadata box
+        // - The minimize icon in the metadata box
+        // - The maximize icon in the metadata box
+        $(".op-metadatabox-edit-tooltip, .op-close-modal, .op-slide-minimize, .op-slide-maximize").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,

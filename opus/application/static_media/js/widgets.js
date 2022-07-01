@@ -421,7 +421,7 @@ var o_widgets = {
                            '<hr class="op-or-label-divider"></ul>');
 
             let removeInputIcon = ('<li class="op-remove-inputs">' +
-                                   '<button type="button" title="Delete this set of search inputs" \
+                                   '<button class="op-input-action-tooltip" type="button" title="Delete this set of search inputs" \
                                    class="p-0 btn btn-small btn-link op-remove-inputs-btn op-input-action-tooltip"' +
                                    `data-widget="widget__${slug}" data-slug="${slug}">` +
                                    `<i class="${trashIcon}"></i></button></li>`);
@@ -1341,7 +1341,7 @@ var o_widgets = {
                                '<hr class="op-or-label-divider"></ul>');
 
                 let removeInputIcon = ('<li class="op-remove-inputs">' +
-                                       '<button type="button" title="Delete this set of search inputs" \
+                                       '<button class="op-input-action-tooltip" type="button" title="Delete this set of search inputs" \
                                        class="p-0 btn btn-small btn-link op-remove-inputs-btn op-input-action-tooltip"' +
                                        `data-widget="widget__${slug}" data-slug="${slug}">` +
                                        `<i class="${trashIcon}"></i></button></li>`);

@@ -839,7 +839,7 @@ var o_cart = {
                     let buttonInfo = o_browse.cartButtonInfo(action);
                     let newAction = buttonInfo["#browse"].rangeTitle.split(" ")[0];
                     let opusId = $(".op-detail-cart a").data("id");
-                    $(".op-detail-cart").html(`<a href="#" data-icon="cart" data-action="${newAction}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon}"></i></a>`);
+                    $(".op-detail-cart").html(`<a class="op-detail-cart-tooltip" href="#" data-icon="cart" data-action="${newAction}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon}"></i></a>`);
                 }
             }
             o_cart.updateCartStatus(statusData);

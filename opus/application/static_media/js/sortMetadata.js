@@ -26,7 +26,7 @@ let o_sortMetadata = {
             delay: opus.tooltips_delay,
             content: "Results are sorted by these metadata fields\nClick to reset sort fields to default",
         });
-        // $(".op-browse-sort-tooltip").tooltipster("content", "Results are sorted by these metadata fields\nClick to reset sort fields to default");
+
         $(".op-sort-contents").sortable({
             items: "div.op-sort-only",
             cursor: "grab",

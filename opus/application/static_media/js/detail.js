@@ -197,8 +197,8 @@ var o_detail = {
         } else {
             $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
         }
-        // Init tooltip of the image in detail tab
-        $(".op-detail-img-tooltip").tooltipster({
+        // Init tooltip of the image & cart button in detail tab
+        $(".op-detail-img-tooltip, .op-detail-cart-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
