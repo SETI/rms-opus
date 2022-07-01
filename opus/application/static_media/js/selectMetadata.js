@@ -259,15 +259,15 @@ var o_selectMetadata = {
 
                 // Initialize all tooltips using tooltipster in select metadata menu
                 $(".op-metadata-selector-tooltip").tooltipster({
-                    maxWidth: opus.tooltips_max_width,
-                    theme: opus.tooltips_theme,
-                    delay: opus.tooltips_delay,
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
                 });
                 // Initialize all tooltips using tooltipster in menu.html
                 $(".op-all-metadata-column .op-menu-tooltip").tooltipster({
-                    maxWidth: opus.tooltips_max_width,
-                    theme: opus.tooltips_theme,
-                    delay: opus.tooltips_delay,
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
                 });
             });
         }
@@ -298,9 +298,9 @@ var o_selectMetadata = {
         }
 
         $(".op-metadata-selector-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
         });
 
     },

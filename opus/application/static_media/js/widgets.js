@@ -462,9 +462,9 @@ var o_widgets = {
             $(`#${widgetId} .op-input`).append(cloneInputs);
             // Initialize tooltips for add and remove input icons in widget
             $(".op-input-action-tooltip").tooltipster({
-                maxWidth: opus.tooltips_max_width,
-                theme: opus.tooltips_theme,
-                delay: opus.tooltips_delay,
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
             });
             // Prevent overscrolling for newly added dropdown.
             let newlyAddedDropdown = $(`#${widgetId} .op-search-inputs-set:last .op-scrollable-menu`);
@@ -1384,8 +1384,8 @@ var o_widgets = {
 
                 // Initialize tooltips for add and remove input icons in widget
                 $(".op-input-action-tooltip").tooltipster({
-                    maxWidth: opus.tooltips_max_width,
-                    theme: opus.tooltips_theme,
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
                 });
             }
 
@@ -1463,14 +1463,14 @@ var o_widgets = {
             // Activate tooltipster after html is fully loaded
             $(`.op-mult-tooltip-${slug}`).tooltipster({
                 interactive: true,
-                maxWidth: opus.tooltips_max_width,
-                theme: opus.tooltips_theme,
-                delay: opus.mult_tooltips_delay,
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.multTooltipsDelay,
             });
             $(`.op-widget-tooltip-${slug}`).tooltipster({
-                maxWidth: opus.tooltips_max_width,
-                theme: opus.tooltips_theme,
-                delay: opus.tooltips_delay,
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
             });
 
         }); // end callback for .done()

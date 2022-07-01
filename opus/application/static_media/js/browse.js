@@ -58,10 +58,6 @@ var o_browse = {
     loadDataInProgress: false,
     infiniteScrollLoadInProgress: false,
 
-    // the x coordinate of the current cursor when moving mouse in the table view
-    mouseX: 0,
-    // The timer we used to detect the stop of mouse moving action in the table view
-    timer: null,
     /**
     *
     *  all the things that happen on the browse tab
@@ -74,16 +70,13 @@ var o_browse = {
         // Also when moving around in the same table row, reposition the tooltip so that
         // it stays right next to the cursor. Work for both browse/cart data table.
         $(".op-data-table tbody").on("mousemove", function(e) {
-            // We will wait for mouse moving to stop, and then show the tooltip
-            // after the amount of delay we set.
-            clearTimeout(o_browse.timer);
-            o_browse.mouseX = e.clientX;
-            o_browse.timer = setTimeout(function() {
-                let tableRow = $(e.target).parent("tr");
-                if (tableRow.length) {
-                    tableRow.tooltipster("instance").reposition();
-                }
-            }, opus.tooltips_delay);
+            o_utils.onImgMouseMoveHandler(e, $(e.target).parent("tr"));
+        });
+
+        // Get the x & y coordinate of the current cursor when moving mouse in metadatabox
+        // image. Reposition the tooltip based on the cursor location.
+        $(".op-metadata-detail-view-body").on("mousemove", ".op-slideshow-image-preview" , function(e) {
+            o_utils.onImgMouseMoveHandler(e, $(e.target));
         });
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);
@@ -170,11 +163,19 @@ var o_browse = {
         // images...
         $(".gallery").on("click", ".thumbnail, .op-recycle-overlay, .op-detail-overlay, .op-last-modal-overlay", function(e) {
             let elem = $(this).parent();
+            // Init the cursor position so that the image tooltip will be properly positioned if
+            // the cursor is right on the image when the metadatabox is open for the first time.
+            opus.mouseX = e.clientX;
+            opus.mouseY = e.clientY;
             o_browse.onGalleryOrRowClick(elem, e);
         });
 
         $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
             let elem = $(this).parent();
+            // Init the cursor position so that the image tooltip will be properly positioned if
+            // the cursor is right on the image when the metadatabox is open for the first time.
+            opus.mouseX = e.clientX;
+            opus.mouseY = e.clientY;
             o_browse.onGalleryOrRowClick(elem, e);
         });
 
@@ -1887,16 +1888,16 @@ var o_browse = {
         // Initialize tooltips using tooltipster in browse gallery and table
         // Since we didn't set functionPosition, the tooltip will always open
         // in the middle of the gallery view's top edge.
-        $(".op-browse-gallery-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+        $(`${tab} .op-browse-gallery-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
             contentAsHTML: true,
         });
-        $(".op-browse-table-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+        $(`${tab} .op-browse-table-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
             contentAsHTML: true,
             functionBefore: function(instance, helper){
                 // Make sure all other tooltips are closed before a new one is opened
@@ -1909,19 +1910,7 @@ var o_browse = {
             // move around the same row in the browse table view. Without this
             // function, the tooltip will always open in the middle of the row.
             functionPosition: function(instance, helper, position){
-                let tooltipWidth = position.size.width;
-                let offsetToRightWindow = 5;
-                let windowWidth = helper.geo.window.size.width;
-                // When the cursor is very close to the right edge of the window, we have
-                // to move the tooltip position to the right so that it won't get cut off
-                // by the window.
-                if ((o_browse.mouseX + tooltipWidth) + offsetToRightWindow > windowWidth) {
-                    position.coord.left = o_browse.mouseX - tooltipWidth;
-                } else {
-                    position.coord.left = o_browse.mouseX;
-                }
-                position.target = o_browse.mouseX;
-                return position;
+                return o_utils.setPreviewImageTooltipPosition(helper, position);
             }
         });
     },
@@ -1999,10 +1988,10 @@ var o_browse = {
         //o_browse.initDraggableColumn(tab);
 
         // Init addall icon tooltip in the browse table
-        $(".op-icon-tooltip-addall, .op-data-table-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+        $(`${tab} .op-icon-tooltip-addall, ${tab} .op-data-table-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
             contentAsHTML: true,
         });
     },
@@ -2955,12 +2944,10 @@ var o_browse = {
         // Initialize tooltips for:
         // - "+" and "trash" icons in the edit menu of metadata box
         // - "x" icon in the metadata box
-        // - The minimize icon in the metadata box
-        // - The maximize icon in the metadata box
-        $(".op-metadatabox-edit-tooltip, .op-close-modal, .op-slide-minimize, .op-slide-maximize").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+        $(".op-metadatabox-edit-tooltip").tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
         });
 
         // if it was last in edit mode, open in edit mode...
@@ -3003,14 +2990,27 @@ var o_browse = {
             let title = `#${obsNum}: ${opusId}<br>Click for full-size image`;
 
             o_browse.metadataboxHtml(opusId);
-            $(".op-metadata-detail-view-body .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview op-metadatabox-tooltip"/></a>`);
+            $(".op-metadata-detail-view-body .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview op-metadatabox-img-tooltip"/></a>`);
             $(".op-metadata-detail-view-body .op-obs-direction a").data("obs", obsNum);
 
             // Initialize tooltips for cart, hamburger, prev, and next icons in metadata box
             $(".op-metadatabox-tooltip").tooltipster({
-                maxWidth: opus.tooltips_max_width,
-                theme: opus.tooltips_theme,
-                delay: opus.tooltips_delay,
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
+            });
+
+            $(".op-metadatabox-img-tooltip").tooltipster({
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
+                contentAsHTML: true,
+                onlyOne: true,
+                // Make sure the tooltip position is next to the cursor when users mouse
+                // over to the metadatabox image.
+                functionPosition: function(instance, helper, position){
+                    return o_utils.setPreviewImageTooltipPosition(helper, position);
+                }
             });
         }
     },

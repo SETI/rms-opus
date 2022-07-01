@@ -204,9 +204,9 @@ var o_cart = {
         // Init tooltipster after popover is about to show.
         $(".app-footer .op-download-links-btn").on("show.bs.popover", function () {
             $(".op-download-popover-tooltip").tooltipster({
-                maxWidth: opus.tooltips_max_width,
-                theme: opus.tooltips_theme,
-                delay: opus.tooltips_delay,
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
             });
         });
 
@@ -589,9 +589,9 @@ var o_cart = {
 
                 // Initialize all tooltips using tooltipster in cart.html
                 $(".op-cart-tooltip").tooltipster({
-                    maxWidth: opus.tooltips_max_width,
-                    theme: opus.tooltips_theme,
-                    delay: opus.tooltips_delay,
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
                 });
             });
         } else {

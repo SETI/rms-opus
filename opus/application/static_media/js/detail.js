@@ -13,6 +13,12 @@ var o_detail = {
 
     activateDetailTab: function(opusId) {
 
+        // Get the x & y coordinate of the current cursor when moving mouse in detail preview
+        // image. Reposition the tooltip based on the cursor location.
+        $("#detail").on("mousemove", ".op-detail-prev-img-tooltip" , function(e) {
+            o_utils.onImgMouseMoveHandler(e, $(e.target));
+        });
+
         $("#detail").on("click", ".op-download-csv", function() {
             let colStr = opus.prefs.cols.join(',');
             $(this).attr("href", `/opus/__api/metadata_v2/${opusId}.csv?cols=${colStr}`);
@@ -110,12 +116,6 @@ var o_detail = {
                             .load(urlMetadata, function() {
                                 $(this).hide().slideDown("fast");
                                 arrOfDeferred[index].resolve();
-                                // Initialize all tooltips using tooltipster in the metadata area of the detail tab
-                                $(".op-detail-metadata-tooltip").tooltipster({
-                                    maxWidth: opus.tooltips_max_width,
-                                    theme: opus.tooltips_theme,
-                                    delay: opus.tooltips_delay,
-                                });
                             }
                         );
 
@@ -125,14 +125,31 @@ var o_detail = {
                     $.when.apply(null, arrOfDeferred).then(function() {
                         let initDetailPageScrollbar = _.debounce(o_detail.initAndUpdatePerfectScrollbar, 200);
                         initDetailPageScrollbar();
+                        // Initialize all tooltips using tooltipster in the metadata area of the detail tab
+                        $(".op-detail-metadata-tooltip").tooltipster({
+                            maxWidth: opus.tooltipsMaxWidth,
+                            theme: opus.tooltipsTheme,
+                            delay: opus.tooltipsDelay,
+                        });
                     });
                 });
                 // Initialize all tooltips using tooltipster in detail.html
                 $(".op-detail-tooltip").tooltipster({
-                    maxWidth: opus.tooltips_max_width,
-                    theme: opus.tooltips_theme,
-                    delay: opus.tooltips_delay,
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
                 });
+                $(".op-detail-prev-img-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                    // Make sure the tooltip position is next to the cursor when users mouse
+                    // over to the detail preview image.
+                    functionPosition: function(instance, helper, position){
+                        return o_utils.setPreviewImageTooltipPosition(helper, position);
+                    }
+                });
+
             } // /detail.load
         );
     }, // / activateDetailTab
@@ -192,16 +209,23 @@ var o_detail = {
                                       alt="${imageObj.alt_text}"
                                       title="${imageObj.opus_id}">`;
                     $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
+
+                    // Init tooltip of the detail prev image in the main nav bar
+                    $(".op-detail-img-tooltip").tooltipster({
+                        maxWidth: opus.tooltipsMaxWidth,
+                        theme: opus.tooltipsTheme,
+                        delay: opus.tooltipsDelay,
+                    });
                 });
             }
         } else {
             $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
         }
-        // Init tooltip of the image & cart button in detail tab
-        $(".op-detail-img-tooltip, .op-detail-cart-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+        // Init tooltip of the cart button in detail tab
+        $(".op-detail-cart-tooltip").tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
         });
     },
 

@@ -152,10 +152,16 @@ var opus = {
     oldSurfacegeoTarget: null,
 
     // Tooltipster settings
-    tooltips_max_width: 350,
-    tooltips_theme: "op-custom-tooltip-theme",
-    tooltips_delay: 500,
-    mult_tooltips_delay: 1500,
+    tooltipsMaxWidth: 350,
+    tooltipsTheme: "op-custom-tooltip-theme",
+    tooltipsDelay: 500,
+    multTooltipsDelay: 1500,
+
+    // the x & y coordinate of the current cursor when moving mouse
+    mouseX: 0,
+    mouseY: 0,
+    // The timer we used to detect the stop of mouse moving action
+    timer: null,
 
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
@@ -1134,9 +1140,9 @@ var opus = {
 
                 // Initialize atooltips using tooltipster in the help menu
                 $(".op-help-tooltip").tooltipster({
-                    maxWidth: opus.tooltips_max_width,
-                    theme: opus.tooltips_theme,
-                    delay: opus.tooltips_delay,
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
                 });
 
                 $(".op-open-help-pdf").on("click", function(e) {
@@ -1511,8 +1517,8 @@ $(document).ready(function() {
     opus.normalizedURLAPICall();
     // Initialize all tooltips using tooltipster in base.html
     $(".op-base-tooltip, .op-browse-view-tooltip").tooltipster({
-        maxWidth: opus.tooltips_max_width,
-        theme: opus.tooltips_theme,
-        delay: opus.tooltips_delay,
+        maxWidth: opus.tooltipsMaxWidth,
+        theme: opus.tooltipsTheme,
+        delay: opus.tooltipsDelay,
     });
 });

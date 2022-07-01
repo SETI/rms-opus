@@ -3508,12 +3508,33 @@ when screen is narrow (cart tab) */
 }
 
 /* Background of the tooltip arrow */
+.op-custom-tooltip-theme.tooltipster-bottom .tooltipster-arrow-background {
+    border-bottom-color: #FFFFFF !important;
+    top: 1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-left .tooltipster-arrow-background {
+    border-left-color: #FFFFFF !important;
+    left: -1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-right .tooltipster-arrow-background {
+    border-right-color: #FFFFFF !important;
+    left: 1px !important;
+}
 .op-custom-tooltip-theme.tooltipster-top .tooltipster-arrow-background {
     border-top-color: #FFFFFF !important;
     top: -1px !important;
 }
 
 /* Border of the tooltip arrow */
+.op-custom-tooltip-theme .tooltipster-bottom .tooltipster-arrow-border {
+    border-bottom-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-left .tooltipster-arrow-border {
+    border-left-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-right .tooltipster-arrow-border {
+    border-right-color: #000000 !important;
+}
 .op-custom-tooltip-theme .tooltipster-top .tooltipster-arrow-border {
     border-top-color: #000000 !important;
 }

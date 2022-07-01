@@ -21,9 +21,9 @@ let o_sortMetadata = {
     addBehaviours: function() {
         // Initialize tooltips of "Sort by" using tooltipster
         $(".op-browse-sort-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
             content: "Results are sorted by these metadata fields\nClick to reset sort fields to default",
         });
 
@@ -288,9 +288,9 @@ let o_sortMetadata = {
 
         // Initialize all tooltips using tooltipster in sort order pills.
         $(".op-sort-tooltip").tooltipster({
-            maxWidth: opus.tooltips_max_width,
-            theme: opus.tooltips_theme,
-            delay: opus.tooltips_delay,
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
         });
 
         // if all the metadata field columns are already in the sort list, disable the add button
