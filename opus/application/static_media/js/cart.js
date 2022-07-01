@@ -589,7 +589,7 @@ var o_cart = {
 
                 // Initialize all tooltips using tooltipster in cart.html
                 $(".op-cart-tooltip").tooltipster({
-                    maxWidth: opus.tooltipsMaxWidth,
+                    maxWidth: opus.downloadPaneTooltipsMaxWidth,
                     theme: opus.tooltipsTheme,
                     delay: opus.tooltipsDelay,
                 });
