@@ -2,31 +2,31 @@
     {
         "pi_dict_context": "MULT_MISSION",
         "pi_dict_name": "CO",
-        "definition": "Mission Cassini Tooltip Definition"
+        "definition": null
     },
     {
         "pi_dict_context": "MULT_MISSION",
         "pi_dict_name": "GO",
-        "definition": "Mission <b>Galileo</b> Tooltip Definition"
+        "definition": null
     },
     {
         "pi_dict_context": "MULT_MISSION",
         "pi_dict_name": "HST",
-        "definition": "Mission 'Hubble' Tooltip Definition"
+        "definition": null
     },
     {
         "pi_dict_context": "MULT_MISSION",
         "pi_dict_name": "NH",
-        "definition": "Mission New <a href='https://opus.pds-rings.seti.org/opus/#' target='_blank'>Horizons</a> Tooltip Definition"
+        "definition": null
     },
     {
         "pi_dict_context": "MULT_MISSION",
         "pi_dict_name": "VG",
-        "definition": "Mission Voyager Tooltip Definition  <img src='https://pds-rings.seti.org/viewer3_jup_18384_animated.gif' alt='random image' width=100 height=100>"
+        "definition": null
     },
     {
         "pi_dict_context": "MULT_MISSION",
         "pi_dict_name": "GB",
-        "definition": "Mission Ground-based Tooltip Definition {}~!@$%^&*()+=,./;:?><[]|`#"
+        "definition": null
     }
 ]
