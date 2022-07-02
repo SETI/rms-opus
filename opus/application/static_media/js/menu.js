@@ -69,7 +69,7 @@ var o_menu = {
 
             o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#search");
             // Initialize all tooltips using tooltipster in menu.html
-            $("#sidebar-container .op-menu-tooltip").tooltipster({
+            $("#sidebar .op-menu-tooltip").tooltipster({
                 maxWidth: opus.tooltipsMaxWidth,
                 theme: opus.tooltipsTheme,
                 delay: opus.tooltipsDelay,

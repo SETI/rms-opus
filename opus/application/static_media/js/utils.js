@@ -130,7 +130,7 @@ var o_utils = {
 
     // Get the x & y coordinate of the current cursor when moving mouse in the traget el.
     // Reposition the tooltip based on the cursor location (set in functionPosition callback).
-    onImgMouseMoveHandler: function(e, targetTooltipster) {
+    onMouseMoveHandler: function(e, targetTooltipster) {
         clearTimeout(opus.timer);
         opus.mouseX = e.clientX;
         opus.mouseY = e.clientY;

@@ -152,7 +152,7 @@ var opus = {
     oldSurfacegeoTarget: null,
 
     // Tooltipster settings
-    tooltipsMaxWidth: 450,
+    tooltipsMaxWidth: 680,
     downloadPaneTooltipsMaxWidth: 350,
     tooltipsTheme: "op-custom-tooltip-theme",
     tooltipsDelay: 500,

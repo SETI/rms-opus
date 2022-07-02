@@ -70,13 +70,13 @@ var o_browse = {
         // Also when moving around in the same table row, reposition the tooltip so that
         // it stays right next to the cursor. Work for both browse/cart data table.
         $(".op-data-table tbody").on("mousemove", function(e) {
-            o_utils.onImgMouseMoveHandler(e, $(e.target).parent("tr"));
+            o_utils.onMouseMoveHandler(e, $(e.target).parent("tr"));
         });
 
         // Get the x & y coordinate of the current cursor when moving mouse in metadatabox
         // image. Reposition the tooltip based on the cursor location.
         $(".op-metadata-detail-view-body").on("mousemove", ".op-slideshow-image-preview" , function(e) {
-            o_utils.onImgMouseMoveHandler(e, $(e.target));
+            o_utils.onMouseMoveHandler(e, $(e.target));
         });
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);

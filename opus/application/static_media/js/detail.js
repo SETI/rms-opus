@@ -16,7 +16,7 @@ var o_detail = {
         // Get the x & y coordinate of the current cursor when moving mouse in detail preview
         // image. Reposition the tooltip based on the cursor location.
         $("#detail").on("mousemove", ".op-detail-prev-img-tooltip" , function(e) {
-            o_utils.onImgMouseMoveHandler(e, $(e.target));
+            o_utils.onMouseMoveHandler(e, $(e.target));
         });
 
         $("#detail").on("click", ".op-download-csv", function() {
