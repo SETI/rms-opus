@@ -85,6 +85,8 @@ var o_detail = {
                 $('.flexslider').flexslider({
                     pauseOnHover: true,
                     slideshow: false,
+                    prevText: "",
+                    nextText: ""
                 });
 
                 let colStr = opus.prefs.cols.join(',');

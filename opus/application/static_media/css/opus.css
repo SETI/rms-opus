@@ -2364,25 +2364,47 @@ guid message and the nav buttons */
     margin-top: 2.5rem;
 }
 
-/* The following "left" & "right" settings in the next four stylings will fix the
-twitching issue when the cursor is at the border of preview image and nav buttons */
 /* Fine tune the position of preview images prev button "<" */
+.op-detail-img .flex-direction-nav a {
+    transition: none;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    -o-transition: none;
+    width:auto;
+    height: auto;
+}
+
 .op-detail-img .flex-direction-nav .flex-prev {
-    height: 50px;
-    left: 0px;
+    color: transparent;
+    opacity: 1;
+    left: -1.6em;
+}
+
+/* "<" size will change based on viewport width */
+.op-detail-img .flex-direction-nav .flex-prev:before {
+    font-size: 3vw;
 }
 
 /* Fine tune the position of preview images next button ">" */
 .op-detail-img .flex-direction-nav .flex-next {
-    height: 50px;
-    right: 0px;
+    color: transparent;
+    opacity: 1;
+    right: -1.6em;
 }
 
+/* ">" size will change based on viewport width */
+.op-detail-img .flex-direction-nav .flex-next:before {
+    font-size: 3vw;
+}
+
+/* Properly set "<" & ">" buttons positions so that we don't have flickering
+when hovering over the detail preview image */
 .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
-  left: 25px;
+  left: -1.6em;
 }
 .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
-  right: 25px;
+  right: -1.6em;
 }
 
 .op-share-message {
@@ -2814,20 +2836,18 @@ ul.ui-autocomplete a.ui-state-active {
 are at the right container of the detail tab. "left" & "right" settings here will fix
 the twitching issue when the cursor is at the border of preview image and nav buttons. */
 @media (min-width: 768px) and (max-width: 860px) {
-  .flexslider .flex-direction-nav .flex-prev {
-    opacity: 0;
-    left: 0px;
-  }
-  .flexslider .flex-direction-nav .flex-next {
-    opacity: 0;
-    right: 0px;
-  }
-  .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
-    left: 15px;
-  }
-  .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
-    right: 15px;
-  }
+    .flexslider .flex-direction-nav .flex-prev {
+        left: -1.6em;
+    }
+    .flexslider .flex-direction-nav .flex-next {
+        right: -1.6em;
+    }
+    .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
+        left: -1.6em;
+    }
+    .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
+        right: -1.6em;
+    }
 }
 
 @media (max-width: 680px) {
