@@ -2857,19 +2857,19 @@ the twitching issue when the cursor is at the border of preview image and nav bu
 instead of the edges of the screen */
 @media(max-width: 767px) {
     .flexslider .flex-direction-nav .flex-prev {
-        left: 10em;
+        left: 15%;
     }
 
     .flexslider .flex-direction-nav .flex-next {
-        right: 10em;
+        right: 15%;
     }
 
     .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
-        left: 10em;
+        left: 15%;
     }
 
     .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
-        right: 10em;
+        right: 15%;
     }
 }
 
