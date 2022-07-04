@@ -2839,14 +2839,45 @@ the twitching issue when the cursor is at the border of preview image and nav bu
     .flexslider .flex-direction-nav .flex-prev {
         left: -1.6em;
     }
+
     .flexslider .flex-direction-nav .flex-next {
         right: -1.6em;
     }
+
     .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
         left: -1.6em;
     }
+
     .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
         right: -1.6em;
+    }
+}
+
+/* When detail preview image moves to the top, position "<" & ">" near the image
+instead of the edges of the screen */
+@media(max-width: 767px) {
+    .flexslider .flex-direction-nav .flex-prev {
+        left: 10em;
+    }
+
+    .flexslider .flex-direction-nav .flex-next {
+        right: 10em;
+    }
+
+    .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
+        left: 10em;
+    }
+
+    .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
+        right: 10em;
+    }
+}
+
+/* Reduce the size of "..." nav buttons for detail preview image */
+@media (max-width: 950px) {
+    .op-detail-img .flex-control-paging li a {
+        width: 9px;
+        height: 9px;
     }
 }
 
