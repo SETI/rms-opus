@@ -2375,10 +2375,14 @@ guid message and the nav buttons */
     height: auto;
 }
 
+.op-detail-img .slides a {
+    cursor: default;
+}
+
 .op-detail-img .flex-direction-nav .flex-prev {
     color: transparent;
     opacity: 1;
-    left: unset;
+    left: 0px;
 }
 
 /* "<" size will change based on viewport width */
@@ -2390,7 +2394,7 @@ guid message and the nav buttons */
 .op-detail-img .flex-direction-nav .flex-next {
     color: transparent;
     opacity: 1;
-    right: unset;
+    right: 0px;
 }
 
 /* ">" size will change based on viewport width */
@@ -2401,10 +2405,10 @@ guid message and the nav buttons */
 /* Properly set "<" & ">" buttons positions so that we don't have flickering
 when hovering over the detail preview image */
 .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
-  left: unset;
+  left: 0px;
 }
 .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
-  right: unset;
+  right: 0px;
 }
 
 .op-share-message {

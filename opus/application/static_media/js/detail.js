@@ -176,7 +176,7 @@ var o_detail = {
             suppressScrollX: true,
         });
         o_detail.adjustDetailHeight();
-        o_detail.adjustDetailImgContainerWidth();
+        o_detail.adjustDetailImgNavBtns();
     },
 
     showDetailThumbInNav: function(imageHtml) {
