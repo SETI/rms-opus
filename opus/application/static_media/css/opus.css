@@ -2328,7 +2328,7 @@ to the left pane when screen is getting too wide */
 /* Make detail image shrink proportionally when screen is resized, and
 also set its min width to be 90px */
 .op-detail-img img {
-    max-width: 97%;
+    max-width: 90%;
     min-width: 90px;
     max-height: 60vh;
     /* Make sure image under flexslider is not taking up the full width of

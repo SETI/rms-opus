@@ -221,7 +221,7 @@ var o_detail = {
     // stay right next to the image at both sides.
     adjustDetailImgNavBtns: function() {
             let detailPreviewImgWdith = $(".op-detail-img img").width();
-            let offset = 30;
+            let offset = 40;
             let imgWidth = $(".op-detail-img img").outerWidth();
             let imgContainerWidth = $(".op-no-select .flexslider").outerWidth();
             let distanceBetweenImgAndNavBtns = (imgContainerWidth-imgWidth)/2 - offset;
