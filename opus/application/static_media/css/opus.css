@@ -2328,7 +2328,7 @@ to the left pane when screen is getting too wide */
 /* Make detail image shrink proportionally when screen is resized, and
 also set its min width to be 90px */
 .op-detail-img img {
-    max-width: 100%;
+    max-width: 97%;
     min-width: 90px;
     max-height: 60vh;
     /* Make sure image under flexslider is not taking up the full width of
@@ -2378,33 +2378,33 @@ guid message and the nav buttons */
 .op-detail-img .flex-direction-nav .flex-prev {
     color: transparent;
     opacity: 1;
-    left: -1.6em;
+    left: unset;
 }
 
 /* "<" size will change based on viewport width */
 .op-detail-img .flex-direction-nav .flex-prev:before {
-    font-size: 3vw;
+    font-size: min(3vw, 40px);
 }
 
 /* Fine tune the position of preview images next button ">" */
 .op-detail-img .flex-direction-nav .flex-next {
     color: transparent;
     opacity: 1;
-    right: -1.6em;
+    right: unset;
 }
 
 /* ">" size will change based on viewport width */
 .op-detail-img .flex-direction-nav .flex-next:before {
-    font-size: 3vw;
+    font-size: min(3vw, 40px);
 }
 
 /* Properly set "<" & ">" buttons positions so that we don't have flickering
 when hovering over the detail preview image */
 .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
-  left: -1.6em;
+  left: unset;
 }
 .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
-  right: -1.6em;
+  right: unset;
 }
 
 .op-share-message {
@@ -2830,47 +2830,6 @@ ul.ui-autocomplete a.ui-state-active {
     word-break: keep-all;
     /* This will make sure dropdown is not covering the widget scrollbar */
     left: -2.5em !important;
-}
-
-/* Keep the trainsition animation of the preview images nav buttons running when they
-are at the right container of the detail tab. "left" & "right" settings here will fix
-the twitching issue when the cursor is at the border of preview image and nav buttons. */
-@media (min-width: 768px) and (max-width: 860px) {
-    .flexslider .flex-direction-nav .flex-prev {
-        left: -1.6em;
-    }
-
-    .flexslider .flex-direction-nav .flex-next {
-        right: -1.6em;
-    }
-
-    .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
-        left: -1.6em;
-    }
-
-    .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
-        right: -1.6em;
-    }
-}
-
-/* When detail preview image moves to the top, position "<" & ">" near the image
-instead of the edges of the screen */
-@media(max-width: 767px) {
-    .flexslider .flex-direction-nav .flex-prev {
-        left: 15%;
-    }
-
-    .flexslider .flex-direction-nav .flex-next {
-        right: 15%;
-    }
-
-    .op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
-        left: 15%;
-    }
-
-    .op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
-        right: 15%;
-    }
 }
 
 /* Reduce the size of "..." nav buttons for detail preview image */

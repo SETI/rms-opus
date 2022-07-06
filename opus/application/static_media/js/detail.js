@@ -176,6 +176,7 @@ var o_detail = {
             suppressScrollX: true,
         });
         o_detail.adjustDetailHeight();
+        o_detail.adjustDetailImgContainerWidth();
     },
 
     showDetailThumbInNav: function(imageHtml) {
@@ -214,6 +215,21 @@ var o_detail = {
             $(".op-detail-metadata").height(containerHeight);
             o_detail.detailPageScrollbar.update();
         }
+    },
+
+    // Adjust the positions of detail preview image nav buttons "<" & ">" to make them
+    // stay right next to the image at both sides.
+    adjustDetailImgNavBtns: function() {
+            let detailPreviewImgWdith = $(".op-detail-img img").width();
+            let offset = 30;
+            let imgWidth = $(".op-detail-img img").outerWidth();
+            let imgContainerWidth = $(".op-no-select .flexslider").outerWidth();
+            let distanceBetweenImgAndNavBtns = (imgContainerWidth-imgWidth)/2 - offset;
+
+            $(".flexslider .flex-direction-nav .flex-prev").css("left", distanceBetweenImgAndNavBtns);
+            $(".op-detail-img .flexslider:hover .flex-direction-nav .flex-prev").css("left", distanceBetweenImgAndNavBtns);
+            $(".flexslider .flex-direction-nav .flex-next").css("right", distanceBetweenImgAndNavBtns);
+            $(".op-detail-img .flexslider:hover .flex-direction-nav .flex-next").css("right", distanceBetweenImgAndNavBtns);
     },
 
 };
