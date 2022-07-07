@@ -81,14 +81,6 @@ var o_detail = {
                 let urlToShare = `${window.location.origin}${window.location.pathname}#/view=detail&detail=${opusId}`;
                 $(".op-detail-share a[data-action='share']").attr("href", urlToShare);
 
-                // Init flexslider
-                $('.flexslider').flexslider({
-                    pauseOnHover: true,
-                    slideshow: false,
-                    prevText: "",
-                    nextText: ""
-                });
-
                 let colStr = opus.prefs.cols.join(',');
                 let arrOfDeferred = [];
                 // get the column metadata, this part is fast
@@ -127,6 +119,15 @@ var o_detail = {
                     $.when.apply(null, arrOfDeferred).then(function() {
                         let initDetailPageScrollbar = _.debounce(o_detail.initAndUpdatePerfectScrollbar, 200);
                         initDetailPageScrollbar();
+
+                        // Init flexslider
+                        $('.flexslider').flexslider({
+                            pauseOnHover: true,
+                            slideshow: false,
+                            prevText: "",
+                            nextText: ""
+                        });
+                        o_detail.adjustDetailImgNavBtns();
                     });
                 });
             } // /detail.load
@@ -176,7 +177,6 @@ var o_detail = {
             suppressScrollX: true,
         });
         o_detail.adjustDetailHeight();
-        o_detail.adjustDetailImgNavBtns();
     },
 
     showDetailThumbInNav: function(imageHtml) {
