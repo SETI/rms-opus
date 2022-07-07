@@ -2312,6 +2312,35 @@ to the left pane when screen is getting too wide */
     }
 }
 
+/* These stylings are for the case when screen is very small (short & narrow) */
+@media (max-width: 767px) and (max-height: 350px) {
+    .op-detail-img .flexslider {
+        margin-bottom: 0 !important;
+    }
+
+    /* use !important to override the styling from flexslider  */
+    .op-detail-img img {
+        height: 60px !important;
+        min-width: 60px !important;
+    }
+
+    .op-detail-img .op-preview-guide {
+        margin-top: 1rem !important;
+    }
+
+    .op-detail-img .op-preview-guide p {
+        margin-bottom: 0.5rem;
+    }
+
+    .op-detail-img .flex-control-nav {
+        bottom: -25px;
+    }
+
+    .op-detail-metadata-header div {
+        margin-bottom: 0.2rem !important;
+    }
+}
+
 @media (max-height: 615px) {
     /* Reduce the spaces around "Observation Detail" (detail tab) */
     .op-detail-metadata h1, .op-detail-metadata-header h1 {
