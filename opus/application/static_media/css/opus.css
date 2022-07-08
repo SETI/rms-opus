@@ -3498,6 +3498,7 @@ when screen is narrow (cart tab) */
 .op-custom-tooltip-theme .tooltipster-content {
     font-size: 13px;
     color: #000000 !important;
+    padding: 3px 5px !important;
 }
 
 /* Styling for main tooltip box */
