@@ -244,7 +244,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
     """
     browse_products = get_pds_products(opus_id_list=opus_id,
                                        product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
-    selected_browse_products = browse_products[opus_id][version_name]
+    selected_browse_products = browse_products[opus_id].get(version_name, [])
     res = []
     # One opus id could have multiple previews, for example:
     # co-rss-occ-2008-039-rev058c-x43-i
