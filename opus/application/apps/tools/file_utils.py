@@ -245,6 +245,9 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
     browse_products = get_pds_products(opus_id_list=opus_id,
                                        product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
     selected_browse_products = browse_products[opus_id].get(version_name, [])
+    # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
+    if len(selected_browse_products) == 0:
+        return [(settings.THUMBNAIL_NOT_FOUND, settings.THUMBNAIL_NOT_FOUND)]
     res = []
     # One opus id could have multiple previews, for example:
     # co-rss-occ-2008-039-rev058c-x43-i
