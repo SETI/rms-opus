@@ -3498,10 +3498,10 @@ when screen is narrow (cart tab) */
 .op-custom-tooltip-theme .tooltipster-content {
     font-size: 13px;
     color: #000000 !important;
-    padding-top: 3px !important;
-    padding-bottom: 3px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
     padding-left: 3px !important;
-    padding-right: 1px !important;
+    padding-right: 3px !important;
     hyphens: auto;
 }
 

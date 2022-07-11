@@ -237,7 +237,7 @@ let o_sortMetadata = {
 
     updateSortOrder: function(data) {
         let tab = opus.getViewTab();
-        let dragTooltip = "\nDrag to reorder";
+        let dragTooltip = "<br>Drag to reorder";
 
         let addIconHtml = `<div class="op-no-sort list-inline-item">` +
                              `<div class="op-sort-order-add-icon op-sort-tooltip" title="Add metadata fields to sort order">`+
@@ -291,6 +291,7 @@ let o_sortMetadata = {
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
+            contentAsHTML: true,
         });
 
         // if all the metadata field columns are already in the sort list, disable the add button
