@@ -2324,11 +2324,11 @@ to the left pane when screen is getting too wide */
         min-width: 60px !important;
     }
 
-    .op-detail-img .op-preview-guide {
+    .op-detail-img .op-preview-guide-center {
         margin-top: 1rem !important;
     }
 
-    .op-detail-img .op-preview-guide p {
+    .op-detail-img .op-preview-guide-center p {
         margin-bottom: 0.5rem;
     }
 
@@ -2387,10 +2387,10 @@ the screen is narrow  */
 
 /* Align preview guide text with preview images and set proper spacing between preview
 guid message and the nav buttons */
-.op-detail-img .op-preview-guide {
+.op-detail-img .op-preview-guide-center {
     text-align: -webkit-center;
     text-align: -moz-center;
-    margin-top: 2.5rem;
+    margin-top: 2rem;
 }
 
 /* Fine tune the position of preview images prev button "<" */
