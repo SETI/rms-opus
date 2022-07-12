@@ -2699,14 +2699,14 @@ var o_browse = {
         let selector = `.op-thumb-overlay [data-id=${opusId}] [data-icon="cart"]`;
         $.each(["#browse", "#cart"], function(index, tab) {
             $(`${tab} ${selector}`).html(`<i class="${buttonInfo[tab].icon} fa-xs"></i>`);
-            $(`${tab} ${selector}`).prop("title", buttonInfo[tab].title);
+            $(`${tab} ${selector}`).tooltipster("content", buttonInfo[tab].title);
         });
 
         let tab = opus.getViewTab();
         let modalCartSelector = `.op-metadata-detail-view-body .bottom .op-cart-toggle[data-id=${opusId}]`;
         if ($("#op-metadata-detail-view").is(":visible") && $(modalCartSelector).length > 0) {
             $(modalCartSelector).html(`<i class="${buttonInfo[tab].icon} fa-2x"></i>`);
-            $(modalCartSelector).prop("title", `${buttonInfo[tab].title} (spacebar)`);
+            $(modalCartSelector).tooltipster("content", `${buttonInfo[tab].title}`);
         }
     },
 
@@ -2966,7 +2966,7 @@ var o_browse = {
             let buttonInfo = o_browse.cartButtonInfo(action);
 
             // prev/next buttons - put this in op-metadata-detail-view html...
-            let html = `<div class="col"><a href="#" class="op-cart-toggle op-metadatabox-tooltip" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            let html = `<div class="col"><a href="#" class="op-cart-toggle op-metadatabox-tooltip" data-id="${opusId}" title="${buttonInfo[tab].title}"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
             html += `<div class="col text-center op-obs-direction">`;
             let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
             let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");

@@ -299,10 +299,10 @@ let o_sortMetadata = {
         // limit the total number of sort columns to 9
         if (Object.keys(tableColumnFields).length === 0) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
-            $(".op-sort-order-add-icon").attr("title", "All selected metadata fields have been used");
+            $(".op-sort-order-add-icon").tooltipster("content", "All selected metadata fields have been used");
         } else if (opus.prefs.order.length >= 9) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
-            $(".op-sort-order-add-icon").attr("title", "The maximum of nine metadata sort fields has been reached");
+            $(".op-sort-order-add-icon").tooltipster("content", "The maximum of nine metadata sort fields has been reached");
         } else {
             $(".op-sort-order-add-icon").removeClass("op-sort-add-disabled");
         }

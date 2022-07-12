@@ -450,9 +450,9 @@ var opus = {
                 }
                 let prettyDate = lastUpdateDate.toLocaleDateString('en-GB',
                                         {year: 'numeric', month: 'long', day: 'numeric'});
-                $("#op-last-blog-update-date").attr("title", "Blog last updated "+prettyDate);
+                $("#op-last-blog-update-date").tooltipster("content", "Blog last updated "+prettyDate);
             } else {
-                $("#op-last-blog-update-date").attr("title", "");
+                $("#op-last-blog-update-date").tooltipster("content", "");
             }
             // note: $.cookie compare needs to be != because the cookie is a string number but cdate is a number.
             if (data.notification !== null && data.notification !== "" && $.cookie("notify") != data.notification_mdate) {

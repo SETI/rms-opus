@@ -225,7 +225,20 @@ var o_selectMetadata = {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
-                $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
+                // Initialize all tooltips using tooltipster in select metadata menu
+                $(".op-metadata-selector-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                });
+                // Initialize all tooltips using tooltipster in menu.html
+                $(".op-all-metadata-column .op-menu-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                });
+
+                $("#op-select-metadata a.op-download-csv").tooltipster("content", downloadTitle);
                 $("#op-select-metadata a.op-download-csv").text(buttonTitle);
 
                 $("#op-select-metadata .op-selected-metadata-column > ul").sortable({
@@ -256,22 +269,9 @@ var o_selectMetadata = {
                 o_selectMetadata.hideOrShowMenuPS();
                 o_selectMetadata.hideMenuLoaderSpinner();
                 o_selectMetadata.rendered = true;
-
-                // Initialize all tooltips using tooltipster in select metadata menu
-                $(".op-metadata-selector-tooltip").tooltipster({
-                    maxWidth: opus.tooltipsMaxWidth,
-                    theme: opus.tooltipsTheme,
-                    delay: opus.tooltipsDelay,
-                });
-                // Initialize all tooltips using tooltipster in menu.html
-                $(".op-all-metadata-column .op-menu-tooltip").tooltipster({
-                    maxWidth: opus.tooltipsMaxWidth,
-                    theme: opus.tooltipsTheme,
-                    delay: opus.tooltipsDelay,
-                });
             });
         }
-        $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
+        $("#op-select-metadata a.op-download-csv").tooltipster("content", downloadTitle);
         $("#op-select-metadata a.op-download-csv").text(buttonTitle);
     },
 

@@ -634,7 +634,7 @@ var o_cart = {
             let detailCartElem = $(".op-detail-cart a");
             if (detailCartElem.length > 0) {
                 detailCartElem.data("action", "add");
-                detailCartElem.attr("title", "Add to cart");
+                detailCartElem.tooltipster("content", "Add to cart");
                 detailCartElem.find("i").attr("class", "fas fa-cart-plus fa-xs");
             }
             opus.changeTab("cart");
@@ -670,12 +670,12 @@ var o_cart = {
         let buttonInfo = o_browse.cartButtonInfo("restore");
         let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
-        $(selector).prop("title", buttonInfo["#cart"].title);
+        $(selector).tooltipster("content", buttonInfo["#cart"].title);
         $("#cart .op-thumbnail-container").addClass("op-in-cart");
         $("#cart .op-thumbnail-container .op-recycle-overlay").addClass("op-hide-element");
         $("#cart tr[data-id]").removeClass("text-success op-recycled");
         $("#cart .op-thumbnail-container[data-id] .op-recycle-overlay").addClass("op-hide-element");
-        $(".op-gallery-view-body .op-cart-toggle").attr("title", `${buttonInfo[tab].title} (spacebar)`);
+        $(".op-gallery-view-body .op-cart-toggle").tooltipster("content", `${buttonInfo[tab].title}`);
         $(".op-gallery-view-body .op-cart-toggle").html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
     },
 
@@ -839,7 +839,12 @@ var o_cart = {
                     let buttonInfo = o_browse.cartButtonInfo(action);
                     let newAction = buttonInfo["#browse"].rangeTitle.split(" ")[0];
                     let opusId = $(".op-detail-cart a").data("id");
-                    $(".op-detail-cart").html(`<a class="op-detail-cart-tooltip" href="#" data-icon="cart" data-action="${newAction}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon}"></i></a>`);
+                    $(".op-detail-cart").html(`<a class="op-detail-cart-icon-tooltip" href="#" data-icon="cart" data-action="${newAction}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon}"></i></a>`);
+                    $(".op-detail-cart-icon-tooltip").tooltipster({
+                        maxWidth: opus.tooltipsMaxWidth,
+                        theme: opus.tooltipsTheme,
+                        delay: opus.tooltipsDelay,
+                    });
                 }
             }
             o_cart.updateCartStatus(statusData);
