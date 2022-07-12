@@ -675,7 +675,7 @@ var o_cart = {
         $("#cart .op-thumbnail-container .op-recycle-overlay").addClass("op-hide-element");
         $("#cart tr[data-id]").removeClass("text-success op-recycled");
         $("#cart .op-thumbnail-container[data-id] .op-recycle-overlay").addClass("op-hide-element");
-        $(".op-gallery-view-body .op-cart-toggle").tooltipster("content", `${buttonInfo[tab].title}`);
+        $(".op-gallery-view-body .op-cart-toggle").tooltipster("content", `${buttonInfo[tab].title} (or press spacebar)`);
         $(".op-gallery-view-body .op-cart-toggle").html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
     },
 
