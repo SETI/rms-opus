@@ -1521,5 +1521,6 @@ $(document).ready(function() {
         maxWidth: opus.tooltipsMaxWidth,
         theme: opus.tooltipsTheme,
         delay: opus.tooltipsDelay,
+        contentAsHTML: true
     });
 });

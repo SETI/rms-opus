@@ -24,7 +24,8 @@ let o_sortMetadata = {
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
-            content: "Results are sorted by these metadata fields\nClick to reset sort fields to default",
+            content: "Results are sorted by these metadata fields<br>Click to reset sort fields to default",
+            contentAsHTML: true
         });
 
         $(".op-sort-contents").sortable({
