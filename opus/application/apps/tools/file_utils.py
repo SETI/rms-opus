@@ -239,10 +239,10 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
     return image_list
 
 def get_displayed_browse_products(opus_id, version_name='Current'):
-    """Given an opus_ids, return a list of browse products urls displayed
-       in detail tab.
+    """Given an opus_id, return a list of browse product URLs to display in the
+       detail tab.
     """
-    browse_products = get_pds_products(opus_id_list=opus_id,
+    browse_products = get_pds_products(opus_id,
                                        product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
     selected_browse_products = browse_products[opus_id].get(version_name, [])
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND

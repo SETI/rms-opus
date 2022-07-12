@@ -2294,8 +2294,7 @@ to the left pane when screen is getting too wide */
         height: 150px !important;
     }
 
-    /* Reduce the top space above the detail image when screen, use !important to override
-    the styling from flexslider */
+    /* Reduce the space above the detail image when the screen is short and narrow */
     .op-detail-img {
         padding-top: 0 !important;
     }

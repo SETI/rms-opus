@@ -54,9 +54,9 @@ from tools.app_utils import (cols_to_slug_list,
                              throw_random_http404_error,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_NO_REQUEST)
-from tools.file_utils import (get_pds_preview_images,
-                              get_pds_products,
-                              get_displayed_browse_products)
+from tools.file_utils import (get_displayed_browse_products,
+                              get_pds_preview_images,
+                              get_pds_products)
 
 from opus_support import (display_search_unit,
                           display_unit_ever,
