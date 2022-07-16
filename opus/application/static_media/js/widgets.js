@@ -220,7 +220,7 @@ var o_widgets = {
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
                 o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                 // close dropdown and trigger the search
-                $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`).toggleClass("show");
+                $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`).next(".op-preprogrammed-ranges").toggleClass("show");
                 $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).trigger("change");
 
                 let minInput = $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`);
@@ -780,9 +780,7 @@ var o_widgets = {
         /**
          * Remove all highlighted text and make sure all category are collpased
          */
-        let preprogrammedRangesDropdown = (targetInput
-                                           .next(".op-preprogrammed-ranges")
-                                           .find(".op-scrollable-menu"));
+        let preprogrammedRangesDropdown = targetInput.next(".op-preprogrammed-ranges");
         let preprogrammedRangesInfo = preprogrammedRangesDropdown.find("li");
 
         // If ranges info is not available, return from the function.
@@ -1315,7 +1313,7 @@ var o_widgets = {
                 if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
                     // Note: the selector to toggle dropdown should be the one with data-bs-toggle="dropdown"
                     // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
-                    $(`#${widget} input.op-range-input-min`).toggleClass("show");
+                    $(`#${widget} input.op-range-input-min`).next(".op-preprogrammed-ranges").toggleClass("show");
                 }
             });
 

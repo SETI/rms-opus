@@ -90,9 +90,7 @@ var o_search = {
             $(this).removeClass("search_input_invalid_no_focus");
 
             // Open the dropdown properly when user tabs to focus in.
-            let preprogrammedRangesDropdown = ($(this)
-                                               .next(".op-preprogrammed-ranges")
-                                               .find(".op-scrollable-menu"));
+            let preprogrammedRangesDropdown = $(this).next(".op-preprogrammed-ranges");
 
             o_search.rangesNameTotalMatchedCounter[slugWithId] =
             (o_search.rangesNameTotalMatchedCounter[slugWithId] || 0);
@@ -142,9 +140,7 @@ var o_search = {
             }
 
             // Close the dropdown properly when user focuses out.
-            let preprogrammedRangesDropdown = ($(this)
-                                               .next(".op-preprogrammed-ranges")
-                                               .find(".op-scrollable-menu"));
+            let preprogrammedRangesDropdown = $(this).next(".op-preprogrammed-ranges");
             if (preprogrammedRangesDropdown.length !== 0 &&
                 preprogrammedRangesDropdown.hasClass("show")) {
                 preprogrammedRangesDropdown.toggleClass("show");
@@ -264,7 +260,7 @@ var o_search = {
                             o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                             o_search.rangesNameTotalMatchedCounter[slugWithId] = 0;
                             // close dropdown and trigger the search
-                            $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).toggleClass("show");;
+                            $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).next(".op-preprogrammed-ranges").toggleClass("show");
                             $(`#${widgetId} input.RANGE[name="${inputName}"]`).trigger("change");
                             let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
                             $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`).trigger("change");
@@ -276,12 +272,10 @@ var o_search = {
             } else {
                 // close the dropdown
                 let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
-                let preprogrammedRangesDropdown = (inputToTriggerDropdown
-                                                   .next(".op-preprogrammed-ranges")
-                                                   .find(".op-scrollable-menu"));
+                let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
 
                 if (preprogrammedRangesDropdown.hasClass("show")) {
-                    inputToTriggerDropdown.toggleClass("show");
+                    preprogrammedRangesDropdown.toggleClass("show");
                 }
             }
 
@@ -722,9 +716,7 @@ var o_search = {
         let slugWithId = `${slug}_${uniqueid}`;
         // Need to be more specific to select the corresponding one
         let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
-        let preprogrammedRangesDropdown = (inputToTriggerDropdown
-                                           .next(".op-preprogrammed-ranges")
-                                           .find(".op-scrollable-menu"));
+        let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
         let preprogrammedRangesInfo = preprogrammedRangesDropdown.find("li");
 
         // If ranges info is not available, return from the function.
@@ -800,11 +792,11 @@ var o_search = {
 
         if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
-                inputToTriggerDropdown.toggleClass("show");;
+                preprogrammedRangesDropdown.toggleClass("show");
             }
         } else {
             if (!preprogrammedRangesDropdown.hasClass("show")) {
-                inputToTriggerDropdown.toggleClass("show");
+                preprogrammedRangesDropdown.toggleClass("show");
             }
         }
     },

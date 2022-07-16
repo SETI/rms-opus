@@ -2829,11 +2829,6 @@ ul.ui-autocomplete a.ui-state-active {
     z-index: 9999;
 }
 
-/* Make sure ranges info div not splitting input min and max into two lines */
-.op-preprogrammed-ranges {
-    display: inline !important;
-}
-
 /* Styling for ranges info dropdown */
 .op-preprogrammed-ranges .dropdown-item:active {
     background-color: transparent;
@@ -2959,21 +2954,14 @@ ul.ui-autocomplete a.ui-state-active {
 
 /* Rotate arrow icon when ranges dropdown list or expandable contents are
 expanded/collapsed */
-.op-preprogrammed-ranges .dropdown-toggle::after,
-.op-preprogrammed-ranges #op-ranges-dropdown-menu::after  {
+.op-preprogrammed-ranges .dropdown-toggle::after {
     transition: all .3s;
     -webkit-transition: all .3s;
 }
 
-.op-preprogrammed-ranges .dropdown-toggle.collapsed::after,
-.op-preprogrammed-ranges #op-ranges-dropdown-menu::after {
+.op-preprogrammed-ranges .dropdown-toggle.collapsed::after {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
-}
-
-.op-preprogrammed-ranges.show #op-ranges-dropdown-menu::after {
-    transform: rotate(0);
-    -webkit-transform: rotate(0);
 }
 
 .op-hide-element {
