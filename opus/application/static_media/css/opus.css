@@ -1033,9 +1033,9 @@ button.op-mini-thumbnail-zoom {
 }
 
 #op-select-metadata .op-download-csv {
-    position: fixed;
-    bottom: 5.5em;
-    right: 1.25em;
+    position: relative;
+    float: right;
+    margin-top: 1rem;
 }
 
 /* Add spacing between each menu item in select metadata menu */
