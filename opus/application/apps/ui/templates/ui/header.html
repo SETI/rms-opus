@@ -34,6 +34,10 @@
 
         <link onerror="fallback(this, 'bootstrap/css/bootstrap-grid-4.1.3.min.css')"
         rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap-grid.css" media="all">
+
+        <!-- flexslider -->
+        <link onerror="fallback(this, 'flexslider/flexslider-2.7.2.css')"
+        rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexslider/2.7.2/flexslider.css" integrity="sha512-HWY8i77pPLL23sU4pHj+5iuZEmmmu2YaiTUcWrBXqBRTpn6yUdDvlFGNmG0qyjDg/vpt+YWNMASjg9M0eOU9DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     {% else %}
         <link rel="stylesheet" href="{{ STATIC_URL }}cdn_fallback/fontawesome/css/all-5.15.1.min.css" media="all">
 
@@ -46,6 +50,9 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}cdn_fallback/bootstrap/css/bootstrap-reboot-4.1.3.min.css" media="all">
 
         <link rel="stylesheet" href="{{ STATIC_URL }}cdn_fallback/bootstrap/css/bootstrap-grid-4.1.3.min.css" media="all">
+
+        <!-- flexslider -->
+        <link rel="stylesheet" href="{{ STATIC_URL }}cdn_fallback/flexslider/flexslider-2.7.2.css" type="text/css">
     {% endif %}
 
     <!-- Main styles for this application-->
@@ -59,9 +66,6 @@
 
     <!-- NASA feedback widget -->
     <link rel="stylesheet" href="{{ STATIC_URL }}feedback/css/feedback.css{{ VERSION_SUFFIX }}" type="text/css" media="screen">
-
-    <!-- flexslider -->
-    <link rel="stylesheet" href="{{ STATIC_URL }}flexslider/flexslider.css" type="text/css">
 
     <!-- inline styles related to this page -->
     {% block page_styles %} {% endblock %}
