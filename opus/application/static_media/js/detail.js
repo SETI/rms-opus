@@ -221,10 +221,11 @@ var o_detail = {
     // stay right next to the image at both sides.
     adjustDetailImgNavBtns: function() {
             // By default when css left & right of "<" & ">" are 0, those two buttons stay
-            // within the image with their arrow tips touching the left & right borders of the
-            // image. The width of "<" & ">" is bit more than 25px. To move buttons out of the
-            // image, we need to set css left & right to at least -(26px + some values)
-            // so that buttons won't be too close the image. Therefore we pick 40 here.
+            // within the image container with their arrow tips touching the left & right
+            // borders of the container. The width of "<" & ">" is bit more than 25px.
+            // To move buttons out of the image, we need to set css left & right to at least
+            // -(26px + some values) so that buttons won't be too close the image.
+            // Therefore we pick 40 here.
             let offset = 40;
             let imgWidth = $(".op-detail-img img").outerWidth();
             let imgContainerWidth = $(".op-no-select .flexslider").outerWidth();
