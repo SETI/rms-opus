@@ -489,7 +489,8 @@ ul.op-search-menu {
     cursor: grab;
 }
 
-.widget .fa-info-circle:hover {
+/* Make sure all black info circles have the default cursor style */
+.fa-info-circle:hover {
     cursor: default;
 }
 

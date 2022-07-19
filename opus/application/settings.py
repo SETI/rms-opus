@@ -374,5 +374,5 @@ DOWNLOAD_FORMATS = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-# We don't want to have these characters in HTML class or ID
+# We don't want to have these characters in HTML class or ID for customized tooltips.
 INVALID_CLASS_CHAR = '~!@$%^&*()+=,./;:"?><[]\{}|`# '
