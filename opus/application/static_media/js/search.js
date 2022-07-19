@@ -99,7 +99,8 @@ var o_search = {
                 (!currentValue || o_search.rangesNameTotalMatchedCounter[slugWithId] > 0) &&
                 !preprogrammedRangesDropdown.hasClass("show") && !o_widgets.isReFocusingBackToInput) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
-                preprogrammedRangesDropdown.toggleClass("show");
+                let dropdownInstance = new bootstrap.Dropdown($(this)[0]);
+                dropdownInstance.toggle();
             }
         });
 
@@ -137,13 +138,6 @@ var o_search = {
                 $(this).removeClass("search_input_valid");
                 $(this).removeClass("search_input_invalid");
                 $(this).addClass("search_input_original");
-            }
-
-            // Close the dropdown properly when user focuses out.
-            let preprogrammedRangesDropdown = $(this).next(".op-preprogrammed-ranges");
-            if (preprogrammedRangesDropdown.length !== 0 &&
-                preprogrammedRangesDropdown.hasClass("show")) {
-                preprogrammedRangesDropdown.toggleClass("show");
             }
 
             o_widgets.isKeepingRangesDropdownOpen = false;
@@ -275,8 +269,12 @@ var o_search = {
                 let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
 
                 if (preprogrammedRangesDropdown.hasClass("show")) {
-                    preprogrammedRangesDropdown.toggleClass("show");
+                    // preprogrammedRangesDropdown.toggleClass("show");
+                    let dropdownInstance = new bootstrap.Dropdown(inputToTriggerDropdown[0]);
+                    // dropdownInstance.hide();
+                    dropdownInstance.toggle();
                 }
+
             }
 
             o_search.stringOrRangeChanged(e.target);
@@ -683,7 +681,7 @@ var o_search = {
         // Make sure dropdown is not shown if user focus into an input with numerical value or
         // string value with no match.
         $("#search").on("show.bs.dropdown", function(e) {
-            let minInput = $(e.target).find("input.op-ranges-dropdown-menu");
+            let minInput = $(e.target);
             if (minInput.length === 0) {
                 return;
             }
@@ -790,13 +788,14 @@ var o_search = {
         }
         o_search.inputsRangesNameMatchedInfo[slugWithId] = o_utils.deepCloneObj(o_search.rangesNameMatchedCounterByCategory);
 
+        let dropdownInstance = new bootstrap.Dropdown(inputToTriggerDropdown[0]);
         if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
-                preprogrammedRangesDropdown.toggleClass("show");
+                dropdownInstance.toggle();
             }
         } else {
             if (!preprogrammedRangesDropdown.hasClass("show")) {
-                preprogrammedRangesDropdown.toggleClass("show");
+                dropdownInstance.toggle();
             }
         }
     },
