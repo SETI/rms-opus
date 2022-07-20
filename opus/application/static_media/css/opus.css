@@ -2836,7 +2836,7 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Enable default scrollbar for ranges info dropdown */
-.op-preprogrammed-ranges .op-scrollable-menu {
+.op-preprogrammed-ranges.op-scrollable-menu {
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
@@ -2851,14 +2851,14 @@ ul.ui-autocomplete a.ui-state-active {
 
 @media (max-width: 680px) {
     /* When browser is narrow, we increase the width to squeeze in the long numbers */
-    .op-preprogrammed-ranges .op-scrollable-menu {
+    .op-preprogrammed-ranges.op-scrollable-menu {
         max-width: 125% !important;
     }
 }
 
 @media (max-width: 710px) {
     /* When browser is narrow, we increase the width to squeeze in the long numbers */
-    .op-preprogrammed-ranges .op-scrollable-menu {
+    .op-preprogrammed-ranges.op-scrollable-menu {
         max-width: 122%;
     }
 }
@@ -2896,7 +2896,7 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Make sure ranges names can be wrapped when dropdown width is narrow */
-.op-preprogrammed-ranges .op-scrollable-menu li {
+.op-preprogrammed-ranges.op-scrollable-menu li {
     white-space: normal;
 }
 
