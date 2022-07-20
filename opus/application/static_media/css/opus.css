@@ -3501,8 +3501,8 @@ when screen is narrow (cart tab) */
     color: #000000 !important;
     padding-top: 2px !important;
     padding-bottom: 2px !important;
-    padding-left: 3px !important;
-    padding-right: 3px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
     hyphens: auto;
 }
 
@@ -3511,6 +3511,16 @@ when screen is narrow (cart tab) */
     border-radius: 3px !important;
     border:1px solid #000000 !important;
     background:#FFFFFF !important;
+}
+
+/* Set some distances between the tooltips and left & right edges of the browser window */
+.op-custom-tooltip-theme.tooltipster-top .tooltipster-box {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+}
+.op-custom-tooltip-theme.tooltipster-bottom .tooltipster-box {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
 }
 
 /* Background of the tooltip arrow */
