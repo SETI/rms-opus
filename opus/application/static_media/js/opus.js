@@ -158,7 +158,9 @@ var opus = {
     tooltipsDelay: 500,
     multTooltipsDelay: 1500,
 
-    // the x & y coordinate of the current cursor when moving mouse
+    // The x & y coordinate of the current cursor when moving the mouse.
+    // For now, these will be used to set the proper position for the tooltips.
+    // It can be used in other places where we need to ultilize the position of the mouse.
     mouseX: 0,
     mouseY: 0,
     // The timer we used to detect the stop of mouse moving action
