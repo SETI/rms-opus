@@ -131,6 +131,14 @@ var o_detail = {
                             theme: opus.tooltipsTheme,
                             delay: opus.tooltipsDelay,
                         });
+                        // Init flexslider
+                        $('.flexslider').flexslider({
+                            pauseOnHover: true,
+                            slideshow: false,
+                            prevText: "",
+                            nextText: ""
+                        });
+                        o_detail.adjustDetailImgNavBtns();
                     });
                 });
                 // Initialize all tooltips using tooltipster in detail.html
@@ -248,6 +256,26 @@ var o_detail = {
             $(".op-detail-metadata").height(containerHeight);
             o_detail.detailPageScrollbar.update();
         }
+    },
+
+    // Adjust the positions of detail preview image nav buttons "<" & ">" to make them
+    // stay right next to the image at both sides.
+    adjustDetailImgNavBtns: function() {
+            // By default when css left & right of "<" & ">" are 0, those two buttons stay
+            // within the image container with their arrow tips touching the left & right
+            // borders of the container. The width of "<" & ">" is bit more than 25px.
+            // To move buttons out of the image, we need to set css left & right to at least
+            // -(26px + some values) so that buttons won't be too close the image.
+            // Therefore we pick 40 here.
+            let offset = 40;
+            let imgWidth = $(".op-detail-img img").outerWidth();
+            let imgContainerWidth = $(".op-no-select .flexslider").outerWidth();
+            let distanceBetweenImgAndNavBtns = (imgContainerWidth-imgWidth)/2 - offset;
+
+            $(".flexslider .flex-direction-nav .flex-prev").css("left", distanceBetweenImgAndNavBtns);
+            $(".op-detail-img .flexslider:hover .flex-direction-nav .flex-prev").css("left", distanceBetweenImgAndNavBtns);
+            $(".flexslider .flex-direction-nav .flex-next").css("right", distanceBetweenImgAndNavBtns);
+            $(".op-detail-img .flexslider:hover .flex-direction-nav .flex-next").css("right", distanceBetweenImgAndNavBtns);
     },
 
 };

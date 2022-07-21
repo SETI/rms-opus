@@ -55,7 +55,8 @@ from tools.app_utils import (cols_to_slug_list,
                              throw_random_http404_error,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_NO_REQUEST)
-from tools.file_utils import (get_pds_preview_images,
+from tools.file_utils import (get_displayed_browse_products,
+                              get_pds_preview_images,
                               get_pds_products)
 
 from opus_support import (display_search_unit,
@@ -625,6 +626,9 @@ def api_init_detail_page(request, **kwargs):
     if instrument_id in settings.PREVIEW_GUIDES:
         preview_guide_url = settings.PREVIEW_GUIDES[instrument_id]
 
+    # Get all preview/browse products (medium size)
+    preview_urls = get_displayed_browse_products(opus_id)
+
     # On the details page, we display the list of available filenames after
     # each product type
     products = get_pds_products(opus_id)[opus_id]
@@ -674,6 +678,7 @@ def api_init_detail_page(request, **kwargs):
     context = {
         'preview_full_url': preview_full_url,
         'preview_med_url': preview_med_url,
+        'preview_urls': preview_urls,
         'preview_guide_url': preview_guide_url,
         'products': new_products,
         'opus_id': opus_id,

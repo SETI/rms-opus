@@ -333,6 +333,9 @@ PREVIEW_GUIDES = {
     'COVIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 }
 
+# Browse products displayed in OPUS detail tab
+DISPLAYED_BROWSE_PRODUCTS = ['browse_medium','diagram_medium']
+
 RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
 
