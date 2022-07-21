@@ -496,6 +496,11 @@ ul.op-search-menu {
     cursor: grab;
 }
 
+/* Make sure all black info circles have the default cursor style */
+.fa-info-circle:hover {
+    cursor: default;
+}
+
 /* Rotate the chevron on a widget header to indicate its open/closed status */
 .widget .card-header .icon-action {
     transition: .3s;
@@ -3347,6 +3352,10 @@ when wrapping into the 2nd line */
     #op-add-metadata-fields .op-select-list {
         height: 30vh;
     }
+
+    .tooltipster-content {
+        font-size: 90% !important;
+    }
 }
 
 @media (max-width: 560px), (max-height: 630px) {
@@ -3596,4 +3605,78 @@ when screen is narrow (cart tab) */
 #detail .op-referred-link {
     padding-left: 0.2em;
     padding-right: 0.2em;
+}
+
+/* Stylings for customized tooltips */
+.tooltip-templates {
+    display: none;
+}
+
+/* Make sure tooltipster tooltip is not covered by popover */
+.tooltipster-show {
+    z-index: 2000000002 !important;
+}
+
+/* set font size and color of the tooltips contents */
+.op-custom-tooltip-theme .tooltipster-content {
+    font-size: 13px;
+    color: #000000 !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    hyphens: auto;
+}
+
+/* Styling for main tooltip box */
+.op-custom-tooltip-theme .tooltipster-box{
+    border-radius: 3px !important;
+    border:1px solid #000000 !important;
+    background:#FFFFFF !important;
+}
+
+/* Set some distances between the tooltips and left & right edges of the browser window */
+.op-custom-tooltip-theme.tooltipster-top .tooltipster-box {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+}
+.op-custom-tooltip-theme.tooltipster-bottom .tooltipster-box {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+}
+
+/* Background of the tooltip arrow */
+.op-custom-tooltip-theme.tooltipster-bottom .tooltipster-arrow-background {
+    border-bottom-color: #FFFFFF !important;
+    top: 1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-left .tooltipster-arrow-background {
+    border-left-color: #FFFFFF !important;
+    left: -1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-right .tooltipster-arrow-background {
+    border-right-color: #FFFFFF !important;
+    left: 1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-top .tooltipster-arrow-background {
+    border-top-color: #FFFFFF !important;
+    top: -1px !important;
+}
+
+/* Border of the tooltip arrow */
+.op-custom-tooltip-theme .tooltipster-bottom .tooltipster-arrow-border {
+    border-bottom-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-left .tooltipster-arrow-border {
+    border-left-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-right .tooltipster-arrow-border {
+    border-right-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-top .tooltipster-arrow-border {
+    border-top-color: #000000 !important;
+}
+
+.op-custom-tooltip-theme .tooltipster-arrow{
+    height:9px !important;
 }

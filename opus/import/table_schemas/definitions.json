@@ -7,7 +7,7 @@
     },
     {
         "field_name": "context",
-        "field_type": "char25",
+        "field_type": "char50",
         "field_notnull": true,
         "field_key": "foreign",
         "field_key_foreign": [

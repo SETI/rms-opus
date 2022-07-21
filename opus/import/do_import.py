@@ -283,17 +283,18 @@ def _mult_table_column_names(table_name):
        constant because various *_target_name tables have an extra
        column used for target name grouping."""
 
-    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping', 'group_disp_order']
+    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping',
+                   'group_disp_order']
     return column_list
 
 def _convert_sql_response_to_mult_table(mult_table_name, rows):
     """Given a set of rows from an SQL query of a mult table, convert it into
        our internal dictionary representation."""
-
     mult_rows = []
     for row in rows:
         (id_num, value, label, disp_order,
          display, grouping, group_disp_order) = row
+
         row_dict = {
             'id': id_num,
             'value': value,

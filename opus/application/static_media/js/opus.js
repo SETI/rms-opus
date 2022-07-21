@@ -151,6 +151,21 @@ var opus = {
 
     oldSurfacegeoTarget: null,
 
+    // Tooltipster settings
+    tooltipsMaxWidth: 680,
+    downloadPaneTooltipsMaxWidth: 350,
+    tooltipsTheme: "op-custom-tooltip-theme",
+    tooltipsDelay: 500,
+    multTooltipsDelay: 1500,
+
+    // The x & y coordinate of the current cursor when moving the mouse.
+    // For now, these will be used to set the proper position for the tooltips.
+    // It can be used in other places where we need to ultilize the position of the mouse.
+    mouseX: 0,
+    mouseY: 0,
+    // The timer we used to detect the stop of mouse moving action
+    timer: null,
+
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
     //------------------------------------------------------------------------------------
@@ -437,9 +452,9 @@ var opus = {
                 }
                 let prettyDate = lastUpdateDate.toLocaleDateString('en-GB',
                                         {year: 'numeric', month: 'long', day: 'numeric'});
-                $("#op-last-blog-update-date").attr("title", "Blog last updated "+prettyDate);
+                $("#op-last-blog-update-date").tooltipster("content", "Blog last updated "+prettyDate);
             } else {
-                $("#op-last-blog-update-date").attr("title", "");
+                $("#op-last-blog-update-date").tooltipster("content", "");
             }
             // note: $.cookie compare needs to be != because the cookie is a string number but cdate is a number.
             if (data.notification !== null && data.notification !== "" && $.cookie("notify") != data.notification_mdate) {
@@ -1071,9 +1086,9 @@ var opus = {
                 return;
         }
         let buttons = '<div class="op-open-help">';
-        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
+        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab op-help-tooltip" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
         if (pdfURL) {
-            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
+            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf op-help-tooltip" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
         }
         buttons += "</div>";
 
@@ -1126,6 +1141,14 @@ var opus = {
                             backgroundColor: "inherit"
                         });
                 });
+
+                // Initialize atooltips using tooltipster in the help menu
+                $(".op-help-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                });
+
                 $(".op-open-help-pdf").on("click", function(e) {
                     let pdfURL = $(".op-open-help-pdf").data("action");
                     window.open(pdfURL, "_blank");
@@ -1496,4 +1519,11 @@ $(document).ready(function() {
     // Call normalized url api first
     // Rest of initialization process will be performed afterwards
     opus.normalizedURLAPICall();
+    // Initialize all tooltips using tooltipster in base.html
+    $(".op-base-tooltip, .op-browse-view-tooltip").tooltipster({
+        maxWidth: opus.tooltipsMaxWidth,
+        theme: opus.tooltipsTheme,
+        delay: opus.tooltipsDelay,
+        contentAsHTML: true
+    });
 });

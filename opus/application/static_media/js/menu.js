@@ -68,6 +68,12 @@ var o_menu = {
             clearTimeout(spinnerTimer);
 
             o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#search");
+            // Initialize all tooltips using tooltipster in menu.html
+            $("#sidebar .op-menu-tooltip").tooltipster({
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
+            });
         });
     },
 

@@ -225,7 +225,20 @@ var o_selectMetadata = {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
-                $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
+                // Initialize all tooltips using tooltipster in select metadata menu
+                $(".op-metadata-selector-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                });
+                // Initialize all tooltips using tooltipster in menu.html
+                $(".op-all-metadata-column .op-menu-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                });
+
+                $("#op-select-metadata a.op-download-csv").tooltipster("content", downloadTitle);
                 $("#op-select-metadata a.op-download-csv").text(buttonTitle);
 
                 $("#op-select-metadata .op-selected-metadata-column > ul").sortable({
@@ -258,7 +271,7 @@ var o_selectMetadata = {
                 o_selectMetadata.rendered = true;
             });
         }
-        $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
+        $("#op-select-metadata a.op-download-csv").tooltipster("content", downloadTitle);
         $("#op-select-metadata a.op-download-csv").text(buttonTitle);
     },
 
@@ -277,12 +290,19 @@ var o_selectMetadata = {
         opus.prefs.cols.push(slug);
 
         let label = $(menuSelector).data("qualifiedlabel");
-        let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
+        let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
         let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".op-selected-metadata-column > ul").append(html);
         if ($(".op-selected-metadata-column li").length > 1) {
             $(".op-selected-metadata-column .op-selected-metadata-unselect").show();
         }
+
+        $(".op-metadata-selector-tooltip").tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
+        });
+
     },
 
     removeColumn: function(slug) {

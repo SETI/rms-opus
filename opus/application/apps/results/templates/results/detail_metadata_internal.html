@@ -8,19 +8,19 @@
                         {% for name, param_info in all_info.items %}
                             {% if name == param %}
                                 {% if param_info.get_tooltip_results %}
-                                    <i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
+                                    <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-toggle="tooltip"
                                         title="{{ param_info.get_tooltip_results|striptags }}"></i>&nbsp;
                                 {% endif %}
                                 <div class="op-detail-entry-values-wrapper">
                                     {% if param_info.get_units %}
                                         {% if param_info.referred_slug %}
-                                            {{ param_info.label_results }} {{ param_info.get_units }}<i class="fas fa-link op-referred-link" title="{{ param_info.get_link_tooltip }}"></i>:&nbsp;
+                                            {{ param_info.label_results }} {{ param_info.get_units }}<i class="fas fa-link op-referred-link op-detail-metadata-tooltip" title="{{ param_info.get_link_tooltip }}"></i>:&nbsp;
                                         {% else %}
                                             {{ param_info.label_results }} {{ param_info.get_units }}:&nbsp;
                                         {% endif %}
                                     {% else %}
                                         {% if param_info.referred_slug %}
-                                            {{ param_info.label_results }}<i class="fas fa-link op-referred-link" title="{{ param_info.get_link_tooltip }}"></i>:&nbsp;
+                                            {{ param_info.label_results }}<i class="fas fa-link op-referred-link op-detail-metadata-tooltip" title="{{ param_info.get_link_tooltip }}"></i>:&nbsp;
                                         {% else %}
                                             {{ param_info.label_results }}:&nbsp;
                                         {% endif %}
@@ -29,7 +29,7 @@
                                         {% if param_info.is_string_or_mult %}
                                             <a href="/opus/#/{{ param_info.slug }}={{ val|encode_value }}{% if param_info.is_string %}&qtype-{{ param_info.slug }}=matches{% endif %}{% if url_cols %}&cols={{ url_cols }}{% endif %}"
                                                     target="_blank">
-                                                <i class="fas fa-search"
+                                                <i class="fas fa-search op-detail-metadata-tooltip"
                                                     title='Open a new browser tab containing OPUS that searches for "{{ param_info.label_results }}" equal to "{{ val }}"'></i>
                                             </a>
                                         {% endif %}

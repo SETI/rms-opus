@@ -1,0 +1,27 @@
+<!-- generic customized mult checkbox input -->
+<li>
+    <ul id="{{ slug }}" class="multichoice">
+        {% for id, choice, tooltip, tp_id in options %}
+            <li>
+                <label for="{{ slug }}_{{ id }}">
+                    {% if choice in selections %}
+                        <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}" checked>
+                    {% else %}
+                        <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}">
+                    {% endif %}
+                <!-- Assign a unique html structure to data-tooltip-content for each different individual tooltip-->
+                <span class="op-choice-label-name op-mult-tooltip-{{ slug }}" data-tooltip-content="#tooltip-content-{{ slug }}-{{ tp_id }}">
+                    {{ choice }}
+                </span>
+                <!-- Customized tooltip contents -->
+                {% if tooltip %}
+                    <div class="tooltip-templates">
+                        <span id="tooltip-content-{{ slug }}-{{ tp_id }}">
+                            <strong>{{ tooltip|safe }}</strong>
+                        </span>
+                    </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</li>
