@@ -1,6 +1,6 @@
 <section class="container-fluid">
     <div class="row flex-md-row flex-md-nowrap op-detail-content">
-        <div class="col-md-12 op-detail-metadata-container">
+        <div class="col-md-9 op-detail-metadata-container">
             <div class="op-detail-metadata-header position-sticky pr-5">
                 <h1>Observation Detail</h1>
                 <div class="row mb-3">
@@ -63,11 +63,27 @@
             </div>
         </div>
         <div class="col-12 op-detail-img pt-5">
-          <div class="op-no-select">
-                <a href="{{ preview_full_url }}" target="_blank">
-                    <img src="{{ preview_med_url }}" alt="Preview image of {{ opus_id }}" title="Click for full-size version">
-                </a>
-                <div>
+            <div class="op-no-select">
+                {% if preview_urls|length > 1 %}
+                    <div class="flexslider">
+                        <ul class="slides">
+                        {% for preview_med_url, preview_full_url in preview_urls %}
+                            <li>
+                                <a href="{{ preview_full_url }}" target="_blank">
+                                    <img src="{{ preview_med_url }}" alt="Preview image of {{ opus_id }}" title="Click for full-size version">
+                                </a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    {% for preview_med_url, preview_full_url in preview_urls %}
+                            <a href="{{ preview_full_url }}" target="_blank">
+                                <img src="{{ preview_med_url }}" alt="Preview image of {{ opus_id }}" title="Click for full-size version">
+                            </a>
+                    {% endfor %}
+                {% endif %}
+                <div class="{% if preview_urls|length > 1 %}op-preview-guide-center{% endif %}">
                     <p>
                         {% if preview_guide_url %}
                             Read about <a href="{{ preview_guide_url }}" target="_blank">how to interpret {{ instrument_id }} preview images</a>

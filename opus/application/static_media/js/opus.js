@@ -780,6 +780,7 @@ var opus = {
             adjustTableSizeDB();
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
+            o_detail.adjustDetailImgNavBtns();
             adjustHelpPanelHeightDB();
             adjustMetadataDetailViewSizeDB();
             o_selectMetadata.adjustHeight();
