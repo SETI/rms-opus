@@ -13,6 +13,12 @@ var o_detail = {
 
     activateDetailTab: function(opusId) {
 
+        // Get the x & y coordinate of the current cursor when moving mouse in detail preview
+        // image. Reposition the tooltip based on the cursor location.
+        $("#detail").on("mousemove", ".op-detail-prev-img-tooltip" , function(e) {
+            o_utils.onMouseMoveHandler(e, $(e.target));
+        });
+
         $("#detail").on("click", ".op-download-csv", function() {
             let colStr = opus.prefs.cols.join(',');
             $(this).attr("href", `/opus/__api/metadata_v2/${opusId}.csv?cols=${colStr}`);
@@ -119,8 +125,39 @@ var o_detail = {
                     $.when.apply(null, arrOfDeferred).then(function() {
                         let initDetailPageScrollbar = _.debounce(o_detail.initAndUpdatePerfectScrollbar, 200);
                         initDetailPageScrollbar();
+                        // Initialize all tooltips using tooltipster in the metadata area of the detail tab
+                        $(".op-detail-metadata-tooltip").tooltipster({
+                            maxWidth: opus.tooltipsMaxWidth,
+                            theme: opus.tooltipsTheme,
+                            delay: opus.tooltipsDelay,
+                        });
+                        // Init flexslider
+                        $('.flexslider').flexslider({
+                            pauseOnHover: true,
+                            slideshow: false,
+                            prevText: "",
+                            nextText: ""
+                        });
+                        o_detail.adjustDetailImgNavBtns();
                     });
                 });
+                // Initialize all tooltips using tooltipster in detail.html
+                $(".op-detail-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                });
+                $(".op-detail-prev-img-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                    delay: opus.tooltipsDelay,
+                    // Make sure the tooltip position is next to the cursor when users mouse
+                    // over to the detail preview image.
+                    functionPosition: function(instance, helper, position){
+                        return o_utils.setPreviewImageTooltipPosition(helper, position);
+                    }
+                });
+
             } // /detail.load
         );
     }, // / activateDetailTab
@@ -176,15 +213,28 @@ var o_detail = {
                 let url = "/opus/__api/image/thumb/" + opus.prefs.detail + ".json";
                 $.getJSON(url, function(image)  {
                     let imageObj = image.data[0];
-                    imageHtml = `<img class="op-nav-detail-image" src="${imageObj.url}"
+                    imageHtml = `<img class="op-nav-detail-image op-detail-img-tooltip" src="${imageObj.url}"
                                       alt="${imageObj.alt_text}"
                                       title="${imageObj.opus_id}">`;
                     $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
+
+                    // Init tooltip of the detail prev image in the main nav bar
+                    $(".op-detail-img-tooltip").tooltipster({
+                        maxWidth: opus.tooltipsMaxWidth,
+                        theme: opus.tooltipsTheme,
+                        delay: opus.tooltipsDelay,
+                    });
                 });
             }
         } else {
             $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
         }
+        // Init tooltip of the cart button in detail tab
+        $(".op-detail-cart-tooltip").tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
+        });
     },
 
     adjustDetailHeight: function() {
@@ -206,6 +256,26 @@ var o_detail = {
             $(".op-detail-metadata").height(containerHeight);
             o_detail.detailPageScrollbar.update();
         }
+    },
+
+    // Adjust the positions of detail preview image nav buttons "<" & ">" to make them
+    // stay right next to the image at both sides.
+    adjustDetailImgNavBtns: function() {
+            // By default when css left & right of "<" & ">" are 0, those two buttons stay
+            // within the image container with their arrow tips touching the left & right
+            // borders of the container. The width of "<" & ">" is bit more than 25px.
+            // To move buttons out of the image, we need to set css left & right to at least
+            // -(26px + some values) so that buttons won't be too close the image.
+            // Therefore we pick 40 here.
+            let offset = 40;
+            let imgWidth = $(".op-detail-img img").outerWidth();
+            let imgContainerWidth = $(".op-no-select .flexslider").outerWidth();
+            let distanceBetweenImgAndNavBtns = (imgContainerWidth-imgWidth)/2 - offset;
+
+            $(".flexslider .flex-direction-nav .flex-prev").css("left", distanceBetweenImgAndNavBtns);
+            $(".op-detail-img .flexslider:hover .flex-direction-nav .flex-prev").css("left", distanceBetweenImgAndNavBtns);
+            $(".flexslider .flex-direction-nav .flex-next").css("right", distanceBetweenImgAndNavBtns);
+            $(".op-detail-img .flexslider:hover .flex-direction-nav .flex-next").css("right", distanceBetweenImgAndNavBtns);
     },
 
 };

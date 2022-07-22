@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* jshint multistr: true */
-/* globals $ */
+/* globals opus */
 
 /* jshint varstmt: false */
 var o_utils = {
@@ -126,6 +126,47 @@ var o_utils = {
         // remove all "_", "/", and " "
         slugName = slugName.replace(/_/g, "").replace(/\//g, "").replace(/ /g, "");
         return slugName;
+    },
+
+    // Get the x & y coordinate of the current cursor when moving mouse in the traget el.
+    // Reposition the tooltip based on the cursor location (set in functionPosition callback).
+    onMouseMoveHandler: function(e, targetTooltipster) {
+        clearTimeout(opus.timer);
+        opus.mouseX = e.clientX;
+        opus.mouseY = e.clientY;
+        opus.timer = setTimeout(function() {
+            if (targetTooltipster.length) {
+                targetTooltipster.tooltipster("instance").reposition();
+            }
+        }, opus.tooltipsDelay);
+    },
+
+    // Set the position of the preview image tooltip
+    setPreviewImageTooltipPosition: function(helper, position) {
+        let tooltipWidth = position.size.width;
+        let tooltipHeight = position.size.height;
+        let offsetToWindow = 5;
+        let arrowOffset = 15;
+        let windowWidth = helper.geo.window.size.width;
+        // make sure the tooltip is not cut off.
+        if (opus.mouseY - tooltipHeight - offsetToWindow < 0) {
+            position.coord.top = opus.mouseY;
+            position.side = "bottom";
+        } else {
+            position.coord.top = opus.mouseY - tooltipHeight;
+            position.side = "top";
+        }
+
+        if (opus.mouseX + tooltipWidth + offsetToWindow > windowWidth) {
+            position.coord.left = opus.mouseX - tooltipWidth + arrowOffset;
+        } else if (opus.mouseX - tooltipWidth - offsetToWindow < 0) {
+            position.coord.left = opus.mouseX - arrowOffset;
+        } else {
+            position.coord.left = opus.mouseX - tooltipWidth/2;
+        }
+
+        position.target = opus.mouseX;
+        return position;
     },
 };
 

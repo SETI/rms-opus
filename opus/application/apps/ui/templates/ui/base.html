@@ -7,7 +7,7 @@
     <div class="app-body container-fluid">
         <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info op-no-select">
             <div class="container-fluid">
-                <a class="op-reset-opus navbar-brand" href="#" title="Reset OPUS to its default state">OPUS3</a>
+                <a class="op-reset-opus navbar-brand op-base-tooltip" href="#" title="Reset OPUS to its default state">OPUS3</a>
                 <ul class="op-tab nav navbar-nav me-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link" href="#search" data-bs-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
@@ -36,13 +36,13 @@
                     <ul class="op-tab nav navbar-nav me-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
                         <li class="nav-item external-link blogspot">
                             <a class="nav-link op-blog-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
-                                <div id="op-last-blog-update-date" class="container align-items-center d-flex h-100 my-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">
+                                <div id="op-last-blog-update-date op-base-tooltip" class="container align-items-center d-flex h-100 my-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">
                                     <img class="newGIF" src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
                                 </div>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn op-user-msg nav-link" data-bs-toggle="modal" data-bs-target="#op-update-url-modal" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
+                            <a class="btn op-user-msg op-base-tooltip nav-link" data-bs-toggle="modal" data-bs-target="#op-update-url-modal" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
                         </li>
                     </ul>
                     <ul class="nav navbar-nav flex-column flex-sm-row">
@@ -51,24 +51,24 @@
                                 <i class="fas fa-question-circle"></i> Help
                             </a>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="op-help-menu">
-                                <a class="dropdown-item op-help-item" data-action="about" href="#" title="Learn about OPUS and its general capabilities">About</a>
-                                <a class="dropdown-item op-help-item" data-action="gettingStarted" href="#" title="View a detailed introduction to each part of OPUS">Getting Started</a>
-                                <a class="dropdown-item op-help-item" data-action="tutorialVideos" href="#" title="Watch OPUS tutorials on YouTube">Tutorial Videos</a>
-                                <a class="dropdown-item op-help-item" data-action="faq" href="#" title="Read the answers to frequently asked questions">FAQ</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="about" href="#" title="Learn about OPUS and its general capabilities">About</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="gettingStarted" href="#" title="View a detailed introduction to each part of OPUS">Getting Started</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="tutorialVideos" href="#" title="Watch OPUS tutorials on YouTube">Tutorial Videos</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="faq" href="#" title="Read the answers to frequently asked questions">FAQ</a>
                                 <div class="dropdown-submenu dropstart">
                                     <a class="dropdown-item dropdown-toggle" href="#" id="op-interpret-image-menu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Interpreting Preview Images</a>
                                     <div class="op-interpret-image dropdown-menu" aria-labelledby="op-interpret-image-menu">
-                                        <a class="op-submenu-item dropdown-item" href="#" data-action="COCIRS">Cassini CIRS</a>
-                                        <a class="op-submenu-item dropdown-item" href="#" data-action="COUVIS">Cassini UVIS</a>
-                                        <a class="op-submenu-item dropdown-item" href="#" data-action="COVIMS">Cassini VIMS</a>
+                                        <a class="op-submenu-item dropdown-item op-base-tooltip" href="#" data-action="COCIRS">Cassini CIRS</a>
+                                        <a class="op-submenu-item dropdown-item op-base-tooltip" href="#" data-action="COUVIS">Cassini UVIS</a>
+                                        <a class="op-submenu-item dropdown-item op-base-tooltip" href="#" data-action="COVIMS">Cassini VIMS</a>
                                     </div>
                                 </div>
-                                <a class="dropdown-item op-help-item" data-action="announcements" href="#" title="View recent announcements about changes to OPUS">Recent Announcements</a>
-                                <a class="dropdown-item op-help-item" data-action="volumes" href="#" title="View the list of PDS data volumes available in OPUS">Data Volumes</a>
-                                <a class="dropdown-item op-help-item" data-action="apiguide" href="#" title="View a description of the OPUS API for external developers">API Guide</a>
-                                <a class="dropdown-item op-help-item" data-action="splash" href="#" title="View the OPUS new-user splash screen">Welcome Message</a>
-                                <a class="dropdown-item op-help-item" data-action="citing" href="#" title="How to cite OPUS in your papers or presentations">Citing OPUS</a>
-                                <a class="dropdown-item op-help-item" data-action="contact" href="#" title="Send questions or feedback to the OPUS developers">Contact Us</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="announcements" href="#" title="View recent announcements about changes to OPUS">Recent Announcements</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="volumes" href="#" title="View the list of PDS data volumes available in OPUS">Data Volumes</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="apiguide" href="#" title="View a description of the OPUS API for external developers">API Guide</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="splash" href="#" title="View the OPUS new-user splash screen">Welcome Message</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="citing" href="#" title="How to cite OPUS in your papers or presentations">Citing OPUS</a>
+                                <a class="dropdown-item op-help-item op-base-tooltip" data-action="contact" href="#" title="Send questions or feedback to the OPUS developers">Contact Us</a>
                             </div>
                         </li>
                     </ul>
@@ -87,7 +87,7 @@
                         </div>
                         <hr class="op-shadow-divider my-0 ms-0 me-3">
                         <div class="op-reset-button">
-                            <button type="button" class="btn btn-sm btn-secondary op-reset-search" data-bs-toggle="modal" data-bs-target="#op-reset-search-modal" title="Reset all search params" disabled>Reset Search</button>
+                            <button type="button" class="btn btn-sm btn-secondary op-reset-search op-base-tooltip" data-bs-toggle="modal" data-bs-target="#op-reset-search-modal" title="Reset all search params" disabled>Reset Search</button>
                             <button type="button" class="btn btn-sm btn-secondary op-reset-search-metadata" data-bs-toggle="modal" data-bs-target="#op-reset-search-metadata-modal" title="Reset all search params and metadata" disabled>Reset Search and Metadata</button>
                         </div>
                     </div>
@@ -107,13 +107,13 @@
                         <div class="browse-nav-container">
                             <ul class="navbar-nav me-auto">
                                 <li class="nav-item">
-                                    <a href="#" class="op-browse-view nav-link" data-view="data"><i class="far fa-list-alt"></i></a>
+                                    <a href="#" class="op-browse-view nav-link op-browse-view-tooltip" data-view="data"><i class="far fa-list-alt"></i></a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="#" class="op-metadata-modal nav-link" data-bs-toggle="modal" data-bs-target="#op-select-metadata" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                    <a href="#" class="op-metadata-modal nav-link op-base-tooltip" data-bs-toggle="modal" data-bs-target="#op-select-metadata" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="#" class="op-download-csv nav-link" download title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
+                                    <a href="#" class="op-download-csv nav-link op-base-tooltip" download title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
                                 </li>
                             </ul>
                             <ul class="op-slider-nav">
@@ -126,7 +126,7 @@
                             </ul>
                         </div>
                         <div class="op-sort-order-container">
-                            <span class="op-sort-order-icon">
+                            <span class="op-sort-order-icon op-browse-sort-tooltip">
                                 <i class="fas fa-random"></i>&nbspSort by&nbsp
                             </span>
                             <div class="op-sort-contents"></div>
@@ -165,9 +165,9 @@
                     </div>
                     <div class="op-edit-field-tool dropdown-menu border-top-0 border-dark mt-0" data-bs-toggle="dropdown" aria-labelledby="op-edit-field-tool" aria-haspopup="true" aria-expanded="false">
                         <div class="d-flex justify-content-between">
-                            <a href="#" class="op-metadata-detail-add" data-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus ps-1"></i></a>
-                            <a href="#" class="op-metadata-detail-remove" data-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
-                            <a href="#" class="op-metadata-detail-add" data-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pe-1"></i></a>
+                            <a href="#" class="op-metadata-detail-add op-base-tooltip" data-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus ps-1"></i></a>
+                            <a href="#" class="op-metadata-detail-remove op-base-tooltip" data-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
+                            <a href="#" class="op-metadata-detail-add op-base-tooltip" data-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pe-1"></i></a>
                         </div>
                     </div>
                 </div>
@@ -184,10 +184,10 @@
                                 <div class="op-cart-nav-container">
                                     <ul class="navbar-nav me-auto">
                                         <li class="nav-item flex-sm-row">
-                                            <a href="#" class="op-browse-view nav-link" data-bs-toggle="modal" data-bs-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
+                                            <a href="#" class="op-browse-view nav-link op-base-tooltip" data-bs-toggle="modal" data-bs-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="#" class="op-metadata-modal nav-link" data-bs-toggle="modal" data-bs-target="#op-select-metadata" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                            <a href="#" class="op-metadata-modal nav-link op-base-tooltip" data-bs-toggle="modal" data-bs-target="#op-select-metadata" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
                                         </li>
                                     </ul>
                                     <ul class="op-slider-nav">
@@ -201,7 +201,7 @@
                                 </div>
                             </div>
                             <div class="op-sort-order-container">
-                                <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
+                                <span class="op-sort-order-icon op-base-tooltip" title="Results are sorted by these metadata fields<br>Click to reset sort fields to default">
                                     <i class="fas fa-random"></i>&nbspSort by&nbsp
                                 </span>
                                 <div class="op-sort-contents"></div>
@@ -209,20 +209,20 @@
                             <div class="op-cart-actions-group">
                                 <div class="op-cart-actions">
                                     <li class="list-inline-item">
-                                        <a href="#" class="text-info me-3" data-bs-toggle="modal" data-bs-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
+                                        <a href="#" class="text-info me-3 op-base-tooltip" data-bs-toggle="modal" data-bs-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
                                             &nbsp;Empty Cart</a>
                                     </li>
                                     <li class="list-inline-item">
-                                        <a href="#" class="text-info me-3" data-bs-toggle="modal" data-bs-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
+                                        <a href="#" class="text-info me-3 op-base-tooltip" data-bs-toggle="modal" data-bs-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
                                             &nbsp;Empty Recycle Bin</a>
                                     </li>
                                     <li class="list-inline-item">
-                                        <a href="#" class="text-info" data-bs-toggle="modal" data-bs-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
+                                        <a href="#" class="text-info op-base-tooltip" data-bs-toggle="modal" data-bs-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
                                             &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge bg-primary">0</span></a>
                                     </li>
                                 </div>
                                 <div class="op-cart-toggle-download-panel">
-                                    <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark fw-bold p-1" title="Slide over download data panel">
+                                    <button type="button" class="op-cart-slide-download-panel op-base-tooltip btn btn-secondary btn-sm nav-link text-dark fw-bold p-1" title="Slide over download data panel">
                                        <i class="fas fa-arrow-left"></i>
                                        <span>&nbsp;Download Data</span>
                                    </button>
@@ -262,9 +262,9 @@
                         </div>
                         <div class="op-edit-field-tool dropdown-menu border-top-0 border-dark mt-0" data-bs-toggle="dropdown" aria-labelledby="op-edit-field-tool" aria-haspopup="true" aria-expanded="false">
                             <div class="d-flex justify-content-between">
-                                <a href="#" class="op-metadata-detail-add" data-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus ps-1"></i></a>
-                                <a href="#" class="op-metadata-detail-remove" data-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
-                                <a href="#" class="op-metadata-detail-add" data-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pe-1"></i></a>
+                                <a href="#" class="op-metadata-detail-add op-base-tooltip" data-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus ps-1"></i></a>
+                                <a href="#" class="op-metadata-detail-remove op-base-tooltip" data-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
+                                <a href="#" class="op-metadata-detail-add op-base-tooltip" data-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pe-1"></i></a>
                             </div>
                         </div>
                     </div>
@@ -337,11 +337,11 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div id="op-metadata-detail-view-content" class="modal-content">
                     <div class="op-docking-tools op-no-select">
-                        <a href="#" class="op-slide-minimize" aria-label="Minimize" title="Minimize the slide"><i class="fas fa-compress-arrows-alt fa-lg"></i></a>
-                        <a href="#" class="op-slide-maximize" aria-label="Maximize" title="Restore the slide to the default size"><i class="fas fa-expand-arrows-alt fa-lg"></i></a>
+                        <a href="#" class="op-slide-minimize op-base-tooltip" aria-label="Minimize" title="Minimize the slide"><i class="fas fa-compress-arrows-alt fa-lg"></i></a>
+                        <a href="#" class="op-slide-maximize op-base-tooltip" aria-label="Maximize" title="Restore the slide to the default size"><i class="fas fa-expand-arrows-alt fa-lg"></i></a>
                         <!--a href="#" class="op-slide-dock" aria-label="Dock" title="Pin the slide to the right of the Browse view"><i class="fas fa-sign-in-alt fa-lg text-info"></i></a-->
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close the slide">
+                    <button type="button" class="op-base-tooltip btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close the slide">
                         <i class="far fa-times-circle fa-lg"></i>
                     </button>
                     <div class="op-metadata-detail-view-body modal-body bg-dark">
@@ -667,6 +667,10 @@
     <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}feedback/js/config.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}feedback/js/feedback.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+
+    <!-- Tooltipster -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/js/tooltipster.bundle.min.js" integrity="sha512-ZKNW/Nk1v5trnyKMNuZ6kjL5aCM0kUATbpnWJLPSHFk/5FxnvF9XmpmjGbag6BEgmXiz7rL6o6uJF6InthyTSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}cdn_fallback/tooltipster/dist/js/tooltipster.bundle-4.2.8.min.js"><\/script>')</script>
 
     {% block scripts %}
 

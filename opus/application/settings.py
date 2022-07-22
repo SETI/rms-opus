@@ -333,6 +333,9 @@ PREVIEW_GUIDES = {
     'COVIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 }
 
+# Browse products displayed in OPUS detail tab
+DISPLAYED_BROWSE_PRODUCTS = ['browse_medium','diagram_medium']
+
 RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
 
@@ -373,3 +376,6 @@ DOWNLOAD_FORMATS = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# We don't want to have these characters in HTML class or ID for customized tooltips.
+INVALID_CLASS_CHAR = '~!@$%^&*()+=,./;:"?><[]\{}|`# '

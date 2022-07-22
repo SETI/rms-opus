@@ -315,6 +315,13 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
 make sure they always stay together when wrapping into a different line */
 #detail .op-detail-entry-values {
     display: inline-block;
+    max-width: 100%;
+}
+
+/* When some entry values overflow, we break them into multiple lines */
+#detail .op-detail-entry-values-wrapper {
+    overflow-wrap: break-word;
+    max-width: 100%;
 }
 
 #nav-sidebar {
@@ -540,6 +547,11 @@ ul.op-search-menu {
 
 .widget .card-header:hover {
     cursor: grab;
+}
+
+/* Make sure all black info circles have the default cursor style */
+.fa-info-circle:hover {
+    cursor: default;
 }
 
 /* Rotate the chevron on a widget header to indicate its open/closed status */
@@ -2381,12 +2393,13 @@ to the left pane when screen is getting too wide */
         flex-wrap: wrap-reverse;
     }
 
-    /* Set detail image size when it's above the left pane */
+    /* Set detail image size when it's above the left pane, use !important to override
+    the styling from flexslider */
     .op-detail-img img {
-        height: 150px;
+        height: 150px !important;
     }
 
-    /* Reduce the top space above the detail image when screen */
+    /* Reduce the space above the detail image when the screen is short and narrow */
     .op-detail-img {
         padding-top: 0 !important;
     }
@@ -2397,8 +2410,38 @@ to the left pane when screen is getting too wide */
         margin-bottom: -1em;
     }
 
+    /* use !important to override the styling from flexslider  */
     .op-detail-img img {
-        height: 100px;
+        height: 100px !important;
+    }
+}
+
+/* These stylings are for the case when screen is very small (short & narrow) */
+@media (max-width: 767px) and (max-height: 350px) {
+    .op-detail-img .flexslider {
+        margin-bottom: 0 !important;
+    }
+
+    /* use !important to override the styling from flexslider  */
+    .op-detail-img img {
+        height: 60px !important;
+        min-width: 60px !important;
+    }
+
+    .op-detail-img .op-preview-guide-center {
+        margin-top: 1rem !important;
+    }
+
+    .op-detail-img .op-preview-guide-center p {
+        margin-bottom: 0.5rem;
+    }
+
+    .op-detail-img .flex-control-nav {
+        bottom: -25px;
+    }
+
+    .op-detail-metadata-header div {
+        margin-bottom: 0.2rem !important;
     }
 }
 
@@ -2416,13 +2459,89 @@ to the left pane when screen is getting too wide */
 }
 
 /* Make detail image shrink proportionally when screen is resized, and
-also set its min width to be 150px */
+also set its min width to be 90px */
 .op-detail-img img {
-    max-width: 100%;
+    max-width: 85%;
     min-width: 90px;
     max-height: 60vh;
-    /* min-width: 150px;
-    max-height: 70vh; */
+    /* Make sure image under flexslider is not taking up the full width of
+    the container */
+    width: auto !important;
+}
+
+/* Align the children img tags with the nav buttons */
+.op-detail-img li {
+    text-align: -webkit-center;
+    text-align: -moz-center;
+}
+
+.op-detail-img .flexslider {
+    margin-bottom: 1.5rem;
+    /* Center the detail preview image and nav buttons horizontally */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Make sure nav buttons of the detail preview images won't be wrapped into two rows when
+the screen is narrow  */
+.op-detail-img .flex-control-nav {
+    width: 120%;
+}
+
+/* Align preview guide text with preview images and set proper spacing between preview
+guid message and the nav buttons */
+.op-detail-img .op-preview-guide-center {
+    text-align: -webkit-center;
+    text-align: -moz-center;
+    margin-top: 2rem;
+}
+
+/* Fine tune the position of preview images prev button "<" */
+.op-detail-img .flex-direction-nav a {
+    transition: none;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    -o-transition: none;
+    width:auto;
+    height: auto;
+}
+
+.op-detail-img .slides a {
+    cursor: default;
+}
+
+.op-detail-img .flex-direction-nav .flex-prev {
+    color: transparent;
+    opacity: 1;
+    left: 0px;
+}
+
+/* "<" size will change based on viewport width */
+.op-detail-img .flex-direction-nav .flex-prev:before {
+    font-size: min(3vw, 40px);
+}
+
+/* Fine tune the position of preview images next button ">" */
+.op-detail-img .flex-direction-nav .flex-next {
+    color: transparent;
+    opacity: 1;
+    right: 0px;
+}
+
+/* ">" size will change based on viewport width */
+.op-detail-img .flex-direction-nav .flex-next:before {
+    font-size: min(3vw, 40px);
+}
+
+/* Properly set "<" & ">" buttons positions so that we don't have flickering
+when hovering over the detail preview image */
+.op-detail-img .flexslider:hover .flex-direction-nav .flex-prev {
+  left: 0px;
+}
+.op-detail-img .flexslider:hover .flex-direction-nav .flex-next {
+  right: 0px;
 }
 
 .op-share-message {
@@ -2847,6 +2966,14 @@ ul.ui-autocomplete a.ui-state-active {
     word-break: keep-all;
     /* This will make sure dropdown is not covering the widget scrollbar */
     left: -2.5em !important;
+}
+
+/* Reduce the size of "..." nav buttons for detail preview image */
+@media (max-width: 950px) {
+    .op-detail-img .flex-control-paging li a {
+        width: 9px;
+        height: 9px;
+    }
 }
 
 @media (max-width: 680px) {
@@ -3312,6 +3439,10 @@ when wrapping into the 2nd line */
     #op-add-metadata-fields .op-select-list {
         height: 30vh;
     }
+
+    .tooltipster-content {
+        font-size: 90% !important;
+    }
 }
 
 @media (max-width: 560px), (max-height: 630px) {
@@ -3561,4 +3692,78 @@ when screen is narrow (cart tab) */
 #detail .op-referred-link {
     padding-left: 0.2em;
     padding-right: 0.2em;
+}
+
+/* Stylings for customized tooltips */
+.tooltip-templates {
+    display: none;
+}
+
+/* Make sure tooltipster tooltip is not covered by popover */
+.tooltipster-show {
+    z-index: 2000000002 !important;
+}
+
+/* set font size and color of the tooltips contents */
+.op-custom-tooltip-theme .tooltipster-content {
+    font-size: 13px;
+    color: #000000 !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    hyphens: auto;
+}
+
+/* Styling for main tooltip box */
+.op-custom-tooltip-theme .tooltipster-box{
+    border-radius: 3px !important;
+    border:1px solid #000000 !important;
+    background:#FFFFFF !important;
+}
+
+/* Set some distances between the tooltips and left & right edges of the browser window */
+.op-custom-tooltip-theme.tooltipster-top .tooltipster-box {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+}
+.op-custom-tooltip-theme.tooltipster-bottom .tooltipster-box {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+}
+
+/* Background of the tooltip arrow */
+.op-custom-tooltip-theme.tooltipster-bottom .tooltipster-arrow-background {
+    border-bottom-color: #FFFFFF !important;
+    top: 1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-left .tooltipster-arrow-background {
+    border-left-color: #FFFFFF !important;
+    left: -1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-right .tooltipster-arrow-background {
+    border-right-color: #FFFFFF !important;
+    left: 1px !important;
+}
+.op-custom-tooltip-theme.tooltipster-top .tooltipster-arrow-background {
+    border-top-color: #FFFFFF !important;
+    top: -1px !important;
+}
+
+/* Border of the tooltip arrow */
+.op-custom-tooltip-theme .tooltipster-bottom .tooltipster-arrow-border {
+    border-bottom-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-left .tooltipster-arrow-border {
+    border-left-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-right .tooltipster-arrow-border {
+    border-right-color: #000000 !important;
+}
+.op-custom-tooltip-theme .tooltipster-top .tooltipster-arrow-border {
+    border-top-color: #000000 !important;
+}
+
+.op-custom-tooltip-theme .tooltipster-arrow{
+    height:9px !important;
 }

@@ -425,7 +425,7 @@ var o_widgets = {
 
             let removeInputIcon = ('<li class="op-remove-inputs">' +
                                    '<button type="button" title="Delete this set of search inputs" \
-                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
+                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn op-input-action-tooltip"' +
                                    `data-widget="widget__${slug}" data-slug="${slug}">` +
                                    `<i class="${trashIcon}"></i></button></li>`);
 
@@ -440,6 +440,10 @@ var o_widgets = {
             } else {
                 lastExistingSetOfInputs.append(orLabel);
                 cloneInputs.find(".op-or-labels").remove();
+                // remove the cloned trash icon, and attach a new one so that the tooltipster
+                // can be initialized.
+                cloneInputs.find(".op-remove-inputs").remove();
+                cloneInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
             }
 
             // Add dummy qtype to center "-- OR --".
@@ -459,6 +463,12 @@ var o_widgets = {
             }
 
             $(`#${widgetId} .op-input`).append(cloneInputs);
+            // Initialize tooltips for add and remove input icons in widget
+            $(".op-input-action-tooltip").tooltipster({
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
+            });
             // Prevent overscrolling for newly added dropdown.
             let newlyAddedDropdown = $(`#${widgetId} .op-search-inputs-set:last .op-scrollable-menu`);
             newlyAddedDropdown.on("scroll wheel", function(scrollingEvent) {
@@ -1256,7 +1266,6 @@ var o_widgets = {
                     return $("#op-qtype-tooltip").html();
                 }
             });
-
             // Prevent overscrolling on ps in widget container when scrolling inside dropdown
             // list has reached to both ends
             $(".op-scrollable-menu").on("scroll wheel", function(e) {
@@ -1324,8 +1333,8 @@ var o_widgets = {
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
                 let addInputIcon = ('<li class="op-add-inputs">' +
-                                    '<button type="button" class="ms-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
-                                    title="Add a new set of search inputs"' +
+                                    '<button type="button" class="ms-2 p-0 btn btn-small btn-link op-add-inputs-btn \
+                                    op-input-action-tooltip" title="Add a new set of search inputs"' +
                                     `data-widget="widget__${slug}" data-slug="${slug}">` +
                                     `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`);
 
@@ -1336,7 +1345,7 @@ var o_widgets = {
 
                 let removeInputIcon = ('<li class="op-remove-inputs">' +
                                        '<button type="button" title="Delete this set of search inputs" \
-                                       class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
+                                       class="p-0 btn btn-small btn-link op-remove-inputs-btn op-input-action-tooltip"' +
                                        `data-widget="widget__${slug}" data-slug="${slug}">` +
                                        `<i class="${trashIcon}"></i></button></li>`);
 
@@ -1375,11 +1384,19 @@ var o_widgets = {
                     o_widgets.uniqueIdForInputs += 1;
                     $(eachInputSet).find("input").attr("data-uniqueid", o_widgets.uniqueIdForInputs);
                 }
+
+                // Initialize tooltips for add and remove input icons in widget
+                $(".op-input-action-tooltip").tooltipster({
+                    maxWidth: opus.tooltipsMaxWidth,
+                    theme: opus.tooltipsTheme,
+                });
             }
 
-            // Wrap mults label names with span tag, we will style the span tag to have a caret cursor
-            // so that users know that they can select and copy the text.
-            if (widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice")) {
+            // Wrap mults label names with span tag (if the wrapping span is not there),
+            // we will style the span tag to have a caret cursor so that users know that
+            // they can select and copy the text.
+            if ((widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice")) &&
+                !widgetInputs.next().hasClass("op-choice-label-name")) {
                 let choiceClass = widgetInputs.hasClass("multichoice") ? ".multichoice" : ".singlechoice";
                 let allChoiceLabels = $(`#widget__${slug} ul${choiceClass} label`);
                 for (const label of allChoiceLabels) {
@@ -1445,6 +1462,20 @@ var o_widgets = {
             if (!opus.isAnyNormalizeInputInProgress()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
+
+            // Activate tooltipster after html is fully loaded
+            $(`.op-mult-tooltip-${slug}`).tooltipster({
+                interactive: true,
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.multTooltipsDelay,
+            });
+            $(`.op-widget-tooltip-${slug}`).tooltipster({
+                maxWidth: opus.tooltipsMaxWidth,
+                theme: opus.tooltipsTheme,
+                delay: opus.tooltipsDelay,
+            });
+
         }); // end callback for .done()
     }, // end getWidget function
 
