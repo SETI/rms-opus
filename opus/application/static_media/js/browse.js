@@ -2770,6 +2770,7 @@ var o_browse = {
             top: top,
             left: left,
             width: width,
+            transform: "none",
         }).fadeIn("slow");
 
         $(toolElem).data("slug", slug);
