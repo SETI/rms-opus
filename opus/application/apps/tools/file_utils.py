@@ -85,7 +85,7 @@ def get_pds_products(opus_id_list,
         sql += ', '+q('obs_files')+'.'+q('checksum')
 
     sql += ' FROM '+q('obs_files')
-    sql += ' WHERE '
+    sql += ' WHERE ('
     if product_types != ['all']:
         # Because we didn't store @version to the database, when multiple versions (or
         # product type) passed in, we need to query database by both short name and
@@ -111,14 +111,14 @@ def get_pds_products(opus_id_list,
                     version = 'Current'
                 else:
                     version = version[1:]
-                sql += '(' + q('obs_files')+'.'+q('short_name')+'=%s AND '
+                sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
                 values.append(prod_type)
                 sql += q('obs_files')+'.'+q('version_name')+'=%s)'
                 values.append(version)
             else:
                 sql += q('obs_files')+'.'+q('short_name')+'=%s'
                 values.append(p)
-            sql += ' OR ' if i != len(product_types)-1 else ' AND '
+            sql += ' OR ' if i != len(product_types)-1 else ') AND '
     sql += q('obs_files')+'.'+q('opus_id')+' IN %s'
     values.append(opus_id_list)
     sql += ' ORDER BY '
