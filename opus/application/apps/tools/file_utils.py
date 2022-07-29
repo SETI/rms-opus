@@ -87,8 +87,38 @@ def get_pds_products(opus_id_list,
     sql += ' FROM '+q('obs_files')
     sql += ' WHERE '
     if product_types != ['all']:
-        sql += q('obs_files')+'.'+q('short_name')+' IN %s AND '
-        values.append(product_types)
+        # Because we didn't store @version to the database, when multiple versions (or
+        # product type) passed in, we need to query database by both short name and
+        # version name for each product type in product_types list, the query condition
+        # will be something like:
+        # (obs_files.short_name='coiss_calib' AND obs_files.version_name='Current') OR
+        # (obs_files.short_name='coiss_calib' AND obs_files.version_name='1') OR
+        # (obs_files.short_name='coiss_raw' AND obs_files.version_name='Current') OR
+        # ...
+        for i, p in enumerate(product_types):
+            # Uncomment this code if we would like to display all files when the user
+            # passes empty string to types parameter. Otherwise we assume the user is
+            # specifying empty string for the types.
+            # if not p:
+            #     continue
+
+            # Check and see if the product type has a version specified (look for '@')
+            if '@' in p:
+                idx = p.index('@')
+                prod_type = p[:idx]
+                version = p[idx+1:]
+                if version == 'current':
+                    version = 'Current'
+                else:
+                    version = version[1:]
+                sql += '(' + q('obs_files')+'.'+q('short_name')+'=%s AND '
+                values.append(prod_type)
+                sql += q('obs_files')+'.'+q('version_name')+'=%s)'
+                values.append(version)
+            else:
+                sql += q('obs_files')+'.'+q('short_name')+'=%s'
+                values.append(p)
+            sql += ' OR ' if i != len(product_types)-1 else ' AND '
     sql += q('obs_files')+'.'+q('opus_id')+' IN %s'
     values.append(opus_id_list)
     sql += ' ORDER BY '
@@ -125,6 +155,10 @@ def get_pds_products(opus_id_list,
 
         if version_name not in results[opus_id]:
             results[opus_id][version_name] = OrderedDict()
+        if version_name != 'Current':
+            short_name = f'{short_name}@v{version_name}'
+        else:
+            short_name = f'{short_name}@{version_name.lower()}'
         product_type = (category, sort_order, short_name, full_name)
         if product_type not in results[opus_id][version_name]:
             results[opus_id][version_name][product_type] = []

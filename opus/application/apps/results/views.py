@@ -1155,11 +1155,13 @@ def api_get_product_types_for_opus_id(request, opus_id):
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
-    product_types = [{'category': x[0],
-                      'product_type': x[1],
-                      'description': x[2],
-                      'version_number': x[3],
-                      'version_name': x[4]} for x in results]
+    for x in results:
+        prod_type = f'{x[1]}@v{x[4]}' if x[4] != 'Current' else f'{x[1]}@{x[4].lower()}'
+        product_types.append({'category': x[0],
+                              'product_type': prod_type,
+                              'description': x[2],
+                              'version_number': x[3],
+                              'version_name': x[4]})
     ret = json_response(product_types)
 
     exit_api_call(api_code, ret)
@@ -1233,11 +1235,14 @@ def api_get_product_types_for_search(request):
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
-    product_types = [{'category': x[0],
-                      'product_type': x[1],
-                      'description': x[2],
-                      'version_number': x[3],
-                      'version_name': x[4]} for x in results]
+    product_types = []
+    for x in results:
+        prod_type = f'{x[1]}@v{x[4]}' if x[4] != 'Current' else f'{x[1]}@{x[4].lower()}'
+        product_types.append({'category': x[0],
+                              'product_type': prod_type,
+                              'description': x[2],
+                              'version_number': x[3],
+                              'version_name': x[4]})
     ret = json_response(product_types)
 
     cache.set(cache_key, ret)
