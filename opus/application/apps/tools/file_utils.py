@@ -103,8 +103,8 @@ def get_pds_products(opus_id_list,
             #     continue
 
             # Check and see if the product type has a version specified (look for '@')
-            if '@' in p:
-                idx = p.index('@')
+            if settings.FILE_VERSION_MODIFIER in p:
+                idx = p.index(settings.FILE_VERSION_MODIFIER)
                 prod_type = p[:idx]
                 version = p[idx+1:]
                 if version == 'current':
