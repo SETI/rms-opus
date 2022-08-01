@@ -2742,9 +2742,9 @@ var o_browse = {
                   $(targetElem).outerHeight();
 
         if (tab === "#cart") {
-            if ($(".cart_details:visible").length > 0) {
+            if ($(".op-cart-details:visible").length > 0) {
                 // need to calculate a new offset if the table has scrolled left behind the details window
-                left -= $(".cart_details").outerWidth() + $(".cart_details").offset().left;
+                left -= $(".op-cart-details").outerWidth() + $(".op-cart-details").offset().left;
             } else {
                 // when the details are collapsed, need to use the offset instead of position
                 left = $(targetElem).offset().left +

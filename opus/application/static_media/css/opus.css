@@ -1476,6 +1476,7 @@ a:-webkit-any-link, a::any-link {
 
 #cart .op-cart-gallery-side {
     background-color: #303030; /* #383838; */
+    position: relative;
 }
 
 #cart-sidebar {
