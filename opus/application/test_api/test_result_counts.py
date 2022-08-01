@@ -122,13 +122,13 @@ class APIResultCountsTests(TestCase):
 ########################################
 class ApiForResultCounts:
     # we need https and no need to specify port number
-    api_base_url = "{}://{}.pds-rings.seti.org/opus/api/meta/result_count.json?"
+    api_base_url = "{}://{}.seti.org/opus/api/meta/result_count.json?"
 
     def __init__(self, target="production"):
         self.target = target
         if not self.target or self.target == "production":
-            self.result_counts_api = self.api_base_url.format("https", "opus")
+            self.result_counts_api = self.api_base_url.format("https", "opus.pds-rings")
         elif self.target == "dev":
-            self.result_counts_api = self.api_base_url.format("http", "dev")
+            self.result_counts_api = self.api_base_url.format("http", "dev.pds")
         else:
             assert False, self.target

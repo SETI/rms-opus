@@ -20,7 +20,7 @@ class ApiTestHelper:
             settings.TEST_GO_LIVE == "production"): # pragma: no cover
             url = "https://opus.pds-rings.seti.org" + url
         else: # pragma: no cover
-            url = "http://dev.pds-rings.seti.org" + url
+            url = "http://dev.pds.seti.org" + url
         return self.client.get(url)
 
     def _run_status_equal(self, url, expected, err_string=None):
@@ -171,7 +171,7 @@ class ApiTestHelper:
         self.assertEqual(resp, expected)
 
     def _run_archive_file_equal(self, url, expected,
-                            response_type='json', fmt='zip'):
+                                response_type='json', fmt='zip'):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -179,8 +179,7 @@ class ApiTestHelper:
         if response_type == 'json':
             jdata = json.loads(response.content)
             file = jdata['filename']
-            path = file.replace(settings.TAR_FILE_URL_PATH,
-                                    settings.TAR_FILE_PATH)
+            path = file.replace(settings.TAR_FILE_URL_PATH, settings.TAR_FILE_PATH)
             read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
             archive_file_path = path
             if fmt == 'zip':
@@ -191,13 +190,11 @@ class ApiTestHelper:
             binary_stream = BytesIO(response.content)
             read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
             file = response.headers['Content-Disposition']
-            archive_file_path = (settings.TAR_FILE_PATH
-                                    + file[file.index('=')+1::])
+            archive_file_path = (settings.TAR_FILE_PATH + file[file.index('=')+1::])
             if fmt == 'zip':
                 archive_file = zipfile.ZipFile(binary_stream, mode=read_mode)
             else:
-                archive_file = tarfile.open(mode=read_mode,
-                                               fileobj=binary_stream)
+                archive_file = tarfile.open(mode=read_mode, fileobj=binary_stream)
         if fmt == 'zip':
             resp = archive_file.namelist()
         else:
