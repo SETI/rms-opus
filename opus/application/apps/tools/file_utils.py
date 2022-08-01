@@ -54,7 +54,7 @@ def get_pds_products(opus_id_list,
         return {}
 
     if not isinstance(product_types, (list, tuple)):
-        product_types = product_types.split(',')
+        product_types = product_types.lower().split(',')
 
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
@@ -85,12 +85,13 @@ def get_pds_products(opus_id_list,
         sql += ', '+q('obs_files')+'.'+q('checksum')
 
     sql += ' FROM '+q('obs_files')
-    sql += ' WHERE ('
+    sql += ' WHERE '
     if product_types != ['all']:
-        # Because we didn't store @version to the database, when multiple versions (or
-        # product type) passed in, we need to query database by both short name and
-        # version name for each product type in product_types list, the query condition
-        # will be something like:
+        sql += '('
+        # Because we didn't store @version in the database, when multiple versions (or
+        # product types) are passed in, we need to query the database by both short name
+        # and version name for each product type in the product_types list. The query
+        # condition will be something like:
         # (obs_files.short_name='coiss_calib' AND obs_files.version_name='Current') OR
         # (obs_files.short_name='coiss_calib' AND obs_files.version_name='1') OR
         # (obs_files.short_name='coiss_raw' AND obs_files.version_name='Current') OR
@@ -104,13 +105,16 @@ def get_pds_products(opus_id_list,
 
             # Check and see if the product type has a version specified (look for '@')
             if settings.FILE_VERSION_MODIFIER in p:
-                idx = p.index(settings.FILE_VERSION_MODIFIER)
-                prod_type = p[:idx]
-                version = p[idx+1:]
+                prod_type, _, version = p.partition(settings.FILE_VERSION_MODIFIER)
                 if version == 'current':
                     version = 'Current'
                 else:
-                    version = version[1:]
+                    # Support cases like @v1.0, @v1, @v1.2, @1.0, @1, and @1.2
+                    if 'v' in version:
+                        version = version[1:]
+                    float_ver = float(version)
+                    if float_ver.is_integer():
+                        version = f'{int(float_ver)}'
                 sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
                 values.append(prod_type)
                 sql += q('obs_files')+'.'+q('version_name')+'=%s)'
@@ -155,10 +159,10 @@ def get_pds_products(opus_id_list,
 
         if version_name not in results[opus_id]:
             results[opus_id][version_name] = OrderedDict()
-        if version_name != 'Current':
-            short_name = f'{short_name}@v{version_name}'
-        else:
-            short_name = f'{short_name}@{version_name.lower()}'
+        # if version_name == 'Current':
+        #     short_name = f'{short_name}@current'
+        # else:
+        #     short_name = f'{short_name}@v{version_name}'
         product_type = (category, sort_order, short_name, full_name)
         if product_type not in results[opus_id][version_name]:
             results[opus_id][version_name][product_type] = []
