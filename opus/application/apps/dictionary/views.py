@@ -13,8 +13,10 @@ def get_def_for_tooltip(term, context):
         entry = Definitions.objects.get(context__name=context, term=term)
         return entry.definition
     except Definitions.DoesNotExist:
-        log.error('No tooltip definition for context "%s" term "%s"',
-                  context, term)
+        # We allow mult tooltips to be None
+        if not context.startswith('MULT_'):
+            log.error('No tooltip definition for context "%s" term "%s"',
+                      context, term)
         return None
 
 def get_more_info_url(term, context):

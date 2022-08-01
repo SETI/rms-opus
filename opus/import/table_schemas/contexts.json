@@ -1,7 +1,7 @@
 [
     {
         "field_name": "name",
-        "field_type": "char25",
+        "field_type": "char50",
         "field_notnull": true,
         "field_key": "unique"
     },
