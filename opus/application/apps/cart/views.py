@@ -540,8 +540,12 @@ def api_create_download(request, opus_id=None, fmt=None):
     if product_types is None or product_types == '':
         product_types = []
     else:
-        product_types = product_types.split(',')
-
+        product_types = product_types.lower().split(',')
+    # By default, we want to download all files of the "Current" version if types
+    # parameter is not specified.
+    downloadCurrentOnly = False
+    if product_types == [] or product_types == ['all']:
+        downloadCurrentOnly = True
     if opus_id:
         opus_ids = [opus_id]
         return_directly = True
@@ -673,62 +677,68 @@ def api_create_download(request, opus_id=None, fmt=None):
     hierarchical_struct = int(request.GET.get('hierarchical', 0))
     files_info = {}
     for f_opus_id in files:
-        if 'Current' not in files[f_opus_id]:
+        if downloadCurrentOnly and 'Current' not in files[f_opus_id]:
             continue
-        files_version = files[f_opus_id]['Current']
-        for product_type in files_version:
-            for file_data in files_version[product_type]:
-                path = file_data['path']
-                pretty_name = path.split('/')[-1]
-                logical_path = path[path.index('/holdings')+9:]
-                if pretty_name not in files_info:
-                    files_info[pretty_name] = [logical_path]
-                elif logical_path not in files_info[pretty_name]:
-                    files_info[pretty_name].append(logical_path)
+        for version_name in files[f_opus_id]:
+            if downloadCurrentOnly and version_name != 'Current':
+                continue
+            files_version = files[f_opus_id][version_name]
+            for product_type in files_version:
+                for file_data in files_version[product_type]:
+                    path = file_data['path']
+                    pretty_name = path.split('/')[-1]
+                    logical_path = path[path.index('/holdings')+9:]
+                    if pretty_name not in files_info:
+                        files_info[pretty_name] = [logical_path]
+                    elif logical_path not in files_info[pretty_name]:
+                        files_info[pretty_name].append(logical_path)
 
     for f_opus_id in files:
-        if 'Current' not in files[f_opus_id]:
+        if downloadCurrentOnly and 'Current' not in files[f_opus_id]:
             continue
-        files_version = files[f_opus_id]['Current']
-        for product_type in files_version:
-            for file_data in files_version[product_type]:
-                path = file_data['path']
-                url = file_data['url']
-                category = file_data['category']
-                product_type = file_data['full_name']
-                product_abbrev = file_data['short_name']
-                version_name = file_data['version_name']
-                checksum = file_data['checksum']
-                size = file_data['size']
-                pretty_name = path.split('/')[-1]
-                logical_path = path[path.index('/holdings')+9:]
-                mdigest = (f'{f_opus_id},{category},{product_type},'
-                          +f'{product_abbrev},{version_name},{logical_path},'
-                          +f'{checksum},{size}')
-                manifest_fp.write(mdigest+'\n')
+        for version_name in files[f_opus_id]:
+            if downloadCurrentOnly and version_name != 'Current':
+                continue
+            files_version = files[f_opus_id][version_name]
+            for product_type in files_version:
+                for file_data in files_version[product_type]:
+                    path = file_data['path']
+                    url = file_data['url']
+                    category = file_data['category']
+                    product_type = file_data['full_name']
+                    product_abbrev = file_data['short_name']
+                    version_name = file_data['version_name']
+                    checksum = file_data['checksum']
+                    size = file_data['size']
+                    pretty_name = path.split('/')[-1]
+                    logical_path = path[path.index('/holdings')+9:]
+                    mdigest = (f'{f_opus_id},{category},{product_type},'
+                              +f'{product_abbrev},{version_name},{logical_path},'
+                              +f'{checksum},{size}')
+                    manifest_fp.write(mdigest+'\n')
 
-                if logical_path not in added:
-                    url_fp.write(url+'\n')
-                    filename = os.path.basename(path)
-                    # If hierarchical_struct is 1 or there are multiple paths
-                    # for the same file basename, we store files with hierarchy
-                    # tree in the zip file.
-                    if hierarchical_struct or len(files_info[pretty_name]) > 1:
-                        filename = logical_path
-                    if not url_file_only:
-                        try:
-                            if fmt == 'zip':
-                                archive_file.write(path, arcname=filename)
-                            else:
-                                archive_file.add(path, arcname=filename)
-                        except Exception as e:
-                            log.error('api_create_download threw exception '+
-                                      'for opus_id %s, product_type %s, '+
-                                      'file %s, pretty_name %s: %s',
-                                      f_opus_id, product_type, path,
-                                      pretty_name, str(e))
-                            errors.append('Error adding: ' + pretty_name)
-                    added.append(logical_path)
+                    if logical_path not in added:
+                        url_fp.write(url+'\n')
+                        filename = os.path.basename(path)
+                        # If hierarchical_struct is 1 or there are multiple paths
+                        # for the same file basename, we store files with hierarchy
+                        # tree in the zip file.
+                        if hierarchical_struct or len(files_info[pretty_name]) > 1:
+                            filename = logical_path
+                        if not url_file_only:
+                            try:
+                                if fmt == 'zip':
+                                    archive_file.write(path, arcname=filename)
+                                else:
+                                    archive_file.add(path, arcname=filename)
+                            except Exception as e:
+                                log.error('api_create_download threw exception '+
+                                          'for opus_id %s, product_type %s, '+
+                                          'file %s, pretty_name %s: %s',
+                                          f_opus_id, product_type, path,
+                                          pretty_name, str(e))
+                                errors.append('Error adding: ' + pretty_name)
+                        added.append(logical_path)
 
     # Write errors to manifest file
     if errors:

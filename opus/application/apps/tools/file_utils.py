@@ -53,6 +53,9 @@ def get_pds_products(opus_id_list,
     if opus_id_list is None:
         return {}
 
+    # display all if types parameter is not specified
+    if product_types == '' or product_types == []:
+        product_types = ['all']
     if not isinstance(product_types, (list, tuple)):
         product_types = product_types.lower().split(',')
 
