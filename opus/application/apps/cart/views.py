@@ -544,7 +544,7 @@ def api_create_download(request, opus_id=None, fmt=None):
     # By default, we want to download all files of the "Current" version if types
     # parameter is not specified.
     downloadCurrentOnly = False
-    if product_types == [] or product_types == ['all']:
+    if product_types == []:
         downloadCurrentOnly = True
     if opus_id:
         opus_ids = [opus_id]
