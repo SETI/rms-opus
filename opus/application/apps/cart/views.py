@@ -132,6 +132,8 @@ def api_view_cart(request):
     info['recycled_count'] = recycled_count
     info['format'] = settings.DOWNLOAD_FORMATS.keys()
 
+    # print("=================")
+    # print(info)
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
     ret = json_response({'html': html,
@@ -822,14 +824,15 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
     sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
-    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')
+    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')+', '
+    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')
     sql += 'FROM '+q('obs_files')+' '
     sql += 'INNER JOIN '+q('cart')+' ON '
     sql += q('cart')+'.'+q('obs_general_id')+'='
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
-    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
+    # sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
     sql += 'ORDER BY '+q('sort')
 
     log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
@@ -839,10 +842,10 @@ def _get_download_info(product_types, session_id):
 
     product_cats = []
     product_cat_list = []
-    product_dict_by_short_name = {}
+    product_dict_by_short_name_ver = {}
 
     for res in results:
-        (category, sort_order, short_name, full_name, default_checked) = res
+        (category, sort_order, short_name, full_name, default_checked, ver) = res
 
         pretty_name = category
         if category == 'standard':
@@ -876,28 +879,37 @@ def _get_download_info(product_types, session_id):
             'download_count': 0,
             'download_size': 0,
             'download_size_pretty': 0,
-            'default_checked': default_checked
+            'default_checked': default_checked,
+            'version_name': ver
         }
         cur_product_list.append(product_dict_entry)
-        product_dict_by_short_name[short_name] = product_dict_entry
+        short_name_ver = short_name + '@' + ver.lower()
+        product_dict_by_short_name_ver[short_name_ver] = product_dict_entry
 
 
-# SELECT obs_files.short_name,
+# SELECT obs_files.category,
+#        obs_files.sort_order,
+#        obs_files.short_name,
+#        obs_files.version_name,
+#        obs_files.full_name,
 #        count(distinct obs_files.opus_id) as product_count,
 #        count(distinct obs_files.logical_path) as download_count,
 #        t2.download_size as downloadsize
 # FROM obs_files,
 #
-#      (SELECT t1.short_name, sum(t1.size) as download_size
-#              FROM (SELECT DISTINCT obs_files.short_name, obs_files.logical_path, obs_files.size
+#      (SELECT t1.short_name, t1.version_name, sum(t1.size) as download_size
+#              FROM (SELECT DISTINCT obs_files.short_name, obs_files.version_name,
+#                                    obs_files.logical_path, obs_files.size
 #                           FROM obs_files
 #                           WHERE opus_id IN ('co-iss-n1460960653', 'co-iss-n1460960868')
 #                   ) as t1
-#              GROUP BY t1.short_name
+#              GROUP BY t1.short_name, t1.version_name
 #      ) as t2
 # WHERE obs_files.short_name=t2.short_name
+#   AND obs_files.version_name=t2.version_name
 #   AND obs_files.opus_id in ('co-iss-n1460960653', 'co-iss-n1460960868')
-# GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name, t2.download_size
+# GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name,
+#          obs_files.version_name, obs_files.full_name
 # ORDER BY sort_order;
     values = []
     sql = 'SELECT '
@@ -908,6 +920,7 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
+    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')+', '
     sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
 
     # download_size is the total sizes of all distinct filenames
@@ -928,11 +941,13 @@ def _get_download_info(product_types, session_id):
 
     # Nested SELECT #1
     sql += '(SELECT '+q('t1')+'.'+q('short_name')+', '
+    sql += q('t1')+'.'+q('version_name')+', '
     sql += 'SUM('+q('t1')+'.'+q('size')+') AS '+q('download_size')+' '
     sql += 'FROM '
 
     # Nested SELECT #2
     sql += '(SELECT DISTINCT '+q('obs_files')+'.'+q('short_name')+', '
+    sql += q('obs_files')+'.'+q('version_name')+', '
     sql += q('obs_files')+'.'+q('logical_path')+', '
     sql += q('obs_files')+'.'+q('size')+' '
     sql += 'FROM '+q('obs_files')+' '
@@ -942,12 +957,12 @@ def _get_download_info(product_types, session_id):
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
     sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
-    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000'
     sql += ') AS '+q('t1')+' '
     # End of nested SELECT #2
 
     # Back to nested SELECT #1
-    sql += 'GROUP BY '+q('t1')+'.'+q('short_name')
+    sql += 'GROUP BY '+q('t1')+'.'+q('short_name')+', '
+    sql += q('t1')+'.'+q('version_name')
     sql += ') AS '+q('t2')+', '
     # End of nested SELECT #1
 
@@ -960,10 +975,11 @@ def _get_download_info(product_types, session_id):
     sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
     sql += 'AND '+q('obs_files')+'.'+q('short_name')+'='
     sql += q('t2')+'.'+q('short_name')+' '
-    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
+    sql += 'AND '+q('obs_files')+'.'+q('version_name')+'='
+    sql += q('t2')+'.'+q('version_name')+' '
 
     sql += 'GROUP BY '+q('cat')+', '+q('sort')+', '
-    sql += q('short')+', '+q('full')+' '
+    sql += q('short')+', '+q('ver')+', '+q('full')+' '
     sql += 'ORDER BY '+q('sort')
 
     log.debug('_get_download_info SQL: %s %s', sql, values)
@@ -975,8 +991,9 @@ def _get_download_info(product_types, session_id):
     total_download_count = 0
 
     for res in results:
-        (category, sort_order, short_name, full_name,
+        (category, sort_order, short_name, version_name, full_name,
          download_size, download_count, product_count) = res
+        short_name_ver = short_name + '@' + version_name.lower()
         download_size = int(download_size)
         download_count = int(download_count)
         product_count = int(product_count)
@@ -984,10 +1001,10 @@ def _get_download_info(product_types, session_id):
             total_download_size += download_size
             total_download_count += download_count
 
-        product_dict_by_short_name[short_name]['product_count'] = product_count
-        product_dict_by_short_name[short_name]['download_count'] = download_count
-        product_dict_by_short_name[short_name]['download_size'] = download_size
-        product_dict_by_short_name[short_name]['download_size_pretty'] = nice_file_size(download_size)
+        product_dict_by_short_name_ver[short_name_ver]['product_count'] = product_count
+        product_dict_by_short_name_ver[short_name_ver]['download_count'] = download_count
+        product_dict_by_short_name_ver[short_name_ver]['download_size'] = download_size
+        product_dict_by_short_name_ver[short_name_ver]['download_size_pretty'] = nice_file_size(download_size)
 
     ret = {
         'total_download_count': total_download_count,
