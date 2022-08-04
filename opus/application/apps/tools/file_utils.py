@@ -123,8 +123,6 @@ def get_pds_products(opus_id_list,
                 sql += q('obs_files')+'.'+q('version_name')+'=%s)'
                 values.append(version)
             else:
-                # sql += q('obs_files')+'.'+q('short_name')+'=%s'
-                # values.append(p)
                 # When there is no modifier "@" in types, we will display "Current"
                 # version of the files, this will match the behavior of api/download
                 sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
