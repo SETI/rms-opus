@@ -840,8 +840,6 @@ def _get_download_info(product_types, session_id):
 
     product_cats = []
     product_cat_list = {}
-    # product_cats = []
-    # product_cat_list = []
     product_dict_by_short_name_ver = {}
 
     for res in results:
@@ -859,18 +857,13 @@ def _get_download_info(product_types, session_id):
         else:
             pretty_name = category + '-Specific Products'
         if ver != 'Current':
-            # category = 'Version ' + ver
             pretty_name = f'{pretty_name} V{float(ver)}'
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
             product_cat_list[pretty_name] = cur_product_list
-            # product_cat_list.append((pretty_name, cur_product_list))
         else:
-            # for i in product_cat_list:
-            #     if i[0] == pretty_name:
-            #         cur_product_list = i[1]
             cur_product_list = product_cat_list[pretty_name]
         try:
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
