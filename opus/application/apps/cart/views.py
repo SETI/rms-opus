@@ -120,7 +120,7 @@ def api_view_cart(request):
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
 
-    for name, details in info['product_cat_list']:
+    for name, details in info['product_cat_list'].items():
         for type in details:
             if (type['slug_name'] in not_selected_product_types or
                 not type['default_checked']):
@@ -132,8 +132,6 @@ def api_view_cart(request):
     info['recycled_count'] = recycled_count
     info['format'] = settings.DOWNLOAD_FORMATS.keys()
 
-    # print("=================")
-    # print(info)
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
     ret = json_response({'html': html,
@@ -832,8 +830,8 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
-    # sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
-    sql += 'ORDER BY '+q('sort')
+    # Put "Current" version on top of others
+    sql += 'ORDER BY '+q('sort')+', FIELD('+q('ver')+' ,"Current") DESC'
 
     log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -841,7 +839,9 @@ def _get_download_info(product_types, session_id):
     results = cursor.fetchall()
 
     product_cats = []
-    product_cat_list = []
+    product_cat_list = {}
+    # product_cats = []
+    # product_cat_list = []
     product_dict_by_short_name_ver = {}
 
     for res in results:
@@ -858,11 +858,20 @@ def _get_download_info(product_types, session_id):
             pretty_name = 'Diagram Products'
         else:
             pretty_name = category + '-Specific Products'
+        if ver != 'Current':
+            # category = 'Version ' + ver
+            pretty_name = f'{pretty_name} V{float(ver)}'
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
-            product_cat_list.append((pretty_name, cur_product_list))
+            product_cat_list[pretty_name] = cur_product_list
+            # product_cat_list.append((pretty_name, cur_product_list))
+        else:
+            # for i in product_cat_list:
+            #     if i[0] == pretty_name:
+            #         cur_product_list = i[1]
+            cur_product_list = product_cat_list[pretty_name]
         try:
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
                                             term=short_name)
@@ -997,7 +1006,30 @@ def _get_download_info(product_types, session_id):
         download_size = int(download_size)
         download_count = int(download_count)
         product_count = int(product_count)
-        if product_types == ['all'] or short_name in product_types:
+
+        # Check if the files info of a product type should be added up to total download
+        # info
+        is_adding_up_to_total = False
+        for p in product_types:
+            if settings.FILE_VERSION_MODIFIER in p:
+                prod_type, _, p_version = p.partition(settings.FILE_VERSION_MODIFIER)
+                if p_version.lower() == 'current':
+                    p_version = 'current'
+                else:
+                    # Support cases like @v1.0, @v1, @v1.2, @1.0, @1, and @1.2
+                    if 'v' in p_version:
+                        p_version = p_version[1:]
+                    float_ver = float(p_version)
+                    if float_ver.is_integer():
+                        p_version = f'{int(float_ver)}'
+                if short_name == prod_type and version_name == p_version:
+                    is_adding_up_to_total = True
+                    break
+            elif short_name == p:
+                is_adding_up_to_total = True
+                break
+
+        if product_types == ['all'] or is_adding_up_to_total:
             total_download_size += download_size
             total_download_count += download_count
 
