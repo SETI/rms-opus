@@ -123,8 +123,13 @@ def get_pds_products(opus_id_list,
                 sql += q('obs_files')+'.'+q('version_name')+'=%s)'
                 values.append(version)
             else:
-                sql += q('obs_files')+'.'+q('short_name')+'=%s'
+                # sql += q('obs_files')+'.'+q('short_name')+'=%s'
+                # values.append(p)
+                # When there is no modifier "@" in types, we will display "Current"
+                # version of the files, this will match the behavior of api/download
+                sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
                 values.append(p)
+                sql += q('obs_files')+'.'+q('version_name')+'="Current")'
             sql += ' OR ' if i != len(product_types)-1 else ') AND '
     sql += q('obs_files')+'.'+q('opus_id')+' IN %s'
     values.append(opus_id_list)
@@ -162,10 +167,6 @@ def get_pds_products(opus_id_list,
 
         if version_name not in results[opus_id]:
             results[opus_id][version_name] = OrderedDict()
-        # if version_name == 'Current':
-        #     short_name = f'{short_name}@current'
-        # else:
-        #     short_name = f'{short_name}@v{version_name}'
         product_type = (category, sort_order, short_name, full_name)
         if product_type not in results[opus_id][version_name]:
             results[opus_id][version_name][product_type] = []
