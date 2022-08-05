@@ -2490,7 +2490,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
 
     # One opus ids with duplicated file names from different versions
     def test__api_cart_download_single_different_vers_hierarchical_zip(self):
-        "[test_cart_api.py] /__cart/download.json: single opus id, files from different versions & hierarchical & fmt=zip"
+        "[test_cart_api.py] /__cart/download.json: single opus id & files from different versions & hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
@@ -2503,7 +2503,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
 
     # One opus ids with duplicated file names from different versions
     def test__api_cart_download_single_different_vers_hierarchical_tar(self):
-        "[test_cart_api.py] /__cart/download.json: single opus id, files from different versions & hierarchical & fmt=tar"
+        "[test_cart_api.py] /__cart/download.json: single opus id & files from different versions & hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
@@ -2516,7 +2516,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
 
     # One opus ids with duplicated file names from different versions
     def test__api_cart_download_single_different_vers_hierarchical_tgz(self):
-        "[test_cart_api.py] /__cart/download.json: single opus id, files from different versions & hierarchical & fmt=tgz"
+        "[test_cart_api.py] /__cart/download.json: single opus id & files from different versions & hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
@@ -2525,6 +2525,102 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@v1,coiss_calib@2.0,browse_full&hierarchical=1&fmt=tgz'
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        self._run_archive_file_equal(url, expected, fmt='tgz')
+
+    # Two opus ids with duplicated file names from different versions
+    def test__api_cart_download_multiple_different_vers_no_hierarchical_zip(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & no hierarchical & fmt=zip"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460973661&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@v1,coiss_calib@2.0,browse_full&hierarchical=0'
+        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        self._run_archive_file_equal(url, expected)
+
+    # Two opus ids with duplicated file names from different versions
+    def test__api_cart_download_multiple_different_vers_no_hierarchical_tar(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & no hierarchical & fmt=tar"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460973661&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@v1,coiss_calib@2.0,browse_full&hierarchical=0&fmt=tar'
+        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        self._run_archive_file_equal(url, expected, fmt='tar')
+
+    # Two opus ids with duplicated file names from different versions
+    def test__api_cart_download_multiple_different_vers_no_hierarchical_tgz(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & no hierarchical & fmt=tgz"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460973661&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@v1,coiss_calib@2.0,browse_full&hierarchical=0&fmt=tgz'
+        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        self._run_archive_file_equal(url, expected, fmt='tgz')
+
+    # Two opus ids with duplicated file names from different versions
+    def test__api_cart_download_multiple_different_vers_hierarchical_zip(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & hierarchical & fmt=zip"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460973661&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@v1,coiss_calib@2.0,browse_full&hierarchical=1'
+        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        self._run_archive_file_equal(url, expected)
+
+    # Two opus ids with duplicated file names from different versions
+    def test__api_cart_download_multiple_different_vers_hierarchical_tar(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & hierarchical & fmt=tar"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460973661&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@v1,coiss_calib@2.0,browse_full&hierarchical=1&fmt=tar'
+        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        self._run_archive_file_equal(url, expected, fmt='tar')
+
+    # Two opus ids with duplicated file names from different versions
+    def test__api_cart_download_multiple_different_vers_hierarchical_tgz(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & hierarchical & fmt=tgz"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460973661&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@v1,coiss_calib@2.0,browse_full&hierarchical=1&fmt=tgz'
+        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
