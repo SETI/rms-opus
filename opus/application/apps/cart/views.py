@@ -882,7 +882,6 @@ def _get_download_info(product_types, session_id):
             'download_size': 0,
             'download_size_pretty': 0,
             'default_checked': default_checked,
-            'version_name': ver,
             'product_type_with_version': f'{short_name}@{ver}'
         }
         cur_product_list.append(product_dict_entry)
