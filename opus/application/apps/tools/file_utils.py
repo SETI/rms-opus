@@ -163,6 +163,9 @@ def get_pds_products(opus_id_list,
         # sort order
         sort_order = int(sort_order[6:])
 
+        if version_name != 'Current':
+            version_name = float(version_name)
+
         if version_name not in results[opus_id]:
             results[opus_id][version_name] = OrderedDict()
         product_type = (category, sort_order, short_name, full_name)
