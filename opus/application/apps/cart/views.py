@@ -120,7 +120,7 @@ def api_view_cart(request):
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
 
-    for name, product_versions in info['product_cat_list'].items():
+    for name, product_versions in info['product_cat_dict'].items():
         for ver, types in product_versions.items():
             for type in types:
                 if (type['slug_name'] in not_selected_product_types or
@@ -128,7 +128,7 @@ def api_view_cart(request):
                     type['selected'] = ''
                 else:
                     type['selected'] = 'checked'
-    # for name, details in info['product_cat_list'].items():
+    # for name, details in info['product_cat_dict'].items():
     #     for type in details:
     #         if (type['slug_name'] in not_selected_product_types or
     #             not type['default_checked']):
@@ -175,7 +175,7 @@ def api_cart_status(request):
             'total_download_count':       Total number of unique files
             'total_download_size':        Total size of unique files (bytes)
             'total_download_size_pretty': Total size of unique files (pretty format)
-            'product_cat_list':           List of categories and info:
+            'product_cat_dict':           List of categories and info:
                 [
                  [<Product Type Category>,
                   [{'slug_name':            Like "browse-thumb"
@@ -440,7 +440,7 @@ def api_reset_session(request):
             'total_download_count':       Total number of unique files
             'total_download_size':        Total size of unique files (bytes)
             'total_download_size_pretty': Total size of unique files (pretty format)
-            'product_cat_list':           List of categories and info:
+            'product_cat_dict':           List of categories and info:
                 [
                  [<Product Type Category>,
                   [{'slug_name':            Like "browse-thumb"
@@ -799,22 +799,24 @@ def _get_download_info(product_types, session_id):
         'total_download_count':       Total number of unique files
         'total_download_size':        Total size of unique files (bytes)
         'total_download_size_pretty': Total size of unique files (pretty format)
-        'product_cat_list':           List of categories and info:
-            [
+        'product_cat_dict':           Dict of categories and info:
+            {
              [<Product Type Category>,
-              [{'slug_name':            Like "browse-thumb"
-                'product_type':         Like "Browse Image (thumbnail)"
-                'tooltip':              User-friendly tooltip, if any
-                'product_count':        Number of opus_ids in this category
-                'download_count':       Number of unique files in this category
-                'download_size':        Size of unique files in this category
-                                            (bytes)
-                'download_size_pretty': Size of unique files in this category
-                                            (pretty format)
+               {version_name:               Like "Current" or "1.0"
+                  [{'slug_name':            Like "browse-thumb"
+                    'product_type':         Like "Browse Image (thumbnail)"
+                    'tooltip':              User-friendly tooltip, if any
+                    'product_count':        Number of opus_ids in this category
+                    'download_count':       Number of unique files in this category
+                    'download_size':        Size of unique files in this category
+                                                (bytes)
+                    'download_size_pretty': Size of unique files in this category
+                                                (pretty format)
+                   }
+                  ], ...
                }
-              ], ...
              ], ...
-            ]
+            }
     """
     cursor = connection.cursor()
     q = connection.ops.quote_name
@@ -847,7 +849,7 @@ def _get_download_info(product_types, session_id):
     results = cursor.fetchall()
 
     product_cats = []
-    product_cat_list = {}
+    product_cat_dict = {}
     product_dict_by_short_name_ver = {}
 
     for res in results:
@@ -873,14 +875,14 @@ def _get_download_info(product_types, session_id):
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
-            product_cat_list[pretty_name] = {}
-            product_cat_list[pretty_name][float_ver] = cur_product_list
+            product_cat_dict[pretty_name] = {}
+            product_cat_dict[pretty_name][float_ver] = cur_product_list
         else:
             try:
-                cur_product_list = product_cat_list[pretty_name][float_ver]
+                cur_product_list = product_cat_dict[pretty_name][float_ver]
             except KeyError:
                 cur_product_list = []
-                product_cat_list[pretty_name][float_ver] = cur_product_list
+                product_cat_dict[pretty_name][float_ver] = cur_product_list
         try:
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
                                             term=short_name)
@@ -1051,7 +1053,7 @@ def _get_download_info(product_types, session_id):
         'total_download_count': total_download_count,
         'total_download_size': total_download_size,
         'total_download_size_pretty':  nice_file_size(total_download_size),
-        'product_cat_list': product_cat_list
+        'product_cat_dict': product_cat_dict
     }
 
     return ret
