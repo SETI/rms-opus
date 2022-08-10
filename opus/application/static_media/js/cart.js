@@ -260,9 +260,17 @@ var o_cart = {
          */
         if (($(target).hasClass("op-cart-select-btn") ||
              $(target).hasClass("op-cart-select-all-btn"))) {
-            $(checkboxesOptions).prop("checked", true);
+            for(let input of checkboxesOptions) {
+                let input_val = $(input).val();
+                let ver_idx = input_val.indexOf("@");
+                let ver = input_val.slice(ver_idx+1).toLowerCase();
+                // Only select the current version of the files
+                if (ver !== "current") continue;
+                $(input).prop("checked", true);
+            }
         } else if (($(target).hasClass("op-cart-deselect-btn") ||
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
+            // Deselect all files
             $(checkboxesOptions).prop("checked", false);
         } else {
             opus.logError("Target button in download data left pane has the wrong class.");
