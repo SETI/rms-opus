@@ -868,8 +868,7 @@ def _get_download_info(product_types, session_id):
             float_ver = ver
         else:
             float_ver = f'{float(ver)}'
-        # if ver != 'Current':
-        #     pretty_name = f'{pretty_name} V{float(ver)}'
+
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
@@ -877,7 +876,6 @@ def _get_download_info(product_types, session_id):
             product_cat_list[pretty_name] = {}
             product_cat_list[pretty_name][float_ver] = cur_product_list
         else:
-            # cur_product_list = product_cat_list[pretty_name]
             try:
                 cur_product_list = product_cat_list[pretty_name][float_ver]
             except KeyError:
