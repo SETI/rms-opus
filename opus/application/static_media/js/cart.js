@@ -183,6 +183,11 @@ var o_cart = {
                                            ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
         });
 
+        // Show/hide the non-current versions of the files in cart table view
+        $("#cart").on("click", ".op-cart-download-show-ver input", function(e) {
+            $(".op-cart-ver-sub-header, .op-cart-ver-item").toggleClass("op-cart-ver-hidden");
+        });
+
         // Initialize popover window for download links at the lower right corner in footer area.
         $(".app-footer .op-download-links-btn").popover({
             html: true,
@@ -491,13 +496,18 @@ var o_cart = {
 
         // update the panel numbers if we received them...
         if (status.product_cat_list !== undefined) {
-            for (let index = 0; index < status.product_cat_list.length; index++) {
-                let slugList = status.product_cat_list[index][1];
-                for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
-                    let slugName = slugList[slugNdx].slug_name;
-                    $(`#op-product-${slugName} .op-options-obs`).html(o_utils.addCommas(slugList[slugNdx].product_count));
-                    $(`#op-product-${slugName} .op-options-files`).html(o_utils.addCommas(slugList[slugNdx].download_count));
-                    $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
+            // for (let index = 0; index < status.product_cat_list.length; index++) {
+            for (let pretty_name in status.product_cat_list) {
+                let prod = status.product_cat_list[pretty_name];
+                // let slugList = status.product_cat_list[index][1];
+                for (let ver in prod) {
+                    let slugList = prod[ver];
+                    for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
+                        let slugName = slugList[slugNdx].slug_name;
+                        $(`#op-product-${slugName} .op-options-obs`).html(o_utils.addCommas(slugList[slugNdx].product_count));
+                        $(`#op-product-${slugName} .op-options-files`).html(o_utils.addCommas(slugList[slugNdx].download_count));
+                        $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
+                    }
                 }
             }
         }
@@ -592,6 +602,13 @@ var o_cart = {
                     maxWidth: opus.downloadPaneTooltipsMaxWidth,
                     theme: opus.tooltipsTheme,
                     delay: opus.tooltipsDelay,
+                    functionBefore: function(instance, helper){
+                        // Make sure all other tooltips are closed before a new one is opened
+                        // in table view.
+                        $.each($.tooltipster.instances(), function(i, inst){
+                            inst.close();
+                        });
+                    },
                 });
             });
         } else {

@@ -52,7 +52,7 @@
                 </div>
             </div>
             <p class="m-0 mb-1">Select which product types to include in downloads:</p>
-            <div class="op-product-types-select-btn-group mb-3">
+            <div class="op-product-types-select-btn-group mb-1">
                 <button class="op-cart-select-all-btn btn btn-sm btn-primary
                     {% if count < 1 and recycled_count < 1  %}
                         op-button-disabled
@@ -68,6 +68,17 @@
                     <i class="fas fa-times"></i>&nbsp;&nbsp;Deselect all product types
                 </button>
             </div>
+            <div class="row no-gutters op-cart-download-show-ver mb-1">
+                <div class="row no-gutters col-7">
+                    <div class="col col-sm-1">
+                        <input type="checkbox">
+                    </div>
+                    <div class="col col-sm-1">
+                        <i class="fas fa-info-circle op-cart-tooltip" title="If checked, all non-current versions of files will be displayed in the table."></i>
+                    </div>
+                    <div class="col col-lg">Show previous versions</div>
+                </div>
+            </div>
         </div>
         <div class="op-download-options-product-types w-100">
             <div class="row op-product-type-table-header font-weight-bold border-bottom border-light no-gutters mr-3">
@@ -77,37 +88,60 @@
                 <div class="col text-right">Size</div>
             </div>
             <div class="op-product-type-table-body pr-3">
-                {% for product_cat, product_list in product_cat_list.items %}
-                    <div class="row no-gutters bg-light">
+                {% for product_cat, product_versions in product_cat_list.items %}
+                    <div class="row no-gutters bg-secondary">
                         <div class="col-12">
                             <h5 class="mt-2">
-                                <button class="op-cart-select-btn btn btn-sm p-0 border-0 bg-light op-cart-tooltip" data-category="{{ product_cat|slugify }}" type="button" title="Select all in category"><i class="fas fa-check"></i></button>
-                                <button class="op-cart-deselect-btn btn btn-sm p-0 border-0 bg-light op-cart-tooltip" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all in category"><i class="fas fa-times"></i></button>
+                                <button class="op-cart-select-btn btn btn-sm p-0 border-0 bg-secondary op-cart-tooltip" data-category="{{ product_cat|slugify }}" type="button" title="Select all in category"><i class="fas fa-check"></i></button>
+                                <button class="op-cart-deselect-btn btn btn-sm p-0 border-0 bg-secondary op-cart-tooltip" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all in category"><i class="fas fa-times"></i></button>
                                 {{ product_cat }}
                             </h5>
                         </div>
                     </div>
-                    {% for product_info in product_list %}
-                        <div id="op-product-{{ product_info.slug_name }}" class="row no-gutters border-bottom border-light">
-                            <div class="row col-7 no-gutters">
-                                <div class="col col-sm-1">
-                                    <input type="checkbox" value="{{ product_info.product_type_with_version }}" data-category="{{ product_cat|slugify }}"
-                                        {{ product_info.selected }}
-                                    >
-                                </div>
-                                <div class="col col-sm-1">
-                                    {% if product_info.tooltip %}
-                                        <i class="fas fa-info-circle op-cart-tooltip" title="{{ product_info.tooltip }}"></i>
-                                    {% endif %}
-                                </div>
-                                <div class="col col-lg">
-                                    {{ product_info.product_type }}
+                    {% for ver, product_list in product_versions.items %}
+                        {% if ver != "Current" %}
+                            <div class="row no-gutters bg-light op-cart-ver-sub-header op-cart-ver-hidden">
+                                <div class="col-12">
+                                    <div class="col col-sm-1"></div>
+                                    <span class="mt-2">
+                                        <button class="op-cart-select-btn btn btn-sm p-0 border-0 bg-light op-cart-tooltip" data-category="{{ product_cat|slugify }}-{{ ver }}" type="button" title="Select all in category"><i class="fas fa-check"></i></button>
+                                        <button class="op-cart-deselect-btn btn btn-sm p-0 border-0 bg-light op-cart-tooltip" data-category="{{ product_cat|slugify }}-{{ ver }}" type="button" title="Deselect all in category"><i class="fas fa-times"></i></button>
+                                        Version: {{ ver }}
+                                    </span>
                                 </div>
                             </div>
-                            <div class="op-options-obs col text-right">{{ product_info.product_count|intcomma }}</div>
-                            <div class="op-options-files col text-right">{{ product_info.download_count|intcomma }}</div>
-                            <div class="op-options-size col text-right">{{ product_info.download_size_pretty }}</div>
-                        </div>
+                        {% endif%}
+                        {% for product_info in product_list %}
+                            <div id="op-product-{{ product_info.slug_name }}" class="row no-gutters border-bottom border-light {% if ver != 'Current' %} op-cart-ver-item op-cart-ver-hidden {% endif%}">
+                                <div class="row col-7 no-gutters">
+                                    {% if ver != "Current" %}
+                                        <div class="col col-sm-1"></div>
+                                    {% endif%}
+                                    <div class="col col-sm-1">
+                                        {% if ver != "Current" %}
+                                            <input type="checkbox" value="{{ product_info.product_type_with_version }}" data-category="{{ product_cat|slugify }}-{{ ver }}"
+                                                {{ product_info.selected }}
+                                            >
+                                        {% else %}
+                                            <input type="checkbox" value="{{ product_info.product_type_with_version }}" data-category="{{ product_cat|slugify }}"
+                                                {{ product_info.selected }}
+                                            >
+                                        {% endif%}
+                                    </div>
+                                    <div class="col col-sm-1">
+                                        {% if product_info.tooltip %}
+                                            <i class="fas fa-info-circle op-cart-tooltip" title="{{ product_info.tooltip }}"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col col-lg">
+                                        {{ product_info.product_type }}
+                                    </div>
+                                </div>
+                                <div class="op-options-obs col text-right">{{ product_info.product_count|intcomma }}</div>
+                                <div class="op-options-files col text-right">{{ product_info.download_count|intcomma }}</div>
+                                <div class="op-options-size col text-right">{{ product_info.download_size_pretty }}</div>
+                            </div>
+                        {% endfor %}
                     {% endfor %}
                 {% endfor %}
                 <div class="op-data-archive-notes">

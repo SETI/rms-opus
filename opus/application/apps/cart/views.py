@@ -120,13 +120,21 @@ def api_view_cart(request):
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
 
-    for name, details in info['product_cat_list'].items():
-        for type in details:
-            if (type['slug_name'] in not_selected_product_types or
-                not type['default_checked']):
-                type['selected'] = ''
-            else:
-                type['selected'] = 'checked'
+    for name, product_versions in info['product_cat_list'].items():
+        for ver, types in product_versions.items():
+            for type in types:
+                if (type['slug_name'] in not_selected_product_types or
+                    not type['default_checked']):
+                    type['selected'] = ''
+                else:
+                    type['selected'] = 'checked'
+    # for name, details in info['product_cat_list'].items():
+    #     for type in details:
+    #         if (type['slug_name'] in not_selected_product_types or
+    #             not type['default_checked']):
+    #             type['selected'] = ''
+    #         else:
+    #             type['selected'] = 'checked'
 
     info['count'] = count
     info['recycled_count'] = recycled_count
@@ -856,15 +864,25 @@ def _get_download_info(product_types, session_id):
             pretty_name = 'Diagram Products'
         else:
             pretty_name = category + '-Specific Products'
-        if ver != 'Current':
-            pretty_name = f'{pretty_name} V{float(ver)}'
+        if ver == 'Current':
+            float_ver = ver
+        else:
+            float_ver = f'{float(ver)}'
+        # if ver != 'Current':
+        #     pretty_name = f'{pretty_name} V{float(ver)}'
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
-            product_cat_list[pretty_name] = cur_product_list
+            product_cat_list[pretty_name] = {}
+            product_cat_list[pretty_name][float_ver] = cur_product_list
         else:
-            cur_product_list = product_cat_list[pretty_name]
+            # cur_product_list = product_cat_list[pretty_name]
+            try:
+                cur_product_list = product_cat_list[pretty_name][float_ver]
+            except KeyError:
+                cur_product_list = []
+                product_cat_list[pretty_name][float_ver] = cur_product_list
         try:
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
                                             term=short_name)
