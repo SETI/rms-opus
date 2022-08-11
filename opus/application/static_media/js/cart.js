@@ -265,7 +265,9 @@ var o_cart = {
                 let ver_idx = input_val.indexOf("@");
                 let ver = input_val.slice(ver_idx+1).toLowerCase();
                 // Only select the current version of the files
-                if (ver !== "current") continue;
+                if (ver !== "current") {
+                    continue;
+                }
                 $(input).prop("checked", true);
             }
         } else if (($(target).hasClass("op-cart-deselect-btn") ||
