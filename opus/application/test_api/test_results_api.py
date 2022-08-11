@@ -106,7 +106,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_data_no_results_default_csv(self):
         "[test_results_api.py] /api/data: no results default cols csv"
         url = '/api/data.csv?opusid=notgoodid'
-        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)\n'
+        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name(s),Observation Start Time,Observation Duration (secs)\n'
         self._run_csv_equal(url, expected)
 
     def test__api_data_no_results_default_html(self):

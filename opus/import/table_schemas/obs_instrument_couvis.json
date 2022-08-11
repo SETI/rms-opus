@@ -33,7 +33,7 @@
     },
     {
         "field_name": "observation_type",
-        "field_type": "char8",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
@@ -92,8 +92,7 @@
     },
     {
         "field_name": "compression_type",
-        "field_type": "enum",
-        "field_enum_options": "'8_BIT','SQRT_8','SQRT_9','NONE'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
@@ -121,8 +120,7 @@
     },
     {
         "field_name": "occultation_port_state",
-        "field_type": "enum",
-        "field_enum_options": "'OPEN','CLOSED','N/A'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
@@ -149,8 +147,7 @@
     },
     {
         "field_name": "slit_state",
-        "field_type": "enum",
-        "field_enum_options": "'HIGH_RESOLUTION','LOW_RESOLUTION','OCCULTATION','NULL'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
@@ -200,7 +197,7 @@
     },
     {
         "field_name": "dwell_time",
-        "field_type": "int4",
+        "field_type": "mult_idx",
         "field_default": null,
         "data_source": "COMPUTE",
         "val_min": 0,
@@ -225,8 +222,7 @@
     },
     {
         "field_name": "channel",
-        "field_type": "enum",
-        "field_enum_options": "'EUV','FUV','HDAC','HSP'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
@@ -435,9 +431,6 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "comments": "Definition is from COUVIS supplemental label"
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

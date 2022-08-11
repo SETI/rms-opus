@@ -33,8 +33,7 @@
     },
     {
         "field_name": "instrument_mode_id",
-        "field_type": "enum",
-        "field_enum_options": "'CAL_BACKGROUND','CAL_SOLAR','CAL_SPECTRAL','IMAGE','LINE','OCCULTATION','POINT'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
@@ -200,8 +199,7 @@
     },
     {
         "field_name": "ir_sampling_mode_id",
-        "field_type": "enum",
-        "field_enum_options": "'HI-RES','NORMAL','UNDER'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
@@ -254,8 +252,7 @@
     },
     {
         "field_name": "vis_sampling_mode_id",
-        "field_type": "enum",
-        "field_enum_options": "'HI-RES','N/A','NORMAL','UNK'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
@@ -283,8 +280,7 @@
     },
     {
         "field_name": "channel",
-        "field_type": "enum",
-        "field_enum_options": "'IR','VIS'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
@@ -307,9 +303,6 @@
               [   0,  "IR",  "IR", "010", "Y", null, null],
               [   1, "VIS", "VIS", "020", "Y", null, null]
           ]
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

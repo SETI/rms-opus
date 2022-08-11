@@ -337,7 +337,7 @@ PREVIEW_GUIDES = {
 DISPLAYED_BROWSE_PRODUCTS = ['browse_medium','diagram_medium']
 
 RANGE_FORM_TYPES = ('LONG','RANGE')
-MULT_FORM_TYPES  = ('GROUP','TARGETS')
+MULT_FORM_TYPES  = ('GROUP','MULTIGROUP')
 
 # First one in list is the default
 STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes', 'regex')

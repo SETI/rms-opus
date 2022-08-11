@@ -61,9 +61,6 @@
         "pi_tooltip": null
     },
     {
-        "put_mults_here": true
-    },
-    {
         "field_name": "id",
         "field_type": "uint4",
         "field_key": "primary",

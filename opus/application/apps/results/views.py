@@ -644,10 +644,27 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 if (form_type in settings.MULT_FORM_TYPES and
                     not return_db_names):
                     mult_name = get_mult_name(param_info.param_qualified_name())
-                    mult_val = results.values(mult_name)[0][mult_name]
-                    result = lookup_pretty_value_for_mult(param_info,
-                                                          mult_val,
-                                                         cvt_null=(fmt!='json'))
+                    mult_val = results.values(param_info.name)[0][param_info.name]
+                    if form_type != 'MULTIGROUP':
+                        # This handles the case of a single mult value where the
+                        # value is the index into the associated mult table
+                        result = lookup_pretty_value_for_mult(param_info,
+                                                              mult_val,
+                                                              cvt_null=(fmt!='json'))
+                    else:
+                        # This handles the case of a "multisel" mult value where the
+                        # value is a JSON string containing a list of indexes into
+                        # the associated mult table. We display these as
+                        # str1, str2, str3
+                        mult_vals = json.loads(mult_val)
+                        result_list = []
+                        for mult_val in mult_vals:
+                            ret = lookup_pretty_value_for_mult(param_info,
+                                                               mult_val,
+                                                               cvt_null=(fmt!='json'))
+                            result_list.append(ret)
+                        result = ', '.join(result_list)
+
                 else:
                     result = result_vals.get(param_info.name, None)
                     # If this is the param info from referred_slug, we will get
@@ -1387,7 +1404,7 @@ def get_search_results_chunk(request, use_cart=None,
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
             mult_table = get_mult_name(pi.param_qualified_name())
-            mult_tables.add((mult_table, table))
+            mult_tables.add((mult_table, table, pi.name))
             column_names.append(mult_table+'.label')
         else:
             column_names.append(column)
@@ -1551,9 +1568,9 @@ def get_search_results_chunk(request, use_cart=None,
             sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, table) in mult_tables:
+        for (mult_table, table, field_name) in mult_tables:
             sql += ' LEFT JOIN '+q(mult_table)
-            sql += ' ON '+q(table)+'.'+q(mult_table)+'='
+            sql += ' ON '+q(table)+'.'+q(field_name)+'='
             sql += q(mult_table)+'.'+q('id')
 
         # But the cache table is an INNER JOIN because we only want opus_ids
@@ -1597,9 +1614,9 @@ def get_search_results_chunk(request, use_cart=None,
             sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, table) in mult_tables | order_mult_tables:
+        for (mult_table, table, field_name) in mult_tables | order_mult_tables:
             sql += ' LEFT JOIN '+q(mult_table)
-            sql += ' ON '+q(table)+'.'+q(mult_table)+'='
+            sql += ' ON '+q(table)+'.'+q(field_name)+'='
             sql += q(mult_table)+'.'+q('id')
 
         # But the cart table is an INNER JOIN because we only want

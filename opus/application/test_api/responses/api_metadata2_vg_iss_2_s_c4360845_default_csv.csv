@@ -1,5 +1,5 @@
 General Constraints
-Planet,Intended Target Name,Nominal Target Class,Mission,Instrument Host Name,Instrument Name,Observation Type,Observation Start Time,Observation Stop Time,Observation Duration (secs),Measurement Quantity,Right Ascension (Min) (degrees),Right Ascension (Max) (degrees),Declination (Min) (degrees),Declination (Max) (degrees)
+Planet,Intended Target Name(s),Nominal Target Class,Mission,Instrument Host Name,Instrument Name,Observation Type,Observation Start Time,Observation Stop Time,Observation Duration (secs),Measurement Quantity,Right Ascension (Min) (degrees),Right Ascension (Max) (degrees),Declination (Min) (degrees),Declination (Max) (degrees)
 Saturn,Saturn,Planet,Voyager,Voyager 2,Voyager ISS,Image,1981-08-12T21:54:21.120,1981-08-12T21:54:24.000,2.88,Reflectivity,197.700321,198.3685,-5.021599,-4.355657
 PDS Constraints
 Volume ID,Data Set ID,Product ID,Product Creation Time,Primary File Spec,OPUS ID,Note

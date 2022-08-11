@@ -41,7 +41,7 @@
     },
     {
         "field_name": "occ_type",
-        "field_type": "char3",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -70,7 +70,7 @@
     },
     {
         "field_name": "occ_dir",
-        "field_type": "char1",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -144,7 +144,7 @@
     },
     {
         "field_name": "quality_score",
-        "field_type": "char16",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -217,7 +217,7 @@
     },
     {
         "field_name": "wl_band",
-        "field_type": "char6",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -248,7 +248,7 @@
     },
     {
         "field_name": "source",
-        "field_type": "char40",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -270,7 +270,7 @@
     },
     {
         "field_name": "host",
-        "field_type": "char100",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -331,9 +331,6 @@
         "pi_disp_order": 1021,
         "pi_display": 0,
         "pi_display_results": 1
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

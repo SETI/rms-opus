@@ -1271,6 +1271,7 @@ def construct_query_string(selections, extras):
     clause_params = []
     obs_tables = set()
     mult_tables = set()
+    q = connection.ops.quote_name
 
     # We always have to have obs_general since it's the master keeper of IDs
     obs_tables.add('obs_general')
@@ -1288,7 +1289,7 @@ def construct_query_string(selections, extras):
                       str(selections), str(extras))
             return None, None
         cat_name = param_info.category_name
-        quoted_cat_name = connection.ops.quote_name(cat_name)
+        quoted_cat_name = q(cat_name)
 
         if param_qualified_name_no_num in all_qtypes:
             qtypes = all_qtypes[param_qualified_name_no_num]
@@ -1321,13 +1322,25 @@ def construct_query_string(selections, extras):
                           str(mult_values), str(selections), str(extras))
                 return None, None
             if mult_values:
-                clause = (quoted_cat_name+'.'
-                          +connection.ops.quote_name(mult_name))
-                clause += ' IN ('
-                clause += ','.join(['%s']*len(mult_values))
-                clause += ')'
+                if form_type == 'GROUP':
+                    # Single-valued mult. We can be efficient by seeing if the field
+                    # contents is in the list of search values.
+                    clause = quoted_cat_name+'.'+q(param_info.name)
+                    clause += ' IN ('
+                    clause += ','.join(['%s']*len(mult_values))
+                    clause += ')'
+                    clause_params += mult_values
+                else:
+                    # Multi-valued mult (multisel). We have to see if each search value
+                    # is in the database field list, so we have to check them one by one.
+                    or_clauses = []
+                    for mult_value in mult_values:
+                        or_clause = 'JSON_CONTAINS('
+                        or_clause += quoted_cat_name+'.'+q(param_info.name)+',%s)'
+                        clause_params.append(str(mult_value))
+                        or_clauses.append(or_clause)
+                    clause = ' OR '.join(or_clauses)
                 clauses.append(clause)
-                clause_params += mult_values
                 obs_tables.add(cat_name)
 
         elif form_type in settings.RANGE_FORM_TYPES:
@@ -1389,28 +1402,22 @@ def construct_query_string(selections, extras):
         mult_tables |= order_mult_tables
         obs_tables |= order_obs_tables
 
-    sql = 'SELECT '
-    sql += connection.ops.quote_name('obs_general')+'.'
-    sql += connection.ops.quote_name('id')
+    sql = 'SELECT '+q('obs_general')+'.'+q('id')
 
     # Now JOIN all the obs_ tables together
-    sql += ' FROM '+connection.ops.quote_name('obs_general')
+    sql += ' FROM '+q('obs_general')
     for table in sorted(obs_tables):
         if table == 'obs_general':
             continue
-        sql += ' LEFT JOIN '+connection.ops.quote_name(table)
-        sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name(table)+'.'
-        sql += connection.ops.quote_name('obs_general_id')
+        sql += ' LEFT JOIN '+q(table)+' ON '
+        sql += q('obs_general')+'.'+q('id')+'='
+        sql += q(table)+'.'+q('obs_general_id')
 
     # And JOIN all the mult_ tables together
-    for mult_table, category in sorted(mult_tables):
-        sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
-        sql += ' ON '+connection.ops.quote_name(category)+'.'
-        sql += connection.ops.quote_name(mult_table)+'='
-        sql += connection.ops.quote_name(mult_table)+'.'
-        sql += connection.ops.quote_name('id')
+    for mult_table, category, field_name in sorted(mult_tables):
+        sql += ' LEFT JOIN '+q(mult_table)+' ON '
+        sql += q(category)+'.'+q(field_name)+'='
+        sql += q(mult_table)+'.'+q('id')
 
     # Add in the WHERE clauses
     if clauses:
@@ -1423,7 +1430,7 @@ def construct_query_string(selections, extras):
     # Add in the ORDER BY clause
     sql += order_sql
 
-    # log.debug('SEARCH SQL: %s *** PARAMS %s', sql, str(clause_params))
+    log.debug('SEARCH SQL: %s *** PARAMS %s', sql, str(clause_params))
     return sql, clause_params
 
 
@@ -1960,7 +1967,8 @@ def create_order_by_sql(order_params, descending_params):
             if form_type in settings.MULT_FORM_TYPES:
                 mult_table = get_mult_name(pi.param_qualified_name())
                 order_param = mult_table + '.label'
-                order_mult_tables.add((mult_table, pi.category_name))
+                order_mult_tables.add((mult_table, pi.category_name,
+                                       pi.name))
             if descending_params[i]:
                 order_param += ' DESC'
             else:

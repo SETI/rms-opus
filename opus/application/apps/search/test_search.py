@@ -3202,7 +3202,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (%s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`planet_id` IN (%s)'
         expected_params = [4]
         print(expected)
         print(expected_params)
@@ -3216,7 +3216,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (%s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`planet_id` IN (%s)'
         expected_params = [4]
         print(expected)
         print(expected_params)
@@ -3259,7 +3259,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_instrument_id` IN (%s)) AND (`obs_general`.`mult_obs_general_planet_id` IN (%s))'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`instrument_id` IN (%s)) AND (`obs_general`.`planet_id` IN (%s))'
         expected_params = [1, 4]
         print(expected)
         print(expected_params)
@@ -3274,7 +3274,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (%s)) AND (`obs_instrument_coiss`.`mult_obs_instrument_coiss_camera` IN (%s))'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` WHERE (`obs_general`.`planet_id` IN (%s)) AND (`obs_instrument_coiss`.`camera` IN (%s))'
         expected_params = [4, 1]
         print(expected)
         print(expected_params)
@@ -3290,7 +3290,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `obs_mission_cassini` ON `obs_general`.`id`=`obs_mission_cassini`.`obs_general_id` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (%s)) AND (`obs_instrument_coiss`.`mult_obs_instrument_coiss_camera` IN (%s)) AND (`obs_mission_cassini`.`mult_obs_mission_cassini_rev_no` IN (%s,%s))'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `obs_mission_cassini` ON `obs_general`.`id`=`obs_mission_cassini`.`obs_general_id` WHERE (`obs_general`.`planet_id` IN (%s)) AND (`obs_instrument_coiss`.`camera` IN (%s)) AND (`obs_mission_cassini`.`rev_no` IN (%s,%s))'
         expected_params = [4, 0, 2, 4]
         print(expected)
         print(expected_params)
@@ -3370,7 +3370,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult_obs_instrument_coiss_data_conversion_type` ON `obs_instrument_coiss`.`mult_obs_instrument_coiss_data_conversion_type`=`mult_obs_instrument_coiss_data_conversion_type`.`id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY mult_obs_instrument_coiss_data_conversion_type.label ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult_obs_instrument_coiss_data_conversion_type` ON `obs_instrument_coiss`.`data_conversion_type`=`mult_obs_instrument_coiss_data_conversion_type`.`id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY mult_obs_instrument_coiss_data_conversion_type.label ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)

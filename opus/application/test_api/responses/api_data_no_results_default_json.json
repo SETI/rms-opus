@@ -8,7 +8,7 @@
     "OPUS ID",
     "Instrument Name",
     "Planet",
-    "Intended Target Name",
+    "Intended Target Name(s)",
     "Observation Start Time",
     "Observation Duration (secs)"
   ],
@@ -16,7 +16,7 @@
     "OPUS ID",
     "Instrument Name",
     "Planet",
-    "Intended Target Name",
+    "Intended Target Name(s)",
     "Observation Start Time",
     "Observation Duration (secs)"
   ],

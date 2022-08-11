@@ -78,8 +78,7 @@
     },
     {
         "field_name": "filter_name",
-        "field_type": "enum",
-        "field_enum_options": "'CLEAR','GREEN','IR-7270','IR-7560','IR-8890','IR-9680','RED','VIOLET'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -112,7 +111,7 @@
     },
     {
         "field_name": "filter_number",
-        "field_type": "int1",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -137,8 +136,7 @@
     },
     {
         "field_name": "gain_mode_id",
-        "field_type": "enum",
-        "field_enum_options": "'400K','100K','40K','10K'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
@@ -166,7 +164,7 @@
     },
     {
         "field_name": "frame_duration",
-        "field_type": "real8",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "val_min": 2,
@@ -190,8 +188,7 @@
     },
     {
         "field_name": "obstruction_id",
-        "field_type": "enum",
-        "field_enum_options": "'POSSIBLE','NOT POSSIBLE','PRESENCE VERIFIED'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "definition": "Identifies if a boom or other type of obstruction was obscuring the view of the camera during the exposure. Values are Possible, Not Possible, or Presence Verified.",
@@ -218,8 +215,7 @@
     },
     {
         "field_name": "compression_type",
-        "field_type": "enum",
-        "field_enum_options": "'BARC RATE CONTROL','HUFFMAN','INTEGER COSINE TRANSFORM','NONE'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
@@ -251,9 +247,6 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

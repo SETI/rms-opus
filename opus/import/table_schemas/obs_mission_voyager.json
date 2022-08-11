@@ -107,7 +107,7 @@
     },
     {
         "field_name": "mission_phase_name",
-        "field_type": "char32",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -126,9 +126,6 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "comments": "Definition is from VGISS label"
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

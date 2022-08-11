@@ -1148,9 +1148,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             temp_sql += ' LEFT JOIN '+q(table)+' ON '+q('obs_general')+'.'+q('id')
             temp_sql += '='+q(table)+'.'+q('obs_general_id')
         # And JOIN all the mult_ tables together
-        for mult_table, category in sorted(order_mult_tables):
+        for mult_table, category, field_name in sorted(order_mult_tables):
             temp_sql += ' LEFT JOIN '+q(mult_table)+' ON '+q(category)+'.'
-            temp_sql += q(mult_table)+'='+q(mult_table)+'.'+q('id')
+            temp_sql += q(field_name)+'='+q(mult_table)+'.'+q('id')
         temp_sql += ' INNER JOIN '+q('cart')
         temp_sql += ' ON '+q('obs_general')+'.'+q('id')+'='
         temp_sql += q('cart')+'.'+q('obs_general_id')
