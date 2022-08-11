@@ -278,6 +278,8 @@ var o_cart = {
             opus.logError("Target button in download data left pane has the wrong class.");
         }
         $(target).prop("disabled", true);
+        // Make sure tooltips are closed when the button is disabled.
+        $(".op-cart-tooltip").tooltipster("close");
         $(target).siblings().prop("disabled", false);
         o_cart.updateDownloadFileInfo();
     },
