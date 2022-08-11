@@ -636,7 +636,9 @@ def api_init_detail_page(request, **kwargs):
         products = {}
     new_products = OrderedDict()
     for version in products:
-        new_products[version] = OrderedDict()
+        # Display "Version: 1.0" instead of "Version: 1" in detail tab
+        pretty_ver = version if version == 'Current' else f'{float(version)}'
+        new_products[pretty_ver] = OrderedDict()
 
         for product_type in products[version]:
             file_list = products[version][product_type]
@@ -673,7 +675,7 @@ def api_init_detail_page(request, **kwargs):
                 log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
                           product_type[2])
                 product_info['tooltip'] = None
-            new_products[version][product_type[3]] = product_info
+            new_products[pretty_ver][product_type[3]] = product_info
 
     context = {
         'preview_full_url': preview_full_url,
