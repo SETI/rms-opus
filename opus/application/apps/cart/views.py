@@ -833,7 +833,8 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
     sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
     sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')+', '
-    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')
+    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')+', '
+    sql += q('obs_files')+'.'+q('version_number')+' AS '+q('ver_num')
     sql += 'FROM '+q('obs_files')+' '
     sql += 'INNER JOIN '+q('cart')+' ON '
     sql += q('cart')+'.'+q('obs_general_id')+'='
@@ -841,7 +842,7 @@ def _get_download_info(product_types, session_id):
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
     # Put "Current" version on top of others
-    sql += 'ORDER BY '+q('sort')+', FIELD('+q('ver')+' ,"Current") DESC'
+    sql += 'ORDER BY '+q('sort')+', '+q('ver_num')+' DESC '
 
     log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -853,7 +854,7 @@ def _get_download_info(product_types, session_id):
     product_dict_by_short_name_ver = {}
 
     for res in results:
-        (category, sort_order, short_name, full_name, default_checked, ver) = res
+        (category, sort_order, short_name, full_name, default_checked, ver, ver_num) = res
 
         pretty_name = category
         if category == 'standard':
