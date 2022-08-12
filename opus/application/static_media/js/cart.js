@@ -258,18 +258,21 @@ var o_cart = {
          * Update checkboxes and disable/enable select all & deselect all
          * buttons correspondingly.
          */
-        if (($(target).hasClass("op-cart-select-btn") ||
-             $(target).hasClass("op-cart-select-all-btn"))) {
+        if ($(target).hasClass("op-cart-select-all-btn")) {
+            // When "Select all product types" is clicked, only select the current version
+            // of the files
             for(let input of checkboxesOptions) {
                 let input_val = $(input).val();
                 let ver_idx = input_val.indexOf("@");
                 let ver = input_val.slice(ver_idx+1).toLowerCase();
-                // Only select the current version of the files
                 if (ver !== "current") {
                     continue;
                 }
                 $(input).prop("checked", true);
             }
+        } else if ($(target).hasClass("op-cart-select-btn")) {
+            // Select all files under a category
+            $(checkboxesOptions).prop("checked", true);
         } else if (($(target).hasClass("op-cart-deselect-btn") ||
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
             // Deselect all files
