@@ -53,9 +53,6 @@ def get_pds_products(opus_id_list,
     if opus_id_list is None:
         return {}
 
-    # display all if types parameter is not specified
-    if product_types == '' or product_types == []:
-        product_types = ['all']
     if not isinstance(product_types, (list, tuple)):
         product_types = product_types.lower().split(',')
 
@@ -111,13 +108,6 @@ def get_pds_products(opus_id_list,
                 prod_type, _, version = p.partition(settings.FILE_VERSION_MODIFIER)
                 if version == 'current':
                     version = 'Current'
-                else:
-                    # Support cases like @v1.0, @v1, @v1.2, @1.0, @1, and @1.2
-                    if 'v' in version:
-                        version = version[1:]
-                    float_ver = float(version)
-                    if float_ver.is_integer():
-                        version = f'{int(float_ver)}'
                 sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
                 values.append(prod_type)
                 sql += q('obs_files')+'.'+q('version_name')+'=%s)'

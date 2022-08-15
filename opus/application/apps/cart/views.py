@@ -867,23 +867,19 @@ def _get_download_info(product_types, session_id):
             pretty_name = 'Diagram Products'
         else:
             pretty_name = category + '-Specific Products'
-        if ver == 'Current':
-            float_ver = ver
-        else:
-            float_ver = f'{float(ver)}'
 
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
             product_cat_dict[pretty_name] = {}
-            product_cat_dict[pretty_name][float_ver] = cur_product_list
+            product_cat_dict[pretty_name][ver] = cur_product_list
         else:
             try:
-                cur_product_list = product_cat_dict[pretty_name][float_ver]
+                cur_product_list = product_cat_dict[pretty_name][ver]
             except KeyError:
                 cur_product_list = []
-                product_cat_dict[pretty_name][float_ver] = cur_product_list
+                product_cat_dict[pretty_name][ver] = cur_product_list
         try:
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
                                             term=short_name)
@@ -1027,13 +1023,6 @@ def _get_download_info(product_types, session_id):
                 prod_type, _, p_version = p.partition(settings.FILE_VERSION_MODIFIER)
                 if p_version.lower() == 'current':
                     p_version = 'current'
-                else:
-                    # Support cases like @v1.0, @v1, @v1.2, @1.0, @1, and @1.2
-                    if 'v' in p_version:
-                        p_version = p_version[1:]
-                    float_ver = float(p_version)
-                    if float_ver.is_integer():
-                        p_version = f'{int(float_ver)}'
                 if short_name == prod_type and version_name == p_version:
                     is_adding_up_to_total = True
                     break
