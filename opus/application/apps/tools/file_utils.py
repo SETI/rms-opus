@@ -97,15 +97,9 @@ def get_pds_products(opus_id_list,
         # (obs_files.short_name='coiss_raw' AND obs_files.version_name='Current') OR
         # ...
         for i, p in enumerate(product_types):
-            # Uncomment this code if we would like to display all files when the user
-            # passes empty string to types parameter. Otherwise we assume the user is
-            # specifying empty string for the types.
-            # if not p:
-            #     continue
-
             # Check and see if the product type has a version specified (look for '@')
-            if settings.FILE_VERSION_MODIFIER in p:
-                prod_type, _, version = p.partition(settings.FILE_VERSION_MODIFIER)
+            if '@' in p:
+                prod_type, _, version = p.partition('@')
                 if version == 'current':
                     version = 'Current'
                 sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
@@ -114,7 +108,7 @@ def get_pds_products(opus_id_list,
                 values.append(version)
             else:
                 # When there is no modifier "@" in types, we will display "Current"
-                # version of the files, this will match the behavior of api/download
+                # version of the files. This will match the behavior of api/download
                 sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
                 values.append(p)
                 sql += q('obs_files')+'.'+q('version_name')+'="Current")'

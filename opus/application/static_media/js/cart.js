@@ -511,10 +511,8 @@ var o_cart = {
 
         // update the panel numbers if we received them...
         if (status.product_cat_dict !== undefined) {
-            // for (let index = 0; index < status.product_cat_dict.length; index++) {
             for (let pretty_name in status.product_cat_dict) {
                 let prod = status.product_cat_dict[pretty_name];
-                // let slugList = status.product_cat_dict[index][1];
                 for (let ver in prod) {
                     let slugList = prod[ver];
                     for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {

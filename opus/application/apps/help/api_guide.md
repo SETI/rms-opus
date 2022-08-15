@@ -610,42 +610,20 @@ The `types` parameter is a list of download product types. Available types can b
 
 #### Examples
 
-* Download both current and version 2.0 calibrated image files for a Cassini ISS observation:
+* Download both current and version 2 calibrated image files for a Cassini ISS observation:
 
-    %EXTLINK%%HOST%/opus/api/download/co-iss-n1460973661.zip?types=coiss_calib@current,coiss_calib@v2.0%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/download/co-iss-n1460973661.zip?types=coiss_calib@current,coiss_calib@2%ENDEXTLINK%
 
     Return value is a zip archive containing the files:
 
 %CODE%
 calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG
 calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL
-calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG
-calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL
-calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG
-calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL
-calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG
-calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL
 calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG
-C4360022_GEOMED.LBL
-C4360022_med.jpg
-C4360022_RAW.IMG
-C4360022_RAW.LBL
-C4360022_RESLOC.DAT
-C4360022_RESLOC.LBL
-C4360022_RESLOC.TAB
-C4360022_small.jpg
-C4360022_thumb.jpg
+calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL
 data.csv
 manifest.csv
 urls.txt
-VGISS_6210_inventory.lbl
-VGISS_6210_inventory.csv
-VGISS_6210_moon_summary.lbl
-VGISS_6210_moon_summary.tab
-VGISS_6210_ring_summary.lbl
-VGISS_6210_ring_summary.tab
-VGISS_6210_saturn_summary.lbl
-VGISS_6210_saturn_summary.tab
 %ENDCODE%
 
 * Download all product types (including all data files) for a Voyager ISS observation:
