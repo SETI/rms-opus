@@ -1,38 +1,43 @@
 #!/usr/bin/env python
+
+########################################################
+### See test_api/TEST_API_README.md for instructions ###
+########################################################
+
 import os
 import settings
 import sys
 
-if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+if __name__ == '__main__':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
-    # pass in livetest to run against actual server
     argv = sys.argv
     settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
     settings.TEST_GO_LIVE = None
 
     for cmd_no, command in enumerate(argv):
-        if command == 'all':
-            argv[cmd_no] = "test_api/"
-        if command.startswith("api"):
-            if command == "api-livetest-pro":
-                argv[cmd_no] = "test_api/enable_livetests_pro.py"
-            elif command == "api-livetest-dev":
-                argv[cmd_no] = "test_api/enable_livetests_dev.py"
-            elif command == "api-internal-db":
-                argv[cmd_no] = "test_api/enable_livetests_internal.py"
-            elif command == "api-internal-db-result-counts":
-                argv[cmd_no] = "test_api/test_result_counts.py"
+        if command.startswith('api'):
+            if command == 'api-all':
+                # Test API only
+                argv[cmd_no] = 'test_api/'
+            elif command == 'api-result-counts':
+                # Test result_counts only (external server)
+                argv[cmd_no] = 'test_api.test_result_counts'
+            elif command == 'api-internal-db-result-counts':
+                # Test result_counts only (internal server)
+                argv[cmd_no] = 'test_api.test_result_counts'
                 settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = True
-            else:
-                usage = "To run api tests, please choose one of these api test commands: "\
-                        "\napi-internal-db"\
-                        "\napi-internal-db-result-counts"\
-                        "\napi-livetest-pro"\
-                        "\napi-livetest-dev"\
-                        "\nSpecify all to test all server tests"
-                print(usage)
-                sys.exit()
+            elif command == 'api-livetest-pro':
+                # Test against production server opus.pds-rings.seti.org
+                # (No VPN required)
+                argv[cmd_no] = 'test_api.enable_livetests_pro'
+            elif command == 'api-livetest-dev':
+                # Test against dev server dev.pds.seti.org
+                # (VPN required)
+                argv[cmd_no] = 'test_api.enable_livetests_dev'
+            elif command == 'api-internal-db':
+                # The default - use internal DB
+                argv[cmd_no] = 'test_api.enable_livetests_internal'
 
     from django.core.management import execute_from_command_line
 
