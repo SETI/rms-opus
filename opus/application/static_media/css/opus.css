@@ -3157,12 +3157,10 @@ wiggling when mouse over autocomplete menu items */
 /* Styling for horizontal divider between OR label when there are multiple
 searches */
 .op-or-label-divider {
-    border: 1px solid;
     margin: 0px;
     display: inline-block;
     width: 10%;
     vertical-align: middle;
-    opacity: 0.5;
 }
 
 /* Disable a button (or a tag button) */
@@ -3306,6 +3304,13 @@ when wrapping into the 2nd line */
     margin-bottom: 0 !important
 }
 
+#op-main-nav .navbar-toggler {
+    font-size: 1.09375rem;
+}
+
+#op-main-nav .navbar-toggler:focus {
+    box-shadow: 0 0 0 0.05rem;
+}
 
 /* ************************************************************************** */
 /* The followings are for mobile support (width: 550px and height: 270px)     */

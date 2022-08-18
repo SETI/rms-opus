@@ -34,6 +34,10 @@
   --cui-hr-color: #23282c;
   --cui-link-color: #20a8d8;
   --cui-link-hover-color: #167495;
+  --cui-border-dark: var(--cui-gray-dark);
+  --cui-border-color: var(--cui-border-dark);
+  --cui-card-border-color: #c8ced3;
+  --cui-card-cap-bg: var(--cui-light);
   --cui-nav-pills-link-active-bg: #20a8d8;
   --cui-nav-link-hover-color: rgba(255, 255, 255, 0.75);
   --cui-btn-link-color: #20a8d8;
@@ -43,7 +47,7 @@
   --cui-dropdown-border-color: #c8ced3;
   --cui-dropdown-header-color: rgb(115, 129, 143);
   --cui-dropdown-link-active-bg: #20a8d8;
-  --cui-dropdown-link-hover-bg: #f0f3f5;
+  --cui-dropdown-link-hover-bg: var(--cui-light);
   --cui-dropdown-font-size: 0.875rem;
   --cui-breakpoint-xs: 0;
   --cui-breakpoint-sm: 576px;
@@ -59,7 +63,6 @@
   --cui-popover-header-color: rgb(35, 40, 44);
   --cui-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
   --cui-body-color: rgb(35, 40, 44);
-  --cui-card-border-color: #c8ced3;
   --bs-body-text-align: left;
 }
 

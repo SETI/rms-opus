@@ -853,7 +853,7 @@ var opus = {
         $("#op-help .dropdown-submenu .dropdown-item").on("click", function(e) {
             e.stopPropagation();
             if($(this).hasClass("show")) {
-                $(this).next(".dropdown-menu").show();
+                $(this).next(".dropdown-menu").show("slow");
             } else {
                 $(this).next(".dropdown-menu").hide();
             }
