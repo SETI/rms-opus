@@ -1204,19 +1204,19 @@ var o_search = {
 
                 let widget = "widget__" + dataSlug;
                 let mults = multdata.mults;
+                let hintsTextClass = "op-hints-info";
                 $("#" + widget + " input").each( function() {
-                    let hintsTextClass = "op-hints-info";
                     let value = $(this).attr("value");
                     let id = "#hint__" + slug + "_" + value.replace(/ /g, "-").replace(/[^\w\s]/gi, "");  // id of hinting span, defined in widgets.js getWidget
 
                     if (!hideHintsForNonSelectedRadioButtons) {
                         if (mults[value]) {
-                            $(id).html(`<span class="${hintsTextClass}">` + mults[value] + "</span>");
+                            $(id).html(`<span class="${hintsTextClass}" data-value=${mults[value]}>` + mults[value] + "</span>");
                             if ($(id).parent().hasClass("fadey")) {
                                 $(id).parent().removeClass("fadey");
                             }
                         } else {
-                            $(id).html(`<span class="${hintsTextClass}">0</span>`);
+                            $(id).html(`<span class="${hintsTextClass}" data-value=0>0</span>`);
                             $(id).parent().addClass("fadey");
                         }
                     } else {
@@ -1224,19 +1224,38 @@ var o_search = {
                         $(id).parent().removeClass("fadey");
                         if (mults[value]) {
                             if ($(this).is(":checked")) {
-                                $(id).html(`<span class="${hintsTextClass}">` + mults[value] + "</span>");
+                                $(id).html(`<span class="${hintsTextClass}" data-value=${mults[value]}>` + mults[value] + "</span>");
                             } else {
-                                $(id).html(`<span class="${hintsTextClass}">--</span>`);
+                                $(id).html(`<span class="${hintsTextClass}" data-value="--">--</span>`);
                             }
                         } else {
                             if ($(this).is(":checked")) {
-                                $(id).html(`<span class="${hintsTextClass}">0</span>`);
-
+                                $(id).html(`<span class="${hintsTextClass}" data-value=0>0</span>`);
                             } else {
-                                $(id).html(`<span class="${hintsTextClass}">--</span>`);
+                                $(id).html(`<span class="${hintsTextClass}" data-value="--">--</span>`);
                             }
                         }
                     }
+                });
+
+                // Count the total hints under each group name and display them in the ui
+                // If the hints are all "--" under a group, we will display "--" next to
+                // the group name.
+                $("#" + widget + " .mult_group").each( function() {
+                    let sum = 0;
+                    // The flag used to determine if we will display the total hints or "--"
+                    let displaySum = false;
+                    let group = $(this).data("group");
+                    let groupClass = `.mult_group_${group}`;
+
+                    $("#" + widget + ` .mult_group[data-group="${group}"] .${hintsTextClass}`).each(function() {
+                        let multVal = $(this).data("value");
+                        if (!displaySum && !isNaN(parseInt(multVal))) displaySum = true;
+                        if (parseInt(multVal)) sum += multVal;
+                    });
+                    if (!displaySum) sum = "--";
+                    let hintHtml = `<span class="${hintsTextClass}">${sum}</span>`;
+                    $("#" + widget + ` ${groupClass} .hints`).html(hintHtml);
                 });
             }
         }); // end mults ajax

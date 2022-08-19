@@ -254,7 +254,8 @@ def api_get_widget(request, **kwargs):
                  +'<span class="indicator fa fa-plus">'
                  +'</span>'
                  +'<span class="mult_group_label">'
-                 +str(glabel) + '</span></div>'
+                 +str(glabel) + '</span>'
+                 +'<span class="hints"></span></div>'
                  +'<ul class="mult_group"'
                  +' data-group=' + str(glabel) + '>'
                  +SearchForm(form_vals,
