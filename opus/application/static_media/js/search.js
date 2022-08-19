@@ -1250,10 +1250,10 @@ var o_search = {
 
                     $("#" + widget + ` .mult_group[data-group="${group}"] .${hintsTextClass}`).each(function() {
                         let multVal = $(this).data("value");
-                        if (!displaySum && !isNaN(parseInt(multVal))) displaySum = true;
-                        if (parseInt(multVal)) sum += multVal;
+                        if (!displaySum && !isNaN(parseInt(multVal))) { displaySum = true; }
+                        if (parseInt(multVal)) { sum += multVal; }
                     });
-                    if (!displaySum) sum = "--";
+                    if (!displaySum) { sum = "--"; }
                     let hintHtml = `<span class="${hintsTextClass}">${sum}</span>`;
                     $("#" + widget + ` ${groupClass} .hints`).html(hintHtml);
                 });
