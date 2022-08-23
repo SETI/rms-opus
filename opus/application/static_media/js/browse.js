@@ -2736,15 +2736,15 @@ var o_browse = {
         let tab = opus.getViewTab();
         let targetElem = e.currentTarget;
         let toolElem = `${tab} .op-edit-field-tool`;
-        let left = $(targetElem).position().left +
-                    $(`${tab} .op-data-table-view .table`).offset().left;
+        let left = $(targetElem).position().left ;/*+
+                    $(`${tab} .op-data-table-view .table`).offset().left;*/
         let top = $(targetElem).offset().top +
                   $(targetElem).outerHeight();
 
         if (tab === "#cart") {
             if ($(".op-cart-details:visible").length > 0) {
                 // need to calculate a new offset if the table has scrolled left behind the details window
-                left -= $(".op-cart-details").outerWidth() + $(".op-cart-details").offset().left;
+                //left -= $(".op-cart-details").outerWidth() + $(".op-cart-details").offset().left;
             } else {
                 // when the details are collapsed, need to use the offset instead of position
                 left = $(targetElem).offset().left +

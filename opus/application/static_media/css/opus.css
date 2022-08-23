@@ -73,6 +73,10 @@ a {
   border-bottom: 1px solid #c8ced3;
 }
 
+.table {
+    max-width: 100%;
+}
+
 .no-gutters {
   margin-right: 0;
   margin-left: 0;
@@ -824,11 +828,9 @@ th.sticky-header {
 }
 
 .op-data-table th {
-    vertical-align: middle;
     /* Fix the hidden th left/right border in firebox */
     background-clip: padding-box;
     text-align: center;
-    /* padding-right: 10px; */
 }
 
 .op-data-table th a {
@@ -2717,16 +2719,13 @@ footer a:hover {
 }
 
 /* Center the "x" icon in help panel */
-#op-help-panel .btn-close {
+#op-help-panel .btn-close, #op-cart-download-panel .btn-close {
     display: flex;
     content: "\f057";
     float: right;
     font-size: 1.3125rem;
-    font-weight: 700;
     line-height: 1;
-    color: #000;
     text-shadow: 0 1px 0 #fff;
-    opacity: 0.5;
 }
 
 #op-help-panel .card-body {

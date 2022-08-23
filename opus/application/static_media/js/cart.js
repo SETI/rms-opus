@@ -127,7 +127,7 @@ var o_cart = {
         });
 
         // Clicking on the "X" in the corner of the download data panel
-        $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
+        $("#op-cart-download-panel .btn-close, .op-overlay").on("click", function() {
             opus.hideHelpAndCartPanels();
             return false;
         });
@@ -312,7 +312,7 @@ var o_cart = {
         // We use detach here to keep the event handlers attached to elements
         let html = $("#op-download-options-container").detach();
         if ($(window).width() <= cartLeftPaneThreshold) {
-            $("#op-cart-download-panel .op-header-text").html("<h2>Download Data</h2>");
+            $("#op-cart-download-panel .op-header-text").html("<h3>Download Data</h3>");
             $("#op-cart-download-panel .op-card-contents").html(html);
             $(".op-download-panel-title").hide();
         } else {
