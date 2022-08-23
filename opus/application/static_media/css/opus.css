@@ -3193,6 +3193,7 @@ at the right of -- OR -- label. */
     /* default is 10px at top and bottom, and total menu height 368px */
     padding-top: 0.25em;
     padding-bottom: 0.25em;
+    color: #000;
 }
 
 /* Make sure hamburger menu will not be covered by metadata modal */
