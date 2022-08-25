@@ -1244,18 +1244,22 @@ var o_search = {
                 $("#" + widget + " .mult_group").each( function() {
                     let sum = 0;
                     // The flag used to determine if we will display the total hints or "--"
-                    let displaySum = false;
+                    let displaySum = true;
                     let group = $(this).data("group");
                     let groupClass = `.mult_group_${group}`;
 
-                    $("#" + widget + ` .mult_group[data-group="${group}"] .${hintsTextClass}`).each(function() {
+                    $(`#${widget} .mult_group[data-group="${group}"] .${hintsTextClass}`).each(function() {
                         let multVal = $(this).data("value");
-                        if (!displaySum && !isNaN(parseInt(multVal))) { displaySum = true; }
-                        if (parseInt(multVal)) { sum += multVal; }
+                        let multValInt = parseInt(multVal);
+                        if (!isNaN(multValInt)) {
+                            sum += multValInt;
+                        } else {
+                            displaySum = false;
+                        }
                     });
                     if (!displaySum) { sum = "--"; }
                     let hintHtml = `<span class="${hintsTextClass}">${sum}</span>`;
-                    $("#" + widget + ` ${groupClass} .hints`).html(hintHtml);
+                    $(`#${widget} ${groupClass} .hints`).html(hintHtml);
                 });
             }
         }); // end mults ajax
