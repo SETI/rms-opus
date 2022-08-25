@@ -885,7 +885,7 @@ Examples:
 }
 %ENDCODE%
 
-* Retrieve raw images ("Current" version) and calibrated images (version 1.0) for a Cassini ISS observation in JSON format.
+* Retrieve raw images ("Current" version) and calibrated images (version 1) for a Cassini ISS observation in JSON format.
 
     %EXTLINK%%HOST%/opus/api/files/co-iss-n1460973661.json?types=coiss_raw,coiss_calib@v1%ENDEXTLINK%
 

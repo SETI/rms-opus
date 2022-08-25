@@ -692,7 +692,7 @@ def api_create_download(request, opus_id=None, fmt=None):
                 for file_data in files_version[product_type]:
                     path = file_data['path']
                     pretty_name = path.split('/')[-1]
-                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+9:]
+                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+len(settings.PDS_HOLDINGS_DIR):]
                     if pretty_name not in files_info:
                         files_info[pretty_name] = [logical_path]
                     elif logical_path not in files_info[pretty_name]:
@@ -716,7 +716,7 @@ def api_create_download(request, opus_id=None, fmt=None):
                     checksum = file_data['checksum']
                     size = file_data['size']
                     pretty_name = path.split('/')[-1]
-                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+9:]
+                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+len(settings.PDS_HOLDINGS_DIR):]
                     mdigest = (f'{f_opus_id},{category},{product_type},'
                               +f'{product_abbrev},{version_name},{logical_path},'
                               +f'{checksum},{size}')
@@ -872,9 +872,9 @@ def _get_download_info(product_types, session_id):
             product_cat_dict[pretty_name] = {}
             product_cat_dict[pretty_name][ver] = cur_product_list
         else:
-            try:
+            if ver in product_cat_dict[pretty_name]:
                 cur_product_list = product_cat_dict[pretty_name][ver]
-            except KeyError:
+            else:
                 cur_product_list = []
                 product_cat_dict[pretty_name][ver] = cur_product_list
         try:

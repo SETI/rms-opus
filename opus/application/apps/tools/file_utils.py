@@ -100,12 +100,15 @@ def get_pds_products(opus_id_list,
             # Check and see if the product type has a version specified (look for '@')
             if '@' in p:
                 prod_type, _, version = p.partition('@')
-                if version == 'current':
+                if version.lower() == 'current':
                     version = 'Current'
-                sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
+                sql += '('+q('obs_files')+'.'+q('short_name')+'=%s'
                 values.append(prod_type)
-                sql += q('obs_files')+'.'+q('version_name')+'=%s)'
-                values.append(version)
+                if version.lower() != 'all':
+                    sql +=' AND '+q('obs_files')+'.'+q('version_name')+'=%s)'
+                    values.append(version)
+                else:
+                    sql += ')'
             else:
                 # When there is no modifier "@" in types, we will display "Current"
                 # version of the files. This will match the behavior of api/download
