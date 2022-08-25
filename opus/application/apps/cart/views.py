@@ -936,6 +936,7 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
     sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')+', '
     sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
+    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')+', '
 
     # download_size is the total sizes of all distinct filenames
     # Note there is only one download_size per short_name, so when we add
@@ -993,7 +994,7 @@ def _get_download_info(product_types, session_id):
     sql += q('t2')+'.'+q('version_name')+' '
 
     sql += 'GROUP BY '+q('cat')+', '+q('sort')+', '
-    sql += q('short')+', '+q('ver')+', '+q('full')+' '
+    sql += q('short')+', '+q('ver')+', '+q('full')+', '+q('checked')+' '
     sql += 'ORDER BY '+q('sort')
 
     log.debug('_get_download_info SQL: %s %s', sql, values)
@@ -1006,7 +1007,7 @@ def _get_download_info(product_types, session_id):
 
     for res in results:
         (category, sort_order, short_name, version_name, full_name,
-         download_size, download_count, product_count) = res
+         checked, download_size, download_count, product_count) = res
         short_name_ver = short_name + '@' + version_name.lower()
         download_size = int(download_size)
         download_count = int(download_count)
@@ -1026,7 +1027,7 @@ def _get_download_info(product_types, session_id):
             elif short_name == p:
                 is_adding_up_to_total = True
                 break
-        if product_types == ['all'] or is_adding_up_to_total:
+        if (product_types == ['all'] and checked) or is_adding_up_to_total:
             total_download_size += download_size
             total_download_count += download_count
 
