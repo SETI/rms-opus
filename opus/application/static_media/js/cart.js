@@ -160,7 +160,9 @@ var o_cart = {
             o_cart.updateCheckboxes(e.target, productList);
 
             if ($(e.target).hasClass("op-cart-select-all-btn")) {
-                $(".op-cart-select-btn").prop("disabled", true);
+                // Make sure the non-current version check marks are not disabled when
+                // "Select all product types" is clicked
+                $(".op-cart-select-btn:not('.op-cart-select-btn-sub')").prop("disabled", true);
                 $(".op-cart-deselect-btn").prop("disabled", false);
             } else {
                 $(".op-cart-select-btn").prop("disabled", false);
