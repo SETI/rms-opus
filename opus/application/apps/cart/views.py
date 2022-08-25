@@ -1020,13 +1020,12 @@ def _get_download_info(product_types, session_id):
                 prod_type, _, p_version = p.partition('@')
                 if p_version.lower() == 'current':
                     p_version = 'current'
-                if short_name == prod_type and version_name == p_version:
+                if short_name == prod_type and version_name.lower() == p_version:
                     is_adding_up_to_total = True
                     break
             elif short_name == p:
                 is_adding_up_to_total = True
                 break
-
         if product_types == ['all'] or is_adding_up_to_total:
             total_download_size += download_size
             total_download_count += download_count
