@@ -887,7 +887,7 @@ Examples:
 
 * Retrieve raw images ("Current" version) and calibrated images (version 1) for a Cassini ISS observation in JSON format.
 
-    %EXTLINK%%HOST%/opus/api/files/co-iss-n1460973661.json?types=coiss_raw,coiss_calib@v1%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/files/co-iss-n1460973661.json?types=coiss_raw,coiss_calib@1%ENDEXTLINK%
 
     Return value:
 
@@ -917,6 +917,47 @@ Examples:
           "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL",
           "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt",
           "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt"
+        ]
+      }
+    }
+  }
+}
+%ENDCODE%
+
+* Retrieve all versions of calibrated images for a Cassini ISS observation in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/files/co-iss-n1460973661.json?types=coiss_calib@all%ENDEXTLINK%
+
+    Return value:
+
+%CODE%
+{
+  "data": {
+    "co-iss-n1460973661": {
+      "coiss_calib": [
+        "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG",
+        "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL"
+      ]
+    }
+  },
+  "versions": {
+    "co-iss-n1460973661": {
+      "1": {
+        "coiss_calib": [
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG",
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL"
+        ]
+      },
+      "2": {
+        "coiss_calib": [
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG",
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL"
+        ]
+      },
+      "Current": {
+        "coiss_calib": [
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG",
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL"
         ]
       }
     }
