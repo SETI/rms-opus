@@ -1244,7 +1244,7 @@ var o_search = {
                 $("#" + widget + " .mult_group").each( function() {
                     let sum = 0;
                     // The flag used to determine if we will display the total hints or "--"
-                    let displaySum = true;
+                    let displaySum = false;
                     let group = $(this).data("group");
                     let groupClass = `.mult_group_${group}`;
 
@@ -1253,8 +1253,7 @@ var o_search = {
                         let multValInt = parseInt(multVal);
                         if (!isNaN(multValInt)) {
                             sum += multValInt;
-                        } else {
-                            displaySum = false;
+                            displaySum = true;
                         }
                     });
                     if (!displaySum) { sum = "--"; }
