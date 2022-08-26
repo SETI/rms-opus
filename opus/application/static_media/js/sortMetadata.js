@@ -206,7 +206,7 @@ let o_sortMetadata = {
             let slug = $(obj).data("slug");
             let label = $(obj).data("label");
             if ($(obj).find(".op-column-ordering").data("sort") === "none") {
-                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#">${label}</a>`;
+                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#" data-bs-toggle="dropdown">${label}</a>`;
             }
         });
         $("#op-add-sort-metadata .op-sort-list").html(html);

@@ -660,7 +660,9 @@ ul.op-search-menu {
 }
 
 .modal-footer .left-container {
-    width: 74%;
+    position: absolute;
+    left: 0;
+    padding: 1rem;
 }
 
 .op-thumbnail-container .op-modal-overlay,
@@ -1015,6 +1017,10 @@ button.op-mini-thumbnail-zoom {
 /* Center the header text in select metadata modal */
 #op-select-metadata .modal-header {
     align-items: center;
+}
+
+#op-select-metadata .modal-header .btn-close {
+    color: rgb(240, 243, 245);
 }
 
 /* make modal width shrink smoothly with screen */

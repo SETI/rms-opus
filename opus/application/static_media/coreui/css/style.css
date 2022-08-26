@@ -46,6 +46,7 @@
   --cui-btn-close-bg: "\f057";
   --cui-dropdown-border-color: #c8ced3;
   --cui-dropdown-header-color: rgb(115, 129, 143);
+  --cui-dropdown-link-color: #000;
   --cui-dropdown-link-active-bg: #20a8d8;
   --cui-dropdown-link-hover-bg: var(--cui-light);
   --cui-dropdown-font-size: 0.875rem;

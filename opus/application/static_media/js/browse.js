@@ -1362,7 +1362,7 @@ var o_browse = {
         let top = content.offset().top;
         let left = content.offset().left;
         let bodyWidth = $("body").width();
-        let bodyHeight = $("body").height() - $("footer").height();
+        let bodyHeight = $("body").height() + $("body").position.top - $("footer").outerHeight();
         let width = content.outerWidth();
         let height = content.outerHeight();
 
@@ -1591,12 +1591,12 @@ var o_browse = {
     },
 
     getDataTableInputElement: function(opusId) {
-        return $(`.op-data-table div[data-id=${opusId}]`).parent();
+        return $(`.op-data-table div[data-id=${opusId}] input`);
     },
 
     highlightStartOfRange: function(opusId) {
-        o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
-        o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in b-a-2");
+        o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in");
+        o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in");
     },
 
     startRangeSelect: function(opusId) {
@@ -1622,9 +1622,9 @@ var o_browse = {
 
         let startElem = $(tab).find(".selected");
         if (startElem.length) {
-            $(startElem).removeClass("selected hvr-ripple-in b-a-2");
+            $(startElem).removeClass("selected hvr-ripple-in");
             let opusId = $(startElem).data("id");
-            o_browse.getDataTableInputElement(opusId).removeClass("hvr-ripple-in b-a-2");
+            o_browse.getDataTableInputElement(opusId).removeClass("hvr-ripple-in");
         }
         $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID = undefined;
         $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectObsNum = undefined;
