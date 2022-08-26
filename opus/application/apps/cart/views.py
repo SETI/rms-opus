@@ -906,6 +906,7 @@ def _get_download_info(product_types, session_id):
 #        obs_files.short_name,
 #        obs_files.version_name,
 #        obs_files.full_name,
+#        obs_files.default_checked,
 #        count(distinct obs_files.opus_id) as product_count,
 #        count(distinct obs_files.logical_path) as download_count,
 #        t2.download_size as downloadsize
@@ -923,7 +924,7 @@ def _get_download_info(product_types, session_id):
 #   AND obs_files.version_name=t2.version_name
 #   AND obs_files.opus_id in ('co-iss-n1460960653', 'co-iss-n1460960868')
 # GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name,
-#          obs_files.version_name, obs_files.full_name
+#          obs_files.version_name, obs_files.full_name, obs_files.default_checked
 # ORDER BY sort_order;
     values = []
     sql = 'SELECT '
