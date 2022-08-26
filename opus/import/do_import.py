@@ -1179,7 +1179,7 @@ def import_observation_table(instrument_obj,
                                                     metadata,
                                                     field_name)
                 if ok:
-                    # For a multisel field, it's OK to return a single value, just to
+                    # For a mult_list field, it's OK to return a single value, just to
                     # make the populate_ code simpler. In that case we turn it into a
                     # single-element list.
                     # Note that if one return value is a dict (full-spec mult field) then
@@ -1216,9 +1216,9 @@ def import_observation_table(instrument_obj,
 
         ### VALIDATE THE COLUMN VALUE ###
 
-        # For a multisel field, the column_val_list contains a list of column_vals.
+        # For a mult_list field, the column_val_list contains a list of column_vals.
         # Otherwise it contains a list with a single entry for the single value.
-        assert field_type == 'multisel' or len(column_val_list) == 1
+        assert field_type == 'mult_list' or len(column_val_list) == 1
 
         row_val = []
 
@@ -1355,14 +1355,14 @@ def import_observation_table(instrument_obj,
                               grouping_list[column_val_num],
                               group_disp_order_list[column_val_num])
 
-            if field_type != 'multisel' or column_val is not None:
-                # When making a list for a multisel field, don't include None
+            if field_type != 'mult_list' or column_val is not None:
+                # When making a list for a mult_list field, don't include None
                 # results because then we end up with a weird list like
                 # ['SATURN', None, 'S RINGS'] which doesn't convert to JSON
                 # propertly.
                 row_val.append(column_val)
 
-        if field_type == 'multisel':
+        if field_type == 'mult_list':
             # An empty list corresponds to a NULL database field
             if len(row_val) == 0:
                 new_row[field_name] = None

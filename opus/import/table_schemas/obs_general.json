@@ -183,7 +183,7 @@
     },
     {
         "field_name": "target_name",
-        "field_type": "multisel",
+        "field_type": "mult_list",
         "field_notnull": true,
         "field_key": false,
         "data_source": "COMPUTE",
@@ -207,7 +207,7 @@
     },
     {
         "field_name": "target_class",
-        "field_type": "multisel",
+        "field_type": "mult_list",
         "field_notnull": true,
         "field_key": false,
         "data_source": "COMPUTE",

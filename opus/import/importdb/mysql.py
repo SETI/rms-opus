@@ -232,8 +232,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 field_type = 'timestamp'
             elif data_type == 'text':
                 field_type = 'text'
-            elif data_type == 'multisel':
-                field_type = 'multisel'
+            elif data_type == 'mult_list':
+                field_type = 'mult_list'
             else:
                 assert False, data_type
             if (field_type.startswith('int') and
@@ -360,7 +360,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 cmd += 'varchar('+field_type[7:]+')'
             elif field_type == 'text':
                 cmd += 'text'
-            elif field_type in ('multisel', 'json'):
+            elif field_type in ('mult_list', 'json'):
                 cmd += 'JSON'
             elif field_type == 'enum':
                 enum_str = column.get('field_enum_options', None)

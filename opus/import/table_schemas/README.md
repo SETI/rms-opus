@@ -12,8 +12,8 @@ columns. Each dictionary can contain the following fields:
                           'varcharNNN' (variable-length char field)
                           'text' (arbitrary-length char field)
                           'mult_idx' (mult field - int idx into associated mult table)
-                          'multisel' (arbitrary-length char field containing multiple
-                                      strings separated surrounded by '\t')
+                          'mult_list' (mult field - JSON list of int idx into associated
+                                       mult table)
                           'enum'
                           'flag_yesno' (Enum 'Yes','No','N/A')
                           'flag_onoff' (Enum 'On','Off','N/A')
