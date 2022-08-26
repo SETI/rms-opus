@@ -25,11 +25,13 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
     ################################
     def _target_name(self):
         target_name, target_info = self._get_target_info('S RINGS')
-        return [(target_name, target_info[2])]
-        # MULTXXX2
+        # return [(target_name, target_info[2])]
+        # MULTXXX2 - Comment out the above line to fake a multi-target results
         target_name2, target_info2 = self._get_target_info('ENCELADUS')
+        target_name3, target_info3 = self._get_target_info('TETHYS')
         return [(target_name, target_info[2]),
-                (target_name2, target_info2[2])]
+                (target_name2, target_info2[2]),
+                (target_name3, target_info3[2])]
 
     def field_obs_general_planet_id(self):
         return self._create_mult('SAT')

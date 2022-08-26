@@ -275,9 +275,11 @@ def analyze_all_tables(namespace):
 
 # We cache the contents of mult_ tables we've touched so we don't have to keep
 # reading them from the database.
-_MULT_TABLE_CACHE = None
-_CREATED_IMP_MULT_TABLES = None
-_MODIFIED_MULT_TABLES = None
+# We initialize them to {} here because do_partables needs these to have values
+# and they are normally only set during a volume import.
+_MULT_TABLE_CACHE = {}
+_CREATED_IMP_MULT_TABLES = {}
+_MODIFIED_MULT_TABLES = {}
 
 def _mult_table_column_names(table_name):
     """Return a list of the columns found in a mult tables. This isn't
@@ -361,6 +363,19 @@ def read_or_create_mult_table(mult_table_name, table_column):
     rows = []
     _MULT_TABLE_CACHE[mult_table_name] = rows
     return rows
+
+
+def mult_table_lookup_id(table_name, field_name, table_column, val):
+    """Lookup the id for a single value in the cached version of a mult table."""
+    mult_table_name = import_util.table_name_mult(table_name, field_name)
+    mult_table = read_or_create_mult_table(mult_table_name, table_column)
+    if val is not None:
+        val = str(val)
+    for entry in mult_table:
+        if entry['value'] == val:
+            # The value is already in the mult table, so we're done here
+            return entry['id']
+    return None
 
 
 def update_mult_table(table_name, field_name, table_column, val, label,
@@ -1211,117 +1226,114 @@ def import_observation_table(instrument_obj,
             if column_val is None:
                 notnull = table_column.get('field_notnull', False)
                 if notnull:
-                import_util.log_nonrepeating_error(
-                    f'Column "{field_name}" in table "{table_name}" '+
-                    'has NULL value but NOT NULL is set')
-        else:
-            if field_type.startswith('flag'):
-                if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
-                    if field_type == 'flag_onoff':
-                        column_val = 'Off'
-                    else:
-                        column_val = 'No'
-                elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
-                                    'ON']:
-                    if field_type == 'flag_onoff':
-                        column_val = 'On'
-                    else:
-                        column_val = 'Yes'
-                elif column_val in ['N/A', 'UNK', 'NULL']:
-                    column_val = None
-                else:
                     import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
-                        f'has FLAG type but value "{column_val}" is not '+
-                        'a valid flag value')
-                    column_val = None
-            if field_type.startswith('char'):
-                field_size = int(field_type[4:])
-                if not isinstance(column_val, str):
-                    import_util.log_nonrepeating_error(
-                        f'Column "{field_name}" in table "{table_name}" '+
-                        f'has CHAR type but value "{column_val}" is of '+
-                        f'type "{type(column_val)}"')
-                    column_val = ''
-                elif len(column_val) > field_size:
-                    import_util.log_nonrepeating_error(
-                        f'Column "{field_name}" in table "{table_name}" '+
-                        f'has CHAR size {field_size} but value '+
-                        f'"{column_val}" is too long')
-                    column_val = column_val[:field_size]
-            elif (field_type.startswith('real') or
-                  field_type.startswith('int') or
-                  field_type.startswith('uint')):
-                the_val = None
-                if field_type.startswith('real'):
-                    try:
-                        the_val = float(column_val)
-                    except ValueError:
-                        import_util.log_nonrepeating_error(
-                            f'Column "{field_name}" in table '+
-                            f'"{table_name}" has REAL type but '+
-                            f'"{column_val}" is not a float')
-                        column_val = None
-                else:
-                    try:
-                        the_val = int(column_val)
-                    except ValueError:
-                        import_util.log_nonrepeating_error(
-                            f'Column "{field_name}" in table '+
-                            f'"{table_name}" has INT type but '+
-                            f'"{column_val}" is not an int')
-                        column_val = None
-                if column_val is not None and the_val is not None:
-                    val_sentinel = table_column.get('val_sentinel', None)
-                    if type(val_sentinel) != list:
-                        val_sentinel = [val_sentinel]
-                    if the_val in val_sentinel:
-                        column_val = None
-                        import_util.log_nonrepeating_error(
-                            f'Caught sentinel value {the_val} for column '+
-                            f'"{field_name}" that was missed'+
-                            ' by the PDS label!')
-                if column_val is not None and the_val is not None:
-                    val_min = table_column.get('val_min', None)
-                    val_max = table_column.get('val_max', None)
-                    val_use_null = table_column.get('val_set_invalid_to_null',
-                                                    False)
-                    if val_min is not None and the_val < val_min:
-                        if val_use_null:
-                            msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has minimum value '+
-                                   f'{val_min} but {column_val} is too small -'+
-                                   ' substituting NULL')
-                            import_util.log_debug(msg)
+                        'has NULL value but NOT NULL is set')
+            else:
+                if field_type.startswith('flag'):
+                    if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
+                        if field_type == 'flag_onoff':
+                            column_val = 'Off'
                         else:
-                            msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has minimum value '+
-                                   f'{val_min} but {column_val} is too small')
-                            import_util.log_nonrepeating_error(msg)
-                        column_val = None
-                    if val_max is not None and the_val > val_max:
-                        if val_use_null:
-                            msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has maximum value {val_max}'+
-                                   f' but {column_val} is too large - '+
-                                   'substituting NULL')
-                            import_util.log_debug(msg)
+                            column_val = 'No'
+                    elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
+                                        'ON']:
+                        if field_type == 'flag_onoff':
+                            column_val = 'On'
                         else:
-                            msg = (f'Column "{field_name}" in table '+
-                                   f'"{table_name}" has maximum value '+
-                                   f'{val_max} but {column_val} is too large')
+                            column_val = 'Yes'
+                    elif column_val in ['N/A', 'UNK', 'NULL']:
+                        column_val = None
+                    else:
+                        import_util.log_nonrepeating_error(
+                            f'Column "{field_name}" in table "{table_name}" '+
+                            f'has FLAG type but value "{column_val}" is not '+
+                            'a valid flag value')
+                        column_val = None
+                if field_type.startswith('char'):
+                    field_size = int(field_type[4:])
+                    if not isinstance(column_val, str):
+                        import_util.log_nonrepeating_error(
+                            f'Column "{field_name}" in table "{table_name}" '+
+                            f'has CHAR type but value "{column_val}" is of '+
+                            f'type "{type(column_val)}"')
+                        column_val = ''
+                    elif len(column_val) > field_size:
+                        import_util.log_nonrepeating_error(
+                            f'Column "{field_name}" in table "{table_name}" '+
+                            f'has CHAR size {field_size} but value '+
+                            f'"{column_val}" is too long')
+                        column_val = column_val[:field_size]
+                elif (field_type.startswith('real') or
+                      field_type.startswith('int') or
+                      field_type.startswith('uint')):
+                    the_val = None
+                    if field_type.startswith('real'):
+                        try:
+                            the_val = float(column_val)
+                        except ValueError:
+                            import_util.log_nonrepeating_error(
+                                f'Column "{field_name}" in table '+
+                                f'"{table_name}" has REAL type but '+
+                                f'"{column_val}" is not a float')
+                            column_val = None
+                    else:
+                        try:
+                            the_val = int(column_val)
+                        except ValueError:
+                            import_util.log_nonrepeating_error(
+                                f'Column "{field_name}" in table '+
+                                f'"{table_name}" has INT type but '+
+                                f'"{column_val}" is not an int')
+                            column_val = None
+                    if column_val is not None and the_val is not None:
+                        val_sentinel = table_column.get('val_sentinel', None)
+                        if type(val_sentinel) != list:
+                            val_sentinel = [val_sentinel]
+                        if the_val in val_sentinel:
+                            column_val = None
+                            import_util.log_nonrepeating_error(
+                                f'Caught sentinel value {the_val} for column '+
+                                f'"{field_name}" that was missed'+
+                                ' by the PDS label!')
+                    if column_val is not None and the_val is not None:
+                        val_min = table_column.get('val_min', None)
+                        val_max = table_column.get('val_max', None)
+                        val_use_null = table_column.get('val_set_invalid_to_null',
+                                                        False)
+                        if val_min is not None and the_val < val_min:
+                            if val_use_null:
+                                msg = (f'Column "{field_name}" in table '+
+                                       f'"{table_name}" has minimum value '+
+                                       f'{val_min} but {column_val} is too small -'+
+                                       ' substituting NULL')
+                                import_util.log_debug(msg)
+                            else:
+                                msg = (f'Column "{field_name}" in table '+
+                                       f'"{table_name}" has minimum value '+
+                                       f'{val_min} but {column_val} is too small')
+                                import_util.log_nonrepeating_error(msg)
+                            column_val = None
+                        if val_max is not None and the_val > val_max:
+                            if val_use_null:
+                                msg = (f'Column "{field_name}" in table '+
+                                       f'"{table_name}" has maximum value {val_max}'+
+                                       f' but {column_val} is too large - '+
+                                       'substituting NULL')
+                                import_util.log_debug(msg)
+                            else:
+                                msg = (f'Column "{field_name}" in table '+
+                                       f'"{table_name}" has maximum value '+
+                                       f'{val_max} but {column_val} is too large')
                                 import_util.log_nonrepeating_error(msg)
                             column_val = None
 
             ### CHECK TO SEE IF THERE IS AN ASSOCIATED MULT_ TABLE ###
 
             form_type = table_column.get('pi_form_type', None)
-        if form_type is not None and form_type.find(':') != -1:
-            form_type = form_type[:form_type.find(':')]
-        if form_type in GROUP_FORM_TYPES:
-            mult_column_name = import_util.table_name_mult(table_name,
-                                                           field_name)
-
+            if form_type is not None and form_type.find(':') != -1:
+                form_type = form_type[:form_type.find(':')]
+            if form_type in GROUP_FORM_TYPES:
                 # Handle the case when display value is not set. This stays here because
                 # mult_label gets updated based on column_val after column_val is validated.
                 # (ex: flag)
@@ -1329,11 +1341,11 @@ def import_observation_table(instrument_obj,
                 if mult_label is None:
                     if column_val is None:
                         mult_label = 'N/A'
-                else:
-                    mult_label = str(column_val)
-                    if (not mult_label[0].isdigit() or
-                        not mult_label[-1].isdigit()):
-                        # This catches things like 2014 MU69 and leaves them
+                    else:
+                        mult_label = str(column_val)
+                        if (not mult_label[0].isdigit() or
+                            not mult_label[-1].isdigit()):
+                            # This catches things like 2014 MU69 and leaves them
                             # in all caps
                             mult_label = mult_label.title()
 

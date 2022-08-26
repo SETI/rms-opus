@@ -43,6 +43,7 @@ class ObsGeneral(ObsBase):
         # target_class supports multiple target names
         target_names = self._target_name()
         ret_list = []
+        used_classes = set()
         for target_name, _ in target_names:
             if target_name is None:
                 ret_list.append(self._create_mult(None))
@@ -51,7 +52,9 @@ class ObsGeneral(ObsBase):
                 if target_info is None:
                     ret_list.append(self._create_mult(None))
                 else:
-                    ret_list.append(self._create_mult(target_info[1]))
+                    if target_info[1] not in used_classes:
+                        ret_list.append(self._create_mult(target_info[1]))
+                        used_classes.add(target_info[1])
         return ret_list
 
     def field_obs_general_primary_filespec(self):

@@ -1,15 +1,15 @@
 General Constraints
-Planet,Intended Target Name(s),Nominal Target Class,Mission,Instrument Host Name,Instrument Name,Observation Type,Observation Start Time,Observation Stop Time,Observation Duration (secs),Measurement Quantity,Right Ascension (Min) (degrees),Right Ascension (Max) (degrees),Declination (Min) (degrees),Declination (Max) (degrees)
-SAT,SATURN,PLANET,VG,VG2,VGISS,IMG,1981-08-12T21:54:21.120,1981-08-12T21:54:24.000,2.88,REFLECT,197.700321,198.3685,-5.021599,-4.355657
+Planet,Intended Target Name(s),Nominal Target Class(es),Mission,Instrument Host Name,Instrument Name,Observation Type,Observation Start Time,Observation Stop Time,Observation Duration (secs),Measurement Quantity,Right Ascension (Min) (degrees),Right Ascension (Max) (degrees),Declination (Min) (degrees),Declination (Max) (degrees)
+Saturn,Saturn,Planet,Voyager,Voyager 2,Voyager ISS,Image,1981-08-12T21:54:21.120,1981-08-12T21:54:24.000,2.88,Reflectivity,197.700321,198.3685,-5.021599,-4.355657
 PDS Constraints
 Volume ID,Data Set ID,Product ID,Product Creation Time,Primary File Spec,OPUS ID,Note
 VGISS_6210,VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0,C4360845_RAW.IMG,2012-05-01T16:00:00.000,VGISS_6210/DATA/C43608XX/C4360845_RAW.LBL,vg-iss-2-s-c4360845,
 Image Constraints
 Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels,Intensity Levels,Image Type
-2.88,800,800,256,FRAM
+2.88,800,800,256,Frame
 Wavelength Constraints
 Wavelength (Min) (microns),Wavelength (Max) (microns),Wavelength Resolution (Min) (microns/pixel),Wavelength Resolution (Max) (microns/pixel),Wavenumber (Min) (cm^-1),Wavenumber (Max) (cm^-1),Wavenumber Resolution (Min) (cm^-1/pixel),Wavenumber Resolution (Max) (cm^-1/pixel),Spectral Information Flag,Spectrum Size,Polarization Type
-0.35,0.45,0.1,0.1,22222.2222222,28571.4285714,6349.206349206,6349.206349206,No,N/A,NONE
+0.35,0.45,0.1,0.1,22222.2222222,28571.4285714,6349.206349206,6349.206349206,No,N/A,None
 Occultation/Reflectance Profiles Constraints
 Occultation or Profile Type,Occultation Direction,Body Occultation Flag,Temporal Sampling Interval (secs),Data Quality Score,Detectable Optical Depth (Min),Detectable Optical Depth (Max),Wavelength Band,Signal Source Name,Receiver Host Name,Observed Ring Radius (Min) [Ring] (km),Observed Ring Radius (Max) [Ring] (km),Ring Center Opening Angle to Sun (Min) [Ring] (degrees),Ring Center Opening Angle to Sun (Max) [Ring] (degrees),Ring Center Opening Angle to Observer (Min) [Ring] (degrees),Ring Center Opening Angle to Observer (Max) [Ring] (degrees)
 N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,60366.558,561518.661,7.871,7.871,10.753,10.753
@@ -27,7 +27,7 @@ Observed Ring Radius (Min) [Ring] (km),Observed Ring Radius (Max) [Ring] (km),Ob
 60366.558,561518.661,193.461,58.525,11.066,11.066,334.998,227.459,17.679,17.679,175.782,40.846,175.899,41.025,12941480.166,13760160.075,13208460.501,13208460.501,119.7093,127.28212,122.34282,710.25702,6.909,7.437,82.128,82.132,79.022,79.682,82.128,82.132,79.022,79.682,7.867,7.871,10.318,10.979,7.134,7.134,82.129,82.129,79.247,79.247,82.129,82.129,79.247,79.247,7.871,7.871,10.753,10.753,3.153,80052.936,287.679,107.679,96.615,276.615,13189764.522,13209113.873,122.01204,122.19073,-4241.899,102168.843,N/A,N/A
 Voyager Mission Constraints
 Mission Phase [Voyager],Spacecraft Clock Start Count [Voyager],Spacecraft Clock Stop Count [Voyager],Earth Received Time [Voyager]
-SATURN ENCOUNTER,43608:44:752,43608:45:001,1981-08-12T23:19:04.000
+Saturn Encounter,43608:44:752,43608:45:001,1981-08-12T23:19:04.000
 Voyager ISS Constraints
 Camera [Voyager ISS],Filter Name [Voyager ISS],Filter Number [Voyager ISS],Shutter Mode [Voyager ISS],Edit Mode [Voyager ISS],Gain Mode [Voyager ISS],Scan Mode [Voyager ISS],Image ID [Voyager ISS],Usable Lines [Voyager ISS],Usable Samples [Voyager ISS],Exposure Duration [Image] (secs)
-N,VIOLET,1,NAONLY,1:1,LOW,3:1,1388S2-014,800,800,2.88
+Narrow Angle,Violet,1,NAONLY,1:1,Low,3:1,1388S2-014,800,800,2.88
