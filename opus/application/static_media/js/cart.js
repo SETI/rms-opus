@@ -263,7 +263,7 @@ var o_cart = {
         if ($(target).hasClass("op-cart-select-all-btn")) {
             // When "Select all product types" is clicked, only select the current version
             // of the files
-            for(let input of checkboxesOptions) {
+            for (let input of checkboxesOptions) {
                 let input_val = $(input).val();
                 let ver_idx = input_val.indexOf("@");
                 let ver = input_val.slice(ver_idx+1).toLowerCase();

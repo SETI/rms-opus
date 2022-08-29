@@ -789,7 +789,9 @@ def _get_download_info(product_types, session_id):
     """Return information about the current cart useful for download.
 
     The resulting totals are limited to the given product_types.
-    ['all'] means return all product_types.
+    ['all'] means return all product_types. Note: the total download size and total
+    download count will only count on the checked product types even if product_types
+    is set to ['all'].
     Product types for items in the recycle bin are returned with values of 0.
 
     Returns dict containing:
