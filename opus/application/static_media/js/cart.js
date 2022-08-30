@@ -142,7 +142,6 @@ var o_cart = {
             let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
             let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
 
-            // let allCheckboxesOptions = $(".op-download-options-product-types input");
             let allCheckboxesOptions = $(".op-download-options-product-types .op-cart-current-ver-input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
             allCheckboxesOptions = $(".op-download-options-product-types input");
@@ -179,7 +178,6 @@ var o_cart = {
 
             o_cart.updateCheckboxes(e.currentTarget, productList);
 
-            // let allCheckboxesOptions = $(".op-download-options-product-types input");
             let allCheckboxesOptions = $(".op-download-options-product-types .op-cart-current-ver-input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
             allCheckboxesOptions = $(".op-download-options-product-types input");
