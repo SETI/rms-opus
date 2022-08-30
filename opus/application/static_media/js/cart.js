@@ -142,8 +142,10 @@ var o_cart = {
             let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
             let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
 
-            let allCheckboxesOptions = $(".op-download-options-product-types input");
+            // let allCheckboxesOptions = $(".op-download-options-product-types input");
+            let allCheckboxesOptions = $(".op-download-options-product-types .op-cart-current-ver-input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
+            allCheckboxesOptions = $(".op-download-options-product-types input");
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
             o_cart.updateSelectDeselectBtn(isAllCatOptionsChecked, isAllCatOptionsUnchecked,
@@ -163,7 +165,7 @@ var o_cart = {
                 // Make sure the non-current version check marks are not disabled when
                 // "Select all product types" is clicked
                 $(".op-cart-select-btn:not('.op-cart-select-btn-sub')").prop("disabled", true);
-                $(".op-cart-deselect-btn").prop("disabled", false);
+                $(".op-cart-deselect-btn:not('.op-cart-deselect-btn-sub')").prop("disabled", false);
             } else {
                 $(".op-cart-select-btn").prop("disabled", false);
                 $(".op-cart-deselect-btn").prop("disabled", true);
@@ -177,8 +179,10 @@ var o_cart = {
 
             o_cart.updateCheckboxes(e.currentTarget, productList);
 
-            let allCheckboxesOptions = $(".op-download-options-product-types input");
+            // let allCheckboxesOptions = $(".op-download-options-product-types input");
+            let allCheckboxesOptions = $(".op-download-options-product-types .op-cart-current-ver-input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
+            allCheckboxesOptions = $(".op-download-options-product-types input");
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
             o_cart.updateSelectDeselectBtn(isAllOptionsChecked, isAllOptionsUnchecked,
@@ -625,6 +629,23 @@ var o_cart = {
                         });
                     },
                 });
+
+                // Properly disable/enable "v" & "x" for each product category when download
+                // pane is loaded.
+                for (let cat of $(".op-cart-select-btn")) {
+                    let productCategory = $(cat).data("category");
+                    let productInputs = $(`input[data-category="${productCategory}"]`);
+
+                    let prodTypeSelectAllBtn = $(`.op-cart-select-btn[data-category="${productCategory}"]`);
+                    let prodTypeDeselectAllBtn = $(`.op-cart-deselect-btn[data-category="${productCategory}"]`);
+                    let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
+                    let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
+                    if (isAllCatOptionsChecked) {
+                        $(`.op-cart-select-btn[data-category="${productCategory}"]`).prop("disabled", true);
+                    } else if (isAllCatOptionsUnchecked) {
+                        $(`.op-cart-deselect-btn[data-category="${productCategory}"]`).prop("disabled", true);
+                    }
+                }
             });
         } else {
             // Make sure "Add all results to cart" is still hidden in cart tab when user switches
