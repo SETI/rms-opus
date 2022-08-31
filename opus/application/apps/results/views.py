@@ -82,7 +82,8 @@ from tools.app_utils import (cols_to_slug_list,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
 from tools.db_utils import (query_table_for_opus_id,
-                            lookup_pretty_value_for_mult)
+                            lookup_pretty_value_for_mult,
+                            lookup_pretty_value_for_mult_list)
 from tools.file_utils import get_pds_preview_images, get_pds_products
 
 from opus_support import (format_unit_value,
@@ -618,14 +619,9 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
                         # value is a JSON string containing a list of indexes into
                         # the associated mult table. We display these as
                         # str1,str2,str3
-                        mult_vals = json.loads(mult_val)
-                        result_list = []
-                        for mult_val in mult_vals:
-                            ret = lookup_pretty_value_for_mult(param_info,
-                                                               mult_val,
-                                                               cvt_null=(fmt!='json'))
-                            result_list.append(ret)
-                        result = ','.join(result_list)
+                        result = lookup_pretty_value_for_mult_list(param_info,
+                                                                   mult_val,
+                                                                   cvt_null=(fmt!='json'))
 
                 else:
                     result = result_vals.get(param_info.name, None)
@@ -1681,14 +1677,10 @@ def get_search_results_chunk(request, use_cart=None,
                 # value is a JSON string containing a list of indexes into
                 # the associated mult table. We display these as
                 # str1,str2,str3
-                mult_vals = json.loads(entry[idx])
-                result_list = []
-                for mult_val in mult_vals:
-                    ret = lookup_pretty_value_for_mult(param_info,
-                                                       mult_val,
-                                                       cvt_null=True)
-                    result_list.append(ret)
-                entry[idx] = ','.join(result_list)
+                result = lookup_pretty_value_for_mult_list(param_info,
+                                                           entry[idx],
+                                                           cvt_null=True)
+                entry[idx] = result
             if entry[idx] != 'N/A':
                 # Result is returned in proper format converted to
                 # the given unit
