@@ -1678,7 +1678,7 @@ def get_search_results_chunk(request, use_cart=None,
                 # the associated mult table. We display these as
                 # str1,str2,str3
                 result = lookup_pretty_value_for_mult_list(param_info,
-                                                           entry[idx],
+                                                           json.loads(entry[idx]),
                                                            cvt_null=True)
                 entry[idx] = result
             if entry[idx] != 'N/A':

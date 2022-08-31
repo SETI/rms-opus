@@ -69,9 +69,8 @@ def lookup_pretty_value_for_mult(param_info, value, cvt_null):
         return None
     return result['label']
 
-def lookup_pretty_value_for_mult_list(param_info, json_val, cvt_null):
+def lookup_pretty_value_for_mult_list(param_info, mult_vals, cvt_null):
     "Given a param_info for a mult list and the mult list value, return the pretty label"
-    mult_vals = json.loads(json_val)
     result_list = []
     for mult_val in mult_vals:
         ret = lookup_pretty_value_for_mult(param_info,
