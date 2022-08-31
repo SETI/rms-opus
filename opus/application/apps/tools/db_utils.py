@@ -4,6 +4,8 @@
 #
 ################################################################################
 
+import json
+
 from django.apps import apps
 
 from tools.app_utils import get_mult_name
@@ -35,6 +37,11 @@ def query_table_for_opus_id(table_name, opus_id):
         return table_model.objects.filter(opus_id=opus_id)
     return table_model.objects.filter(obs_general__opus_id=opus_id)
 
+# Looking up entries in the mult tables is slow, so cache them in memory as they
+# are retrieved. There aren't that many mult tables or values, so this won't take
+# much memory even in the worst case.
+_PRETTY_MULT_CACHE = {}
+
 def lookup_pretty_value_for_mult(param_info, value, cvt_null):
     "Given a param_info for a mult and the mult value, return the pretty label"
     if param_info.form_type is None: # pragma: no cover
@@ -46,12 +53,29 @@ def lookup_pretty_value_for_mult(param_info, value, cvt_null):
     if form_type not in settings.MULT_FORM_TYPES: # pragma: no cover
         return None
 
-    mult_param = get_mult_name(param_info.param_qualified_name())
-    model = apps.get_model('search', mult_param.title().replace('_',''))
+    key = (param_info.param_qualified_name(), value)
+    if key in _PRETTY_MULT_CACHE:
+        result = _PRETTY_MULT_CACHE[key]
+    else:
+        mult_param = get_mult_name(param_info.param_qualified_name())
+        model = apps.get_model('search', mult_param.title().replace('_',''))
 
-    results = model.objects.filter(id=value).values('value','label')
-    if not results: # pragma: no cover
+        results = model.objects.filter(id=value).values('value','label')
+        if not results: # pragma: no cover
+            return None
+        result = results[0]
+        _PRETTY_MULT_CACHE[key] = result
+    if not cvt_null and result['value'] is None:
         return None
-    if not cvt_null and results[0]['value'] is None:
-        return None
-    return results[0]['label']
+    return result['label']
+
+def lookup_pretty_value_for_mult_list(param_info, json_val, cvt_null):
+    "Given a param_info for a mult list and the mult list value, return the pretty label"
+    mult_vals = json.loads(json_val)
+    result_list = []
+    for mult_val in mult_vals:
+        ret = lookup_pretty_value_for_mult(param_info,
+                                           mult_val,
+                                           cvt_null=cvt_null)
+        result_list.append(ret)
+    return ','.join(result_list)
