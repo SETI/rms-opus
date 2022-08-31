@@ -1410,6 +1410,9 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                 version_name = sublist[0].version_id
                 if version_name == '':
                     version_name = 'Current'
+                # Make sure versions other than "Current" are not checked by default
+                if version_name != 'Current':
+                    default_checked = False
                 logical_path = file.logical_path
 
                 # For an index file, we check to see if this observation is

@@ -120,13 +120,14 @@ def api_view_cart(request):
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
 
-    for name, details in info['product_cat_list']:
-        for type in details:
-            if (type['slug_name'] in not_selected_product_types or
-                not type['default_checked']):
-                type['selected'] = ''
-            else:
-                type['selected'] = 'checked'
+    for name, product_versions in info['product_cat_dict'].items():
+        for ver, types in product_versions.items():
+            for prod_type in types:
+                if (prod_type['slug_name'] in not_selected_product_types or
+                    not prod_type['default_checked']):
+                    prod_type['selected'] = ''
+                else:
+                    prod_type['selected'] = 'checked'
 
     info['count'] = count
     info['recycled_count'] = recycled_count
@@ -167,21 +168,24 @@ def api_cart_status(request):
             'total_download_count':       Total number of unique files
             'total_download_size':        Total size of unique files (bytes)
             'total_download_size_pretty': Total size of unique files (pretty format)
-            'product_cat_list':           List of categories and info:
-                [
-                 [<Product Type Category>,
-                  [{'slug_name':            Like "browse-thumb"
-                    'product_type':         Like "Browse Image (thumbnail)"
-                    'product_count':        Number of opus_ids in this category
-                    'download_count':       Number of unique files in this category
-                    'download_size':        Size of unique files in this category
-                                                (bytes)
-                    'download_size_pretty': Size of unique files in this category
-                                                (pretty format)
-                   }
-                  ], ...
-                 ], ...
-                ]
+            'product_cat_dict':           Dict of categories and info:
+                {
+                  <Product Type Category>:
+                    {version_name:              Like "Current", "1" or "1.0"
+                      [{'slug_name':            Like "browse-thumb"
+                        'product_type':         Like "Browse Image (thumbnail)"
+                        'tooltip':              User-friendly tooltip, if any
+                        'product_count':        Number of opus_ids in this category
+                        'download_count':       Number of unique files in this category
+                        'download_size':        Size of unique files in this category
+                                                    (bytes)
+                        'download_size_pretty': Size of unique files in this category
+                                                    (pretty format)
+                       }
+                      ], ...
+                    }
+                  , ...
+                }
 
 
     """
@@ -432,21 +436,24 @@ def api_reset_session(request):
             'total_download_count':       Total number of unique files
             'total_download_size':        Total size of unique files (bytes)
             'total_download_size_pretty': Total size of unique files (pretty format)
-            'product_cat_list':           List of categories and info:
-                [
-                 [<Product Type Category>,
-                  [{'slug_name':            Like "browse-thumb"
-                    'product_type':         Like "Browse Image (thumbnail)"
-                    'product_count':        Number of opus_ids in this category
-                    'download_count':       Number of unique files in this category
-                    'download_size':        Size of unique files in this category
-                                                (bytes)
-                    'download_size_pretty': Size of unique files in this category
-                                                (pretty format)
-                   }
-                  ], ...
-                 ], ...
-                ]
+            'product_cat_dict':           Dict of categories and info:
+                {
+                  <Product Type Category>:
+                    {version_name:              Like "Current", "1" or "1.0"
+                      [{'slug_name':            Like "browse-thumb"
+                        'product_type':         Like "Browse Image (thumbnail)"
+                        'tooltip':              User-friendly tooltip, if any
+                        'product_count':        Number of opus_ids in this category
+                        'download_count':       Number of unique files in this category
+                        'download_size':        Size of unique files in this category
+                                                    (bytes)
+                        'download_size_pretty': Size of unique files in this category
+                                                    (pretty format)
+                       }
+                      ], ...
+                    }
+                  , ...
+                }
 
 
     """
@@ -540,8 +547,10 @@ def api_create_download(request, opus_id=None, fmt=None):
     if product_types is None or product_types == '':
         product_types = []
     else:
-        product_types = product_types.split(',')
-
+        product_types = product_types.lower().split(',')
+    # By default, we want to download all files of the "Current" version if types
+    # parameter is not specified.
+    download_current_only = (product_types == [])
     if opus_id:
         opus_ids = [opus_id]
         return_directly = True
@@ -673,62 +682,68 @@ def api_create_download(request, opus_id=None, fmt=None):
     hierarchical_struct = int(request.GET.get('hierarchical', 0))
     files_info = {}
     for f_opus_id in files:
-        if 'Current' not in files[f_opus_id]:
+        if download_current_only and 'Current' not in files[f_opus_id]:
             continue
-        files_version = files[f_opus_id]['Current']
-        for product_type in files_version:
-            for file_data in files_version[product_type]:
-                path = file_data['path']
-                pretty_name = path.split('/')[-1]
-                logical_path = path[path.index('/holdings')+9:]
-                if pretty_name not in files_info:
-                    files_info[pretty_name] = [logical_path]
-                elif logical_path not in files_info[pretty_name]:
-                    files_info[pretty_name].append(logical_path)
+        for version_name in files[f_opus_id]:
+            if download_current_only and version_name != 'Current':
+                continue
+            files_version = files[f_opus_id][version_name]
+            for product_type in files_version:
+                for file_data in files_version[product_type]:
+                    path = file_data['path']
+                    pretty_name = path.split('/')[-1]
+                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+len(settings.PDS_HOLDINGS_DIR):]
+                    if pretty_name not in files_info:
+                        files_info[pretty_name] = [logical_path]
+                    elif logical_path not in files_info[pretty_name]:
+                        files_info[pretty_name].append(logical_path)
 
     for f_opus_id in files:
-        if 'Current' not in files[f_opus_id]:
+        if download_current_only and 'Current' not in files[f_opus_id]:
             continue
-        files_version = files[f_opus_id]['Current']
-        for product_type in files_version:
-            for file_data in files_version[product_type]:
-                path = file_data['path']
-                url = file_data['url']
-                category = file_data['category']
-                product_type = file_data['full_name']
-                product_abbrev = file_data['short_name']
-                version_name = file_data['version_name']
-                checksum = file_data['checksum']
-                size = file_data['size']
-                pretty_name = path.split('/')[-1]
-                logical_path = path[path.index('/holdings')+9:]
-                mdigest = (f'{f_opus_id},{category},{product_type},'
-                          +f'{product_abbrev},{version_name},{logical_path},'
-                          +f'{checksum},{size}')
-                manifest_fp.write(mdigest+'\n')
+        for version_name in files[f_opus_id]:
+            if download_current_only and version_name != 'Current':
+                continue
+            files_version = files[f_opus_id][version_name]
+            for product_type in files_version:
+                for file_data in files_version[product_type]:
+                    path = file_data['path']
+                    url = file_data['url']
+                    category = file_data['category']
+                    product_type = file_data['full_name']
+                    product_abbrev = file_data['short_name']
+                    version_name = file_data['version_name']
+                    checksum = file_data['checksum']
+                    size = file_data['size']
+                    pretty_name = path.split('/')[-1]
+                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+len(settings.PDS_HOLDINGS_DIR):]
+                    mdigest = (f'{f_opus_id},{category},{product_type},'
+                              +f'{product_abbrev},{version_name},{logical_path},'
+                              +f'{checksum},{size}')
+                    manifest_fp.write(mdigest+'\n')
 
-                if logical_path not in added:
-                    url_fp.write(url+'\n')
-                    filename = os.path.basename(path)
-                    # If hierarchical_struct is 1 or there are multiple paths
-                    # for the same file basename, we store files with hierarchy
-                    # tree in the zip file.
-                    if hierarchical_struct or len(files_info[pretty_name]) > 1:
-                        filename = logical_path
-                    if not url_file_only:
-                        try:
-                            if fmt == 'zip':
-                                archive_file.write(path, arcname=filename)
-                            else:
-                                archive_file.add(path, arcname=filename)
-                        except Exception as e:
-                            log.error('api_create_download threw exception '+
-                                      'for opus_id %s, product_type %s, '+
-                                      'file %s, pretty_name %s: %s',
-                                      f_opus_id, product_type, path,
-                                      pretty_name, str(e))
-                            errors.append('Error adding: ' + pretty_name)
-                    added.append(logical_path)
+                    if logical_path not in added:
+                        url_fp.write(url+'\n')
+                        filename = os.path.basename(path)
+                        # If hierarchical_struct is 1 or there are multiple paths
+                        # for the same file basename, we store files with hierarchy
+                        # tree in the zip file.
+                        if hierarchical_struct or len(files_info[pretty_name]) > 1:
+                            filename = logical_path
+                        if not url_file_only:
+                            try:
+                                if fmt == 'zip':
+                                    archive_file.write(path, arcname=filename)
+                                else:
+                                    archive_file.add(path, arcname=filename)
+                            except Exception as e:
+                                log.error('api_create_download threw exception '+
+                                          'for opus_id %s, product_type %s, '+
+                                          'file %s, pretty_name %s: %s',
+                                          f_opus_id, product_type, path,
+                                          pretty_name, str(e))
+                                errors.append('Error adding: ' + pretty_name)
+                        added.append(logical_path)
 
     # Write errors to manifest file
     if errors:
@@ -774,29 +789,32 @@ def _get_download_info(product_types, session_id):
     """Return information about the current cart useful for download.
 
     The resulting totals are limited to the given product_types.
-    ['all'] means return all product_types.
+    ['all'] means include all product types that are checked by default in the
+    database.
     Product types for items in the recycle bin are returned with values of 0.
 
     Returns dict containing:
         'total_download_count':       Total number of unique files
         'total_download_size':        Total size of unique files (bytes)
         'total_download_size_pretty': Total size of unique files (pretty format)
-        'product_cat_list':           List of categories and info:
-            [
-             [<Product Type Category>,
-              [{'slug_name':            Like "browse-thumb"
-                'product_type':         Like "Browse Image (thumbnail)"
-                'tooltip':              User-friendly tooltip, if any
-                'product_count':        Number of opus_ids in this category
-                'download_count':       Number of unique files in this category
-                'download_size':        Size of unique files in this category
-                                            (bytes)
-                'download_size_pretty': Size of unique files in this category
-                                            (pretty format)
-               }
-              ], ...
-             ], ...
-            ]
+        'product_cat_dict':           Dict of categories and info:
+            {
+              <Product Type Category>:
+                {version_name:              Like "Current", "1" or "1.0"
+                  [{'slug_name':            Like "browse-thumb"
+                    'product_type':         Like "Browse Image (thumbnail)"
+                    'tooltip':              User-friendly tooltip, if any
+                    'product_count':        Number of opus_ids in this category
+                    'download_count':       Number of unique files in this category
+                    'download_size':        Size of unique files in this category
+                                                (bytes)
+                    'download_size_pretty': Size of unique files in this category
+                                                (pretty format)
+                   }
+                  ], ...
+                }
+              , ...
+            }
     """
     cursor = connection.cursor()
     q = connection.ops.quote_name
@@ -812,15 +830,17 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
     sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
-    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')
+    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')+', '
+    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')+', '
+    sql += q('obs_files')+'.'+q('version_number')+' AS '+q('ver_num')
     sql += 'FROM '+q('obs_files')+' '
     sql += 'INNER JOIN '+q('cart')+' ON '
     sql += q('cart')+'.'+q('obs_general_id')+'='
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
-    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
-    sql += 'ORDER BY '+q('sort')
+    # Put "Current" version on top of others
+    sql += 'ORDER BY '+q('sort')+', '+q('ver_num')+' DESC '
 
     log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -828,11 +848,11 @@ def _get_download_info(product_types, session_id):
     results = cursor.fetchall()
 
     product_cats = []
-    product_cat_list = []
-    product_dict_by_short_name = {}
+    product_cat_dict = {}
+    product_dict_by_short_name_ver = {}
 
     for res in results:
-        (category, sort_order, short_name, full_name, default_checked) = res
+        (category, sort_order, short_name, full_name, default_checked, ver, ver_num) = res
 
         pretty_name = category
         if category == 'standard':
@@ -845,11 +865,19 @@ def _get_download_info(product_types, session_id):
             pretty_name = 'Diagram Products'
         else:
             pretty_name = category + '-Specific Products'
+
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
-            product_cat_list.append((pretty_name, cur_product_list))
+            product_cat_dict[pretty_name] = {}
+            product_cat_dict[pretty_name][ver] = cur_product_list
+        else:
+            if ver in product_cat_dict[pretty_name]:
+                cur_product_list = product_cat_dict[pretty_name][ver]
+            else:
+                cur_product_list = []
+                product_cat_dict[pretty_name][ver] = cur_product_list
         try:
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
                                             term=short_name)
@@ -866,28 +894,38 @@ def _get_download_info(product_types, session_id):
             'download_count': 0,
             'download_size': 0,
             'download_size_pretty': 0,
-            'default_checked': default_checked
+            'default_checked': default_checked,
+            'product_type_with_version': f'{short_name}@{ver}'
         }
         cur_product_list.append(product_dict_entry)
-        product_dict_by_short_name[short_name] = product_dict_entry
+        short_name_ver = short_name + '@' + ver.lower()
+        product_dict_by_short_name_ver[short_name_ver] = product_dict_entry
 
 
-# SELECT obs_files.short_name,
+# SELECT obs_files.category,
+#        obs_files.sort_order,
+#        obs_files.short_name,
+#        obs_files.version_name,
+#        obs_files.full_name,
+#        obs_files.default_checked,
 #        count(distinct obs_files.opus_id) as product_count,
 #        count(distinct obs_files.logical_path) as download_count,
 #        t2.download_size as downloadsize
 # FROM obs_files,
 #
-#      (SELECT t1.short_name, sum(t1.size) as download_size
-#              FROM (SELECT DISTINCT obs_files.short_name, obs_files.logical_path, obs_files.size
+#      (SELECT t1.short_name, t1.version_name, sum(t1.size) as download_size
+#              FROM (SELECT DISTINCT obs_files.short_name, obs_files.version_name,
+#                                    obs_files.logical_path, obs_files.size
 #                           FROM obs_files
 #                           WHERE opus_id IN ('co-iss-n1460960653', 'co-iss-n1460960868')
 #                   ) as t1
-#              GROUP BY t1.short_name
+#              GROUP BY t1.short_name, t1.version_name
 #      ) as t2
 # WHERE obs_files.short_name=t2.short_name
+#   AND obs_files.version_name=t2.version_name
 #   AND obs_files.opus_id in ('co-iss-n1460960653', 'co-iss-n1460960868')
-# GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name, t2.download_size
+# GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name,
+#          obs_files.version_name, obs_files.full_name, obs_files.default_checked
 # ORDER BY sort_order;
     values = []
     sql = 'SELECT '
@@ -898,7 +936,9 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
+    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')+', '
     sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
+    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')+', '
 
     # download_size is the total sizes of all distinct filenames
     # Note there is only one download_size per short_name, so when we add
@@ -918,11 +958,13 @@ def _get_download_info(product_types, session_id):
 
     # Nested SELECT #1
     sql += '(SELECT '+q('t1')+'.'+q('short_name')+', '
+    sql += q('t1')+'.'+q('version_name')+', '
     sql += 'SUM('+q('t1')+'.'+q('size')+') AS '+q('download_size')+' '
     sql += 'FROM '
 
     # Nested SELECT #2
     sql += '(SELECT DISTINCT '+q('obs_files')+'.'+q('short_name')+', '
+    sql += q('obs_files')+'.'+q('version_name')+', '
     sql += q('obs_files')+'.'+q('logical_path')+', '
     sql += q('obs_files')+'.'+q('size')+' '
     sql += 'FROM '+q('obs_files')+' '
@@ -932,12 +974,12 @@ def _get_download_info(product_types, session_id):
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
     sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
-    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000'
     sql += ') AS '+q('t1')+' '
     # End of nested SELECT #2
 
     # Back to nested SELECT #1
-    sql += 'GROUP BY '+q('t1')+'.'+q('short_name')
+    sql += 'GROUP BY '+q('t1')+'.'+q('short_name')+', '
+    sql += q('t1')+'.'+q('version_name')
     sql += ') AS '+q('t2')+', '
     # End of nested SELECT #1
 
@@ -950,10 +992,11 @@ def _get_download_info(product_types, session_id):
     sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
     sql += 'AND '+q('obs_files')+'.'+q('short_name')+'='
     sql += q('t2')+'.'+q('short_name')+' '
-    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
+    sql += 'AND '+q('obs_files')+'.'+q('version_name')+'='
+    sql += q('t2')+'.'+q('version_name')+' '
 
     sql += 'GROUP BY '+q('cat')+', '+q('sort')+', '
-    sql += q('short')+', '+q('full')+' '
+    sql += q('short')+', '+q('ver')+', '+q('full')+', '+q('checked')+' '
     sql += 'ORDER BY '+q('sort')
 
     log.debug('_get_download_info SQL: %s %s', sql, values)
@@ -965,25 +1008,41 @@ def _get_download_info(product_types, session_id):
     total_download_count = 0
 
     for res in results:
-        (category, sort_order, short_name, full_name,
-         download_size, download_count, product_count) = res
+        (category, sort_order, short_name, version_name, full_name,
+         checked, download_size, download_count, product_count) = res
+        short_name_ver = short_name + '@' + version_name.lower()
         download_size = int(download_size)
         download_count = int(download_count)
         product_count = int(product_count)
-        if product_types == ['all'] or short_name in product_types:
+
+        # Check if the files info of a product type should be added up to total download
+        # info
+        is_adding_up_to_total = False
+        for p in product_types:
+            if '@' in p:
+                prod_type, _, p_version = p.partition('@')
+                if p_version.lower() == 'current':
+                    p_version = 'current'
+                if short_name == prod_type and version_name.lower() == p_version:
+                    is_adding_up_to_total = True
+                    break
+            elif short_name == p:
+                is_adding_up_to_total = True
+                break
+        if (product_types == ['all'] and checked) or is_adding_up_to_total:
             total_download_size += download_size
             total_download_count += download_count
 
-        product_dict_by_short_name[short_name]['product_count'] = product_count
-        product_dict_by_short_name[short_name]['download_count'] = download_count
-        product_dict_by_short_name[short_name]['download_size'] = download_size
-        product_dict_by_short_name[short_name]['download_size_pretty'] = nice_file_size(download_size)
+        product_dict_by_short_name_ver[short_name_ver]['product_count'] = product_count
+        product_dict_by_short_name_ver[short_name_ver]['download_count'] = download_count
+        product_dict_by_short_name_ver[short_name_ver]['download_size'] = download_size
+        product_dict_by_short_name_ver[short_name_ver]['download_size_pretty'] = nice_file_size(download_size)
 
     ret = {
         'total_download_count': total_download_count,
         'total_download_size': total_download_size,
         'total_download_size_pretty':  nice_file_size(total_download_size),
-        'product_cat_list': product_cat_list
+        'product_cat_dict': product_cat_dict
     }
 
     return ret
