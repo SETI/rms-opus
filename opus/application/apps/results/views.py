@@ -438,12 +438,16 @@ def api_get_metadata_internal(request, opus_id, fmt):
     Arguments: cols=<columns>
                     Limit results to particular columns.
                     This is a list of slugs separated by commas. Note that the
-                    return will be indexed by field name, but by slug name.
-                    If cols is supplied, cats is ignored.
+                    return will be indexed by slug name. If cols is supplied, cats is
+                    ignored. The slugs in cols may contain optional desired return units
+                    of the form "slug:unit". If no unit is specified, the default units
+                    are used. If the cols= parameter is not included at all, then all
+                    results are returned using their default units, if applicable.
                cats=<cats>
                     Limit results to particular categories. Categories can be
                     given as "pretty names" as displayed on the Details page,
-                    or can be given as table names.
+                    or can be given as table names. All results are returned using their
+                    default units, if applicable.
                url_cols=<cols>
                     If given, include these column names in the URLs for each
                     search icon for mults/strings in the internal HTML output.
@@ -562,7 +566,9 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
             for param_info in param_info_list:
                 if param_info.referred_slug is not None:
                     referred_slug = param_info.referred_slug
-                    param_info = get_param_info_by_slug(referred_slug, 'col')
+                    # A referred slug will never contain a unit specifier
+                    param_info = get_param_info_by_slug(referred_slug, 'col',
+                                                        allow_units_override=False)
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
                                 param_info.body_qualified_label_results(True))
@@ -594,7 +600,9 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
             for param_info in param_info_list:
                 if param_info.referred_slug is not None:
                     referred_slug = param_info.referred_slug
-                    param_info = get_param_info_by_slug(referred_slug, 'col')
+                    # A referred slug will never contain a unit specifier
+                    param_info = get_param_info_by_slug(referred_slug, 'col',
+                                                        allow_units_override=False)
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
                                 param_info.body_qualified_label_results(True))
@@ -643,7 +651,9 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
                         result = 'N/A'
                     else:
                         # Result is returned in proper format in the default
-                        # unit
+                        # unit. In this section of the code there is no way for the
+                        # caller to specify desired units, so all return values are
+                        # given in their default units.
                         result = format_unit_value(result,
                                                    form_type_format,
                                                    form_type_unit_id,
@@ -1340,7 +1350,9 @@ def get_search_results_chunk(request, use_cart=None,
     mult_tables = set()
     for slug in cols_to_slug_list(cols):
         # First try the full name, which might include a trailing 1 or 2
-        pi = get_param_info_by_slug(slug, 'col')
+        # Allow allow the caller to specify desired units for the retrieved metadata
+        pi, desired_units = get_param_info_by_slug(slug, 'col',
+                                                   allow_units_override=True)
         if not pi or throw_random_http404_error():
             log.error('get_search_results_chunk: Slug "%s" not found', slug)
             return error_return(404, HTTP404_UNKNOWN_SLUG(slug, request))
@@ -1366,7 +1378,8 @@ def get_search_results_chunk(request, use_cart=None,
             # to return the .label because it's a JSON list of multiple IDs. So just
             # return that list so we can look up the pretty values later.
             column_names.append(column)
-        form_type_formats.append((pi, form_type, form_type_format, form_type_unit_id))
+        form_type_formats.append((pi, form_type, form_type_format, form_type_unit_id,
+                                  desired_units))
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -1670,7 +1683,7 @@ def get_search_results_chunk(request, use_cart=None,
     # If pi_form_type has format, we format the results
     # This is also where we make pretty lists for MULTIGROUPs
     for idx, (param_info, form_type, form_type_format,
-              form_type_unit_id) in enumerate(form_type_formats):
+              form_type_unit_id, desired_units) in enumerate(form_type_formats):
         for entry in results:
             if form_type == 'MULTIGROUP':
                 # This handles the case of a "multisel" mult value where the
@@ -1687,7 +1700,7 @@ def get_search_results_chunk(request, use_cart=None,
                 entry[idx] = format_unit_value(entry[idx],
                                                form_type_format,
                                                form_type_unit_id,
-                                               None)
+                                               desired_units)
 
     aux_dict = {}
     if return_opusids:
@@ -1746,8 +1759,12 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
         return json_response(data)
     if fmt == 'html':
         if internal:
+            # This is only for the Details tab. We allow desired units to be given but
+            # we ignore them because they were already processed earlier during
+            # get_search_results_chunk.
             for slug, label, result in zip(slug_list, labels, page[0]):
-                pi = get_param_info_by_slug(slug, 'col')
+                pi, desired_units = get_param_info_by_slug(slug, 'col',
+                                                           allow_units_override=True)
                 data.append({label: (result, pi)})
             context = {'data': data,
                        'url_cols': url_cols}
@@ -1856,7 +1873,8 @@ def labels_for_slugs(slugs, units=True):
     labels = []
 
     for slug in slugs:
-        pi = get_param_info_by_slug(slug, 'col')
+        pi, desired_units = get_param_info_by_slug(slug, 'col',
+                                                   allow_units_override=True)
         if not pi:
             log.error('api_get_data_and_images: Could not find param_info '
                       +'for %s', slug)
@@ -1865,7 +1883,7 @@ def labels_for_slugs(slugs, units=True):
         # append units if pi_units has unit stored
         unit = None
         if units:
-            unit = pi.get_units()
+            unit = pi.get_units(override_unit=desired_units)
         label = pi.body_qualified_label_results()
         if unit:
             labels.append(label + ' ' + unit)

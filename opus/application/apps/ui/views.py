@@ -203,7 +203,9 @@ def api_get_metadata_selector(request):
         col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     col_slugs_info = OrderedDict()
     for col_slug in col_slugs:
-        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col')
+        # Update when the UI supports selectable display units
+        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col',
+                                                          allow_units_override=False)
 
     search_slugs_info = []
     search_slugs = request.GET.get('widgets', None)
@@ -1206,7 +1208,8 @@ def api_normalize_url(request):
             continue
         if col == 'ringobsid':
             col = 'opusid'
-        pi = get_param_info_by_slug(col, 'col')
+        # Update when the UI supports selectable display units
+        pi = get_param_info_by_slug(col, 'col', allow_units_override=False)
         # It used to be OK for single-column ranges to have a '1' at the end
         if not pi and col[-1] == '1':
             pi = get_param_info_by_slug(strip_numeric_suffix(col), 'widget')
@@ -1320,7 +1323,8 @@ def api_normalize_url(request):
         if order[0] == '-':
             desc = True
             order = order[1:]
-        pi = get_param_info_by_slug(order, 'col')
+        # Sort order slugs should never include units
+        pi = get_param_info_by_slug(order, 'col', allow_units_override=False)
         # It used to be OK for single-column ranges to have a '1' at the end
         if not pi and order[-1] == '1':
             pi = get_param_info_by_slug(strip_numeric_suffix(order), 'widget')
@@ -1664,7 +1668,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     # If referred_slug exists, we will look up the param info
                     # based on the referred_slug.
                     if p.referred_slug is not None:
-                        p = get_param_info_by_slug(p.referred_slug, 'col')
+                        # A referred slug will never contain a unit specifier
+                        p = get_param_info_by_slug(p.referred_slug, 'col',
+                                                   allow_units_override=False)
                         p.label = p.body_qualified_label()
                         p.label_results = p.body_qualified_label_results(True)
 
@@ -1689,7 +1695,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # under the current category.
                 if p.referred_slug is not None:
                     referred_slug = p.referred_slug
-                    p = get_param_info_by_slug(referred_slug, 'col')
+                    # A referred slug will never contain a unit specifier
+                    p = get_param_info_by_slug(referred_slug, 'col',
+                                               allow_units_override=False)
                     p.label = p.body_qualified_label()
                     p.label_results = p.body_qualified_label_results(True)
                     # assign referred_slug used to determine if an icon should
@@ -1732,7 +1740,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             if p.slug[-1] == '1':
                 # This is a numeric range field, so we want to add both
                 # the min and max slugs to the list.
-                p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col')
+                # Update when the UI supports selectable display units
+                p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col',
+                                            allow_units_override=False)
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
     new_div_list = []

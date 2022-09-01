@@ -1142,11 +1142,12 @@ def set_user_search_number(selections, extras):
     return s.id, new_entry
 
 
-def get_param_info_by_slug(slug, source):
+def get_param_info_by_slug(slug, source, allow_units_override=False):
     """Given a slug, look up the corresponding ParamInfo.
 
     If source == 'col', then this is a column name. We look at the
-    slug name as given (current or old).
+    slug name as given (current or old). If allow_units_override is True and
+    a unit is specified with ":unit", we ignore it when searching for the ParamInfo.
 
     If source == 'widget', then this is a widget name. Widget names have a
     '1' on the end even if they are single-column ranges, so we just remove the
@@ -1159,6 +1160,10 @@ def get_param_info_by_slug(slug, source):
 
     If source == 'search', then this is a search term. Numeric search terms
     can always have a '1' or '2' suffix even for single-column ranges.
+
+    The return value is the ParamInfo structure. In the case of source == 'col' and
+    allow_units_override == True, the return is a tuple consisting of the ParamInfo
+    and the requested unit string.
     """
     assert source in ('col', 'widget', 'qtype', 'search')
 
@@ -1168,36 +1173,47 @@ def get_param_info_by_slug(slug, source):
                   'numeric suffix', slug)
         return None
 
-    ret = None
+    desired_units = None
+    if source == 'col' and allow_units_override and ':' in slug:
+        slug, _, desired_units = slug.partition(':')
+
+    pi = None
     # Current slug as given
     try:
-        ret = ParamInfo.objects.get(slug=slug)
+        pi = ParamInfo.objects.get(slug=slug)
     except ParamInfo.DoesNotExist:
         pass
 
-    if not ret:
+    if not pi:
         # Old slug as given
         try:
-            ret = ParamInfo.objects.get(old_slug=slug)
+            pi = ParamInfo.objects.get(old_slug=slug)
         except ParamInfo.DoesNotExist:
             pass
 
-    if ret:
+    if pi:
+        if source == 'col' and allow_units_override:
+            if desired_units is not None and not pi.is_valid_unit(desired_units):
+                log.error('get_param_info_by_slug: Slug "%s" unit "%s" invalid',
+                          slug, desired_units)
+                return None, None
+            return pi, desired_units
+
         if source == 'search':
             if slug[-1] in ('1', '2'):
                 # Search slug has 1/2, param_info has 1/2 - all is good
-                return ret
+                return pi
             # For a single-column range, the slug we were given MUST end
             # in a '1' or '2' - but for non-range types, it's OK to not
             # have the '1' or '2'. Note the non-single-column ranges were
             # already dealt with above.
             (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(ret.form_type)
+             form_type_unit_id) = parse_form_type(pi.form_type)
             if form_type in settings.RANGE_FORM_TYPES: # pragma: no cover
                 # Whoops! We are missing the numeric suffix.
                 return None
 
-        return ret
+        return pi
 
     # For widgets, if this is a multi-column range, return the version with
     # the '1' suffix.
@@ -1229,28 +1245,31 @@ def get_param_info_by_slug(slug, source):
     # even though the database entry is just a single column without a numeric
     # suffix.
     if source == 'search' and (slug[-1] == '1' or slug[-1] == '2'):
-        ret = None
+        pi = None
         try:
-            ret = ParamInfo.objects.get(slug=slug[:-1])
+            pi = ParamInfo.objects.get(slug=slug[:-1])
         except ParamInfo.DoesNotExist:
             pass
 
-        if not ret:
+        if not pi:
             try:
-                ret = ParamInfo.objects.get(old_slug=slug[:-1])
+                pi = ParamInfo.objects.get(old_slug=slug[:-1])
             except ParamInfo.DoesNotExist:
                 pass
 
-        if ret:
+        if pi:
             (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(ret.form_type)
+             form_type_unit_id) = parse_form_type(pi.form_type)
             if form_type not in settings.RANGE_FORM_TYPES:
                 # Whoops! It's not a range, but we have a numeric suffix.
                 return None
-            return ret
+            return pi
 
     log.error('get_param_info_by_slug: Slug "%s" source "%s" not found',
               slug, source)
+
+    if source == 'col' and allow_units_override:
+        return None, None
 
     return None
 
@@ -1932,7 +1951,7 @@ def parse_order_slug(all_order):
     for order in orders:
         descending = order[0] == '-'
         order = order.strip('-')
-        param_info = get_param_info_by_slug(order, 'col')
+        param_info = get_param_info_by_slug(order, 'col', allow_units_override=False)
         if not param_info:
             log.error('parse_order_slug: Unable to resolve order '
                       +'slug "%s"', order)

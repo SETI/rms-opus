@@ -1,4 +1,5 @@
 # opus/application/test_api/api_test_helper.py
+import difflib
 from io import BytesIO
 import json
 import os
@@ -49,6 +50,16 @@ class ApiTestHelper:
             for el in data:
                 ApiTestHelper._depth_first_remove(el, ignore_list)
 
+    @staticmethod
+    def _print_clean_diffs(got, expected):
+        print('Diffs:')
+        diff = difflib.SequenceMatcher(a=got, b=expected)
+        for tag, i1, i2, j1, j2 in diff.get_opcodes():
+            if tag == 'equal':
+                continue
+            print(f'{tag:7} got[{i1:5d}:{i2:5d}] --> exp[{j1:5d}:{j2:5d}] {got[i1:i2]} '
+                  f'--> {expected[j1:j2]}')
+
     def _run_json_equal(self, url, expected, ignore=[]):
         if not isinstance(ignore, (list, tuple)):
             ignore = [ignore]
@@ -62,6 +73,8 @@ class ApiTestHelper:
         print(expected)
         self._depth_first_remove(jdata, ignore)
         self._depth_first_remove(expected, ignore)
+        if jdata != expected:
+            self._print_clean_diffs(str(jdata), str(expected))
         self.assertEqual(jdata, expected)
 
     def _run_json_equal_file(self, url, exp_file):
@@ -79,6 +92,8 @@ class ApiTestHelper:
         print(jdata)
         print('Expected:')
         print(expected)
+        if jdata != expected:
+            self._print_clean_diffs(str(jdata), str(expected))
         self.assertEqual(jdata, expected)
 
     def _run_html_equal(self, url, expected):
@@ -94,6 +109,8 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
     def _run_html_equal_file(self, url, exp_file):
@@ -115,6 +132,8 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
     def _run_html_startswith(self, url, expected):
@@ -131,6 +150,8 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
     @staticmethod
@@ -150,6 +171,8 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
     def _run_csv_equal_file(self, url, exp_file):
@@ -168,6 +191,8 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
     def _run_archive_file_equal(self, url, expected,
@@ -209,4 +234,6 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
         self.assertListEqual(resp, expected)
