@@ -1879,6 +1879,35 @@ var o_browse = {
         let rangeSelectOpusID = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
         o_browse.highlightStartOfRange(rangeSelectOpusID);
 
+        // Initialize tooltips using tooltipster in browse gallery and table
+        // Since we didn't set functionPosition, the tooltip will always open
+        // in the middle of the gallery view's top edge.
+        $(`${tab} .op-browse-gallery-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
+            contentAsHTML: true,
+        });
+        $(`${tab} .op-browse-table-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
+            contentAsHTML: true,
+            functionBefore: function(instance, helper){
+                // Make sure all other tooltips are closed before a new one is opened
+                // in table view.
+                $.each($.tooltipster.instances(), function(i, inst){
+                    inst.close();
+                });
+            },
+            // Make sure the tooltip position is next to the cursor when users
+            // move around the same row in the browse table view. Without this
+            // function, the tooltip will always open in the middle of the row.
+            functionPosition: function(instance, helper, position){
+                return o_utils.setPreviewImageTooltipPosition(helper, position);
+            }
+        });
+
         // Note: we have to manually set the scrollbar position.
         // - scroll up: when we scroll up and a new page is fetched, we want to keep scrollbar position at the current startObs,
         //   instead of at the first item in newly fetched page.
@@ -2380,34 +2409,6 @@ var o_browse = {
                 o_browse.hideMetadataDetailModal();
             }
             o_browse.renderGalleryAndTable(data, this.url, view);
-            // Initialize tooltips using tooltipster in browse gallery and table
-            // Since we didn't set functionPosition, the tooltip will always open
-            // in the middle of the gallery view's top edge.
-            $(`${tab} .op-browse-gallery-tooltip`).tooltipster({
-                maxWidth: opus.tooltipsMaxWidth,
-                theme: opus.tooltipsTheme,
-                delay: opus.tooltipsDelay,
-                contentAsHTML: true,
-            });
-            $(`${tab} .op-browse-table-tooltip`).tooltipster({
-                maxWidth: opus.tooltipsMaxWidth,
-                theme: opus.tooltipsTheme,
-                delay: opus.tooltipsDelay,
-                contentAsHTML: true,
-                functionBefore: function(instance, helper){
-                    // Make sure all other tooltips are closed before a new one is opened
-                    // in table view.
-                    $.each($.tooltipster.instances(), function(i, inst){
-                        inst.close();
-                    });
-                },
-                // Make sure the tooltip position is next to the cursor when users
-                // move around the same row in the browse table view. Without this
-                // function, the tooltip will always open in the middle of the row.
-                functionPosition: function(instance, helper, position){
-                    return o_utils.setPreviewImageTooltipPosition(helper, position);
-                }
-            });
 
             if (opus.metadataDetailOpusId !== "") {
                 o_browse.metadataboxHtml(opus.metadataDetailOpusId, view);

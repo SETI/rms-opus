@@ -142,8 +142,9 @@ var o_cart = {
             let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
             let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
 
-            let allCheckboxesOptions = $(".op-download-options-product-types input");
+            let allCheckboxesOptions = $(".op-download-options-product-types .op-cart-current-ver-input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
+            allCheckboxesOptions = $(".op-download-options-product-types input");
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
             o_cart.updateSelectDeselectBtn(isAllCatOptionsChecked, isAllCatOptionsUnchecked,
@@ -160,8 +161,10 @@ var o_cart = {
             o_cart.updateCheckboxes(e.target, productList);
 
             if ($(e.target).hasClass("op-cart-select-all-btn")) {
-                $(".op-cart-select-btn").prop("disabled", true);
-                $(".op-cart-deselect-btn").prop("disabled", false);
+                // Make sure the non-current version check marks are not disabled when
+                // "Select all product types" is clicked
+                $(".op-cart-select-btn:not('.op-cart-select-btn-sub')").prop("disabled", true);
+                $(".op-cart-deselect-btn:not('.op-cart-deselect-btn-sub')").prop("disabled", false);
             } else {
                 $(".op-cart-select-btn").prop("disabled", false);
                 $(".op-cart-deselect-btn").prop("disabled", true);
@@ -175,12 +178,18 @@ var o_cart = {
 
             o_cart.updateCheckboxes(e.currentTarget, productList);
 
-            let allCheckboxesOptions = $(".op-download-options-product-types input");
+            let allCheckboxesOptions = $(".op-download-options-product-types .op-cart-current-ver-input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
+            allCheckboxesOptions = $(".op-download-options-product-types input");
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
             o_cart.updateSelectDeselectBtn(isAllOptionsChecked, isAllOptionsUnchecked,
                                            ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
+        });
+
+        // Show/hide the non-current versions of the files in cart table view
+        $("#cart").on("click", ".op-cart-download-show-ver input", function(e) {
+            $(".op-cart-ver-sub-header, .op-cart-ver-item").toggleClass("op-cart-ver-hidden");
         });
 
         // Initialize popover window for download links at the lower right corner in footer area.
@@ -254,16 +263,31 @@ var o_cart = {
          * Update checkboxes and disable/enable select all & deselect all
          * buttons correspondingly.
          */
-        if (($(target).hasClass("op-cart-select-btn") ||
-             $(target).hasClass("op-cart-select-all-btn"))) {
+        if ($(target).hasClass("op-cart-select-all-btn")) {
+            // When "Select all product types" is clicked, only select the current version
+            // of the files
+            for (let input of checkboxesOptions) {
+                let input_val = $(input).val();
+                let ver_idx = input_val.indexOf("@");
+                let ver = input_val.slice(ver_idx+1).toLowerCase();
+                if (ver !== "current") {
+                    continue;
+                }
+                $(input).prop("checked", true);
+            }
+        } else if ($(target).hasClass("op-cart-select-btn")) {
+            // Select all files under a category
             $(checkboxesOptions).prop("checked", true);
         } else if (($(target).hasClass("op-cart-deselect-btn") ||
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
+            // Deselect all files
             $(checkboxesOptions).prop("checked", false);
         } else {
             opus.logError("Target button in download data left pane has the wrong class.");
         }
         $(target).prop("disabled", true);
+        // Make sure tooltips are closed when the button is disabled.
+        $(".op-cart-tooltip").tooltipster("close");
         $(target).siblings().prop("disabled", false);
         o_cart.updateDownloadFileInfo();
     },
@@ -491,14 +515,17 @@ var o_cart = {
         }
 
         // update the panel numbers if we received them...
-        if (status.product_cat_list !== undefined) {
-            for (let index = 0; index < status.product_cat_list.length; index++) {
-                let slugList = status.product_cat_list[index][1];
-                for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
-                    let slugName = slugList[slugNdx].slug_name;
-                    $(`#op-product-${slugName} .op-options-obs`).html(o_utils.addCommas(slugList[slugNdx].product_count));
-                    $(`#op-product-${slugName} .op-options-files`).html(o_utils.addCommas(slugList[slugNdx].download_count));
-                    $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
+        if (status.product_cat_dict !== undefined) {
+            for (let pretty_name in status.product_cat_dict) {
+                let prod = status.product_cat_dict[pretty_name];
+                for (let ver in prod) {
+                    let slugList = prod[ver];
+                    for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
+                        let slugName = slugList[slugNdx].slug_name;
+                        $(`#op-product-${slugName} .op-options-obs`).html(o_utils.addCommas(slugList[slugNdx].product_count));
+                        $(`#op-product-${slugName} .op-options-files`).html(o_utils.addCommas(slugList[slugNdx].download_count));
+                        $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
+                    }
                 }
             }
         }
@@ -593,7 +620,31 @@ var o_cart = {
                     maxWidth: opus.downloadPaneTooltipsMaxWidth,
                     theme: opus.tooltipsTheme,
                     delay: opus.tooltipsDelay,
+                    functionBefore: function(instance, helper){
+                        // Make sure all other tooltips are closed before a new one is opened
+                        // in table view.
+                        $.each($.tooltipster.instances(), function(i, inst){
+                            inst.close();
+                        });
+                    },
                 });
+
+                // Properly disable/enable "v" & "x" for each product category when download
+                // pane is loaded.
+                for (let cat of $(".op-cart-select-btn")) {
+                    let productCategory = $(cat).data("category");
+                    let productInputs = $(`input[data-category="${productCategory}"]`);
+
+                    let prodTypeSelectAllBtn = $(`.op-cart-select-btn[data-category="${productCategory}"]`);
+                    let prodTypeDeselectAllBtn = $(`.op-cart-deselect-btn[data-category="${productCategory}"]`);
+                    let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
+                    let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
+                    if (isAllCatOptionsChecked) {
+                        $(`.op-cart-select-btn[data-category="${productCategory}"]`).prop("disabled", true);
+                    } else if (isAllCatOptionsUnchecked) {
+                        $(`.op-cart-deselect-btn[data-category="${productCategory}"]`).prop("disabled", true);
+                    }
+                }
             });
         } else {
             // Make sure "Add all results to cart" is still hidden in cart tab when user switches
