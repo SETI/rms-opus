@@ -9,7 +9,7 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL"
             ],
-            "couvis_documentation": [
+            "couvis_occ_documentation": [
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.docx",
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Cassini-UVIS-Final-Report.pdf",
@@ -71,7 +71,7 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL"
                 ],
-                "couvis_documentation": [
+                "couvis_occ_documentation": [
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.docx",
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Cassini-UVIS-Final-Report.pdf",
