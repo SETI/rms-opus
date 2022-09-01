@@ -254,7 +254,8 @@ def api_get_widget(request, **kwargs):
                  +'<span class="indicator fa fa-plus">'
                  +'</span>'
                  +'<span class="mult_group_label">'
-                 +str(glabel) + '</span></div>'
+                 +str(glabel) + '</span>'
+                 +'<span class="hints"></span></div>'
                  +'<ul class="mult_group"'
                  +' data-group=' + str(glabel) + '>'
                  +SearchForm(form_vals,
@@ -637,7 +638,6 @@ def api_init_detail_page(request, **kwargs):
     new_products = OrderedDict()
     for version in products:
         new_products[version] = OrderedDict()
-
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
