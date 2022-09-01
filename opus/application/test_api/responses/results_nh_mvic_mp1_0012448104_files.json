@@ -15,6 +15,11 @@
                 "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHLAMV_2001/data/20060612_001244/mp1_0012448104_0x530_sci_1_med.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHLAMV_2001/data/20060612_001244/mp1_0012448104_0x530_sci_1_full.jpg"
             ],
+            "nh_mvic_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Reuter-etal-2005-SPIE.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Ralph-Geometric-Distortion.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/FITS-Standard-4.0.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/NHxxMV_xxxx/NHLAMV_1001/NHLAMV_1001_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/NHxxMV_xxxx/NHLAMV_1001/NHLAMV_1001_index.lbl"
@@ -53,6 +58,11 @@
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHLAMV_2001/data/20060612_001244/mp1_0012448104_0x530_sci_1_small.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHLAMV_2001/data/20060612_001244/mp1_0012448104_0x530_sci_1_med.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHLAMV_2001/data/20060612_001244/mp1_0012448104_0x530_sci_1_full.jpg"
+                ],
+                "nh_mvic_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Reuter-etal-2005-SPIE.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Ralph-Geometric-Distortion.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/FITS-Standard-4.0.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/NHxxMV_xxxx/NHLAMV_1001/NHLAMV_1001_index.tab",

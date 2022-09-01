@@ -9,6 +9,10 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx/COVIMS_8001/data/VIMS_2014_175_L2PUP_E_TAU_10KM.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx/COVIMS_8001/data/VIMS_2014_175_L2PUP_E_TAU_10KM.LBL"
             ],
+            "covims_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_8xxx/VIMS-ring-occultations-summary.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_8xxx/Cassini-VIMS-Final-Report.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_index.lbl"
@@ -73,6 +77,10 @@
                 "covims_occ_10": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx/COVIMS_8001/data/VIMS_2014_175_L2PUP_E_TAU_10KM.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx/COVIMS_8001/data/VIMS_2014_175_L2PUP_E_TAU_10KM.LBL"
+                ],
+                "covims_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_8xxx/VIMS-ring-occultations-summary.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_8xxx/Cassini-VIMS-Final-Report.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_index.tab",

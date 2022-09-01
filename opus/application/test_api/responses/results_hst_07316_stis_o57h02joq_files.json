@@ -13,6 +13,11 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02JOQ_RAW.JPG",
                 "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02JOQ.LBL"
             ],
+            "hst_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Instrument-Handbook-20.0.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Data-Handbook-7.0.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/FITS-Standard-4.0.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.lbl"
@@ -49,6 +54,11 @@
                 "hst_raw": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02JOQ_RAW.JPG",
                     "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02JOQ.LBL"
+                ],
+                "hst_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Instrument-Handbook-20.0.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Data-Handbook-7.0.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/FITS-Standard-4.0.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.tab",
