@@ -1142,12 +1142,17 @@ def set_user_search_number(selections, extras):
     return s.id, new_entry
 
 
-def get_param_info_by_slug(slug, source, allow_units_override=False):
+def get_param_info_by_slug(slug, source, allow_units_override=False,
+                           check_valid_units=True):
     """Given a slug, look up the corresponding ParamInfo.
 
     If source == 'col', then this is a column name. We look at the
     slug name as given (current or old). If allow_units_override is True and
     a unit is specified with ":unit", we ignore it when searching for the ParamInfo.
+    If check_valid_units is True, we verify that the specified unit is one that is
+    permitted on this slug, and reset it to the default if it is a bad unit.
+    If check_valid_units is False, we simply return the specified unit, if any, without
+    checking. This is useful for normalizeurl.
 
     If source == 'widget', then this is a widget name. Widget names have a
     '1' on the end even if they are single-column ranges, so we just remove the
@@ -1176,6 +1181,7 @@ def get_param_info_by_slug(slug, source, allow_units_override=False):
     desired_units = None
     if source == 'col' and allow_units_override and ':' in slug:
         slug, _, desired_units = slug.partition(':')
+        desired_units = desired_units.lower()
 
     pi = None
     # Current slug as given
@@ -1193,10 +1199,11 @@ def get_param_info_by_slug(slug, source, allow_units_override=False):
 
     if pi:
         if source == 'col' and allow_units_override:
-            if desired_units is not None and not pi.is_valid_unit(desired_units):
-                log.error('get_param_info_by_slug: Slug "%s" unit "%s" invalid',
-                          slug, desired_units)
-                return None, None
+            if (check_valid_units and desired_units is not None and
+                not pi.is_valid_unit(desired_units)):
+                log.error('get_param_info_by_slug: Slug "%s" unit "%s" invalid -'
+                          'using default', slug, desired_units)
+                desired_units = None
             return pi, desired_units
 
         if source == 'search':

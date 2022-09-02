@@ -4,8 +4,6 @@
 #
 ################################################################################
 
-import json
-
 from django.apps import apps
 
 from tools.app_utils import get_mult_name
@@ -36,6 +34,7 @@ def query_table_for_opus_id(table_name, opus_id):
     if table_name == 'obs_general':
         return table_model.objects.filter(opus_id=opus_id)
     return table_model.objects.filter(obs_general__opus_id=opus_id)
+
 
 # Looking up entries in the mult tables is slow, so cache them in memory as they
 # are retrieved. There aren't that many mult tables or values, so this won't take

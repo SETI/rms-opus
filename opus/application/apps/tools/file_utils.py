@@ -7,7 +7,6 @@
 ################################################################################
 
 from collections import OrderedDict
-import json
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
