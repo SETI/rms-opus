@@ -643,7 +643,6 @@ def api_init_detail_page(request, **kwargs):
     new_products = OrderedDict()
     for version in products:
         new_products[version] = OrderedDict()
-
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
