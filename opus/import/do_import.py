@@ -1236,8 +1236,7 @@ def import_observation_table(instrument_obj,
                             column_val = 'Off'
                         else:
                             column_val = 'No'
-                    elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
-                                        'ON']:
+                    elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on', 'ON']:
                         if field_type == 'flag_onoff':
                             column_val = 'On'
                         else:
