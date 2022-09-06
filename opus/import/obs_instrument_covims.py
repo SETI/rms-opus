@@ -63,14 +63,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
     ################################
 
     def _target_name(self):
-        return self._cassini_intended_target_name()
-
-    def field_obs_general_target_name(self):
-        target_name, target_disp_name = self._target_name()
-        group_info = self._get_planet_group_info(target_name)
-        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
-                                 grouping=group_info['label'],
-                                 group_disp_order=group_info['disp_order'])
+        return [self._cassini_intended_target_name()]
 
     # We occasionally don't bother to generate ring_geo data for COVIMS, like during
     # cruise, so just use the given RA/DEC from the index if needed. We don't make

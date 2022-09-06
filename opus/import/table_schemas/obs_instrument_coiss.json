@@ -33,8 +33,7 @@
     },
     {
         "field_name": "data_conversion_type",
-        "field_type": "enum",
-        "field_enum_options": "'12BIT','8LSB','TABLE'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -62,8 +61,7 @@
     },
     {
         "field_name": "compression_type",
-        "field_type": "enum",
-        "field_enum_options": "'LOSSLESS','LOSSY','NOTCOMP'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -91,8 +89,7 @@
     },
     {
         "field_name": "gain_mode_id",
-        "field_type": "enum",
-        "field_enum_options": "'12 ELECTRONS PER DN','29 ELECTRONS PER DN','95 ELECTRONS PER DN','215 ELECTRONS PER DN'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -121,7 +118,7 @@
     },
     {
         "field_name": "image_observation_type",
-        "field_type": "char48",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -182,8 +179,7 @@
     },
     {
         "field_name": "shutter_mode_id",
-        "field_type": "enum",
-        "field_enum_options": "'NACONLY','WACONLY','BOTSIM'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -211,8 +207,7 @@
     },
     {
         "field_name": "shutter_state_id",
-        "field_type": "enum",
-        "field_enum_options": "'DISABLED','ENABLED'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -261,8 +256,7 @@
     },
     {
         "field_name": "instrument_mode_id",
-        "field_type": "enum",
-        "field_enum_options": "'FULL','SUM2','SUM4'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
@@ -288,7 +282,7 @@
     },
     {
         "field_name": "target_desc",
-        "field_type": "char75",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -310,7 +304,7 @@
     },
     {
         "field_name": "combined_filter",
-        "field_type": "char30",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -333,9 +327,8 @@
     },
     {
         "field_name": "camera",
-        "field_type": "enum",
+        "field_type": "mult_idx",
         "field_notnull": true,
-        "field_enum_options": "'W','N'",
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
@@ -364,9 +357,6 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

@@ -91,12 +91,12 @@ if __name__ == "__main__":
         clean_opus_id = opus_id.replace('-', '_')
         print(f'    def test__results_contents_{clean_opus_id}_metadata(self):')
         print(f'        "[test_results_contents.py] {opus_id} metadata"')
-        print(f'        url = "/api/metadata_v2/{opus_id}.json"')
+        print(f'        url = "/api/metadata/{opus_id}.json"')
         print(f'        self._run_json_equal_file(url, "results_{clean_opus_id}_metadata.json")')
         print()
 
-        # url = f'https://opus.pds-rings.seti.org/api/metadata_v2/{opus_id}.json'
-        url = f'http://127.0.0.1:8000/api/metadata_v2/{opus_id}.json'
+        # url = f'https://opus.pds-rings.seti.org/api/metadata/{opus_id}.json'
+        url = f'http://127.0.0.1:8000/api/metadata/{opus_id}.json'
         r = session.get(url)
         j = json.loads(r.text.replace('"NULL"', 'null'))
         with open(f'responses/results_{clean_opus_id}_metadata.json', 'w') as fp:

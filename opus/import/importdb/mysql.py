@@ -232,6 +232,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 field_type = 'timestamp'
             elif data_type == 'text':
                 field_type = 'text'
+            elif data_type == 'mult_list':
+                field_type = 'mult_list'
             else:
                 assert False, data_type
             if (field_type.startswith('int') and
@@ -295,7 +297,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         super(ImportDBMySQL, self)._exit()
 
     def create_table(self, namespace, raw_table_name, schema,
-                     ignore_if_exists=True, auto_create_mults=True):
+                     ignore_if_exists=True):
         """Create a new table from the given schema. Returns True if
            table successfully created; False if table already existed
            and ignore_if_exists==True."""
@@ -310,40 +312,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         cmd = ''
         key_cmd = ''
 
-        if auto_create_mults:
-            mult_schema = []
-            for column in schema:
-                if (column.get('put_mults_here', False) or
-                    column.get('pi_referred_slug', None)):
-                    continue
-                pi_form_type = column.get('pi_form_type', None)
-                if pi_form_type is not None and pi_form_type.find(':') != -1:
-                    pi_form_type = pi_form_type[:pi_form_type.find(':')]
-                if pi_form_type not in self._mult_form_types:
-                    continue
-                field_name = column['field_name']
-                entry = {
-                    'field_name': 'mult_'+raw_table_name+'_'+field_name,
-                    'field_type': 'uint4',
-                    'field_key': 'foreign',
-                    'field_key_foreign': [
-                            'mult_'+raw_table_name+'_'+field_name,
-                            "id"
-                        ],
-                    'field_notnull': True
-                }
-                mult_schema.append(entry)
-            new_schema = []
-            for column in schema:
-                if column.get('pi_referred_slug', False):
-                    continue
-                if column.get('put_mults_here', False):
-                    new_schema += mult_schema
-                else:
-                    new_schema.append(column)
-            schema = new_schema
-
         for column in schema:
+            if 'pi_referred_slug' in column:
+                continue
+
             if cmd != '':
                 cmd += ',\n'
 
@@ -388,16 +360,18 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 cmd += 'varchar('+field_type[7:]+')'
             elif field_type == 'text':
                 cmd += 'text'
-            elif field_type == 'json':
+            elif field_type in ('mult_list', 'json'):
                 cmd += 'JSON'
             elif field_type == 'enum':
                 enum_str = column.get('field_enum_options', None)
                 assert enum_str, (raw_table_name, column)
                 cmd += f'enum({enum_str})'
             elif field_type == 'flag_yesno':
-                cmd += "enum('Yes','No')"
+                cmd += 'int unsigned' # Index for mult table
             elif field_type == 'flag_onoff':
-                cmd += "enum('On','Off')"
+                cmd += 'int unsigned' # Index for mult table
+            elif field_type == 'mult_idx':
+                cmd += 'int unsigned' # Index for mult table
             elif field_type == 'timestamp':
                 cmd += 'timestamp'
             elif field_type == 'datetime':

@@ -17,8 +17,8 @@ python main_opus_import.py --do-all-import --override-db-schema $1 $3 VOYAGER
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 NEWHORIZONS
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 HST
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 COCIRS
-python main_opus_import.py --do-all-import --override-db-schema $1 $3 COUVIS_0xxx
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 COISS
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 COUVIS_0xxx
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 COVIMS_0xxx
 
 python main_opus_import.py --cleanup-aux-tables --override-db-schema $1

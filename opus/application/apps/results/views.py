@@ -10,8 +10,8 @@
 #    Format: api/data.(?P<fmt>json|html|csv)
 #    Format: __api/data.(?P<fmt>csv)
 #
-#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
-#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 #
 #    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
 #    Format: api/images.(json|html|csv)
@@ -82,7 +82,8 @@ from tools.app_utils import (cols_to_slug_list,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
 from tools.db_utils import (query_table_for_opus_id,
-                            lookup_pretty_value_for_mult)
+                            lookup_pretty_value_for_mult,
+                            lookup_pretty_value_for_mult_list)
 from tools.file_utils import get_pds_preview_images, get_pds_products
 
 from opus_support import (format_unit_value,
@@ -417,36 +418,6 @@ def api_get_metadata(request, opus_id, fmt):
                     Limit results to particular categories. Categories can be
                     given as "pretty names" as displayed on the Details page,
                     or can be given as table names.
-                    Note that the JSON return will be indexed by database field
-                    name, not by slug name. This is never what we actually want
-                    but is provided for backwards compatibility and is no longer
-                    documented.
-
-    Can return JSON, HTML, or CSV.
-
-    JSON is indexed by pretty category name, then by field database name (EEK).
-
-    HTML and CSV return fully qualified labels.
-    """
-    return get_metadata(request, opus_id, fmt,
-                        'api_get_metadata', True, False)
-
-@never_cache
-def api_get_metadata_v2(request, opus_id, fmt):
-    r"""Return all metadata, sorted by category, for this opus_id.
-
-    This is a PUBLIC API.
-
-    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
-
-    Arguments: cols=<columns>
-                    Limit results to particular columns.
-                    This is a list of slugs separated by commas.
-                    If cols is supplied, cats is ignored.
-               cats=<cats>
-                    Limit results to particular categories. Categories can be
-                    given as "pretty names" as displayed on the Details page,
-                    or can be given as table names.
 
     Can return JSON, HTML, or CSV.
 
@@ -454,15 +425,15 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     HTML and CSV return fully qualified labels.
     """
-    return get_metadata(request, opus_id, fmt,
-                        'api_get_metadata_v2', False, False)
+    return get_metadata(request, opus_id, fmt, 'api_get_metadata', False)
 
-def api_get_metadata_v2_internal(request, opus_id, fmt):
+
+def api_get_metadata_internal(request, opus_id, fmt):
     r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PRIVATE API.
 
-    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+    Format: __api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -484,22 +455,21 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
     HTML and CSV return fully qualified labels.
 
-    The only difference between __api/metadata_v2 and api_metadata_v2 is in the
+    The only difference between __api/metadata and api_metadata is in the
     returned HTML. The __api version returns an internally-formatted HTML needed
     by the Details tab including things like tooltips. The api version returns
     an externally-formatted HTML that is acceptable to outside users without
     exposing internal details.
     """
-    return get_metadata(request, opus_id, fmt,
-                        'api_get_metadata_v2_internal', False, True)
+    return get_metadata(request, opus_id, fmt, 'api_get_metadata_internal', True)
 
-def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
+def get_metadata(request, opus_id, fmt, api_name, internal):
     api_code = enter_api_call(api_name, request)
     if not request or request.GET is None or request.META is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
         # don't care.
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/metadata_v2/{opus_id}.{fmt}'))
+        ret = Http404(HTTP404_NO_REQUEST(f'/api/metadata/{opus_id}.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -519,7 +489,6 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     if cols or cols == '':
         ret = _get_metadata_by_slugs(request, opus_id, cols,
                                      fmt,
-                                     return_db_names,
                                      internal,
                                      api_code)
         if ret is None or throw_random_http404_error():
@@ -600,11 +569,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     param_info.referred_slug = referred_slug
                 else:
                     all_param_names.append(param_info.name)
-
-                if return_db_names:
-                    all_info[param_info.name] = param_info
-                else:
-                    all_info[param_info.slug] = param_info
+                all_info[param_info.slug] = param_info
             # Store all param info objects for current table
             data_all_info[table_label] = all_info
 
@@ -641,13 +606,23 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 (form_type, form_type_format,
                  form_type_unit_id) = parse_form_type(param_info.form_type)
 
-                if (form_type in settings.MULT_FORM_TYPES and
-                    not return_db_names):
-                    mult_name = get_mult_name(param_info.param_qualified_name())
-                    mult_val = results.values(mult_name)[0][mult_name]
-                    result = lookup_pretty_value_for_mult(param_info,
-                                                          mult_val,
-                                                         cvt_null=(fmt!='json'))
+                if form_type in settings.MULT_FORM_TYPES:
+                    mult_val = results.values(param_info.name)[0][param_info.name]
+                    if form_type != 'MULTIGROUP':
+                        # This handles the case of a single mult value where the
+                        # value is the index into the associated mult table
+                        result = lookup_pretty_value_for_mult(param_info,
+                                                              mult_val,
+                                                              cvt_null=(fmt!='json'))
+                    else:
+                        # This handles the case of a "multisel" mult value where the
+                        # value is a JSON string containing a list of indexes into
+                        # the associated mult table. We display these as
+                        # str1,str2,str3
+                        result = lookup_pretty_value_for_mult_list(param_info,
+                                                                   mult_val,
+                                                                   cvt_null=(fmt!='json'))
+
                 else:
                     result = result_vals.get(param_info.name, None)
                     # If this is the param info from referred_slug, we will get
@@ -657,7 +632,6 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                                     request, opus_id,
                                                     param_info.referred_slug,
                                                     'raw_data',
-                                                    return_db_names,
                                                     internal,
                                                     api_code)
                         result = r_data[0].get(param_info.referred_slug, None)
@@ -677,8 +651,6 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
 
                 if fmt == 'csv':
                     index = param_info.fully_qualified_label_results()
-                elif return_db_names:
-                    index = param_info.name
                 else:
                     index = param_info.slug
                 if index:
@@ -1383,15 +1355,18 @@ def get_search_results_chunk(request, use_cart=None,
         tables.add(table)
         (form_type, form_type_format,
          form_type_unit_id) = parse_form_type(pi.form_type)
-        if form_type in settings.MULT_FORM_TYPES:
+        if form_type in settings.MULT_FORM_TYPES and form_type != 'MULTIGROUP':
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
             mult_table = get_mult_name(pi.param_qualified_name())
-            mult_tables.add((mult_table, table))
+            mult_tables.add((mult_table, table, pi.name))
             column_names.append(mult_table+'.label')
         else:
+            # For a non-mult column or a MULTIGROUP mult. In the latter case we don't want
+            # to return the .label because it's a JSON list of multiple IDs. So just
+            # return that list so we can look up the pretty values later.
             column_names.append(column)
-        form_type_formats.append((form_type_format, form_type_unit_id))
+        form_type_formats.append((pi, form_type, form_type_format, form_type_unit_id))
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -1422,8 +1397,7 @@ def get_search_results_chunk(request, use_cart=None,
     all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
     if not all_order:
         all_order = settings.DEFAULT_SORT_ORDER
-    if (settings.FINAL_SORT_ORDER
-        not in all_order.replace('-','').split(',')):
+    if (settings.FINAL_SORT_ORDER not in all_order.replace('-','').split(',')):
         if all_order:
             all_order += ','
         all_order += settings.FINAL_SORT_ORDER
@@ -1551,9 +1525,9 @@ def get_search_results_chunk(request, use_cart=None,
             sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, table) in mult_tables:
+        for (mult_table, table, field_name) in mult_tables:
             sql += ' LEFT JOIN '+q(mult_table)
-            sql += ' ON '+q(table)+'.'+q(mult_table)+'='
+            sql += ' ON '+q(table)+'.'+q(field_name)+'='
             sql += q(mult_table)+'.'+q('id')
 
         # But the cache table is an INNER JOIN because we only want opus_ids
@@ -1597,9 +1571,9 @@ def get_search_results_chunk(request, use_cart=None,
             sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, table) in mult_tables | order_mult_tables:
+        for (mult_table, table, field_name) in mult_tables | order_mult_tables:
             sql += ' LEFT JOIN '+q(mult_table)
-            sql += ' ON '+q(table)+'.'+q(mult_table)+'='
+            sql += ' ON '+q(table)+'.'+q(field_name)+'='
             sql += q(mult_table)+'.'+q('id')
 
         # But the cart table is an INNER JOIN because we only want
@@ -1694,8 +1668,19 @@ def get_search_results_chunk(request, use_cart=None,
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
     # If pi_form_type has format, we format the results
-    for idx, (form_type_format, form_type_unit_id) in enumerate(form_type_formats):
+    # This is also where we make pretty lists for MULTIGROUPs
+    for idx, (param_info, form_type, form_type_format,
+              form_type_unit_id) in enumerate(form_type_formats):
         for entry in results:
+            if form_type == 'MULTIGROUP':
+                # This handles the case of a "multisel" mult value where the
+                # value is a JSON string containing a list of indexes into
+                # the associated mult table. We display these as
+                # str1,str2,str3
+                result = lookup_pretty_value_for_mult_list(param_info,
+                                                           json.loads(entry[idx]),
+                                                           cvt_null=True)
+                entry[idx] = result
             if entry[idx] != 'N/A':
                 # Result is returned in proper format converted to
                 # the given unit
@@ -1717,8 +1702,7 @@ def get_search_results_chunk(request, use_cart=None,
     return (page_no, start_obs, limit, results, all_order, aux_dict, None)
 
 
-def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
-                           internal, api_code):
+def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
     "Returns results for specified slugs."
     (page_no, start_obs, limit,
      page, order, aux, error) = get_search_results_chunk(
@@ -1818,43 +1802,43 @@ def get_triggered_tables(selections, extras, api_code=None):
         trigger_tab = partable.trigger_tab
         trigger_col = partable.trigger_col
         trigger_val = partable.trigger_val
-        partable = partable.partable
+        partable_name = partable.partable
 
-        if partable in triggered_tables:
+        if partable_name in triggered_tables:
             continue  # Already triggered, no need to check
 
-        if trigger_tab + trigger_col in queries:
-            results = queries[trigger_tab + trigger_col]
+        if trigger_tab == 'obs_surface_geometry_name':
+            # Surface geometry has multiple targets per observation
+            # so we just want to know if our val is in the result
+            # (not the only result)
+            if 'obs_surface_geometry_name.target_name' in selections:
+                if (trigger_val.upper() ==
+                    selections['obs_surface_geometry_name.target_name'][0].upper()):
+                    # If the selected surfacegeo target has no result, we
+                    # still want to have the related menu item displayed.
+                    triggered_tables.append(partable_name)
         else:
-            trigger_model = apps.get_model('search',
-                                           ''.join(trigger_tab.title()
-                                                   .split('_')))
-            results = trigger_model.objects
-            if selections:
-                if trigger_tab == 'obs_general':
-                    where = connection.ops.quote_name(trigger_tab) + '.id='
-                    where += user_query_table + '.id'
-                else:
-                    where = connection.ops.quote_name(trigger_tab)
-                    where += '.obs_general_id='
-                    where += connection.ops.quote_name(user_query_table) + '.id'
-                results = results.extra(where=[where], tables=[user_query_table])
-            results = results.distinct().values(trigger_col)
-            queries.setdefault(trigger_tab + trigger_col, results)
+            if trigger_tab + trigger_col in queries:
+                results = queries[trigger_tab + trigger_col]
+            else:
+                trigger_model = apps.get_model('search',
+                                               ''.join(trigger_tab.title()
+                                                       .split('_')))
+                results = trigger_model.objects
+                if selections:
+                    if trigger_tab == 'obs_general':
+                        where = connection.ops.quote_name(trigger_tab) + '.id='
+                        where += user_query_table + '.id'
+                    else:
+                        where = connection.ops.quote_name(trigger_tab)
+                        where += '.obs_general_id='
+                        where += connection.ops.quote_name(user_query_table) + '.id'
+                    results = results.extra(where=[where], tables=[user_query_table])
+                results = results.distinct().values(trigger_col)
+                queries.setdefault(trigger_tab + trigger_col, results)
 
-        if len(results) == 1 and results[0][trigger_col] == trigger_val:
-            triggered_tables.append(partable)
-
-        # Surface geometry has multiple targets per observation
-        # so we just want to know if our val is in the result
-        # (not the only result)
-        if 'obs_surface_geometry_name.target_name' in selections:
-            if (trigger_tab == 'obs_surface_geometry_name' and
-                trigger_val.upper() ==
-                selections['obs_surface_geometry_name.target_name'][0].upper()):
-                # If the selected surfacegeo target has no result, we
-                # still want to have the related menu item displayed.
-                triggered_tables.append(partable)
+            if len(results) == 1 and str(results[0][trigger_col]) == trigger_val:
+                triggered_tables.append(partable_name)
 
     # Now hack in the proper ordering of tables
     final_table_list = []

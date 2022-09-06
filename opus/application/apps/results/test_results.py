@@ -17,7 +17,6 @@ from results.views import (api_get_categories_for_opus_id,
                            api_get_images,
                            api_get_images_by_size,
                            api_get_metadata,
-                           api_get_metadata_v2,
                            api_get_product_types_for_opus_id,
                            api_get_product_types_for_search,
                            get_triggered_tables,
@@ -106,7 +105,7 @@ class resultsTests(TestCase):
         no_request = self.factory.get('dummy')
         no_request.META = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
+            r'Internal error \(No request was provided\) for /api/metadata/vg-iss-2-s-c4360845.json'):
             api_get_metadata(no_request, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_no_get(self):
@@ -114,29 +113,8 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/metadata/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
+            r'Internal error \(No request was provided\) for /api/metadata/vg-iss-2-s-c4360845.json'):
             api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
-
-
-            ##################################################
-            ######### api_get_metadata_v2 UNIT TESTS #########
-            ##################################################
-
-    def test__api_get_metadata_v2_no_request(self):
-        "[test_results.py] api_get_metadata_v2: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
-            api_get_metadata_v2(no_request, 'vg-iss-2-s-c4360845', 'json')
-
-    def test__api_get_metadata_v2_no_get(self):
-        "[test_results.py] api_get_metadata_v2: no GET"
-        request = self.factory.get('/api/metadata_v2/vg-iss-2-s-c4360845.json')
-        request.GET = None
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
-            api_get_metadata_v2(request, 'vg-iss-2-s-c4360845', 'json')
 
 
             #############################################

@@ -18,7 +18,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
     * [Return Formats](#returnformats)
     * [Getting Metadata](#gettingmetadata)
       * [`api/data.[fmt]` - Return Metadata from a Search](#datafmt)
-      * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUS ID](#metadatav2fmt)
+      * [`api/metadata/[opusid].[fmt]` - Return Metadata for an OPUS ID](#metadatafmt)
     * [Getting Data](#gettingdata)
       * [`api/download/[opusid].zip` - Download Files for an O  PUS ID](#downloadopusidzip)
       * [`api/files.json` - Return URLs of Files from a Search](#filesjson)
@@ -376,7 +376,7 @@ Example:
 
 
 
-<h3 id="metadatav2fmt"><code>api/metadata_v2/[opusid].[fmt]</code> - Return Metadata for an OPUSID</h3>
+<h3 id="metadatafmt"><code>api/metadata/[opusid].[fmt]</code> - Return Metadata for an OPUSID</h3>
 
 Get all available, or particular, metadata for a single observation.
 
@@ -399,7 +399,7 @@ Examples:
 
 * Retrieve all metadata for a single Cassini ISS Saturn observation in JSON format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.json%ENDEXTLINK%
 
     Return value:
 
@@ -421,7 +421,7 @@ Examples:
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in JSON format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json?cols=time1,time2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.json?cols=time1,time2%ENDEXTLINK%
 
     Return value:
 
@@ -438,7 +438,7 @@ Examples:
 
 * Retrieve PDS and Images Constraints only for a single Cassini ISS Saturn Observation in JSON format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
     Return value:
 
@@ -469,7 +469,7 @@ The return value is a series of text lines. If `cols` is supplied, the return va
 
 * Retrieve all metadata for a single Cassini ISS Saturn observation in CSV format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.csv%ENDEXTLINK%
 
     Return value:
 
@@ -488,7 +488,7 @@ Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in CSV format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv?cols=time1,time2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.csv?cols=time1,time2%ENDEXTLINK%
 
     Return value:
 
@@ -499,7 +499,7 @@ Observation Start Time,Observation Stop Time
 
 * Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in CSV format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
     Return value:
 
@@ -520,7 +520,7 @@ Examples:
 
 * Retrieve all metadata for a single Cassini ISS Saturn observation in HTML format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.html%ENDEXTLINK%
 
     Return value:
 
@@ -545,7 +545,7 @@ Examples:
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in HTML format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html?cols=time1,time2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.html?cols=time1,time2%ENDEXTLINK%
 
     Return value:
 
@@ -559,7 +559,7 @@ Examples:
 
 * Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
 
-    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
     Return value:
 

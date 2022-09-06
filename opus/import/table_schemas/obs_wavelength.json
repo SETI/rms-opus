@@ -275,8 +275,7 @@
     },
     {
         "field_name": "polarization_type",
-        "field_type": "enum",
-        "field_enum_options": "'LINEAR','CIRCULAR','NONE'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
@@ -297,9 +296,6 @@
               [   0,   "LINEAR",   "Linear",   "010", "Y", null, null],
               [   1,     "NONE",     "None",   "020", "Y", null, null]
           ]
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

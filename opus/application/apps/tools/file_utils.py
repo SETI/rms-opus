@@ -7,7 +7,6 @@
 ################################################################################
 
 from collections import OrderedDict
-import json
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
@@ -216,9 +215,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
             preview_json = preview_jsons[idx]
         else:
             try:
-                preview_json_str = (ObsGeneral.objects.get(opus_id=opus_id)
-                                    .preview_images)
-                preview_json = json.loads(preview_json_str)
+                preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
             except ObjectDoesNotExist:
                 log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)

@@ -7,7 +7,9 @@ from django.db import connection
 from django.db.models import Count
 
 from paraminfo.models import ParamInfo
-from search.models import (MultObsGeneralPlanetId,
+from search.models import (MultObsGeneralInstrumentId,
+                           MultObsGeneralMissionId,
+                           MultObsGeneralPlanetId,
                            ObsGeneral,
                            ObsInstrumentCocirs,
                            ObsInstrumentCoiss,
@@ -71,8 +73,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for mission_id='CO' and obs_mission_cassini.
         """
+        mission_id = (MultObsGeneralMissionId.objects.values_list('id')
+                      .filter(value='CO'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(mission_id='CO')
+               .filter(mission_id=mission_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsMissionCassini.objects.values_list('volume_id')
@@ -89,8 +93,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for mission_id='GO' and obs_mission_galileo.
         """
+        mission_id = (MultObsGeneralMissionId.objects.values_list('id')
+                      .filter(value='GO'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(mission_id='GO')
+               .filter(mission_id=mission_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsMissionGalileo.objects.values_list('volume_id')
@@ -107,8 +113,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for mission_id='HST' and obs_mission_hubble.
         """
+        mission_id = (MultObsGeneralMissionId.objects.values_list('id')
+                      .filter(value='HST'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(mission_id='HST')
+               .filter(mission_id=mission_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsMissionHubble.objects.values_list('volume_id')
@@ -125,8 +133,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for mission_id='NH' and obs_mission_newhorizons.
         """
+        mission_id = (MultObsGeneralMissionId.objects.values_list('id')
+                      .filter(value='NH'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(mission_id='NH')
+               .filter(mission_id=mission_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsMissionNewHorizons.objects.values_list('volume_id')
@@ -143,8 +153,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for mission_id='VG' and obs_mission_voyager.
         """
+        mission_id = (MultObsGeneralMissionId.objects.values_list('id')
+                      .filter(value='VG'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(mission_id='VG')
+               .filter(mission_id=mission_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsMissionVoyager.objects.values_list('volume_id')
@@ -156,13 +168,15 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__COCIRS_counts_match_obs_general(self):
+    def test__cocirs_counts_match_obs_general(self):
         """DB Integrity: volumes in obs_general = obs_instrument_cocirs
            Test that the observation count per volume is the same in
            obs_general for instrument_id='COCIRS' and obs_instrument_cocirs.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='COCIRS'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='COCIRS')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentCocirs.objects.values_list('volume_id')
@@ -174,13 +188,15 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__COISS_counts_match_obs_general(self):
+    def test__coiss_counts_match_obs_general(self):
         """DB Integrity: volumes in obs_general = obs_instrument_coiss
            Test that the observation count per volume is the same in
            obs_general for instrument_id='COISS' and obs_instrument_coiss.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='COISS'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='COISS')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentCoiss.objects.values_list('volume_id')
@@ -192,13 +208,16 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__COUVIS_counts_match_obs_general(self):
+    def test__couvis_counts_match_obs_general(self):
         """DB Integrity: volumes in obs_general = obs_instrument_couvis
            Test that the observation count per volume is the same in
            obs_general for instrument_id='COUVIS' and obs_instrument_couvis.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='COUVIS'))[0][0]
+        print(instrument_id)
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='COUVIS')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentCouvis.objects.values_list('volume_id')
@@ -210,13 +229,15 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__COVIMS_counts_match_obs_general(self):
+    def test__covims_counts_match_obs_general(self):
         """DB Integrity: volumes in obs_general = obs_instrument_covims
            Test that the observation count per volume is the same in
            obs_general for instrument_id='COVIMS' and obs_instrument_covims.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='COVIMS'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='COVIMS')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentCovims.objects.values_list('volume_id')
@@ -228,13 +249,15 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__GOSSI_counts_match_obs_general(self):
+    def test__gossi_counts_match_obs_general(self):
         """DB Integrity: volumes in obs_general = obs_instrument_gossi
            Test that the observation count per volume is the same in
            obs_general for instrument_id='GOSSI' and obs_instrument_gossi.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='GOSSI'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='GOSSI')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentGossi.objects.values_list('volume_id')
@@ -251,8 +274,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for instrument_id='NHLORRI' and obs_instrument_nhlorri.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='NHLORRI'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='NHLORRI')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentNhlorri.objects.values_list('volume_id')
@@ -269,8 +294,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for instrument_id='NHMVIC' and obs_instrument_nhmvic.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='NHMVIC'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='NHMVIC')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentNhmvic.objects.values_list('volume_id')
@@ -287,8 +314,10 @@ class DBIntegrityTest(TestCase):
            Test that the observation count per volume is the same in
            obs_general for instrument_id='VGISS' and obs_instrument_vgiss.
         """
+        instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
+                         .filter(value='VGISS'))[0][0]
         obs = (ObsGeneral.objects.values_list('volume_id')
-               .filter(instrument_id='VGISS')
+               .filter(instrument_id=instrument_id)
                .annotate(Count('volume_id'))
                .order_by('volume_id'))
         ref = (ObsInstrumentVgiss.objects.values_list('volume_id')
@@ -301,14 +330,14 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__mult_field_matches_id_fields_in_mult_tables(self):
-        """DB Integrity: intended target name mults exist
-           Check the obs_general target_name mult to make sure there are no
+        """DB Integrity: instrument mults exist
+           Check the obs_general instrument_id mult to make sure there are no
            references to an id in the mult table that don't have entries.
         """
         cursor = connection.cursor()
         q = """SELECT COUNT(*) FROM obs_general
-               WHERE mult_obs_general_target_name NOT IN
-                   (SELECT id FROM mult_obs_general_target_name)"""
+               WHERE instrument_id NOT IN
+                   (SELECT id FROM mult_obs_general_instrument_id)"""
         cursor.execute(q)
         result = cursor.fetchone()
         cursor.close()

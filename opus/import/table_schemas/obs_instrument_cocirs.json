@@ -33,7 +33,7 @@
     },
     {
         "field_name": "detector_id",
-        "field_type": "char3",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_cocirs",
@@ -176,9 +176,6 @@
         "pi_slug": "COCIRSinstrumentmodeallflag",
         "pi_sub_heading": null,
         "pi_tooltip": null
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

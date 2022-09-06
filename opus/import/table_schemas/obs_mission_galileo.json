@@ -33,7 +33,7 @@
     },
     {
         "field_name": "orbit_number",
-        "field_type": "char2",
+        "field_type": "mult_idx",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_galileo",
@@ -142,9 +142,6 @@
         "pi_slug": "GALILEOspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": ""
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",
