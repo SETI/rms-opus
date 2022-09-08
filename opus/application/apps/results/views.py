@@ -1350,7 +1350,7 @@ def get_search_results_chunk(request, use_cart=None,
     mult_tables = set()
     for slug in cols_to_slug_list(cols):
         # First try the full name, which might include a trailing 1 or 2
-        # Allow allow the caller to specify desired units for the retrieved metadata
+        # Allow the caller to specify desired units for the retrieved metadata
         pi, desired_units = get_param_info_by_slug(slug, 'col',
                                                    allow_units_override=True)
         if not pi or throw_random_http404_error():
