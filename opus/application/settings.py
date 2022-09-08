@@ -334,8 +334,8 @@ PREVIEW_GUIDES = {
 }
 
 # Browse products displayed in OPUS detail tab
-DISPLAYED_BROWSE_PRODUCTS = ['browse_medium','diagram_medium']
-FULL_SIZE_BROWSE_PRODUCTS = ['browse_full','diagram_full']
+DISPLAYED_BROWSE_PRODUCTS = ['browse_medium','diagram_medium',
+                             'browse_full','diagram_full']
 
 RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','MULTIGROUP')

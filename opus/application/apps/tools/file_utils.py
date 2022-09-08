@@ -267,12 +267,8 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
     """
     browse_products = get_pds_products(opus_id,
                                        product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
-    # Get full size browse products
-    browse_products_full = get_pds_products(opus_id,
-                                       product_types=settings.FULL_SIZE_BROWSE_PRODUCTS)
 
     selected_browse_products = browse_products[opus_id].get(version_name, [])
-    selected_browse_products_full = browse_products_full[opus_id].get(version_name, [])
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
     if len(selected_browse_products) == 0:
         return [(settings.THUMBNAIL_NOT_FOUND, settings.THUMBNAIL_NOT_FOUND)]
@@ -280,13 +276,20 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
     # One opus id could have multiple previews, for example:
     # co-rss-occ-2008-039-rev058c-x43-i
     # co-uvis-occ-2005-232-alpsco-i
+    # Get paired medium and full browse urls in res (mediem url, full url)
+    disp_prod_dict = {}
     for p in selected_browse_products:
-        for browse_med_url in selected_browse_products[p]:
-            basename, _, _ = browse_med_url.partition('_med.')
-            # search for the corresponding full size image in full size browse products
-            for p_full in selected_browse_products_full:
-                for browse_full_url in selected_browse_products_full[p_full]:
-                    if basename in browse_full_url:
-                        res.append((browse_med_url, browse_full_url))
+        for browse_url in selected_browse_products[p]:
+            if '_med.' in browse_url:
+                basename, _, _ = browse_url.partition('_med.')
+                if basename in disp_prod_dict:
+                    res.append((browse_url, disp_prod_dict[basename]))
+                    continue
+            else: # '_full.' in browse_url
+                basename, _, _ = browse_url.partition('_full.')
+                if basename in disp_prod_dict:
+                    res.append((disp_prod_dict[basename], browse_url))
+                    continue
+            disp_prod_dict[basename] = browse_url
 
     return res
