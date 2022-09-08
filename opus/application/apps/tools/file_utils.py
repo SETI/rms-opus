@@ -263,7 +263,8 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
 
 def get_displayed_browse_products(opus_id, version_name='Current'):
     """Given an opus_id, return a list of browse product URLs to display in the
-       detail tab.
+       detail tab. The function will return a list of tuples, and each tuple will
+       be (medium browse url, full browse url).
     """
     browse_products = get_pds_products(opus_id,
                                        product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
@@ -276,7 +277,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
     # One opus id could have multiple previews, for example:
     # co-rss-occ-2008-039-rev058c-x43-i
     # co-uvis-occ-2005-232-alpsco-i
-    # Get paired medium and full browse urls in res (mediem url, full url)
+    # Get paired medium and full browse urls in res (medium url, full url)
     disp_prod_dict = {}
     for p in selected_browse_products:
         for browse_url in selected_browse_products[p]:
