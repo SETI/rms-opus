@@ -1,6 +1,6 @@
 PDS Constraints
-Volume ID,Data Set ID,Product ID,Product Creation Time,Primary File Spec,OPUS ID,Note
+Volume ID,Data Set ID,Product ID,Product Creation Time (YMDhms),Primary File Spec,OPUS ID,Note
 HSTJ0_9975,HST-M-ACS-5-ID9975-V1.1,J8N410LBQ,2013-06-17T12:57:23.000,HSTJ0_9975/DATA/VISIT_10/J8N410LBQ.LBL,hst-09975-acs-j8n410lbq,
 Hubble Mission Constraints
-Detector [Hubble],Filter Name [Hubble],Filter Type [Hubble],STIS Optical Element [Hubble],Aperture Type [Hubble],STIS Proposed Aperture Type [Hubble],HST Proposal ID [Hubble],PI Name [Hubble],STScI File Name [Hubble],HST Target Name [Hubble],WFPC2 Targeted Detector [Hubble],WFPC2 PC1 Flag [Hubble],WFPC2 WF2 Flag [Hubble],WFPC2 WF3 Flag [Hubble],WFPC2 WF4 Flag [Hubble],Exposure Type [Hubble],Fine Guidance System Lock [Hubble],Gain Mode [Hubble],Instrument Mode [Hubble],Publication Date [Hubble],Exposure Duration [Image] (secs)
+Detector [Hubble],Filter Name [Hubble],Filter Type [Hubble],STIS Optical Element [Hubble],Aperture Type [Hubble],STIS Proposed Aperture Type [Hubble],HST Proposal ID [Hubble],PI Name [Hubble],STScI File Name [Hubble],HST Target Name [Hubble],WFPC2 Targeted Detector [Hubble],WFPC2 PC1 Flag [Hubble],WFPC2 WF2 Flag [Hubble],WFPC2 WF3 Flag [Hubble],WFPC2 WF4 Flag [Hubble],Exposure Type [Hubble],Fine Guidance System Lock [Hubble],Gain Mode [Hubble],Instrument Mode [Hubble],Publication Date [Hubble] (YMDhms),Exposure Duration [Image] (secs)
 ACS-HRC,ACS-F435W,Broadband,N/A,ACS-HRC,N/A,9975,"James, Philip B.",J8N410LBQ,MARS-CML015,N/A,N/A,N/A,N/A,N/A,Normal,Fine,N/A,ACCUM,2003-08-07T00:00:00.000,0.2

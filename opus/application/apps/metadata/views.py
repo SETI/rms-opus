@@ -197,7 +197,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug, 'col')
+    param_info = get_param_info_by_slug(slug, 'col', allow_units_override=False)
     if not param_info or throw_random_http404_error():
         log.error('api_get_mult_counts: Could not find param_info entry for '
                   +'slug %s *** Selections %s *** Extras %s', str(slug),
@@ -740,7 +740,9 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                     referred_slug = f.referred_slug
                     category = f.category_name
                     disp_order = f.disp_order
-                    f = get_param_info_by_slug(referred_slug, 'col')
+                    # A referred slug will never contain a unit specifier
+                    f = get_param_info_by_slug(referred_slug, 'col',
+                                               allow_units_override=False)
                     f.label = f.body_qualified_label()
                     f.label_results = f.body_qualified_label_results(True)
                     f.referred_slug = referred_slug

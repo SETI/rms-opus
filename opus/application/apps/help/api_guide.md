@@ -91,7 +91,19 @@ cols=observationduration,rightasc1,rightasc2
 
 However, it would be illegal to say `cols=observationduration1` or `cols=rightasc`.
 
-See the section on [Available Metadata Fields](#availablefields) below for more information.
+For some numeric fields, the units for the returned values may be specified after a `:`. For example:
+
+%CODE%
+cols=opusid,time1:ydhms,time2:ydhms,observationduration:milliseconds
+%ENDCODE%
+
+If no units are specified, the default units are used. A metadata field may be specified more than once with different units if desired:
+
+%CODE%
+cols=time1,time1:ydhms,time1:jd,time1:et
+%ENDCODE%
+
+See the section on [Available Metadata Fields](#availablefields) below for more information, including a list of available units for each field.
 
 <h2 id="performingsearches">Performing Searches</h2>
 
