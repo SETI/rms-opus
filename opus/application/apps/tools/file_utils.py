@@ -263,10 +263,12 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
 
 def get_displayed_browse_products(opus_id, version_name='Current'):
     """Given an opus_id, return a list of browse product URLs to display in the
-       detail tab.
+       detail tab. The function will return a list of tuples, and each tuple will
+       be (medium browse url, full browse url).
     """
     browse_products = get_pds_products(opus_id,
                                        product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
+
     selected_browse_products = browse_products[opus_id].get(version_name, [])
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
     if len(selected_browse_products) == 0:
@@ -275,9 +277,20 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
     # One opus id could have multiple previews, for example:
     # co-rss-occ-2008-039-rev058c-x43-i
     # co-uvis-occ-2005-232-alpsco-i
+    # Get paired medium and full browse urls in res (medium url, full url)
+    disp_prod_dict = {}
     for p in selected_browse_products:
-        for browse_med_url in selected_browse_products[p]:
-            browse_full_url = browse_med_url.replace('_med.', '_full.')
-            res.append((browse_med_url, browse_full_url))
+        for browse_url in selected_browse_products[p]:
+            if '_med.' in browse_url:
+                basename, _, _ = browse_url.partition('_med.')
+                if basename in disp_prod_dict:
+                    res.append((browse_url, disp_prod_dict[basename]))
+                    continue
+            else: # '_full.' in browse_url
+                basename, _, _ = browse_url.partition('_full.')
+                if basename in disp_prod_dict:
+                    res.append((disp_prod_dict[basename], browse_url))
+                    continue
+            disp_prod_dict[basename] = browse_url
 
     return res
