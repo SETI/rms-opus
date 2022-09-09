@@ -1448,7 +1448,7 @@ UNIT_FORMAT_DB = {
     },
     'datetime': {
         'display_search': True,
-        'display_result': False,
+        'display_result': True,
         'default': 'ymdhms',
         'conversions': {
             'ymdhms':       ('YMDhms',   1, parse_time, format_time_ymd,  []),
@@ -1824,7 +1824,20 @@ def adjust_format_string_for_units(numerical_format, unit_id, unit):
 
 def format_unit_value(val, numerical_format, unit_id, unit,
                       keep_trailing_zeros=False, convert_from_default=True):
-    "Format a value based on the unit_id and specific unit."
+    """Format a value based on the unit_id and specific unit.
+
+    val                     The value to be formatted.
+    numerical_format        A string like ".5f" that specifies the numerical format to be
+                            used if this unit system does not include a formatting
+                            function. The number of decimal places will be adjusted, as
+                            appropriate, based on the units requested.
+    unit_id                 The id of the unit system.
+    unit                    The requested output unit. None means use the default unit.
+    keep_trailing_zeros     If True, keep the zeros at the end of a decimal floating point
+                            number (e.g. 2.1000).
+    convert_from_default    If True, convert the value from the default unit to the
+                            requested unit.
+    """
     if val is None or isinstance(val, str):
         return val
     format_func = None

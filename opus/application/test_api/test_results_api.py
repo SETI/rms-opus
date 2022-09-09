@@ -106,7 +106,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_data_no_results_default_csv(self):
         "[test_results_api.py] /api/data: no results default cols csv"
         url = '/api/data.csv?opusid=notgoodid'
-        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name(s),Observation Start Time,Observation Duration (secs)\n'
+        expected = b'OPUS ID,Instrument Name,Planet,Intended Target Name(s),Observation Start Time (YMDhms),Observation Duration (secs)\n'
         self._run_csv_equal(url, expected)
 
     def test__api_data_no_results_default_html(self):
@@ -301,7 +301,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_pagestartobslimit_json(self):
-        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini page startobs lmiit json"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini page startobs limit json"
         url = '/api/metadata/vg-iss-2-s-c4365507.json?page=8&startobs=800&limit=0&cols=opusid,volumeid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json')
 

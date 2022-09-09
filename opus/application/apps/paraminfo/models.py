@@ -10,6 +10,7 @@ import settings
 from opus_support import (display_result_unit,
                           get_default_unit,
                           get_unit_display_name,
+                          is_valid_unit,
                           parse_form_type)
 
 class ParamInfo(models.Model):
@@ -107,17 +108,25 @@ class ParamInfo(models.Model):
             return self.label_results
         return self.label_results + ' [' + pretty_name + ']'
 
-    def get_units(self):
+    def get_units(self, override_unit=None):
         # Put parentheses around units (units)
         (form_type, form_type_format,
          form_type_unit_id) = parse_form_type(self.form_type)
         if form_type_unit_id and display_result_unit(form_type_unit_id):
-            default_unit = get_default_unit(form_type_unit_id)
-            display_name = get_unit_display_name(form_type_unit_id,
-                                                 default_unit)
+            if override_unit:
+                unit = override_unit
+            else:
+                unit = get_default_unit(form_type_unit_id)
+            display_name = get_unit_display_name(form_type_unit_id, unit)
             return ('(' + display_name + ')')
-        else:
-            return ''
+        return ''
+
+    def is_valid_unit(self, unit):
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(self.form_type)
+        if form_type_unit_id and display_result_unit(form_type_unit_id):
+            return is_valid_unit(form_type_unit_id, unit)
+        return False
 
     def fully_qualified_label_results(self):
         ret = self.body_qualified_label_results()

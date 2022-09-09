@@ -1005,6 +1005,13 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['cols'] = 'instrument'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "Instrument Name" is duplicated in the list of selected metadata; only one copy is being used.')
 
+    def test__api_normalizeurl_cols_time1_time1_units_1(self):
+        "[test_ui_api.py] /__normalizeurl: cols time1,time1:jd"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?cols=time1,time1:jd'
+        new_slugs['cols'] = 'time1'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "Observation Start Time" is duplicated in the list of selected metadata; only one copy is being used.')
+
     # Something that doesn't have an old slug
 
     # Also tests string field
@@ -1031,6 +1038,31 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['cols'] = 'productid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "XXX" is unknown; it has been removed.')
 
+    # Good units
+
+    def test__api_normalizeurl_cols_units_good_1(self):
+        "[test_ui_api.py] /__normalizeurl: cols units good 1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?cols=time1:YMDHMS,time2:Et,observationduration'
+        new_slugs['cols'] = 'time1:ymdhms,time2:et,observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    # Bad units
+
+    def test__api_normalizeurl_cols_units_bad_1(self):
+        "[test_ui_api.py] /__normalizeurl: cols units bad 1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?cols=instrument:seconds'
+        new_slugs['cols'] = 'instrument'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='><li>Selected metadata field "Instrument Name" has invalid units "seconds"; units have been removed.</li>')
+
+    def test__api_normalizeurl_cols_units_bad_2(self):
+        "[test_ui_api.py] /__normalizeurl: cols units bad 2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?cols=time2:hours'
+        new_slugs['cols'] = 'time2'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='><li>Selected metadata field "Observation Stop Time" has invalid units "hours"; units have been removed.</li>')
+
     # Not viewable
 
     def test__api_normalizeurl_cols_ringobsid(self):
@@ -1054,6 +1086,13 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?cols=observationduration'
         new_slugs['cols'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_cols_observationduration_units(self):
+        "[test_ui_api.py] /__normalizeurl: cols observationduration units"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?cols=observationduration:microseconds'
+        new_slugs['cols'] = 'observationduration:microseconds'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_cols_observationduration1(self):

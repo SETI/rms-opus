@@ -9,7 +9,7 @@
     "Instrument Name",
     "Planet",
     "Intended Target Name(s)",
-    "Observation Start Time",
+    "Observation Start Time (YMDhms)",
     "Observation Duration (secs)"
   ],
   "columns": [
@@ -17,7 +17,7 @@
     "Instrument Name",
     "Planet",
     "Intended Target Name(s)",
-    "Observation Start Time",
+    "Observation Start Time (YMDhms)",
     "Observation Duration (secs)"
   ],
   "page": []
