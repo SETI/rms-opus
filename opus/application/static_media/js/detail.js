@@ -21,7 +21,7 @@ var o_detail = {
 
         $("#detail").on("click", ".op-download-csv", function() {
             let colStr = opus.prefs.cols.join(',');
-            $(this).attr("href", `/opus/__api/metadata_v2/${opusId}.csv?cols=${colStr}`);
+            $(this).attr("href", `/opus/__api/metadata/${opusId}.csv?cols=${colStr}`);
         });
 
         $("#detail").on("click", "a[data-action]", function() {
@@ -90,7 +90,7 @@ var o_detail = {
                 let colStr = opus.prefs.cols.join(',');
                 let arrOfDeferred = [];
                 // get the column metadata, this part is fast
-                let urlMetadataColumn = `/opus/__api/metadata_v2/${opusId}.html?${o_hash.getHash()}&url_cols=${colStr}`;
+                let urlMetadataColumn = `/opus/__api/metadata/${opusId}.html?${o_hash.getHash()}&url_cols=${colStr}`;
                 $("#cols_metadata_"+opusId)
                     .load(urlMetadataColumn, function() {
                         $(this).hide().fadeIn("fast");
@@ -111,7 +111,7 @@ var o_detail = {
                         $("#all_metadata_" + opusId).append(html);
 
                         // now send for data
-                        let urlMetadata = `/opus/__api/metadata_v2/${opusId}.html?cats=${tableName}&url_cols=${colStr}`;
+                        let urlMetadata = `/opus/__api/metadata/${opusId}.html?cats=${tableName}&url_cols=${colStr}`;
                         $("#all_metadata_" + opusId + ' .detail_' + tableName)
                             .load(urlMetadata, function() {
                                 $(this).hide().slideDown("fast");

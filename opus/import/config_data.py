@@ -6,7 +6,7 @@
 
 
 # param_info form types that invoke mult_ tables
-GROUP_FORM_TYPES = ['GROUP', 'TARGETS']
+GROUP_FORM_TYPES = ['GROUP', 'MULTIGROUP']
 
 # A list of all tables we populate, in order, for each observation index row.
 # If you change something here, be sure to update do_table_names.py as well.

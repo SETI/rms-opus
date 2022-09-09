@@ -237,7 +237,7 @@ LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
             res = db.general_select(cmd)
             for row in res:
                 for col in range(start_col, len(row)-1, 2):
-                    pretty_filter = ':'.join(row[0:start_col])
+                    pretty_filter = ':'.join([str(x) for x in row[0:start_col]])
                     if row[col] != row[col+1]:
                         logger.log('warning',
             f'"obs_wavelength.{wl_fields[(col-start_col)//2]}" has inconsistent'

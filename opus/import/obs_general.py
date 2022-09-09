@@ -40,13 +40,22 @@ class ObsGeneral(ObsBase):
         return self._create_mult(self.mission_id)
 
     def field_obs_general_target_class(self):
-        target_name, _ = self._target_name()
-        if target_name is None:
-            return self._create_mult(None)
-        target_name, target_info = self._get_target_info(target_name)
-        if target_info is None:
-            return self._create_mult(None)
-        return self._create_mult(target_info[1])
+        # target_class supports multiple target names
+        target_names = self._target_name()
+        ret_list = []
+        used_classes = set()
+        for target_name, _ in target_names:
+            if target_name is None:
+                ret_list.append(self._create_mult(None))
+            else:
+                target_name, target_info = self._get_target_info(target_name)
+                if target_info is None:
+                    ret_list.append(self._create_mult(None))
+                else:
+                    if target_info[1] not in used_classes:
+                        ret_list.append(self._create_mult(target_info[1]))
+                        used_classes.add(target_info[1])
+        return ret_list
 
     def field_obs_general_primary_filespec(self):
         return self.primary_filespec
@@ -126,14 +135,20 @@ class ObsGeneral(ObsBase):
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return None, None
-        return target_name, target_info[2]
+        return [(target_name, target_info[2])]
 
     def field_obs_general_target_name(self):
-        target_name, target_disp_name = self._target_name()
-        group_info = self._get_planet_group_info(target_name)
-        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
-                                 grouping=group_info['label'],
-                                 group_disp_order=group_info['disp_order'])
+        ret = []
+        for target_name, target_disp_name in self._target_name():
+            if target_name is None:
+                ret.append(self._create_mult(None))
+            else:
+                group_info = self._get_planet_group_info(target_name)
+                ret.append(self._create_mult(col_val=target_name,
+                                             disp_name=target_disp_name,
+                                             grouping=group_info['label'],
+                                             group_disp_order=group_info['disp_order']))
+        return ret
 
     def field_obs_general_time1(self):
         return self._time_from_some_index()

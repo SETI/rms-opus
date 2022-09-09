@@ -259,8 +259,28 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
             exit_api_call(api_code, ret)
             return ret
 
-        results = (table_model.objects.values(mult_name)
-                   .annotate(Count(mult_name)))
+        cursor = connection.cursor()
+        q = connection.ops.quote_name
+
+        if param_info.form_type == 'MULTIGROUP':
+            # This extracts the list of mult ids from the JSON list and creates a new
+            # column with them that is then summarized by count.
+            values = []
+            sql = 'SELECT '+q(table_name)+'.'+q('_mult_val_')
+            sql += ', COUNT(*) AS '
+            sql += q(param_info.name+'__count')+' FROM '
+            sql += q(table_name)+' JOIN JSON_TABLE('+q(table_name)+'.'+q(param_info.name)
+            sql += ', "$[*]" COLUMNS ('+q('_mult_val_')+' TEXT PATH "$")) '
+            sql += q(table_name)
+            group_by = ' GROUP BY '+q(table_name)+'.'+q('_mult_val_')
+        else:
+            results = (table_model.objects.values(param_info.name)
+                       .annotate(Count(param_info.name)))
+            values = []
+            sql = 'SELECT '+q(table_name)+'.'+q(param_info.name)
+            sql += ', COUNT(*) AS '
+            sql += q(param_info.name+'__count')+' FROM '+q(table_name)
+            group_by = ' GROUP BY '+q(table_name)+'.'+q(param_info.name)
 
         user_table = get_user_query_table(selections, extras, api_code=api_code)
 
@@ -276,17 +296,22 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         if selections:
             # selections are constrained so join in the user_table
             if table_name == 'obs_general':
-                where = [connection.ops.quote_name(table_name) + '.id='
-                         + connection.ops.quote_name(user_table) + '.id']
+                where = q(table_name)+'.'+q('id')+'='+q(user_table)+'.'+q('id')
             else:
-                where = [connection.ops.quote_name(table_name)
-                         + '.obs_general_id='
-                         + connection.ops.quote_name(user_table) + '.id']
-            results = results.extra(where=where, tables=[user_table])
+                where = (q(table_name)+'.'+q('obs_general_id')+'='+
+                         q(user_table)+'.'+q('id'))
+            sql += ', '+q(user_table)+' WHERE '+where
+
+        sql += group_by
+
+        log.debug('MULT COUNTS SQL: %s *** PARAMS %s', sql, str(values))
+
+        cursor.execute(sql, values)
+        results = cursor.fetchall()
 
         mult_result_list = []
         for row in results:
-            mult_id = row[mult_name]
+            mult_id = row[0]
             try:
                 mult = mult_model.objects.get(id=mult_id)
                 mult_disp_order = mult.disp_order
@@ -301,8 +326,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
                 return ret
 
             mult_result_list.append((mult_disp_order,
-                                     (mult_label,
-                                      row[mult_name + '__count'])))
+                                     (mult_label, row[1])))
         mult_result_list.sort()
 
         mults = OrderedDict()  # info to return

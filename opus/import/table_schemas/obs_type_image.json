@@ -41,7 +41,7 @@
     },
     {
         "field_name": "image_type_id",
-        "field_type": "char4",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -155,9 +155,6 @@
         "pi_slug": "lesserpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": ""
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

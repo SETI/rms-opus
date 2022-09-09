@@ -86,16 +86,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         if target_info is None:
             return None, None
 
-        return target_name, target_info[2]
-
-    def field_obs_general_target_name(self):
-        target_name, target_disp_name = self._target_name()
-        if target_name is None:
-            return self._create_mult(None)
-        group_info = self._get_planet_group_info(target_name)
-        return self._create_mult(col_val=target_name, disp_name=target_disp_name,
-                                 grouping=group_info['label'],
-                                 group_disp_order=group_info['disp_order'])
+        return [(target_name, target_info[2])]
 
     def field_obs_general_quantity(self):
         return self._create_mult('OPDEPTH')

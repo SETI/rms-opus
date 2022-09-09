@@ -54,8 +54,7 @@
     },
     {
         "field_name": "scan_mode",
-        "field_type": "enum",
-        "field_enum_options": "'1:1','2:1','3:1','5:1','10:1'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -83,8 +82,7 @@
     },
     {
         "field_name": "shutter_mode",
-        "field_type": "enum",
-        "field_enum_options": "'BODARK','BOTALT','BOTSIM','BSIMAN','NAONLY','NOSHUT','WAONLY','N/A'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -115,8 +113,7 @@
     },
     {
         "field_name": "gain_mode",
-        "field_type": "enum",
-        "field_enum_options": "'LOW','HIGH'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -141,8 +138,7 @@
     },
     {
         "field_name": "edit_mode",
-        "field_type": "enum",
-        "field_enum_options": "'1:1','3:4','2:3','3:5','1:2','2:5','1:3','1:5','1:10','1:32'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -175,8 +171,7 @@
     },
     {
         "field_name": "filter_name",
-        "field_type": "enum",
-        "field_enum_options": "'BLUE','CH4_JS','CH4_U','CLEAR','GREEN','ORANGE','SODIUM','UV','VIOLET'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -208,7 +203,7 @@
     },
     {
         "field_name": "filter_number",
-        "field_type": "int1",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -239,8 +234,7 @@
     },
     {
         "field_name": "camera",
-        "field_type": "enum",
-        "field_enum_options": "'W','N'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -317,9 +311,6 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

@@ -64,7 +64,7 @@ class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
 
 
     def _is_voyager_at_uranus(self):
-        target_name, target_disp_name = self._target_name()
+        target_name, target_disp_name = self._target_name()[0]
         return target_name == 'U RINGS'
 
     # Source: Voyager RSS is at south, observer: earth is at north.

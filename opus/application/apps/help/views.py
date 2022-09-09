@@ -107,7 +107,7 @@ def api_volumes(request, fmt):
     for d in (ObsGeneral.objects.values('instrument_id','volume_id')
               .order_by('instrument_id','volume_id').distinct()):
         instrument_name = (MultObsGeneralInstrumentId.objects.values('label')
-                           .filter(value=d['instrument_id']))
+                           .filter(id=d['instrument_id']))
         all_volumes.setdefault(instrument_name[0]['label'],
                                []).append(d['volume_id'])
     for k,v in all_volumes.items():

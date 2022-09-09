@@ -33,7 +33,7 @@
     },
     {
         "field_name": "instrument_compression_type",
-        "field_type": "char10",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_nhmvic",
@@ -57,9 +57,6 @@
               [   1,     "LOSSY",          "Lossy", "020", "Y", null, null],
               [   2,   "NOTCOMP", "Not Compressed", "030", "Y", null, null]
           ]
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

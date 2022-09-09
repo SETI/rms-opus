@@ -33,7 +33,7 @@
     },
     {
         "field_name": "instrument_compression_type",
-        "field_type": "char10",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_nhlorri",
@@ -60,8 +60,7 @@
     },
     {
         "field_name": "binning_mode",
-        "field_type": "enum",
-        "field_enum_options": "'1x1','4x4'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_nhlorri",
@@ -91,9 +90,6 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",

@@ -107,7 +107,7 @@
     },
     {
         "field_name": "detector_id",
-        "field_type": "char14",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -190,8 +190,7 @@
     },
     {
         "field_name": "fine_guidance_system_lock_type",
-        "field_type": "char10",
-        "field_enum_options": "'FINE','COARSE','GYROS','FINE/GYRO','UNKNOWN'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_hubble",
@@ -219,7 +218,7 @@
     },
     {
         "field_name": "filter_name",
-        "field_type": "char23",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -241,7 +240,7 @@
     },
     {
         "field_name": "filter_type",
-        "field_type": "char3",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -272,7 +271,7 @@
     },
     {
         "field_name": "aperture_type",
-        "field_type": "char22",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -294,7 +293,7 @@
     },
     {
         "field_name": "proposed_aperture_type",
-        "field_type": "char18",
+        "field_type": "mult_idx",
         "field_notnull": false,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -316,7 +315,7 @@
     },
     {
         "field_name": "exposure_type",
-        "field_type": "char20",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_hubble",
@@ -345,7 +344,7 @@
     },
     {
         "field_name": "gain_mode_id",
-        "field_type": "char5",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_hubble",
@@ -374,8 +373,7 @@
     },
     {
         "field_name": "instrument_mode_id",
-        "field_type": "char10",
-        "field_enum_options": "'ACCUM','ACQ','FULL','AREA','TIME-TAG','MULTI'",
+        "field_type": "mult_idx",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_hubble",
@@ -490,8 +488,7 @@
     },
     {
         "field_name": "targeted_detector_id",
-        "field_type": "enum",
-        "field_enum_options": "'PC1','WF2','WF3','WF4'",
+        "field_type": "mult_idx",
         "field_default": null,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_hubble",
@@ -519,7 +516,7 @@
     },
     {
         "field_name": "optical_element",
-        "field_type": "char6",
+        "field_type": "mult_idx",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -545,9 +542,6 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "put_mults_here": true
     },
     {
         "field_name": "id",
