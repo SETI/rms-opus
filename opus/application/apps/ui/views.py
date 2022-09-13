@@ -210,15 +210,6 @@ def api_get_metadata_selector(request):
         # and display them in the Select Metadata dialog with the ability to
         # select different units.
         p = get_param_info_by_slug(col_slug, 'col', allow_units_override=False)
-        # (form_type, form_type_format,
-        #  form_type_unit_id) = parse_form_type(p.form_type)
-        # units = get_unit_display_names(form_type_unit_id)
-        # p.units = units
-        # default_unit = get_default_unit(form_type_unit_id)
-        # if default_unit is not None:
-        #     p.form_type = get_unit_display_name(form_type_unit_id, default_unit)
-        # else:
-        #     p.form_type = None
         p.default_unit, p.units = get_default_and_available_units(p.form_type)
         col_slugs_info[col_slug] = p
 
@@ -1707,12 +1698,6 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                         if p.slug[-1] == '1':
                             # Strip the trailing 1 off all ranges
                             p.slug = strip_numeric_suffix(p.slug)
-                    # (form_type, form_type_format,
-                    #  form_type_unit_id) = parse_form_type(p.form_type)
-                    # units = get_unit_display_names(form_type_unit_id)
-                    # valid_units = get_valid_units(form_type_unit_id)
-                    # p.form_type = p.get_units()
-                    # p.units = units
                     p.default_unit, p.units = get_default_and_available_units(p.form_type)
                     menu_data[table_name]['data'].setdefault(sub_head_tuple,
                                                                []).append(p)
@@ -1745,15 +1730,6 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     if p.slug[-1] == '1':
                         # Strip the trailing 1 off all ranges
                         p.slug = strip_numeric_suffix(p.slug)
-                # (form_type, form_type_format,
-                #  form_type_unit_id) = parse_form_type(p.form_type)
-                # units = get_unit_display_names(form_type_unit_id)
-                # p.units = units
-                # default_unit = get_default_unit(form_type_unit_id)
-                # if default_unit is not None:
-                #     p.form_type = get_unit_display_name(form_type_unit_id, default_unit)
-                # else:
-                #     p.form_type = None
                 p.default_unit, p.units = get_default_and_available_units(p.form_type)
                 menu_data[table_name].setdefault('data', []).append(p)
 
@@ -1777,15 +1753,6 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             # Search Terms" of select metadata menu.
             if p.slug == 'surfacegeometrytargetname':
                 continue
-            # (form_type, form_type_format,
-            #  form_type_unit_id) = parse_form_type(p.form_type)
-            # units = get_unit_display_names(form_type_unit_id)
-            # p.units = units
-            # default_unit = get_default_unit(form_type_unit_id)
-            # if default_unit is not None:
-            #     p.form_type = get_unit_display_name(form_type_unit_id, default_unit)
-            # else:
-            #     p.form_type = None
             p.default_unit, p.units = get_default_and_available_units(p.form_type)
             menu_data['search_fields'].setdefault('data', []).append(p)
             if p.slug[-1] == '1':
@@ -1795,15 +1762,6 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # will never be a units modifier here.
                 p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col',
                                             allow_units_override=False)
-                # (form_type, form_type_format,
-                #  form_type_unit_id) = parse_form_type(p.form_type)
-                # units = get_unit_display_names(form_type_unit_id)
-                # p2.units = units
-                # default_unit = get_default_unit(form_type_unit_id)
-                # if default_unit is not None:
-                #     p2.form_type = get_unit_display_name(form_type_unit_id, default_unit)
-                # else:
-                #     p2.form_type = None
                 p2.default_unit, p2.units = get_default_and_available_units(p2.form_type)
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
