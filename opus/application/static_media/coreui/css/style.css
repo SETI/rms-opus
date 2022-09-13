@@ -35,7 +35,7 @@
   --cui-link-color: #20a8d8;
   --cui-link-hover-color: #167495;
   --cui-border-dark: var(--cui-gray-dark);
-  --cui-border-color: var(--cui-border-dark);
+  --cui-border-color: var(--cui-secondary);
   --cui-card-border-color: #c8ced3;
   --cui-card-cap-bg: var(--cui-light);
   --cui-nav-pills-link-active-bg: #20a8d8;
