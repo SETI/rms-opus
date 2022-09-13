@@ -2865,9 +2865,9 @@ ul.ui-autocomplete a.ui-state-active {
     color: inherit;
 }
 
-/* Enable default scrollbar for ranges info dropdown */
+/* Enable default scrollbar for ranges info & unit dropdown */
+.op-selected-metadata-column .op-scrollable-menu,
 .op-preprogrammed-ranges .op-scrollable-menu {
-    max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
     border-width: 2px;
@@ -2877,6 +2877,23 @@ ul.ui-autocomplete a.ui-state-active {
     word-break: keep-all;
     /* This will make sure dropdown is not covering the widget scrollbar */
     left: -2.5em !important;
+}
+
+.op-preprogrammed-ranges .op-scrollable-menu {
+    max-height: 200px;
+}
+
+/* remove the caret next to unit dropdown in selected metadata fields */
+.op-selected-metadata-column .dropdown-toggle::after {
+    display: none !important;
+}
+
+.op-selected-metadata-column .op-scrollable-menu {
+    max-height: 150px;
+}
+
+.op-selected-metadata-column .op-scrollable-menu .dropdown-item {
+    padding: 5px 10px 5px 5px;
 }
 
 /* Reduce the size of "..." nav buttons for detail preview image */

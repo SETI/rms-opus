@@ -55,7 +55,7 @@
                                                                 {% if p.get_tooltip_results %}
                                                                     <i class="fas fa-info-circle op-menu-tooltip" title="{{ p.get_tooltip_results }}"></i>
                                                                 {% endif %}
-                                                                <span>{{ p.label_results }}</span>
+                                                                <span>{{ p.label_results }}&nbsp;{{ p.form_type }}</span>
                                                             {% else %}
                                                                 {% if p.get_tooltip %}
                                                                     <i class="fas fa-info-circle op-menu-tooltip" title="{{ p.get_tooltip }}"></i>
@@ -91,6 +91,8 @@
                                         {% else %}
                                             {{ p.body_qualified_label }}
                                         {% endif %}
+                                      " data-defaultunit="{{ p.default_unit }}
+                                      " data-availunits="{{ p.units }}
                                       " data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                         <span class="op-menu-item">
                                             <span class="op-search-param-checkmark">

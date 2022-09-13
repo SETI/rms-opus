@@ -39,7 +39,20 @@
                         <span class="op-selected-metadata-info">
                             &nbsp;<i class="fas fa-info-circle op-metadata-selector-tooltip" title="{{ param_info.get_tooltip_results }}"></i>
                         </span>
-                        {{ param_info.body_qualified_label_results }}
+                        <span>{{ param_info.body_qualified_label_results }}
+                        {% if param_info.units %}
+                            (<div class="dropdown d-inline">
+                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                {{ param_info.default_unit }}
+                                </a>
+                                <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">
+                                {% for unit_val, unit_disp in param_info.units.items %}
+                                    <a class="dropdown-item" value="{{ unit_val }}" href="#">{{ unit_disp }}</a>
+                                {% endfor %}
+                                </div>
+                            </div>)
+                        {% endif %}
+                        </span>
                         <span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></i></span>
     	            </li>
                 {% endfor %}

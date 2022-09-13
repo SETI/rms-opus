@@ -46,6 +46,7 @@ var o_selectMetadata = {
             o_selectMetadata.saveOpusPrefsCols();
             o_selectMetadata.adjustHeight();
             o_browse.hideMenus();
+            console.log("=======render when clicking select metadata modal====")
             o_selectMetadata.render();
 
             // Do the fake API call to write in the Apache log files that
@@ -179,6 +180,8 @@ var o_selectMetadata = {
             }
             o_selectMetadata.lastMetadataMenuRequestNo++;
             let url = `/opus/__metadata_selector.json?${hash}${expandedCats}&reqno=${o_selectMetadata.lastMetadataMenuRequestNo}`;
+            console.log("$$$$$$")
+            console.log(url)
 
             $.getJSON(url, function(data) {
                 if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
@@ -258,6 +261,13 @@ var o_selectMetadata = {
                         o_widgets.preventContinuousDownScrolling(event.target);
                     }
                 });
+
+                // Prevent overscrolling on ps in selected metadata fields when scrolling
+                // inside unit dropdown when the list has reached to both ends
+                $(".op-selected-metadata-column .op-scrollable-menu").on("scroll wheel", function(e) {
+                    e.stopPropagation();
+                });
+
                 if (opus.prefs.cols.length <= 1) {
                     $("#op-select-metadata .op-selected-metadata-column .op-selected-metadata-unselect").hide();
                 }
@@ -291,6 +301,7 @@ var o_selectMetadata = {
 
         let label = $(menuSelector).data("qualifiedlabel");
         let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
+        // TODO: need to append unit after label, and make label
         let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".op-selected-metadata-column > ul").append(html);
         if ($(".op-selected-metadata-column li").length > 1) {
