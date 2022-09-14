@@ -1,3 +1,4 @@
+{% load json_dumps %}
 {% block menu %}
     <ul class="op-search-menu list-group list-group-flush">
         {% for div in menu.divs %}
@@ -46,7 +47,10 @@
                                                         {% else %}
                                                             {{ p.body_qualified_label }}
                                                         {% endif %}
-                                                      " data-slug="{{ p.slug }}" class="op-search-param" href="#">
+                                                      "
+                                                      data-defaultunit="{% if p.default_unit %}{{ p.default_unit }}{% endif %}"
+                                                      data-availunits="{% if p.units|json_dumps %}{{ p.units }}{% endif %}"
+                                                      data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                                         <span class="op-menu-item">
                                                             <span class="op-search-param-checkmark">
                                                                 <i class="fa fa-check"></i>
@@ -91,9 +95,10 @@
                                         {% else %}
                                             {{ p.body_qualified_label }}
                                         {% endif %}
-                                      " data-defaultunit="{{ p.default_unit }}
-                                      " data-availunits="{{ p.units }}
-                                      " data-slug="{{ p.slug }}" class="op-search-param" href="#">
+                                      "
+                                      data-defaultunit="{% if p.default_unit %}{{ p.default_unit }}{% endif %}"
+                                      data-availunits="{% if p.units %}{{ p.units|json_dumps }}{% endif %}"
+                                      data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                         <span class="op-menu-item">
                                             <span class="op-search-param-checkmark">
                                                 <i class="fa fa-check"></i>

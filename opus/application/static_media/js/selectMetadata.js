@@ -300,15 +300,31 @@ var o_selectMetadata = {
         opus.prefs.cols.push(slug);
 
         let label = $(menuSelector).data("qualifiedlabel");
+        let defaultUnit = $(menuSelector).data("defaultunit");
+
         let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
-        // TODO: need to append unit after label, and make label
-        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
+
+        // If a slug has units available, attach the units dropdown menu 
+        let unitDropdown = "";
+        if(defaultUnit) {
+            unitDropdown +=`(<div class="dropdown d-inline">
+            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${defaultUnit}</a>
+            <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
+            let units = $(menuSelector).data("availunits");
+            for(let unit in units) {
+                unitDropdown += `<a class="dropdown-item" value="${unit}" href="#">${units[unit]}</a>`;
+            }
+            unitDropdown += "</div></div>)";
+        }
+
+        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label} ${unitDropdown}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
+
         $(".op-selected-metadata-column > ul").append(html);
         if ($(".op-selected-metadata-column li").length > 1) {
             $(".op-selected-metadata-column .op-selected-metadata-unselect").show();
         }
 
-        $(".op-metadata-selector-tooltip").tooltipster({
+        $(`#cchoose__${slug} .op-metadata-selector-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
