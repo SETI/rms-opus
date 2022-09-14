@@ -127,6 +127,17 @@ var o_selectMetadata = {
             let namespace = opus.getViewNamespace();
             namespace.downloadCSV(this);
         });
+
+        $("#op-select-metadata").on("click", ".op-units-dropdown .dropdown-item", function(e) {
+            // Avoid <a> href in dropdown item changing the url
+            e.preventDefault();
+
+            let slug = $(e.target).data("slug");
+            let displayVal = $(e.target).data("dispval");
+            // Update the displayed unit for the field after selecting one
+            $(`.op-${slug}-units-dropdown-toggle`).text(` ${displayVal} `);
+
+        });
     },  // /addSelectMetadataBehaviors
 
     showMenuLoaderSpinner: function() {
@@ -304,15 +315,15 @@ var o_selectMetadata = {
 
         let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
 
-        // If a slug has units available, attach the units dropdown menu 
+        // If a slug has units available, attach the units dropdown menu
         let unitDropdown = "";
         if(defaultUnit) {
-            unitDropdown +=`(<div class="dropdown d-inline">
-            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${defaultUnit}</a>
+            unitDropdown +=`(<div class="op-units-dropdown dropdown d-inline">
+            <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${defaultUnit}</a>
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
             for(let unit in units) {
-                unitDropdown += `<a class="dropdown-item" value="${unit}" href="#">${units[unit]}</a>`;
+                unitDropdown += `<a class="dropdown-item" data-value="${unit}" data-dispval="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
             }
             unitDropdown += "</div></div>)";
         }

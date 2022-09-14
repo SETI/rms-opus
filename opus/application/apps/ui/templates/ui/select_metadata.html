@@ -41,13 +41,13 @@
                         </span>
                         <span>{{ param_info.body_qualified_label_results }}
                         {% if param_info.units %}
-                            (<div class="dropdown d-inline">
-                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            (<div class="op-units-dropdown dropdown d-inline">
+                                <a class="op-{{ param_info.slug }}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 {{ param_info.default_unit }}
                                 </a>
                                 <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">
                                 {% for unit_val, unit_disp in param_info.units.items %}
-                                    <a class="dropdown-item" value="{{ unit_val }}" href="#">{{ unit_disp }}</a>
+                                    <a class="dropdown-item" data-value="{{ unit_val }}" data-dispval="{{ unit_disp }}" data-slug="{{ param_info.slug }}" href="#">{{ unit_disp }}</a>
                                 {% endfor %}
                                 </div>
                             </div>)
