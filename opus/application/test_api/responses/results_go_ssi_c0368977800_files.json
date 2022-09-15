@@ -8,10 +8,8 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RTLMTAB.FMT"
             ],
             "gossi_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-Home-Page-at-JPL.link",
                 "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.link",
                 "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
             ],
             "gossi_raw_alternate": [
@@ -54,10 +52,8 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RTLMTAB.FMT"
                 ],
                 "gossi_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-Home-Page-at-JPL.link",
                     "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.link",
                     "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
                 ],
                 "gossi_raw_alternate": [
