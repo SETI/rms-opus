@@ -35,10 +35,11 @@ def query_table_for_opus_id(table_name, opus_id):
         return table_model.objects.filter(opus_id=opus_id)
     return table_model.objects.filter(obs_general__opus_id=opus_id)
 
+
 # Looking up entries in the mult tables is slow, so cache them in memory as they
 # are retrieved. There aren't that many mult tables or values, so this won't take
 # much memory even in the worst case.
-_PRETTY_MULT_CACHE = {} # noqa: E305
+_PRETTY_MULT_CACHE = {}
 
 def lookup_pretty_value_for_mult(param_info, value, cvt_null):
     "Given a param_info for a mult and the mult value, return the pretty label"

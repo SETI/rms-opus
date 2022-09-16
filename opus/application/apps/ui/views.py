@@ -203,7 +203,12 @@ def api_get_metadata_selector(request):
         col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     col_slugs_info = OrderedDict()
     for col_slug in col_slugs:
-        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col')
+        # Update when the UI supports selectable display units.
+        # This will need to be changed to retrieve the desired units, if any,
+        # and display them in the Select Metadata dialog with the ability to
+        # select different units.
+        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col',
+                                                          allow_units_override=False)
 
     search_slugs_info = []
     search_slugs = request.GET.get('widgets', None)
@@ -1205,10 +1210,13 @@ def api_normalize_url(request):
             continue
         if col == 'ringobsid':
             col = 'opusid'
-        pi = get_param_info_by_slug(col, 'col')
+        pi, desired_units = get_param_info_by_slug(col, 'col', allow_units_override=True,
+                                                   check_valid_units=False)
         # It used to be OK for single-column ranges to have a '1' at the end
         if not pi and col[-1] == '1':
-            pi = get_param_info_by_slug(strip_numeric_suffix(col), 'widget')
+            pi, desired_units = get_param_info_by_slug(strip_numeric_suffix(col), 'col',
+                                                       allow_units_override=True,
+                                                       check_valid_units=False)
         if not pi:
             msg = ('Selected metadata field "' + escape(col)
                    +'" is unknown; it has been removed.')
@@ -1226,9 +1234,16 @@ def api_normalize_url(request):
                    +'only one copy is being used.')
             msg_list.append(msg)
             continue
-        cols_list.append(pi.slug)
-        if col != pi.slug:
+        if desired_units is not None and not pi.is_valid_unit(desired_units):
+            msg = ('Selected metadata field "'
+                   +pi.body_qualified_label_results()
+                   +'" has invalid units "' + escape(desired_units)
+                   +'"; units have been removed.')
+            msg_list.append(msg)
+            desired_units = None
+        if col.partition(':')[0] != pi.slug:
             old_ui_slug_flag = True
+        cols_list.append(f'{pi.slug}:{desired_units}' if desired_units else pi.slug)
     if len(cols_list) == 0:
         msg = ('Your new selected metadata list is empty; '
                +'it has been replaced with the defaults.')
@@ -1319,7 +1334,8 @@ def api_normalize_url(request):
         if order[0] == '-':
             desc = True
             order = order[1:]
-        pi = get_param_info_by_slug(order, 'col')
+        # Sort order slugs should never include units
+        pi = get_param_info_by_slug(order, 'col', allow_units_override=False)
         # It used to be OK for single-column ranges to have a '1' at the end
         if not pi and order[-1] == '1':
             pi = get_param_info_by_slug(strip_numeric_suffix(order), 'widget')
@@ -1571,6 +1587,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     if request and request.GET:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
+        # Remember which categories the user had previous expanded so that when we
+        # regenerate the category list we can expand them again.
         get_expanded_cats = request.GET.get('expanded_cats')
         if get_expanded_cats == '':
             expanded_cats = []
@@ -1663,7 +1681,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     # If referred_slug exists, we will look up the param info
                     # based on the referred_slug.
                     if p.referred_slug is not None:
-                        p = get_param_info_by_slug(p.referred_slug, 'col')
+                        # A referred slug will never contain a unit specifier
+                        p = get_param_info_by_slug(p.referred_slug, 'col',
+                                                   allow_units_override=False)
                         p.label = p.body_qualified_label()
                         p.label_results = p.body_qualified_label_results(True)
 
@@ -1688,7 +1708,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # under the current category.
                 if p.referred_slug is not None:
                     referred_slug = p.referred_slug
-                    p = get_param_info_by_slug(referred_slug, 'col')
+                    # A referred slug will never contain a unit specifier
+                    p = get_param_info_by_slug(referred_slug, 'col',
+                                               allow_units_override=False)
                     p.label = p.body_qualified_label()
                     p.label_results = p.body_qualified_label_results(True)
                     # assign referred_slug used to determine if an icon should
@@ -1731,7 +1753,10 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             if p.slug[-1] == '1':
                 # This is a numeric range field, so we want to add both
                 # the min and max slugs to the list.
-                p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col')
+                # This is generated by a search field, not a metadata column, so there
+                # will never be a units modifier here.
+                p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col',
+                                            allow_units_override=False)
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
     new_div_list = []
