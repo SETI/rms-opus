@@ -13,9 +13,7 @@ logs
 log.txt
 nohup.out
 
-venv
-p2venv
-p3venv
+*venv*
 opus_secrets.py
 
 migrations/
@@ -30,5 +28,6 @@ log_analyzer/.logs
 TODO
 mypy.ini
 ignored-errors
-venv38/
 opus/application/static_media/coreui/css/style-old.css
+
+.vscode
