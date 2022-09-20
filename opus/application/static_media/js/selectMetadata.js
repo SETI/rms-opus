@@ -128,15 +128,23 @@ var o_selectMetadata = {
             namespace.downloadCSV(this);
         });
 
+        // Select a unit from units dropdown in select metadata menu
         $("#op-select-metadata").on("click", ".op-units-dropdown .dropdown-item", function(e) {
             // Avoid <a> href in dropdown item changing the url
             e.preventDefault();
 
             let slug = $(e.target).data("slug");
             let displayVal = $(e.target).data("dispval");
+            let val = $(e.target).data("value");
             // Update the displayed unit for the field after selecting one
             $(`.op-${slug}-units-dropdown-toggle`).text(` ${displayVal} `);
-
+            // console.log("------CLICK UNIT DROPDOWN MENU------------");
+            // console.log(opus.prefs.cols);
+            let idx = opus.prefs.cols.findIndex((col) => {
+                return col.includes(slug);
+            });
+            opus.prefs.cols[idx] = slug + ":" + val;
+            // console.log(opus.prefs.cols);
         });
     },  // /addSelectMetadataBehaviors
 
