@@ -917,6 +917,12 @@ th.sticky-header {
     overflow: hidden;
 }
 
+/* Remove the little gap on top of the table header when
+scolling the browse table view */
+.op-data-table-view tr {
+    border-top: 0px;
+}
+
 .op-data-table-view .ps__rail-y {
     background-color: transparent !important;
     z-index: 11;
