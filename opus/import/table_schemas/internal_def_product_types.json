@@ -117,7 +117,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss_documentation",
-        "definition": "RMS-curated document collection for Cassini ISS."
+        "definition": "RMS-curated document collection for Cassini ISS observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -132,7 +132,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "couvis_documentation",
-        "definition": "RMS-curated document collection for Cassini UVIS."
+        "definition": "RMS-curated document collection for Cassini UVIS observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -157,7 +157,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims_documentation",
-        "definition": "Documents for the Cassini VIMS visual/near-IR cube collection."
+        "definition": "RMS-curated document collection for Cassini VIMS observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -207,7 +207,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "nh_lorri_documentation",
-        "definition": "RMS-curated documents for the New Horizons LORRI collection."
+        "definition": "RMS-curated document collection for New Horizons LORRI observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -217,7 +217,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "nh_mvic_documentation",
-        "definition": "RMS-curated documents for the New Horizons MVIC collection."
+        "definition": "RMS-curated document collection for New Horizons MVIC observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -237,7 +237,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "gossi_documentation",
-        "definition": "RMS-curated document collection for Galileo SSI."
+        "definition": "RMS-curated document collection for Galileo SSI observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -387,7 +387,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cocirs_documentation",
-        "definition": "RMS-curated document collection for Cassini CIRS."
+        "definition": "RMS-curated document collection for Cassini CIRS observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -452,7 +452,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst_documentation",
-        "definition": "RSS-curated document collection for HST data sets."
+        "definition": "RMS-curated document collection for HST data sets."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -562,7 +562,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "corss_occ_documentation",
-        "definition": "RMS-curated document collection for the Cassini RSS ring profiles."
+        "definition": "RMS-curated document collection for Cassini RSS occultations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -577,7 +577,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "couvis_occ_documentation",
-        "definition": "RMS-curated document collection for Cassini UVIS ring profiles."
+        "definition": "RMS-curated document collection for Cassini UVIS occultations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -592,7 +592,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims_occ_documentation",
-        "definition": "RMS-curated document collection for the Cassini VIMS ring profiles."
+        "definition": "RMS-curated document collection for Cassini VIMS occultations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -917,6 +917,6 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss_documentation",
-        "definition": "RMS-curated documents for the Voyager ISS image collection."
+        "definition": "RMS-curated document collection for Voyager ISS observations."
     }
 ]
