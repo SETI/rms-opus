@@ -49,6 +49,13 @@
     "version_name": "Current"
   },
   {
+    "category": "Cassini ISS",
+    "product_type": "coiss_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
     "category": "metadata",
     "product_type": "rms_index",
     "description": "RMS Node Augmented Index",

@@ -20,6 +20,19 @@
             "coiss_full": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1462657510_1462783154/N1462660850_2.IMG.png"
             ],
+            "coiss_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
@@ -75,6 +88,19 @@
                 ],
                 "coiss_full": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1462657510_1462783154/N1462660850_2.IMG.png"
+                ],
+                "coiss_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
