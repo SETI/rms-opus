@@ -64,7 +64,6 @@ from opus_support import (display_search_unit,
                           format_unit_value,
                           get_default_and_available_units,
                           get_default_unit,
-                          get_unit_display_name,
                           get_unit_display_names,
                           get_valid_units,
                           parse_form_type)
