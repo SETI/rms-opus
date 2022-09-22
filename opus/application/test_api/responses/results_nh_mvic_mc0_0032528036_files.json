@@ -15,6 +15,12 @@
                 "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHJUMV_2001/data/20070131_003252/mc0_0032528036_0x536_sci_1_med.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHJUMV_2001/data/20070131_003252/mc0_0032528036_0x536_sci_1_full.jpg"
             ],
+            "nh_mvic_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Reuter-etal-2005-SPIE.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Ralph-Geometric-Distortion.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/NH-Boresight-FOVs.png",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/FITS-Standard-4.0.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/NHxxMV_xxxx/NHJUMV_1001/NHJUMV_1001_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/NHxxMV_xxxx/NHJUMV_1001/NHJUMV_1001_index.lbl"
@@ -53,6 +59,12 @@
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHJUMV_2001/data/20070131_003252/mc0_0032528036_0x536_sci_1_small.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHJUMV_2001/data/20070131_003252/mc0_0032528036_0x536_sci_1_med.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxMV_xxxx/NHJUMV_2001/data/20070131_003252/mc0_0032528036_0x536_sci_1_full.jpg"
+                ],
+                "nh_mvic_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Reuter-etal-2005-SPIE.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/Ralph-Geometric-Distortion.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/NH-Boresight-FOVs.png",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxMV_xxxx/FITS-Standard-4.0.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/NHxxMV_xxxx/NHJUMV_1001/NHJUMV_1001_index.tab",

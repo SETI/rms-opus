@@ -116,6 +116,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_documentation",
+        "definition": "RMS-curated document collection for Cassini ISS observations."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "couvis_raw",
         "definition": "Raw image files (*.DAT) for Cassini UVIS. Observations are in binary format, uncalibrated, and contain raw data counts from the associated detector. Associated labels (*.LBL) are text files that contain information about the observation, including how to interpret the binary data."
     },
@@ -123,6 +128,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "couvis_calib_corr",
         "definition": "Calibration files (*.DAT) for Cassini UVIS containing matricies that can be used to calibrate UVIS raw observations. Associated labels (*.LBL) are text files that contain information about the calibration matrix and how to apply it."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis_documentation",
+        "definition": "RMS-curated document collection for Cassini UVIS observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -143,6 +153,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims_full",
         "definition": "Full-size (131x69) TIFFs (*.tiff) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "covims_documentation",
+        "definition": "RMS-curated document collection for Cassini VIMS observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -191,8 +206,18 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_lorri_documentation",
+        "definition": "RMS-curated document collection for New Horizons LORRI observations."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "nh_mvic_calib_browse",
         "definition": "Preview images (*.jpg) for the calibrated image files for New Horizons LORRI."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_mvic_documentation",
+        "definition": "RMS-curated document collection for New Horizons MVIC observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -208,6 +233,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "gossi_raw_alternate",
         "definition": "Raw image files (*.IMG) for Galileo SSI. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are RTLMTAB.FMT, which describes the format of the VICAR binary header, and RLINEPRX.FMT, which describes the format of the binary prefix at the beginning of each line of imaging data. The superseded processing files are included here when available."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "gossi_documentation",
+        "definition": "RMS-curated document collection for Galileo SSI observations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -356,6 +386,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cocirs_documentation",
+        "definition": "RMS-curated document collection for Cassini CIRS observations."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst_text",
         "definition": "Text files (*.ASC) giving the FITS header for the associated HST data files (which are not available in the PDS). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
@@ -413,6 +448,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst_2d_spectrum",
         "definition": "Preview JPEGs (*_X2D.JPG or *_SX2.JPG) of observations, supplied by the STScI showing a 2-D spectrum plot (wavelength vs. line number vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst_documentation",
+        "definition": "RMS-curated document collection for HST data sets."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -521,6 +561,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "corss_occ_documentation",
+        "definition": "RMS-curated document collection for Cassini RSS occultations."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "couvis_occ_01",
         "definition": "Text files (*.TAB) that tabulate an occultation profile with 1km resolution. Associated labels (*.LBL) describe the contents of the text files."
     },
@@ -531,6 +576,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis_occ_documentation",
+        "definition": "RMS-curated document collection for Cassini UVIS occultations."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims_occ_01",
         "definition": "Text files (*.TAB) that tabulate an occultation profile with 1km resolution. Associated labels (*.LBL) describe the contents of the text files."
     },
@@ -538,6 +588,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims_occ_10",
         "definition": "Text files (*.TAB) that tabulate an occultation profile with 10km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "covims_occ_documentation",
+        "definition": "RMS-curated document collection for Cassini VIMS occultations."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -858,5 +913,10 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss_prof_img_cal",
         "definition": "Calibrated and geometrically corrected image files (*_GEOMED.IMG) for Voyager ISS that were used to create a radial scan. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG)."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_documentation",
+        "definition": "RMS-curated document collection for Voyager ISS observations."
     }
 ]

@@ -17,6 +17,12 @@
             "covims_full": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005015T175855_2005016T184233/v1484504730_1.qub.tiff"
             ],
+            "covims_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/VIMS-Preview-Interpretation-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Cassini-VIMS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Archive-SIS.txt"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl"
@@ -73,6 +79,12 @@
                 ],
                 "covims_full": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005015T175855_2005016T184233/v1484504730_1.qub.tiff"
+                ],
+                "covims_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/VIMS-Preview-Interpretation-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Cassini-VIMS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Archive-SIS.txt"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",

@@ -9,6 +9,17 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/RING_POLAR/000RB_COMP001______CI005_680_F3_224R.JPG",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/RING_POLAR/000RB_COMP001______CI005_680_F3_224R.LBL"
             ],
+            "cocirs_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Volume-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Spectral-Cube-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/FOV-Overview.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Chan-etal-2015.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Cassini-CIRS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Calibration-Equations.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Interference.pdf"
+            ],
             "cube_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_ring_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_ring_index.lbl"
@@ -41,6 +52,17 @@
                 "cocirs_extra": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/RING_POLAR/000RB_COMP001______CI005_680_F3_224R.JPG",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/RING_POLAR/000RB_COMP001______CI005_680_F3_224R.LBL"
+                ],
+                "cocirs_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Volume-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Spectral-Cube-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/FOV-Overview.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Chan-etal-2015.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Cassini-CIRS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Calibration-Equations.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Interference.pdf"
                 ],
                 "cube_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_ring_index.tab",
