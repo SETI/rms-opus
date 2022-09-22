@@ -77,7 +77,7 @@ With the exception of the `id` field in the `obs_general` table and the `obs_gen
 
 Here is an example of the schema for the `obs_general` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
 
-    mysql> desc obs_general;
+    mysql> DESC obs_general;
     +----------------------+--------------+------+-----+-------------------+
     | Field                | Type         | Null | Key | Default           |
     +----------------------+--------------+------+-----+-------------------+
@@ -107,11 +107,11 @@ Here is an example of the schema for the `obs_general` table (note this may chan
     | timestamp            | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +----------------------+--------------+------+-----+-------------------+
 
-Most of these fields should be self-evident. Some numeric fields have `1` and `2` versions. These are the minimum and maximum values of the metadata for a "dual column range". `right_asc` has two extra fields (`right_asc` and `d_right_asc`). These are internal fields that are used to help speed up searching on wrap-around longitudes. Also, `obs_general` has a hidden field `preview_images` which stores information about all of the preview images for each observation so that they can be rapidly retrieved when displaying the Gallery View without needing to join tables together.
+Most of these fields should be self-evident. Some numeric fields have `1` and `2` versions. These are the minimum and maximum values of the metadata for a "dual column range". `right_asc` has two extra fields (`right_asc` and `d_right_asc`). These are internal fields that are used to help speed up searching on wrap-around longitudes. Also, `obs_general` has a hidden field `preview_images` which stores information (in the form of a JSON encoded PdsViewSet) about all of the preview images for each observation so that they can be rapidly retrieved when displaying the Gallery View without needing to join tables together.
 
 `obs_pds` is a simple example of a secondary table that depends on `obs_general`:
 
-    mysql> desc obs_pds;
+    mysql> DESC obs_pds;
     +-----------------------+--------------+------+-----+-------------------+
     | Field                 | Type         | Null | Key | Default           |
     +-----------------------+--------------+------+-----+-------------------+
@@ -130,7 +130,7 @@ Most of these fields should be self-evident. Some numeric fields have `1` and `2
 
 Here is an example of a mission table:
 
-    mysql> desc obs_mission_cassini;
+    mysql> DESC obs_mission_cassini;
     +-------------------------+--------------+------+-----+-------------------+
     | Field                   | Type         | Null | Key | Default           |
     +-------------------------+--------------+------+-----+-------------------+
@@ -158,20 +158,18 @@ Here is an example of a mission table:
 
 Note that there will be a different number of rows in the `obs_general` table and many of the other tables:
 
-    mysql> select count(*) from obs_general; select count(*) from obs_mission_cassini;
+    mysql> SELECT COUNT(*) FROM obs_general; SELECT COUNT(*) FROM obs_mission_cassini;
     +----------+
-    | count(*) |
+    | COUNT(*) |
     +----------+
     |    29689 |
     +----------+
-    1 row in set (0.00 sec)
 
     +----------+
-    | count(*) |
+    | COUNT(*) |
     +----------+
     |    18081 |
     +----------+
-    1 row in set (0.03 sec)
 
 Tables can be joined together to retrieve all of the metadata for one or more observations:
 
@@ -190,7 +188,7 @@ Generally speaking, you can think of the OPUS schema as having only one `obs` ta
 
 "Mult" (aka `GROUP`) fields are multiple choice options selected from a defined set. The list of available options may be hardcoded in the import pipeline or generated dynamically during the import process. Either way, the option associated with a particular observation is stored as an integer in the database. This integer is then used as an index into an associated "mult table" to look up the details of that option. The name of the "mult table" is a combination of the parent `obs_*` table and the field name. For example, for the "Planet Name" (`planet_id`) field in the "General Constraints" category (`obs_general`) the table is called `mult_obs_general_planet_id`, and it has the following schema:
 
-    mysql> desc mult_obs_general_planet_id;
+    mysql> DESC mult_obs_general_planet_id;
     +------------------+---------------+------+-----+-------------------+
     | Field            | Type          | Null | Key | Default           |
     +------------------+---------------+------+-----+-------------------+
@@ -204,7 +202,7 @@ Generally speaking, you can think of the OPUS schema as having only one `obs` ta
     | timestamp        | timestamp     | YES  |     | CURRENT_TIMESTAMP |
     +------------------+---------------+------+-----+-------------------+
 
-The fields are as follows:
+The fields are:
 
 - `id`: A unique integer which is used to reference a row in this table. This is the same value that is stored in the `obs_*` table.
 - `value`: The actual metadata value which was the source of this option.
@@ -217,7 +215,7 @@ The fields are as follows:
 
 For example, here are the entries for the `planet_id` field (timestamp removed for brevity):
 
-    mysql> select * from mult_obs_general_planet_id;
+    mysql> SELECT * FROM mult_obs_general_planet_id;
     +----+-------+---------+------------+---------+----------+------------------+
     | id | value | label   | disp_order | display | grouping | group_disp_order |
     +----+-------+---------+------------+---------+----------+------------------+
@@ -236,7 +234,7 @@ Notice in this case that the `disp_order` field is simply a three-digit string t
 
 Here are the first 10 entries for the `target_name` field (timestamp removed for brevity):
 
-    mysql> select * from mult_obs_general_target_name limit 10;
+    mysql> SELECT * FROM mult_obs_general_target_name LIMIT 10;
     +----+-----------+--------------+--------------+---------+----------+------------------+
     | id | value     | label        | disp_order   | display | grouping | group_disp_order |
     +----+-----------+--------------+--------------+---------+----------+------------------+
@@ -286,26 +284,288 @@ SQL indexes are never required, but are useful for performance enhancement. A co
 
 ### The Surface Geometry Tables
 
+There are two types of surface geometry tables. The first, called simply `obs_surface_geometry`, contains the fields shown under "Surface Geometry Constraints" *other than* `Surface Geometry Target Selector`, which is a magic field. At the time of this writing, the only other field is `Multiple Target List`. Thus its schema is:
+
+    mysql> DESC obs_surface_geometry;
+    +----------------+--------------+------+-----+-------------------+
+    | Field          | Type         | Null | Key | Default           |
+    +----------------+--------------+------+-----+-------------------+
+    | obs_general_id | int unsigned | NO   | MUL | NULL              |
+    | opus_id        | char(50)     | NO   | MUL | NULL              |
+    | volume_id      | char(11)     | NO   | MUL | NULL              |
+    | instrument_id  | char(12)     | NO   | MUL | NULL              |
+    | target_list    | text         | YES  |     | NULL              |
+    | id             | int unsigned | NO   | PRI | NULL              |
+    | timestamp      | timestamp    | NO   |     | CURRENT_TIMESTAMP |
+    +----------------+--------------+------+-----+-------------------+
+
+There is also a series of tables, one per body, containing the surface geometry information for that body for each OPUS ID for which geometry information is available. These tables are named `obs_surface_geometry__<body>`. Normally at most only a few such tables will contain rows for a given OPUS ID, since only a small number bodies are in the field of view:
+
+    mysql> SELECT COUNT(*) FROM obs_surface_geometry__enceladus WHERE opus_id='co-iss-n1460961193';
+    +----------+
+    | COUNT(*) |
+    +----------+
+    |        1 |
+    +----------+
+
+    mysql> SELECT COUNT(*) FROM obs_surface_geometry__titan WHERE opus_id='co-iss-n1460961193';
+    +----------+
+    | COUNT(*) |
+    +----------+
+    |        0 |
+    +----------+
+
+Other than the odd naming, these surface geometry tables behave exactly the same as any other `obs_*` table.
 
 ### The Special `obs_file` Table
 
+The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. All of this information could be encoded in a single enormous JSON structure in the `obs_general` table, but for efficiency and historical reasons we break this information out into its own table, `obs_file`. The `obs_file` table has a similar structure to other `obs_*` tables, but is unique in that it has a one-to-many relationship with OPUS IDs. In other words, with one row per downloadable file product, a single OPUS ID will likely have more than one row in this table. The `obs_file` table is only joined with `obs_general` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
 
+    mysql> desc obs_files;
+    +-----------------+--------------+------+-----+-------------------+
+    | Field           | Type         | Null | Key | Default           |
+    +-----------------+--------------+------+-----+-------------------+
+    | obs_general_id  | int unsigned | NO   | MUL | NULL              |
+    | opus_id         | char(50)     | NO   | MUL | NULL              |
+    | volume_id       | char(11)     | NO   | MUL | NULL              |
+    | instrument_id   | char(12)     | NO   | MUL | NULL              |
+    | version_number  | int unsigned | NO   | MUL | NULL              |
+    | version_name    | char(16)     | NO   | MUL | NULL              |
+    | category        | char(32)     | NO   | MUL | NULL              |
+    | sort_order      | char(9)      | NO   | MUL | NULL              |
+    | short_name      | char(32)     | NO   | MUL | NULL              |
+    | full_name       | char(64)     | NO   | MUL | NULL              |
+    | default_checked | int unsigned | NO   |     | NULL              |
+    | product_order   | int unsigned | NO   |     | NULL              |
+    | logical_path    | text         | NO   |     | NULL              |
+    | url             | text         | NO   |     | NULL              |
+    | checksum        | char(32)     | NO   |     | NULL              |
+    | size            | int unsigned | NO   |     | NULL              |
+    | width           | int unsigned | YES  |     | NULL              |
+    | height          | int unsigned | YES  |     | NULL              |
+    | id              | int unsigned | NO   | PRI | NULL              |
+    | timestamp       | timestamp    | NO   |     | CURRENT_TIMESTAMP |
+    +-----------------+--------------+------+-----+-------------------+
 
+And as predicted a single OPUS ID is likely to appear more than once:
+
+    mysql> SELECT COUNT(*) FROM obs_files WHERE opus_id='co-iss-n1460961193';
+    +----------+
+    | COUNT(*) |
+    +----------+
+    |       27 |
+    +----------+
+
+    mysql> SELECT short_name, logical_path, size, width, height
+                FROM obs_files WHERE opus_id='co-iss-n1460961193' LIMIT 10;
+    +--------------+--------------...---------------...-------------------------+---------+-------+--------+
+    | short_name   | logical_path ...               ...                         | size    | width | height |
+    +--------------+--------------...---------------...-------------------------+---------+-------+--------+
+    | coiss_raw    | volumes/COISS...1460960653_1461...G                        | 1077344 |  NULL |   NULL |
+    | coiss_raw    | volumes/COISS...1460960653_1461...L                        |    3656 |  NULL |   NULL |
+    | coiss_raw    | volumes/COISS.../prefix2.fmt   ...                         |    4753 |  NULL |   NULL |
+    | coiss_raw    | volumes/COISS.../tlmtab.fmt    ...                         |   18676 |  NULL |   NULL |
+    | coiss_thumb  | volumes/COISS...s/thumbnail/146...0961193_1.IMG.jpeg_small |     560 |    50 |     50 |
+    | coiss_medium | volumes/COISS...s/browse/146096...1193_1.IMG.jpeg          |    2894 |   256 |    256 |
+    | coiss_full   | volumes/COISS...s/full/14609606...93_1.IMG.png             |  237420 |  1024 |   1024 |
+    | coiss_calib  | calibrated/CO...ta/1460960653_1..._CALIB.IMG               | 4202496 |  NULL |   NULL |
+    | coiss_calib  | calibrated/CO...ta/1460960653_1..._CALIB.LBL               |    3793 |  NULL |   NULL |
+    | coiss_calib  | calibrated/CO.../data/146096065...3_1_CALIB.IMG            | 4202496 |  NULL |   NULL |
+    +--------------+--------------...---------------...-------------------------+---------+-------+--------+
 
 ## The `param_info` Table
 
+In order for OPUS to properly handle search and metadata display, it needs detailed information about each metadata field. This information is encoded in the `param_info` table, which has one row for each displayable metadata field:
+
+    mysql> desc param_info;
+    +----------------------+---------------+------+-----+-------------------+
+    | Field                | Type          | Null | Key | Default           |
+    +----------------------+---------------+------+-----+-------------------+
+    | category_name        | varchar(150)  | YES  | MUL | NULL              |
+    | name                 | varchar(87)   | YES  | MUL | NULL              |
+    | form_type            | varchar(100)  | YES  |     | NULL              |
+    | display              | tinyint       | NO   |     | NULL              |
+    | display_results      | tinyint       | NO   |     | NULL              |
+    | disp_order           | int           | NO   |     | NULL              |
+    | label                | varchar(240)  | YES  |     | NULL              |
+    | label_results        | varchar(240)  | YES  |     | NULL              |
+    | slug                 | varchar(255)  | YES  |     | NULL              |
+    | old_slug             | varchar(255)  | YES  |     | NULL              |
+    | referred_slug        | varchar(255)  | YES  |     | NULL              |
+    | intro                | varchar(1023) | YES  |     | NULL              |
+    | tooltip              | varchar(255)  | YES  |     | NULL              |
+    | dict_context         | varchar(255)  | YES  |     | NULL              |
+    | dict_name            | varchar(255)  | YES  |     | NULL              |
+    | dict_context_results | varchar(255)  | YES  |     | NULL              |
+    | dict_name_results    | varchar(255)  | YES  |     | NULL              |
+    | sub_heading          | varchar(150)  | YES  |     | NULL              |
+    | ranges               | json          | YES  |     | NULL              |
+    | field_hints1         | varchar(255)  | YES  |     | NULL              |
+    | field_hints2         | varchar(255)  | YES  |     | NULL              |
+    | id                   | int unsigned  | NO   | PRI | NULL              |
+    | timestamp            | timestamp     | YES  |     | CURRENT_TIMESTAMP |
+    +----------------------+---------------+------+-----+-------------------+
+
+The fields are:
+
+- `category_name`: The name of the `obs_*` table containing the metadata field.
+- `name`: The name of the field in the above-referenced table.
+- `form_type`: Information about the field so that OPUS knows how to present it for searching and metadata display. The format is `TYPE[precision][:units]`. The available `TYPE`s are described in the section "Opus Metadata" above.
+  - For numeric fields (`RANGE` and `LONG`), `precision` defines the precision of the value using `%` notation:
+    - `%d` means a decimal value (no fractional part)
+    - `%.nf` means a floating point value with `n` digits to the right of the decimal point.
+  - When specified, `units` is a descriptor of the encoding of the value, including what the default units are, what other units are available, and how to convert the value between units. The list of available units is given in the top-level file `lib/opus_support.py`. For example, `form_type="RANGE%.4f:duration"` means to use the `duration` type of units, which has a default unit of `seconds` and support for `microseconds`, `milliseconds`, `minutes`, `hours`, and `days`. The values are displayed numerically and the precision of the default `%.3f` is adjusted based on the factor needed to convert from unit to unit. Another example is `form_type="RANGE:range_cassini_sclk"`. In this case, the "units" are really a way of indicating the conversion to and from the Cassini Spacecraft Clock Count, which has the format `dddddddddd.sss` where `sss` can be between 0 and 255 inclusive. There is no need to specify a precision because it is already implied by `range_cassini_sclk`. Likewise there are no units available other than the default units, since there is no other way to display this metadata.
+- `display`: A boolean value indicating whether this metadata is available for searching in the UI. The primary reason to hide a metadata value from searching is because a min/max pair of `XXX1` and `XXX2` really only represents a single UI search widget. By convention we mark the `1` field as displayed and the `2` field hidden.
+- `display_results`: A boolean value indicating whether this metadata is available for viewing. This is set to `False` only in rare occasions, such as the hidden `preview_images` field which is only for internal use.
+- `disp_order`: An integer indicating how the metadata fields within a given category should be sorted for display. Smaller values will appear higher in the list.
+- `label`: The English name of the metadata field as displayed in the title of a search widget, such as `Right Ascension`.
+- `label_results`: The English name of the metadata field as displayed as a result, such as `Right Ascension (Min)` or `Right Ascension (Max)`.
+- `slug`: The abbreviation for the field used in the main URL, such as `rightasc1` or `VOYAGERmissionphasename`.
+- `old_slug`: An old abbreviation for the field from a previous version of OPUS. This is supported for backwards compatibility but is not used when creating any new URLs.
+- `referred_slug`: Some fields (such as `Ring Radius`) appear under multiple categories (`Ring Geometry Constraints` and `Occultation/Reflectance Profiles Constraints`). Only one of these is the "real" field and the other simply refers to the real field. In the latter case, the `referred_slug` field gives the `slug` of the "real" field, and the `slug` field is `NULL`.
+- `intro`: The extended text that appears at the top of a search widget explaining any special circumstances; `NULL` if none is provided. For example, for `Product Creation Time`:
+
+        The Product Creation Time is the time when the actual final data product was created for inclusion in the PDS archive, not the time of the original observation. In most cases, you will want to use the Observation Time under General Constraints instead.
+
+- `tooltip`: This field is not used.
+- `dict_context` and `dict_name`: The "context" and "name" used to look up the tooltip for this field in the dictionary when used in a search widget. A `XXX2` field will have `NULL` for these columns. For example, for `right_asc1` we have `dict_context="OPUS_GENERAL"` and `dict_name="RIGHT_ASCENSION"` while for `right_asc2` both fields are `NULL.`
+- `dict_context_results` and `dict_name_results`: The "context" and "name" used to look up the tooltip for this field in the dictionary when used to display metadata. For example, for `right_asc1` we have `dict_context="OPUS_GENERAL"` and `dict_name="RIGHT_ASCENSION_MIN"` while for `right_asc2` we have `dict_context="OPUS_GENERAL"` and `dict_name="RIGHT_ASCENSION_MAX"`.
+- `sub_heading`: The sub-category to use when the category is further divided. For example, in the `Ring Geometry Constraints` category each field is under a sub-heading such as `Radius & Longitude` or `Edge-On Viewing Geometry`.
+- `ranges`: A JSON field giving details of pre-programmed ranges that can be selected during searching, if any. For example, the `Wavelength` field has a number of pre-programmed options such as "Red" or "Violet".
+- `field_hints1` and `field_hints2`: When `ranges` is specified, the grey text to display in the search widget to give a hint as to what can be typed. For example, for the `Wavelength` field this is "Wavelength or Color".
+- `id`: A unique ID.
+- `timestamp`: The date and time this row was last modified.
 
 ## The `table_names` Table
 
+The `table_names` table contains the mapping between the `obs_*` SQL table name and the English used to describe the category in the UI:
 
-## The `partable` Table
+    mysql> desc table_names;
+    +------------+--------------+------+-----+-------------------+
+    | Field      | Type         | Null | Key | Default           |
+    +------------+--------------+------+-----+-------------------+
+    | table_name | char(60)     | NO   | MUL | NULL              |
+    | label      | char(60)     | NO   |     | NULL              |
+    | display    | char(1)      | NO   |     | Y                 |
+    | disp_order | int          | NO   |     | NULL              |
+    | id         | int unsigned | NO   | PRI | NULL              |
+    | timestamp  | timestamp    | YES  |     | CURRENT_TIMESTAMP |
+    +------------+--------------+------+-----+-------------------+
 
+The fields are:
+
+- `table_name`: The name of the SQL `obs_*` table.
+- `label`: The English label, such as `Occultation/Reflectance Profiles Constraints`.
+- `display`: A flag `Y` or `N` indicating whether to display this table. Currently this is always `Y`.
+- `disp_order`: An integer indicating how the table should be sorted when displaying them.
+- `id`: A unique ID.
+- `timestamp`: The date and time this row was last modified.
+
+## The `partables` Table
+
+The `partables` table is used to instruct OPUS on how to figure out when a particular search category should be displayed. In general a category is displayed when all of the current search results have a particular property, e.g. the `Cassini Mission Constraints` table is displayed when all of the search results have the `Mission` field equal to `Cassini`.
+
+    mysql> desc partables;
+    +-------------+--------------+------+-----+-------------------+
+    | Field       | Type         | Null | Key | Default           |
+    +-------------+--------------+------+-----+-------------------+
+    | trigger_tab | char(200)    | YES  | MUL | NULL              |
+    | trigger_col | char(200)    | YES  |     | NULL              |
+    | trigger_val | char(60)     | YES  |     | NULL              |
+    | partable    | char(200)    | YES  |     | NULL              |
+    | id          | int unsigned | NO   | PRI | NULL              |
+    | timestamp   | timestamp    | YES  |     | CURRENT_TIMESTAMP |
+    +-------------+--------------+------+-----+-------------------+
+
+- `trigger_tab`: The table to look at for a particular value.
+- `trigger_col`: The column in that table to look at for a particular value.
+- `trigger_val`: The value to look for.
+- `partable`: When that value is found in that column in that table for all search results, trigger the display of this table.
+- `id`: A unique ID.
+- `timestamp`: The date and time this row was last modified.
+
+For example:
+
+    mysql> SELECT trigger_tab, trigger_col, trigger_val, partable FROM partables
+               WHERE partable='obs_mission_cassini' OR partable='obs_instrument_nhlorri';
+    +-------------+---------------+-------------+------------------------+
+    | trigger_tab | trigger_col   | trigger_val | partable               |
+    +-------------+---------------+-------------+------------------------+
+    | obs_general | mission_id    | 0           | obs_mission_cassini    |
+    | obs_general | instrument_id | 15          | obs_instrument_nhlorri |
+    | obs_general | inst_host_id  | 0           | obs_mission_cassini    |
+    +-------------+---------------+-------------+------------------------+
+
+The `obs_mission_cassini` table will be displayed whenever all of the search results have a `mission_id` of Cassini (the mult value `0` for that column) or a `inst_host_id` of Cassini (the mult value `0` for that column), while the `obs_instrument_nhlorri` table will be displayed whenever all of the search results have an `instrument_id` of `NHLORRI` (the mult value `15` for that column).
 
 ## The `cart` Table
 
+The `cart` table records the current Cart contents for all users. As long as the Django session is not changed and the database is not reinitialized, users have a cart that persists across browser sessions. Each row in the table represents one OPUS ID stored in the cart for a particular user. Thus the cart for one user is spread across as many rows as necessary.
+
+    mysql> desc cart;
+    +----------------+--------------+------+-----+-------------------+
+    | Field          | Type         | Null | Key | Default           |
+    +----------------+--------------+------+-----+-------------------+
+    | session_id     | char(80)     | NO   | MUL | NULL              |
+    | obs_general_id | int unsigned | NO   | MUL | NULL              |
+    | opus_id        | char(50)     | NO   | MUL | NULL              |
+    | recycled       | tinyint      | NO   |     | NULL              |
+    | id             | int unsigned | NO   | PRI | NULL              |
+    | timestamp      | timestamp    | YES  |     | CURRENT_TIMESTAMP |
+    +----------------+--------------+------+-----+-------------------+
+
+The fields are:
+
+- `session_id`: The Django session ID.
+- `obs_general_id`: The `obs_general` unique ID of the observation in the cart.
+- `opus_id`: The OPUS ID of the observation in the cart (which could also be found by joining the `obs_general_id` with the `obs_general` table).
+- `recycled`: A boolean flag saying whether or not this observation is in the recycle bin.
+- `id`: A unique ID.
+- `timestamp`: The date and time this row was last modified.
+
+## The `user_searches` and `cache_*` Tables
+
+When a search query comes in, OPUS first looks in the `user_searches` table to see if the exact same search has already been performed; if so the results are already cached in one of the `cache_*` tables. If not, the details of the search are stored in `user_searches` and a new `cache_*` table is created with the results.
+
+    mysql> desc user_searches;
+    +-----------------+--------------+------+-----+-------------------+
+    | Field           | Type         | Null | Key | Default           |
+    +-----------------+--------------+------+-----+-------------------+
+    | id              | int unsigned | NO   | PRI | NULL              |
+    | selections_json | text         | NO   |     | NULL              |
+    | selections_hash | varchar(32)  | NO   | MUL | NULL              |
+    | qtypes_json     | text         | YES  |     | NULL              |
+    | qtypes_hash     | varchar(32)  | YES  |     | NULL              |
+    | units_json      | text         | YES  |     | NULL              |
+    | units_hash      | varchar(32)  | YES  |     | NULL              |
+    | order_json      | text         | YES  |     | NULL              |
+    | order_hash      | varchar(32)  | YES  |     | NULL              |
+    | timestamp       | timestamp    | YES  |     | CURRENT_TIMESTAMP |
+    +-----------------+--------------+------+-----+-------------------+
+
+    mysql> desc cache_1;
+    +------------+--------------+------+-----+---------+
+    | Field      | Type         | Null | Key | Default |
+    +------------+--------------+------+-----+---------+
+    | sort_order | int          | NO   | PRI | NULL    |
+    | id         | int unsigned | YES  | UNI | NULL    |
+    +------------+--------------+------+-----+---------+
+
+The fields of `user_searches` are:
+
+- `selections_json` and `selections_hash`: A JSON structure containing internal details of the search query, and an MD5 hash of the structure for ease of searching.
+- `qtypes_json` and `qtypes_hash`: A JSON structure containing internal details of the qtypes used in the search query, and an MD5 hash of the structure for ease of searching.
+- `units_json` and `units_hash`: A JSON structure containing internal details of the units used in the search query, and an MD5 hash of the structure for ease of searching.
+- `order_json` and `order_hash`: A JSON structure containing internal details of the sort order used in the search query, and an MD5 hash of the structure for ease of searching.
+- `id`: A unique ID. This unique ID is also used to identify the particular associated `cache_N` table.
+- `timestamp`: The date and time this row was last modified.
+
+Only if all four fields `selections`, `qtypes`, `units`, and `order` match is a search considered to have been previously performed.
+
+The `cache_*` tables each contain all of the results from one search. Each row represents one OPUS ID in the search results. The fields of `cache_*` are:
+
+- `id`: The `obs_general` ID of the result.
+- `sort_order`: An integer indicating how the result appears in the sorted order. It is necessary because the `CREATE TABLE` operation in `get_search_results_chunk` does not preserve the ordering of the original table.
 
 
 ## The `contexts` and `definitions` Tables
-
-
-## The `user_searches` and `cache_*` Tables
