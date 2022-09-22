@@ -46,7 +46,6 @@ var o_selectMetadata = {
             o_selectMetadata.saveOpusPrefsCols();
             o_selectMetadata.adjustHeight();
             o_browse.hideMenus();
-            console.log("=======render when clicking select metadata modal====")
             o_selectMetadata.render();
 
             // Do the fake API call to write in the Apache log files that
@@ -138,13 +137,11 @@ var o_selectMetadata = {
             let val = $(e.target).data("value");
             // Update the displayed unit for the field after selecting one
             $(`.op-${slug}-units-dropdown-toggle`).text(` ${displayVal} `);
-            // console.log("------CLICK UNIT DROPDOWN MENU------------");
-            // console.log(opus.prefs.cols);
+            // Update the slug in opus.prefs.cols by adding the selected unit
             let idx = opus.prefs.cols.findIndex((col) => {
                 return col.includes(slug);
             });
             opus.prefs.cols[idx] = slug + ":" + val;
-            // console.log(opus.prefs.cols);
         });
     },  // /addSelectMetadataBehaviors
 
@@ -199,8 +196,6 @@ var o_selectMetadata = {
             }
             o_selectMetadata.lastMetadataMenuRequestNo++;
             let url = `/opus/__metadata_selector.json?${hash}${expandedCats}&reqno=${o_selectMetadata.lastMetadataMenuRequestNo}`;
-            console.log("$$$$$$")
-            console.log(url)
 
             $.getJSON(url, function(data) {
                 if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
@@ -221,6 +216,7 @@ var o_selectMetadata = {
 
                 // display check next to any currently used columns
                 $.each(opus.prefs.cols, function(index, col) {
+                    col = o_utils.getSlugWithoutUnit(col);
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
                     let elem = $(`#op-add-metadata-fields .op-select-list a[data-slug="${col}"]`).parent();
                     elem.remove();
@@ -319,15 +315,15 @@ var o_selectMetadata = {
         opus.prefs.cols.push(slug);
 
         let label = $(menuSelector).data("qualifiedlabel");
-        let defaultUnit = $(menuSelector).data("defaultunit");
+        let dispUnit = $(menuSelector).data("dispunit");
 
         let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
 
         // If a slug has units available, attach the units dropdown menu
         let unitDropdown = "";
-        if(defaultUnit) {
+        if(dispUnit) {
             unitDropdown +=`(<div class="op-units-dropdown dropdown d-inline">
-            <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${defaultUnit}</a>
+            <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${dispUnit}</a>
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
             for(let unit in units) {
@@ -352,7 +348,9 @@ var o_selectMetadata = {
     },
 
     removeColumn: function(slug) {
-        let colIndex = $.inArray(slug, opus.prefs.cols);
+        let colIndex = opus.prefs.cols.findIndex((col) => {
+            return col.includes(slug);
+        });
         if (colIndex < 0 || opus.prefs.cols.length <= 1) {
             return;
         }
@@ -386,6 +384,7 @@ var o_selectMetadata = {
 
         // add them back in...
         $(opus.prefs.cols).each(function(index, slug) {
+            slug = o_utils.getSlugWithoutUnit(slug);
             let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
             o_menu.markMenuItem(menuSelector);
         });
