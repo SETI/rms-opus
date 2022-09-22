@@ -269,9 +269,7 @@ var o_search = {
                 let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
 
                 if (preprogrammedRangesDropdown.hasClass("show")) {
-                    // preprogrammedRangesDropdown.toggleClass("show");
                     let dropdownInstance = new bootstrap.Dropdown(inputToTriggerDropdown[0]);
-                    // dropdownInstance.hide();
                     dropdownInstance.toggle();
                 }
 

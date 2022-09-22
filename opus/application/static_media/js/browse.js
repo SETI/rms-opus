@@ -2737,8 +2737,7 @@ var o_browse = {
         let tab = opus.getViewTab();
         let targetElem = e.currentTarget;
         let toolElem = `${tab} .op-edit-field-tool`;
-        let left = $(targetElem).position().left ;/*+
-                    $(`${tab} .op-data-table-view .table`).offset().left;*/
+        let left = $(targetElem).position().left;
         let top = $(targetElem).offset().top +
                   $(targetElem).outerHeight();
 
