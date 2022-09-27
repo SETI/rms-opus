@@ -617,6 +617,6 @@ The fields are:
 
 - `term`: The internal name of the term (e.g. `PLANET_NAME`).
 - `context`: The associated internal name of the context.
-- `definitiion`: The full free-form text definition.
+- `definition`: The full free-form text definition.
 - `timestamp`: The date and time this row was last modified.
 - `id`: A unique ID.
