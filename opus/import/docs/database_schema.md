@@ -321,7 +321,7 @@ Other than the odd naming, these surface geometry tables behave exactly the same
 
 The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. All of this information could be encoded in a single enormous JSON structure in the `obs_general` table, but for efficiency and historical reasons we break this information out into its own table, `obs_file`. The `obs_file` table has a similar structure to other `obs_*` tables, but is unique in that it has a one-to-many relationship with OPUS IDs. In other words, with one row per downloadable file product, a single OPUS ID will likely have more than one row in this table. The `obs_file` table is only joined with `obs_general` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
 
-    mysql> desc obs_files;
+    mysql> DESC obs_files;
     +-----------------+--------------+------+-----+-------------------+
     | Field           | Type         | Null | Key | Default           |
     +-----------------+--------------+------+-----+-------------------+
@@ -378,7 +378,7 @@ And as predicted a single OPUS ID is likely to appear more than once:
 
 In order for OPUS to properly handle search and metadata display, it needs detailed information about each metadata field. This information is encoded in the `param_info` table, which has one row for each displayable metadata field:
 
-    mysql> desc param_info;
+    mysql> DESC param_info;
     +----------------------+---------------+------+-----+-------------------+
     | Field                | Type          | Null | Key | Default           |
     +----------------------+---------------+------+-----+-------------------+
@@ -442,7 +442,7 @@ The fields are:
 
 The `table_names` table contains the mapping between the `obs_*` SQL table name and the English used to describe the category in the UI:
 
-    mysql> desc table_names;
+    mysql> DESC table_names;
     +------------+--------------+------+-----+-------------------+
     | Field      | Type         | Null | Key | Default           |
     +------------+--------------+------+-----+-------------------+
@@ -468,7 +468,7 @@ The fields are:
 
 The `partables` table is used to instruct OPUS on how to figure out when a particular search category should be displayed. In general a category is displayed when all of the current search results have a particular property, e.g. the `Cassini Mission Constraints` table is displayed when all of the search results have the `Mission` field equal to `Cassini`.
 
-    mysql> desc partables;
+    mysql> DESC partables;
     +-------------+--------------+------+-----+-------------------+
     | Field       | Type         | Null | Key | Default           |
     +-------------+--------------+------+-----+-------------------+
@@ -506,7 +506,7 @@ The `obs_mission_cassini` table will be displayed whenever all of the search res
 
 The `cart` table records the current Cart contents for all users. As long as the Django session is not changed and the database is not reinitialized, users have a cart that persists across browser sessions. Each row in the table represents one OPUS ID stored in the cart for a particular user. Thus the cart for one user is spread across as many rows as necessary.
 
-    mysql> desc cart;
+    mysql> DESC cart;
     +----------------+--------------+------+-----+-------------------+
     | Field          | Type         | Null | Key | Default           |
     +----------------+--------------+------+-----+-------------------+
@@ -532,7 +532,7 @@ The fields are:
 
 When a search query comes in, OPUS first looks in the `user_searches` table to see if the exact same search has already been performed; if so the results are already cached in one of the `cache_*` tables. If not, the details of the search are stored in `user_searches` and a new `cache_*` table is created with the results.
 
-    mysql> desc user_searches;
+    mysql> DESC user_searches;
     +-----------------+--------------+------+-----+-------------------+
     | Field           | Type         | Null | Key | Default           |
     +-----------------+--------------+------+-----+-------------------+
@@ -548,7 +548,7 @@ When a search query comes in, OPUS first looks in the `user_searches` table to s
     | timestamp       | timestamp    | YES  |     | CURRENT_TIMESTAMP |
     +-----------------+--------------+------+-----+-------------------+
 
-    mysql> desc cache_1;
+    mysql> DESC cache_1;
     +------------+--------------+------+-----+---------+
     | Field      | Type         | Null | Key | Default |
     +------------+--------------+------+-----+---------+
@@ -574,3 +574,49 @@ The `cache_*` tables each contain all of the results from one search. Each row r
 
 #
 # The `contexts` and `definitions` Tables
+
+OPUS supports a flexible database-based dictionary. Eventually this dictionary will be available through a website interface as a searchable glossary, but in the meantime it is used to supply tooltips for OPUS metadata fields. Each entry in the dictionary consists of a field name (e.g. `PLANET_NAME`) and a context (e.g. `OPUS_GENERAL_SEARCH`). It is possible for a field name to appear under multiple contexts. For example, a field such as `EXPOSURE_TIME` might mean something different in the `COISS` and `COCIRS` contexts. There are two database tables that support the dictionary.
+
+The `contexts` table has the following schema:
+
+    mysql> DESC contexts;
+    +-------------+--------------+------+-----+-------------------+
+    | Field       | Type         | Null | Key | Default           |
+    +-------------+--------------+------+-----+-------------------+
+    | name        | char(50)     | NO   | UNI | NULL              |
+    | description | char(100)    | NO   |     | NULL              |
+    | parent      | char(25)     | NO   |     | NULL              |
+    | timestamp   | timestamp    | YES  |     | CURRENT_TIMESTAMP |
+    | id          | int unsigned | NO   | PRI | NULL              |
+    +-------------+--------------+------+-----+-------------------+
+
+Contexts are arranged in a tree, such that each context has a single parent. In the eventual website interface, a term will be displayed in multiple contexts if appropriate. The top-level context is the NASA PDS Planetary Science Data Dictionary, `PSDD`. Under this are the top-level OPUS Constraints categories: `OPUS_GENERAL`, `OPUS_PDS`, `OPUS_TYPE_IMAGE`, `OPUS_WAVELENGTH`, etc., as well as the missions like `CASSINI`. Under each mission are the instruments: `CASSINI` has `COCIRS`, `COISS`, `COUVIS`, etc.
+
+The fields are:
+
+- `name`: The internal name of the context (e.g. `CASSINI`).
+- `description`: The pretty English name of the context (e.g. `Cassini Mission`).
+- `parent`: The internal name of the parent context.
+- `timestamp`: The date and time this row was last modified.
+- `id`: A unique ID.
+
+The `definitions` table has the following schema:
+
+    mysql> DESC definitions;
+    +------------+--------------+------+-----+-------------------+
+    | Field      | Type         | Null | Key | Default           |
+    +------------+--------------+------+-----+-------------------+
+    | term       | char(255)    | NO   | MUL | NULL              |
+    | context    | char(50)     | NO   | MUL | NULL              |
+    | definition | text         | NO   |     | NULL              |
+    | timestamp  | timestamp    | YES  |     | CURRENT_TIMESTAMP |
+    | id         | int unsigned | NO   | PRI | NULL              |
+    +------------+--------------+------+-----+-------------------+
+
+The fields are:
+
+- `term`: The internal name of the term (e.g. `PLANET_NAME`).
+- `context`: The associated internal name of the context.
+- `definitiion`: The full free-form text definition.
+- `timestamp`: The date and time this row was last modified.
+- `id`: A unique ID.
