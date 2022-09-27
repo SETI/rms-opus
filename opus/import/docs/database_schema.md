@@ -1,5 +1,3 @@
-# The OPUS Database Schema
-
 This document describes the database schema for OPUS 3.x.
 
 OPUS uses MySQL 8.x. MySQL is a relational database based on SQL (Structured Query Language). A relational database is one where data is stored in a collection of *tables*, each of which has pre-defined *columns* with specified data types. The actual data is stored in each table in *rows*, much like in a spreadsheet, and each *row* contains an instance of each *column*. Columns that do not have data available may be marked by storing the special value `NULL`, if the column's properties are set to permit it. The relational part comes when tables cross-reference each other. For example, a column in one table could be used to select rows from another table. Such an operation is called a *join*, and many tables can be joined together. The joining of tables is the fundamental concept of relational databases. To fully understand the OPUS database it is strongly recommended that you become familiar with relational databases and the SQL language before continuing.
@@ -10,7 +8,8 @@ Each row in an `obs_*` table represents a single observation represented by a un
 
 In addition to metadata, OPUS stores other information that helps it operate in tables. This includes information about checkbox fields, the contents of users' Carts, the dictionary of terms and definitions (including tooltips), information about the metadata fields themselves (this is metadata metadata!), and information about the metadata categories.
 
-## OPUS Metadata
+#
+# OPUS Metadata
 
 It's important to understand that OPUS has its own concept of metadata types independent of the SQL data types. For example, an integer in the database could represent a numeric value (like the pixel size of an image) or an index into a "mult table" (like the selection of a particular mission from the available options) or a reference to an entry in another table or just a unique ID in the current table. As such, there needs to be a place to store "metadata about the metadata", and this is the separate `param_info` table, which will be discussed later. We will use the term "field type" when discussing OPUS's concept of metadata types, and "SQL data type" when discussing the attributes of a SQL column.
 
@@ -50,9 +49,10 @@ OPUS understands the following high-level field types:
 
 Many numerical fields can be interpreted in different units. In these cases, there is a default unit that is stored in the database (for example, `km`) and the values are converted to/from this default unit as needed. This is also the case for fields that are numerical in nature but whose printed representation is something more complicated, like date/time strings (store as Ephemeris Time) or the various Spacecraft Clock Counts (stored in an internal floating point representation).
 
-## The `obs_*` Tables
+#
+# The `obs_*` Tables
 
-### General Overview
+## General Overview
 
 Each "Constraints" section corresponds to one `obs_*` table. Each `obs_*` table has columns representing a series of metadata fields. Each row of a table represents a single observation identified by a unique OPUS ID.
 
@@ -184,7 +184,7 @@ Tables can be joined together to retrieve all of the metadata for one or more ob
 
 Generally speaking, you can think of the OPUS schema as having only one `obs` table and one row per OPUS ID with a huge number of columns encoding all of the possible metadata that could be needed. However, this would be inefficient to store (e.g. why store New Horizons metadata for a Cassini mission? You would just have to fill the columns wth NULLs), so instead we break the information across multiple tables and only populate the rows in the tables as necessary, allowing MySQL's efficient JOIN functionality to combine everything together when needed.
 
-### The Encoding of Checkbox IDs and the `mult_obs_*` Tables
+## The Encoding of Checkbox IDs and the `mult_obs_*` Tables
 
 "Mult" (aka `GROUP`) fields are multiple choice options selected from a defined set. The list of available options may be hardcoded in the import pipeline or generated dynamically during the import process. Either way, the option associated with a particular observation is stored as an integer in the database. This integer is then used as an index into an associated "mult table" to look up the details of that option. The name of the "mult table" is a combination of the parent `obs_*` table and the field name. For example, for the "Planet Name" (`planet_id`) field in the "General Constraints" category (`obs_general`) the table is called `mult_obs_general_planet_id`, and it has the following schema:
 
@@ -274,15 +274,15 @@ Fields like `Intended Target Name` that support multiple simultaneous options ar
 
 To better understand how this is used, search for SQL commands containing `JSON_` in the `views.py` files under `apps`.
 
-### NULL and NOT NULL Columns
+## NULL and NOT NULL Columns
 
 Some columns (like `OPUS ID`) must always contain a valid value, while others (like `Right Ascension`) may have values missing for some observations. For safety and database integrity, we prevent columns that must always be valid from having `NULL` values by setting the `NOT NULL` column property. Other columns do not have this property set and allow `NULL` values. The validate step of the import process identifies columns that permit NULLs and yet have no NULL values and issues the suggestion that those columns be modified to be `NOT NULL`.
 
-### The Use of SQL Indexes
+## The Use of SQL Indexes
 
 SQL indexes are never required, but are useful for performance enhancement. A column that has an index will theoretically be faster to search on and to join with. As such, we try to make every metadata column have an associated index. Unfortunately, MySQL has a limit of 64 indexes for each table, so some tables with a large number of metadata fields (like `obs_ring_geometry`) are unable to have indexes for all columns. In these cases we remove indexes for the columns that are least likely to be used in searches.
 
-### The Surface Geometry Tables
+## The Surface Geometry Tables
 
 There are two types of surface geometry tables. The first, called simply `obs_surface_geometry`, contains the fields shown under "Surface Geometry Constraints" *other than* `Surface Geometry Target Selector`, which is a magic field. At the time of this writing, the only other field is `Multiple Target List`. Thus its schema is:
 
@@ -317,7 +317,7 @@ There is also a series of tables, one per body, containing the surface geometry 
 
 Other than the odd naming, these surface geometry tables behave exactly the same as any other `obs_*` table.
 
-### The Special `obs_file` Table
+## The Special `obs_file` Table
 
 The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. All of this information could be encoded in a single enormous JSON structure in the `obs_general` table, but for efficiency and historical reasons we break this information out into its own table, `obs_file`. The `obs_file` table has a similar structure to other `obs_*` tables, but is unique in that it has a one-to-many relationship with OPUS IDs. In other words, with one row per downloadable file product, a single OPUS ID will likely have more than one row in this table. The `obs_file` table is only joined with `obs_general` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
 
@@ -373,7 +373,8 @@ And as predicted a single OPUS ID is likely to appear more than once:
     | coiss_calib  | calibrated/CO.../data/146096065...3_1_CALIB.IMG            | 4202496 |  NULL |   NULL |
     +--------------+--------------...---------------...-------------------------+---------+-------+--------+
 
-## The `param_info` Table
+#
+# The `param_info` Table
 
 In order for OPUS to properly handle search and metadata display, it needs detailed information about each metadata field. This information is encoded in the `param_info` table, which has one row for each displayable metadata field:
 
@@ -436,7 +437,8 @@ The fields are:
 - `id`: A unique ID.
 - `timestamp`: The date and time this row was last modified.
 
-## The `table_names` Table
+#
+# The `table_names` Table
 
 The `table_names` table contains the mapping between the `obs_*` SQL table name and the English used to describe the category in the UI:
 
@@ -461,7 +463,8 @@ The fields are:
 - `id`: A unique ID.
 - `timestamp`: The date and time this row was last modified.
 
-## The `partables` Table
+#
+# The `partables` Table
 
 The `partables` table is used to instruct OPUS on how to figure out when a particular search category should be displayed. In general a category is displayed when all of the current search results have a particular property, e.g. the `Cassini Mission Constraints` table is displayed when all of the search results have the `Mission` field equal to `Cassini`.
 
@@ -498,7 +501,8 @@ For example:
 
 The `obs_mission_cassini` table will be displayed whenever all of the search results have a `mission_id` of Cassini (the mult value `0` for that column) or a `inst_host_id` of Cassini (the mult value `0` for that column), while the `obs_instrument_nhlorri` table will be displayed whenever all of the search results have an `instrument_id` of `NHLORRI` (the mult value `15` for that column).
 
-## The `cart` Table
+#
+# The `cart` Table
 
 The `cart` table records the current Cart contents for all users. As long as the Django session is not changed and the database is not reinitialized, users have a cart that persists across browser sessions. Each row in the table represents one OPUS ID stored in the cart for a particular user. Thus the cart for one user is spread across as many rows as necessary.
 
@@ -523,7 +527,8 @@ The fields are:
 - `id`: A unique ID.
 - `timestamp`: The date and time this row was last modified.
 
-## The `user_searches` and `cache_*` Tables
+#
+# The `user_searches` and `cache_*` Tables
 
 When a search query comes in, OPUS first looks in the `user_searches` table to see if the exact same search has already been performed; if so the results are already cached in one of the `cache_*` tables. If not, the details of the search are stored in `user_searches` and a new `cache_*` table is created with the results.
 
@@ -567,5 +572,5 @@ The `cache_*` tables each contain all of the results from one search. Each row r
 - `id`: The `obs_general` ID of the result.
 - `sort_order`: An integer indicating how the result appears in the sorted order. It is necessary because the `CREATE TABLE` operation in `get_search_results_chunk` does not preserve the ordering of the original table.
 
-
-## The `contexts` and `definitions` Tables
+#
+# The `contexts` and `definitions` Tables
