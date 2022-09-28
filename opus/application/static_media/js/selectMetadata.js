@@ -372,7 +372,22 @@ var o_selectMetadata = {
     // columns can be reordered wrt each other in 'metadata selector' by dragging them
     metadataDragged: function(element) {
         let cols = $.map($(element).sortable("toArray"), function(item) {
-            return item.split("__")[1];
+            let hasUnit = $(`#${item} .op-units-dropdown`).length;
+            let unitVal = "";
+            if (hasUnit) {
+                let currentDispUnit = $(`#${item} .dropdown-toggle`).text().trim();
+                for (let unit of $(`#${item} .dropdown-item`)) {
+                    let dispVal = $(unit).data("dispval");
+                    if (dispVal === currentDispUnit) {
+                        let defaultUnit = $(unit).data("defaultunit");
+                        let currentVal = $(unit).data("value");
+                        unitVal = (defaultUnit === currentVal) ? "" : currentVal;
+                        break;
+                    }
+                }
+            }
+            let col = unitVal ? item.split("__")[1] + ":" + unitVal : item.split("__")[1];
+            return col;
         });
         opus.prefs.cols = cols;
     },
