@@ -125,8 +125,7 @@ class ParamInfo(models.Model):
         display_name = self.get_default_unit(override_unit)
         if display_name:
             return ('(' + display_name + ')')
-        else:
-            return display_name
+        return display_name
 
     def is_valid_unit(self, unit):
         (form_type, form_type_format,

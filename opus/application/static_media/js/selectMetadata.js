@@ -134,6 +134,7 @@ var o_selectMetadata = {
 
             let slug = $(e.target).data("slug");
             let displayVal = $(e.target).data("dispval");
+            let defaultUnit = $(e.target).data("defaultunit");
             let val = $(e.target).data("value");
             // Update the displayed unit for the field after selecting one
             $(`.op-${slug}-units-dropdown-toggle`).text(` ${displayVal} `);
@@ -141,7 +142,7 @@ var o_selectMetadata = {
             let idx = opus.prefs.cols.findIndex((col) => {
                 return col.includes(slug);
             });
-            opus.prefs.cols[idx] = slug + ":" + val;
+            opus.prefs.cols[idx] = (val === defaultUnit) ? slug : slug + ":" + val;
         });
     },  // /addSelectMetadataBehaviors
 
@@ -316,18 +317,19 @@ var o_selectMetadata = {
 
         let label = $(menuSelector).data("qualifiedlabel");
         let dispUnit = $(menuSelector).data("dispunit");
+        let defaultUnit = $(menuSelector).data("defaultunit");
 
         let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
 
         // If a slug has units available, attach the units dropdown menu
         let unitDropdown = "";
-        if(dispUnit) {
-            unitDropdown +=`(<div class="op-units-dropdown dropdown d-inline">
+        if (dispUnit) {
+            unitDropdown += `(<div class="op-units-dropdown dropdown d-inline">
             <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${dispUnit}</a>
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
-            for(let unit in units) {
-                unitDropdown += `<a class="dropdown-item" data-value="${unit}" data-dispval="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
+            for (let unit in units) {
+                unitDropdown += `<a class="dropdown-item" data-defaultunit="${defaultUnit}" data-value="${unit}" data-dispval="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
             }
             unitDropdown += "</div></div>)";
         }

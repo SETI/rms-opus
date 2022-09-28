@@ -49,6 +49,7 @@
                                                         {% endif %}
                                                       "
                                                       data-dispunit="{% if p.disp_unit %}{{ p.disp_unit }}{% endif %}"
+                                                      data-defaultpunit="{% if p.default_unit %}{{ p.default_unit }}{% endif %}"
                                                       data-availunits="{% if p.units|json_dumps %}{{ p.units }}{% endif %}"
                                                       data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                                         <span class="op-menu-item">
@@ -97,6 +98,7 @@
                                         {% endif %}
                                       "
                                       data-dispunit="{% if p.disp_unit %}{{ p.disp_unit }}{% endif %}"
+                                      data-defaultpunit="{% if p.default_unit %}{{ p.default_unit }}{% endif %}"
                                       data-availunits="{% if p.units %}{{ p.units|json_dumps }}{% endif %}"
                                       data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                         <span class="op-menu-item">

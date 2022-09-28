@@ -2883,7 +2883,8 @@ ul.ui-autocomplete a.ui-state-active {
     max-height: 200px;
 }
 
-/* remove the caret next to unit dropdown in selected metadata fields */
+/* remove the caret next to unit dropdown in selected metadata fields menu
+under select metadata modal in browse view */
 .op-selected-metadata-column .dropdown-toggle::after {
     display: none !important;
 }

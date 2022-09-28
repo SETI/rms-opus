@@ -1798,19 +1798,17 @@ def display_unit_ever(unit_id):
     "Check if a unit name should ever be displayed for a unit_id."
     return display_search_unit(unit_id) or display_result_unit(unit_id)
 
-def get_default_and_available_units(param_form_type):
-    """Takes in a param info form type and return a list of display default unit and
-    available units.
-    """
+def get_disp_and_available_units(param_form_type):
+    "Return display, default, and available units for a given param form type."
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_form_type)
     available_units = get_unit_display_names(form_type_unit_id)
     default_unit = get_default_unit(form_type_unit_id)
     if default_unit is not None:
-        default_unit_disp = get_unit_display_name(form_type_unit_id, default_unit)
+        disp_unit = get_unit_display_name(form_type_unit_id, default_unit)
     else:
-        default_unit_disp = None
-    return [default_unit_disp, available_units]
+        disp_unit = None
+    return disp_unit, default_unit, available_units
 
 ### FORMAT A VALUE FOR A GIVEN UNIT
 
