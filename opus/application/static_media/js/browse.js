@@ -2932,7 +2932,7 @@ var o_browse = {
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools me-2">` +
                          `<a href="#" class="op-metadata-detail-remove op-metadatabox-edit-tooltip" me-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
-        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add op-metadatabox-edit-tooltip" title="${selectMetadataTitle}" data-bs-toggle="dropdown" role="button"><i class="fas fa-plus pe-1"> Add field here</i></a>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add op-metadatabox-edit-tooltip" title="${selectMetadataTitle}" role="button"><i class="fas fa-plus pe-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
