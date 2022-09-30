@@ -5,6 +5,14 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_0xxx/COUVIS_0002/DATA/D2001_087/HSP2001_087_04_00.DAT",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_0xxx/COUVIS_0002/DATA/D2001_087/HSP2001_087_04_00.LBL"
             ],
+            "couvis_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.lbl"
@@ -33,6 +41,14 @@
                 "couvis_raw": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_0xxx/COUVIS_0002/DATA/D2001_087/HSP2001_087_04_00.DAT",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_0xxx/COUVIS_0002/DATA/D2001_087/HSP2001_087_04_00.LBL"
+                ],
+                "couvis_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab",

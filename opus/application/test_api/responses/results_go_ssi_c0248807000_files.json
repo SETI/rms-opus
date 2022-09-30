@@ -13,6 +13,11 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0016/LABEL/RLINEPRX.FMT",
                 "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0016/LABEL/RTLMTAB.FMT"
             ],
+            "gossi_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_index.lbl"
@@ -49,6 +54,11 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0016/SL9/C0248807000G.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0016/LABEL/RLINEPRX.FMT",
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0016/LABEL/RTLMTAB.FMT"
+                ],
+                "gossi_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_index.tab",
