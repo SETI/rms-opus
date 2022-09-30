@@ -133,7 +133,7 @@ var o_selectMetadata = {
             e.preventDefault();
 
             let slug = $(e.target).data("slug");
-            let displayVal = $(e.target).data("dispval");
+            let displayVal = $(e.target).data("dispvalue");
             let defaultUnit = $(e.target).data("defaultunit");
             let val = $(e.target).data("value");
             // Update the displayed unit for the field after selecting one
@@ -329,7 +329,7 @@ var o_selectMetadata = {
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
             for (let unit in units) {
-                unitDropdown += `<a class="dropdown-item" data-defaultunit="${defaultUnit}" data-value="${unit}" data-dispval="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
+                unitDropdown += `<a class="dropdown-item" data-defaultUnit="${defaultUnit}" data-value="${unit}" data-dispValue="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
             }
             unitDropdown += "</div></div>)";
         }
@@ -377,7 +377,7 @@ var o_selectMetadata = {
             if (hasUnit) {
                 let currentDispUnit = $(`#${item} .dropdown-toggle`).text().trim();
                 for (let unit of $(`#${item} .dropdown-item`)) {
-                    let dispVal = $(unit).data("dispval");
+                    let dispVal = $(unit).data("dispvalue");
                     if (dispVal === currentDispUnit) {
                         let defaultUnit = $(unit).data("defaultunit");
                         let currentVal = $(unit).data("value");

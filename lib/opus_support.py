@@ -1799,7 +1799,7 @@ def display_unit_ever(unit_id):
     return display_search_unit(unit_id) or display_result_unit(unit_id)
 
 def get_disp_default_and_avail_units(param_form_type):
-    "Return display, default, and available units for a given param form type."
+    "Return display, default, and available units for a given ParamInfo form type."
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_form_type)
 
