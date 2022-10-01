@@ -42,7 +42,7 @@
                         <span>{{ param_info.body_qualified_label_results }}
                         {% if param_info.units %}
                             (<div class="op-units-dropdown dropdown d-inline">
-                                <a class="op-{{ param_info.slug }}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <a class="op-{{ param_info.slug }}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" data-prevDispValue="{{ param_info.disp_unit }}" aria-haspopup="true" aria-expanded="false">
                                 {{ param_info.disp_unit }}
                                 </a>
                                 <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">

@@ -73,6 +73,7 @@ var o_selectMetadata = {
                     return;
                 }
             }
+            o_selectMetadata.hideUnitsDropdown();
             // remove spinner if nothing is re-draw when we click save changes
             o_browse.hidePageLoaderSpinner();
         });
@@ -94,6 +95,7 @@ var o_selectMetadata = {
 
         // removes chosen column
         $("#op-select-metadata").on("click", ".op-selected-metadata-column li .op-selected-metadata-unselect", function() {
+            o_selectMetadata.hideUnitsDropdown();
             let slug = $(this).parent().attr("id").split('__')[1];
             o_selectMetadata.removeColumn(slug);
             return false;
@@ -137,7 +139,9 @@ var o_selectMetadata = {
             let defaultUnit = $(e.target).data("defaultunit");
             let val = $(e.target).data("value");
             // Update the displayed unit for the field after selecting one
+            let prevDispValue = $(`.op-${slug}-units-dropdown-toggle`).text().trim();
             $(`.op-${slug}-units-dropdown-toggle`).text(` ${displayVal} `);
+            $(`.op-${slug}-units-dropdown-toggle`).data("prevdispvalue", prevDispValue);
             // Update the slug in opus.prefs.cols by adding the selected unit
             let idx = opus.prefs.cols.findIndex((col) => {
                 return col.includes(slug);
@@ -145,6 +149,15 @@ var o_selectMetadata = {
             opus.prefs.cols[idx] = (val === defaultUnit) ? slug : slug + ":" + val;
         });
     },  // /addSelectMetadataBehaviors
+
+    // close units dropdown
+    hideUnitsDropdown: function() {
+        for (let unitDropdown of $(".op-units-dropdown")) {
+            if ($(unitDropdown).hasClass("show")) {
+                $(unitDropdown).find(".dropdown-toggle").dropdown("toggle");
+            }
+        }
+    },
 
     showMenuLoaderSpinner: function() {
         o_selectMetadata.spinnerTimer = setTimeout(function() {
@@ -270,6 +283,7 @@ var o_selectMetadata = {
                         o_selectMetadata.isSortingHappening = false;
                     },
                     start: function(event, ui) {
+                        o_selectMetadata.hideUnitsDropdown();
                         o_widgets.getMaxScrollTopVal(event.target);
                         o_selectMetadata.isSortingHappening = true;
                     },
@@ -407,6 +421,11 @@ var o_selectMetadata = {
         });
         $(o_selectMetadata.lastSavedSelected).each(function(index, selected) {
             $("#op-select-metadata .op-selected-metadata-column > ul").append(selected);
+            let unitDropdown = $(selected).find(".dropdown-toggle");
+            if (unitDropdown.length) {
+                let prevDisplayValue = unitDropdown.data("prevdispvalue");
+                unitDropdown.text(` ${prevDisplayValue} `);
+            }
         });
         $("#op-select-metadata .op-selected-metadata-column").find("li").show();
         $("#op-select-metadata").modal("hide");
