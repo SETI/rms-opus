@@ -1881,12 +1881,14 @@ var o_browse = {
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
             contentAsHTML: true,
+            debug: false,
         });
         $(`${tab} .op-browse-table-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
             contentAsHTML: true,
+            debug: false,
             functionBefore: function(instance, helper){
                 // Make sure all other tooltips are closed before a new one is opened
                 // in table view.
