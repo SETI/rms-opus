@@ -73,6 +73,7 @@ var o_selectMetadata = {
                     return;
                 }
             }
+            o_selectMetadata.hideUnitsDropdown();
             // remove spinner if nothing is re-draw when we click save changes
             o_browse.hidePageLoaderSpinner();
         });
@@ -94,6 +95,7 @@ var o_selectMetadata = {
 
         // removes chosen column
         $("#op-select-metadata").on("click", ".op-selected-metadata-column li .op-selected-metadata-unselect", function() {
+            o_selectMetadata.hideUnitsDropdown();
             let slug = $(this).parent().attr("id").split('__')[1];
             o_selectMetadata.removeColumn(slug);
             return false;
@@ -126,7 +128,36 @@ var o_selectMetadata = {
             let namespace = opus.getViewNamespace();
             namespace.downloadCSV(this);
         });
+
+        // Select a unit from units dropdown in select metadata menu
+        $("#op-select-metadata").on("click", ".op-units-dropdown .dropdown-item", function(e) {
+            // Avoid <a> href in dropdown item changing the url
+            e.preventDefault();
+
+            let slug = $(e.target).data("slug");
+            let displayVal = $(e.target).data("dispvalue");
+            let defaultUnit = $(e.target).data("defaultunit");
+            let val = $(e.target).data("value");
+            // Update the displayed unit for the field after selecting one
+            let prevDispValue = $(`.op-${slug}-units-dropdown-toggle`).text().trim();
+            $(`.op-${slug}-units-dropdown-toggle`).text(` ${displayVal} `);
+            $(`.op-${slug}-units-dropdown-toggle`).data("prevdispvalue", prevDispValue);
+            // Update the slug in opus.prefs.cols by adding the selected unit
+            let idx = opus.prefs.cols.findIndex((col) => {
+                return col.includes(slug);
+            });
+            opus.prefs.cols[idx] = (val === defaultUnit) ? slug : slug + ":" + val;
+        });
     },  // /addSelectMetadataBehaviors
+
+    // close units dropdown
+    hideUnitsDropdown: function() {
+        for (let unitDropdown of $(".op-units-dropdown")) {
+            if ($(unitDropdown).hasClass("show")) {
+                $(unitDropdown).find(".dropdown-toggle").dropdown("toggle");
+            }
+        }
+    },
 
     showMenuLoaderSpinner: function() {
         o_selectMetadata.spinnerTimer = setTimeout(function() {
@@ -199,6 +230,7 @@ var o_selectMetadata = {
 
                 // display check next to any currently used columns
                 $.each(opus.prefs.cols, function(index, col) {
+                    col = o_utils.getSlugWithoutUnit(col);
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
                     let elem = $(`#op-add-metadata-fields .op-select-list a[data-slug="${col}"]`).parent();
                     elem.remove();
@@ -251,6 +283,7 @@ var o_selectMetadata = {
                         o_selectMetadata.isSortingHappening = false;
                     },
                     start: function(event, ui) {
+                        o_selectMetadata.hideUnitsDropdown();
                         o_widgets.getMaxScrollTopVal(event.target);
                         o_selectMetadata.isSortingHappening = true;
                     },
@@ -258,6 +291,13 @@ var o_selectMetadata = {
                         o_widgets.preventContinuousDownScrolling(event.target);
                     }
                 });
+
+                // Prevent overscrolling on ps in selected metadata fields when scrolling
+                // inside unit dropdown when the list has reached to both ends
+                $(".op-selected-metadata-column .op-scrollable-menu").on("scroll wheel", function(e) {
+                    e.stopPropagation();
+                });
+
                 if (opus.prefs.cols.length <= 1) {
                     $("#op-select-metadata .op-selected-metadata-column .op-selected-metadata-unselect").hide();
                 }
@@ -290,14 +330,32 @@ var o_selectMetadata = {
         opus.prefs.cols.push(slug);
 
         let label = $(menuSelector).data("qualifiedlabel");
+        let dispUnit = $(menuSelector).data("dispunit");
+        let defaultUnit = $(menuSelector).data("defaultunit");
+
         let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
-        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
+
+        // If a slug has units available, attach the units dropdown menu
+        let unitDropdown = "";
+        if (dispUnit) {
+            unitDropdown += `(<div class="op-units-dropdown dropdown d-inline">
+            <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${dispUnit}</a>
+            <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
+            let units = $(menuSelector).data("availunits");
+            for (let unit in units) {
+                unitDropdown += `<a class="dropdown-item" data-defaultunit="${defaultUnit}" data-value="${unit}" data-dispvalue="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
+            }
+            unitDropdown += "</div></div>)";
+        }
+
+        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label} ${unitDropdown}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
+
         $(".op-selected-metadata-column > ul").append(html);
         if ($(".op-selected-metadata-column li").length > 1) {
             $(".op-selected-metadata-column .op-selected-metadata-unselect").show();
         }
 
-        $(".op-metadata-selector-tooltip").tooltipster({
+        $(`#cchoose__${slug} .op-metadata-selector-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
@@ -306,7 +364,9 @@ var o_selectMetadata = {
     },
 
     removeColumn: function(slug) {
-        let colIndex = $.inArray(slug, opus.prefs.cols);
+        let colIndex = opus.prefs.cols.findIndex((col) => {
+            return col.includes(slug);
+        });
         if (colIndex < 0 || opus.prefs.cols.length <= 1) {
             return;
         }
@@ -326,7 +386,22 @@ var o_selectMetadata = {
     // columns can be reordered wrt each other in 'metadata selector' by dragging them
     metadataDragged: function(element) {
         let cols = $.map($(element).sortable("toArray"), function(item) {
-            return item.split("__")[1];
+            let hasUnit = $(`#${item} .op-units-dropdown`).length;
+            let unitVal = "";
+            if (hasUnit) {
+                let currentDispUnit = $(`#${item} .dropdown-toggle`).text().trim();
+                for (let unit of $(`#${item} .dropdown-item`)) {
+                    let dispVal = $(unit).data("dispvalue");
+                    if (dispVal === currentDispUnit) {
+                        let defaultUnit = $(unit).data("defaultunit");
+                        let currentVal = $(unit).data("value");
+                        unitVal = (defaultUnit === currentVal) ? "" : currentVal;
+                        break;
+                    }
+                }
+            }
+            let col = unitVal ? item.split("__")[1] + ":" + unitVal : item.split("__")[1];
+            return col;
         });
         opus.prefs.cols = cols;
     },
@@ -340,11 +415,17 @@ var o_selectMetadata = {
 
         // add them back in...
         $(opus.prefs.cols).each(function(index, slug) {
+            slug = o_utils.getSlugWithoutUnit(slug);
             let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
             o_menu.markMenuItem(menuSelector);
         });
         $(o_selectMetadata.lastSavedSelected).each(function(index, selected) {
             $("#op-select-metadata .op-selected-metadata-column > ul").append(selected);
+            let unitDropdown = $(selected).find(".dropdown-toggle");
+            if (unitDropdown.length) {
+                let prevDisplayValue = unitDropdown.data("prevdispvalue");
+                unitDropdown.text(` ${prevDisplayValue} `);
+            }
         });
         $("#op-select-metadata .op-selected-metadata-column").find("li").show();
         $("#op-select-metadata").modal("hide");
