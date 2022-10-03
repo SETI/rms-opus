@@ -1440,10 +1440,15 @@ def construct_query_string(selections, extras):
         sql += q(table)+'.'+q('obs_general_id')
 
     # And JOIN all the mult_ tables together
-    for mult_table, category, field_name in sorted(mult_tables):
+    for mult_table, is_multigroup, category, field_name in sorted(mult_tables):
         sql += ' LEFT JOIN '+q(mult_table)+' ON '
-        sql += q(category)+'.'+q(field_name)+'='
-        sql += q(mult_table)+'.'+q('id')
+        if is_multigroup:
+            sql += 'JSON_EXTRACT('
+        sql += q(category)+'.'+q(field_name)
+        if is_multigroup:
+            # For a MULTIGROUP field, we just sort on the first value
+            sql += ', "$[0]")'
+        sql += '='+q(mult_table)+'.'+q('id')
 
     # Add in the WHERE clauses
     if clauses:
@@ -1993,7 +1998,8 @@ def create_order_by_sql(order_params, descending_params):
             if form_type in settings.MULT_FORM_TYPES:
                 mult_table = get_mult_name(pi.param_qualified_name())
                 order_param = mult_table + '.label'
-                order_mult_tables.add((mult_table, pi.category_name,
+                is_multigroup = form_type == 'MULTIGROUP'
+                order_mult_tables.add((mult_table, is_multigroup, pi.category_name,
                                        pi.name))
             if descending_params[i]:
                 order_param += ' DESC'

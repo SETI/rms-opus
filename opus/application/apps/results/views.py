@@ -1371,7 +1371,7 @@ def get_search_results_chunk(request, use_cart=None,
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
             mult_table = get_mult_name(pi.param_qualified_name())
-            mult_tables.add((mult_table, table, pi.name))
+            mult_tables.add((mult_table, False, table, pi.name))
             column_names.append(mult_table+'.label')
         else:
             # For a non-mult column or a MULTIGROUP mult. In the latter case we don't want
@@ -1538,7 +1538,10 @@ def get_search_results_chunk(request, use_cart=None,
             sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, table, field_name) in mult_tables:
+        for (mult_table, is_multigroup, table, field_name) in mult_tables:
+            # We can't have a MULTIGROUP here because those fields are simply
+            # added as columns above to be mapped later
+            assert not is_multigroup
             sql += ' LEFT JOIN '+q(mult_table)
             sql += ' ON '+q(table)+'.'+q(field_name)+'='
             sql += q(mult_table)+'.'+q('id')
@@ -1584,10 +1587,20 @@ def get_search_results_chunk(request, use_cart=None,
             sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, table, field_name) in mult_tables | order_mult_tables:
+        for (mult_table, is_multigroup, table, field_name) in (
+                mult_tables | order_mult_tables):
+            # If is_multigroup is True, this must have been from order_mult_tables.
+            # This is OK, because a multigroup field will never show up in mult_tables
+            # (see above), so this field will only be used for sorting.
             sql += ' LEFT JOIN '+q(mult_table)
-            sql += ' ON '+q(table)+'.'+q(field_name)+'='
-            sql += q(mult_table)+'.'+q('id')
+            sql += ' ON '
+            if is_multigroup:
+                sql += 'JSON_EXTRACT('
+            sql += q(table)+'.'+q(field_name)
+            if is_multigroup:
+                # For a MULTIGROUP field, we just sort on the first value
+                sql += ', "$[0]")'
+            sql += '='+q(mult_table)+'.'+q('id')
 
         # But the cart table is an INNER JOIN because we only want
         # opus_ids that appear in the cart table to cause result rows

@@ -1207,9 +1207,15 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             temp_sql += ' LEFT JOIN '+q(table)+' ON '+q('obs_general')+'.'+q('id')
             temp_sql += '='+q(table)+'.'+q('obs_general_id')
         # And JOIN all the mult_ tables together
-        for mult_table, category, field_name in sorted(order_mult_tables):
-            temp_sql += ' LEFT JOIN '+q(mult_table)+' ON '+q(category)+'.'
-            temp_sql += q(field_name)+'='+q(mult_table)+'.'+q('id')
+        for mult_table, is_multigroup, category, field_name in sorted(order_mult_tables):
+            temp_sql += ' LEFT JOIN '+q(mult_table)+' ON '
+            if is_multigroup:
+                temp_sql += 'JSON_EXTRACT('
+            temp_sql += q(category)+'.'+q(field_name)
+            if is_multigroup:
+                # For a MULTIGROUP field, we just sort on the first value
+                temp_sql += ', "$[0]")'
+            temp_sql += '='+q(mult_table)+'.'+q('id')
         temp_sql += ' INNER JOIN '+q('cart')
         temp_sql += ' ON '+q('obs_general')+'.'+q('id')+'='
         temp_sql += q('cart')+'.'+q('obs_general_id')
