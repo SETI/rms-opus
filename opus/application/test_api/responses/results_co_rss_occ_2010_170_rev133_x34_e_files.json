@@ -33,6 +33,10 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev133/Rev133E/Rev133E_RSS_2010_170_X34_E/Rev133E_RSS_2010_170_X34_E_Summary.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev133_OccTrack_Geometry.LBL"
             ],
+            "corss_occ_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl"
@@ -117,6 +121,10 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev133/Rev133_DSN_Elevation.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev133/Rev133E/Rev133E_RSS_2010_170_X34_E/Rev133E_RSS_2010_170_X34_E_Summary.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev133_OccTrack_Geometry.LBL"
+                ],
+                "corss_occ_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.tab",

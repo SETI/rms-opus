@@ -108,8 +108,7 @@ class ParamInfo(models.Model):
             return self.label_results
         return self.label_results + ' [' + pretty_name + ']'
 
-    def get_units(self, override_unit=None):
-        # Put parentheses around units (units)
+    def get_default_unit(self, override_unit=None):
         (form_type, form_type_format,
          form_type_unit_id) = parse_form_type(self.form_type)
         if form_type_unit_id and display_result_unit(form_type_unit_id):
@@ -118,8 +117,15 @@ class ParamInfo(models.Model):
             else:
                 unit = get_default_unit(form_type_unit_id)
             display_name = get_unit_display_name(form_type_unit_id, unit)
-            return ('(' + display_name + ')')
+            return display_name
         return ''
+
+    def get_units(self, override_unit=None):
+        # Put parentheses around units (units)
+        display_name = self.get_default_unit(override_unit)
+        if display_name:
+            return ('(' + display_name + ')')
+        return display_name
 
     def is_valid_unit(self, unit):
         (form_type, form_type_format,

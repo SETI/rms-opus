@@ -62,6 +62,7 @@ from tools.file_utils import (get_displayed_browse_products,
 from opus_support import (display_search_unit,
                           display_unit_ever,
                           format_unit_value,
+                          get_disp_default_and_avail_units,
                           get_default_unit,
                           get_unit_display_names,
                           get_valid_units,
@@ -203,12 +204,19 @@ def api_get_metadata_selector(request):
         col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     col_slugs_info = OrderedDict()
     for col_slug in col_slugs:
-        # Update when the UI supports selectable display units.
-        # This will need to be changed to retrieve the desired units, if any,
-        # and display them in the Select Metadata dialog with the ability to
-        # select different units.
-        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col',
-                                                          allow_units_override=False)
+        # If the desired_unit is None, the default unit will be displayed, else the
+        # desired_unit is displayed.
+        p, desired_unit = get_param_info_by_slug(col_slug, 'col',
+                                                 allow_units_override=True)
+        (p.disp_unit, p.default_unit,
+         p.units) = get_disp_default_and_avail_units(p.form_type)
+
+        if desired_unit is not None:
+            p.disp_unit = p.units[desired_unit]
+
+        if ':' in col_slug:
+            col_slug, _, _ = col_slug.partition(':')
+        col_slugs_info[col_slug] = p
 
     search_slugs_info = []
     search_slugs = request.GET.get('widgets', None)
@@ -1695,9 +1703,10 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                         if p.slug[-1] == '1':
                             # Strip the trailing 1 off all ranges
                             p.slug = strip_numeric_suffix(p.slug)
+                    (p.disp_unit, p.default_unit,
+                     p.units) = get_disp_default_and_avail_units(p.form_type)
                     menu_data[table_name]['data'].setdefault(sub_head_tuple,
                                                                []).append(p)
-
         else:
             # this div has no sub headings
             menu_data[table_name]['has_sub_heading'] = False
@@ -1727,6 +1736,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     if p.slug[-1] == '1':
                         # Strip the trailing 1 off all ranges
                         p.slug = strip_numeric_suffix(p.slug)
+                (p.disp_unit, p.default_unit,
+                 p.units) = get_disp_default_and_avail_units(p.form_type)
                 menu_data[table_name].setdefault('data', []).append(p)
 
     # If there are any search slugs, put those in first
@@ -1749,6 +1760,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             # Search Terms" of select metadata menu.
             if p.slug == 'surfacegeometrytargetname':
                 continue
+            (p.disp_unit, p.default_unit,
+             p.units) = get_disp_default_and_avail_units(p.form_type)
             menu_data['search_fields'].setdefault('data', []).append(p)
             if p.slug[-1] == '1':
                 # This is a numeric range field, so we want to add both
@@ -1757,6 +1770,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # will never be a units modifier here.
                 p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col',
                                             allow_units_override=False)
+                (p2.disp_unit, p2.default_unit,
+                 p2.units) = get_disp_default_and_avail_units(p2.form_type)
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
     new_div_list = []
