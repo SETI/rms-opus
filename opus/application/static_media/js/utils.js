@@ -168,6 +168,13 @@ var o_utils = {
         position.target = opus.mouseX;
         return position;
     },
+
+    // Return the slug without a unit
+    getSlugWithoutUnit: function(slug) {
+        let idx = slug.indexOf(":");
+        slug = idx === -1 ? slug : slug.slice(0, idx);
+        return slug;
+    }
 };
 
 /**

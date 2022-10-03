@@ -421,7 +421,9 @@ var o_browse = {
 
             let parentSlug = $(contextMenu).data("slug");
             let direction = $(contextMenu).data("direction");
-            let index = $.inArray(parentSlug, opus.prefs.cols);
+            let index = opus.prefs.cols.findIndex((col) => {
+                return col.includes(parentSlug);
+            });
             if (index >= 0) {
                 if (direction === "after") {
                     index++;
@@ -496,7 +498,7 @@ var o_browse = {
                     break;
                 case "remove":
                     o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
-                    opus.prefs.cols = opus.prefs.cols.filter(col => col !== slug);
+                    opus.prefs.cols = opus.prefs.cols.filter(col => !col.includes(slug));
                     o_browse.onDoneUpdateFromTableMetadataDetails(e);
                     break;
                 case "addAfter":
@@ -1849,8 +1851,9 @@ var o_browse = {
                 row += `<td class="op-mini-thumbnail op-mini-thumbnail-zoom"><div>${miniThumbnail}</div></td>`;
 
                 let tr = `<tr class="op-browse-table-tooltip" data-id="${opusId}" ${recycled} data-bs-target="#op-metadata-detail-view" data-obs="${item.obs_num}" title="${mainTitle}">`;
-                $.each(item.metadata, function(index, cell) {
-                    let slug = slugs[index];
+                $.each(item.metadata, function(idx, cell) {
+                    let slug = slugs[idx];
+                    slug = o_utils.getSlugWithoutUnit(slug);
                     row += `<td class="op-metadata-value" data-slug="${slug}">${cell}</td>`;
                 });
                 tableHtml += `${tr}${row}</tr>`;
@@ -1887,12 +1890,14 @@ var o_browse = {
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
             contentAsHTML: true,
+            debug: false,
         });
         $(`${tab} .op-browse-table-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
             contentAsHTML: true,
+            debug: false,
             functionBefore: function(instance, helper){
                 // Make sure all other tooltips are closed before a new one is opened
                 // in table view.
@@ -1954,7 +1959,7 @@ var o_browse = {
 
         $.each(columns, function(index, header) {
             let slug = slugs[index];
-
+            slug = o_utils.getSlugWithoutUnit(slug);
             // Store label (without units) of each header in data-label attributes
             let label = columnsNoUnits[index];
 
@@ -2760,6 +2765,7 @@ var o_browse = {
 
         // need to adjust for the PerfectScrollbar overlaying a bit on the last field
         let lastSlug = opus.prefs.cols[opus.prefs.cols.length - 1];
+        lastSlug = o_utils.getSlugWithoutUnit(lastSlug);
         if (slug === lastSlug) {
             width -= $(`${tab} .op-data-table-view .ps__thumb-y`).width();
         }
@@ -2938,6 +2944,7 @@ var o_browse = {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
             } else {
                 let slug = opus.prefs.cols[index];
+                slug = o_utils.getSlugWithoutUnit(slug);
                 let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
                 let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
                 html += `<ul class="list-inline mb-2" data-slug="${slug}">${removeTool}`;
