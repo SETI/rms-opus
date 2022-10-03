@@ -343,7 +343,7 @@ var o_selectMetadata = {
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
             for (let unit in units) {
-                unitDropdown += `<a class="dropdown-item" data-defaultunit="${defaultUnit}" data-value="${unit}" data-dispValue="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
+                unitDropdown += `<a class="dropdown-item" data-defaultunit="${defaultUnit}" data-value="${unit}" data-dispvalue="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
             }
             unitDropdown += "</div></div>)";
         }
