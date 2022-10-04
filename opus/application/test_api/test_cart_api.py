@@ -1631,6 +1631,21 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_removerange_sort_multigroup(self):
+        "[test_cart_api.py] /__cart/removerange: add+removerange OPUSIDs with order by multigroup field"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/addrange.json?instrument=Voyager+UVS&order=target,opusid&range=vg-uvs-2-n-occ-1989-236-sigsgr-i,vg-uvs-2-u-occ-1986-024-sigsgr-epsilon-i&reqno=456'
+        expected = {'recycled_count': 0, 'count': 8, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/removerange.json?&instrument=Voyager+UVS&target=Uranus+Rings,Neptune+Rings&order=target,opusid&range=vg-uvs-2-n-occ-1989-236-sigsgr-i,vg-uvs-2-u-occ-1986-024-sigsgr-epsilon-e&reqno=456'
+        expected = {'recycled_count': 0, 'count': 4, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 4, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
 
             ###########################################################
             ######### /__cart/addrange.json (cart): API TESTS #########
@@ -1950,6 +1965,21 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 12, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_removerange_sort_multigroup_cart(self):
+        "[test_cart_api.py] /__cart/removerange: add+removerange OPUSIDs with order by multigroup field"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/addrange.json?instrument=Voyager+UVS&order=target,opusid&range=vg-uvs-2-n-occ-1989-236-sigsgr-i,vg-uvs-2-u-occ-1986-024-sigsgr-epsilon-i&reqno=456'
+        expected = {'recycled_count': 0, 'count': 8, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/removerange.json?&view=cart&order=-target,time1,opusid&range=vg-uvs-2-u-occ-1986-024-sigsgr-delta-e,vg-uvs-2-s-occ-1981-237-delsco-i&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 4, 'count': 4, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 4, 'count': 4, 'reqno': 456}
         self._run_json_equal(url, expected)
 
 

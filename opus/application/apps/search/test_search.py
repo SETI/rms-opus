@@ -3388,6 +3388,48 @@ class searchTests(TestCase):
         self.assertIsNone(sql)
         self.assertIsNone(params)
 
+    def test__construct_query_string_mults_multigroup_target_single(self):
+        "[test_search.py] construct_query_string: obs_general intended_target single"
+        selections = {'obs_general.target_name': ['Saturn']}
+        extras = {}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s)'
+        expected_params = ['1']
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__construct_query_string_mults_multigroup_target_dual(self):
+        "[test_search.py] construct_query_string: obs_general intended_target dual"
+        selections = {'obs_general.target_name': ['Saturn', 'Jupiter']}
+        extras = {}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s) OR JSON_CONTAINS(`obs_general`.`target_name`,%s)'
+        expected_params = ['1', '19']
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__construct_query_string_mults_multigroup_target_order(self):
+        "[test_search.py] construct_query_string: obs_general intended_target sort"
+        selections = {}
+        extras = {'order': (['obs_general.target_name'], [False])}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `mult_obs_general_target_name` ON JSON_EXTRACT(`obs_general`.`target_name`, "$[0]")=`mult_obs_general_target_name`.`id` ORDER BY mult_obs_general_target_name.label ASC'
+        expected_params = []
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
 
             #####################################################
             ######### set_user_search_number UNIT TESTS #########
