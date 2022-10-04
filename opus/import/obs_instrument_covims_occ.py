@@ -30,28 +30,22 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
     ###################################
 
     def field_obs_wavelength_wavelength1(self):
-        return 0.8842
+        return self._index_col('MINIMUM_WAVELENGTH') / 1000. # nm -> micron
 
     def field_obs_wavelength_wavelength2(self):
-        return 5.1225
+        return self._index_col('MAXIMUM_WAVELENGTH') / 1000. # nm -> micron
 
     def field_obs_wavelength_wave_res1(self):
-        return 0.01662
+        return self._wave_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_res2(self):
-        return 0.01662
+        return self.field_obs_wavelength_wave_res1()
 
     def field_obs_wavelength_wave_no_res1(self):
-        return self._wave_no_res1_from_wave_res()
+        return self._wave_no_res_from_full_bandwidth()
 
     def field_obs_wavelength_wave_no_res2(self):
-        return self._wave_no_res2_from_wave_res()
-
-    def field_obs_wavelength_spec_flag(self):
-        return self._create_mult('Y')
-
-    def field_obs_wavelength_spec_size(self):
-        return 256
+        return self.field_obs_wavelength_wave_no_res1()
 
 
     ################################
