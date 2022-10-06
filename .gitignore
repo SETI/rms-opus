@@ -13,6 +13,7 @@ logs
 log.txt
 nohup.out
 
+.vscode
 *venv*
 opus_secrets.py
 
@@ -20,14 +21,3 @@ migrations/
 
 .coverage
 htmlcov/
-
-run_log_analyzer_end_of_month.sh
-run_log_analyzer_refresh_all.sh
-run_log_analyzer_update.sh
-log_analyzer/.logs
-TODO
-mypy.ini
-ignored-errors
-opus/application/static_media/coreui/css/style-old.css
-
-.vscode
