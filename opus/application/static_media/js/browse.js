@@ -2991,7 +2991,7 @@ var o_browse = {
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col text-start"><a href="#" class="menu pe-3 float-end text-center op-metadatabox-tooltip" data-bs-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            html += `<div class="col text-start"><a href="#" class="menu pe-3 float-end text-center op-metadatabox-tooltip" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-metadata-detail-view-body .bottom").html(html);
 
             // update the binoculars here
