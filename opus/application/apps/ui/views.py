@@ -261,20 +261,50 @@ def api_get_widget(request, **kwargs):
     """
 
     def _update_form_with_grouping(form, form_vals, glabel, gvalue):
-        form += ("\n\n"
-                 +'<div class="mult_group_label_container'
-                 +' mult_group_' + str(glabel) + '">'
-                 +'<span class="indicator fa fa-plus">'
-                 +'</span>'
-                 +'<span class="mult_group_label">'
-                 +str(glabel) + '</span>'
-                 +'<span class="hints"></span></div>'
-                 +'<ul class="mult_group"'
-                 +' data-group=' + str(glabel) + '>'
-                 +SearchForm(form_vals,
-                             auto_id='%s_' + str(gvalue),
-                             grouping=gvalue).as_ul()
-                 +'</ul>')
+        # Get each level of the directories, create proper mult group label
+        # container based on the directory names
+        dir_list = glabel.split('/')
+        html = ''
+        num_of_u_tags = len(dir_list)
+        current_hierarchy = ''
+        for idx, dir in enumerate(dir_list):
+            current_hierarchy += (dir + '/')
+            # Check if the current hierarchy exists
+            if current_hierarchy in form:
+                # Remove </ul> to make sure the next level directory is wrapped
+                # within the current existing category
+                form = form[:-5]
+
+                # If the current hierarchy exists, and it's at the lowest level,
+                # we will render the input form
+                if idx == len(dir_list) - 1:
+                    html += (SearchForm(form_vals,
+                                        auto_id='%s_' + str(dir),
+                                        grouping=glabel).as_ul()
+                            +'</ul>' * num_of_u_tags)
+                    form += html
+                    return form
+                else:
+                    continue
+
+            # If it's a brand new category, we will create a new mult group container
+            html += ("\n\n"
+                     +'<div class="mult_group_label_container'
+                     +' mult_group_' + str(dir)
+                     +'" data-hierarchy=' + str(current_hierarchy) + '">'
+                     +'<span class="indicator fa fa-plus">'
+                     +'</span>'
+                     +'<span class="mult_group_label">'
+                     +str(dir) + '</span>'
+                     +'<span class="hints"></span></div>'
+                     +'<ul class="mult_group"'
+                     +' data-group=' + str(dir) + '>')
+            if idx == len(dir_list) - 1:
+                html += (SearchForm(form_vals,
+                                    auto_id='%s_' + str(dir),
+                                    grouping=glabel).as_ul()
+                        +'</ul>' * num_of_u_tags)
+        form += html
         return form
 
     api_code = enter_api_call('api_get_widget', request, kwargs)
@@ -474,7 +504,6 @@ def api_get_widget(request, **kwargs):
         for entry in grouping_entries:
             options_of_a_group = []
             glabel = entry['grouping']
-            # glabel = entry.grouping
             if glabel is not None and glabel != 'NULL':
                 if model.objects.filter(grouping=glabel)[0:1]:
                     form = _update_form_with_grouping(form, form_vals,
