@@ -268,7 +268,7 @@ def api_get_widget(request, **kwargs):
         num_of_u_tags = len(dir_list)
         current_hierarchy = ''
         for idx, dir in enumerate(dir_list):
-            current_hierarchy += (dir + '/')
+            current_hierarchy = dir if idx == 0 else (current_hierarchy + '_' + dir)
             # Check if the current hierarchy exists
             if current_hierarchy in form:
                 # Remove </ul> to make sure the next level directory is wrapped
@@ -290,15 +290,14 @@ def api_get_widget(request, **kwargs):
             # If it's a brand new category, we will create a new mult group container
             html += ("\n\n"
                      +'<div class="mult_group_label_container'
-                     +' mult_group_' + str(dir)
-                     +'" data-hierarchy=' + str(current_hierarchy) + '">'
+                     +' mult_group_' + str(current_hierarchy) + '">'
                      +'<span class="indicator fa fa-plus">'
                      +'</span>'
                      +'<span class="mult_group_label">'
                      +str(dir) + '</span>'
                      +'<span class="hints"></span></div>'
                      +'<ul class="mult_group"'
-                     +' data-group=' + str(dir) + '>')
+                     +' data-group=' + str(current_hierarchy) + '>')
             if idx == len(dir_list) - 1:
                 html += (SearchForm(form_vals,
                                     auto_id='%s_' + str(dir),
