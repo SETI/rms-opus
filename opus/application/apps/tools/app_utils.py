@@ -333,23 +333,23 @@ def HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, r):
         r = r.path
     return f'Unknown DOWNLOAD FILE FORMAT "{fmt}" for {r}'
 
-def wrap_http500_string(s):
+def wrap_http500_string(s): # pragma: no cover
     # This duplicates the format for the Django debug page
     ret = f'<div id="info">{s}</div>'
     return ret
 
-def HTTP500_SEARCH_CACHE_FAILED(r):
+def HTTP500_SEARCH_CACHE_FAILED(r): # pragma: no cover
     if type(r) != str:
         r = r.path
     return wrap_http500_string(f'Internal database error for {r}')
 
-def HTTP500_DATABASE_ERROR(r):
+def HTTP500_DATABASE_ERROR(r): # pragma: no cover
     if type(r) != str:
         r = r.path
     return wrap_http500_string(
                 f'Internal database error for {r}')
 
-def HTTP500_INTERNAL_ERROR(r):
+def HTTP500_INTERNAL_ERROR(r): # pragma: no cover
     if type(r) != str:
         r = r.path
     return wrap_http500_string(f'Unspecified internal server error for {r}')

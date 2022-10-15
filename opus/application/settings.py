@@ -6,7 +6,7 @@ _HAS_MEMCACHE = False
 try: # pragma: no cover
     import memcache
     _HAS_MEMCACHE = True
-except ImportError:
+except ImportError: # pragma: no cover
     pass
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
@@ -154,7 +154,7 @@ if _HAS_MEMCACHE: # pragma: no cover
         },
     }
 else:
-    CACHES = {
+    CACHES = { # pragma: no cover
        'default': {
            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
            # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',

@@ -702,14 +702,12 @@ def get_result_count_helper(request, api_code):
 
     return count, table, None
 
-def get_cart_count(session_id, recycled=False):
+def get_cart_count(session_id):
     "Return the number of items in the current cart."
     count = (Cart.objects
              .filter(session_id__exact=session_id)
              .filter(recycled=0)
              .count())
-    if not recycled:
-        return count
     recycled_count = (Cart.objects
              .filter(session_id__exact=session_id)
              .filter(recycled=1)
@@ -728,10 +726,6 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         else:
             fields = ParamInfo.objects.all()
         fields.order_by('category_name', 'slug')
-        # We cheat with the HTML return because we want to collapse all the
-        # surface geometry down to a single target version to save screen
-        # space. This is a horrible hack, but for right now we just assume
-        # there will always be surface geometry data for Saturn.
         return_obj = {}
         for f in fields:
             if not f.slug:
@@ -748,8 +742,14 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                     f.referred_slug = referred_slug
                     f.category_name = category
                     f.disp_order = disp_order
-                else:
+                else: # pragma: no cover`
+                    # There shouldn't be a case where BOTH the slug and
+                    # referred_slug are None, but just to be careful...
                     continue
+            # We cheat with the HTML return because we want to collapse all the
+            # surface geometry down to a single target version to save screen
+            # space. This is a horrible hack, but for right now we just assume
+            # there will always be surface geometry data for Saturn.
             if (collapse and
                 f.slug.startswith('SURFACEGEO') and
                 not f.slug.startswith('SURFACEGEOsaturn')):
@@ -788,7 +788,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                         f_type = 'range_integer'
                     elif form_type_format[-1] == 'f':
                         f_type = 'range_float'
-                    else:
+                    else: # pragma: no cover
                         log.warning('Unparseable form type '+str(f.form_type))
                 elif form_type_unit_id == 'datetime':
                     f_type = 'range_time'
@@ -798,7 +798,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                 f_type = 'multiple'
             elif form_type == 'STRING':
                 f_type = 'string'
-            else:
+            else: # pragma: no cover
                 log.warning('Unparseable form type '+str(f.form_type))
             entry['type'] = f_type
             entry['label'] = f.label_results
@@ -859,7 +859,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                              )]
                 rows += row_data
         ret = csv_response('fields', rows, labels)
-    else:
+    else: # pragma: no cover
         log.error('get_fields_info: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)

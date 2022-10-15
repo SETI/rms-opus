@@ -68,8 +68,8 @@ class ApiResultsTests(TestCase, ApiTestHelper):
                         HTTP404_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
 
     # fake
-    def test__api_dataimages_no_results_default_reqno(self):
-        "[test_results_api.py] /__fake/__api/dataimages: no results default cols reqno"
+    def test__api_dataimages_no_results_default_reqno_fake(self):
+        "[test_results_api.py] /__fake/__api/dataimages: fake no results default cols reqno"
         url = '/__fake/__api/dataimages.json?opusid=notgoodid&reqno=5'
         self._run_status_equal(url, 200)
 
@@ -450,8 +450,8 @@ class ApiResultsTests(TestCase, ApiTestHelper):
                     HTTP404_UNKNOWN_OPUS_ID('vg-iss-2s-c4360845',
                             '/api/metadata/vg-iss-2s-c4360845.html'))
 
-    def test__api_metadata_bad_opusid_html(self):
-        "[test_results_api.py] /api/metadata_v2: bad opusid html"
+    def test__api_metadata_bad_opusid_html_v2(self):
+        "[test_results_api.py] /api/metadata_v2: bad opusid html v2"
         url = '/api/metadata/,,,.html'
         self._run_status_equal(url, 404)
 
@@ -461,8 +461,8 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 404,
                     HTTP404_UNKNOWN_OPUS_ID('0124', '/api/metadata/0124.csv'))
 
-    def test__api_metadata_bad_opusid_csv(self):
-        "[test_results_api.py] /api/metadata_v2: bad opusid csv"
+    def test__api_metadata_bad_opusid_csv_v2(self):
+        "[test_results_api.py] /api/metadata_v2: bad opusid csv v2"
         url = '/api/metadata/1.csv'
         self._run_status_equal(url, 404,
                     HTTP404_UNKNOWN_OPUS_ID('1', '/api/metadata/1.csv'))

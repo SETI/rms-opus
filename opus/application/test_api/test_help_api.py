@@ -39,9 +39,19 @@ class ApiHelpTests(TestCase, ApiTestHelper):
         url = '/__help/about.html'
         self._run_status_equal(url, 200)
 
+    def test__api_help_about_pdf(self):
+        "[test_help_api.py] /__help: about pdf"
+        url = '/__help/about.pdf'
+        self._run_status_equal(url, 200)
+
     def test__api_help_volumes(self):
         "[test_help_api.py] /__help: volumes"
         url = '/__help/volumes.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_volumes_pdf(self):
+        "[test_help_api.py] /__help: volumes pdf"
+        url = '/__help/volumes.pdf'
         self._run_status_equal(url, 200)
 
     def test__api_help_faq(self):
@@ -49,9 +59,54 @@ class ApiHelpTests(TestCase, ApiTestHelper):
         url = '/__help/faq.html'
         self._run_status_equal(url, 200)
 
+    def test__api_help_faq_pdf(self):
+        "[test_help_api.py] /__help: faq pdf"
+        url = '/__help/faq.pdf'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_gettingstarted(self):
+        "[test_help_api.py] /__help: gettingstarted"
+        url = '/__help/gettingstarted.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_gettingstarted_pdf(self):
+        "[test_help_api.py] /__help: gettingstarted pdf"
+        url = '/__help/gettingstarted.pdf'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_splash(self):
+        "[test_help_api.py] /__help: splash"
+        url = '/__help/splash.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_citing(self):
+        "[test_help_api.py] /__help: citing"
+        url = '/__help/citing.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_citing_qr(self):
+        "[test_help_api.py] /__help: citing qr"
+        url = '/__help/citing.html?searchurl=fred&stateurl=george'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_citing_pdf(self):
+        "[test_help_api.py] /__help: citing pdf"
+        url = '/__help/citing.pdf'
+        self._run_status_equal(url, 200)
+
     def test__api_help_apiguide(self):
         "[test_help_api.py] /__help: apiguide"
         url = '/__help/apiguide.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_apiguide_exp(self):
+        "[test_help_api.py] /help: apiguide pdf"
+        url = '/apiguide.pdf'
+        self._run_status_equal(url, 200)
+
+    def test__api_help_apiguide_pdf(self):
+        "[test_help_api.py] /__help: apiguide pdf"
+        url = '/__help/apiguide.pdf'
         self._run_status_equal(url, 200)
 
     def test__api_help_bad(self):

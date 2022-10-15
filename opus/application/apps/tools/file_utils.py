@@ -49,7 +49,7 @@ def get_pds_products(opus_id_list,
         the URL, path, and checksum.
     """
     assert loc_type in ('path', 'url', 'raw'), loc_type
-    if opus_id_list is None:
+    if opus_id_list is None: # pragma: no cover
         return {}
 
     if not isinstance(product_types, (list, tuple)):
@@ -58,7 +58,7 @@ def get_pds_products(opus_id_list,
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
 
-    if len(opus_id_list) == 0 or len(product_types) == 0:
+    if len(opus_id_list) == 0 or len(product_types) == 0: # pragma: no cover
         return {}
 
     results = OrderedDict() # Dict of opus_ids
@@ -199,10 +199,6 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
     elif not isinstance(sizes, (list, tuple)):
         sizes = [sizes]
 
-    if preview_jsons:
-        if not isinstance(preview_jsons, (list, tuple)):
-            preview_jsons = [preview_jsons]
-
     product_types = []
     for size in sizes:
         product_types += settings.PREVIEW_SIZE_TO_PDS_TYPE[size]
@@ -216,7 +212,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
         else:
             try:
                 preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist: # pragma: no cover
                 log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)
         viewset = None
@@ -234,12 +230,12 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                     viewable = viewset.medium
                 elif size == 'full':
                     viewable = viewset.full_size
-                else:
+                else: # pragma: no cover
                     log.error('Unknown image size "%s"', size)
-            if not preview_json or not viewset:
+            if not preview_json or not viewset: # pragma: no cover
                 # log.error('No preview image size "%s" found for '
                 #           +'opus_id "%s"', size, opus_id)
-                if ignore_missing:
+                if ignore_missing: # pragma: no cover
                     continue
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'

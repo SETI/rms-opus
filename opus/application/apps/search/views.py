@@ -353,7 +353,7 @@ def api_string_search_choices(request, slug):
             cursor.execute(sql, tuple(sql_params))
             if throw_random_http500_error(): # pragma: no cover
                 raise DatabaseError('random')
-        except DatabaseError as e:
+        except DatabaseError as e: # pragma: no cover
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
@@ -655,7 +655,7 @@ def url_to_search_params(request_get, allow_errors=False,
         if sourceunit_slug in request_get:
             sourceunit_val = request_get[sourceunit_slug].lower()
             if (valid_units is None or
-                sourceunit_val not in valid_units):
+                sourceunit_val not in valid_units): # pragma: no cover
                 log.error('url_to_search_params: Bad sourceunit value'
                           +' for "%s": %s', sourceunit_slug,
                           str(sourceunit_val))
@@ -1200,7 +1200,7 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
     if pi:
         if source == 'col' and allow_units_override:
             if (check_valid_units and desired_units is not None and
-                not pi.is_valid_unit(desired_units)):
+                not pi.is_valid_unit(desired_units)): # pragma: no cover
                 log.error('get_param_info_by_slug: Slug "%s" unit "%s" invalid -'
                           'using default', slug, desired_units)
                 desired_units = None
@@ -1396,10 +1396,9 @@ def construct_query_string(selections, extras):
 
             if clause is None:
                 return None, None
-            if clause:
-                clauses.append(clause)
-                clause_params += params
-                obs_tables.add(cat_name)
+            clauses.append(clause)
+            clause_params += params
+            obs_tables.add(cat_name)
 
         elif form_type == 'STRING': # pragma: no cover
             clause, params = get_string_query(selections, param_qualified_name,
@@ -1492,8 +1491,6 @@ def get_string_query(selections, param_qualified_name, qtypes):
     values = selections[param_qualified_name]
 
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
-    if not param_info:
-        return None, None
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
@@ -1920,31 +1917,18 @@ def _get_param_info_by_qualified_name(param_qualified_name):
 
 def is_single_column_range(param_qualified_name):
     "Given a qualified name cat.name return True if it's a single-column range"
-    if param_qualified_name.find('.') == -1:
-        return False
-
     cat_name = param_qualified_name.split('.')[0]
     name = param_qualified_name.split('.')[1]
 
     # Single column range queries will not have the numeric suffix
     name_no_num = strip_numeric_suffix(name)
     try:
-        _ = ParamInfo.objects.get(category_name=cat_name,
-                                  name=name_no_num)
-        return True
+        ParamInfo.objects.get(category_name=cat_name,
+                              name=name_no_num)
     except ParamInfo.DoesNotExist:
         return False
 
-    return False
-
-
-def _clean_numeric_field(s):
-    def clean_func(x):
-        return x.replace(' ', '').replace(',', '').replace('_','')
-    if isinstance(s, (list, tuple)):
-        return [clean_func(z) for z in s]
-
-    return clean_func(s)
+    return True
 
 
 def parse_order_slug(all_order):

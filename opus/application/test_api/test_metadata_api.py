@@ -756,7 +756,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = {"min": "2.35799722211", "max": "119.24373594429", "nulls": 10, "units": "uranusradii"}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_ring_radius_VGISS_rs(self):
+    def test__api_meta_range_endpoints_ring_radius_VGISS_rn(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: ring radius VGISS RN"
         url = '/api/meta/range/endpoints/RINGGEOringradius.json?volumeid=VGISS_6210&units=neptuneradii'
         expected = {"min": "2.38921906838", "max": "120.82262227948", "nulls": 10, "units": "neptuneradii"}

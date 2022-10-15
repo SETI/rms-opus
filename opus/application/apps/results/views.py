@@ -245,7 +245,7 @@ def api_get_data_and_images(request):
         order_list.append(order_entry)
 
     if request.GET.get('view', 'browse') == 'cart':
-        cart_count, recycled_count = get_cart_count(session_id, recycled=True)
+        cart_count, recycled_count = get_cart_count(session_id)
         count = cart_count + recycled_count
     else:
         count, _, err = get_result_count_helper(request, api_code)

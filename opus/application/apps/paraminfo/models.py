@@ -154,9 +154,7 @@ class ParamInfo(models.Model):
         return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
 
     def get_ranges_info(self):
-        """
-        Get the ranges info except units & qtype
-        """
+        """Get the ranges info except units & qtype."""
         ranges = {}
         if self.ranges:
             ranges = json.loads(self.ranges)

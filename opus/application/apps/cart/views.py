@@ -118,7 +118,7 @@ def api_view_cart(request):
     product_types = product_types_str.split(',')
 
     info = _get_download_info(product_types, session_id)
-    count, recycled_count = get_cart_count(session_id, recycled=True)
+    count, recycled_count = get_cart_count(session_id)
 
     for name, product_versions in info['product_cat_dict'].items():
         for ver, types in product_versions.items():
@@ -205,14 +205,14 @@ def api_cart_status(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    download = request.GET.get('download', 0)
+    download_str = request.GET.get('download', 0)
     try:
-        download = int(download)
-    except:
-        pass
+        download = int(download_str)
+    except ValueError:
+        download = None
     if (download != 0 and download != 1) or throw_random_http404_error():
-        log.error('api_cart_status: Badly formatted download %s', download)
-        ret = Http404(HTTP404_BAD_DOWNLOAD(download, request))
+        log.error('api_cart_status: Badly formatted download %s', download_str)
+        ret = Http404(HTTP404_BAD_DOWNLOAD(download_str, request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -223,7 +223,7 @@ def api_cart_status(request):
     else:
         info = {}
 
-    count, recycled_count = get_cart_count(session_id, recycled=True)
+    count, recycled_count = get_cart_count(session_id)
 
     info['count'] = count
     info['recycled_count'] = recycled_count
@@ -390,11 +390,16 @@ def api_edit_cart(request, action, **kwargs):
         exit_api_call(api_code, err)
         return err
 
-    download = request.GET.get('download', 0)
+    download_str = request.GET.get('download', 0)
     try:
-        download = int(download)
-    except:
-        pass
+        download = int(download_str)
+    except ValueError:
+        download = None
+    if (download != 0 and download != 1) or throw_random_http404_error():
+        log.error('api_edit_cart: Badly formatted download %s', download_str)
+        ret = Http404(HTTP404_BAD_DOWNLOAD(download_str, request))
+        exit_api_call(api_code, ret)
+        raise ret
     if download:
         product_types_str = request.GET.get('types', 'all')
         product_types = product_types_str.split(',')
@@ -402,7 +407,7 @@ def api_edit_cart(request, action, **kwargs):
     else:
         info = {}
 
-    count, recycled_count = get_cart_count(session_id, recycled=True)
+    count, recycled_count = get_cart_count(session_id)
 
     info['error'] = err
     info['count'] = count
@@ -494,11 +499,16 @@ def api_reset_session(request):
     cursor = connection.cursor()
     cursor.execute(sql, values)
 
-    download = request.GET.get('download', 0)
+    download_str = request.GET.get('download', 0)
     try:
-        download = int(download)
-    except:
-        pass
+        download = int(download_str)
+    except ValueError:
+        download = None
+    if (download != 0 and download != 1) or throw_random_http404_error():
+        log.error('api_edit_cart: Badly formatted download %s', download_str)
+        ret = Http404(HTTP404_BAD_DOWNLOAD(download_str, request))
+        exit_api_call(api_code, ret)
+        raise ret
     if download:
         product_types_str = request.GET.get('types', 'all')
         product_types = product_types_str.split(',')
@@ -506,7 +516,7 @@ def api_reset_session(request):
     else:
         info = {}
 
-    count, recycled_count = get_cart_count(session_id, recycled=True)
+    count, recycled_count = get_cart_count(session_id)
 
     info['count'] = count
     info['recycled_count'] = recycled_count
