@@ -3435,6 +3435,18 @@ class searchTests(TestCase):
             ######### set_user_search_number UNIT TESTS #########
             #####################################################
 
+    def test__set_user_search_number_no_extras(self):
+        "[test_search.py] set_user_search_number: no extras"
+        selections = {'obs_pds.volume_id': ['FRED']}
+        extras = {}
+        num1 = set_user_search_number(selections, extras)
+        extras = {'qtypes': {},
+                  'units': {},
+                  'order': ([], [])}
+        num2 = set_user_search_number(selections, extras)
+        self.assertEqual(num1, (1, True))
+        self.assertEqual(num2, (1, False))
+
     def test__set_user_search_number_dead_qtype_str(self):
         "[test_search.py] set_user_search_number: dead qtype string"
         selections = {'obs_pds.volume_id': ['FRED']}
@@ -3569,86 +3581,3 @@ class searchTests(TestCase):
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (2, True))
-
-
-    # ##  set_user_search_number
-    # def test__set_user_search_number(self):
-    #     no = set_user_search_number(self.selections)
-    #     self.assertTrue(no)
-    #
-    # def test__set_user_search_number_with_times(self):
-    #     selections = {'obs_general.planet_id': ['Saturn'], 'obs_general.time_sec2': ['2009-12-28'], 'obs_general.time1': ['2009-12-23']}
-    #     search_no = set_user_search_number(selections)
-    #     print(search_no)
-    #     self.assertGreater(len(str(search_no)), 0)
-    #
-    #
-    # def test__set_user_search_number_2_planets(self):
-    #     selections = {}
-    #     selections['obs_general.planet_id'] = ['Saturn']
-    #     no = set_user_search_number(selections)
-    #     print(no)
-    #     # breaking this, this test needs to see if there are any rows in the table
-    #     self.assertGreater(no, 0)
-    #
-    # def test__range_query_time_any(self):
-    #     # range query: form type = TIME, qtype any
-    #     selections = {}
-    #     selections['obs_general.time_sec1'] = ['1979-05-28T10:17:37.28']
-    #     selections['obs_general.time_sec2'] = ['1979-05-29T18:22:26']
-    #     q = str(get_range_query(selections,'obs_general.time_sec1',['any']))
-    #     print(q)
-    #     # time_sec1 <= -649993324.720000 AND time_sec2 >= -649877836.000000
-    #     try:
-    #         # julian module behaves a bit differently on the production server
-    #         # so try both possible results before failing this test
-    #         expected = "(AND: ('time_sec1__lte', -649834636.0), ('time_sec2__gte', -649950124.72000003))"
-    #         print('expected:')
-    #         print(expected)
-    #         self.assertEqual('".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
-    #     except AssertionError:
-    #         expected = "(AND: ('time_sec1__lte', -649834636.0), ('time_sec2__gte', -649950124.72))"
-    #         print('expected:')
-    #         print(expected)
-    #         self.assertEqual('".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
-    #
-    #
-    # def test__range_query_time_any_single_time(self):
-    #     # range query: form type = TIME, qtype any
-    #     selections = {}
-    #     selections['obs_general.time_sec1'] = ['1979-05-28T10:17:37.28']
-    #     q = str(get_range_query(selections,'obs_general.time_sec1',['any']))
-    #     print(str(q))
-    #     # time_sec2 >= -649993324.720000
-    #     try:
-    #         # julian module behaves a bit differently on the production server
-    #         # so try both possible results before failing this test
-    #         expected = "(AND: ('time_sec2__gte', -649950124.72000003))"
-    #         print('expected:')
-    #         print(expected)
-    #         self.assertEqual('".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
-    #     except AssertionError:
-    #         expected = "(AND: ('time_sec2__gte', -649950124.72))"
-    #         print('expected:')
-    #         print(expected)
-    #         self.assertEqual('".join(q.split()),"".join(expected.split()))  # strips all whitespace b4 compare
-    #
-
-    # ## get_user_query_table
-    #
-    # def test__get_user_query_table(self):
-    #     # simple base join types only
-    #     table = get_user_query_table(self.selections)
-    #     print('table = " + str(table) + "\n" + str(self.selections))
-    #     self.assertEqual(table.split('_')[0],'cache')
-    #
-    # def test__get_user_query_table_with_times(self):
-    #     selections = {'obs_general.planet_id': ['Saturn'], 'obs_general.time_sec2': ['2009-12-28'], 'obs_general.time_sec1': ['2009-12-23']}
-    #     table = get_user_query_table(selections)
-    #     print(table)
-    #     self.assertGreater(len(table), 0)
-    #
-    # def test__get_user_query_table_table_already_exists(self):
-    #     # the 2nd time through yo're testing whether it returns the table that is already there
-    #     table = get_user_query_table(self.selections)
-    #     self.assertEqual(table.split('_')[0],'cache')

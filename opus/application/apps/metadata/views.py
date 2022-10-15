@@ -794,6 +794,8 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                     f_type = 'range_time'
                 elif form_type_unit_id is not None:
                     f_type = 'range_special'
+                else: # pragma: no cover
+                    f_type = 'Internal Error'
             elif form_type in settings.MULT_FORM_TYPES:
                 f_type = 'multiple'
             elif form_type == 'STRING':

@@ -531,7 +531,7 @@ def url_to_search_params(request_get, allow_errors=False,
         # The unit is the unit we want the field to be in
         is_unit = None
         # The sourceunit is used by normalizeurl to allow the conversion of
-        # values from ones unit to another. The original unit is available in
+        # values from one unit to another. The original unit is available in
         # "sourceunit" and the desination unit is available in "unit".
         # sourceunit should not be used anywhere else.
         is_sourceunit = None
@@ -1085,7 +1085,7 @@ def set_user_search_number(selections, extras):
 
     order_json = None
     order_hash = 'NONE' # Needed for UNIQUE constraint to work
-    if 'order' in extras:
+    if 'order' in extras and extras['order'][0]:
         order_json = str(json.dumps(extras['order']))
         order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
 
@@ -1940,9 +1940,7 @@ def parse_order_slug(all_order):
         all_order = settings.DEFAULT_SORT_ORDER
     if (settings.FINAL_SORT_ORDER
         not in all_order.replace('-','').split(',')):
-        if all_order:
-            all_order += ','
-        all_order += settings.FINAL_SORT_ORDER
+        all_order += ',' + settings.FINAL_SORT_ORDER
     orders = all_order.split(',')
     for order in orders:
         descending = order[0] == '-'
@@ -1966,30 +1964,30 @@ def create_order_by_sql(order_params, descending_params):
     order_mult_tables = set()
     order_obs_tables = set()
     order_sql = ''
-    if order_params:
-        order_str_list = []
-        for i in range(len(order_params)):
-            order_slug = order_params[i]
-            pi = _get_param_info_by_qualified_name(order_slug)
-            if not pi:
-                log.error('create_order_by_sql: Unable to resolve order'
-                          +' slug "%s"', order_slug)
-                return None, None, None
-            (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(pi.form_type)
-            order_param = pi.param_qualified_name()
-            order_obs_tables.add(pi.category_name)
-            if form_type in settings.MULT_FORM_TYPES:
-                mult_table = get_mult_name(pi.param_qualified_name())
-                order_param = mult_table + '.label'
-                is_multigroup = form_type == 'MULTIGROUP'
-                order_mult_tables.add((mult_table, is_multigroup, pi.category_name,
-                                       pi.name))
-            if descending_params[i]:
-                order_param += ' DESC'
-            else:
-                order_param += ' ASC'
-            order_str_list.append(order_param)
-        order_sql = ' ORDER BY ' + ','.join(order_str_list)
+    assert order_params # There should always be an ordering
+    order_str_list = []
+    for i in range(len(order_params)):
+        order_slug = order_params[i]
+        pi = _get_param_info_by_qualified_name(order_slug)
+        if not pi:
+            log.error('create_order_by_sql: Unable to resolve order'
+                        +' slug "%s"', order_slug)
+            return None, None, None
+        (form_type, form_type_format,
+            form_type_unit_id) = parse_form_type(pi.form_type)
+        order_param = pi.param_qualified_name()
+        order_obs_tables.add(pi.category_name)
+        if form_type in settings.MULT_FORM_TYPES:
+            mult_table = get_mult_name(pi.param_qualified_name())
+            order_param = mult_table + '.label'
+            is_multigroup = form_type == 'MULTIGROUP'
+            order_mult_tables.add((mult_table, is_multigroup, pi.category_name,
+                                    pi.name))
+        if descending_params[i]:
+            order_param += ' DESC'
+        else:
+            order_param += ' ASC'
+        order_str_list.append(order_param)
+    order_sql = ' ORDER BY ' + ','.join(order_str_list)
 
     return order_sql, order_mult_tables, order_obs_tables
