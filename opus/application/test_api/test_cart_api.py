@@ -29,7 +29,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         self.cart_maximum = settings.MAX_SELECTIONS_ALLOWED
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -388,13 +388,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 0.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -433,7 +433,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,hst-11559-wfc3-ib4v22guq&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add multiple OPUS IDs to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
@@ -455,7 +455,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=hst-11559-wfc3-ib4v22guq&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 1, 'error': 'Your request to add OPUS ID hst-11559-wfc3-ib4v22guq to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
@@ -483,13 +483,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360018&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID vg-iss-2-s-c4360018 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
@@ -1279,13 +1279,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add 1 observations (OPUS IDs co-vims-v1484504505_ir to co-vims-v1484504505_ir) to the cart failed. The resulting cart and recycle bin would have more than the maximum (0) allowed. None of the observations were added.', 'reqno': 567}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -2139,13 +2139,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (905) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -2323,7 +2323,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         # Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
@@ -2331,7 +2331,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1484509868_ir&recyclebin=1&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'error': False, 'reqno': 456}
@@ -2340,7 +2340,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
@@ -2349,7 +2349,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'reqno': 456}
@@ -2397,13 +2397,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 16, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=vg-iss-2-s-c4360018,vg-iss-2-s-c4360018&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 17, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 16, 'error': 'Your request to add 1 observations (OPUS IDs vg-iss-2-s-c4360018 to vg-iss-2-s-c4360018) to the cart failed. The resulting cart and recycle bin would have more than the maximum (17) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1488642557_ir&reqno=456&recyclebin=0'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 16, 'error': False, 'reqno': 456}
@@ -2428,13 +2428,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}

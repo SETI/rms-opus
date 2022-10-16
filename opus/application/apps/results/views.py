@@ -249,7 +249,7 @@ def api_get_data_and_images(request):
         count = cart_count + recycled_count
     else:
         count, _, err = get_result_count_helper(request, api_code)
-        if err is not None: # pragma: no cover
+        if err is not None: # pragma: no cover - database error
             exit_api_call(api_code, err)
             return err
 
@@ -363,7 +363,7 @@ def api_get_data(request, fmt):
         return get_search_results_chunk_error_handler(error, api_code)
 
     result_count, _, err = get_result_count_helper(request, api_code)
-    if err is not None: # pragma: no cover
+    if err is not None: # pragma: no cover - database error
         exit_api_call(api_code, err)
         return err
 
@@ -392,7 +392,7 @@ def api_get_data(request, fmt):
         ret = render(request, 'results/data.html', context)
     elif fmt == 'json':
         ret = json_response(data)
-    else: # pragma: no cover
+    else: # pragma: no cover - protection against future bugs
         log.error('api_get_data: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -477,7 +477,7 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
         exit_api_call(api_code, ret)
         raise ret
 
-    if not opus_id: # pragma: no cover
+    if not opus_id: # pragma: no cover - configuration error
         ret = Http404(HTTP404_MISSING_OPUS_ID(request))
         exit_api_call(api_code, ret)
         raise ret
@@ -505,9 +505,9 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
     # Make sure it's a valid OPUS ID
     try:
         results = query_table_for_opus_id('obs_general', opus_id)
-        if throw_random_http500_error(): # pragma: no cover
+        if throw_random_http500_error(): # pragma: no cover - internal debugging
             raise LookupError
-    except LookupError: # pragma: no cover
+    except LookupError: # pragma: no cover - configuration error
         log.error('api_get_metadata: Could not find data model for obs_general')
         ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
         exit_api_call(api_code, ret)
@@ -581,9 +581,9 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
-                if throw_random_http500_error(): # pragma: no cover
+                if throw_random_http500_error(): # pragma: no cover - internal debugging
                     raise LookupError
-            except LookupError: # pragma: no cover
+            except LookupError: # pragma: no cover - configuration error
                 log.error('api_get_metadata: Could not find data model for '
                           +'category %s', model_name)
                 ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -693,7 +693,7 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
                          context)
     elif fmt == 'json':
         ret = json_response(data)
-    else: # pragma: no cover
+    else: # pragma: no cover - protection against future bugs
         log.error('get_metadata: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -848,7 +848,7 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
     data = {}
     if include_search:
         result_count, _, err = get_result_count_helper(request, api_code)
-        if err is not None: # pragma: no cover
+        if err is not None: # pragma: no cover - database error
             exit_api_call(api_code, err)
             return err
 
@@ -889,7 +889,7 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
         ret = render(request, 'results/image_list.html', context)
     elif fmt == 'json':
         ret = json_response(data)
-    else: # pragma: no cover
+    else: # pragma: no cover - protection against future bugs
         log.error('api_get_images_by_size: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -967,7 +967,7 @@ def api_get_files(request, opus_id=None):
     data = {}
     if opus_id is None:
         result_count, _, err = get_result_count_helper(request, api_code)
-        if err is not None: # pragma: no cover
+        if err is not None: # pragma: no cover - protection against future bugs
             exit_api_call(api_code, err)
             return err
 
@@ -1002,7 +1002,7 @@ def api_get_categories_for_opus_id(request, opus_id):
         exit_api_call(api_code, ret)
         raise ret
 
-    if not opus_id: # pragma: no cover
+    if not opus_id: # pragma: no cover - configuration error
         ret = Http404(HTTP404_MISSING_OPUS_ID(request))
         exit_api_call(api_code, ret)
         raise ret
@@ -1102,7 +1102,7 @@ def api_get_product_types_for_opus_id(request, opus_id):
         exit_api_call(api_code, ret)
         raise ret
 
-    if not opus_id: # pragma: no cover
+    if not opus_id: # pragma: no cover - configuration error
         ret = Http404(HTTP404_MISSING_OPUS_ID(request))
         exit_api_call(api_code, ret)
         raise ret
@@ -1174,7 +1174,8 @@ def api_get_product_types_for_search(request):
         raise ret
 
     user_query_table = get_user_query_table(selections, extras, api_code)
-    if not user_query_table or throw_random_http500_error(): # pragma: no cover
+    if (not user_query_table or
+        throw_random_http500_error()): # pragma: no cover - internal debugging
         log.error('api_get_product_types_for_search: get_user_query_table '
                   +'failed *** Selections %s *** Extras %s',
                   str(selections), str(extras))

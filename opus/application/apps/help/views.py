@@ -143,8 +143,9 @@ def api_faq(request, fmt):
         text = stream.read()
         try:
             faq = yaml.load(text, Loader=yaml.FullLoader)
-
-        except yaml.YAMLError as exc: # pragma: no cover
+        except yaml.YAMLError as exc: # pragma: no cover -
+            # This can only happen if there is a problem with the YAML in the
+            # FAQ.YAML file
             log.error('api_faq error: %s', str(exc))
             exit_api_call(api_code, None)
             raise Http404

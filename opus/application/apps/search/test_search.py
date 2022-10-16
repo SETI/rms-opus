@@ -28,7 +28,7 @@ class searchTests(TestCase):
         cursor.execute('DELETE FROM user_searches')
         cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
         cursor.execute("SHOW TABLES LIKE %s", ["cache_%"])
-        for row in cursor: # pragma: no cover
+        for row in cursor: # pragma: no cover - may never be cache_ tables
             q = 'DROP TABLE ' + row[0]
             print(q)
             cursor.execute(q)

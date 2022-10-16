@@ -35,7 +35,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000000
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD  = 1000000
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 1000000
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -55,11 +55,11 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         if 'full_search' not in expected:
-            if 'full_search' in jdata: # pragma: no cover
+            if 'full_search' in jdata: # pragma: no cover - for future test cases
                 del jdata['full_search']
         new_choices = []
         for choice in jdata['choices']:
-            if choice in expected['choices']: # pragma: no cover
+            if choice in expected['choices']: # pragma: no cover - for future test cases
                 new_choices.append(choice)
         print('Got:')
         print(str(jdata))

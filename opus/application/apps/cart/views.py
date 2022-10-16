@@ -360,7 +360,7 @@ def api_edit_cart(request, action, **kwargs):
     recycle_bin = request.GET.get('recyclebin', 0)
     try:
         recycle_bin = int(recycle_bin)
-        if throw_random_http404_error(): # pragma: no cover
+        if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
     except:
         log.error('api_edit_cart: Bad value for recyclebin %s: %s', recycle_bin,
@@ -379,7 +379,7 @@ def api_edit_cart(request, action, **kwargs):
                                api_code)
     elif action == 'addall':
         err = _edit_cart_addall(request, session_id, recycle_bin, api_code)
-    else: # pragma: no cover
+    else: # pragma: no cover - protection against future bugs
         log.error('api_edit_cart: Unknown action %s: %s', action,
                   request.GET)
         ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -481,7 +481,7 @@ def api_reset_session(request):
     recycle_bin = request.GET.get('recyclebin', 0)
     try:
         recycle_bin = int(recycle_bin)
-        if throw_random_http404_error(): # pragma: no cover
+        if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
     except:
         log.error('api_reset_session: Bad value for recyclebin %s: %s',
@@ -1235,7 +1235,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         temp_sql += order_sql
         try:
             cursor.execute(temp_sql, params)
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
         except DatabaseError as e:
             log.error('_edit_cart_range: "%s" "%s" returned %s',
@@ -1338,9 +1338,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             try:
                 cursor.execute(sql, sql_from_params)
                 num_new = cursor.fetchone()[0]
-                if throw_random_http500_error(): # pragma: no cover
+                if throw_random_http500_error(): # pragma: no cover - internal debugging
                     raise DatabaseError('random')
-            except DatabaseError as e: # pragma: no cover
+            except DatabaseError as e: # pragma: no cover - database error
                 log.error('_edit_cart_range: SQL query failed for request %s: '
                           +' SQL "%s" ERR "%s"', request.GET, sql, e)
                 ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
@@ -1351,9 +1351,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             try:
                 cursor.execute(sql, sql_from_params+sql_incart_params)
                 num_old = cursor.fetchone()[0]
-                if throw_random_http500_error(): # pragma: no cover
+                if throw_random_http500_error(): # pragma: no cover - internal debugging
                     raise DatabaseError('random')
-            except DatabaseError as e: # pragma: no cover
+            except DatabaseError as e: # pragma: no cover - database error
                 log.error('_edit_cart_range: SQL query failed for request %s: '
                           +' SQL "%s" ERR "%s"', request.GET, sql, e)
                 ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
@@ -1413,7 +1413,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         sql = 'DROP TABLE '+q(temp_table_name)
         try:
             cursor.execute(sql)
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
         except DatabaseError as e:
             log.error('_edit_cart_range: "%s" returned %s',
@@ -1453,9 +1453,9 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
         try:
             cursor.execute(sql, values)
             num_dup = cursor.fetchone()[0]
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
-        except DatabaseError as e: # pragma: no cover
+        except DatabaseError as e: # pragma: no cover - database error
             log.error('_edit_cart_addall: SQL query failed for request %s: '
                       +' SQL "%s" ERR "%s"', request.GET, sql, e)
             ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))

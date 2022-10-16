@@ -19,7 +19,7 @@ class MultiFloatField(forms.Field):
 
     # forms.Field.blank=True
 
-    def validate(self, value): # pragma: no cover
+    def validate(self, value):
         # Use the parent's handling of required fields, etc.
         super(MultiFloatField, self).validate(value)
 
@@ -34,7 +34,7 @@ class MultiFloatField(forms.Field):
         #     except: raise forms.ValidationError("value must be a number: " + num[0:20] + '...')
 
 
-class SearchForm(forms.Form): # pragma: no cover
+class SearchForm(forms.Form):
     """
     >>>> from search.forms import *
     >>>> auto_id = False

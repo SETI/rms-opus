@@ -22,7 +22,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()

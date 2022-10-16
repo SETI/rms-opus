@@ -11,7 +11,7 @@ def get_def_for_tooltip(term, context):
         entry = Definitions.objects.get(context__name=context, term=term)
     except Definitions.DoesNotExist:
         # We allow mult tooltips to be None
-        if not context.startswith('MULT_'): # pragma: no cover
+        if not context.startswith('MULT_'): # pragma: no cover - import error
             log.error('No tooltip definition for context "%s" term "%s"',
                       context, term)
         return None

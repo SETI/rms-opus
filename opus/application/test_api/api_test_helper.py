@@ -18,9 +18,9 @@ class ApiTestHelper:
 
     def _get_response(self, url):
         if (not settings.TEST_GO_LIVE or
-            settings.TEST_GO_LIVE == "production"): # pragma: no cover
+            settings.TEST_GO_LIVE == "production"):
             url = "https://opus.pds-rings.seti.org" + url
-        else: # pragma: no cover
+        else:
             url = "http://dev.pds.seti.org" + url
         return self.client.get(url)
 
@@ -44,14 +44,14 @@ class ApiTestHelper:
             for key in data:
                 ApiTestHelper._depth_first_remove(data[key], ignore_list)
         if isinstance(data, list):
-            for ignore in ignore_list: # pragma: no cover
+            for ignore in ignore_list:
                 while ignore in data:
                     data.remove(ignore)
             for el in data:
                 ApiTestHelper._depth_first_remove(el, ignore_list)
 
     @staticmethod
-    def _print_clean_diffs(got, expected): # pragma: no cover
+    def _print_clean_diffs(got, expected):
         print('Diffs:')
         diff = difflib.SequenceMatcher(a=got, b=expected)
         for tag, i1, i2, j1, j2 in diff.get_opcodes():
@@ -73,7 +73,7 @@ class ApiTestHelper:
         print(expected)
         self._depth_first_remove(jdata, ignore)
         self._depth_first_remove(expected, ignore)
-        if jdata != expected: # pragma: no cover
+        if jdata != expected:
             self._print_clean_diffs(str(jdata), str(expected))
         self.assertEqual(jdata, expected)
 
@@ -82,7 +82,7 @@ class ApiTestHelper:
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
-        if self.UPDATE_FILES: # pragma: no cover
+        if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
                 fp.write(json.dumps(jdata, indent=2)+'\n')
             return
@@ -92,7 +92,7 @@ class ApiTestHelper:
         print(jdata)
         print('Expected:')
         print(expected)
-        if jdata != expected: # pragma: no cover
+        if jdata != expected:
             self._print_clean_diffs(str(jdata), str(expected))
         self.assertEqual(jdata, expected)
 
@@ -109,7 +109,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        if resp != expected: # pragma: no cover
+        if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
@@ -117,7 +117,7 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        if self.UPDATE_FILES: # pragma: no cover
+        if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
                 fp.write(response.content.decode())
             return
@@ -132,7 +132,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        if resp != expected: # pragma: no cover
+        if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
@@ -150,7 +150,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        if resp != expected: # pragma: no cover
+        if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
@@ -171,7 +171,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        if resp != expected: # pragma: no cover
+        if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
@@ -179,7 +179,7 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        if self.UPDATE_FILES: # pragma: no cover
+        if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
                 fp.write(response.content.decode())
             return
@@ -191,7 +191,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        if resp != expected: # pragma: no cover
+        if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
 
@@ -234,6 +234,6 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        if resp != expected: # pragma: no cover
+        if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertListEqual(resp, expected)

@@ -187,11 +187,9 @@ def api_string_search_choices(request, slug):
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
 
-    qtypes = {}
     query_qtype_list = []
     query_qtype = 'contains'
-    if 'qtypes' in extras: # pragma: no cover
-        qtypes = extras['qtypes']
+    qtypes = extras['qtypes']
     if param_qualified_name in qtypes:
         query_qtype_list = qtypes[param_qualified_name]
         if query_qtype_list == ['matches']:
@@ -202,7 +200,7 @@ def api_string_search_choices(request, slug):
     # Must do this here before deleting the slug from selections below
     like_query, like_params = get_string_query(selections, param_qualified_name,
                                                query_qtype_list)
-    if like_query is None or throw_random_http500_error(): # pragma: no cover
+    if like_query is None or throw_random_http500_error():
         # This is usually caused by a bad regex
         result = {'choices': [],
                   'full_search': True,
@@ -217,7 +215,8 @@ def api_string_search_choices(request, slug):
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
-    if not user_query_table or throw_random_http500_error(): # pragma: no cover
+    if not user_query_table or throw_random_http500_error(): # pragma: no cover -
+        # internal debugging
         log.error('api_string_search_choices: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -228,7 +227,7 @@ def api_string_search_choices(request, slug):
     limit = request.GET.get('limit', settings.DEFAULT_STRINGCHOICE_LIMIT)
     try:
         limit = int(limit)
-        if throw_random_http404_error(): # pragma: no cover
+        if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
     except ValueError:
         log.error('api_string_search_choices: Bad limit for'
@@ -278,7 +277,7 @@ def api_string_search_choices(request, slug):
     cursor.execute(sql)
     results = cursor.fetchall()
     if (len(results) != 1 or len(results[0]) != 1 or
-        throw_random_http500_error()): # pragma: no cover
+        throw_random_http500_error()): # pragma: no cover - internal debugging
         log.error('api_string_search_choices: SQL failure: %s', sql)
         ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
         exit_api_call(api_code, ret)
@@ -301,7 +300,7 @@ def api_string_search_choices(request, slug):
         # that appear in the cache table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
         sql += ' ON '+quoted_table_name+'.'
-        if param_category == 'obs_general': # pragma: no cover
+        if param_category == 'obs_general': # pragma: no cover - not possible
             # There are currently no string fields in obs_general
             sql += connection.ops.quote_name('id')+'='
         else:
@@ -320,10 +319,11 @@ def api_string_search_choices(request, slug):
 
         try:
             cursor.execute(sql, tuple(sql_params))
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
         except DatabaseError as e:
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
+                # database error
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
                 ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
@@ -351,10 +351,11 @@ def api_string_search_choices(request, slug):
 
         try:
             cursor.execute(sql, tuple(sql_params))
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
-        except DatabaseError as e: # pragma: no cover
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
+        except DatabaseError as e: # pragma: no cover - database error
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
+                # database error
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
                 ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
@@ -362,7 +363,7 @@ def api_string_search_choices(request, slug):
                 return ret
             final_results = []
 
-    if final_results is None: # pragma: no cover
+    if final_results is None: # pragma: no cover - can't trigger during testing
         # This is always true except when BOTH queries time out
         final_results = []
         more = True
@@ -580,7 +581,7 @@ def url_to_search_params(request_get, allow_errors=False,
          form_type_unit_id) = parse_form_type(param_info.form_type)
         valid_units = get_valid_units(form_type_unit_id)
 
-        if param_info.slug: # Should always be true # pragma: no cover
+        if param_info.slug: # pragma: no cover - currently always true
             # Kill off all the original slugs
             pi_slug_no_num = strip_numeric_suffix(param_info.slug)
             used_slugs.append(pi_slug_no_num+clause_num_str)
@@ -613,7 +614,7 @@ def url_to_search_params(request_get, allow_errors=False,
         if qtype_slug in request_get:
             qtype_val = request_get[qtype_slug].lower()
             if valid_qtypes is None or qtype_val not in valid_qtypes:
-                if allow_errors: # pragma: no cover
+                if allow_errors: # pragma: no cover - protection against future bugs
                     # We never actually hit this because normalizeurl catches
                     # the bad qtype first
                     qtype_val = None
@@ -633,7 +634,7 @@ def url_to_search_params(request_get, allow_errors=False,
         if unit_slug in request_get:
             unit_val = request_get[unit_slug].lower()
             if valid_units is None or unit_val not in valid_units:
-                if allow_errors: # pragma: no cover
+                if allow_errors: # pragma: no cover - protection against future bugs
                     # We never actually hit this because normalizeurl catches
                     # the bad unit first
                     unit_val = None
@@ -655,11 +656,11 @@ def url_to_search_params(request_get, allow_errors=False,
         if sourceunit_slug in request_get:
             sourceunit_val = request_get[sourceunit_slug].lower()
             if (valid_units is None or
-                sourceunit_val not in valid_units): # pragma: no cover
+                sourceunit_val not in valid_units):
                 log.error('url_to_search_params: Bad sourceunit value'
                           +' for "%s": %s', sourceunit_slug,
                           str(sourceunit_val))
-                if allow_errors: # pragma: no cover
+                if allow_errors: # pragma: no cover - protection against future bugs
                     # We never actually hit this because normalizeurl catches
                     # the bad unit first
                     sourceunit_val = None
@@ -802,15 +803,15 @@ def url_to_search_params(request_get, allow_errors=False,
             if return_slugs:
                 if not is_single_column_range(param_qualified_name_no_num):
                     # Always include qtype no matter what
-                    # The following if should always be true because we only hit
-                    # this once for each slug
-                    if param_qualified_name_no_num not in qtypes: # pragma: no cover
+                    if param_qualified_name_no_num not in qtypes: # pragma: no cover -
+                        # This should always be true because we only hit
+                        # this once for each slug
                         qtypes[param_qualified_name_no_num] = []
                     qtypes[param_qualified_name_no_num].append(qtype_val)
                 # Always include unit no matter what
-                # The following if should always be true because we only hit
-                # this once for each slug
-                if param_qualified_name_no_num not in units: # pragma: no cover
+                if param_qualified_name_no_num not in units: # pragma: no cover -
+                    # This should always be true because we only hit
+                    # this once for each slug
                     units[param_qualified_name_no_num] = []
                 units[param_qualified_name_no_num].append(unit_val)
             elif (allow_empty or
@@ -873,7 +874,7 @@ def url_to_search_params(request_get, allow_errors=False,
 
         # For STRING form types, there is only a single slug. Just ignore the
         # slug we're currently looking at and start over for simplicity.
-        if is_unit or unit_val is not None: # pragma: no cover
+        if is_unit or unit_val is not None: # pragma: no cover -
             # We shouldn't ever get here because string fields have no valid
             # units and this will be caught above
             log.error('url_to_search_params: String field "%s" has unit',
@@ -965,13 +966,13 @@ def get_user_query_table(selections, extras, api_code=None):
     """
     cursor = connection.cursor()
 
-    if selections is None or extras is None: # pragma: no cover
-        # This should never happen...
+    if selections is None or extras is None: # pragma: no cover -
+        # protection against future bugs
         return None
 
     # Create a cache key
     cache_table_num, cache_new_flag = set_user_search_number(selections, extras)
-    if cache_table_num is None: # pragma: no cover
+    if cache_table_num is None: # pragma: no cover - database error
         log.error('get_user_query_table: Failed to make entry in user_searches'+
                   ' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -995,13 +996,13 @@ def get_user_query_table(selections, extras, api_code=None):
     # a MYSQL_TABLE_ALREADY_EXISTS exception and we can just return the table
     # name.
     sql, params = construct_query_string(selections, extras)
-    if sql is None: # pragma: no cover
+    if sql is None: # pragma: no cover - protection against future bugs
         log.error('get_user_query_table: construct_query_string failed'
                   +' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
         return None
 
-    if not sql: # pragma: no cover
+    if not sql: # pragma: no cover - protection against future bugs
         log.error('get_user_query_table: Query string is empty'
                   +' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -1017,8 +1018,10 @@ def get_user_query_table(selections, extras, api_code=None):
     try:
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
-    except DatabaseError as e: # pragma: no cover
-        if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS: # pragma: no cover
+    except DatabaseError as e: # pragma: no cover -
+        # This can only happen when multiple processes are accessing the
+        # database at the same time
+        if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS: # pragma: no cover - ditto
             cache.set(cache_key, cache_table_name)
             return cache_table_name
         log.error('get_user_query_table: "%s" with params "%s" failed with '
@@ -1043,7 +1046,8 @@ def set_user_search_number(selections, extras):
     indicating if this is a new entry in user_searches so the cache table
     shouldn't exist yet.
     """
-    if selections is None or extras is None: # pragma: no cover
+    if selections is None or extras is None: # pragma: no cover -
+        # protection against future bugs
         return None, False
 
     selections_json = str(json.dumps(sort_dictionary(selections)))
@@ -1123,8 +1127,8 @@ def set_user_search_number(selections, extras):
                                      qtypes_hash=qtypes_hash,
                                      units_hash=units_hash,
                                      order_hash=order_hash)
-    except UserSearches.MultipleObjectsReturned: # pragma: no cover
-        # This really shouldn't be possible
+    except UserSearches.MultipleObjectsReturned: # pragma: no cover -
+        # This would only happen if the database is corrupted
         s = UserSearches.objects.filter(selections_hash=selections_hash,
                                         qtypes_hash=qtypes_hash,
                                         units_hash=units_hash,
@@ -1173,7 +1177,7 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
     assert source in ('col', 'widget', 'qtype', 'search')
 
     # Qtypes are forbidden from having a numeric suffix`
-    if source == 'qtype' and slug[-1] in ('1', '2'): # pragma: no cover
+    if source == 'qtype' and slug[-1] in ('1', '2'):
         log.error('get_param_info_by_slug: Qtype slug "%s" has unpermitted '+
                   'numeric suffix', slug)
         return None
@@ -1216,8 +1220,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
             # already dealt with above.
             (form_type, form_type_format,
              form_type_unit_id) = parse_form_type(pi.form_type)
-            if form_type in settings.RANGE_FORM_TYPES: # pragma: no cover
-                # Whoops! We are missing the numeric suffix.
+            if form_type in settings.RANGE_FORM_TYPES: # pragma: no cover -
+                # We are missing the numeric suffix - protection against future bugs
                 return None
 
         return pi
@@ -1409,7 +1413,7 @@ def construct_query_string(selections, extras):
             clause_params += params
             obs_tables.add(cat_name)
 
-        else: # pragma: no cover
+        else: # pragma: no cover - protection against future bugs
             log.error('construct_query_string: Unknown field type "%s" for '
                       +'param "%s"', form_type, param_qualified_name)
             return None, None
@@ -1552,8 +1556,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
                       +'*** Selections %s *** Qtypes %s ***',
                       qtype, param_qualified_name, str(selections), str(qtypes))
             return None, None
-        if clause: # pragma: no cover
-            clauses.append(clause)
+        clauses.append(clause)
 
     if len(clauses) == 1:
         clause = clauses[0]
