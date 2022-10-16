@@ -14,23 +14,12 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class MultiStringField(forms.Field):
-
-    def validate(self, value):
-        # Use the parent's handling of required fields, etc.
-        super(MultiStringField, self).validate(value)
-
-        max_length = 25
-        for mult in value:
-            if len(mult) > max_length:
-                raise forms.ValidationError("string value is too long, limit is " + max_length + ': ' + mult[0:20] + '...')
-
 
 class MultiFloatField(forms.Field):
 
     # forms.Field.blank=True
 
-    def validate(self, value):
+    def validate(self, value): # pragma: no cover
         # Use the parent's handling of required fields, etc.
         super(MultiFloatField, self).validate(value)
 
@@ -45,22 +34,7 @@ class MultiFloatField(forms.Field):
         #     except: raise forms.ValidationError("value must be a number: " + num[0:20] + '...')
 
 
-class MultiTimeField(forms.Field):
-
-    # forms.Field.blank=True
-
-    def validate(self, value):
-        # Use the parent's handling of required fields, etc.
-        super(MultiFloatField(blank=True), self).validate(value)
-
-        for num in value:
-            try:
-                float(num)
-            except:
-                raise forms.ValidationError("value must be a number: " + num[0:20] + '...')
-
-
-class SearchForm(forms.Form):
+class SearchForm(forms.Form): # pragma: no cover
     """
     >>>> from search.forms import *
     >>>> auto_id = False
@@ -167,7 +141,6 @@ class SearchForm(forms.Form):
                     self.field_order = [slug_no_num+'1', slug_no_num+'2']  # makes sure min is first! boo ya!
 
             elif form_type in settings.MULT_FORM_TYPES:
-                # self.fields[slug]= MultiStringField(forms.Field)
                 try:
                     param_qualified_name = ParamInfo.objects.get(slug=slug).param_qualified_name()
                 except ParamInfo.DoesNotExist:

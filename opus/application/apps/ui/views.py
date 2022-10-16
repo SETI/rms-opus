@@ -119,35 +119,28 @@ def api_notifications(request):
     lastupdate = None
     try:
         with open(settings.OPUS_LAST_BLOG_UPDATE_FILE, 'r') as fp:
-            lastupdate = fp.read().strip()
-            if not lastupdate:
-                lastupdate = None
-    except:
-        try:
-            log.error('api_notifications: Failed to read file "%s"',
-                      settings.OPUS_LAST_BLOG_UPDATE_FILE)
-        except:
-            log.error('api_notifications: OPUS_LAST_BLOG_UPDATE_FILE not set')
+            lastupdate_val = fp.read().strip()
+            if lastupdate_val:
+                lastupdate = lastupdate_val
+    except FileNotFoundError:
+        log.error('api_notifications: Failed to read file "%s"',
+                  settings.OPUS_LAST_BLOG_UPDATE_FILE)
 
     notification = None
     notification_modify = None
     try:
         with open(settings.OPUS_NOTIFICATION_FILE, 'r') as fp:
-            notification = fp.read().strip()
-            if not notification:
-                notification = None
+            notification_val = fp.read().strip()
+            if notification_val:
+                notification = notification_val
             try:
-                notification_modify = os.path.getmtime(
-                                       settings.OPUS_NOTIFICATION_FILE)
+                notification_modify = os.path.getmtime(settings.OPUS_NOTIFICATION_FILE)
             except:
                 log.error('api_notification: Failed to read the modify date of '
                           'file "%s"', settings.OPUS_NOTIFICATION_FILE)
-    except:
-        try:
-            log.debug('api_notifications: Failed to read file "%s"',
-                      settings.OPUS_NOTIFICATION_FILE)
-        except:
-            log.debug('api_notifications: OPUS_NOTIFICATION_FILE not set')
+    except FileNotFoundError:
+        log.debug('api_notifications: Failed to read file "%s"',
+                  settings.OPUS_NOTIFICATION_FILE)
 
     ret = json_response({'lastupdate': lastupdate,
                          'notification': notification,

@@ -1437,7 +1437,7 @@ def get_search_results_chunk(request, use_cart=None,
                 start_obs = int(start_obs)
                 if throw_random_http404_error():
                     raise ValueError
-            except:
+            except ValueError:
                 log.error('get_search_results_chunk: Unable to parse '
                           +'startobs "%s"', start_obs)
                 return error_return(404, HTTP404_BAD_STARTOBS(start_obs, request))
@@ -1447,7 +1447,7 @@ def get_search_results_chunk(request, use_cart=None,
                 page_no = int(page_no)
                 if throw_random_http404_error():
                     raise ValueError
-            except:
+            except ValueError:
                 log.error('get_search_results_chunk: Unable to parse page_no "%s"',
                           page_no)
                 return error_return(404, HTTP404_BAD_PAGENO(page_no, request))

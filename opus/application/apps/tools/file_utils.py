@@ -216,7 +216,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                 log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)
         viewset = None
-        if preview_json:
+        if preview_json: # pragma: no cover
             viewset = pdsviewable.PdsViewSet.from_dict(preview_json)
         data = OrderedDict({'opus_id':  opus_id})
         for size in sizes:
@@ -267,7 +267,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
 
     selected_browse_products = browse_products[opus_id].get(version_name, [])
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
-    if len(selected_browse_products) == 0:
+    if len(selected_browse_products) == 0: # pragma: no cover
         return [(settings.THUMBNAIL_NOT_FOUND, settings.THUMBNAIL_NOT_FOUND)]
     res = []
     # One opus id could have multiple previews, for example:
