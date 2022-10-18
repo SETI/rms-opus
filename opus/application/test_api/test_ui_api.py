@@ -83,6 +83,157 @@ class ApiUITests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 200)
 
 
+            #####################################
+            ######### /__menu API TESTS #########
+            #####################################
+
+    def test__api_menu_default(self):
+        "[test_ui_api.py] /__menu: default"
+        url = '/__menu.json?reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_menu_default_no_reqno(self):
+        "[test_ui_api.py] /__menu: no reqno"
+        url = '/__menu.json'
+        self._run_status_equal(url, 404)
+
+    def test__api_menu_search_time(self):
+        "[test_ui_api.py] /__menu: search time"
+        url = '/__menu.json?time1=2010-01-01&reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_menu_search_cirs(self):
+        "[test_ui_api.py] /__menu: search cirs"
+        url = '/__menu.json?instrumentid=Cassini+CIRS&surfacegeometrytargetname=Saturn&widgets=instrumentid,target,surfacegeometrytargetname&reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_menu_search_expanded(self):
+        "[test_ui_api.py] /__menu: expanded cats"
+        url = '/__menu.json?expanded_cats=obs_wavelength,obs_ring_geometry,obs_ring_geometry-radius-longitude&reqno=5'
+        self._run_status_equal(url, 200)
+
+
+            ##################################################
+            ######### /__menudata_selector API TESTS #########
+            ##################################################
+
+    def test__api_metadata_selector(self):
+        "[test_ui_api.py] /__metadata_selector: default"
+        url = '/__metadata_selector.json?reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_metadata_selector_no_reqno(self):
+        "[test_ui_api.py] /__metadata_selector: no reqno"
+        url = '/__metadata_selector.json'
+        self._run_status_equal(url, 404)
+
+    def test__api_metadata_selector_no_cols(self):
+        "[test_ui_api.py] /__metadata_selector: no cols"
+        url = '/__metadata_selector.json?cols=&reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_metadata_selector_cols_units(self):
+        "[test_ui_api.py] /__metadata_selector: cols w/units"
+        url = '/__metadata_selector.json?cols=time1:jd&reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_metadata_selector_search_cirs(self):
+        "[test_ui_api.py] /__metadata_selector: search cirs"
+        url = '/__metadata_selector.json?instrumentid=Cassini+CIRS&surfacegeometrytargetname=Saturn&widgets=instrumentid,time,target,surfacegeometrytargetname&reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_metadata_selector_expanded1(self):
+        "[test_ui_api.py] /__metadata_selector: expanded cats 1"
+        url = '/__metadata_selector.json?expanded_cats=obs_general&widgets=instrumentid,target&reqno=5'
+        self._run_status_equal(url, 200)
+
+    def test__api_metadata_selector_expanded2(self):
+        "[test_ui_api.py] /__metadata_selector: expanded cats 2"
+        url = '/__metadata_selector.json?expanded_cats=search_fields&widgets=instrumentid,target&reqno=5'
+        self._run_status_equal(url, 200)
+
+
+            #######################################
+            ######### /__widget API TESTS #########
+            #######################################
+
+    def test__api_widget_target(self):
+        "[test_ui_api.py] /__widget: target"
+        url = '/__widget/target.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_target_constrained(self):
+        "[test_ui_api.py] /__widget: target constrained"
+        url = '/__widget/target.html?target=Saturn'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_mission(self):
+        "[test_ui_api.py] /__widget: mission"
+        url = '/__widget/mission.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_time(self):
+        "[test_ui_api.py] /__widget: time"
+        url = '/__widget/time.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_productid(self):
+        "[test_ui_api.py] /__widget: productid"
+        url = '/__widget/productid.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_opusid_constrained(self):
+        "[test_ui_api.py] /__widget: opusid constrained"
+        url = '/__widget/opusid.html?opusid_01=fred&opusid_02=ginger'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_ringgeophase_constrained(self):
+        "[test_ui_api.py] /__widget: RINGGEOphase constrained"
+        url = '/__widget/RINGGEOphase.html?RINGGEOphase1=10&RINGGEOphase2=20'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_ringgeophase_constrained2(self):
+        "[test_ui_api.py] /__widget: RINGGEOphase constrained 2"
+        url = '/__widget/RINGGEOphase.html?RINGGEOphase1_01=10&RINGGEOphase2_01=20&RINGGEOphase1_02=30&RINGGEOphase2_02=40'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_wavelength(self):
+        "[test_ui_api.py] /__widget: wavelength"
+        url = '/__widget/wavelength.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_widget_bad(self):
+        "[test_ui_api.py] /__widget: bad slug"
+        url = '/__widget/badslug.html'
+        self._run_status_equal(url, 404)
+
+
+            ###########################################
+            ######### /__initdetail API TESTS #########
+            ###########################################
+
+    def test__api_initdetail(self):
+        "[test_ui_api.py] /__initdetail: co-vims-v1484504730_vis"
+        url = '/__initdetail/co-vims-v1484504730_vis.html'
+        self._run_status_equal(url, 200)
+
+    def test__api_initdetail_bad(self):
+        "[test_ui_api.py] /__initdetail: bad opusid"
+        url = '/__initdetail/bad.html'
+        self._run_status_equal(url, 404)
+
+    def test__api_initdetail_in_cart(self):
+        "[test_ui_api.py] /__initdetail: co-iss-n1460960653 in cart"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460960653&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__initdetail/co-iss-n1460960653.html'
+        self._run_status_equal(url, 200)
+
+
             #############################################
             ######### /__normalizeurl API TESTS #########
             #############################################

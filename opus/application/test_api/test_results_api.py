@@ -7,6 +7,10 @@ from unittest import TestCase
 
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
+from opus.application.apps.tools.app_utils import (HTTP404_BAD_OFFSET,
+                                                   HTTP404_BAD_PAGENO,
+                                                   HTTP404_BAD_STARTOBS,
+                                                   HTTP404_SEARCH_PARAMS_INVALID)
 
 from tools.app_utils import (HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_UNKNOWN_CATEGORY,
@@ -48,24 +52,29 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /__api/dataimages: no results default cols"
         url = '/__api/dataimages.json?opusid=notgoodid'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
 
     def test__api_dataimages_no_results_default_reqno(self):
         "[test_results_api.py] /__api/dataimages: no results default cols reqno"
         url = '/__api/dataimages.json?opusid=notgoodid&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_json_equal_file(url, 'api_dataimages_no_results_default_reqno.json')
 
     def test__api_dataimages_no_results_default_reqno_bad(self):
         "[test_results_api.py] /__api/dataimages: no results default cols reqno bad"
         url = '/__api/dataimages.json?opusid=notgoodid&reqno=-1'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
 
     def test__api_dataimages_no_results_default_reqno_bad_2(self):
         "[test_results_api.py] /__api/dataimages: no results default cols reqno bad 2"
         url = '/__api/dataimages.json?opusid=notgoodid&reqno=1.0'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
+
+    def test__api_dataimages_corss_cols_units(self):
+        "[test_results_api.py] /__api/dataimages: corss search & cols & units"
+        url = '/__api/dataimages.json?instrument=Cassini+RSS&occdir=Ingress&cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&startobs=5&limit=40&reqno=12'
+        self._run_json_equal_file(url, 'api_dataimages_corss_cols_units.json')
 
     # fake
     def test__api_dataimages_no_results_default_reqno_fake(self):
@@ -137,15 +146,65 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/api/data.json?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
         self._run_json_equal_file(url, 'api_data_coiss_2002_more_cols_json.json')
 
+    def test__api_data_coiss_2002_more_cols_bad_startobs_json(self):
+        "[test_results_api.py] /api/data: coiss_2002 more cols json bad startobs"
+        url = '/api/data.json?startobs=5x2&cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_STARTOBS('5x2', '/api/data.json'))
+
+    def test__api_data_coiss_2002_more_cols_bad_page_json(self):
+        "[test_results_api.py] /api/data: coiss_2002 more cols json bad startobs"
+        url = '/api/data.json?page=inf&cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_PAGENO('inf', '/api/data.json'))
+
+    def test__api_data_coiss_2002_more_cols_bad_offset_json(self):
+        "[test_results_api.py] /api/data: coiss_2002 more cols json bad startobs"
+        url = '/api/data.json?page=10000000000000000000&cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_OFFSET('999999999999999999900',
+                                                  '/api/data.json'))
+
     def test__api_data_coiss_2002_more_cols_csv(self):
         "[test_results_api.py] /api/data: coiss_2002 more cols csv"
         url = '/api/data.csv?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
         self._run_csv_equal_file(url, 'api_data_coiss_2002_more_cols_csv.csv')
 
+    def test__api_data_coiss_2002_more_cols_units_csv(self):
+        "[test_results_api.py] /api/data: coiss_2002 more cols units csv"
+        url = '/api/data.csv?cols=opusid,instrument,planet,target,time1:jd,observationduration:milliseconds,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_csv_equal_file(url, 'api_data_coiss_2002_more_cols_units_csv.csv')
+
     def test__api_data_coiss_2002_more_cols_html(self):
         "[test_results_api.py] /api/data: coiss_2002 more cols html"
         url = '/api/data.html?cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
         self._run_html_equal_file(url, 'api_data_coiss_2002_more_cols_html.html')
+
+    def test__api_data_coiss_2002_more_cols_units_html(self):
+        "[test_results_api.py] /api/data: coiss_2002 more cols units html"
+        url = '/api/data.html?cols=opusid,instrument,planet,target,time1:jd,observationduration:milliseconds,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_html_equal_file(url, 'api_data_coiss_2002_more_cols_units_html.html')
+
+    def test__api_data_coiss_2002_more_cols_units_json(self):
+        "[test_results_api.py] /api/data: coiss_2002 more cols units json"
+        url = '/api/data.json?cols=opusid,instrument,planet,target,time1:jd,observationduration:milliseconds,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
+        self._run_json_equal_file(url, 'api_data_coiss_2002_more_cols_units_json.json')
+
+    def test__api_data_gossi_cols_units_json(self):
+        "[test_results_api.py] /api/data: gossi cols units json"
+        url = '/api/data.json?duration1=0.5&duration2=15&unit-duration=seconds&GOSSIfilter=Methane+%5BIR-8890%5D&instrument=Galileo+SSI&cols=opusid,target,time1,time1:et,observationduration:milliseconds,duration,GOSSIfilter,wavelength1:angstroms,wavelength2:nm&order=target,-observationduration,time1,opusid'
+        self._run_json_equal_file(url, 'api_data_gossi_cols_units.json')
+
+    def test__api_data_good_regex_opusid_csv(self):
+        "[test_results_api.py] /api/data: good regex opusid csv"
+        url = r'/api/data.csv?opusid=co-iss-n14609\d0\d5.*&qtype-opusid=regex'
+        self._run_html_equal_file(url, 'api_data_good_regex_opusid_csv.html')
+
+    def test__api_data_bad_regex_opusid_csv(self):
+        "[test_results_api.py] /api/data: bad regex csv"
+        url = r'/api/data.csv?opusid=[a-z]*(&qtype-opusid=regex'
+        self._run_status_equal(url, 404,
+                               HTTP404_SEARCH_PARAMS_INVALID('/api/data.csv'))
 
     def test__api_data_bad_cols_json(self):
         "[test_results_api.py] /api/data: bad cols 1 json"

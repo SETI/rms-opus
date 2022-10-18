@@ -49,8 +49,7 @@ def get_pds_products(opus_id_list,
         the URL, path, and checksum.
     """
     assert loc_type in ('path', 'url', 'raw'), loc_type
-    if opus_id_list is None: # pragma: no cover
-        return {}
+    assert opus_id_list is not None
 
     if not isinstance(product_types, (list, tuple)):
         product_types = product_types.lower().split(',')
@@ -58,8 +57,7 @@ def get_pds_products(opus_id_list,
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
 
-    if len(opus_id_list) == 0 or len(product_types) == 0: # pragma: no cover
-        return {}
+    assert len(opus_id_list) > 0 and len(product_types) > 0
 
     results = OrderedDict() # Dict of opus_ids
 
@@ -212,11 +210,11 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
         else:
             try:
                 preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
-            except ObjectDoesNotExist: # pragma: no cover
+            except ObjectDoesNotExist: # pragma: no cover - import error
                 log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)
         viewset = None
-        if preview_json: # pragma: no cover
+        if preview_json: # pragma: no cover - import error
             viewset = pdsviewable.PdsViewSet.from_dict(preview_json)
         data = OrderedDict({'opus_id':  opus_id})
         for size in sizes:
@@ -230,12 +228,12 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                     viewable = viewset.medium
                 elif size == 'full':
                     viewable = viewset.full_size
-                else: # pragma: no cover
+                else: # pragma: no cover - protection against future bugs
                     log.error('Unknown image size "%s"', size)
             if not preview_json or not viewset: # pragma: no cover
                 # log.error('No preview image size "%s" found for '
                 #           +'opus_id "%s"', size, opus_id)
-                if ignore_missing: # pragma: no cover
+                if ignore_missing:
                     continue
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
@@ -267,7 +265,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
 
     selected_browse_products = browse_products[opus_id].get(version_name, [])
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
-    if len(selected_browse_products) == 0: # pragma: no cover
+    if len(selected_browse_products) == 0: # pragma: no cover - thumbnails not available
         return [(settings.THUMBNAIL_NOT_FOUND, settings.THUMBNAIL_NOT_FOUND)]
     res = []
     # One opus id could have multiple previews, for example:
@@ -279,12 +277,15 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
         for browse_url in selected_browse_products[p]:
             if '_med.' in browse_url:
                 basename, _, _ = browse_url.partition('_med.')
-                if basename in disp_prod_dict:
+                if basename in disp_prod_dict: # pragma: no cover -
+                    # The order of browse products is usually medium,full
+                    # so this never gets triggered, since it would require
+                    # the full image to come first.
                     res.append((browse_url, disp_prod_dict[basename]))
                     continue
             else: # '_full.' in browse_url
                 basename, _, _ = browse_url.partition('_full.')
-                if basename in disp_prod_dict:
+                if basename in disp_prod_dict: # pragma: no cover - see above
                     res.append((disp_prod_dict[basename], browse_url))
                     continue
             disp_prod_dict[basename] = browse_url

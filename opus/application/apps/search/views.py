@@ -380,7 +380,7 @@ def api_string_search_choices(request, slug):
                 esc_partial_query = re.escape(partial_query)
             try:
                 # We have to catch all random exceptions here because the
-                # compile may fail if the user gives regex that is bad for
+                # compile may fail if the user gives a regex that is bad for
                 # the regex library but wasn't caught by _valid_regex
                 # because it wasn't bad for MySQL
                 pattern = regex.compile(f'({esc_partial_query})',
@@ -535,7 +535,6 @@ def url_to_search_params(request_get, allow_errors=False,
         # values from one unit to another. The original unit is available in
         # "sourceunit" and the desination unit is available in "unit".
         # sourceunit should not be used anywhere else.
-        is_sourceunit = None
         if slug.startswith('qtype-'): # like qtype-time=all
             slug = slug[6:]
             slug_no_num = strip_numeric_suffix(slug)
@@ -554,7 +553,6 @@ def url_to_search_params(request_get, allow_errors=False,
                 return None, None
             param_info = get_param_info_by_slug(slug, 'qtype')
         elif slug.startswith('sourceunit-'):
-            is_sourceunit = True
             slug = slug[11:]
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
@@ -646,7 +644,9 @@ def url_to_search_params(request_get, allow_errors=False,
             # Default if not specified
             unit_val = get_default_unit(form_type_unit_id)
 
-        # Look for an associated sourceunit.
+        # Look for an associated sourceunit. Sourceunits are created by the UI
+        # when the user changes the unit selection on a range widget, so this
+        # URL has never passed through normalizeurl.
         # Use the original slug name here since we hope if someone says
         # XXX=5 then they also say sourceunit-XXX=msec
         sourceunit_slug = 'sourceunit-'+slug_no_num+clause_num_str
@@ -660,11 +660,15 @@ def url_to_search_params(request_get, allow_errors=False,
                 log.error('url_to_search_params: Bad sourceunit value'
                           +' for "%s": %s', sourceunit_slug,
                           str(sourceunit_val))
-                if allow_errors: # pragma: no cover - protection against future bugs
-                    # We never actually hit this because normalizeurl catches
-                    # the bad unit first
+                if allow_errors: # pragma: no cover -
+                    # sourceunit can only show up when called from
+                    # normalizeinput, in which case allow_errors is always
+                    # True. Since this is an internal error in the UI,
+                    # we don't want to throw any kind of error that would freeze
+                    # the UI, so we just pretend the sourceunit value wasn't
+                    # specified and hope someone looks at the error log.
                     sourceunit_val = None
-                else:
+                else: # pragma: no cover
                     return None, None
 
         if form_type in settings.MULT_FORM_TYPES:
@@ -684,7 +688,8 @@ def url_to_search_params(request_get, allow_errors=False,
                     has_value = True
                     break
             if not has_value:
-                if pretty_results and return_slugs:
+                if pretty_results and return_slugs: # pragma: no cover -
+                    # These must be true in the current usage
                     selections[slug] = ""
                 continue
             # Mult form types can be sorted and uniquified to save duplicate
@@ -734,19 +739,16 @@ def url_to_search_params(request_get, allow_errors=False,
                     if value:
                         try:
                             # Convert the strings into the internal
-                            # representation if necessary. If there is not
-                            # sourceunit slug, then sourceunit and unit are the
-                            # same and we parse the value in that unit and then
-                            # convert it to and back from default (which should
-                            # do nothing). If they are different, then we parse
-                            # the value as sourceunit, convert it to default as
+                            # representation if necessary. If there is a
+                            # sourceunit slug, then we parse the value as
+                            # sourceunit, convert it to default as
                             # sourceunit, and convert it back to unit to do the
                             # unit conversion.
                             new_value = parse_unit_value(value,
                                                          form_type_format,
                                                          form_type_unit_id,
                                                          sourceunit_val)
-                            if is_sourceunit or sourceunit_val is not None:
+                            if sourceunit_val is not None:
                                 default_val = (convert_to_default_unit(
                                                     new_value,
                                                     form_type_unit_id,
@@ -816,7 +818,8 @@ def url_to_search_params(request_get, allow_errors=False,
                 units[param_qualified_name_no_num].append(unit_val)
             elif (allow_empty or
                   new_values[0] is not None or
-                  new_values[1] is not None):
+                  new_values[1] is not None): # pragma: no cover -
+                # One of these must be true in current usage
                 # If both values are None, then don't include this slug at all
                 if new_param_qualified_names[0] not in selections:
                     selections[new_param_qualified_names[0]] = []
@@ -829,7 +832,10 @@ def url_to_search_params(request_get, allow_errors=False,
                     # number because allow_empty is only True when it's
                     # called from api_get_widget, and in that case,
                     # clause numbers have already been normalized.
-                    if len_min < clause_num:
+                    if len_min < clause_num: # pragma: no cover -
+                        # This will always be True because the normalized
+                        # clause numbers will be in order, and thus it will
+                        # always be necessary to add a new entry.
                         range_min_selection += [None] * (clause_num-len_min)
                     range_min_selection[clause_num-1] = new_values[0]
                 else:
@@ -843,7 +849,10 @@ def url_to_search_params(request_get, allow_errors=False,
                     range_max_selection = selections[
                                                 new_param_qualified_names[1]]
                     len_max = len(range_max_selection)
-                    if len_max < clause_num:
+                    if len_max < clause_num: # pragma: no cover -
+                        # This will always be True because the normalized
+                        # clause numbers will be in order, and thus it will
+                        # always be necessary to add a new entry.
                         range_max_selection += [None] * (clause_num-len_max)
                     range_max_selection[clause_num-1] = new_values[1]
                 else:
@@ -859,7 +868,10 @@ def url_to_search_params(request_get, allow_errors=False,
                     if allow_empty and clause_num_str:
                         range_qtype = qtypes[param_qualified_name_no_num]
                         len_qtype = len(range_qtype)
-                        if len_qtype < clause_num:
+                        if len_qtype < clause_num: # pragma: no cover -
+                            # This will always be True because the normalized
+                            # clause numbers will be in order, and thus it will
+                            # always be necessary to add a new entry.
                             range_qtype += [None] * (clause_num-len_qtype)
                         range_qtype[clause_num-1] = qtype_val
                     else:
@@ -898,7 +910,10 @@ def url_to_search_params(request_get, allow_errors=False,
             units[new_slug] = unit_val
         elif (allow_empty or
               (new_value is not None and
-               new_value != '')):
+               new_value != '')): # pragma: no cover -
+            # This will always be True because the normalized
+            # clause numbers will be in order, and thus it will
+            # always be necessary to add a new entry.
             # If the value is None or '', then don't include this slug at all
             if new_value == '':
                 new_value = None
@@ -1177,7 +1192,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
     assert source in ('col', 'widget', 'qtype', 'search')
 
     # Qtypes are forbidden from having a numeric suffix`
-    if source == 'qtype' and slug[-1] in ('1', '2'):
+    if source == 'qtype' and slug[-1] in ('1', '2'): # pragma: no cover -
+        # always caught by caller
         log.error('get_param_info_by_slug: Qtype slug "%s" has unpermitted '+
                   'numeric suffix', slug)
         return None
@@ -1202,9 +1218,10 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
             pass
 
     if pi:
-        if source == 'col' and allow_units_override:
+        if source == 'col' and allow_units_override: # pragma: no cover -
+            # always caught by caller
             if (check_valid_units and desired_units is not None and
-                not pi.is_valid_unit(desired_units)): # pragma: no cover
+                not pi.is_valid_unit(desired_units)):
                 log.error('get_param_info_by_slug: Slug "%s" unit "%s" invalid -'
                           'using default', slug, desired_units)
                 desired_units = None
@@ -1404,7 +1421,7 @@ def construct_query_string(selections, extras):
             clause_params += params
             obs_tables.add(cat_name)
 
-        elif form_type == 'STRING': # pragma: no cover
+        elif form_type == 'STRING':
             clause, params = get_string_query(selections, param_qualified_name,
                                               qtypes)
             if clause is None:
@@ -1496,9 +1513,6 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
 
-    (form_type, form_type_format,
-     form_type_unit_id) = parse_form_type(param_info.form_type)
-
     cat_name = param_info.category_name
     quoted_cat_name = connection.ops.quote_name(cat_name)
     name = param_info.name
@@ -1550,7 +1564,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
                 return None, None
             clause = quoted_param_qualified_name + ' RLIKE %s'
             params.append(value)
-        else:
+        else: # pragma: no cover - protecting against future bugs
             log.error('_get_string_query: Unknown qtype "%s" '
                       +'for "%s" '
                       +'*** Selections %s *** Qtypes %s ***',
@@ -1877,8 +1891,7 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                           str(selections), str(qtypes),  str(units))
                 return None, None
 
-        if clause: # pragma: no cover
-            clauses.append(clause)
+        clauses.append(clause)
 
     if len(clauses) == 1:
         clause = clauses[0]

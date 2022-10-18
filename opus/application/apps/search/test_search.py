@@ -2889,6 +2889,16 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__string_query_regex_bad(self):
+        "[test_search.py] string_query: string query with qtype regex bad"
+        selections = {'obs_pds.volume_id': [r'^COISS.\d\d\d\d($']}
+        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+                                       ['regex'])
+        print(sql)
+        print(params)
+        self.assertIsNone(sql)
+        self.assertIsNone(params)
+
     def test__string_query_ends_special_chars(self):
         "[test_search.py] string_query: string query with qtype matches special chars"
         selections = {'obs_pds.volume_id': ['ISS_\\%\\X\\']}
@@ -3047,6 +3057,16 @@ class searchTests(TestCase):
         print(expected_params)
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
+
+    def test__construct_query_string_regex_bad(self):
+        "[test_search.py] construct_query_string: qtype regex bad"
+        selections = {'obs_pds.volume_id': [r'^COISS.\d\d\d\d($']}
+        extras = {'qtypes': {'obs_pds.volume_id': ['regex']}}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        self.assertIsNone(sql)
+        self.assertIsNone(params)
 
     def test__construct_query_string_nojoin(self):
         "[test_search.py] construct_query_string: just obs_general"

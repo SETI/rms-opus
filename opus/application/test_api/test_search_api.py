@@ -9,12 +9,12 @@ from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from tools.app_utils import (HTTP404_BAD_LIMIT,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_CATEGORY,
-                             HTTP404_UNKNOWN_OPUS_ID,
-                             HTTP404_UNKNOWN_RING_OBS_ID,
-                             HTTP404_UNKNOWN_SLUG)
+                               HTTP404_BAD_OR_MISSING_REQNO,
+                               HTTP404_SEARCH_PARAMS_INVALID,
+                               HTTP404_UNKNOWN_CATEGORY,
+                               HTTP404_UNKNOWN_OPUS_ID,
+                               HTTP404_UNKNOWN_RING_OBS_ID,
+                               HTTP404_UNKNOWN_SLUG)
 
 from .api_test_helper import ApiTestHelper
 
@@ -423,6 +423,24 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
         self._run_json_equal(url, expected)
 
+    def test__api_normalizeinput_unit8(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & no unit (default unit) & sourceunit: cm diff order"
+        url = '/__api/normalizeinput.json?sourceunit-wavelength=cm&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
+        expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit9(self):
+        "[test_search_api.py] /api/normalizeinput: sourceunit with numeric suffix"
+        url = '/__api/normalizeinput.json?sourceunit-wavelength1=cm&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
+        self._run_status_equal(url, 404,
+                    HTTP404_SEARCH_PARAMS_INVALID('/__api/normalizeinput.json'))
+
+    def test__api_normalizeinput_unit10(self):
+        "[test_search_api.py] /api/normalizeinput: sourceunit bad value"
+        url = '/__api/normalizeinput.json?sourceunit-wavelength=fred&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
+        expected = {"wavelength1": "0.0001", "wavelength2": "0.03", "reqno": 123}
+        self._run_json_equal(url, expected)
+
     def test__api_normalizeinput_unit_overflow(self):
         "[test_search_api.py] /api/normalizeinput: wavelength overflow basic unit"
         url = '/__api/normalizeinput.json?wavelength1=1e307&unit-wavelength=cm&reqno=123'
@@ -434,6 +452,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         url = '/__api/normalizeinput.json?wavelength1=1e307&sourceunit-wavelength=cm&unit-wavelength=microns&reqno=123'
         expected = {"wavelength1": None, "reqno": 123}
         self._run_json_equal(url, expected)
+
 
             ########################################################
             ######### /__api/stringsearchchoices API TESTS #########

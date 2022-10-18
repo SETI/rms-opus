@@ -43,13 +43,13 @@ _PRETTY_MULT_CACHE = {}
 
 def lookup_pretty_value_for_mult(param_info, value, cvt_null):
     "Given a param_info for a mult and the mult value, return the pretty label"
-    if param_info.form_type is None: # pragma: no cover
+    if param_info.form_type is None: # pragma: no cover - import error
         return None
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
 
-    if form_type not in settings.MULT_FORM_TYPES: # pragma: no cover
+    if form_type not in settings.MULT_FORM_TYPES: # pragma: no cover - import error
         return None
 
     key = (param_info.param_qualified_name(), value)
@@ -60,7 +60,7 @@ def lookup_pretty_value_for_mult(param_info, value, cvt_null):
         model = apps.get_model('search', mult_param.title().replace('_',''))
 
         results = model.objects.filter(id=value).values('value','label')
-        if not results: # pragma: no cover
+        if not results: # pragma: no cover - import error
             return None
         result = results[0]
         _PRETTY_MULT_CACHE[key] = result

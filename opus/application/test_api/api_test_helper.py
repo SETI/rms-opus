@@ -11,7 +11,7 @@ import settings
 _RESPONSES_FILE_ROOT = 'test_api/responses/'
 
 class ApiTestHelper:
-    # If this is set to true, then instead of comparing responses to files
+    # If this is set to True, then instead of comparing responses to files
     # we overwrite the files with the response to update the test results.
     # Use with extreme caution!
     UPDATE_FILES = False
@@ -153,6 +153,42 @@ class ApiTestHelper:
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
+
+    def _run_html_contains(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = resp[:len(expected)]
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        if expected not in resp:
+            self._print_clean_diffs(resp, expected)
+            self.assertTrue(False)
+
+    def _run_html_not_contains(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = resp[:len(expected)]
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        if expected in resp:
+            self._print_clean_diffs(resp, expected)
+            self.assertTrue(False)
 
     @staticmethod
     def _cleanup_csv(text):

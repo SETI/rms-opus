@@ -328,9 +328,9 @@ PREVIEW_SIZE_TO_PDS_TYPE = {
 }
 
 PREVIEW_GUIDES = {
-    'COCIRS': 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt',
-    'COUVIS': 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt',
-    'COVIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
+    'Cassini CIRS': 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt',
+    'Cassini UVIS': 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt',
+    'Cassini VIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 }
 
 # Browse products displayed in OPUS detail tab
