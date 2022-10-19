@@ -15,6 +15,7 @@ import settings
 class ApiUITests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        self.UPDATE_FILES = False
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -90,7 +91,7 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_menu_default(self):
         "[test_ui_api.py] /__menu: default"
         url = '/__menu.json?reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_menu_default.html')
 
     def test__api_menu_default_no_reqno(self):
         "[test_ui_api.py] /__menu: no reqno"
@@ -100,17 +101,17 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_menu_search_time(self):
         "[test_ui_api.py] /__menu: search time"
         url = '/__menu.json?time1=2010-01-01&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_menu_search_time.html')
 
     def test__api_menu_search_cirs(self):
         "[test_ui_api.py] /__menu: search cirs"
         url = '/__menu.json?instrumentid=Cassini+CIRS&surfacegeometrytargetname=Saturn&widgets=instrumentid,target,surfacegeometrytargetname&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_menu_search_cirs.html')
 
     def test__api_menu_search_expanded(self):
         "[test_ui_api.py] /__menu: expanded cats"
         url = '/__menu.json?expanded_cats=obs_wavelength,obs_ring_geometry,obs_ring_geometry-radius-longitude&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_menu_search_expanded.html')
 
 
             ##################################################
@@ -120,7 +121,7 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_metadata_selector(self):
         "[test_ui_api.py] /__metadata_selector: default"
         url = '/__metadata_selector.json?reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_metadata_selector.html')
 
     def test__api_metadata_selector_no_reqno(self):
         "[test_ui_api.py] /__metadata_selector: no reqno"
@@ -130,27 +131,27 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_metadata_selector_no_cols(self):
         "[test_ui_api.py] /__metadata_selector: no cols"
         url = '/__metadata_selector.json?cols=&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_metadata_selector_no_cols.html')
 
     def test__api_metadata_selector_cols_units(self):
         "[test_ui_api.py] /__metadata_selector: cols w/units"
         url = '/__metadata_selector.json?cols=time1:jd&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_metadata_selector_cols_units.html')
 
     def test__api_metadata_selector_search_cirs(self):
         "[test_ui_api.py] /__metadata_selector: search cirs"
         url = '/__metadata_selector.json?instrumentid=Cassini+CIRS&surfacegeometrytargetname=Saturn&widgets=instrumentid,time,target,surfacegeometrytargetname&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_metadata_selector_search_cirs.html')
 
     def test__api_metadata_selector_expanded1(self):
         "[test_ui_api.py] /__metadata_selector: expanded cats 1"
         url = '/__metadata_selector.json?expanded_cats=obs_general&widgets=instrumentid,target&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_metadata_selector_expanded1.html')
 
     def test__api_metadata_selector_expanded2(self):
         "[test_ui_api.py] /__metadata_selector: expanded cats 2"
         url = '/__metadata_selector.json?expanded_cats=search_fields&widgets=instrumentid,target&reqno=5'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_metadata_selector_expanded2.html')
 
 
             #######################################
@@ -160,47 +161,47 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_widget_target(self):
         "[test_ui_api.py] /__widget: target"
         url = '/__widget/target.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_target.html')
 
     def test__api_widget_target_constrained(self):
         "[test_ui_api.py] /__widget: target constrained"
         url = '/__widget/target.html?target=Saturn'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_target_constrained.html')
 
     def test__api_widget_mission(self):
         "[test_ui_api.py] /__widget: mission"
         url = '/__widget/mission.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_mission.html')
 
     def test__api_widget_time(self):
         "[test_ui_api.py] /__widget: time"
         url = '/__widget/time.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_time.html')
 
     def test__api_widget_productid(self):
         "[test_ui_api.py] /__widget: productid"
         url = '/__widget/productid.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_productid.html')
 
     def test__api_widget_opusid_constrained(self):
         "[test_ui_api.py] /__widget: opusid constrained"
         url = '/__widget/opusid.html?opusid_01=fred&opusid_02=ginger'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_opusid_constrained.html')
 
     def test__api_widget_ringgeophase_constrained(self):
         "[test_ui_api.py] /__widget: RINGGEOphase constrained"
         url = '/__widget/RINGGEOphase.html?RINGGEOphase1=10&RINGGEOphase2=20'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_ringgeophase_constrained.html')
 
     def test__api_widget_ringgeophase_constrained2(self):
         "[test_ui_api.py] /__widget: RINGGEOphase constrained 2"
         url = '/__widget/RINGGEOphase.html?RINGGEOphase1_01=10&RINGGEOphase2_01=20&RINGGEOphase1_02=30&RINGGEOphase2_02=40'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_ringgeophase_constrained2.html')
 
     def test__api_widget_wavelength(self):
         "[test_ui_api.py] /__widget: wavelength"
         url = '/__widget/wavelength.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_widget_wavelength.html')
 
     def test__api_widget_bad(self):
         "[test_ui_api.py] /__widget: bad slug"
@@ -212,10 +213,10 @@ class ApiUITests(TestCase, ApiTestHelper):
             ######### /__initdetail API TESTS #########
             ###########################################
 
-    def test__api_initdetail(self):
+    def test__api_initdetail_covims(self):
         "[test_ui_api.py] /__initdetail: co-vims-v1484504730_vis"
         url = '/__initdetail/co-vims-v1484504730_vis.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_initdetail_covims.html')
 
     def test__api_initdetail_bad(self):
         "[test_ui_api.py] /__initdetail: bad opusid"
@@ -231,7 +232,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__initdetail/co-iss-n1460960653.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_initdetail_in_cart.html')
 
 
             #############################################

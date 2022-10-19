@@ -57,13 +57,13 @@ class resultsTests(TestCase):
             ######### api_get_data_and_images UNIT TESTS #########
             ######################################################
 
-    def test__api_get_data_and_images_no_request(self):
-        "[test_results.py] api_get_data_and_images: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_data_and_images_no_meta(self):
+        "[test_results.py] api_get_data_and_images: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__api/dataimages.json'):
-            api_get_data_and_images(no_request)
+            api_get_data_and_images(request)
 
     def test__api_get_data_and_images_no_get(self):
         "[test_results.py] api_get_data_and_images: no GET"
@@ -78,13 +78,13 @@ class resultsTests(TestCase):
             ######### api_get_data UNIT TESTS #########
             ###########################################
 
-    def test__api_get_data_no_request(self):
-        "[test_results.py] api_get_data: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_data_no_meta(self):
+        "[test_results.py] api_get_data: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/data.json'):
-            api_get_data(no_request, 'json')
+            api_get_data(request, 'json')
 
     def test__api_get_data_no_get(self):
         "[test_results.py] api_get_data: no GET"
@@ -100,13 +100,13 @@ class resultsTests(TestCase):
             ######### api_get_metadata UNIT TESTS #########
             ###############################################
 
-    def test__api_get_metadata_no_request(self):
-        "[test_results.py] api_get_metadata: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_metadata_no_meta(self):
+        "[test_results.py] api_get_metadata: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/metadata/vg-iss-2-s-c4360845.json'):
-            api_get_metadata(no_request, 'vg-iss-2-s-c4360845', 'json')
+            api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_no_get(self):
         "[test_results.py] api_get_metadata: no GET"
@@ -121,13 +121,13 @@ class resultsTests(TestCase):
             ######### api_get_images UNIT TESTS #########
             #############################################
 
-    def test__api_get_images_no_request(self):
-        "[test_results.py] api_get_images: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_images_no_meta(self):
+        "[test_results.py] api_get_images: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/images/None.json'):
-            api_get_images(no_request, 'json')
+            api_get_images(request, 'json')
 
     def test__api_get_images_no_get(self):
         "[test_results.py] api_get_images: no GET"
@@ -142,13 +142,13 @@ class resultsTests(TestCase):
             ######### api_get_images_by_size UNIT TESTS #########
             #####################################################
 
-    def test__api_get_images_by_size_no_request(self):
-        "[test_results.py] api_get_images_by_size: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_images_by_size_no_meta(self):
+        "[test_results.py] api_get_images_by_size: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/images/small.json'):
-            api_get_images_by_size(no_request, 'small', 'json')
+            api_get_images_by_size(request, 'small', 'json')
 
     def test__api_get_images_by_size_no_get(self):
         "[test_results.py] api_get_images_by_size: no GET"
@@ -163,13 +163,13 @@ class resultsTests(TestCase):
             ######### api_get_image UNIT TESTS #########
             ############################################
 
-    def test__api_get_image_no_request(self):
-        "[test_results.py] api_get_image: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_image_no_meta(self):
+        "[test_results.py] api_get_image: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/images/small.json'):
-            api_get_image(no_request, 'vg-iss-2-s-c4360845', 'small', 'json')
+            api_get_image(request, 'vg-iss-2-s-c4360845', 'small', 'json')
 
     def test__api_get_image_no_get(self):
         "[test_results.py] api_get_image: no GET"
@@ -184,13 +184,13 @@ class resultsTests(TestCase):
             ######### api_get_files UNIT TESTS #########
             ############################################
 
-    def test__api_get_files_no_request(self):
-        "[test_results.py] api_get_files: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_files_no_meta(self):
+        "[test_results.py] api_get_files: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/files/vg-iss-2-s-c4360845.json'):
-            api_get_files(no_request, 'vg-iss-2-s-c4360845')
+            api_get_files(request, 'vg-iss-2-s-c4360845')
 
     def test__api_get_files_no_get(self):
         "[test_results.py] api_get_files: no GET"
@@ -205,13 +205,13 @@ class resultsTests(TestCase):
             ######### api_get_categories_for_opus_id UNIT TESTS #########
             #############################################################
 
-    def test__api_get_categories_for_opus_id_no_request(self):
-        "[test_results.py] api_get_categories_for_opus_id: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_categories_for_opus_id_no_meta(self):
+        "[test_results.py] api_get_categories_for_opus_id: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/categories/vg-iss-2-s-c4360845.json'):
-            api_get_categories_for_opus_id(no_request, 'vg-iss-2-s-c4360845')
+            api_get_categories_for_opus_id(request, 'vg-iss-2-s-c4360845')
 
     def test__api_get_categories_for_opus_id_no_get(self):
         "[test_results.py] api_get_categories_for_opus_id: no GET"
@@ -227,13 +227,13 @@ class resultsTests(TestCase):
             ######### api_get_categories_for_search UNIT TESTS #########
             ############################################################
 
-    def test__api_get_categories_for_search_no_request(self):
-        "[test_results.py] api_get_categories_for_search: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_categories_for_search_no_meta(self):
+        "[test_results.py] api_get_categories_for_search: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/categories.json'):
-            api_get_categories_for_search(no_request)
+            api_get_categories_for_search(request)
 
     def test__api_get_categories_for_search_no_get(self):
         "[test_results.py] api_get_categories_for_search: no GET"
@@ -248,13 +248,13 @@ class resultsTests(TestCase):
             ######### api_get_product_types_for_opus_id UNIT TESTS #########
             ################################################################
 
-    def test__api_get_product_types_for_opus_id_no_request(self):
-        "[test_results.py] api_get_product_types_for_opus_id: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_product_types_for_opus_id_no_meta(self):
+        "[test_results.py] api_get_product_types_for_opus_id: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/product_types/vg-iss-2-s-c4360845.json'):
-            api_get_product_types_for_opus_id(no_request, 'vg-iss-2-s-c4360845')
+            api_get_product_types_for_opus_id(request, 'vg-iss-2-s-c4360845')
 
     def test__api_get_product_types_for_opus_id_no_get(self):
         "[test_results.py] api_get_product_types_for_opus_id: no GET"
@@ -270,13 +270,13 @@ class resultsTests(TestCase):
             ######### api_get_product_types_for_search UNIT TESTS #########
             ###############################################################
 
-    def test__api_get_product_types_for_search_no_request(self):
-        "[test_results.py] api_get_product_types_for_search: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_product_types_for_search_no_meta(self):
+        "[test_results.py] api_get_product_types_for_search: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/product_types.json'):
-            api_get_product_types_for_search(no_request)
+            api_get_product_types_for_search(request)
 
     def test__api_get_product_types_for_search_no_get(self):
         "[test_results.py] api_get_product_types_for_search: no GET"

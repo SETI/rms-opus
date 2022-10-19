@@ -36,13 +36,13 @@ class MetadataTests(TestCase):
             ######### api_get_result_count UNIT TESTS #########
             ###################################################
 
-    def test__api_get_result_count_no_request(self):
-        "[test_metadata.py] api_get_result_count: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_result_count_no_meta(self):
+        "[test_metadata.py] api_get_result_count: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/meta/result_count.json'):
-            api_get_result_count(no_request, 'json')
+            api_get_result_count(request, 'json')
 
     def test__api_get_result_count_no_get(self):
         "[test_metadata.py] api_get_result_count: no GET"
@@ -59,13 +59,13 @@ class MetadataTests(TestCase):
             r'Internal error \(Unknown return format "jsonx"\) for /api/meta/result_count.json'):
             api_get_result_count(request, 'jsonx')
 
-    def test__api_get_result_count_no_request_internal(self):
-        "[test_metadata.py] api_get_result_count: no request internal"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_result_count_no_meta_internal(self):
+        "[test_metadata.py] api_get_result_count: no META internal"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/meta/result_count.json'):
-            api_get_result_count_internal(no_request)
+            api_get_result_count_internal(request)
 
     def test__api_get_result_count_no_get_internal(self):
         "[test_metadata.py] api_get_result_count: no GET internal"
@@ -80,13 +80,13 @@ class MetadataTests(TestCase):
             ######### api_get_mult_counts UNIT TESTS #########
             ##################################################
 
-    def test__api_get_mult_counts_no_request(self):
-        "[test_metadata.py] api_get_mult_counts: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_mult_counts_no_meta(self):
+        "[test_metadata.py] api_get_mult_counts: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/meta/mults/target.json'):
-            api_get_mult_counts(no_request, 'target', 'json')
+            api_get_mult_counts(request, 'target', 'json')
 
     def test__api_get_mult_counts_no_get(self):
         "[test_metadata.py] api_get_mult_counts: no GET"
@@ -103,13 +103,13 @@ class MetadataTests(TestCase):
             r'Internal error \(Unknown return format "jsonx"\) for /api/meta/mults/target.json'):
             api_get_mult_counts(request, 'target', 'jsonx')
 
-    def test__api_get_mult_counts_no_request_internal(self):
-        "[test_metadata.py] api_get_mult_counts: no request internal"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_mult_counts_no_meta_internal(self):
+        "[test_metadata.py] api_get_mult_counts: no META internal"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/meta/mults/target.json'):
-            api_get_mult_counts_internal(no_request, 'target')
+            api_get_mult_counts_internal(request, 'target')
 
     def test__api_get_mult_counts_no_get_internal(self):
         "[test_metadata.py] api_get_mult_counts: no GET internal"
@@ -124,13 +124,13 @@ class MetadataTests(TestCase):
             ######### api_get_range_endpoints UNIT TESTS #########
             ######################################################
 
-    def test__api_get_range_endpoints_no_request(self):
-        "[test_metadata.py] api_get_range_endpoints: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_range_endpoints_no_meta(self):
+        "[test_metadata.py] api_get_range_endpoints: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/meta/range/endpoints/observationduration.json'):
-            api_get_range_endpoints(no_request, 'observationduration', 'json')
+            api_get_range_endpoints(request, 'observationduration', 'json')
 
     def test__api_get_range_endpoints_no_get(self):
         "[test_metadata.py] api_get_range_endpoints: no GET"
@@ -147,13 +147,13 @@ class MetadataTests(TestCase):
             r'Internal error \(Unknown return format "jsonx"\) for /api/meta/range/endpoints/observationduration.json'):
             api_get_range_endpoints(request, 'observationduration', 'jsonx')
 
-    def test__api_get_range_endpoints_no_request_internal(self):
-        "[test_metadata.py] api_get_range_endpoints: no request internal"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_range_endpoints_no_meta_internal(self):
+        "[test_metadata.py] api_get_range_endpoints: no META internal"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/meta/range/endpoints/observationduration.json'):
-            api_get_range_endpoints_internal(no_request, 'observationduration')
+            api_get_range_endpoints_internal(request, 'observationduration')
 
     def test__api_get_range_endpoints_no_get_internal(self):
         "[test_metadata.py] api_get_range_endpoints: no GET internal"
@@ -168,13 +168,13 @@ class MetadataTests(TestCase):
             ######### api_get_fields UNIT TESTS #########
             #############################################
 
-    def test__api_get_fields_no_request(self):
-        "[test_metadata.py] api_get_fields: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_get_fields_no_meta(self):
+        "[test_metadata.py] api_get_fields: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/fields/None.json'):
-            api_get_fields(no_request, 'json')
+            api_get_fields(request, 'json')
 
     def test__api_get_fields_no_get(self):
         "[test_metadata.py] api_get_fields: no GET"

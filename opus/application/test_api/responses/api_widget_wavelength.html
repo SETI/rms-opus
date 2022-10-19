@@ -1,0 +1,721 @@
+<div class="card">
+<header class="card-header">
+<h6 class="card-title mt-0">
+<div class="d-flex align-items-baseline">
+<i class="fas fa-info-circle op-widget-tooltip-wavelength" title="The range of wavelengths at which an observation was made. For spectrographic instruments, this is the actual range available. For most imaging instruments, this is the full transmission bandwidth. For Cassini ISS, this is based on the FWHM around the center wavelength. Some instruments natively use wavelength and others natively use wavenumber. OPUS supports both quantities for all instruments and searches over equivalent ranges of wavelength and wavenumber will produce identical results. Both the minimum and maximum wavelengths are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information."></i>
+<div>
+<span class="op-widget-title">Wavelength [Wavelength]&nbsp;</span>
+<select class="op-unit-wavelength" name="unit-wavelength" tabindex="0">
+<option value="microns">microns</option>
+<option value="angstroms">angstroms</option>
+<option value="nm">nm</option>
+<option value="cm">cm</option>
+<select>
+<span class="spinner"
+>&nbsp;</span>
+</div>
+</div>
+<span class="float-right border-left border-dark">
+<a href="#card__wavelength" data-toggle="collapse" data-target="#card__wavelength" aria-expanded="true">
+<i class="icon-action fa fa-chevron-down pull-right"></i>
+</a>
+<a href="#" data-action="close" data-slug="wavelength" class="close_card">
+<i class="icon-action fa fa-times"></i>
+</a>
+</span>
+</h6>
+</header>
+<div class="collapse show" id="card__wavelength" style="">
+<article class="card-body p-1 widget__wavelength
+range-widget
+">
+<div class="op-widget-main">
+<div id="hint__wavelength" class="op-range-hints"></div>
+<ul class="op-input">
+<!-- TESTING AREA -->
+<!-- Customize inputs in the widget -->
+<ul class="op-search-inputs-set"><li>
+Min:
+<input type="text" name="wavelength1" class="op-range-input-min RANGE op-ranges-dropdown-menu dropdown-toggle" placeholder="Wavelength or Color" autocomplete="off" data-slugname="wavelength" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+</li>
+<li>
+Max:
+<input type="text" name="wavelength2" class="op-range-input-max RANGE " placeholder="" autocomplete="off" data-slugname="wavelength" data-toggle="" aria-haspopup="true" aria-expanded="false">
+</li>
+<li>
+<select name="qtype-wavelength" tabindex="0" class="RANGE">
+<option value="any">any</option>
+<option value="all">all</option>
+<option value="only">only</option>
+</select>
+</li></ul>
+</ul>
+<div class="op-preprogrammed-ranges">
+<ul class="dropdown-menu op-scrollable-menu pl-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
+<li class="mr-0 d-block" data-category="pds4-wavelength-ranges">
+<a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#pds4-wavelength-ranges" role="button" aria-expanded="false" aria-controls="pds4-wavelength-ranges">PDS4 Wavelength Ranges</a>
+<div class="container collapse" id="pds4-wavelength-ranges" data-widget="widget__wavelength" data-mininput="wavelength1">
+<div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
+<div class="col-4">
+</div>
+<div class="col-4 font-weight-bold text-right">
+Min
+</div>
+<div class="col-4 font-weight-bold text-right">
+Max
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.01" data-max="0.4" data-widget="widget__wavelength" data-unit="microns" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.01
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.4
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="100" data-max="4,000" data-widget="widget__wavelength" data-unit="angstroms" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+100
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+4,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="10" data-max="400" data-widget="widget__wavelength" data-unit="nm" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+10
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+400
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.000001" data-max="0.00004" data-widget="widget__wavelength" data-unit="cm" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.000001
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.00004
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.39" data-max="0.7" data-widget="widget__wavelength" data-unit="microns" data-name="Visible">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visible
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.39
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.7
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="3,900" data-max="7,000" data-widget="widget__wavelength" data-unit="angstroms" data-name="Visible">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visible
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+3,900
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+7,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="390" data-max="700" data-widget="widget__wavelength" data-unit="nm" data-name="Visible">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visible
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+390
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+700
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.000039" data-max="0.00007" data-widget="widget__wavelength" data-unit="cm" data-name="Visible">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visible
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.000039
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.00007
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.65" data-max="5" data-widget="widget__wavelength" data-unit="microns" data-name="Near Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Near Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.65
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+5
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="6,500" data-max="50,000" data-widget="widget__wavelength" data-unit="angstroms" data-name="Near Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Near Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+6,500
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+50,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="650" data-max="5,000" data-widget="widget__wavelength" data-unit="nm" data-name="Near Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Near Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+650
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+5,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.000065" data-max="0.0005" data-widget="widget__wavelength" data-unit="cm" data-name="Near Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Near Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.000065
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0005
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.75" data-max="300" data-widget="widget__wavelength" data-unit="microns" data-name="Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.75
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+300
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="7,500" data-max="3,000,000" data-widget="widget__wavelength" data-unit="angstroms" data-name="Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+7,500
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+3,000,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="750" data-max="300,000" data-widget="widget__wavelength" data-unit="nm" data-name="Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+750
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+300,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.000075" data-max="0.03" data-widget="widget__wavelength" data-unit="cm" data-name="Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.000075
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.03
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="30" data-max="300" data-widget="widget__wavelength" data-unit="microns" data-name="Far Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Far Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+30
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+300
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="300,000" data-max="3,000,000" data-widget="widget__wavelength" data-unit="angstroms" data-name="Far Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Far Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+300,000
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+3,000,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="30,000" data-max="300,000" data-widget="widget__wavelength" data-unit="nm" data-name="Far Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Far Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+30,000
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+300,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.003" data-max="0.03" data-widget="widget__wavelength" data-unit="cm" data-name="Far Infrared">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Far Infrared
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.003
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.03
+</div>
+</div>
+</div>
+</li>
+<li class="mr-0 d-block" data-category="crc-wavelength-ranges">
+<a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#crc-wavelength-ranges" role="button" aria-expanded="false" aria-controls="crc-wavelength-ranges">CRC Wavelength Ranges</a>
+<div class="container collapse" id="crc-wavelength-ranges" data-widget="widget__wavelength" data-mininput="wavelength1">
+<div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
+<div class="col-4">
+</div>
+<div class="col-4 font-weight-bold text-right">
+Min
+</div>
+<div class="col-4 font-weight-bold text-right">
+Max
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.4" data-max="0.424" data-widget="widget__wavelength" data-unit="microns" data-name="Violet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Violet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.4
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.424
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="4,000" data-max="4,240" data-widget="widget__wavelength" data-unit="angstroms" data-name="Violet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Violet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+4,000
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+4,240
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="400" data-max="424" data-widget="widget__wavelength" data-unit="nm" data-name="Violet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Violet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+400
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+424
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.00004" data-max="0.0000424" data-widget="widget__wavelength" data-unit="cm" data-name="Violet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Violet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.00004
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000424
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.424" data-max="0.491" data-widget="widget__wavelength" data-unit="microns" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.424
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.491
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="4,240" data-max="4,910" data-widget="widget__wavelength" data-unit="angstroms" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+4,240
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+4,910
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="424" data-max="491" data-widget="widget__wavelength" data-unit="nm" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+424
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+491
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000424" data-max="0.0000491" data-widget="widget__wavelength" data-unit="cm" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000424
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000491
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.491" data-max="0.575" data-widget="widget__wavelength" data-unit="microns" data-name="Green">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Green
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.491
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.575
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="4,910" data-max="5,750" data-widget="widget__wavelength" data-unit="angstroms" data-name="Green">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Green
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+4,910
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+5,750
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="491" data-max="575" data-widget="widget__wavelength" data-unit="nm" data-name="Green">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Green
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+491
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+575
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000491" data-max="0.0000575" data-widget="widget__wavelength" data-unit="cm" data-name="Green">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Green
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000491
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000575
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.575" data-max="0.585" data-widget="widget__wavelength" data-unit="microns" data-name="Yellow">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Yellow
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.575
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.585
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="5,750" data-max="5,850" data-widget="widget__wavelength" data-unit="angstroms" data-name="Yellow">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Yellow
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+5,750
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+5,850
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="575" data-max="585" data-widget="widget__wavelength" data-unit="nm" data-name="Yellow">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Yellow
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+575
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+585
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000575" data-max="0.0000585" data-widget="widget__wavelength" data-unit="cm" data-name="Yellow">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Yellow
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000575
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000585
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.585" data-max="0.647" data-widget="widget__wavelength" data-unit="microns" data-name="Orange">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Orange
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.585
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.647
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="5,850" data-max="6,470" data-widget="widget__wavelength" data-unit="angstroms" data-name="Orange">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Orange
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+5,850
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+6,470
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="585" data-max="647" data-widget="widget__wavelength" data-unit="nm" data-name="Orange">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Orange
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+585
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+647
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000585" data-max="0.0000647" data-widget="widget__wavelength" data-unit="cm" data-name="Orange">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Orange
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000585
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000647
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.647" data-max="0.7" data-widget="widget__wavelength" data-unit="microns" data-name="Red">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Red
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.647
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.7
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="6,470" data-max="7,000" data-widget="widget__wavelength" data-unit="angstroms" data-name="Red">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Red
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+6,470
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+7,000
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="647" data-max="700" data-widget="widget__wavelength" data-unit="nm" data-name="Red">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Red
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+647
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+700
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000647" data-max="0.00007" data-widget="widget__wavelength" data-unit="cm" data-name="Red">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Red
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000647
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.00007
+</div>
+</div>
+</div>
+</li>
+<li class="mr-0 d-block" data-category="johnson-filters">
+<a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#johnson-filters" role="button" aria-expanded="false" aria-controls="johnson-filters">Johnson Filters</a>
+<div class="container collapse" id="johnson-filters" data-widget="widget__wavelength" data-mininput="wavelength1">
+<div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
+<div class="col-4">
+</div>
+<div class="col-4 font-weight-bold text-right">
+Min
+</div>
+<div class="col-4 font-weight-bold text-right">
+Max
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.332" data-max="0.398" data-widget="widget__wavelength" data-unit="microns" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.332
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.398
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="3,320" data-max="3,980" data-widget="widget__wavelength" data-unit="angstroms" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+3,320
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+3,980
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="332" data-max="398" data-widget="widget__wavelength" data-unit="nm" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+332
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+398
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000332" data-max="0.0000398" data-widget="widget__wavelength" data-unit="cm" data-name="Ultraviolet">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Ultraviolet
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000332
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000398
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.398" data-max="0.492" data-widget="widget__wavelength" data-unit="microns" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.398
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.492
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="3,980" data-max="4,920" data-widget="widget__wavelength" data-unit="angstroms" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+3,980
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+4,920
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="398" data-max="492" data-widget="widget__wavelength" data-unit="nm" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+398
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+492
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000398" data-max="0.0000492" data-widget="widget__wavelength" data-unit="cm" data-name="Blue">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Blue
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000398
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000492
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.507" data-max="0.595" data-widget="widget__wavelength" data-unit="microns" data-name="Visual">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visual
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.507
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.595
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="5,070" data-max="5,950" data-widget="widget__wavelength" data-unit="angstroms" data-name="Visual">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visual
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+5,070
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+5,950
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="507" data-max="595" data-widget="widget__wavelength" data-unit="nm" data-name="Visual">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visual
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+507
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+595
+</div>
+</div>
+<div class="op-preprogrammed-ranges-data-item row" data-min="0.0000507" data-max="0.0000595" data-widget="widget__wavelength" data-unit="cm" data-name="Visual">
+<div class="col-4 op-preprogrammed-ranges-data-name">
+Visual
+</div>
+<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+0.0000507
+</div>
+<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+0.0000595
+</div>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</article>
+</div><!-- /widget-body -->
+</div><!-- /widget-box -->

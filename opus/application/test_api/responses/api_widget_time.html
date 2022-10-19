@@ -1,0 +1,59 @@
+<div class="card">
+<header class="card-header">
+<h6 class="card-title mt-0">
+<div class="d-flex align-items-baseline">
+<i class="fas fa-info-circle op-widget-tooltip-time" title="The time range during which an observation was performed. For compound observations such as spectral cubes or time series, or instruments with multiple detectors like Cassini VIMS, this is the range covered by the entire observation, and may be much longer than the times of the individual component observations. All human activities associated with the observation are considered; for example, for radio occultations the start time is when the first photons leave the spacecraft and the end time is when the last photons arrive at the detector on Earth. Although many formats are supported, the standard is YYYY-MM-DD[Thh:mm:ss.sss]. Both the start and stop time are available as a range, and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information."></i>
+<div>
+<span class="op-widget-title">Observation Time [General]&nbsp;</span>
+<select class="op-unit-time" name="unit-time" tabindex="0">
+<option value="ymdhms">YMDhms</option>
+<option value="ydhms">YDhms</option>
+<option value="jd">JD</option>
+<option value="jed">JED</option>
+<option value="mjd">MJD</option>
+<option value="mjed">MJED</option>
+<option value="et">SPICE ET</option>
+<select>
+<span class="spinner"
+>&nbsp;</span>
+</div>
+</div>
+<span class="float-right border-left border-dark">
+<a href="#card__time" data-toggle="collapse" data-target="#card__time" aria-expanded="true">
+<i class="icon-action fa fa-chevron-down pull-right"></i>
+</a>
+<a href="#" data-action="close" data-slug="time" class="close_card">
+<i class="icon-action fa fa-times"></i>
+</a>
+</span>
+</h6>
+</header>
+<div class="collapse show" id="card__time" style="">
+<article class="card-body p-1 widget__time
+range-widget
+">
+<div class="op-widget-main">
+<div id="hint__time" class="op-range-hints"></div>
+<ul class="op-input">
+<!-- TESTING AREA -->
+<!-- Customize inputs in the widget -->
+<ul class="op-search-inputs-set"><li>
+Min:
+<input type="text" name="time1" class="op-range-input-min RANGE " placeholder="" autocomplete="off" data-slugname="time" data-toggle="" aria-haspopup="true" aria-expanded="false">
+</li>
+<li>
+Max:
+<input type="text" name="time2" class="op-range-input-max RANGE " placeholder="" autocomplete="off" data-slugname="time" data-toggle="" aria-haspopup="true" aria-expanded="false">
+</li>
+<li>
+<select name="qtype-time" tabindex="0" class="RANGE">
+<option value="any">any</option>
+<option value="all">all</option>
+<option value="only">only</option>
+</select>
+</li></ul>
+</ul>
+</div>
+</article>
+</div><!-- /widget-body -->
+</div><!-- /widget-box -->

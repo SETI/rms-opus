@@ -105,7 +105,7 @@ def api_view_cart(request):
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http404_error():
         log.error('api_view_cart: Missing or badly formatted reqno')
         ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
         exit_api_call(api_code, ret)
@@ -379,7 +379,7 @@ def api_edit_cart(request, action, **kwargs):
                                api_code)
     elif action == 'addall':
         err = _edit_cart_addall(request, session_id, recycle_bin, api_code)
-    else: # pragma: no cover - protection against future bugs
+    else: # pragma: no cover - error catchall
         log.error('api_edit_cart: Unknown action %s: %s', action,
                   request.GET)
         ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -598,7 +598,7 @@ def api_create_download(request, opus_id=None, fmt=None):
         opus_ids = [x[0] for x in res]
         return_directly = False
 
-    if not opus_ids:
+    if not opus_ids or throw_random_http404_error():
         if return_directly:
             raise Http404(HTTP404_MISSING_OPUS_ID(request))
         else:

@@ -162,14 +162,6 @@ def api_get_data_and_images(request):
 
     session_id = get_session_id(request)
 
-    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-
-    labels = labels_for_slugs(cols_to_slug_list(cols))
-    if labels is None or throw_random_http404_error():
-        ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
-        exit_api_call(api_code, ret)
-        raise ret
-
     (page_no, start_obs, limit,
      page, order, aux, error) = get_search_results_chunk(
                                        request,
@@ -186,7 +178,7 @@ def api_get_data_and_images(request):
     image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
 
-    if not image_list and len(opus_ids) > 0:
+    if not image_list and len(opus_ids) > 0: # pragma: no cover - bad import or data
         log.error('api_get_data_and_images: No image found for: %s',
                   str(opus_ids[:50]))
 
@@ -218,7 +210,8 @@ def api_get_data_and_images(request):
     labels = labels_for_slugs(cols_to_slug_list(cols))
     labels_no_units = labels_for_slugs(cols_to_slug_list(cols), units=False)
     if (labels is None or labels_no_units is None or
-        throw_random_http404_error()):
+        throw_random_http404_error()): # pragma: no cover -
+        # Bad slugs will have already been caught in get_search_results_chunk
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -226,7 +219,8 @@ def api_get_data_and_images(request):
     order_slugs = cols_to_slug_list(order)
     order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
     order_labels = labels_for_slugs(order_slugs_pure, units=False)
-    if order_labels is None or throw_random_http404_error():
+    if order_labels is None or throw_random_http404_error(): # pragma: no cover -
+        # Bad slugs will have already been caught in get_search_results_chunk
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -392,7 +386,7 @@ def api_get_data(request, fmt):
         ret = render(request, 'results/data.html', context)
     elif fmt == 'json':
         ret = json_response(data)
-    else: # pragma: no cover - protection against future bugs
+    else: # pragma: no cover - error catchall
         log.error('api_get_data: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -693,7 +687,7 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
                          context)
     elif fmt == 'json':
         ret = json_response(data)
-    else: # pragma: no cover - protection against future bugs
+    else: # pragma: no cover - error catchall
         log.error('get_metadata: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -889,7 +883,7 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
         ret = render(request, 'results/image_list.html', context)
     elif fmt == 'json':
         ret = json_response(data)
-    else: # pragma: no cover - protection against future bugs
+    else: # pragma: no cover - error catchall
         log.error('api_get_images_by_size: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -967,7 +961,7 @@ def api_get_files(request, opus_id=None):
     data = {}
     if opus_id is None:
         result_count, _, err = get_result_count_helper(request, api_code)
-        if err is not None: # pragma: no cover - protection against future bugs
+        if err is not None: # pragma: no cover - database error
             exit_api_call(api_code, err)
             return err
 
@@ -1431,8 +1425,8 @@ def get_search_results_chunk(request, use_cart=None,
             start_obs = request.GET.get('startobs', None)
             if start_obs is None:
                 page_no = request.GET.get('page', None)
-            if start_obs is None and page_no is None:
-                start_obs = 1 # Default to using start_obs
+        if start_obs is None and page_no is None:
+            start_obs = 1 # Default to using start_obs
         if start_obs is not None:
             try:
                 start_obs = int(start_obs)

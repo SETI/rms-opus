@@ -137,7 +137,7 @@ def api_get_result_count(request, fmt, internal=False):
                      {'data': data})
     elif fmt == 'csv':
         ret = csv_response('result_count', [['result count', count]])
-    else: # pragma: no cover - protection against future bugs
+    else: # pragma: no cover - error catchall
         log.error('api_get_result_count: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -789,19 +789,19 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                         f_type = 'range_integer'
                     elif form_type_format[-1] == 'f':
                         f_type = 'range_float'
-                    else: # pragma: no cover - protection against future bugs
+                    else: # pragma: no cover - error catchall
                         log.warning('Unparseable form type '+str(f.form_type))
                 elif form_type_unit_id == 'datetime':
                     f_type = 'range_time'
                 elif form_type_unit_id is not None:
                     f_type = 'range_special'
-                else: # pragma: no cover - protection against future bugs
+                else: # pragma: no cover - error catchall
                     f_type = 'Internal Error'
             elif form_type in settings.MULT_FORM_TYPES:
                 f_type = 'multiple'
             elif form_type == 'STRING':
                 f_type = 'string'
-            else: # pragma: no cover - protection against future bugs
+            else: # pragma: no cover - error catchall
                 log.warning('Unparseable form type '+str(f.form_type))
             entry['type'] = f_type
             entry['label'] = f.label_results
@@ -862,7 +862,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                              )]
                 rows += row_data
         ret = csv_response('fields', rows, labels)
-    else: # pragma: no cover - protection against future bugs
+    else: # pragma: no cover - error catchall
         log.error('get_fields_info: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)

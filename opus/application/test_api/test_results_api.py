@@ -25,7 +25,7 @@ import settings
 class ApiResultsTests(TestCase, ApiTestHelper):
 
     def setUp(self):
-        self.UPDATE_FILES = False
+        self.UPDATE_FILES = True
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -46,7 +46,23 @@ class ApiResultsTests(TestCase, ApiTestHelper):
             ######### /api/dataimages API TESTS #########
             #############################################
 
-    # reqno
+    def test__api_dataimages_bad_cols(self):
+        "[test_results_api.py] /__api/dataimages: bad cols"
+        url = '/__api/dataimages.json?cols=xxx,yyy'
+        self._run_status_equal(url, 404,
+                               HTTP404_UNKNOWN_SLUG('xxx', '/__api/dataimages.json'))
+
+    def test__api_dataimages_bad_order(self):
+        "[test_results_api.py] /__api/dataimages: bad order"
+        url = '/__api/dataimages.json?order=xxx'
+        self._run_status_equal(url, 404,
+                               HTTP404_SEARCH_PARAMS_INVALID('/__api/dataimages.json'))
+
+    def test__api_dataimages_bad_search(self):
+        "[test_results_api.py] /__api/dataimages: bad search"
+        url = '/__api/dataimages.json?time1=xxx-yyy'
+        self._run_status_equal(url, 404,
+                               HTTP404_SEARCH_PARAMS_INVALID('/__api/dataimages.json'))
 
     def test__api_dataimages_no_results_default(self):
         "[test_results_api.py] /__api/dataimages: no results default cols"
@@ -75,6 +91,11 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /__api/dataimages: corss search & cols & units"
         url = '/__api/dataimages.json?instrument=Cassini+RSS&occdir=Ingress&cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&startobs=5&limit=40&reqno=12'
         self._run_json_equal_file(url, 'api_dataimages_corss_cols_units.json')
+
+    def test__api_dataimages_corss_cols_units_page(self):
+        "[test_results_api.py] /__api/dataimages: corss search & cols & units"
+        url = '/__api/dataimages.json?instrument=Cassini+RSS&cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&page=1&limit=40&reqno=12'
+        self._run_json_equal_file(url, 'api_dataimages_corss_cols_units_page.json')
 
     # fake
     def test__api_dataimages_no_results_default_reqno_fake(self):
@@ -636,6 +657,86 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/files: HSTWFC3 versions ib4v12n6q"
         url = '/api/files/hst-11559-wfc3-ib4v12n6q.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_versions_ib4v12n6q.json')
+
+    def test__api_files_COISS_2002_order_startobs_limit(self):
+        "[test_results_api.py] /api/files: COISS 2002 order startobs limit"
+        url = '/api/files.json?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_json_equal_file(url, 'api_files_COISS_2002_order_startobs_limit.json')
+
+
+            ########################################################
+            ######### /api/image and /api/images API TESTS #########
+            ########################################################
+
+    def test__api_image_COISS_w1866145657_thumb_json(self):
+        "[test_results_api.py] /api/image: COISS w1866145657"
+        url = '/api/image/thumb/co-iss-w1866145657.json'
+        self._run_json_equal_file(url, 'api_image_COISS_w1866145657_thumb_json.json')
+
+    def test__api_image_COISS_w1866145657_small_json(self):
+        "[test_results_api.py] /api/image: COISS w1866145657"
+        url = '/api/image/small/co-iss-w1866145657.json'
+        self._run_json_equal_file(url, 'api_image_COISS_w1866145657_small_json.json')
+
+    def test__api_image_COISS_w1866145657_med_json(self):
+        "[test_results_api.py] /api/image: COISS w1866145657"
+        url = '/api/image/med/co-iss-w1866145657.json'
+        self._run_json_equal_file(url, 'api_image_COISS_w1866145657_med_json.json')
+
+    def test__api_image_COISS_w1866145657_full_json(self):
+        "[test_results_api.py] /api/image: COISS w1866145657"
+        url = '/api/image/full/co-iss-w1866145657.json'
+        self._run_json_equal_file(url, 'api_image_COISS_w1866145657_full_json.json')
+
+    def test__api_image_COISS_w1866145657_thumb_html(self):
+        "[test_results_api.py] /api/image: COISS w1866145657"
+        url = '/api/image/thumb/co-iss-w1866145657.html'
+        self._run_html_equal_file(url, 'api_image_COISS_w1866145657_thumb_html.html')
+
+    def test__api_image_COISS_w1866145657_small_csv(self):
+        "[test_results_api.py] /api/image: COISS w1866145657"
+        url = '/api/image/small/co-iss-w1866145657.csv'
+        self._run_csv_equal_file(url, 'api_image_COISS_w1866145657_small_csv.csv')
+
+    def test__api_images_COISS_2002_order_startobs_limit_json(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit json"
+        url = '/api/images.json?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_json.json')
+
+    def test__api_images_COISS_2002_order_startobs_limit_csv(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit csv"
+        url = '/api/images.csv?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_csv_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_csv.csv')
+
+    def test__api_images_COISS_2002_order_startobs_limit_thumb_json(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit thumb json"
+        url = '/api/images/thumb.json?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_thumb_json.json')
+
+    def test__api_images_COISS_2002_order_startobs_limit_thumb_html(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit thumb html"
+        url = '/api/images/thumb.html?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_html_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_thumb_html.html')
+
+    def test__api_images_COISS_2002_order_startobs_limit_thumb_csv(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit thumb csv"
+        url = '/api/images/thumb.csv?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_csv_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_thumb_csv.csv')
+
+    def test__api_images_COISS_2002_order_startobs_limit_small_json(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit small json"
+        url = '/api/images/small.json?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_small_json.json')
+
+    def test__api_images_COISS_2002_order_startobs_limit_med_json(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit med json"
+        url = '/api/images/med.json?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_med_json.json')
+
+    def test__api_images_COISS_2002_order_startobs_limit_full_json(self):
+        "[test_results_api.py] /api/images: COISS 2002 order startobs limit full json"
+        url = '/api/images/full.json?instrument=Cassini+ISS&volumeid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
+        self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_full_json.json')
 
 
             #############################################

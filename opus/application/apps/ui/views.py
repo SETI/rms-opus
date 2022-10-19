@@ -112,8 +112,7 @@ def api_notifications(request):
         }
     """
     api_code = enter_api_call('api_notifications', request)
-    if not request or request.GET is None or request.META is None: # pragma: no cover -
-        # Should never happen
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -764,8 +763,7 @@ def api_normalize_url(request):
 
     api_code = enter_api_call('api_normalize_url', request)
 
-    if not request or request.GET is None or request.META is None: # pragma: no cover -
-        # Will never happen
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -1084,7 +1082,8 @@ def api_normalize_url(request):
             unit_val = original_slugs[old_unit_slug+clause_num_str]
             # Silently replace old units with new versions
             unit_val = unit_val.replace('/', '_')
-            if unit_val == 'hourangle': # pragma: no cover - backwards compatibility
+            if unit_val == 'hourangle': # pragma: no cover -
+                # backwards compatibility that we don't really care about
                 unit_val = 'hours'
             if valid_units and unit_val not in valid_units:
                 msg = ('Unit "'+escape(found_unit)

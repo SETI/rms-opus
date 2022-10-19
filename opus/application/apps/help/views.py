@@ -63,9 +63,8 @@ def api_about(request, fmt):
     """
     api_code = enter_api_call('api_about', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/about.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -96,9 +95,8 @@ def api_volumes(request, fmt):
     """
     api_code = enter_api_call('api_volumes', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/volumes.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -130,9 +128,8 @@ def api_faq(request, fmt):
     """
     api_code = enter_api_call('api_faq', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/faq.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -169,9 +166,8 @@ def api_gettingstarted(request, fmt):
     """
     api_code = enter_api_call('api_gettingstarted', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/gettingstarted.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -193,9 +189,8 @@ def api_splash(request):
     """
     api_code = enter_api_call('api_splash', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST('/__help/splash.html'))
         exit_api_call(api_code, ret)
         raise ret
@@ -214,9 +209,8 @@ def api_citing_opus(request, fmt):
     """
     api_code = enter_api_call('api_citing_opus', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/citing.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -284,9 +278,8 @@ def api_api_guide(request, fmt):
     """
     api_code = enter_api_call('api_api_guide', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/apiguide.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret

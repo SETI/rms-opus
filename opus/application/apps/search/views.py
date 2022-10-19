@@ -84,7 +84,7 @@ def api_normalize_input(request):
     """
     api_code = enter_api_call('api_normalize_input', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST('/__api/normalizeinput.json'))
         exit_api_call(api_code, ret)
         raise ret
@@ -145,7 +145,7 @@ def api_string_search_choices(request, slug):
     """
     api_code = enter_api_call('api_string_search_choices', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(
                                 f'/__api/stringsearchchoices/{slug}.json'))
         exit_api_call(api_code, ret)
@@ -981,10 +981,6 @@ def get_user_query_table(selections, extras, api_code=None):
     """
     cursor = connection.cursor()
 
-    if selections is None or extras is None: # pragma: no cover -
-        # protection against future bugs
-        return None
-
     # Create a cache key
     cache_table_num, cache_new_flag = set_user_search_number(selections, extras)
     if cache_table_num is None: # pragma: no cover - database error
@@ -1011,13 +1007,13 @@ def get_user_query_table(selections, extras, api_code=None):
     # a MYSQL_TABLE_ALREADY_EXISTS exception and we can just return the table
     # name.
     sql, params = construct_query_string(selections, extras)
-    if sql is None: # pragma: no cover - protection against future bugs
+    if sql is None: # pragma: no cover - already caught by previous checks
         log.error('get_user_query_table: construct_query_string failed'
                   +' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
         return None
 
-    if not sql: # pragma: no cover - protection against future bugs
+    if not sql: # pragma: no cover - not possible
         log.error('get_user_query_table: Query string is empty'
                   +' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -1061,10 +1057,6 @@ def set_user_search_number(selections, extras):
     indicating if this is a new entry in user_searches so the cache table
     shouldn't exist yet.
     """
-    if selections is None or extras is None: # pragma: no cover -
-        # protection against future bugs
-        return None, False
-
     selections_json = str(json.dumps(sort_dictionary(selections)))
     selections_hash = hashlib.md5(str.encode(selections_json)).hexdigest()
 
@@ -1238,7 +1230,7 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
             (form_type, form_type_format,
              form_type_unit_id) = parse_form_type(pi.form_type)
             if form_type in settings.RANGE_FORM_TYPES: # pragma: no cover -
-                # We are missing the numeric suffix - protection against future bugs
+                # We are missing the numeric suffix - import error
                 return None
 
         return pi
@@ -1430,7 +1422,7 @@ def construct_query_string(selections, extras):
             clause_params += params
             obs_tables.add(cat_name)
 
-        else: # pragma: no cover - protection against future bugs
+        else: # pragma: no cover - error catchall
             log.error('construct_query_string: Unknown field type "%s" for '
                       +'param "%s"', form_type, param_qualified_name)
             return None, None

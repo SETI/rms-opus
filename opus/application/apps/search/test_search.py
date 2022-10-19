@@ -58,6 +58,14 @@ class searchTests(TestCase):
             r'Internal error \(No request was provided\) for /__api/normalizeinput.json'):
             api_normalize_input(None)
 
+    def test__api_normalize_input_no_meta(self):
+        "[test_search.py] api_normalize_input: no META"
+        request = self.factory.get('/__api/normalizeinput.json')
+        request.META = None
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__api/normalizeinput.json'):
+            api_normalize_input(request)
+
     def test__api_normalize_input_no_get(self):
         "[test_search.py] api_normalize_input: no GET"
         request = self.factory.get('/__api/normalizeinput.json')
@@ -76,6 +84,14 @@ class searchTests(TestCase):
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
             api_string_search_choices(None, 'slug')
+
+    def test__api_string_search_choices_no_meta(self):
+        "[test_search.py] api_string_search_choices: no META"
+        request = self.factory.get('/__api/stringsearchchoices/volumeid.json')
+        request.META = None
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
+            api_string_search_choices(request, 'slug')
 
     def test__api_string_search_choices_no_get(self):
         "[test_search.py] api_string_search_choices: no GET"

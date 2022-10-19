@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "opus_id": "co-iss-w1866145657",
+      "alt_text": "W1866145657_1_thumb.jpg",
+      "size_bytes": 2244,
+      "width": 100,
+      "height": 100,
+      "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_thumb.jpg",
+      "path": "https://opus.pds-rings.seti.org/holdings/previews/",
+      "img": "COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_thumb.jpg",
+      "thumb": "COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_thumb.jpg",
+      "ring_obs_id": "S_IMG_CO_ISS_1866145657_W"
+    }
+  ]
+}

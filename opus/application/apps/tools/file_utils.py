@@ -228,7 +228,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                     viewable = viewset.medium
                 elif size == 'full':
                     viewable = viewset.full_size
-                else: # pragma: no cover - protection against future bugs
+                else: # pragma: no cover - error catchall
                     log.error('Unknown image size "%s"', size)
             if not preview_json or not viewset: # pragma: no cover
                 # log.error('No preview image size "%s" found for '
