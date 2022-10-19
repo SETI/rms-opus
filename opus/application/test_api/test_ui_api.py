@@ -178,6 +178,16 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/__widget/time.html'
         self._run_html_equal_file(url, 'api_widget_time.html')
 
+    def test__api_widget_greaterpixelsize(self):
+        "[test_ui_api.py] /__widget: greaterpixelsize"
+        url = '/__widget/greaterpixelsize.html'
+        self._run_html_equal_file(url, 'api_widget_greaterpixelsize.html')
+
+    def test__api_widget_surfacegeometrytargetname(self):
+        "[test_ui_api.py] /__widget: surfacegeometrytargetname"
+        url = '/__widget/surfacegeometrytargetname.html'
+        self._run_html_equal_file(url, 'api_widget_surfacegeometrytargetname.html')
+
     def test__api_widget_productid(self):
         "[test_ui_api.py] /__widget: productid"
         url = '/__widget/productid.html'

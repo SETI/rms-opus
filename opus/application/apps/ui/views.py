@@ -357,7 +357,7 @@ def api_get_widget(request, **kwargs):
     # or we won't find it in selections.
     if 'obs_general.opus_id' in selections:
         selections['obs_pds.opus_id'] = selections['obs_general.opus_id']
-    if 'qtypes' in extras and 'obs_general.opus_id' in extras['qtypes']:
+    if 'obs_general.opus_id' in extras['qtypes']:
         extras['qtypes']['obs_pds.opus_id'] = extras['qtypes']['obs_general.opus_id']
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
