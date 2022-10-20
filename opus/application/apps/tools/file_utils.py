@@ -6,8 +6,6 @@
 #
 ################################################################################
 
-from collections import OrderedDict
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
 
@@ -37,7 +35,7 @@ def get_pds_products(opus_id_list,
 
     opus_id_list can be a string or a list.
 
-    WARNING: The returned OrderedDict() is not currently guaranteed to be in the same
+    WARNING: The returned dict is not currently guaranteed to be in the same
              order as opus_id_list. Instead it is in a sorted order.
 
     product_types can be a simple string, a comma-separated string, or a list.
@@ -59,7 +57,7 @@ def get_pds_products(opus_id_list,
 
     assert len(opus_id_list) > 0 and len(product_types) > 0
 
-    results = OrderedDict() # Dict of opus_ids
+    results = {} # Dict of opus_ids
 
     cursor = connection.cursor()
     q = connection.ops.quote_name
@@ -128,7 +126,7 @@ def get_pds_products(opus_id_list,
     # We do this here so if there aren't any products, there's still an empty
     # dictionary returned
     for opus_id in opus_id_list:
-        results[opus_id] = OrderedDict() # Dict of versions
+        results[opus_id] = {} # Dict of versions
 
     for row in cursor:
         path = None
@@ -147,7 +145,7 @@ def get_pds_products(opus_id_list,
         # sort order
         sort_order = int(sort_order[6:])
         if version_name not in results[opus_id]:
-            results[opus_id][version_name] = OrderedDict()
+            results[opus_id][version_name] = {}
         product_type = (category, sort_order, short_name, full_name)
         if product_type not in results[opus_id][version_name]:
             results[opus_id][version_name][product_type] = []
@@ -216,7 +214,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
         viewset = None
         if preview_json: # pragma: no cover - import error
             viewset = pdsviewable.PdsViewSet.from_dict(preview_json)
-        data = OrderedDict({'opus_id':  opus_id})
+        data = {'opus_id': opus_id}
         for size in sizes:
             viewable = None
             if viewset:

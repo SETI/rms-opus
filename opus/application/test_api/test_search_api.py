@@ -507,6 +507,31 @@ class ApiSearchTests(TestCase, ApiTestHelper):
                     HTTP404_SEARCH_PARAMS_INVALID(
                             '/__api/stringsearchchoices/volumeid.json'))
 
+    def test__api_stringsearchchoices_opusid_COISS_2002_regex_good(self):
+        "[test_search_api.py] /api/stringsearchchoices: opusid volumeid COISS_2002 regex good"
+        url = r'/opus/__api/stringsearchchoices/opusid.json?volumeid=COISS_2002&opusid=co-iss-n14609\d0&qtype-opusid=regex&reqno=123'
+        expected = {'choices': ['<b>co-iss-n1460960</b>653',
+                                '<b>co-iss-n1460960</b>868',
+                                '<b>co-iss-n1460960</b>908',
+                                '<b>co-iss-n1460960</b>944',
+                                '<b>co-iss-n1460960</b>992',
+                                '<b>co-iss-n1460970</b>939',
+                                '<b>co-iss-n1460980</b>093',
+                                '<b>co-iss-n1460980</b>638',
+                                '<b>co-iss-n1460980</b>902',
+                                '<b>co-iss-n1460980</b>958'],
+                    'full_search': False,
+                    'truncated_results': False, "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_opusid_COISS_2002_regex_bad(self):
+        "[test_search_api.py] /api/stringsearchchoices: opusid volumeid COISS_2002 regex bad"
+        url = r'/opus/__api/stringsearchchoices/opusid.json?volumeid=COISS_2002&opusid=co-iss-n14609\d0\&qtype-opusid=regex&reqno=123'
+        expected = {'choices': [],
+                    'full_search': True,
+                    'truncated_results': False, "reqno": 123}
+        self._run_json_equal(url, expected)
+
     def test__api_stringsearchchoices_volumeid_empty_bigcache(self):
         "[test_search_api.py] /api/stringsearchchoices: volumeid empty"
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
@@ -612,7 +637,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_contains_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 contains good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNA volumeid COISS_2002 contains good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNA&qtype-datasetid=contains&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -620,7 +645,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_contains_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 contains bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNAISSWA volumeid COISS_2002 contains bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNAISSWA&qtype-datasetid=contains&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -628,7 +653,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_ends_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 ends good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid V1.0 volumeid COISS_2002 ends good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1.0&qtype-datasetid=ends&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>'],
                     'full_search': False,
@@ -636,7 +661,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_ends_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 ends bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid O-S volumeid COISS_2002 ends bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=O-S&qtype-datasetid=ends&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -644,7 +669,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_matches_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 matches good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNA volumeid COISS_2002 matches good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNA&qtype-datasetid=matches&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -652,7 +677,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_matches_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 matches bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNAX volumeid COISS_2002 matches bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNAX&qtype-datasetid=matches&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -660,7 +685,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 excludes good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid V1 volumeid COISS_2002 excludes good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1&qtype-datasetid=excludes&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -668,7 +693,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 excludes bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid V1X volumeid COISS_2002 excludes bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1X&qtype-datasetid=excludes&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -676,7 +701,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_regex_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 regex good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid [A-Z]{3}NA volumeid COISS_2002 regex good"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=[A-Z]{3}NA&qtype-datasetid=regex&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -684,7 +709,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_regex_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 regex bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid [A-Z]{3}(NA volumeid COISS_2002 regex bad"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=[A-Z]{3}(NA&qtype-datasetid=regex&reqno=123'
         expected = {'choices': [],
                     'full_search': True,

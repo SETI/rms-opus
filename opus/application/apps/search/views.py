@@ -151,6 +151,13 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
+    reqno = get_reqno(request)
+    if reqno is None or throw_random_http404_error():
+        log.error('api_normalize_input: Missing or badly formatted reqno')
+        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
+        exit_api_call(api_code, ret)
+        raise ret
+
     param_info = get_param_info_by_slug(slug, 'search')
     if not param_info or throw_random_http404_error():
         log.error('api_string_search_choices: unknown slug "%s"',
@@ -162,6 +169,14 @@ def api_string_search_choices(request, slug):
     param_qualified_name = param_info.param_qualified_name()
     param_category = param_info.category_name
     param_name = param_info.name
+
+    # obs_general.opus_id is shown to the user in the obs_pds table
+    # but searched from the obs_general table. Thus we have to switch the
+    # table here to find the parameter and qtype below.
+    if param_qualified_name == 'obs_pds.opus_id':
+        param_qualified_name = 'obs_general.opus_id'
+        param_category = 'obs_general'
+        param_name = 'opus_id'
 
     # We'd really rather not have to use allow_regex_errors here,
     # but the front end will send us search strings with bad regex
@@ -177,13 +192,6 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    reqno = get_reqno(request)
-    if reqno is None or throw_random_http404_error():
-        log.error('api_normalize_input: Missing or badly formatted reqno')
-        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
-        exit_api_call(api_code, ret)
-        raise ret
-
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
 
@@ -192,6 +200,9 @@ def api_string_search_choices(request, slug):
     qtypes = extras['qtypes']
     if param_qualified_name in qtypes:
         query_qtype_list = qtypes[param_qualified_name]
+        # We convert "matches" to "contains" because when someone is doing a
+        # "match" search we still want to give string matches even when they've
+        # only entered part of the string.
         if query_qtype_list == ['matches']:
             query_qtype_list = ['contains']
         query_qtype = query_qtype_list[0]

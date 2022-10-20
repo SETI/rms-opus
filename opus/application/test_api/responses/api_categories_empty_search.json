@@ -1,0 +1,30 @@
+[
+  {
+    "table_name": "obs_general",
+    "label": "General Constraints"
+  },
+  {
+    "table_name": "obs_pds",
+    "label": "PDS Constraints"
+  },
+  {
+    "table_name": "obs_type_image",
+    "label": "Image Constraints"
+  },
+  {
+    "table_name": "obs_wavelength",
+    "label": "Wavelength Constraints"
+  },
+  {
+    "table_name": "obs_profile",
+    "label": "Occultation/Reflectance Profiles Constraints"
+  },
+  {
+    "table_name": "obs_surface_geometry",
+    "label": "Surface Geometry Constraints"
+  },
+  {
+    "table_name": "obs_ring_geometry",
+    "label": "Ring Geometry Constraints"
+  }
+]

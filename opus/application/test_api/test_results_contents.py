@@ -1239,5 +1239,3 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] vg-iss-2-s-prof images"
         url = "/api/images.json?opusid=vg-iss-2-s-prof"
         self._run_json_equal_file(url, "results_vg_iss_2_s_prof_images.json")
-
-    ####################
