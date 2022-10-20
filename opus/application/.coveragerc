@@ -10,7 +10,7 @@ omit =
     test_api/test_result_counts.py
 
 [html]
-Title = Coverage Report for OPUS Tests
+Title = Coverage Report for OPUS Backend Tests
 
 [report]
 exclude_lines =

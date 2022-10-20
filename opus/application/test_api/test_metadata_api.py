@@ -21,6 +21,7 @@ import settings
 class ApiMetadataTests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        # self.UPDATE_FILES = True
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -789,19 +790,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_json(self):

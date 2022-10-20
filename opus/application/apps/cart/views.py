@@ -255,7 +255,9 @@ def api_get_cart_csv(request):
     if error is not None:
         return get_search_results_chunk_error_handler(error, api_code)
 
-    if column_labels is None or throw_random_http404_error():
+    if column_labels is None or throw_random_http404_error(): # pragma: no cover -
+        # This should never happen because the bad slugs are caught inside
+        # _csv_helper
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -386,7 +388,7 @@ def api_edit_cart(request, action, **kwargs):
         exit_api_call(api_code, ret)
         return ret
 
-    if isinstance(err, HttpResponse):
+    if isinstance(err, HttpResponse): # pragma: no cover - database error
         exit_api_call(api_code, err)
         return err
 
@@ -429,6 +431,9 @@ def api_reset_session(request):
     Arguments: reqno=<N>
                recyclebin=0/1
                [download=<N>]
+
+    If recyclebin=1, then only remove items from the recycle bin and leave the
+    normal cart alone.
 
     Returns dict containing:
         In all cases:
@@ -478,15 +483,26 @@ def api_reset_session(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    recycle_bin = request.GET.get('recyclebin', 0)
+    recycle_str = request.GET.get('recyclebin', 0)
     try:
-        recycle_bin = int(recycle_bin)
-        if throw_random_http404_error(): # pragma: no cover - internal debugging
-            raise ValueError
-    except:
-        log.error('api_reset_session: Bad value for recyclebin %s: %s',
-                  recycle_bin, request.GET)
-        ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_bin, request))
+        recycle_bin = int(recycle_str)
+    except ValueError:
+        recycle_bin = None
+    if recycle_bin not in (0, 1) or throw_random_http404_error():
+        log.error('api_reset_session: Badly formatted recyclebin %s',
+                  recycle_str)
+        ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_str, request))
+        exit_api_call(api_code, ret)
+        raise ret
+
+    download_str = request.GET.get('download', 0)
+    try:
+        download = int(download_str)
+    except ValueError:
+        download = None
+    if download not in (0, 1) or throw_random_http404_error():
+        log.error('api_edit_cart: Badly formatted download %s', download_str)
+        ret = Http404(HTTP404_BAD_DOWNLOAD(download_str, request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -499,16 +515,6 @@ def api_reset_session(request):
     cursor = connection.cursor()
     cursor.execute(sql, values)
 
-    download_str = request.GET.get('download', 0)
-    try:
-        download = int(download_str)
-    except ValueError:
-        download = None
-    if (download != 0 and download != 1) or throw_random_http404_error():
-        log.error('api_edit_cart: Badly formatted download %s', download_str)
-        ret = Http404(HTTP404_BAD_DOWNLOAD(download_str, request))
-        exit_api_call(api_code, ret)
-        raise ret
     if download:
         product_types_str = request.GET.get('types', 'all')
         product_types = product_types_str.split(',')
@@ -553,14 +559,15 @@ def api_create_download(request, opus_id=None, fmt=None):
 
     session_id = get_session_id(request)
 
+    download_current_only = False
     product_types = request.GET.get('types', 'all')
     if product_types is None or product_types == '':
-        product_types = []
+        product_types = ['all']
+        download_current_only = True
     else:
         product_types = product_types.lower().split(',')
     # By default, we want to download all files of the "Current" version if types
     # parameter is not specified.
-    download_current_only = (product_types == [])
     if opus_id:
         opus_ids = [opus_id]
         return_directly = True
@@ -599,12 +606,9 @@ def api_create_download(request, opus_id=None, fmt=None):
         return_directly = False
 
     if not opus_ids or throw_random_http404_error():
-        if return_directly:
-            raise Http404(HTTP404_MISSING_OPUS_ID(request))
-        else:
-            ret = json_response({'error': 'No observations selected'})
-            exit_api_call(api_code, ret)
-            return ret
+        ret = json_response({'error': 'No observations selected'})
+        exit_api_call(api_code, ret)
+        return ret
 
     # Fetch the full file info of the files we'll be zipping up
     # We want the raw objects so we can get the file metadata as well as the
@@ -692,8 +696,6 @@ def api_create_download(request, opus_id=None, fmt=None):
     hierarchical_struct = int(request.GET.get('hierarchical', 0))
     files_info = {}
     for f_opus_id in files:
-        if download_current_only and 'Current' not in files[f_opus_id]:
-            continue
         for version_name in files[f_opus_id]:
             if download_current_only and version_name != 'Current':
                 continue
@@ -709,8 +711,6 @@ def api_create_download(request, opus_id=None, fmt=None):
                         files_info[pretty_name].append(logical_path)
 
     for f_opus_id in files:
-        if download_current_only and 'Current' not in files[f_opus_id]:
-            continue
         for version_name in files[f_opus_id]:
             if download_current_only and version_name != 'Current':
                 continue
@@ -746,7 +746,7 @@ def api_create_download(request, opus_id=None, fmt=None):
                                     archive_file.write(path, arcname=filename)
                                 else:
                                     archive_file.add(path, arcname=filename)
-                            except Exception as e:
+                            except Exception as e: # pragma: no cover - internal error
                                 log.error('api_create_download threw exception '+
                                           'for opus_id %s, product_type %s, '+
                                           'file %s, pretty_name %s: %s',
@@ -756,7 +756,7 @@ def api_create_download(request, opus_id=None, fmt=None):
                         added.append(logical_path)
 
     # Write errors to manifest file
-    if errors:
+    if errors: # pragma: no cover - internal error
         manifest_fp.write('Errors:\n')
         for e in errors:
             manifest_fp.write(e+'\n')
@@ -865,9 +865,7 @@ def _get_download_info(product_types, session_id):
         (category, sort_order, short_name, full_name, default_checked, ver, ver_num) = res
 
         pretty_name = category
-        if category == 'standard':
-            pretty_name = 'Standard Data Products'
-        elif category == 'metadata':
+        if category == 'metadata':
             pretty_name = 'Metadata Products'
         elif category == 'browse':
             pretty_name = 'Browse Products'
@@ -892,7 +890,7 @@ def _get_download_info(product_types, session_id):
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
                                             term=short_name)
             tooltip = entry.definition
-        except Definitions.DoesNotExist:
+        except Definitions.DoesNotExist: # pragma: no cover - import error
             log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
                       short_name)
             tooltip = None
@@ -1072,7 +1070,8 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
     with recycled=0.
     """
     cursor = connection.cursor()
-    if not isinstance(opus_id_list, (list, tuple)):
+    if not isinstance(opus_id_list, (list, tuple)): # pragma: no cover -
+        # We currently never pass in a list
         opus_id_list = [opus_id_list]
     general_res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
                    .values_list('opus_id', 'id'))
@@ -1132,7 +1131,8 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
     then remove deletes the entry completely.
     """
     cursor = connection.cursor()
-    if not isinstance(opus_id_list, (list, tuple)):
+    if not isinstance(opus_id_list, (list, tuple)): # pragma: no cover -
+        # We currently never pass in a list
         opus_id_list = [opus_id_list]
     q = connection.ops.quote_name
     if recycle_bin:
@@ -1186,8 +1186,6 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         # This is for the cart page - we don't have any pre-done sort order
         # so we have to do it ourselves here
         all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
-        if not all_order:
-            all_order = settings.DEFAULT_SORT_ORDER
         order_params, order_descending_params = parse_order_slug(all_order)
         (order_sql, order_mult_tables,
          order_obs_tables) = create_order_by_sql(order_params,
@@ -1237,7 +1235,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             cursor.execute(temp_sql, params)
             if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
-        except DatabaseError as e:
+        except DatabaseError as e: # pragma: no cover - database error
             log.error('_edit_cart_range: "%s" "%s" returned %s',
                       temp_sql, params, str(e))
             ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
@@ -1262,7 +1260,8 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
 
         user_query_table = get_user_query_table(selections, extras,
                                                 api_code=api_code)
-        if not user_query_table or throw_random_http500_error():
+        if not user_query_table or throw_random_http500_error(): # pragma: no cover -
+            # database error
             log.error('_edit_cart_range: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -1398,7 +1397,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         sql += q(user_query_table)+' ON '
         sql += q(user_query_table)+'.'+q('id')+'='
         sql += q('cart')+'.'+q('obs_general_id')
-    else:
+    else: # pragma: no cover - error catchall
         log.error('_edit_cart_range: Unknown action %s: %s', action,
                   request.GET)
         ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -1415,7 +1414,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             cursor.execute(sql)
             if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
-        except DatabaseError as e:
+        except DatabaseError as e: # pragma: no cover - database error
             log.error('_edit_cart_range: "%s" returned %s',
                       sql, str(e))
             ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
@@ -1433,7 +1432,7 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 
         # We ignore recycle_bin here because it doesn't mean anything
         count, user_query_table, err = get_result_count_helper(request, api_code)
-        if err is not None:
+        if err is not None: # pragma: no cover - database errors
             return err
 
         num_cart_and_recycle = (Cart.objects
@@ -1496,6 +1495,9 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
             log.debug('_edit_cart_addall SQL: %s %s', sql, values)
             cursor.execute(sql, values)
 
+    else: # pragma: no cover - error catchall
+        log.error('_edit_cart_addall: Bad view %s', view)
+
     return False
 
 
@@ -1529,7 +1531,9 @@ def _create_csv_file(request, csv_file_name, opus_id, api_code=None):
     if error is not None:
         return get_search_results_chunk_error_handler(error, api_code)
 
-    if column_labels is None or throw_random_http404_error():
+    if column_labels is None or throw_random_http404_error(): # pragma: no cover -
+        # This should never happen because the bad slugs are caught inside
+        # _csv_helper
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
