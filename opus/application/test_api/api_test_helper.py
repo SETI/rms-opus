@@ -1,8 +1,10 @@
 # opus/application/test_api/api_test_helper.py
+from curses import start_color
 import difflib
 from io import BytesIO
 import json
 import os
+import re
 import tarfile
 import zipfile
 
@@ -148,6 +150,41 @@ class ApiTestHelper:
         resp = str(response.content)[2:-1]
         resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
         resp = resp[:len(expected)]
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
+        self.assertEqual(resp, expected)
+
+    @staticmethod
+    def _remove_range(s, start_str, end_str):
+        ret = ''
+        ind = s.find(start_str)
+        if ind == -1:
+            return s
+        ret = s[:ind+len(start_str)]
+        if end_str:
+            ind = s.find(end_str)
+            if ind != -1:
+                ret += s[ind:]
+        return ret
+
+    def _run_html_range_file(self, url, exp_file, start_str, end_str):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
+            expected = fp.read()
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        expected = self._remove_range(expected, start_str, end_str)
+        resp = self._remove_range(resp, start_str, end_str)
+        if self.UPDATE_FILES:
+            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+                fp.write(resp)
+            return
         print('Got:')
         print(resp)
         print('Expected:')

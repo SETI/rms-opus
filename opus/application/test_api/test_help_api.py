@@ -14,6 +14,7 @@ import settings
 class ApiHelpTests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        # self.UPDATE_FILES = True
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -37,7 +38,9 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_about(self):
         "[test_help_api.py] /__help: about"
         url = '/__help/about.html'
-        self._run_status_equal(url, 200)
+        # Remove the GIT version number, host name, and database schema name.
+        self._run_html_range_file(url, 'api_help_about.html',
+                                  '<p><small>OPUS version', None)
 
     def test__api_help_about_pdf(self):
         "[test_help_api.py] /__help: about pdf"
@@ -47,7 +50,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_volumes(self):
         "[test_help_api.py] /__help: volumes"
         url = '/__help/volumes.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_help_volumes.html')
 
     def test__api_help_volumes_pdf(self):
         "[test_help_api.py] /__help: volumes pdf"
@@ -57,7 +60,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_faq(self):
         "[test_help_api.py] /__help: faq"
         url = '/__help/faq.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_help_faq.html')
 
     def test__api_help_faq_pdf(self):
         "[test_help_api.py] /__help: faq pdf"
@@ -67,7 +70,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_gettingstarted(self):
         "[test_help_api.py] /__help: gettingstarted"
         url = '/__help/gettingstarted.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_help_gettingstarted.html')
 
     def test__api_help_gettingstarted_pdf(self):
         "[test_help_api.py] /__help: gettingstarted pdf"
@@ -77,7 +80,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_splash(self):
         "[test_help_api.py] /__help: splash"
         url = '/__help/splash.html'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_help_splash.html')
 
     def test__api_help_citing(self):
         "[test_help_api.py] /__help: citing"
@@ -87,7 +90,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_citing_qr(self):
         "[test_help_api.py] /__help: citing qr"
         url = '/__help/citing.html?searchurl=fred&stateurl=george'
-        self._run_status_equal(url, 200)
+        self._run_html_equal_file(url, 'api_help_citing_qr.html')
 
     def test__api_help_citing_pdf(self):
         "[test_help_api.py] /__help: citing pdf"
@@ -97,7 +100,10 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_apiguide(self):
         "[test_help_api.py] /__help: apiguide"
         url = '/__help/apiguide.html'
-        self._run_status_equal(url, 200)
+        # Remove the "produced on" date
+        self._run_html_range_file(url, 'api_help_apiguide.html',
+                    'It was produced on ',
+                    '<h1 class="op-help-api-guide-no-count">Table of Contents</h1>')
 
     def test__api_help_apiguide_exp(self):
         "[test_help_api.py] /help: apiguide pdf"
