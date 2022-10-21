@@ -301,7 +301,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_data_good_regex_opusid_csv(self):
         "[test_results_api.py] /api/data: good regex opusid csv"
         url = r'/api/data.csv?opusid=co-iss-n14609\d0\d5.*&qtype-opusid=regex'
-        self._run_csv_equal_file(url, 'api_data_good_regex_opusid_csv.html')
+        self._run_csv_equal_file(url, 'api_data_good_regex_opusid_csv.csv')
 
     def test__api_data_bad_regex_opusid_csv(self):
         "[test_results_api.py] /api/data: bad regex csv"
