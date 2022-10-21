@@ -16,8 +16,6 @@
 #
 ################################################################################
 
-from collections import OrderedDict
-
 import settings
 import os
 
@@ -200,7 +198,7 @@ def api_get_metadata_selector(request):
     col_slugs = list(filter(None, col_slugs)) # Eliminate empty slugs
     if not col_slugs:
         col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
-    col_slugs_info = OrderedDict()
+    col_slugs_info = {}
     for col_slug in col_slugs:
         # If the desired_unit is None, the default unit will be displayed, else the
         # desired_unit is displayed.
@@ -679,9 +677,9 @@ def api_init_detail_page(request, **kwargs):
     products = get_pds_products(opus_id)[opus_id]
     if not products: # pragma: no cover - data error
         products = {}
-    new_products = OrderedDict()
+    new_products = {}
     for version in products:
-        new_products[version] = OrderedDict()
+        new_products[version] = {}
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
@@ -1658,8 +1656,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     # sub-menus!
     # We have to be careful to maintain ordering of sub-headings because the
     # original disp_order is the only way we know what the display order of
-    # the sub-headings is. Hence the use of OrderedDict.
-    sub_headings = OrderedDict()
+    # the sub-headings is.
+    sub_headings = {}
     for p in params:
         if p.sub_heading is None:
             continue
@@ -1689,7 +1687,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         else:
             d.collapsed = 'collapsed'
             d.show = ''
-        menu_data.setdefault(table_name, OrderedDict())
+        menu_data.setdefault(table_name, {})
 
         if labels_view == 'search':
             # Don't want these to show up in the metadata selector
@@ -1708,7 +1706,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             # this div is divided into sub headings
             menu_data[table_name]['has_sub_heading'] = True
 
-            menu_data[table_name].setdefault('data', OrderedDict())
+            menu_data[table_name].setdefault('data', {})
             for sub_head in sub_headings[d.table_name]:
                 if table_name+'-'+slugify(sub_head) in expanded_cats:
                     sub_head_tuple = (sub_head, '', 'show')
@@ -1791,7 +1789,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             search_div['collapsed'] = 'collapsed'
             search_div['show'] = ''
         divs = [search_div] + list(divs)
-        menu_data.setdefault('search_fields', OrderedDict())
+        menu_data.setdefault('search_fields', {})
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
             (p.disp_unit, p.default_unit,

@@ -1,5 +1,4 @@
 import settings
-from collections import OrderedDict
 from django.apps import apps
 from django import forms
 from search.views import get_param_info_by_slug, is_single_column_range
@@ -138,7 +137,7 @@ class SearchForm(forms.Form):
 
         if form_type in settings.RANGE_FORM_TYPES:
             my_fields = self.fields
-            self.fields = OrderedDict()
+            self.fields = {}
             self.fields[slug_no_num+'1'] = my_fields[slug_no_num+'1']
             self.fields[slug_no_num+'2'] = my_fields[slug_no_num+'2']
             if 'qtype-'+slug_no_num in my_fields:

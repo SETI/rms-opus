@@ -1,6 +1,5 @@
 import os
 import sys
-from collections import OrderedDict
 
 _HAS_MEMCACHE = False
 try: # pragma: no cover

@@ -4,7 +4,6 @@
 #
 ################################################################################
 
-from collections import OrderedDict
 import csv
 import datetime
 import json
@@ -68,8 +67,8 @@ def get_numeric_suffix(name):
     return None # pragma: no cover - see above
 
 def sort_dictionary(old_dict):
-    """Sort a dictionary by key and return an equivalent OrderedDict."""
-    new_dict = OrderedDict()
+    """Sort a dictionary by key."""
+    new_dict = {}
     for key in sorted(old_dict.keys()):
         new_dict[key] = old_dict[key]
     return new_dict

@@ -19,7 +19,6 @@
 #
 ################################################################################
 
-from collections import OrderedDict
 import logging
 
 import settings
@@ -336,7 +335,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
                                      (mult_label, row[1])))
         mult_result_list.sort()
 
-        mults = OrderedDict()  # info to return
+        mults = {}  # info to return
         for _, mult_info in mult_result_list:
             mults[mult_info[0]] = mult_info[1]
 
@@ -768,9 +767,9 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             if collapse and cat.find('Surface Geometry Constraints') != -1:
                 cat = cat.replace('Saturn', '<TARGET>')
 
-            return_obj[cat] = return_obj.get(cat, OrderedDict())
+            return_obj[cat] = return_obj.get(cat, {})
 
-            entry = OrderedDict()
+            entry = {}
             return_obj[cat]['table_order'] = table_name.disp_order
             entry['disp_order'] = f.disp_order
             collapsed_slug = f.slug
@@ -826,13 +825,11 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
 
         # Organize return_obj before returning
         # Sort categories by table_order
-        return_obj = OrderedDict(sorted(return_obj.items(),
-                                 key=lambda x: x[1]['table_order']))
+        return_obj = dict(sorted(return_obj.items(), key=lambda x: x[1]['table_order']))
         for cat, cat_data in return_obj.items():
             del cat_data['table_order']
             # Sort slugs of each category by disp_order
-            cat_data = OrderedDict(sorted(cat_data.items(),
-                                   key=lambda x: x[1]['disp_order']))
+            cat_data = dict(sorted(cat_data.items(), key=lambda x: x[1]['disp_order']))
             return_obj[cat] = cat_data
             for key, val in cat_data.items():
                 del val['disp_order']

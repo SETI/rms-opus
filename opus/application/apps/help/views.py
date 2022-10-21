@@ -16,7 +16,6 @@
 ################################################################################
 
 import base64
-from collections import OrderedDict
 import datetime
 from io import BytesIO
 import logging
@@ -101,7 +100,7 @@ def api_volumes(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    all_volumes = OrderedDict()
+    all_volumes = {}
     for d in (ObsGeneral.objects.values('instrument_id','volume_id')
               .order_by('instrument_id','volume_id').distinct()):
         instrument_name = (MultObsGeneralInstrumentId.objects.values('label')
