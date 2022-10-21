@@ -20,7 +20,6 @@
 ################################################################################
 
 from collections import OrderedDict
-import copy
 import logging
 
 import settings
