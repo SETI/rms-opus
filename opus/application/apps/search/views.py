@@ -10,6 +10,7 @@
 #
 ################################################################################
 
+import copy
 import hashlib
 import json
 import logging
@@ -1164,6 +1165,14 @@ def set_user_search_number(selections, extras):
     return s.id, new_entry
 
 
+# get_param_info_by_slug is called a LOT and turns out to take a significant
+# fraction of the execution time since it has to do at least one, and probably
+# multiple, database lookups each time it's called. Thus we cache the results.
+# We don't use the functools @lru_cache decorator because we need to make
+# each return a distinct copy of the ParamInfo, because multiple callers
+# mutate the structure after its returned.
+_PARAMINFO_CACHE = {}
+
 def get_param_info_by_slug(slug, source, allow_units_override=False,
                            check_valid_units=True):
     """Given a slug, look up the corresponding ParamInfo.
@@ -1207,18 +1216,22 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
         desired_units = desired_units.lower()
 
     pi = None
-    # Current slug as given
-    try:
-        pi = ParamInfo.objects.get(slug=slug)
-    except ParamInfo.DoesNotExist:
-        pass
-
-    if not pi:
-        # Old slug as given
+    key = (slug, source)
+    if key in _PARAMINFO_CACHE:
+        pi = _PARAMINFO_CACHE[key]
+    else:
+        # Current slug as given
         try:
-            pi = ParamInfo.objects.get(old_slug=slug)
+            pi = ParamInfo.objects.get(slug=slug)
         except ParamInfo.DoesNotExist:
             pass
+
+        if not pi:
+            # Old slug as given
+            try:
+                pi = ParamInfo.objects.get(old_slug=slug)
+            except ParamInfo.DoesNotExist:
+                pass
 
     if pi:
         if source == 'col' and allow_units_override: # pragma: no cover -
@@ -1228,7 +1241,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
                 log.error('get_param_info_by_slug: Slug "%s" unit "%s" invalid -'
                           'using default', slug, desired_units)
                 desired_units = None
-            return pi, desired_units
+            _PARAMINFO_CACHE[key] = pi
+            return copy.copy(pi), desired_units
 
         if source == 'search':
             if slug[-1] in ('1', '2'):
@@ -1244,57 +1258,64 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
                 # We are missing the numeric suffix - import error
                 return None
 
-        return pi
+        _PARAMINFO_CACHE[key] = pi
+        return copy.copy(pi)
 
     # For widgets, if this is a multi-column range, return the version with
     # the '1' suffix.
     if source == 'widget':
         try:
-            return ParamInfo.objects.get(slug=slug+'1')
+            pi = ParamInfo.objects.get(slug=slug+'1')
         except ParamInfo.DoesNotExist:
             pass
-
-        try:
-            return ParamInfo.objects.get(old_slug=slug+'1')
-        except ParamInfo.DoesNotExist:
-            pass
+        if not pi:
+            try:
+                pi = ParamInfo.objects.get(old_slug=slug+'1')
+            except ParamInfo.DoesNotExist:
+                pass
+        if pi:
+            _PARAMINFO_CACHE[key] = pi
+            return copy.copy(pi)
 
     # Q-types can never have a '1' or '2' suffix, but the database entries
     # might.
     if source == 'qtype' and slug[-1] not in ('1', '2'):
         try:
-            return ParamInfo.objects.get(slug=slug+'1')
+            pi = ParamInfo.objects.get(slug=slug+'1')
         except ParamInfo.DoesNotExist:
             pass
-
-        try:
-            return ParamInfo.objects.get(old_slug=slug+'1')
-        except ParamInfo.DoesNotExist:
-            pass
+        if not pi:
+            try:
+                pi = ParamInfo.objects.get(old_slug=slug+'1')
+            except ParamInfo.DoesNotExist:
+                pass
+        if pi:
+            _PARAMINFO_CACHE[key] = pi
+            return copy.copy(pi)
 
     # Searching on a single-column range is done with '1' or '2' suffixes
     # even though the database entry is just a single column without a numeric
     # suffix.
     if source == 'search' and (slug[-1] == '1' or slug[-1] == '2'):
-        pi = None
         try:
             pi = ParamInfo.objects.get(slug=slug[:-1])
         except ParamInfo.DoesNotExist:
             pass
-
         if not pi:
             try:
                 pi = ParamInfo.objects.get(old_slug=slug[:-1])
             except ParamInfo.DoesNotExist:
                 pass
-
         if pi:
             (form_type, form_type_format,
              form_type_unit_id) = parse_form_type(pi.form_type)
             if form_type not in settings.RANGE_FORM_TYPES:
                 # Whoops! It's not a range, but we have a numeric suffix.
                 return None
-            return pi
+            _PARAMINFO_CACHE[key] = pi
+            return copy.copy(pi)
+
+    _PARAMINFO_CACHE[key] = None
 
     log.error('get_param_info_by_slug: Slug "%s" source "%s" not found',
               slug, source)

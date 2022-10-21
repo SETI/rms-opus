@@ -1,3 +1,3 @@
 coverage run ../../lib/opus_support.py
-coverage run -a manage.py test -b
+coverage run -a manage.py $1 test -b
 coverage html

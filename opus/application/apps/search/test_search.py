@@ -25,13 +25,17 @@ class searchTests(TestCase):
 
     def _empty_user_searches(self):
         cursor = connection.cursor()
-        cursor.execute('DELETE FROM user_searches')
-        cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("SHOW TABLES LIKE %s", ["cache_%"])
-        for row in cursor: # pragma: no cover - may never be cache_ tables
-            q = 'DROP TABLE ' + row[0]
-            print(q)
-            cursor.execute(q)
+        sql = 'SELECT COUNT(*) FROM user_searches' # Check first for efficiency
+        cursor.execute(sql)
+        results = cursor.fetchall()
+        if int(results[0][0]) != 0:
+            cursor.execute('DELETE FROM user_searches')
+            cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
+            cursor.execute("SHOW TABLES LIKE %s", ["cache_%"])
+            for row in cursor: # pragma: no cover - may never be cache_ tables
+                q = 'DROP TABLE ' + row[0]
+                print(q)
+                cursor.execute(q)
         cache.clear()
         self.factory = RequestFactory()
 
@@ -44,7 +48,6 @@ class searchTests(TestCase):
         logging.disable(logging.ERROR)
 
     def tearDown(self):
-        self._empty_user_searches()
         logging.disable(logging.NOTSET)
 
 

@@ -20,6 +20,7 @@
 ################################################################################
 
 from collections import OrderedDict
+import copy
 import logging
 
 import settings
@@ -189,6 +190,12 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
+    if fmt not in ('json', 'html', 'csv'):
+        log.error('api_get_mult_counts: Unknown format "%s"', fmt)
+        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
+        exit_api_call(api_code, ret)
+        raise ret
+
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None or throw_random_http404_error():
         log.error('api_get_mult_counts: Failed to get selections for slug %s, '
@@ -351,14 +358,10 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         ret = json_response(data)
     elif fmt == 'html':
         ret = render(request, 'metadata/mults.html', data)
-    elif fmt == 'csv':
+    else:
+        assert fmt == 'csv'
         ret = csv_response(slug, [list(mults.values())],
                            column_names=list(mults.keys()))
-    else:
-        log.error('api_get_mult_counts: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
 
     exit_api_call(api_code, ret)
     return ret
@@ -415,6 +418,12 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     if not request or request.GET is None or request.META is None:
         ret = Http404(HTTP404_NO_REQUEST(
                                     f'/api/meta/range/endpoints/{slug}.{fmt}'))
+        exit_api_call(api_code, ret)
+        raise ret
+
+    if fmt not in ('json', 'html', 'csv'):
+        log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
+        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -571,17 +580,13 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         ret = render(request,
                      'metadata/endpoints.html',
                      {'data': range_endpoints})
-    elif fmt == 'csv':
+    else:
+        assert fmt == 'csv'
         ret = csv_response(slug, [[range_endpoints['min'],
                                    range_endpoints['max'],
                                    range_endpoints['nulls'],
                                    range_endpoints['units']]],
                            ['min', 'max', 'nulls', 'units'])
-    else:
-        log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
 
     exit_api_call(api_code, ret)
     return ret

@@ -52,6 +52,8 @@ class ApiTestHelper:
 
     @staticmethod
     def _print_clean_diffs(got, expected):
+        if len(got) > 10000 or len(expected) > 10000:
+            return # Too slow
         print('Diffs:')
         diff = difflib.SequenceMatcher(a=got, b=expected)
         for tag, i1, i2, j1, j2 in diff.get_opcodes():

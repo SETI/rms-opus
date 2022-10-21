@@ -21,3 +21,5 @@ migrations/
 
 .coverage
 htmlcov/
+
+profile.txt

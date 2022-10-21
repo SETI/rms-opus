@@ -3,7 +3,6 @@ from collections import OrderedDict
 from django.apps import apps
 from django import forms
 from search.views import get_param_info_by_slug, is_single_column_range
-from paraminfo.models import ParamInfo
 from tools.app_utils import (get_mult_name,
                              get_numeric_suffix,
                              strip_numeric_suffix)
@@ -12,7 +11,6 @@ from opus_support import parse_form_type
 
 import logging
 log = logging.getLogger(__name__)
-
 
 
 class MultiFloatField(forms.Field):
