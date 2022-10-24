@@ -2617,7 +2617,7 @@ var o_browse = {
             }
             $(".op-download-links-btn").html("Download Not Available");
             $(".op-download-links-btn").addClass("op-a-tag-btn-disabled");
-            $(".footer .op-download-links-btn").popover("hide");
+            $(".op-download-links-btn").popover("hide");
         } else {
             $(".op-download-links-btn").html("Download Links History");
             if ($(".op-zipped-files > li").length > 1) {
