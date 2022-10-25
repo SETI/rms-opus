@@ -378,7 +378,7 @@ def mult_table_lookup_id(table_name, field_name, table_column, val):
     return None
 
 
-def update_mult_table(table_name, field_name, table_column, val, label,
+def update_mult_table(table_name, field_name, table_column, val, label, disp='Y',
                       disp_order=None, grouping=None, group_disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
@@ -476,7 +476,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         'value': val,
         'label': label,
         'disp_order': disp_order,
-        'display': 'Y', # if label is not None else 'N'
+        'display': disp, # default display: 'Y'
         'grouping': grouping,
         'group_disp_order': group_disp_order
     }
@@ -1189,6 +1189,7 @@ def import_observation_table(instrument_obj,
                     if isinstance(ret[0], dict):
                         column_val_list = [x['col_val'] for x in ret]
                         mult_label_list = [x['disp_name'] for x in ret]
+                        disp_list = [x['disp'] for x in ret]
                         disp_order_list = [x['disp_order'] for x in ret]
                         grouping_list = [x['grouping'] for x in ret]
                         group_disp_order_list = [x['group_disp_order'] for x in ret]
@@ -1350,7 +1351,9 @@ def import_observation_table(instrument_obj,
 
                 column_val = update_mult_table(
                               table_name, field_name, table_column,
-                              column_val, mult_label, disp_order_list[column_val_num],
+                              column_val, mult_label,
+                              disp_list[column_val_num],
+                              disp_order_list[column_val_num],
                               grouping_list[column_val_num],
                               group_disp_order_list[column_val_num])
 

@@ -354,10 +354,11 @@ class ObsBase(object):
                 planet_id = 'OTHER'
         return PLANET_GROUP_MAPPING[planet_id]
 
-    def _create_mult(self, col_val, disp_name=None, disp_order=None,
+    def _create_mult(self, col_val, disp_name=None, disp='Y', disp_order=None,
                      grouping=None, group_disp_order=None, tooltip=None):
         data_dict = {}
         data_dict['col_val'] = col_val
+        data_dict['disp'] = disp
         data_dict['disp_name'] = disp_name
         data_dict['disp_order'] = disp_order
         data_dict['grouping'] = grouping
