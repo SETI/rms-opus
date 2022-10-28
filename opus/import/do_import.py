@@ -286,8 +286,8 @@ def _mult_table_column_names(table_name):
        constant because various *_target_name tables have an extra
        column used for target name grouping."""
 
-    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'grouping',
-                   'group_disp_order']
+    column_list = ['id', 'value', 'label','disp_order', 'display',
+                   'grouping', 'group_disp_order', 'aliases']
     return column_list
 
 def _convert_sql_response_to_mult_table(mult_table_name, rows):
@@ -295,13 +295,19 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
        our internal dictionary representation."""
     mult_rows = []
     for row in rows:
-        (id_num, value, label, disp_order,
-         display, grouping, group_disp_order) = row
+        if len(row) == 8:
+            (id_num, value, label, disp_order,
+             display, grouping, group_disp_order, aliases) = row
+        else:
+            (id_num, value, label, disp_order,
+             display, grouping, group_disp_order) = row
+            aliases = None
 
         row_dict = {
             'id': id_num,
             'value': value,
             'label': str(label),
+            'aliases': aliases,
             'disp_order': disp_order,
             'display': display,
             'grouping': grouping,
@@ -378,8 +384,8 @@ def mult_table_lookup_id(table_name, field_name, table_column, val):
     return None
 
 
-def update_mult_table(table_name, field_name, table_column, val, label, disp='Y',
-                      disp_order=None, grouping=None, group_disp_order=None):
+def update_mult_table(table_name, field_name, table_column, val, label, aliases=None,
+                      disp='Y', disp_order=None, grouping=None, group_disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
@@ -475,6 +481,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         'id': next_id,
         'value': val,
         'label': label,
+        'aliases': aliases,
         'disp_order': disp_order,
         'display': disp, # default display: 'Y'
         'grouping': grouping,
@@ -1164,6 +1171,8 @@ def import_observation_table(instrument_obj,
 
             column_val_list = None
             mult_label_list = None
+            aliases_list = None
+            disp_list = None
             disp_order_list = None # Might be set with mult_label but not otherwise
             grouping_list = None
             group_disp_order_list = None
@@ -1189,6 +1198,7 @@ def import_observation_table(instrument_obj,
                     if isinstance(ret[0], dict):
                         column_val_list = [x['col_val'] for x in ret]
                         mult_label_list = [x['disp_name'] for x in ret]
+                        aliases_list = [x['aliases'] for x in ret]
                         disp_list = [x['disp'] for x in ret]
                         disp_order_list = [x['disp_order'] for x in ret]
                         grouping_list = [x['grouping'] for x in ret]
@@ -1352,6 +1362,7 @@ def import_observation_table(instrument_obj,
                 column_val = update_mult_table(
                               table_name, field_name, table_column,
                               column_val, mult_label,
+                              aliases_list[column_val_num],
                               disp_list[column_val_num],
                               disp_order_list[column_val_num],
                               grouping_list[column_val_num],
