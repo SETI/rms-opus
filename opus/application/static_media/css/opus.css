@@ -2185,6 +2185,10 @@ even when screen is narrow */
     font-weight:bold;
 }
 
+.op-checked-indication {
+    margin: 0 2px 0 5px;
+}
+
 .mult_group_label {
     padding: 5px 4px;
     padding-left: 5px;

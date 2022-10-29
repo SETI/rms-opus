@@ -534,7 +534,6 @@ var o_search = {
     },
 
     addCheckMarkForCategories: function(slug) {
-        // let slug = $(this).attr("name");
         let categories = $(`#widget__${slug} .mult_group`);
         // Check each checkboxes under each category. If a category
         // has any checked checkbox, add a check mark next to the
@@ -550,10 +549,12 @@ var o_search = {
             let groupName = $(cat).data("group");
             let parentCatClassName = `mult_group_${groupName}`;
             let checkMarkClassName = `${parentCatClassName}_checked`;
+
             // Add the check mark right next to the category if any checkbox inside the
             // category is checked && check mark doesn't exist
             if (isChecked && $(`.mult_group_${groupName} .${checkMarkClassName}`).length === 0) {
-                let checkMark = `<span class=${checkMarkClassName}><i class="fa fa-check"></i></span>`;
+                let checkMark = `<span class="${checkMarkClassName} op-checked-indication">` +
+                                "<i class='fa fa-check'></i></span>";
                 $(`.${parentCatClassName}`).append(checkMark);
             } else if (!isChecked) {
                 // Remove the check mark if none of checkboxes under that category is checked.
