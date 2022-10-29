@@ -1437,6 +1437,9 @@ var o_widgets = {
                 o_search.getHinting(slug);
             }
 
+            // Add check mark for mult categories
+            o_search.addCheckMarkForCategories(slug);
+
             // If an input widget just got opened and input slugs are not in opus.selections,
             // we need to update opus.selections to make sure input slugs exist.
             if (widgetInputs.hasClass("RANGE")) {

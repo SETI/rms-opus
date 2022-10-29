@@ -319,6 +319,10 @@ var o_search = {
             let newTargetSlug = $(this).attr("data-slug");
             opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
 
+            if ($(this).hasClass("multichoice")) {
+                o_search.addCheckMarkForCategories(id);
+            }
+
             if ($(this).is(":checked")) {
                 let values = [];
                 if (opus.selections[id]) {
@@ -527,6 +531,35 @@ var o_search = {
                 }
             }
         });
+    },
+
+    addCheckMarkForCategories: function(slug) {
+        // let slug = $(this).attr("name");
+        let categories = $(`#widget__${slug} .mult_group`);
+        // Check each checkboxes under each category. If a category
+        // has any checked checkbox, add a check mark next to the
+        // category name
+        for (let cat of categories) {
+            let isChecked = false;
+            let checkboxes = $(cat).find("input.multichoice");
+            for (let checkbox of checkboxes) {
+                isChecked = $(checkbox).is(":checked");
+                if (isChecked) break;
+            }
+
+            let groupName = $(cat).data("group");
+            let parentCatClassName = `mult_group_${groupName}`;
+            let checkMarkClassName = `${parentCatClassName}_checked`;
+            // Add the check mark right next to the category if any checkbox inside the
+            // category is checked && check mark doesn't exist
+            if (isChecked && $(`.mult_group_${groupName} .${checkMarkClassName}`).length === 0) {
+                let checkMark = `<span class=${checkMarkClassName}><i class="fa fa-check"></i></span>`;
+                $(`.${parentCatClassName}`).append(checkMark);
+            } else if (!isChecked) {
+                // Remove the check mark if none of checkboxes under that category is checked.
+                $(`.${checkMarkClassName}`).remove();
+            }
+        }
     },
 
     stringOrRangeChanged: function(target) {
