@@ -543,7 +543,7 @@ var o_search = {
             let checkboxes = $(cat).find("input.multichoice");
             for (let checkbox of checkboxes) {
                 isChecked = $(checkbox).is(":checked");
-                if (isChecked) break;
+                if (isChecked) {break;}
             }
 
             let groupName = $(cat).data("group");
