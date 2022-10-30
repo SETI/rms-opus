@@ -299,6 +299,7 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
             (id_num, value, label, disp_order,
              display, grouping, group_disp_order, aliases) = row
         else:
+            # preprogrammed mult options list doesn't have aliases field
             (id_num, value, label, disp_order,
              display, grouping, group_disp_order) = row
             aliases = None
