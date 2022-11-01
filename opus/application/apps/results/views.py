@@ -1238,7 +1238,7 @@ def get_search_results_chunk_error_handler(error, api_code):
         exit_api_call(api_code, ret)
         raise ret
     else: # pragma: no cover
-        assert(error[0] == 500)
+        assert error[0] == 500
         ret = HttpResponseServerError(error[1])
         exit_api_call(api_code, ret)
         return ret
