@@ -1183,7 +1183,7 @@ def api_get_product_types_for_search(request):
         return ret
 
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
-                    + ':product_types:' + user_query_table)
+                 + ':product_types:' + user_query_table)
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         exit_api_call(api_code, cached_val)
@@ -1796,7 +1796,7 @@ def get_triggered_tables(selections, extras, api_code=None):
         return None
 
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
-                    + ':triggered_tables:' + user_query_table)
+                 + ':triggered_tables:' + user_query_table)
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         return cached_val

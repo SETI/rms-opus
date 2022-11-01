@@ -2011,10 +2011,10 @@ def create_order_by_sql(order_params, descending_params):
         pi = _get_param_info_by_qualified_name(order_slug)
         if not pi:
             log.error('create_order_by_sql: Unable to resolve order'
-                        +' slug "%s"', order_slug)
+                      +' slug "%s"', order_slug)
             return None, None, None
         (form_type, form_type_format,
-            form_type_unit_id) = parse_form_type(pi.form_type)
+         form_type_unit_id) = parse_form_type(pi.form_type)
         order_param = pi.param_qualified_name()
         order_obs_tables.add(pi.category_name)
         if form_type in settings.MULT_FORM_TYPES:
@@ -2022,7 +2022,7 @@ def create_order_by_sql(order_params, descending_params):
             order_param = mult_table + '.label'
             is_multigroup = form_type == 'MULTIGROUP'
             order_mult_tables.add((mult_table, is_multigroup, pi.category_name,
-                                    pi.name))
+                                   pi.name))
         if descending_params[i]:
             order_param += ' DESC'
         else:

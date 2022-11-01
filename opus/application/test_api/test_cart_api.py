@@ -1192,7 +1192,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?download=1&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)

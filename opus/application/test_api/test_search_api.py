@@ -9,12 +9,9 @@ from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from tools.app_utils import (HTTP404_BAD_LIMIT,
-                               HTTP404_BAD_OR_MISSING_REQNO,
-                               HTTP404_SEARCH_PARAMS_INVALID,
-                               HTTP404_UNKNOWN_CATEGORY,
-                               HTTP404_UNKNOWN_OPUS_ID,
-                               HTTP404_UNKNOWN_RING_OBS_ID,
-                               HTTP404_UNKNOWN_SLUG)
+                             HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_SLUG)
 
 from .api_test_helper import ApiTestHelper
 
@@ -80,7 +77,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: empty no reqno"
         url = '/__api/normalizeinput.json'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_empty_reqno(self):
         "[test_search_api.py] /api/normalizeinput: empty"
@@ -92,13 +89,14 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: empty reqno bad"
         url = '/__api/normalizeinput.json?reqno=X'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_bad_slug(self):
         "[test_search_api.py] /api/normalizeinput: bad slug"
         url = '/__api/normalizeinput.json?fredethel=1234&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID('/__api/normalizeinput.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_string_empty(self):
         "[test_search_api.py] /api/normalizeinput: string empty"
@@ -434,7 +432,8 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: sourceunit with numeric suffix"
         url = '/__api/normalizeinput.json?sourceunit-wavelength1=cm&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID('/__api/normalizeinput.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_unit10(self):
         "[test_search_api.py] /api/normalizeinput: sourceunit bad value"
@@ -463,50 +462,50 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/stringsearchchoices: bad slug"
         url = '/__api/stringsearchchoices/fredethel.json?reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_UNKNOWN_SLUG('fredethel',
-                                '/__api/stringsearchchoices/fredethel.json'))
+                               HTTP404_UNKNOWN_SLUG('fredethel',
+                                   '/__api/stringsearchchoices/fredethel.json'))
 
     def test__api_stringsearchchoices_bad_limit(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit"
         url = '/__api/stringsearchchoices/volumeid.json?limit=0A&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('0A',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('0A',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_n1(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit -1"
         url = '/__api/stringsearchchoices/volumeid.json?limit=-1&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('-1',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('-1',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_0(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 0"
         url = '/__api/stringsearchchoices/volumeid.json?limit=0&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('0',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('0',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_1000000000001(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 1000000000001"
         url = '/__api/stringsearchchoices/volumeid.json?limit=1000000000001&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('1000000000001',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('1000000000001',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_search(self):
         "[test_search_api.py] /api/stringsearchchoices: bad search"
         url = '/__api/stringsearchchoices/volumeid.json?fredethel=2&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
-                            '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_search2(self):
         "[test_search_api.py] /api/stringsearchchoices: bad search2"
         url = '/__api/stringsearchchoices/volumeid.json?missionid=A&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
-                            '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_opusid_COISS_2002_regex_good(self):
         "[test_search_api.py] /api/stringsearchchoices: opusid volumeid COISS_2002 regex good"
@@ -554,8 +553,8 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/stringsearchchoices: volumeid none no reqno"
         url = '/__api/stringsearchchoices/volumeid.json?volumeid=BAD_VOLUME'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_REQNO(
-                            '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO(
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_volumeid_GO_0017(self):
         "[test_search_api.py] /api/stringsearchchoices: volumeid GO_0017"
