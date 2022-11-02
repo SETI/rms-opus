@@ -2,6 +2,7 @@
 - All Django tests pass: Y/N/NA
 - JSHINT run on all affected files: Y/N/NA
 - FLAKE8 run on all affected files: Y/N/NA
+- Code coverage run: Y/N/NA
 - Tested on Chrome, Firefox, Safari, and iOS: Y/N/NA
   (Remember to test all browser sizes)
 - Tested for race conditions (with delayed API calls if applicable): Y/N/NA

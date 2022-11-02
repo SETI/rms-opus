@@ -15,14 +15,14 @@ import settings
 class ApiResultsTests(TestCase, ApiTestHelper):
 
     def setUp(self):
-        self.UPDATE_FILES = False
+        # self.UPDATE_FILES = True
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -1239,5 +1239,3 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] vg-iss-2-s-prof images"
         url = "/api/images.json?opusid=vg-iss-2-s-prof"
         self._run_json_equal_file(url, "results_vg_iss_2_s_prof_images.json")
-
-    ####################

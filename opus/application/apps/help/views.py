@@ -16,7 +16,6 @@
 ################################################################################
 
 import base64
-from collections import OrderedDict
 import datetime
 from io import BytesIO
 import logging
@@ -63,9 +62,8 @@ def api_about(request, fmt):
     """
     api_code = enter_api_call('api_about', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/about.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -96,14 +94,13 @@ def api_volumes(request, fmt):
     """
     api_code = enter_api_call('api_volumes', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/volumes.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
 
-    all_volumes = OrderedDict()
+    all_volumes = {}
     for d in (ObsGeneral.objects.values('instrument_id','volume_id')
               .order_by('instrument_id','volume_id').distinct()):
         instrument_name = (MultObsGeneralInstrumentId.objects.values('label')
@@ -130,9 +127,8 @@ def api_faq(request, fmt):
     """
     api_code = enter_api_call('api_faq', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/faq.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -143,8 +139,9 @@ def api_faq(request, fmt):
         text = stream.read()
         try:
             faq = yaml.load(text, Loader=yaml.FullLoader)
-
-        except yaml.YAMLError as exc: # pragma: no cover
+        except yaml.YAMLError as exc: # pragma: no cover -
+            # This can only happen if there is a problem with the YAML in the
+            # FAQ.YAML file
             log.error('api_faq error: %s', str(exc))
             exit_api_call(api_code, None)
             raise Http404
@@ -168,9 +165,8 @@ def api_gettingstarted(request, fmt):
     """
     api_code = enter_api_call('api_gettingstarted', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/gettingstarted.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -192,9 +188,8 @@ def api_splash(request):
     """
     api_code = enter_api_call('api_splash', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST('/__help/splash.html'))
         exit_api_call(api_code, ret)
         raise ret
@@ -213,9 +208,8 @@ def api_citing_opus(request, fmt):
     """
     api_code = enter_api_call('api_citing_opus', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/citing.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
@@ -283,9 +277,8 @@ def api_api_guide(request, fmt):
     """
     api_code = enter_api_call('api_api_guide', request)
 
-    if (not request or request.GET is None
-        or throw_random_http404_error()
-        or request.META is None):
+    if (not request or request.GET is None or request.META is None
+        or throw_random_http404_error()):
         ret = Http404(HTTP404_NO_REQUEST(f'/__help/apiguide.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret

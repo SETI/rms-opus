@@ -7,12 +7,14 @@ from unittest import TestCase
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
-from tools.app_utils import (HTTP404_BAD_OR_MISSING_RANGE,
+from tools.app_utils import (HTTP404_BAD_DOWNLOAD,
+                             HTTP404_BAD_OR_MISSING_RANGE,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_BAD_RECYCLEBIN,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT)
+                             HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT,
+                             HTTP404_UNKNOWN_SLUG)
 
 from .api_test_helper import ApiTestHelper
 
@@ -21,6 +23,7 @@ import settings
 class ApiCartTests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        # self.UPDATE_FILES = True
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -28,7 +31,11 @@ class ApiCartTests(TestCase, ApiTestHelper):
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         self.cart_maximum = settings.MAX_SELECTIONS_ALLOWED
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        self.url_download_maximum = settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD
+        self.data_download_maximum = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
+        self.max_download_size = settings.MAX_DOWNLOAD_SIZE
+        self.max_cum_download_size = settings.MAX_CUM_DOWNLOAD_SIZE
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -37,6 +44,54 @@ class ApiCartTests(TestCase, ApiTestHelper):
     def tearDown(self):
         logging.disable(logging.NOTSET)
         settings.MAX_SELECTIONS_ALLOWED = self.cart_maximum
+        settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD = self.url_download_maximum
+        settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD = self.data_download_maximum
+        settings.MAX_DOWNLOAD_SIZE = self.max_download_size
+        settings.MAX_CUM_DOWNLOAD_SIZE = self.max_cum_download_size
+
+
+            ##################################################
+            ######### /__cart/view.json: API TESTS #########
+            ##################################################
+
+    def test__api_cart_view_no_reqno(self):
+        "[test_cart_api.py] /__cart/view: no reqno"
+        url = '/__cart/view.json'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_OR_MISSING_REQNO('/__cart/view.json'))
+
+    def test__api_cart_view_types_default(self):
+        "[test_cart_api.py] /__cart/view: types default"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
+        expected = {'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/view.json?reqno=710'
+        self._run_json_equal_file(url, 'test__api_cart_view_types_default.json')
+
+    def test__api_cart_view_types_selected(self):
+        "[test_cart_api.py] /__cart/view: types selected"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
+        expected = {'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/view.json?types=inventory,planet_geometry,moon_geometry,ring_geometry,browse_full&reqno=710'
+        self._run_json_equal_file(url, 'test__api_cart_view_types_selected.json')
+
+    def test__api_cart_view_types_unselected(self):
+        "[test_cart_api.py] /__cart/view: types unselected"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
+        expected = {'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/view.json?unselected_types=coiss_raw,coiss_calib,coiss_thumb,coiss_medium,coiss_full&reqno=710'
+        self._run_json_equal_file(url, 'test__api_cart_view_types_unselected.json')
 
 
             ##################################################
@@ -47,7 +102,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/status: no reqno"
         url = '/__cart/status.json'
         self._run_status_equal(url, 404,
-                           HTTP404_BAD_OR_MISSING_REQNO('/__cart/status.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__cart/status.json'))
+
+    def test__api_cart_status_bad_download(self):
+        "[test_cart_api.py] /__cart/status: bad download"
+        url = '/__cart/status.json?download=inf&reqno=456'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_DOWNLOAD('inf', '/__cart/status.json'))
 
     def test__api_cart_status_download_ver(self):
         "[test_cart_api.py] /__cart/status: download=1, types is set to version 2 calib"
@@ -58,8 +119,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=42&download=1&types=coiss_calib@2'
-        expected = {'total_download_count': 2, 'total_download_size': 4206293, 'total_download_size_pretty': '4M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104427, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206287, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 564, 'download_size_pretty': '564B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 2849, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 259925, 'download_size_pretty': '253K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS observations.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206293, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201970, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 995, 'download_size_pretty': '995B', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 3012, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 7892, 'download_size_pretty': '7K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 215079, 'download_size_pretty': '210K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'count': 1, 'recycled_count': 0, 'reqno': 42}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_status_download_ver.json')
 
     # We don't bother otherwise testing this separately because it's used
     # extensively in all the tests below
@@ -73,7 +133,64 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/reset: no reqno"
         url = '/__cart/reset.json'
         self._run_status_equal(url, 404,
-                            HTTP404_BAD_OR_MISSING_REQNO('/__cart/reset.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__cart/reset.json'))
+
+    def test__api_cart_reset_download0(self):
+        "[test_cart_api.py] /__cart/reset: download 0"
+        url = '/__cart/reset.json?download=0&reqno=456'
+        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_reset_download1(self):
+        "[test_cart_api.py] /__cart/reset: download 1"
+        url = '/__cart/reset.json?download=1&reqno=456'
+        expected = {"total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_dict": {}, "count": 0, "recycled_count": 0, "reqno": 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_reset_bad_download(self):
+        "[test_cart_api.py] /__cart/reset: bad download"
+        url = '/__cart/reset.json?download=inf&reqno=456'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_DOWNLOAD('inf', '/__cart/reset.json'))
+
+    def test__api_cart_reset_recyclebin0(self):
+        "[test_cart_api.py] /__cart/reset: recyclebin 0"
+        url = '/__cart/reset.json?recyclebin=0&reqno=456'
+        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
+        expected = {"count": 1, "recycled_count": 0, "reqno": 456, "error": False}
+        self._run_json_equal(url, expected)
+        url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=456&recyclebin=1'
+        expected = {"count": 0, "recycled_count": 1, "reqno": 456, "error": False}
+        self._run_json_equal(url, expected)
+        url = '/__cart/reset.json?recyclebin=0&reqno=456'
+        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_reset_recyclebin1(self):
+        "[test_cart_api.py] /__cart/reset: recyclebin 1"
+        url = '/__cart/reset.json?recyclebin=0&reqno=456'
+        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
+        expected = {"count": 1, "recycled_count": 0, "reqno": 456, "error": False}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
+        expected = {"count": 2, "recycled_count": 0, "reqno": 456, "error": False}
+        self._run_json_equal(url, expected)
+        url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=456&recyclebin=1'
+        expected = {"count": 1, "recycled_count": 1, "reqno": 456, "error": False}
+        self._run_json_equal(url, expected)
+        url = '/__cart/reset.json?recyclebin=1&reqno=456'
+        expected = {"count": 1, "recycled_count": 0, "reqno": 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_reset_bad_recyclebin(self):
+        "[test_cart_api.py] /__cart/reset: bad download"
+        url = '/__cart/reset.json?recyclebin=1e38&reqno=456'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_RECYCLEBIN('1e38', '/__cart/reset.json'))
 
     def test__api_cart_reset(self):
         "[test_cart_api.py] /__cart/reset"
@@ -127,9 +244,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_one_recyclebin0(self):
         "[test_cart_api.py] /__cart/add: good OPUSID no download recyclebin=0"
@@ -139,9 +253,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_one_recyclebin1(self):
         "[test_cart_api.py] /__cart/add: good OPUSID no download recyclebin=1"
@@ -150,9 +261,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456&recyclebin=1'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_duplicate(self):
@@ -166,9 +274,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_duplicate_multi(self):
         "[test_cart_api.py] /__cart/add: duplicate OPUSID no download multi"
@@ -178,9 +283,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460961026,co-iss-n1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_bad(self):
         "[test_cart_api.py] /__cart/add: bad OPUSID no download"
@@ -189,9 +291,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad(self):
@@ -205,9 +304,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi(self):
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download multi"
@@ -216,9 +312,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,co-iss-xn1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi_2(self):
@@ -229,9 +322,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460961026,&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi_3(self):
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download multi 3"
@@ -241,9 +331,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=,co-iss-n1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi_4(self):
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download multi 4"
@@ -252,9 +339,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=,&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_mixture(self):
@@ -279,9 +363,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=nh-mvic-mpf_000526016&reqno=456'
         expected = {'recycled_count': 0, 'count': 2, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_mixture_multi(self):
@@ -317,17 +398,25 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_add_bad_download(self):
+        "[test_cart_api.py] /__cart/add: bad download"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=nh-mvic-mpf_000526016&download=1x2&reqno=456'
+        self._run_status_equal(url, 404,
+                               HTTP404_BAD_DOWNLOAD('1x2', '/__cart/add.json'))
+        url = '/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_add_download_ver(self):
         "[test_cart_api.py] /__cart/add: download=1, types set to version 2 calib, total size & count only count on verion 2 calib"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/add.json?opusid=co-iss-n1460960653&download=1&reqno=101010101&types=coiss_calib@2'
-        expected = {'total_download_count': 2, 'total_download_size': 4206293, 'total_download_size_pretty': '4M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104427, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206287, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 564, 'download_size_pretty': '564B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 2849, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 259925, 'download_size_pretty': '253K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206293, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201970, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 995, 'download_size_pretty': '995B', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 3012, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 7892, 'download_size_pretty': '7K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 215079, 'download_size_pretty': '210K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 101010101}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=0'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 0}
-        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-cirs-0408161433-fp4&download=1&reqno=101010101&types=coiss_calib@2'
+        self._run_json_equal_file(url, 'api_cart_add_download_ver.json')
 
     def test__api_cart_add_download_one(self):
         "[test_cart_api.py] /__cart/add: good OPUSID with download"
@@ -335,11 +424,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460960653&download=1&reqno=101010101'
-        expected = {'total_download_count': 7, 'total_download_size': 5525793, 'total_download_size_pretty': '5M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104427, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206287, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 564, 'download_size_pretty': '564B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 2849, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 259925, 'download_size_pretty': '253K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206293, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201970, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 995, 'download_size_pretty': '995B', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 3012, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 7892, 'download_size_pretty': '7K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 215079, 'download_size_pretty': '210K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 101010101}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=0'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 0}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_add_download_one.json')
 
     def test__api_cart_add_download_two(self):
         "[test_cart_api.py] /__cart/add: two OPUSIDs with download"
@@ -350,11 +435,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 101010100}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460960653&download=1&reqno=101010101'
-        expected = {'total_download_count': 12, 'total_download_size': 11161778, 'total_download_size_pretty': '10M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 2, 'download_count': 6, 'download_size': 2185416, 'download_size_pretty': '2M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 2, 'download_count': 4, 'download_size': 8412565, 'download_size_pretty': '8M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 2, 'download_count': 2, 'download_size': 1322, 'download_size_pretty': '1K', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 2, 'download_count': 2, 'download_size': 7589, 'download_size_pretty': '7K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 2, 'download_count': 2, 'download_size': 721369, 'download_size_pretty': '704K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS.', 'product_type': 'Documentation', 'product_count': 2, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 2, 'download_count': 4, 'download_size': 8412579, 'download_size_pretty': '8M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 2, 'download_count': 4, 'download_size': 8403931, 'download_size_pretty': '8M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 2, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 2, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 2, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 2, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 2, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 2, 'download_count': 2, 'download_size': 3049, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 2, 'download_count': 2, 'download_size': 9179, 'download_size_pretty': '8K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 2, 'download_count': 2, 'download_size': 23639, 'download_size_pretty': '23K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 2, 'download_count': 2, 'download_size': 563797, 'download_size_pretty': '550K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 2, 'recycled_count': 0, 'reqno': 101010101}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=0'
-        expected = {'recycled_count': 0, 'count': 2, 'reqno': 0}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'test__api_cart_add_download_two.json')
 
     def test__api_cart_add_one_too_many_0(self):
         "[test_cart_api.py] /__cart/add: good OPUSID no download too many 1"
@@ -363,13 +444,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 0.', 'reqno': 456}
-        self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -384,9 +464,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_one_too_many_2_multi(self):
         "[test_cart_api.py] /__cart/add: good OPUSID no download too many 2 multi"
@@ -397,9 +474,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460961026,hst-11559-wfc3-ib4v22guq&reqno=456'
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_one_too_many_1_multi(self):
         "[test_cart_api.py] /__cart/add: good OPUSID no download too many 1 multi"
@@ -408,7 +482,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,hst-11559-wfc3-ib4v22guq&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add multiple OPUS IDs to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
@@ -430,7 +504,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=hst-11559-wfc3-ib4v22guq&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 1, 'error': 'Your request to add OPUS ID hst-11559-wfc3-ib4v22guq to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
@@ -458,13 +532,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360018&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID vg-iss-2-s-c4360018 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
@@ -479,7 +553,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/remove: no reqno"
         url = '/__cart/remove.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 404,
-                           HTTP404_BAD_OR_MISSING_REQNO('/__cart/remove.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__cart/remove.json'))
 
     def test__api_cart_remove_missing(self):
         "[test_cart_api.py] /__cart/remove: missing OPUSID no download"
@@ -516,9 +590,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_one_recyclebin0(self):
         "[test_cart_api.py] /__cart/remove: add+remove good OPUSID no download recyclebin=0"
@@ -530,9 +601,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_one_recyclebin1(self):
@@ -546,15 +614,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_one_recyclebinx(self):
         "[test_cart_api.py] /__cart/remove: recyclebin=x"
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456&recyclebin=x'
         self._run_status_equal(url, 404,
-                HTTP404_BAD_RECYCLEBIN('x', '/__cart/remove.json'))
+                               HTTP404_BAD_RECYCLEBIN('x', '/__cart/remove.json'))
 
     def test__api_cart_remove_duplicate(self):
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download"
@@ -569,9 +634,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_duplicate_recyclebin1(self):
@@ -588,9 +650,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_duplicate_multi(self):
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download multi"
@@ -603,9 +662,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_bad(self):
         "[test_cart_api.py] /__cart/remove: bad OPUSID no download"
@@ -615,9 +671,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # Removing an unknown opusid doesn't throw an error
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_irx&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_bad_recyclebin1(self):
@@ -647,9 +700,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_good_bad_multi(self):
         "[test_cart_api.py] /__cart/remove: good+bad OPUSID no download multi"
@@ -661,9 +711,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_ir,co-iss-xn1460961026&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_mixture(self):
@@ -698,9 +745,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_mixture_recyclebin1(self):
         "[test_cart_api.py] /__cart/remove: mixture no download recyclebin=1"
@@ -731,9 +775,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=go-ssi-c0347174400&reqno=456'
         expected = {'recycled_count': 1, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 1, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_mixture_multi(self):
         "[test_cart_api.py] /__cart/remove: mixture no download multi"
@@ -761,9 +802,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_ir,go-ssi-c0347174400&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_add_bad(self):
         "[test_cart_api.py] /__cart/remove: add+remove bad OPUSID no download"
@@ -776,9 +814,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # Removing an unknown opusid doesn't throw an error
         url = '/__cart/remove.json?opusid=co-iss-xn1460961026&reqno=101010101'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 101010101}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=0'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 0}
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_missing_download(self):
@@ -804,9 +839,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 123456, "total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_dict": {}}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=789'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 789}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_remove_download_ver(self):
         "[test_cart_api.py] /__cart/remove: good OPUSID with download=1, types set to version 2 calib"
@@ -820,11 +852,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1&types=coiss_calib@2'
-        expected = {'total_download_count': 2, 'total_download_size': 4206286, 'total_download_size_pretty': '4M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104418, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206278, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 758, 'download_size_pretty': '758B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 4740, 'download_size_pretty': '4K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 461444, 'download_size_pretty': '450K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS observations.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206286, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201961, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 2054, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 6167, 'download_size_pretty': '6K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 15747, 'download_size_pretty': '15K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 348718, 'download_size_pretty': '340K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 123456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=789'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 789}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_remove_download_ver.json')
 
     def test__api_cart_remove_one_download_recyclebin1(self):
         "[test_cart_api.py] /__cart/remove: good OPUSID with download recyclebin=1"
@@ -835,11 +863,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1&recyclebin=1'
-        expected = {'total_download_count': 0, 'total_download_size': 0, 'total_download_size_pretty': '0B', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS observations.', 'product_type': 'Documentation', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 0, 'download_count': 0, 'download_size': 0, 'download_size_pretty': 0, 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 0, 'recycled_count': 1, 'reqno': 123456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=789'
-        expected = {'recycled_count': 1, 'count': 0, 'reqno': 789}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_remove_one_download_recyclebin1.json')
 
     def test__api_cart_add_two_remove_one_download(self):
         "[test_cart_api.py] /__cart/remove: two OPUSIDs remove one with download"
@@ -849,15 +873,11 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460960868&download=0&reqno=101010100'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 101010100}
         self._run_json_equal(url, expected)
-        url = '/__cart/add.json?opusid=co-iss-n1460960653&download=&reqno=101010101'
+        url = '/__cart/add.json?opusid=co-iss-n1460960653&download=0&reqno=101010101'
         expected = {'error': False, 'recycled_count': 0, 'count': 2, 'reqno': 101010101}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460960868&download=1&reqno=101010102'
-        expected = {'total_download_count': 7, 'total_download_size': 5525793, 'total_download_size_pretty': '5M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104427, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206287, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 564, 'download_size_pretty': '564B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 2849, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 259925, 'download_size_pretty': '253K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206293, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201970, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 995, 'download_size_pretty': '995B', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 3012, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 7892, 'download_size_pretty': '7K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 215079, 'download_size_pretty': '210K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 101010102}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=789'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 789}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_add_two_remove_one_download.json')
 
     def test__api_cart_add_two_remove_one_download_recyclebin1(self):
         "[test_cart_api.py] /__cart/remove: two OPUSIDs remove one with download recyclebin=1"
@@ -867,41 +887,25 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460960868&download=0&reqno=101010100'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 101010100}
         self._run_json_equal(url, expected)
-        url = '/__cart/add.json?opusid=co-iss-n1460960653&download=&reqno=101010101'
+        url = '/__cart/add.json?opusid=co-iss-n1460960653&download=0&reqno=101010101'
         expected = {'error': False, 'recycled_count': 0, 'count': 2, 'reqno': 101010101}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460960868&download=1&reqno=101010102&recyclebin=1'
-        expected = {'total_download_count': 7, 'total_download_size': 5525793, 'total_download_size_pretty': '5M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104427, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206287, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 564, 'download_size_pretty': '564B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 2849, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 259925, 'download_size_pretty': '253K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206293, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201970, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 995, 'download_size_pretty': '995B', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 3012, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 7892, 'download_size_pretty': '7K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 215079, 'download_size_pretty': '210K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 1, 'recycled_count': 1, 'reqno': 101010102}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=789'
-        expected = {'recycled_count': 1, 'count': 1, 'reqno': 789}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_add_two_remove_one_download_recyclebin1.json')
 
     def test__api_cart_unselect_option_one_download_recyclebin0(self):
         "[test_cart_api.py] /__cart/unselect option: good OPUSID with download recyclebin=0"
-        url = '/opus/__cart/reset.json?reqno=42'
+        url = '/__cart/reset.json?reqno=42'
         expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
+        url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
         expected = {'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = 'opus/__cart/view.json?types=inventory,planet_geometry,moon_geometry,ring_geometry,browse_full&unselected_types=coiss_raw,coiss_calib,coiss_thumb,coiss_medium,coiss_full&reqno=710'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 710}
-        ignore = 'html'
-        self._run_json_equal(url, expected, ignore)
-        url = '/opus/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1'
+        url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1'
         expected = {'total_download_count': 0, 'total_download_size': 0, 'total_download_size_pretty': '0B', 'product_cat_dict': {}, 'error': False, 'count': 0, 'recycled_count': 0, 'reqno': 123456}
         self._run_json_equal(url, expected)
-        url = 'opus/__cart/view.json?types=inventory,planet_geometry,moon_geometry,ring_geometry,browse_thumb,browse_small,browse_medium,browse_full&unselected_types=coiss_raw,coiss_calib,coiss_thumb,coiss_medium,coiss_full&reqno=711'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 711}
-        ignore = 'html'
-        self._run_json_equal(url, expected, ignore)
-        url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=458'
+        url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=458'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 458}
-        self._run_json_equal(url, expected)
-        url = '/opus/__cart/status.json?download=1&reqno=789'
-        expected = {'total_download_count': 7, 'total_download_size': 5617869, 'total_download_size_pretty': '5M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104417, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206277, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 717, 'download_size_pretty': '717B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 4172, 'download_size_pretty': '4K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 382743, 'download_size_pretty': '373K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS observations.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206283, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201960, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 1908, 'download_size_pretty': '1K', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 5509, 'download_size_pretty': '5K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 14111, 'download_size_pretty': '13K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 307175, 'download_size_pretty': '299K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'count': 1, 'recycled_count': 0, 'reqno': 789}
-        self._run_json_equal(url, expected)
 
 
             #############################################################
@@ -912,7 +916,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/addrange: no reqno"
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404,
-                           HTTP404_BAD_OR_MISSING_REQNO('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__cart/addrange.json'))
 
     def test__api_cart_addrange_missing(self):
         "[test_cart_api.py] /__cart/addrange: missing range no download"
@@ -921,7 +925,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?reqno=456'
         self._run_status_equal(url, 404,
-                       HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -933,7 +937,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=&reqno=456'
         self._run_status_equal(url, 404,
-                       HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -945,7 +949,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                       HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -957,7 +961,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir,&reqno=456'
         self._run_status_equal(url, 404,
-                       HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -969,7 +973,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -981,7 +985,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -994,9 +998,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_one_browse(self):
         "[test_cart_api.py] /__cart/addrange: one good OPUSID no download browse"
@@ -1005,9 +1006,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=browse&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate(self):
@@ -1021,9 +1019,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate_browse(self):
         "[test_cart_api.py] /__cart/addrange: duplicate OPUSID no download browse"
@@ -1035,9 +1030,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=browse&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate2(self):
@@ -1051,9 +1043,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate3(self):
         "[test_cart_api.py] /__cart/addrange: duplicate 3 no download"
@@ -1065,9 +1054,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 22, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 22, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate4(self):
@@ -1081,9 +1067,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642979_ir,co-vims-v1488647105_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 22, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 22, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate5(self):
         "[test_cart_api.py] /__cart/addrange: duplicate 5 no download"
@@ -1096,9 +1079,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate6(self):
         "[test_cart_api.py] /__cart/addrange: duplicate 6 no download"
@@ -1110,9 +1090,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-vims-v1488642557_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_opusid(self):
@@ -1158,7 +1135,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_SEARCH_PARAMS_INVALID('/__cart/addrange.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1171,9 +1148,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi_recyclebin0(self):
         "[test_cart_api.py] /__cart/addrange: multiple no download recyclebin=0"
@@ -1182,9 +1156,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi_recyclebin1(self):
@@ -1195,9 +1166,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi_reverse(self):
         "[test_cart_api.py] /__cart/addrange: multiple reversed no download"
@@ -1206,9 +1174,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488646261_ir,co-vims-v1488642557_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_multi_sort(self):
@@ -1219,9 +1184,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&instrument=Cassini+VIMS&primaryfilespec=8864&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1488649724_vis,co-vims-v1488647527_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_missing_download(self):
         "[test_cart_api.py] /__cart/addrange: missing range with download"
@@ -1230,7 +1192,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?download=1&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1241,11 +1203,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567&download=1'
-        expected = {'total_download_count': 30, 'total_download_size': 3152341, 'total_download_size_pretty': '3M', 'product_cat_dict': {'Cassini VIMS-Specific Products': {'Current': [{'slug_name': 'covims_raw', 'tooltip': 'Raw data files (*.qub) for Cassini VIMS. Observations are in binary format, uncalibrated, and contain raw data numbers from both the VIS and IR detectors. Associated labels (*.lbl) are text files that contain information about the observation, including how to interpret the binary data.', 'product_type': 'Raw Cube', 'product_count': 17, 'download_count': 21, 'download_size': 2919003, 'download_size_pretty': '2M', 'default_checked': 1, 'product_type_with_version': 'covims_raw@Current'}, {'slug_name': 'covims_thumb', 'tooltip': 'Thumbnail-size (131x69) JPEGs (*.jpeg_small) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 17, 'download_count': 9, 'download_size': 17411, 'download_size_pretty': '17K', 'default_checked': 0, 'product_type_with_version': 'covims_thumb@Current'}, {'slug_name': 'covims_medium', 'tooltip': 'Medium-size (786x414) JPEGs (*.jpeg) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (medium)', 'product_count': 17, 'download_count': 9, 'download_size': 183437, 'download_size_pretty': '179K', 'default_checked': 0, 'product_type_with_version': 'covims_medium@Current'}, {'slug_name': 'covims_full', 'tooltip': 'Full-size (131x69) TIFFs (*.tiff) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (full)', 'product_count': 17, 'download_count': 9, 'download_size': 455148, 'download_size_pretty': '444K', 'default_checked': 0, 'product_type_with_version': 'covims_full@Current'}, {'slug_name': 'covims_documentation', 'tooltip': 'Documents for the Cassini VIMS visual/near-IR cube collection.', 'product_type': 'Documentation', 'product_count': 17, 'download_count': 4, 'download_size': 7846549, 'download_size_pretty': '7M', 'default_checked': 0, 'product_type_with_version': 'covims_documentation@Current'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 17, 'download_count': 2, 'download_size': 1958899, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'supplemental_index', 'tooltip': 'Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Supplemental Index', 'product_count': 17, 'download_count': 2, 'download_size': 1786592, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'supplemental_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 17, 'download_count': 2, 'download_size': 383776, 'download_size_pretty': '374K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 17, 'download_count': 2, 'download_size': 1485943, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 17, 'download_count': 2, 'download_size': 2382135, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 17, 'download_count': 9, 'download_size': 82840, 'download_size_pretty': '80K', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 17, 'download_count': 9, 'download_size': 227327, 'download_size_pretty': '221K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 17, 'download_count': 9, 'download_size': 233338, 'download_size_pretty': '227K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 17, 'download_count': 9, 'download_size': 233338, 'download_size_pretty': '227K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 17, 'recycled_count': 0, 'reqno': 1234567}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_addrange_multi_download.json')
 
     def test__api_cart_addrange_one_too_many_0(self):
         "[test_cart_api.py] /__cart/addrange: one good OPUSID no download too many 0"
@@ -1254,13 +1212,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add 1 observations (OPUS IDs co-vims-v1484504505_ir to co-vims-v1484504505_ir) to the cart failed. The resulting cart and recycle bin would have more than the maximum (0) allowed. None of the observations were added.', 'reqno': 567}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1275,9 +1233,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate2_too_many_17(self):
         "[test_cart_api.py] /__cart/addrange: duplicate 2 no download too many 17"
@@ -1291,9 +1246,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
 
             ################################################################
@@ -1304,7 +1256,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/removerange: no reqno"
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_REQNO('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__cart/removerange.json'))
 
     def test__api_cart_removerange_missing(self):
         "[test_cart_api.py] /__cart/removerange: missing range no download"
@@ -1314,7 +1266,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 200)
         url = '/__cart/removerange.json?reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1326,7 +1278,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=&reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1338,7 +1290,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1350,7 +1302,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir,&reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1362,7 +1314,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1374,7 +1326,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1390,9 +1342,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_add_one_recyclebin0(self):
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download recyclebin=0"
@@ -1405,9 +1354,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_add_one_recyclebin1(self):
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download recyclebin=1"
@@ -1419,9 +1365,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate(self):
@@ -1438,9 +1381,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate_recyclebin1(self):
         "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download recyclebin=1"
@@ -1455,9 +1395,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate2(self):
@@ -1474,9 +1411,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate3(self):
         "[test_cart_api.py] /__cart/removerange: duplicate 3 no download"
@@ -1491,9 +1425,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 11, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 11, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_bad_opusid(self):
@@ -1539,7 +1470,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID('/__cart/removerange.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1570,9 +1501,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_sort(self):
         "[test_cart_api.py] /__cart/removerange: multiple nonstandard sort no download"
@@ -1588,9 +1516,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1490784910_001_ir,co-vims-v1490782254_001_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_one(self):
         "[test_cart_api.py] /__cart/removerange: one good OPUSID no download"
@@ -1600,9 +1525,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 567}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_missing_download(self):
         "[test_cart_api.py] /__cart/removerange: missing range with download"
@@ -1611,7 +1533,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?download=1&reqno=456'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1625,11 +1547,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'error': False, 'recycled_count': 0, 'count': 17, 'reqno': 1234567}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642135_ir,co-vims-v1488643823_ir&reqno=12345678&download=1'
-        expected = {'total_download_count': 21, 'total_download_size': 2101866, 'total_download_size_pretty': '2M', 'product_cat_dict': {'Cassini VIMS-Specific Products': {'Current': [{'slug_name': 'covims_raw', 'tooltip': 'Raw data files (*.qub) for Cassini VIMS. Observations are in binary format, uncalibrated, and contain raw data numbers from both the VIS and IR detectors. Associated labels (*.lbl) are text files that contain information about the observation, including how to interpret the binary data.', 'product_type': 'Raw Cube', 'product_count': 10, 'download_count': 15, 'download_size': 1948066, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'covims_raw@Current'}, {'slug_name': 'covims_thumb', 'tooltip': 'Thumbnail-size (131x69) JPEGs (*.jpeg_small) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 10, 'download_count': 6, 'download_size': 11718, 'download_size_pretty': '11K', 'default_checked': 0, 'product_type_with_version': 'covims_thumb@Current'}, {'slug_name': 'covims_medium', 'tooltip': 'Medium-size (786x414) JPEGs (*.jpeg) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (medium)', 'product_count': 10, 'download_count': 6, 'download_size': 122860, 'download_size_pretty': '119K', 'default_checked': 0, 'product_type_with_version': 'covims_medium@Current'}, {'slug_name': 'covims_full', 'tooltip': 'Full-size (131x69) TIFFs (*.tiff) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (full)', 'product_count': 10, 'download_count': 6, 'download_size': 303432, 'download_size_pretty': '296K', 'default_checked': 0, 'product_type_with_version': 'covims_full@Current'}, {'slug_name': 'covims_documentation', 'tooltip': 'Documents for the Cassini VIMS visual/near-IR cube collection.', 'product_type': 'Documentation', 'product_count': 10, 'download_count': 4, 'download_size': 7846549, 'download_size_pretty': '7M', 'default_checked': 0, 'product_type_with_version': 'covims_documentation@Current'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 10, 'download_count': 2, 'download_size': 1958899, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'supplemental_index', 'tooltip': 'Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Supplemental Index', 'product_count': 10, 'download_count': 2, 'download_size': 1786592, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'supplemental_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 10, 'download_count': 2, 'download_size': 383776, 'download_size_pretty': '374K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 10, 'download_count': 2, 'download_size': 1485943, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 10, 'download_count': 2, 'download_size': 2382135, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 10, 'download_count': 6, 'download_size': 54402, 'download_size_pretty': '53K', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 10, 'download_count': 6, 'download_size': 149668, 'download_size_pretty': '146K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 10, 'download_count': 6, 'download_size': 153800, 'download_size_pretty': '150K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 10, 'download_count': 6, 'download_size': 153800, 'download_size_pretty': '150K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 10, 'recycled_count': 0, 'reqno': 12345678}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_removerange_multi_download.json')
 
     def test__api_cart_removerange_sort_multigroup(self):
         "[test_cart_api.py] /__cart/removerange: add+removerange OPUSIDs with order by multigroup field"
@@ -1641,9 +1559,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?&instrument=Voyager+UVS&target=Uranus+Rings,Neptune+Rings&order=target,opusid&range=vg-uvs-2-n-occ-1989-236-sigsgr-i,vg-uvs-2-u-occ-1986-024-sigsgr-epsilon-e&reqno=456'
         expected = {'recycled_count': 0, 'count': 4, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 4, 'reqno': 456}
         self._run_json_equal(url, expected)
 
 
@@ -1670,7 +1585,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1682,7 +1597,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               HTTP404_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1698,9 +1613,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate_cart_recyclebin0(self):
         "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download recyclebin=0"
@@ -1713,9 +1625,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_duplicate_cart_recyclebin1(self):
         "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download recyclebin=1"
@@ -1727,9 +1636,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_bad_opusid_cart(self):
@@ -1774,9 +1680,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
 
             ##############################################################
@@ -1794,9 +1697,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_add_one_cart_recyclebin1(self):
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download cart recyclebin=1"
@@ -1808,9 +1708,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate_cart(self):
@@ -1845,9 +1742,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_cart(self):
         "[test_cart_api.py] /__cart/removerange: multiple no download cart"
@@ -1859,9 +1753,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_cart_recyclebin1(self):
@@ -1875,9 +1766,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis&reqno=456&recyclebin=1'
         expected = {'recycled_count': 7, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 7, 'count': 10, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_reverse_cart(self):
         "[test_cart_api.py] /__cart/removerange: multiple reversed no download cart"
@@ -1890,9 +1778,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_reverse_cart_recyclebin1(self):
         "[test_cart_api.py] /__cart/removerange: multiple reversed no download cart recyclebin=1"
@@ -1904,9 +1789,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456&recyclebin=1'
         expected = {'recycled_count': 7, 'count': 10, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 7, 'count': 10, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_sort_cart(self):
@@ -1978,9 +1860,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?&view=cart&order=-target,time1,opusid&range=vg-uvs-2-u-occ-1986-024-sigsgr-delta-e,vg-uvs-2-s-occ-1981-237-delsco-i&reqno=456&recyclebin=1'
         expected = {'recycled_count': 4, 'count': 4, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 4, 'count': 4, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
 
             ##################################################
@@ -1991,7 +1870,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/addall: no reqno"
         url = '/__cart/addall.json?volumeid=VGISS_6210'
         self._run_status_equal(url, 404,
-                            HTTP404_BAD_OR_MISSING_REQNO('/__cart/addall.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__cart/addall.json'))
 
     def test__api_cart_addall_one(self):
         "[test_cart_api.py] /__cart/addall: one time no download"
@@ -2001,9 +1880,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addall_one_browse(self):
         "[test_cart_api.py] /__cart/addall: one time no download browse"
@@ -2012,9 +1888,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?view=browse&volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate(self):
@@ -2028,9 +1901,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate2(self):
         "[test_cart_api.py] /__cart/addall: addrange plus addall no download"
@@ -2042,9 +1912,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate3(self):
@@ -2058,9 +1925,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addall_bad_search(self):
         "[test_cart_api.py] /__cart/addall: bad search no download"
@@ -2069,7 +1933,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeidXX=COVIMS_0006&reqno=456'
         self._run_status_equal(url, 404,
-                        HTTP404_SEARCH_PARAMS_INVALID('/__cart/addall.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID('/__cart/addall.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2091,9 +1955,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 4393, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 4393, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addall_one_download(self):
         "[test_cart_api.py] /__cart/addall: one time with download"
@@ -2101,11 +1962,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeid=VGISS_8201&productid=12&reqno=9878&download=1'
-        expected = {'total_download_count': 510, 'total_download_size': 166162601, 'total_download_size_pretty': '158M', 'product_cat_dict': {'Voyager ISS-Specific Products': {'Current': [{'slug_name': 'vgiss_raw', 'tooltip': 'Raw image files (*_RAW.IMG) for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions.', 'product_type': 'Raw Image', 'product_count': 34, 'download_count': 68, 'download_size': 28148748, 'download_size_pretty': '26M', 'default_checked': 1, 'product_type_with_version': 'vgiss_raw@Current'}, {'slug_name': 'vgiss_cleaned', 'tooltip': 'Cleaned image files (*_CLEANED.IMG) for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Apparent flaws in the raw image, including reseau markings and spikes, have been removed.', 'product_type': 'Cleaned Image', 'product_count': 34, 'download_count': 68, 'download_size': 21936280, 'download_size_pretty': '20M', 'default_checked': 1, 'product_type_with_version': 'vgiss_cleaned@Current'}, {'slug_name': 'vgiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Voyager ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are calibrated versions of the cleaned images (*_CLEANED.IMG).', 'product_type': 'Calibrated Image', 'product_count': 34, 'download_count': 68, 'download_size': 43769972, 'download_size_pretty': '41M', 'default_checked': 1, 'product_type_with_version': 'vgiss_calib@Current'}, {'slug_name': 'vgiss_geomed', 'tooltip': 'Calibrated and geometrically corrected image files (*_GEOMED.IMG) for Voyager ISS. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG).', 'product_type': 'Geometrically Corrected Image', 'product_count': 34, 'download_count': 68, 'download_size': 68190894, 'download_size_pretty': '65M', 'default_checked': 1, 'product_type_with_version': 'vgiss_geomed@Current'}, {'slug_name': 'vgiss_resloc', 'tooltip': 'Files describing the determined location of the reseau markings for an image. Locations are provided in VICAR format (*_RESLOC.DAT) and text format (*_RESLOC.TAB). An associated label (*_RESLOC.LBL) is a text file that contains information about the *.DAT and *.TAB files.', 'product_type': 'Reseau Table', 'product_count': 34, 'download_count': 102, 'download_size': 672296, 'download_size_pretty': '656K', 'default_checked': 1, 'product_type_with_version': 'vgiss_resloc@Current'}, {'slug_name': 'vgiss_geoma', 'tooltip': 'Files describing the nominal and measured reseau mark locations used to geometrically correct the image. Locations are provided in VICAR format (*_GEOMA.DAT) and text format (*_GEOMA.TAB). An associated label (*_GEOMA.LBL) is a text file that contains information about the *.DAT and *.TAB files.', 'product_type': 'Geometric Tiepoint Table', 'product_count': 34, 'download_count': 102, 'download_size': 1424003, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'vgiss_geoma@Current'}, {'slug_name': 'vgiss_raw_browse', 'tooltip': 'Preview images (*_RAW.JPG) for the raw image files for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions.', 'product_type': 'Extra Preview (raw)', 'product_count': 34, 'download_count': 68, 'download_size': 1963297, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'vgiss_raw_browse@Current'}, {'slug_name': 'vgiss_cleaned_browse', 'tooltip': 'Preview images (*_CLEANED.JPG) for the cleaned image files for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Apparent flaws in the raw image, including reseau markings and spikes, have been removed.', 'product_type': 'Extra Preview (cleaned)', 'product_count': 34, 'download_count': 68, 'download_size': 1512756, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'vgiss_cleaned_browse@Current'}, {'slug_name': 'vgiss_calib_browse', 'tooltip': 'Preview images (*_CALIB.JPG) for the calibrated image files for Voyager ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are calibrated versions of the cleaned images (*_CLEANED.IMG).', 'product_type': 'Extra Preview (calibrated)', 'product_count': 34, 'download_count': 68, 'download_size': 2361266, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'vgiss_calib_browse@Current'}, {'slug_name': 'vgiss_geomed_browse', 'tooltip': 'Preview images (*_GEOMED.JPG) for the calibrated and geometrically corrected image files for Voyager ISS. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG).', 'product_type': 'Extra Preview (geometrically corrected)', 'product_count': 34, 'download_count': 68, 'download_size': 2665121, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'vgiss_geomed_browse@Current'}, {'slug_name': 'vgiss_documentation', 'tooltip': 'RMS-curated documents for the Voyager ISS image collection.', 'product_type': 'Documentation', 'product_count': 34, 'download_count': 5, 'download_size': 385675, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'vgiss_documentation@Current'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 34, 'download_count': 2, 'download_size': 1881025, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'raw_image_index', 'tooltip': 'Text files ([volume]_raw_image_index.tab) that tabulate information about the raw image for each observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Raw Image Index', 'product_count': 34, 'download_count': 2, 'download_size': 324742, 'download_size_pretty': '317K', 'default_checked': 0, 'product_type_with_version': 'raw_image_index@Current'}, {'slug_name': 'supplemental_index', 'tooltip': 'Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Supplemental Index', 'product_count': 34, 'download_count': 2, 'download_size': 161366, 'download_size_pretty': '157K', 'default_checked': 0, 'product_type_with_version': 'supplemental_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 34, 'download_count': 2, 'download_size': 81999, 'download_size_pretty': '80K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 25, 'download_count': 2, 'download_size': 306984, 'download_size_pretty': '299K', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 25, 'download_count': 2, 'download_size': 1775636, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 25, 'download_count': 2, 'download_size': 509704, 'download_size_pretty': '497K', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 34, 'download_count': 34, 'download_size': 49298, 'download_size_pretty': '48K', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 34, 'download_count': 34, 'download_size': 117246, 'download_size_pretty': '114K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 34, 'download_count': 34, 'download_size': 428816, 'download_size_pretty': '418K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 34, 'download_count': 34, 'download_size': 2020408, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'error': False, 'count': 34, 'recycled_count': 0, 'reqno': 9878}
-        self._run_json_equal(url, expected, ignore='tooltip')
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 34, 'reqno': 456}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_addall_one_download.json')
 
     def test__api_cart_addall_one_too_many_905(self):
         "[test_cart_api.py] /__cart/addall: one time no download too many 905"
@@ -2114,13 +1971,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (905) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -2135,9 +1992,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate_too_many_906(self):
         "[test_cart_api.py] /__cart/addall: twice no download"
@@ -2151,9 +2005,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate3_too_many_906(self):
         "[test_cart_api.py] /__cart/addall: add plus addall no download too many 906"
@@ -2166,9 +2017,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
         self._run_json_equal(url, expected)
 
 
@@ -2199,9 +2047,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?view=browse&range=co-vims-v1484510714_ir,co-vims-v1484510890_ir&reqno=456'
         expected = {'recycled_count': 3, 'count': 3488, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 3, 'count': 3488, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_recyclebin_reset(self):
         "[test_cart_api.py] /__cart/reset: recyclebin"
@@ -2231,9 +2076,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_reset_download_ver(self):
         "[test_cart_api.py] /__cart/reset: download=1, types set to version 2 calib"
@@ -2244,16 +2086,12 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/reset.json?reqno=42&download=1&types=coiss_calib@2&recyclebin=1'
-        expected = {'total_download_count': 2, 'total_download_size': 4206293, 'total_download_size_pretty': '4M', 'product_cat_dict': {'Cassini ISS-Specific Products': {'Current': [{'slug_name': 'coiss_raw', 'tooltip': 'Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.', 'product_type': 'Raw Image', 'product_count': 1, 'download_count': 4, 'download_size': 1104427, 'download_size_pretty': '1M', 'default_checked': 1, 'product_type_with_version': 'coiss_raw@Current'}, {'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206287, 'download_size_pretty': '4M', 'default_checked': 1, 'product_type_with_version': 'coiss_calib@Current'}, {'slug_name': 'coiss_thumb', 'tooltip': 'Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 564, 'download_size_pretty': '564B', 'default_checked': 0, 'product_type_with_version': 'coiss_thumb@Current'}, {'slug_name': 'coiss_medium', 'tooltip': 'Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 2849, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'coiss_medium@Current'}, {'slug_name': 'coiss_full', 'tooltip': 'Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.', 'product_type': 'Extra Preview (full)', 'product_count': 1, 'download_count': 1, 'download_size': 259925, 'download_size_pretty': '253K', 'default_checked': 0, 'product_type_with_version': 'coiss_full@Current'}, {'slug_name': 'coiss_documentation', 'tooltip': 'RMS-curated document collection for Cassini ISS observations.', 'product_type': 'Documentation', 'product_count': 1, 'download_count': 11, 'download_size': 23558547, 'download_size_pretty': '22M', 'default_checked': 0, 'product_type_with_version': 'coiss_documentation@Current'}], '2': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4206293, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@2'}], '1': [{'slug_name': 'coiss_calib', 'tooltip': 'Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.', 'product_type': 'Calibrated Image', 'product_count': 1, 'download_count': 2, 'download_size': 4201970, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'coiss_calib@1'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 1, 'download_count': 2, 'download_size': 10170954, 'download_size_pretty': '9M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 1, 'download_count': 2, 'download_size': 385595, 'download_size_pretty': '376K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 1364814, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 4111515, 'download_size_pretty': '3M', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 1, 'download_count': 2, 'download_size': 2229982, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 1, 'download_count': 1, 'download_size': 995, 'download_size_pretty': '995B', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 1, 'download_count': 1, 'download_size': 3012, 'download_size_pretty': '2K', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 1, 'download_count': 1, 'download_size': 7892, 'download_size_pretty': '7K', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 1, 'download_count': 1, 'download_size': 215079, 'download_size_pretty': '210K', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'count': 1, 'recycled_count': 0, 'reqno': 42}
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_cart_reset_download_ver.json')
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/reset.json?types=coiss_calib@2&reqno=42&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_recyclebin(self):
@@ -2279,9 +2117,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?view=cart&reqno=456&recyclebin=1'
         expected = {'recycled_count': 0, 'count': 3495, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 3495, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_add_too_many_2_recyclebin(self):
         "[test_cart_api.py] /__cart/add: add&remove too many 2 recyclebin"
@@ -2298,7 +2133,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         # Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
@@ -2306,7 +2141,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1484509868_ir&recyclebin=1&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'error': False, 'reqno': 456}
@@ -2315,7 +2150,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
@@ -2324,7 +2159,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'reqno': 456}
@@ -2355,9 +2190,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
         expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 1, 'count': 2, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_too_many_17_recyclebin(self):
         "[test_cart_api.py] /__cart/addrange: duplicate no download too many 17 recyclebin"
@@ -2372,22 +2204,19 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 16, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=vg-iss-2-s-c4360018,vg-iss-2-s-c4360018&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 17, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 16, 'error': 'Your request to add 1 observations (OPUS IDs vg-iss-2-s-c4360018 to vg-iss-2-s-c4360018) to the cart failed. The resulting cart and recycle bin would have more than the maximum (17) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1488642557_ir&reqno=456&recyclebin=0'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 16, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=vg-iss-2-s-c4360018,vg-iss-2-s-c4360018&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_too_many_906_recyclebin_2(self):
@@ -2403,13 +2232,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE:
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
@@ -2430,9 +2259,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
 
             ###############################################
@@ -2447,9 +2273,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/data.csv?cols=opusid,instrument,planet'
         expected = b'OPUS ID,Instrument Name,Planet\n'
         self._run_csv_equal(url, expected)
-        url = '/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
-        self._run_json_equal(url, expected)
 
     def test__api_cart_datacsv_multi(self):
         "[test_cart_api.py] /__cart/datacsv: multiple"
@@ -2466,10 +2289,32 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 3, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_datacsv_bad_cols(self):
+        "[test_cart_api.py] /__cart/datacsv: bad search"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/data.csv?cols=instrumentidx'
+        self._run_status_equal(url, 404,
+                               HTTP404_UNKNOWN_SLUG('instrumentidx', '/__cart/data.csv'))
+
 
             ####################################################
             ######### /__cart/download.json: API TESTS #########
             ####################################################
+
+    def test__api_cart_download_single_hierarchical_zip_all_types(self):
+        "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip all types"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=&hierarchical=1'
+        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'documents/COISS_0xxx/Archive-SIS.pdf', 'documents/COISS_0xxx/Archive-SIS.txt', 'documents/COISS_0xxx/CISSCAL-Users-Guide.pdf', 'documents/COISS_0xxx/Calibration-Plan.pdf', 'documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf', 'documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf', 'documents/COISS_0xxx/Data-Product-SIS.pdf', 'documents/COISS_0xxx/Data-Product-SIS.txt', 'documents/COISS_0xxx/ISS-Users-Guide.docx', 'documents/COISS_0xxx/ISS-Users-Guide.pdf', 'documents/COISS_0xxx/VICAR-File-Format.pdf', 'manifest.csv', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        self._run_archive_file_equal(url, expected)
+
     def test__api_cart_download_single_no_hierarchical_zip(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
@@ -2481,6 +2326,30 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected)
+
+    def test__api_cart_download_single_no_hierarchical_zip_cols(self):
+        "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip w/cols"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&cols=target,opusid,time1&hierarchical=0'
+        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        self._run_archive_file_equal(url, expected)
+
+    def test__api_cart_download_single_no_hierarchical_zip_bad_cols(self):
+        "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip w/bad cols"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&cols=targetx,opusid,time1&hierarchical=0'
+        self._run_status_equal(url, 404,
+                               HTTP404_UNKNOWN_SLUG('targetx', '/__cart/download.json'))
 
     def test__api_cart_download_single_no_hierarchical_tar(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=tar"
@@ -3064,7 +2933,88 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
-    # Unsupported format
+    def test__api_cart_download_multiple_tar_urlonly(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tar & urlonly"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1481265970&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?fmt=tar&urlonly=0'
+        expected = ['data.csv', 'manifest.csv', 'urls.txt']
+        self._run_archive_file_equal(url, expected, fmt='tar')
+
+    def test__api_cart_download_multiple_tar_urlonly_toomany(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz & urlonly toomany"
+        settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD = 1
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1481265970&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?fmt=tar&urlonly=1'
+        expected = {'error': 'You are attempting to download more than the maximum permitted number (1) of observations in a URL archive. Please reduce the number of observations you are trying to download.'}
+        self._run_json_equal(url, expected)
+
+    # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toomany(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz toomany"
+        settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 1
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1481265970&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
+        expected = {'error': 'You are attempting to download more than the maximum permitted number (1) of observations in a data archive. Please either reduce the number of observations you are trying to download or download a URL archive instead and then retrieve the data products using "wget".'}
+        self._run_json_equal(url, expected)
+
+    # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toobig(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz toobig"
+        settings.MAX_DOWNLOAD_SIZE = 1000
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1481265970&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
+        expected = {'error': 'Sorry, this download would require 7,665,180 bytes but the maximum allowed is 1,000 bytes. Please either reduce the number of observations you are trying to download, reduce the number of data products for each observation, or download a URL archive instead and then retrieve the data products using "wget".'}
+        self._run_json_equal(url, expected)
+
+    # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toobig_cum(self):
+        "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz toobig_cum"
+        settings.MAX_CUM_DOWNLOAD_SIZE = 2000
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1481265970&reqno=457'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
+        expected = {'error': 'Sorry, maximum cumulative download size (2,000 bytes) reached for this session'}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_download_unsupported_format(self):
         "[test_cart_api.py] /__cart/download.json: fmt=xxx not supported"
         url = '/__cart/reset.json?reqno=42'
@@ -3077,9 +3027,20 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 404,
                                HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT('xxx', '/__cart/download.json'))
 
+    def test__api_cart_download_empty_tar(self):
+        "[test_cart_api.py] /__cart/download.json: empty fmt=tar"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?fmt=tar'
+        expected = {'error': 'No observations selected'}
+        self._run_json_equal(url, expected)
+
+
             ###########################################################
             ######### /api/download/<opusid>.<fmt>: API TESTS #########
             ###########################################################
+
     def test__api_download_no_hierarchical_zip(self):
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & no hierarchical"
         url = '/__cart/reset.json?reqno=42'
@@ -3096,6 +3057,15 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tar?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
+
+    def test__api_download_no_hierarchical_urlonly_tar(self):
+        "[test_cart_api.py] /__api/download/<opusid>.tar: one opus id & no hierarchical urlonly"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__api/download/co-iss-n1481265970.tar?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&urlonly=1'
+        expected = ['data.csv', 'manifest.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
     def test__api_download_no_hierarchical_tgz(self):
@@ -3133,10 +3103,3 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__api/download/co-iss-n1481265970.tgz?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tgz')
-
-
-            ################################################
-            ######### /__cart/view.html: API TESTS #########
-            ################################################
-
-    # XXX Need to implement tests

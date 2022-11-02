@@ -15,13 +15,14 @@ import settings
 class ApiUITests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        self.UPDATE_FILES = False
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -81,6 +82,167 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__dummy: normal"
         url = '/__dummy.json'
         self._run_status_equal(url, 200)
+
+
+            #####################################
+            ######### /__menu API TESTS #########
+            #####################################
+
+    def test__api_menu_default(self):
+        "[test_ui_api.py] /__menu: default"
+        url = '/__menu.json?reqno=5'
+        self._run_html_equal_file(url, 'api_menu_default.html')
+
+    def test__api_menu_default_no_reqno(self):
+        "[test_ui_api.py] /__menu: no reqno"
+        url = '/__menu.json'
+        self._run_status_equal(url, 404)
+
+    def test__api_menu_search_time(self):
+        "[test_ui_api.py] /__menu: search time"
+        url = '/__menu.json?time1=2010-01-01&reqno=5'
+        self._run_html_equal_file(url, 'api_menu_search_time.html')
+
+    def test__api_menu_search_cirs(self):
+        "[test_ui_api.py] /__menu: search cirs"
+        url = '/__menu.json?instrumentid=Cassini+CIRS&surfacegeometrytargetname=Saturn&widgets=instrumentid,target,surfacegeometrytargetname&reqno=5'
+        self._run_html_equal_file(url, 'api_menu_search_cirs.html')
+
+    def test__api_menu_search_expanded(self):
+        "[test_ui_api.py] /__menu: expanded cats"
+        url = '/__menu.json?expanded_cats=obs_wavelength,obs_ring_geometry,obs_ring_geometry-radius-longitude&reqno=5'
+        self._run_html_equal_file(url, 'api_menu_search_expanded.html')
+
+
+            ##################################################
+            ######### /__menudata_selector API TESTS #########
+            ##################################################
+
+    def test__api_metadata_selector(self):
+        "[test_ui_api.py] /__metadata_selector: default"
+        url = '/__metadata_selector.json?reqno=5'
+        self._run_html_equal_file(url, 'api_metadata_selector.html')
+
+    def test__api_metadata_selector_no_reqno(self):
+        "[test_ui_api.py] /__metadata_selector: no reqno"
+        url = '/__metadata_selector.json'
+        self._run_status_equal(url, 404)
+
+    def test__api_metadata_selector_no_cols(self):
+        "[test_ui_api.py] /__metadata_selector: no cols"
+        url = '/__metadata_selector.json?cols=&reqno=5'
+        self._run_html_equal_file(url, 'api_metadata_selector_no_cols.html')
+
+    def test__api_metadata_selector_cols_units(self):
+        "[test_ui_api.py] /__metadata_selector: cols w/units"
+        url = '/__metadata_selector.json?cols=time1:jd&reqno=5'
+        self._run_html_equal_file(url, 'api_metadata_selector_cols_units.html')
+
+    def test__api_metadata_selector_search_cirs(self):
+        "[test_ui_api.py] /__metadata_selector: search cirs"
+        url = '/__metadata_selector.json?instrumentid=Cassini+CIRS&surfacegeometrytargetname=Saturn&widgets=instrumentid,time,target,surfacegeometrytargetname&reqno=5'
+        self._run_html_equal_file(url, 'api_metadata_selector_search_cirs.html')
+
+    def test__api_metadata_selector_expanded1(self):
+        "[test_ui_api.py] /__metadata_selector: expanded cats 1"
+        url = '/__metadata_selector.json?expanded_cats=obs_general&widgets=instrumentid,target&reqno=5'
+        self._run_html_equal_file(url, 'api_metadata_selector_expanded1.html')
+
+    def test__api_metadata_selector_expanded2(self):
+        "[test_ui_api.py] /__metadata_selector: expanded cats 2"
+        url = '/__metadata_selector.json?expanded_cats=search_fields&widgets=instrumentid,target&reqno=5'
+        self._run_html_equal_file(url, 'api_metadata_selector_expanded2.html')
+
+
+            #######################################
+            ######### /__widget API TESTS #########
+            #######################################
+
+    def test__api_widget_target(self):
+        "[test_ui_api.py] /__widget: target"
+        url = '/__widget/target.html'
+        self._run_html_equal_file(url, 'api_widget_target.html')
+
+    def test__api_widget_target_constrained(self):
+        "[test_ui_api.py] /__widget: target constrained"
+        url = '/__widget/target.html?target=Saturn'
+        self._run_html_equal_file(url, 'api_widget_target_constrained.html')
+
+    def test__api_widget_mission(self):
+        "[test_ui_api.py] /__widget: mission"
+        url = '/__widget/mission.html'
+        self._run_html_equal_file(url, 'api_widget_mission.html')
+
+    def test__api_widget_time(self):
+        "[test_ui_api.py] /__widget: time"
+        url = '/__widget/time.html'
+        self._run_html_equal_file(url, 'api_widget_time.html')
+
+    def test__api_widget_greaterpixelsize(self):
+        "[test_ui_api.py] /__widget: greaterpixelsize"
+        url = '/__widget/greaterpixelsize.html'
+        self._run_html_equal_file(url, 'api_widget_greaterpixelsize.html')
+
+    def test__api_widget_surfacegeometrytargetname(self):
+        "[test_ui_api.py] /__widget: surfacegeometrytargetname"
+        url = '/__widget/surfacegeometrytargetname.html'
+        self._run_html_equal_file(url, 'api_widget_surfacegeometrytargetname.html')
+
+    def test__api_widget_productid(self):
+        "[test_ui_api.py] /__widget: productid"
+        url = '/__widget/productid.html'
+        self._run_html_equal_file(url, 'api_widget_productid.html')
+
+    def test__api_widget_opusid_constrained(self):
+        "[test_ui_api.py] /__widget: opusid constrained"
+        url = '/__widget/opusid.html?opusid_01=fred&opusid_02=ginger'
+        self._run_html_equal_file(url, 'api_widget_opusid_constrained.html')
+
+    def test__api_widget_ringgeophase_constrained(self):
+        "[test_ui_api.py] /__widget: RINGGEOphase constrained"
+        url = '/__widget/RINGGEOphase.html?RINGGEOphase1=10&RINGGEOphase2=20'
+        self._run_html_equal_file(url, 'api_widget_ringgeophase_constrained.html')
+
+    def test__api_widget_ringgeophase_constrained2(self):
+        "[test_ui_api.py] /__widget: RINGGEOphase constrained 2"
+        url = '/__widget/RINGGEOphase.html?RINGGEOphase1_01=10&RINGGEOphase2_01=20&RINGGEOphase1_02=30&RINGGEOphase2_02=40'
+        self._run_html_equal_file(url, 'api_widget_ringgeophase_constrained2.html')
+
+    def test__api_widget_wavelength(self):
+        "[test_ui_api.py] /__widget: wavelength"
+        url = '/__widget/wavelength.html'
+        self._run_html_equal_file(url, 'api_widget_wavelength.html')
+
+    def test__api_widget_bad(self):
+        "[test_ui_api.py] /__widget: bad slug"
+        url = '/__widget/badslug.html'
+        self._run_status_equal(url, 404)
+
+
+            ###########################################
+            ######### /__initdetail API TESTS #########
+            ###########################################
+
+    def test__api_initdetail_covims(self):
+        "[test_ui_api.py] /__initdetail: co-vims-v1484504730_vis"
+        url = '/__initdetail/co-vims-v1484504730_vis.html'
+        self._run_html_equal_file(url, 'api_initdetail_covims.html')
+
+    def test__api_initdetail_bad(self):
+        "[test_ui_api.py] /__initdetail: bad opusid"
+        url = '/__initdetail/bad.html'
+        self._run_status_equal(url, 404)
+
+    def test__api_initdetail_in_cart(self):
+        "[test_ui_api.py] /__initdetail: co-iss-n1460960653 in cart"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1460960653&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__initdetail/co-iss-n1460960653.html'
+        self._run_html_equal_file(url, 'api_initdetail_in_cart.html')
 
 
             #############################################
@@ -2556,7 +2718,3 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Triton&SURFACEGEOtriton_centerresolution2_102=70&unit-SURFACEGEOtriton_centerresolution_102=km%2Fpixel&time1_101=1989-08-16T00:00:00.000&time2_101=1989-08-26T00:00:00.000&qtype-time_101=any&reqno=68'
         expected = {"new_url": "surfacegeometrytargetname=Triton&SURFACEGEOtriton_centerresolution2=70&unit-SURFACEGEOtriton_centerresolution=km_pixel&time1=1989-08-16T00:00:00.000&time2=1989-08-26T00:00:00.000&qtype-time=any&unit-time=ymdhms&cols=opusid,instrument,planet,target,time1,observationduration&widgets=SURFACEGEOtriton_centerresolution,surfacegeometrytargetname,time&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"surfacegeometrytargetname": "Triton"}, {"SURFACEGEOtriton_centerresolution2": "70"}, {"unit-SURFACEGEOtriton_centerresolution": "km_pixel"}, {"time1": "1989-08-16T00:00:00.000"}, {"time2": "1989-08-26T00:00:00.000"}, {"qtype-time": "any"}, {"unit-time": "ymdhms"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "SURFACEGEOtriton_centerresolution,surfacegeometrytargetname,time"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
         self._run_json_equal(url, expected)
-
-# http://pds-rings-tools.seti.org/#/planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_VG1_ISS_3353709_N
-# http://pds-rings-tools.seti.org/#/planet=Jupiter&target=EUROPA&missionid=Voyager&view=detail&browse=data&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=missionid,planet,target&widgets2=&detail=J_IMG_VG2_ISS_2076737_N
-# https://opus.pds-rings.seti.org/#/mission=Cassini&target=Jupiter,Ganymede,Europa,Callisto,Io&instrument=Cassini+ISS&view=browse&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=opusid,instrumentid,planet,target,time1,observationduration&widgets=instrument,mission,planet,target&widgets2=&detail=

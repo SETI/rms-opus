@@ -1,12 +1,18 @@
 [run]
 branch = True
-include = */application/*,*/opus_support.py
+include =
+    apps/*
+    test_api/*
+    */opus_support.py
+omit =
+    manage.py
+    test_api/api_test_helper.py
+    test_api/test_result_counts.py
 
 [html]
-Title = Coverage Report for OPUS Tests
+Title = Coverage Report for OPUS Backend Tests
 
 [report]
 exclude_lines =
   pragma: no cover
-  def __repr__
   def __unicode__

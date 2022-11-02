@@ -1,0 +1,177 @@
+{
+  "total_download_count": 30,
+  "total_download_size": 3152341,
+  "total_download_size_pretty": "3M",
+  "product_cat_dict": {
+    "Cassini VIMS-Specific Products": {
+      "Current": [
+        {
+          "slug_name": "covims_raw",
+          "tooltip": "Raw data files (*.qub) for Cassini VIMS. Observations are in binary format, uncalibrated, and contain raw data numbers from both the VIS and IR detectors. Associated labels (*.lbl) are text files that contain information about the observation, including how to interpret the binary data.",
+          "product_type": "Raw Cube",
+          "product_count": 17,
+          "download_count": 21,
+          "download_size": 2919003,
+          "download_size_pretty": "2M",
+          "default_checked": 1,
+          "product_type_with_version": "covims_raw@Current"
+        },
+        {
+          "slug_name": "covims_thumb",
+          "tooltip": "Thumbnail-size (131x69) JPEGs (*.jpeg_small) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.",
+          "product_type": "Extra Preview (thumbnail)",
+          "product_count": 17,
+          "download_count": 9,
+          "download_size": 17411,
+          "download_size_pretty": "17K",
+          "default_checked": 0,
+          "product_type_with_version": "covims_thumb@Current"
+        },
+        {
+          "slug_name": "covims_medium",
+          "tooltip": "Medium-size (786x414) JPEGs (*.jpeg) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.",
+          "product_type": "Extra Preview (medium)",
+          "product_count": 17,
+          "download_count": 9,
+          "download_size": 183437,
+          "download_size_pretty": "179K",
+          "default_checked": 0,
+          "product_type_with_version": "covims_medium@Current"
+        },
+        {
+          "slug_name": "covims_full",
+          "tooltip": "Full-size (131x69) TIFFs (*.tiff) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.",
+          "product_type": "Extra Preview (full)",
+          "product_count": 17,
+          "download_count": 9,
+          "download_size": 455148,
+          "download_size_pretty": "444K",
+          "default_checked": 0,
+          "product_type_with_version": "covims_full@Current"
+        },
+        {
+          "slug_name": "covims_documentation",
+          "tooltip": "RMS-curated document collection for Cassini VIMS observations.",
+          "product_type": "Documentation",
+          "product_count": 17,
+          "download_count": 4,
+          "download_size": 7846549,
+          "download_size_pretty": "7M",
+          "default_checked": 0,
+          "product_type_with_version": "covims_documentation@Current"
+        }
+      ]
+    },
+    "Metadata Products": {
+      "Current": [
+        {
+          "slug_name": "rms_index",
+          "tooltip": "Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "RMS Node Augmented Index",
+          "product_count": 17,
+          "download_count": 2,
+          "download_size": 1958899,
+          "download_size_pretty": "1M",
+          "default_checked": 0,
+          "product_type_with_version": "rms_index@Current"
+        },
+        {
+          "slug_name": "supplemental_index",
+          "tooltip": "Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Supplemental Index",
+          "product_count": 17,
+          "download_count": 2,
+          "download_size": 1786592,
+          "download_size_pretty": "1M",
+          "default_checked": 0,
+          "product_type_with_version": "supplemental_index@Current"
+        },
+        {
+          "slug_name": "inventory",
+          "tooltip": "Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Target Body Inventory",
+          "product_count": 17,
+          "download_count": 2,
+          "download_size": 383776,
+          "download_size_pretty": "374K",
+          "default_checked": 0,
+          "product_type_with_version": "inventory@Current"
+        },
+        {
+          "slug_name": "planet_geometry",
+          "tooltip": "Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Planet Geometry Index",
+          "product_count": 17,
+          "download_count": 2,
+          "download_size": 1485943,
+          "download_size_pretty": "1M",
+          "default_checked": 0,
+          "product_type_with_version": "planet_geometry@Current"
+        },
+        {
+          "slug_name": "ring_geometry",
+          "tooltip": "Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Ring Geometry Index",
+          "product_count": 17,
+          "download_count": 2,
+          "download_size": 2382135,
+          "download_size_pretty": "2M",
+          "default_checked": 0,
+          "product_type_with_version": "ring_geometry@Current"
+        }
+      ]
+    },
+    "Browse Products": {
+      "Current": [
+        {
+          "slug_name": "browse_thumb",
+          "tooltip": "Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (thumbnail)",
+          "product_count": 17,
+          "download_count": 9,
+          "download_size": 82840,
+          "download_size_pretty": "80K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_thumb@Current"
+        },
+        {
+          "slug_name": "browse_small",
+          "tooltip": "Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (small)",
+          "product_count": 17,
+          "download_count": 9,
+          "download_size": 227327,
+          "download_size_pretty": "221K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_small@Current"
+        },
+        {
+          "slug_name": "browse_medium",
+          "tooltip": "Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (medium)",
+          "product_count": 17,
+          "download_count": 9,
+          "download_size": 233338,
+          "download_size_pretty": "227K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_medium@Current"
+        },
+        {
+          "slug_name": "browse_full",
+          "tooltip": "Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (full)",
+          "product_count": 17,
+          "download_count": 9,
+          "download_size": 233338,
+          "download_size_pretty": "227K",
+          "default_checked": 1,
+          "product_type_with_version": "browse_full@Current"
+        }
+      ]
+    }
+  },
+  "error": false,
+  "count": 17,
+  "recycled_count": 0,
+  "reqno": 1234567
+}
