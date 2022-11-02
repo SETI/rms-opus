@@ -213,7 +213,6 @@ var o_cart = {
 
         // Init tooltipster after popover is about to show.
         $(".op-download-links-btn").on("shown.bs.popover", function () {
-            console.log("shown.bs.popover");
             $(".op-download-popover-tooltip").tooltipster({
                 maxWidth: opus.tooltipsMaxWidth,
                 theme: opus.tooltipsTheme,
@@ -223,7 +222,6 @@ var o_cart = {
 
         // Toggle popover window when clicking download history button at the footer
         $(".op-download-links-btn").on("click", function() {
-            console.log("1). toggle popover");
             if ($(".op-links-popover").hasClass("show")) {
                 $(".op-download-links-btn").popover("hide");
             } else {
@@ -235,17 +233,16 @@ var o_cart = {
         });
 
         // Close popover when clicking "x" button on the popover title
-        $(document).on("click", ".op-close-download-links-history", function() {
-            console.log("hide popover");
+        $(document).on("click", ".op-close-download-links-history", function(e) {
             $(".op-download-links-btn").popover("hide");
         });
 
-        $(document).on("click", ".op-clear-history-btn", function() {
+        $(document).on("click", ".op-clear-history-btn", function(e) {
             o_cart.clearDownloadLinksHistory();
         });
 
         // Handle the "How to Cite OPUS" button
-        $(document).on("click", ".op-cite-opus-btn", function() {
+        $(document).on("click", ".op-cite-opus-btn", function(e) {
             if (!$(".op-cite-opus-btn").hasClass("op-prevent-pointer-events")) {
                 opus.displayHelpPane("citing");
             }
@@ -384,7 +381,6 @@ var o_cart = {
 
         // Open the download links popover so the user can see the spinner
         //$(".op-download-links-btn").show();
-        console.log("1) popover show");
         if (!$(".op-links-popover").hasClass("show")) {
             $(".op-download-links-btn").popover("show");
         }
@@ -407,7 +403,6 @@ var o_cart = {
                 if (data.error !== undefined) {
                     // hide the spinner and display error message in an open modal
                     $(".op-download-links-contents .spinner").hide();
-                    console.log("2) popover update");
                     $(".op-download-links-btn").popover("update");
                     $("#op-download-links-error-msg-modal .modal-body").text(data.error);
                     $("#op-download-links-error-msg-modal").modal("show");
@@ -417,7 +412,7 @@ var o_cart = {
                     // (when popover is open) are synced up with updates. To achieve this, we have to call show
                     // method from popover to update content, and make sure the selector managing DOM are selecting
                     // the same elements in both #op-download-links and .popover-body. (length === 2).
-                    $(".op-download-links-btn").show();
+                    $(".op-download-links-btn").popover("update");
 
                     // Set the max height for the window of download links history
                     $(".popover-body").css("max-height", downloadLinksPBMaxHeight);
@@ -465,7 +460,6 @@ var o_cart = {
          * Clear the download links history in the popover window
          */
         $(".op-zipped-files li:not(:first-child)").remove();
-        console.log("3) popover update");
         $(".op-download-links-btn").popover("update");
         $(".op-clear-history-btn").addClass("op-a-tag-btn-disabled");
         $(".op-download-links-btn").addClass("op-a-tag-btn-disabled");
