@@ -45,7 +45,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_about_pdf(self):
         "[test_help_api.py] /__help: about pdf"
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux': # pragma: no cover
             url = '/__help/about.pdf'
             self._run_status_equal(url, 200)
 
@@ -56,7 +56,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_volumes_pdf(self):
         "[test_help_api.py] /__help: volumes pdf"
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux': # pragma: no cover
             url = '/__help/volumes.pdf'
             self._run_status_equal(url, 200)
 
@@ -67,7 +67,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_faq_pdf(self):
         "[test_help_api.py] /__help: faq pdf"
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux': # pragma: no cover
             url = '/__help/faq.pdf'
             self._run_status_equal(url, 200)
 
@@ -78,7 +78,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_gettingstarted_pdf(self):
         "[test_help_api.py] /__help: gettingstarted pdf"
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux': # pragma: no cover
             url = '/__help/gettingstarted.pdf'
             self._run_status_equal(url, 200)
 
@@ -99,7 +99,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_citing_pdf(self):
         "[test_help_api.py] /__help: citing pdf"
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux': # pragma: no cover
             url = '/__help/citing.pdf'
             self._run_status_equal(url, 200)
 
@@ -113,13 +113,13 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_apiguide_exp(self):
         "[test_help_api.py] /help: apiguide pdf"
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux': # pragma: no cover
             url = '/apiguide.pdf'
             self._run_status_equal(url, 200)
 
     def test__api_help_apiguide_pdf(self):
         "[test_help_api.py] /__help: apiguide pdf"
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux': # pragma: no cover
             url = '/__help/apiguide.pdf'
             self._run_status_equal(url, 200)
 
