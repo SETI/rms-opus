@@ -224,7 +224,14 @@ var o_cart = {
         // Toggle popover window when clicking download history button at the footer
         $(".op-download-links-btn").on("click", function() {
             console.log("1). toggle popover");
-            $(".op-download-links-btn").popover("toggle");
+            if ($(".op-links-popover").hasClass("show")) {
+                $(".op-download-links-btn").popover("hide");
+            } else {
+                $(".op-download-links-btn").popover("show");
+                $(".op-download-links-contents .spinner").hide();
+            }
+            // Properly position the popover
+            $(".op-download-links-btn").popover("update");
         });
 
         // Close popover when clicking "x" button on the popover title
@@ -378,11 +385,11 @@ var o_cart = {
         // Open the download links popover so the user can see the spinner
         //$(".op-download-links-btn").show();
         console.log("1) popover show");
-        $(".op-download-links-btn").popover("show");
-        $(".op-download-links-contents .spinner").show();
-        // prevent popover window from jumping when displaying the spinner
-        console.log("1) popover update");
+        if (!$(".op-links-popover").hasClass("show")) {
+            $(".op-download-links-btn").popover("show");
+        }
         $(".op-download-links-btn").popover("update");
+        $(".op-download-links-contents .spinner").show();
 
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -416,11 +423,13 @@ var o_cart = {
                     $(".popover-body").css("max-height", downloadLinksPBMaxHeight);
                     $(".op-download-links-contents .op-empty-history").remove();
                     $(".op-download-links-contents .spinner").hide();
-                    let latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
+                    let filename = data.filename.replace("<URL>", "");
+                    let latestLink = $(`<li><a href = "${filename}" download>${filename}</a></li>`);
                     $(".op-download-links-contents ul.op-zipped-files li:nth-child(1)").after(latestLink);
                     $(".op-clear-history-btn").removeClass("op-a-tag-btn-disabled");
                     $(".op-download-links-btn").removeClass("op-a-tag-btn-disabled");
                     o_cart.enablePSinDownloadLinksWindow();
+                    $(".op-download-links-btn").popover("update");
                 }
             },
             error: function(e) {
