@@ -6,6 +6,9 @@
 #
 # These are generally related to conversion of values to/from various text
 # formats.
+#
+# NOTE: THIS FILE HAS 100% TEST COVERAGE AND ANY FUTURE MODIFICATIONS MUST
+#       MAINTAIN THIS LEVEL OF COVERAGE.
 ################################################################################
 
 import math
@@ -38,8 +41,7 @@ def _parse_two_field_sclk(sclk, ndigits, sep, modval, scname):
                     or a period.
         modval      the modulus value of the second field.
         scname      name of the spacecraft, used for error messages.
-        """
-
+    """
     # Check the partition number before ignoring it
     parts = sclk.split('/')
     if len(parts) > 2:
@@ -100,8 +102,7 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
                     or a period.
         modval      the modulus value of the second field.
         scname      name of the spacecraft, used for error messages.
-        """
-
+    """
     # Extract fields
     hours = int(value)
     value -= hours
@@ -136,23 +137,20 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
 
 def parse_galileo_sclk(sclk, **kwargs):
     """Convert a Galileo clock string to a numeric value."""
-
     return _parse_two_field_sclk(sclk, 8, '.', 91, 'Galileo')
 
 def format_galileo_sclk(value, **kwargs):
-    """Convert a number into a valid Galileo clock string.
-    """
-
+    """Convert a number into a valid Galileo clock string."""
     return _format_two_field_sclk(value, 8, '.', 91, 'Galileo')
 
 class GalileoTest(unittest.TestCase):
     def test_parse_extra_slash(self):
-        "Galileo parse: Two slashes"
+        """Galileo parse: Two slashes"""
         with self.assertRaises(ValueError):
             parse_galileo_sclk('1/2/03464059.00')
 
     def test_parse_bad_partition(self):
-        "Galileo parse: Partition number other than 1"
+        """Galileo parse: Partition number other than 1"""
         with self.assertRaises(ValueError):
             parse_galileo_sclk('2/03464059.00')
         with self.assertRaises(ValueError):
@@ -169,7 +167,7 @@ class GalileoTest(unittest.TestCase):
             parse_galileo_sclk('1/03464059.00.00')
 
     def test_parse_bad_value(self):
-        "Galileo parse: Bad sclk value"
+        """Galileo parse: Bad sclk value"""
         with self.assertRaises(ValueError):
             parse_galileo_sclk('1/a')
         with self.assertRaises(ValueError):
@@ -194,27 +192,25 @@ class GalileoTest(unittest.TestCase):
             parse_galileo_sclk('1/-34640590.00')
 
     def test_parse_good_sclk(self):
-        "Galileo parse: Good sclk format"
+        """Galileo parse: Good sclk format"""
+        self.assertEqual(parse_galileo_sclk('1'), 1)
         self.assertEqual(parse_galileo_sclk('1.'), 1)
         self.assertEqual(parse_galileo_sclk('1.0'), 1)
         self.assertEqual(parse_galileo_sclk('1.00'), 1)
         self.assertEqual(parse_galileo_sclk('1/03464059.00'), 3464059)
-        self.assertAlmostEqual(parse_galileo_sclk('1/03464059.90'),
-                               3464059.989010989)
-        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.90'),
-                               3464059.989010989)
-        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.9'),
-                               3464059.989010989)
-        self.assertAlmostEqual(parse_galileo_sclk('03464059.90'),
-                               3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('1/03464059.90'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.90'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.9'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059.90'), 3464059.989010989)
 
     def test_format_good_sclk(self):
-        "Galileo format: Good value"
+        """Galileo format: Good value"""
         self.assertEqual(format_galileo_sclk(0), '00000000.00')
         self.assertEqual(format_galileo_sclk(1234), '00001234.00')
         self.assertEqual(format_galileo_sclk(12345678), '12345678.00')
         self.assertEqual(format_galileo_sclk(1234.989010989), '00001234.90')
         self.assertEqual(format_galileo_sclk(99999999.989010989), '99999999.90')
+        self.assertEqual(format_galileo_sclk(99999999.995010989), '100000000.00')
 
 
 ################################################################################
@@ -232,7 +228,6 @@ class GalileoTest(unittest.TestCase):
 
 def parse_new_horizons_sclk(sclk, **kwargs):
     """Convert a New Horizons clock string to a numeric value."""
-
     original_sclk = sclk
 
     # Check for partition number
@@ -256,19 +251,17 @@ def parse_new_horizons_sclk(sclk, **kwargs):
     return value
 
 def format_new_horizons_sclk(value, **kwargs):
-    """Convert a number into a valid New Horizons clock string.
-    """
-
+    """Convert a number into a valid New Horizons clock string."""
     return _format_two_field_sclk(value, 10, ':', 50000, 'New Horizons')
 
 class NewHorizonsTest(unittest.TestCase):
     def test_parse_extra_slash(self):
-        "NewHorizons parse: Two slashes"
+        """NewHorizons parse: Two slashes"""
         with self.assertRaises(ValueError):
             parse_new_horizons_sclk('1/2/0003103485:49000')
 
     def test_parse_bad_partition(self):
-        "NewHorizons parse: Partition number other than 1 or 3"
+        """NewHorizons parse: Partition number other than 1 or 3"""
         with self.assertRaises(ValueError):
             parse_new_horizons_sclk('4/0003103485:49000')
         with self.assertRaises(ValueError):
@@ -287,7 +280,7 @@ class NewHorizonsTest(unittest.TestCase):
             parse_new_horizons_sclk('1/0003103485:49000:49000')
 
     def test_parse_bad_value(self):
-        "NewHorizons parse: Bad sclk value"
+        """NewHorizons parse: Bad sclk value"""
         with self.assertRaises(ValueError):
             parse_new_horizons_sclk('1/a')
         with self.assertRaises(ValueError):
@@ -316,34 +309,25 @@ class NewHorizonsTest(unittest.TestCase):
             parse_new_horizons_sclk('3/0149999999:49999')
 
     def test_parse_good_sclk(self):
-        "NewHorizons parse: Good sclk format"
+        """NewHorizons parse: Good sclk format"""
         self.assertEqual(parse_new_horizons_sclk('1:'), 1)
         self.assertEqual(parse_new_horizons_sclk('1:0'), 1)
         self.assertEqual(parse_new_horizons_sclk('1:00'), 1)
         self.assertEqual(parse_new_horizons_sclk('1/0003103485:25'), 3103485.5)
-        self.assertEqual(parse_new_horizons_sclk('1/0003103485:25000'),
-                         3103485.5)
-        self.assertEqual(parse_new_horizons_sclk('3/1003103485:25000'),
-                         1003103485.5)
-        self.assertEqual(parse_new_horizons_sclk('1/3103485:25000'),
-                         3103485.5)
-        self.assertEqual(parse_new_horizons_sclk('1/3103485:25'),
-                         3103485.5)
-        self.assertEqual(parse_new_horizons_sclk('0003103485:25000'),
-                         3103485.5)
-        self.assertEqual(parse_new_horizons_sclk('3/9999999999:49999'),
-                         9999999999.99998)
-        self.assertEqual(parse_new_horizons_sclk('1/0149999999:49999'),
-                         149999999.99998)
-        self.assertEqual(parse_new_horizons_sclk('3/0150000000:00001'),
-                         150000000.00002)
+        self.assertEqual(parse_new_horizons_sclk('1/0003103485:25000'), 3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('3/1003103485:25000'), 1003103485.5)
+        self.assertEqual(parse_new_horizons_sclk('1/3103485:25000'), 3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('1/3103485:25'), 3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('0003103485:25000'), 3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('3/9999999999:49999'), 9999999999.99998)
+        self.assertEqual(parse_new_horizons_sclk('1/0149999999:49999'), 149999999.99998)
+        self.assertEqual(parse_new_horizons_sclk('3/0150000000:00001'), 150000000.00002)
 
     def test_format_good_sclk(self):
-        "NewHorizons format: Good value"
+        """NewHorizons format: Good value"""
         self.assertEqual(format_new_horizons_sclk(0), '0000000000:00000')
         self.assertEqual(format_new_horizons_sclk(1234), '0000001234:00000')
-        self.assertEqual(format_new_horizons_sclk(1234567890),
-                         '1234567890:00000')
+        self.assertEqual(format_new_horizons_sclk(1234567890), '1234567890:00000')
         self.assertEqual(format_new_horizons_sclk(1234.5), '0000001234:25000')
 
 
@@ -360,23 +344,20 @@ class NewHorizonsTest(unittest.TestCase):
 
 def parse_cassini_sclk(sclk, **kwargs):
     """Convert a Cassini clock string to a numeric value."""
-
     return _parse_two_field_sclk(sclk, 10, '.', 256, 'Cassini')
 
 def format_cassini_sclk(value, **kwargs):
-    """Convert a number into a valid Cassini clock string.
-    """
-
+    """Convert a number into a valid Cassini clock string."""
     return _format_two_field_sclk(value, 10, '.', 256, 'Cassini')
 
 class CassiniTest(unittest.TestCase):
     def test_parse_extra_slash(self):
-        "Cassini parse: Two slashes"
+        """Cassini parse: Two slashes"""
         with self.assertRaises(ValueError):
             parse_cassini_sclk('1/2/1294341579.000')
 
     def test_parse_bad_partition(self):
-        "Cassini parse: Partition number other than 1"
+        """Cassini parse: Partition number other than 1"""
         with self.assertRaises(ValueError):
             parse_cassini_sclk('2/1294341579.000')
         with self.assertRaises(ValueError):
@@ -393,7 +374,7 @@ class CassiniTest(unittest.TestCase):
             parse_cassini_sclk('1/1294341579.000.000')
 
     def test_parse_bad_value(self):
-        "Cassini parse: Bad sclk value"
+        """Cassini parse: Bad sclk value"""
         with self.assertRaises(ValueError):
             parse_cassini_sclk('1/a')
         with self.assertRaises(ValueError):
@@ -418,20 +399,17 @@ class CassiniTest(unittest.TestCase):
             parse_cassini_sclk('1/-34640590.000')
 
     def test_parse_good_sclk(self):
-        "Cassini parse: Good sclk format"
+        """Cassini parse: Good sclk format"""
         self.assertEqual(parse_cassini_sclk('1.'), 1)
         self.assertEqual(parse_cassini_sclk('1.0'), 1)
         self.assertEqual(parse_cassini_sclk('1.00'), 1)
         self.assertEqual(parse_cassini_sclk('1/03464059.00'), 3464059)
-        self.assertEqual(parse_cassini_sclk('1/0003464059.064'),
-                         3464059.25)
-        self.assertEqual(parse_cassini_sclk('1/3464059.064'),
-                         3464059.25)
-        self.assertEqual(parse_cassini_sclk('03464059.064'),
-                         3464059.25)
+        self.assertEqual(parse_cassini_sclk('1/0003464059.064'), 3464059.25)
+        self.assertEqual(parse_cassini_sclk('1/3464059.064'), 3464059.25)
+        self.assertEqual(parse_cassini_sclk('03464059.064'), 3464059.25)
 
     def test_format_good_sclk(self):
-        "Cassini format: Good value"
+        """Cassini format: Good value"""
         self.assertEqual(format_cassini_sclk(0), '0000000000.000')
         self.assertEqual(format_cassini_sclk(1234), '0000001234.000')
         self.assertEqual(format_cassini_sclk(1234567890), '1234567890.000')
@@ -459,7 +437,6 @@ CASSINI_ORBIT_NAME = {-1:'000', 0:'00A', 1:'00B', 2:'00C'}
 
 def parse_cassini_orbit(orbit, **kwargs):
     """Convert Cassini orbit name to an integer."""
-
     try:
         intval = int(orbit)
         if intval >= 3:
@@ -478,7 +455,6 @@ def parse_cassini_orbit(orbit, **kwargs):
 
 def format_cassini_orbit(value, **kwargs):
     """Convert an internal number for a Cassini orbit to its displayed value."""
-
     if value >= 3:
         return '%03d' % value
 
@@ -489,7 +465,7 @@ def format_cassini_orbit(value, **kwargs):
 
 class CassiniOrbitTest(unittest.TestCase):
     def test_parse_bad_orbit(self):
-        "CassiniOrbit parse: Bad orbit"
+        """CassiniOrbit parse: Bad orbit"""
         with self.assertRaises(ValueError):
             parse_cassini_orbit('-1')
         with self.assertRaises(ValueError):
@@ -498,7 +474,7 @@ class CassiniOrbitTest(unittest.TestCase):
             parse_cassini_orbit('2')
 
     def test_parse_good_orbit(self):
-        "CassiniOrbit parse: Good orbit"
+        """CassiniOrbit parse: Good orbit"""
         self.assertEqual(parse_cassini_orbit('0'), -1)
         self.assertEqual(parse_cassini_orbit('A'), 0)
         self.assertEqual(parse_cassini_orbit('0A'), 0)
@@ -514,12 +490,12 @@ class CassiniOrbitTest(unittest.TestCase):
         self.assertEqual(parse_cassini_orbit('4'), 4)
 
     def test_format_bad_orbit(self):
-        "CassiniOrbit format: Bad orbit"
+        """CassiniOrbit format: Bad orbit"""
         with self.assertRaises(ValueError):
             format_cassini_orbit(-2)
 
     def test_format_good_orbit(self):
-        "CassiniOrbit format: Good orbit"
+        """CassiniOrbit format: Good orbit"""
         self.assertEqual(format_cassini_orbit(-1), '000')
         self.assertEqual(format_cassini_orbit(0), '00A')
         self.assertEqual(format_cassini_orbit(1), '00B')
@@ -566,7 +542,6 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
     explicitly stated partition number must be compatible with the associated
     planetary flyby.
     """
-
     assert planet in (None, 5, 6, 7, 8), 'Invalid planet value: ' + str(planet)
 
     # Check the partition number before ignoring it
@@ -634,9 +609,7 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
     return ints[0] + (ints[1] + (ints[2]-1) / 800.) / 60.
 
 def format_voyager_sclk(value, sep=':', fields=3, **kwargs):
-    """Convert a number in units of FDS hours into a valid Voyager clock string.
-    """
-
+    """Convert a number in units of FDS hours to valid Voyager clock string."""
     assert sep in (':', '.'), 'Separator must be ":" or ".": ' + str(sep)
     assert fields in (2,3), 'Fields must be 2 or 3: ' + str(fields)
 
@@ -668,7 +641,6 @@ def format_voyager_sclk(value, sep=':', fields=3, **kwargs):
         if seconds > 800:
             seconds -= 800
             minutes += 1
-
             if minutes >= 60:
                 minutes -= 60
                 hours += 1
@@ -688,12 +660,12 @@ def format_voyager_sclk(value, sep=':', fields=3, **kwargs):
 
 class VoyagerTest(unittest.TestCase):
     def test_parse_extra_slash(self):
-        "Cassini parse: Two slashes"
+        """Voyager parse: Two slashes"""
         with self.assertRaises(ValueError):
             parse_voyager_sclk('1/2/08966:30:752')
 
     def test_parse_bad_partition(self):
-        "Voyager parse: Bad partition/planet"
+        """""Voyager parse: Bad partition/planet"""""
         with self.assertRaises(ValueError):
             parse_voyager_sclk('1/08966:30:752')
         with self.assertRaises(ValueError):
@@ -726,7 +698,9 @@ class VoyagerTest(unittest.TestCase):
             parse_voyager_sclk('5/08966:30:752', planet=8)
 
     def test_parse_bad_sclk(self):
-        "Voyager parse: Bad sclk"
+        """Voyager parse: Bad sclk"""
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('1:0:1:0')
         with self.assertRaises(ValueError):
             parse_voyager_sclk('0:0:0')
         with self.assertRaises(ValueError):
@@ -747,7 +721,7 @@ class VoyagerTest(unittest.TestCase):
             parse_voyager_sclk('a:0:0')
 
     def test_parse_good_partition(self):
-        "Voyager parse: Good partition/planet"
+        """Voyager parse: Good partition/planet"""
         self.assertAlmostEqual(parse_voyager_sclk('2/0:0:1'), 0)
         self.assertAlmostEqual(parse_voyager_sclk('3/0:0:1'), 0)
         self.assertAlmostEqual(parse_voyager_sclk('4/0:0:1'), 0)
@@ -757,7 +731,7 @@ class VoyagerTest(unittest.TestCase):
         self.assertAlmostEqual(parse_voyager_sclk('4/0:0:1', planet=8), 0)
 
     def test_parse_good_sclk(self):
-        "Voyager parse: Good sclk"
+        """Voyager parse: Good sclk"""
         self.assertEqual(parse_voyager_sclk('0'), 0)
         self.assertEqual(parse_voyager_sclk('0:0'), 0)
         self.assertEqual(parse_voyager_sclk('0:0:1'), 0)
@@ -768,12 +742,31 @@ class VoyagerTest(unittest.TestCase):
         self.assertEqual(parse_voyager_sclk('1000.00.001'), 1000)
         self.assertEqual(parse_voyager_sclk('100000'), 1000)
 
-    def test_format_good_sclk(self):
+    def test_format_good_sclk_3(self):
+        """Voyager format: Good sclk 3 fields"""
         self.assertEqual(format_voyager_sclk(0), '00000:00:001')
         self.assertEqual(format_voyager_sclk(.5/60), '00000:00:401')
         self.assertEqual(format_voyager_sclk(1/60), '00000:01:001')
         self.assertEqual(format_voyager_sclk(1), '00001:00:001')
         self.assertEqual(format_voyager_sclk(5000), '05000:00:001')
+        self.assertEqual(format_voyager_sclk(59.97/3600), '00000:01:001')
+        self.assertEqual(format_voyager_sclk(5000.9999999), '05001:00:001')
+        self.assertEqual(format_voyager_sclk(5000, sep='.'), '05000.00.001')
+
+    def test_format_good_sclk_2(self):
+        """Voyager format: Good sclk 2 fields"""
+        self.assertEqual(format_voyager_sclk(0, fields=2), '00000:00')
+        self.assertEqual(format_voyager_sclk(.39/60, fields=2), '00000:00')
+        self.assertEqual(format_voyager_sclk(.5/60, fields=2), '00000:01')
+        self.assertEqual(format_voyager_sclk(59.6/60, fields=2), '00001:00')
+        self.assertEqual(format_voyager_sclk(1, fields=2), '00001:00')
+        self.assertEqual(format_voyager_sclk(5000, fields=2), '05000:00')
+        self.assertEqual(format_voyager_sclk(5000, fields=2, sep='.'), '05000.00')
+
+    def test_format_bad_sclk(self):
+        """Voyager format: Bad sclk"""
+        with self.assertRaises(ValueError):
+            format_voyager_sclk(65536)
 
 
 ################################################################################
@@ -783,15 +776,18 @@ class VoyagerTest(unittest.TestCase):
 
 def parse_time(iso, unit=None, **kwargs):
     iso = str(iso)
+    # For raw numbers, try to use the current unit to figure out what
+    # to do
     try:
-        # For raw numbers, try to use the current unit to figure out what
-        # to do
         et = float(iso)
+    except:
+        pass
+    else:
         if not math.isfinite(et):
             raise ValueError('Invalid time syntax: '+iso)
         if unit == 'et':
             return julian.tai_from_tdb(et)
-        elif unit == 'jd':
+        if unit == 'jd':
             iso = 'JD' + iso
         elif unit == 'jed':
             iso = 'JED' + iso
@@ -799,8 +795,6 @@ def parse_time(iso, unit=None, **kwargs):
             iso = 'MJD' + iso
         elif unit == 'mjed':
             iso = 'MJED' + iso
-    except:
-        pass
     try:
         (day, sec, time_type) = julian.day_sec_type_from_string(iso)
     except:
@@ -857,83 +851,93 @@ class TimeTest(unittest.TestCase):
     # all that here. We just do a couple of simple tests to make sure the
     # interface is working.
     def test_format_ymd(self):
-        "Time format: YMD"
+        """Time format: YMD"""
         self.assertEqual(format_time_ymd(0), '1999-12-31T23:59:28.000')
         self.assertEqual(format_time_ymd(600000000), '2019-01-05T10:39:23.000')
 
     def test_format_ydoy(self):
-        "Time format: YDOY"
+        """Time format: YDOY"""
         self.assertEqual(format_time_ydoy(0), '1999-365T23:59:28.000')
         self.assertEqual(format_time_ydoy(600000000), '2019-005T10:39:23.000')
 
     def test_format_jd(self):
-        "Time format: JD"
+        """Time format: JD"""
         self.assertEqual(format_time_jd(0), 'JD2451544.49962963')
         self.assertEqual(format_time_jd(600000000), 'JD2458488.94401620')
 
     def test_format_jed(self):
-        "Time format: JED"
+        """Time format: JED"""
         self.assertEqual(format_time_jed(0), 'JED2451544.50037250')
         self.assertEqual(format_time_jed(600000000), 'JED2458488.94481695')
 
     def test_format_mjd(self):
-        "Time format: MJD"
+        """Time format: MJD"""
         self.assertEqual(format_time_mjd(0), 'MJD51543.99962963')
         self.assertEqual(format_time_mjd(600000000), 'MJD58488.44401620')
 
     def test_format_mjed(self):
-        "Time format: MJED"
+        """Time format: MJED"""
         self.assertEqual(format_time_mjed(0), 'MJED51544.00037250')
         self.assertEqual(format_time_mjed(600000000), 'MJED58488.44481695')
 
     def test_format_et(self):
-        "Time format: ET"
+        """Time format: ET"""
         self.assertEqual(format_time_et(0), '-43167.816')
         self.assertEqual(format_time_et(600000000), '599956832.184')
 
     def test_parse(self):
-        "Time parse"
+        """Time parse"""
         self.assertEqual(parse_time('1999-12-31T23:59:28.000'), 0)
         self.assertEqual(parse_time('2019-005T10:39:23.000'), 600000000)
         self.assertEqual(julian.jd_from_time(julian.time_from_jd(0)), 0)
-        self.assertAlmostEqual(julian.jd_from_time(
-                                julian.time_from_jd(1000.123)),
+        self.assertAlmostEqual(julian.jd_from_time(julian.time_from_jd(1000.123)),
                                1000.123)
         self.assertEqual(julian.mjd_from_time(julian.time_from_mjd(0)), 0)
-        self.assertAlmostEqual(julian.mjd_from_time(
-                                julian.time_from_mjd(1000.123)),
+        self.assertAlmostEqual(julian.mjd_from_time(julian.time_from_mjd(1000.123)),
                                1000.123)
         self.assertAlmostEqual(parse_time('JD2451544.49962963'), 0, places=3)
-        self.assertAlmostEqual(parse_time('JD2458488.94401620'), 600000000,
+        self.assertAlmostEqual(parse_time('JD2458488.94401620'), 600000000, places=3)
+        self.assertAlmostEqual(parse_time('2458488.94401620', unit='jd'), 600000000,
                                places=3)
-        self.assertAlmostEqual(parse_time('JED2451544.49962963'),
+        self.assertAlmostEqual(parse_time('JED2451544.49962963'), -64.18391461631109,
+                               places=3)
+        self.assertAlmostEqual(parse_time('2451544.49962963', unit='jed'),
                                -64.18391461631109, places=3)
-        self.assertAlmostEqual(parse_time('JED2458488.94401620'),
-                               599999930.8156223, places=3)
+        self.assertAlmostEqual(parse_time('JED2458488.94401620'), 599999930.8156223,
+                               places=3)
         self.assertAlmostEqual(parse_time('MJD51543.99962963'), 0, places=3)
-        self.assertAlmostEqual(parse_time('MJD58488.44401620'), 600000000,
+        self.assertAlmostEqual(parse_time('MJD58488.44401620'), 600000000, places=3)
+        self.assertAlmostEqual(parse_time('58488.44401620', unit='mjd'), 600000000,
                                places=3)
-        self.assertAlmostEqual(parse_time('MJED51543.99962963'),
+        self.assertAlmostEqual(parse_time('MJED51543.99962963'), -64.18391461631109,
+                               places=3)
+        self.assertAlmostEqual(parse_time('51543.99962963', unit='mjed'),
                                -64.18391461631109, places=3)
-        self.assertAlmostEqual(parse_time('MJED58488.44401620'),
-                               599999930.8156223, places=3)
+        self.assertAlmostEqual(parse_time('MJED58488.44401620'), 599999930.8156223,
+                               places=3)
+        self.assertAlmostEqual(parse_time('50000', unit='et'), 93167.81604149533,
+                               places=3)
         with self.assertRaises(ValueError):
             parse_time('nan')
         with self.assertRaises(ValueError):
             parse_time('inf')
-        self.assertAlmostEqual(parse_time('-43167.816'), 0, places=3)
-        self.assertAlmostEqual(parse_time('599956832.184'), 600000000, places=3)
+        with self.assertRaises(ValueError):
+            parse_time('2000')
+        with self.assertRaises(ValueError):
+            parse_time('2000-01-01. TAI')
+        with self.assertRaises(ValueError):
+            parse_time('JD9999999999')
 
-    def test_idopotent(self):
-        "Time idempotency"
+    def test_idempotent(self):
+        """Time idempotency"""
         self.assertEqual(format_time_ymd(parse_time('2015-05-03T10:12:34.123')),
                          '2015-05-03T10:12:34.123')
         self.assertEqual(format_time_ydoy(parse_time('2015-122T10:12:34.123')),
                          '2015-122T10:12:34.123')
-        self.assertEqual(format_time_jd(parse_time('JD123456789.123')),
-                         'JD123456789.12300000')
-        self.assertEqual(format_time_jed(parse_time('JED123456789.123')),
-                         'JED123456789.12300000')
+        self.assertEqual(format_time_jd(parse_time('JD2234567.123')),
+                         'JD2234567.12300000')
+        self.assertEqual(format_time_jed(parse_time('JED2234567.123')),
+                         'JED2234567.12300000')
 
 
 ################################################################################
@@ -987,7 +991,8 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
                              r') *(|\d+(|\.\d*)m) *(|\d+(|\.\d*)s)', s)
         if match is None and format_char == default[0]:
             # Check for just "N N N" if we are looking at the default format
-            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|.\d*))', s)
+            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|.\d*))',
+                                 s)
         if match:
             neg = match[1]
             degrees_hours = match[2]
@@ -1074,7 +1079,8 @@ def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
         subtract_amt = 2
     elif unit == 'hours':
         subtract_amt = -2
-    elif unit == 'radians':
+    else:
+        assert unit == 'radians'
         subtract_amt = -2
 
     new_dec = max(int(numerical_format[1:-1])-subtract_amt, 0)
@@ -1122,9 +1128,9 @@ def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
         ret = '-' + ret
     return ret
 
-class TimeTest(unittest.TestCase):
+class DMSHMSTest(unittest.TestCase):
     def test_parse_hms(self):
-        "HMS parse"
+        """HMS parse"""
         self.assertEqual(parse_hms('0h 0m 0s'), 0*15)
         self.assertEqual(parse_hms('1h 0m 0s'), 1*15)
         self.assertEqual(parse_hms('0h 30m 0s'), 0.5*15)
@@ -1183,9 +1189,13 @@ class TimeTest(unittest.TestCase):
                          123.456*15)
         self.assertEqual(parse_hms('123.456h', conversion_factor=2),
                          123.456*15/2)
+        with self.assertRaises(ValueError):
+            parse_hms('1e400d')
+        with self.assertRaises(ValueError):
+            parse_hms('1e400')
 
     def test_parse_dms(self):
-        "DMS parse"
+        """DMS parse"""
         self.assertEqual(parse_dms('0d 0m 0s'), 0)
         self.assertEqual(parse_dms('1d 0m 0s'), 1)
         self.assertEqual(parse_dms('0d 30m 0s'), 0.5)
@@ -1243,9 +1253,13 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_dms('1E+0009d 0m 0s'), 1000000000)
         self.assertEqual(parse_dms('123.456', conversion_factor=2), 123.456)
         self.assertEqual(parse_dms('123.456d', conversion_factor=2), 123.456/2)
+        with self.assertRaises(ValueError):
+            parse_dms('1e400d')
+        with self.assertRaises(ValueError):
+            parse_dms('1e400')
 
     def test_parse_dms_hms(self):
-        "DMS_HMS parse"
+        """DMS_HMS parse"""
         self.assertEqual(parse_dms_hms('1d 30m 36s'), 1.51)
         self.assertEqual(parse_dms_hms('1h 30m 36s'), 1.51*15)
         self.assertEqual(parse_dms_hms('1 30 36'), 1.51)
@@ -1254,75 +1268,68 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_dms_hms('1 30 36', conversion_factor=2), 1.51/2)
         self.assertEqual(parse_dms_hms('1.5d', conversion_factor=2), 1.5/2)
         self.assertEqual(parse_dms_hms('1.5h', conversion_factor=2), 1.5*15/2)
+        with self.assertRaises(ValueError):
+            parse_dms('1e400d')
+        with self.assertRaises(ValueError):
+            parse_dms('1e400h')
+        with self.assertRaises(ValueError):
+            parse_dms('1e400')
 
     def test_parse_hms_dms(self):
-        "DMS_HMS parse"
+        """DMS_HMS parse"""
         self.assertEqual(parse_hms_dms('1d 30m 36s'), 1.51)
         self.assertEqual(parse_hms_dms('1h 30m 36s'), 1.51*15)
         self.assertEqual(parse_hms_dms('1.5'), 1.5*15)
         self.assertEqual(parse_hms_dms('1 30 36'), 1.51*15)
-        self.assertEqual(parse_hms_dms('1 30 36', conversion_factor=2),
-                                       1.51*15/2)
+        self.assertEqual(parse_hms_dms('1 30 36', conversion_factor=2), 1.51*15/2)
         self.assertEqual(parse_hms_dms('1.5d', conversion_factor=2), 1.5/2)
         self.assertEqual(parse_hms_dms('1.5h', conversion_factor=2), 1.5*15/2)
+        with self.assertRaises(ValueError):
+            parse_dms('1e400d')
+        with self.assertRaises(ValueError):
+            parse_dms('1e400h')
+        with self.assertRaises(ValueError):
+            parse_dms('1e400')
 
     def test_format_dms_hms(self):
-        "DMS_HMS format"
-        self.assertEqual(format_dms_hms(0, None, 'degrees', '.3f', True),
-                         '0.000')
-        self.assertEqual(format_dms_hms(0, None, 'degrees', '.3f', False),
-                         '0')
-        self.assertEqual(format_dms_hms(123.4, None, 'degrees', '.3f',
-                                        True), '123.400')
-        self.assertEqual(format_dms_hms(123.4, None, 'degrees', '.3f',
-                                        False), '123.4')
-        self.assertEqual(format_dms_hms(123.456789, None, 'degrees', '.3f',
-                                        True), '123.457')
-        self.assertEqual(format_dms_hms(123.456789, None, 'degrees', '.3f',
-                                        False), '123.457')
-        self.assertEqual(format_dms_hms(-123.456789, None, 'degrees', '.3f',
-                                        False), '-123.457')
-        self.assertEqual(format_dms_hms(1e7, None, 'degrees', '.3f',
-                                        False), '10000000')
-        self.assertEqual(format_dms_hms(1e8, None, 'degrees', '.3f',
-                                        False), '1e+08')
-        self.assertEqual(format_dms_hms(1.01e8, None, 'degrees', '.3f',
-                                        False), '1.01e+08')
+        """DMS_HMS format"""
+        self.assertEqual(format_dms_hms(0, None, 'degrees', '.3f', True), '0.000')
+        self.assertEqual(format_dms_hms(0, None, 'degrees', '.3f', False), '0')
+        self.assertEqual(format_dms_hms(123.4, None, 'degrees', '.3f', True), '123.400')
+        self.assertEqual(format_dms_hms(123.4, None, 'degrees', '.3f', False), '123.4')
+        self.assertEqual(format_dms_hms(123.456789, None, 'degrees', '.3f', True),
+                         '123.457')
+        self.assertEqual(format_dms_hms(123.456789, None, 'degrees', '.3f', False),
+                         '123.457')
+        self.assertEqual(format_dms_hms(-123.456789, None, 'degrees', '.3f', False),
+                         '-123.457')
+        self.assertEqual(format_dms_hms(1e7, None, 'degrees', '.3f', False), '10000000')
+        self.assertEqual(format_dms_hms(1e8, None, 'degrees', '.3f', False), '1e+08')
+        self.assertEqual(format_dms_hms(1.01e8, None, 'degrees', '.3f', False),
+                         '1.01e+08')
 
-        self.assertEqual(format_dms_hms(0, None, 'hours', '.3f', True),
-                         '0.00000')
-        self.assertEqual(format_dms_hms(0, None, 'hours', '.3f', False),
-                         '0')
-        self.assertEqual(format_dms_hms(121.86, None, 'hours', '.3f',
-                                        True), '8.12400')
-        self.assertEqual(format_dms_hms(121.86, None, 'hours', '.3f',
-                                        False), '8.124')
-        self.assertEqual(format_dms_hms(123.456789, None, 'hours', '.3f',
-                                        True), '8.23045')
-        self.assertEqual(format_dms_hms(123.456789, None, 'hours', '.3f',
-                                        False), '8.23045')
-        self.assertEqual(format_dms_hms(-123.456789, None, 'hours', '.3f',
-                                        False), '-8.23045')
-        self.assertEqual(format_dms_hms(15e8, None, 'hours', '.3f',
-                                        False), '1e+08')
-        self.assertEqual(format_dms_hms(15.15e8, None, 'hours', '.3f',
-                                        False), '1.01e+08')
+        self.assertEqual(format_dms_hms(0, None, 'hours', '.3f', True), '0.00000')
+        self.assertEqual(format_dms_hms(0, None, 'hours', '.3f', False), '0')
+        self.assertEqual(format_dms_hms(121.86, None, 'hours', '.3f', True), '8.12400')
+        self.assertEqual(format_dms_hms(121.86, None, 'hours', '.3f', False), '8.124')
+        self.assertEqual(format_dms_hms(123.456789, None, 'hours', '.3f', True),
+                         '8.23045')
+        self.assertEqual(format_dms_hms(123.456789, None, 'hours', '.3f', False),
+                         '8.23045')
+        self.assertEqual(format_dms_hms(-123.456789, None, 'hours', '.3f', False),
+                         '-8.23045')
+        self.assertEqual(format_dms_hms(15e8, None, 'hours', '.3f', False), '1e+08')
+        self.assertEqual(format_dms_hms(15.15e8, None, 'hours', '.3f', False), '1.01e+08')
 
-        self.assertEqual(format_dms_hms(0, None, 'radians', '.3f', True),
-                         '0.00000')
-        self.assertEqual(format_dms_hms(0, None, 'radians', '.3f', False),
-                         '0')
-        self.assertEqual(format_dms_hms(1e7, None, 'radians', '.3f',
-                                        False), '10000000')
-        self.assertEqual(format_dms_hms(1e8, None, 'radians', '.3f',
-                                        False), '1e+08')
-        self.assertEqual(format_dms_hms(1.01e8, None, 'radians', '.3f',
-                                        False), '1.01e+08')
+        self.assertEqual(format_dms_hms(0, None, 'radians', '.3f', True), '0.00000')
+        self.assertEqual(format_dms_hms(0, None, 'radians', '.3f', False), '0')
+        self.assertEqual(format_dms_hms(1e7, None, 'radians', '.3f', False), '10000000')
+        self.assertEqual(format_dms_hms(1e8, None, 'radians', '.3f', False), '1e+08')
+        self.assertEqual(format_dms_hms(1.01e8, None, 'radians', '.3f', False),
+                         '1.01e+08')
 
-        self.assertEqual(format_dms_hms(0, None, 'dms', '.6f', False),
-                         '0d 00m 00s')
-        self.assertEqual(format_dms_hms(0, None, 'dms', '.6f', True),
-                         '0d 00m 00.000s')
+        self.assertEqual(format_dms_hms(0, None, 'dms', '.6f', False), '0d 00m 00s')
+        self.assertEqual(format_dms_hms(0, None, 'dms', '.6f', True), '0d 00m 00.000s')
         self.assertEqual(format_dms_hms(0.0001, None, 'dms', '.6f', False),
                          '0d 00m 00.36s')
         self.assertEqual(format_dms_hms(0.0001, None, 'dms', '.6f', True),
@@ -1333,22 +1340,19 @@ class TimeTest(unittest.TestCase):
                          '-0d 00m 00.360s')
         self.assertEqual(format_dms_hms(700, None, 'dms', '.6f', False),
                          '700d 00m 00s')
-        self.assertEqual(format_dms_hms(699.99999987, None, 'dms', '.6f',
-                                        False), '700d 00m 00s')
-        self.assertEqual(format_dms_hms(699.99999986, None, 'dms', '.6f',
-                                        False), '699d 59m 59.999s')
-        self.assertEqual(format_dms_hms(-699.99999986, None, 'dms', '.6f',
-                                        False), '-699d 59m 59.999s')
-        self.assertEqual(format_dms_hms(1e7, None, 'dms', '.3f',
-                                        False), '10000000d 00m 00s')
-        self.assertEqual(format_dms_hms(1e8, None, 'dms', '.3f',
-                                        False), '1e+08d 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999987, None, 'dms', '.6f', False),
+                         '700d 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999986, None, 'dms', '.6f', False),
+                         '699d 59m 59.999s')
+        self.assertEqual(format_dms_hms(-699.99999986, None, 'dms', '.6f', False),
+                         '-699d 59m 59.999s')
+        self.assertEqual(format_dms_hms(1e7, None, 'dms', '.3f', False),
+                         '10000000d 00m 00s')
+        self.assertEqual(format_dms_hms(1e8, None, 'dms', '.3f', False),
+                         '1e+08d 00m 00s')
 
-
-        self.assertEqual(format_dms_hms(0, None, 'hms', '.6f', False),
-                         '0h 00m 00s')
-        self.assertEqual(format_dms_hms(0, None, 'hms', '.6f', True),
-                         '0h 00m 00.0000s')
+        self.assertEqual(format_dms_hms(0, None, 'hms', '.6f', False), '0h 00m 00s')
+        self.assertEqual(format_dms_hms(0, None, 'hms', '.6f', True), '0h 00m 00.0000s')
         self.assertEqual(format_dms_hms(0.0001*15, None, 'hms', '.6f', False),
                          '0h 00m 00.36s')
         self.assertEqual(format_dms_hms(0.0001*15, None, 'hms', '.6f', True),
@@ -1359,16 +1363,17 @@ class TimeTest(unittest.TestCase):
                          '-0h 00m 00.3600s')
         self.assertEqual(format_dms_hms(700*15, None, 'hms', '.6f', False),
                          '700h 00m 00s')
-        self.assertEqual(format_dms_hms(699.99999987*15, None, 'hms', '.5f',
-                                        False), '700h 00m 00s')
-        self.assertEqual(format_dms_hms(699.99999986*15, None, 'hms', '.5f',
-                                        False), '699h 59m 59.999s')
-        self.assertEqual(format_dms_hms(-699.99999986*15, None, 'hms', '.5f',
-                                        False), '-699h 59m 59.999s')
-        self.assertEqual(format_dms_hms(1e7*15, None, 'hms', '.3f',
-                                        False), '10000000h 00m 00s')
-        self.assertEqual(format_dms_hms(1e8*15, None, 'hms', '.3f',
-                                        False), '1e+08h 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999987*15, None, 'hms', '.5f', False),
+                         '700h 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999986*15, None, 'hms', '.5f', False),
+                         '699h 59m 59.999s')
+        self.assertEqual(format_dms_hms(-699.99999986*15, None, 'hms', '.5f', False),
+                         '-699h 59m 59.999s')
+        self.assertEqual(format_dms_hms(1e7*15, None, 'hms', '.3f', False),
+                         '10000000h 00m 00s')
+        self.assertEqual(format_dms_hms(1e8*15, None, 'hms', '.3f', False),
+                         '1e+08h 00m 00s')
+
 
 ################################################################################
 ################################################################################
@@ -1709,11 +1714,16 @@ UNIT_FORMAT_DB = {
 ### (These routines *numerically* convert to/from the value stored in the
 ###  database with no formatting)
 
+# In all of the following functions, unit_id must be in the proper case. This is
+# a safe assumption because the unit_id comes from the ParamInfo structure.
+# On the other hand, unit can be in any case, since it's potentially supplied
+# by the user, and we force it to lower case.
+
 def convert_to_default_unit(val, unit_id, unit):
-    "Convert a value from a specific unit to the default unit for unit_id."
+    """Convert a value from a specific unit to the default unit for unit_id."""
     if unit_id is None and unit is not None:
         raise KeyError
-    if val is None or unit_id is None or unit is None:
+    if val is None or (unit_id is None and unit is None):
         return val
     unit = unit.lower()
     default_unit = UNIT_FORMAT_DB[unit_id]['default']
@@ -1725,10 +1735,10 @@ def convert_to_default_unit(val, unit_id, unit):
     return ret
 
 def convert_from_default_unit(val, unit_id, unit):
-    "Convert a value from the default unit to a specific unit for unit_id."
+    """Convert a value from the default unit to a specific unit for unit_id."""
     if unit_id is None and unit is not None:
         raise KeyError
-    if val is None or unit_id is None or unit is None:
+    if val is None or (unit_id is None and unit is None):
         return val
     unit = unit.lower()
     default_unit = UNIT_FORMAT_DB[unit_id]['default']
@@ -1742,7 +1752,10 @@ def convert_from_default_unit(val, unit_id, unit):
 ### GET INFORMATION ABOUT UNITS
 
 def get_valid_units(unit_id):
-    "Get the list of valid units for a unit_id."
+    """Get the list of valid units for a unit_id.
+
+    If unit_id is None, we return None.
+    """
     unit_info = UNIT_FORMAT_DB.get(unit_id, None)
     valid_units = None
     if unit_info is not None:
@@ -1752,7 +1765,9 @@ def get_valid_units(unit_id):
     return valid_units
 
 def get_unit_display_names(unit_id):
-    "Get a dictionary with valid units as keys and display names as values."
+    """Get a dictionary with valid units as keys and display names as values.
+
+    If unit_id is None, we return None."""
     unit_info = UNIT_FORMAT_DB.get(unit_id, None)
     display_names = None
     if unit_info is not None:
@@ -1763,43 +1778,43 @@ def get_unit_display_names(unit_id):
     return display_names
 
 def get_unit_display_name(unit_id, unit):
-    "Get the display name for a given unit_id and unit."
+    """Get the display name for a given valid unit_id and unit."""
     unit = unit.lower()
     return UNIT_FORMAT_DB[unit_id]['conversions'][unit][0]
 
 def is_valid_unit_id(unit_id):
-    "Check if a unit_id is valid."
+    """Check if a unit_id is valid."""
     return unit_id in UNIT_FORMAT_DB
 
 def is_valid_unit(unit_id, unit):
-    "Check if a unit is a valid unit for unit_id."
+    """Check if a unit is a valid unit for a valid unit_id."""
     unit = unit.lower()
     return unit in UNIT_FORMAT_DB[unit_id]['conversions']
 
 def get_default_unit(unit_id):
-    "Return the default unit for a unit_id."
+    """Return the default unit for a unit_id."""
     if unit_id is None:
         return None
     return UNIT_FORMAT_DB[unit_id]['default']
 
 def display_search_unit(unit_id):
-    "Check if a unit name should be displayed for a unit_id on the Search tab."
+    """Check if a unit name should be displayed for a unit_id on the Search tab."""
     if not unit_id:
         return False
     return UNIT_FORMAT_DB[unit_id]['display_search']
 
 def display_result_unit(unit_id):
-    "Check if a unit name should be displayed for a unit_id for results."
+    """Check if a unit name should be displayed for a unit_id for results."""
     if not unit_id:
         return False
     return UNIT_FORMAT_DB[unit_id]['display_result']
 
 def display_unit_ever(unit_id):
-    "Check if a unit name should ever be displayed for a unit_id."
+    """Check if a unit name should ever be displayed for a unit_id."""
     return display_search_unit(unit_id) or display_result_unit(unit_id)
 
 def get_disp_default_and_avail_units(param_form_type):
-    "Return display, default, and available units for a given ParamInfo form type."
+    """Return display, default, and available units for a given ParamInfo form type."""
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_form_type)
 
@@ -1809,16 +1824,18 @@ def get_disp_default_and_avail_units(param_form_type):
 
     available_units = get_unit_display_names(form_type_unit_id)
     default_unit = get_default_unit(form_type_unit_id)
-    if default_unit is not None:
-        disp_unit = get_unit_display_name(form_type_unit_id, default_unit)
-    else:
-        disp_unit = None
+    disp_unit = get_unit_display_name(form_type_unit_id, default_unit)
     return disp_unit, default_unit, available_units
 
 ### FORMAT A VALUE FOR A GIVEN UNIT
 
 def adjust_format_string_for_units(numerical_format, unit_id, unit):
-    "Adjust a format string size for a change of units."
+    """Adjust a format string size for a change of units.
+
+    This takeas a format string of the form ".<n>f" and adjusts the value
+    of <n> based on the ratio of the given unit to the default unit.
+    If the format string is anything else, it is left unchanged.
+    """
     if unit_id is None:
         return numerical_format
     if (not numerical_format.startswith('.') or
@@ -1828,7 +1845,6 @@ def adjust_format_string_for_units(numerical_format, unit_id, unit):
     default_unit = UNIT_FORMAT_DB[unit_id]['default']
     if default_unit == unit:
         return numerical_format
-    assert unit_id in UNIT_FORMAT_DB
     # The behavior of ceil is to increase the number of positive numbers
     # (which is adding decimal places), which is good. And it's to decrease
     # the absolute value of negative numbers (which is removing decimal places),
@@ -1881,6 +1897,7 @@ def format_unit_value(val, numerical_format, unit_id, unit,
                        keep_trailing_zeros=keep_trailing_zeros)
 
 def _strip_trailing_zeros(s):
+    """Strip meaningless trailing zeros (like after a decimal point)."""
     if re.fullmatch(r'.*\.\d*0*', s):
         # Strip trailing .000s from NNN.DDDZZZ
         s = s.rstrip('0').rstrip('.')
@@ -1892,18 +1909,19 @@ def _strip_trailing_zeros(s):
     return s
 
 def _clean_numeric_field(s, compress_spaces=True):
-    def clean_func(x):
-        ret = x.lower().replace(',', '').replace('_','')
-        if compress_spaces:
-            ret = ret.replace(' ', '')
-        return ret
-    if isinstance(s, (list, tuple)):
-        return [clean_func(z) for z in s]
-
-    return clean_func(s)
+    """Remove useless characters like , or _ from a string."""
+    ret = s.lower().replace(',', '').replace('_','')
+    if compress_spaces:
+        ret = ret.replace(' ', '')
+    return ret
 
 def parse_unit_value(s, numerical_format, unit_id, unit):
-    """Parse a string given the unit and numerical format."""
+    """Parse a string given the unit and numerical format.
+
+    We assume that the value returned should be in the given unit, so
+    normally there is no conversion done. However, if the user explicitly
+    specifies a unit, like "1 km", then we convert from that unit to the
+    passed-in unit."""
     if s is None or s == '':
         return None
     parse_func = None
@@ -1982,10 +2000,7 @@ def get_single_parse_function(unit_id):
     parse_func = None
     if unit_id and not display_unit_ever(unit_id):
         default_unit = get_default_unit(unit_id)
-        parse_func = (UNIT_FORMAT_DB[unit_id]
-                                    ['conversions']
-                                    [default_unit]
-                                    [2])
+        parse_func = (UNIT_FORMAT_DB[unit_id]['conversions'][default_unit][2])
     return parse_func
 
 def get_single_format_function(unit_id):
@@ -1993,12 +2008,188 @@ def get_single_format_function(unit_id):
     format_func = None
     if unit_id and not display_unit_ever(unit_id):
         default_unit = get_default_unit(unit_id)
-        format_func = (UNIT_FORMAT_DB[unit_id]
-                                    ['conversions']
-                                    [default_unit]
-                                    [3])
+        format_func = (UNIT_FORMAT_DB[unit_id]['conversions'][default_unit][3])
     return format_func
 
 
-if __name__ == '__main__':
+class UnitConversionTests(unittest.TestCase):
+    def test_cvt_to_default_unit(self):
+        """Test convert_to_default_unit"""
+        with self.assertRaises(KeyError):
+            convert_to_default_unit(0, None, 'm')
+        self.assertIsNone(convert_to_default_unit(None, 'x', 'y'))
+        self.assertEqual(convert_to_default_unit(10, None, None), 10)
+        self.assertEqual(convert_to_default_unit(100, 'duration', 'seconds'),
+                         100)
+        self.assertEqual(convert_to_default_unit(100, 'duration',
+                                                 'milliseconds'), 0.1)
+        with self.assertRaises(ValueError):
+            convert_to_default_unit(1e307, 'duration', 'days')
+
+    def test_cvt_from_default_unit(self):
+        """Test convert_from_default_unit"""
+        with self.assertRaises(KeyError):
+            convert_from_default_unit(0, None, 'm')
+        self.assertIsNone(convert_from_default_unit(None, 'x', 'y'))
+        self.assertEqual(convert_from_default_unit(10, None, None), 10)
+        self.assertEqual(convert_from_default_unit(100, 'duration', 'seconds'),
+                         100)
+        self.assertEqual(convert_from_default_unit(100, 'duration',
+                                                   'milliseconds'), 100000)
+        with self.assertRaises(ValueError):
+            convert_from_default_unit(1e307, 'duration', 'milliseconds')
+
+    def test_get_valid_units(self):
+        """Test get_valid_units"""
+        self.assertIsNone(get_valid_units('fred'))
+        self.assertEqual(get_valid_units('duration'),
+            ['seconds', 'microseconds', 'milliseconds', 'minutes',
+             'hours', 'days'])
+
+    def test_get_unit_display_names(self):
+        """Test get_unit_display_names"""
+        self.assertIsNone(get_unit_display_names('fred'))
+        self.assertEqual(get_unit_display_names('datetime'),
+            {'ymdhms': 'YMDhms',
+             'ydhms': 'YDhms',
+             'jd': 'JD',
+             'jed': 'JED',
+             'mjd': 'MJD',
+             'mjed': 'MJED',
+             'et': 'SPICE ET'})
+
+    def test_get_unit_display_name(self):
+        """Test get_unit_display_name"""
+        self.assertEqual(get_unit_display_name('latitude', 'dms'), 'DMS')
+
+    def test_is_valid_unit_id(self):
+        """Test is_valid_unit_id"""
+        self.assertFalse(is_valid_unit_id('fred'))
+        self.assertTrue(is_valid_unit_id('generic_angle'))
+
+    def test_is_valid_unit(self):
+        """Test is_valid_unit"""
+        self.assertFalse(is_valid_unit('generic_angle', 'fred'))
+        self.assertTrue(is_valid_unit('generic_angle', 'radians'))
+
+    def test_get_default_unit(self):
+        """Test get_default_unit"""
+        self.assertFalse(get_default_unit(None))
+        self.assertEqual(get_default_unit('longitude'), 'degrees')
+
+    def test_display_search_unit(self):
+        """Test display_search_unit"""
+        self.assertFalse(display_search_unit(None))
+        self.assertTrue(display_search_unit('longitude'))
+        self.assertFalse(display_search_unit('range_cassini_rev_no'))
+
+    def test_display_result_unit(self):
+        """Test display_result_unit"""
+        self.assertFalse(display_result_unit(None))
+        self.assertTrue(display_result_unit('longitude'))
+        self.assertFalse(display_result_unit('range_cassini_rev_no'))
+
+    def test_display_unit_ever(self):
+        """Test display_unit_ever"""
+        self.assertFalse(display_unit_ever(None))
+        self.assertTrue(display_unit_ever('longitude'))
+        self.assertFalse(display_unit_ever('range_cassini_rev_no'))
+
+    def test_disp_default_and_avail_units(self):
+        """Test get_disp_default_and_avail_units"""
+        self.assertEqual(get_disp_default_and_avail_units(
+            '%d:range_cassini_rev_no'), (None, None, None))
+        self.assertEqual(get_disp_default_and_avail_units('%d:wavenumber'),
+                         ('cm^-1', '1_cm', {'1_cm': 'cm^-1', '1_m': 'm^-1'}))
+
+    def test_adjust_format_string_for_units(self):
+        """Test adjust_format_string_for_units"""
+        self.assertEqual(adjust_format_string_for_units('.6f', None, None),
+                         '.6f')
+        self.assertEqual(adjust_format_string_for_units(
+            '6d', 'wavenumber', '1_m'), '6d')
+        self.assertEqual(adjust_format_string_for_units(
+            '.6f', 'wavenumber', '1_M'), '.4f')
+        self.assertEqual(adjust_format_string_for_units(
+            '.6f', 'duration', 'days'), '.11f')
+        self.assertEqual(adjust_format_string_for_units(
+            '.6f', 'duration', 'seconds'), '.6f')
+
+    def test_format_unit_value(self):
+        """Test format_unit_value"""
+        self.assertEqual(format_unit_value('string', None, None, None),
+                         'string')
+        self.assertIsNone(format_unit_value(None, None, 'datetime', 'ydhms'))
+        self.assertEqual(format_unit_value(600000000, None, 'datetime',
+                                           'ydhms'),
+                         '2019-005T10:39:23.000')
+        self.assertEqual(format_unit_value(600000000, None, 'datetime',
+                                           'ymdhms'),
+                         '2019-01-05T10:39:23.000')
+        self.assertEqual(format_unit_value(100.1, '.3f', 'duration', 'seconds'),
+                         '100.1')
+        self.assertEqual(format_unit_value(100.1, '.3f', None, None),
+                         '100.1')
+        self.assertEqual(format_unit_value(100.1, '.3f', 'duration', None),
+                         '100.1')
+        self.assertEqual(format_unit_value(100.1, '.3f', 'duration', 'seconds',
+                                           keep_trailing_zeros=True),
+                         '100.100')
+        self.assertEqual(format_unit_value(100.1, '.3f', 'duration', 'days',
+                                           keep_trailing_zeros=True),
+                         '0.00115856')
+        self.assertEqual(format_unit_value(100.1, '.3f', 'duration', 'days',
+                                           keep_trailing_zeros=True,
+                                           convert_from_default=False),
+                         '100.10000000')
+        self.assertEqual(format_unit_value(100, None, 'duration', 'seconds'),
+                         '100')
+        self.assertEqual(format_unit_value(1e7, '.3f', 'duration', 'seconds'),
+                         '10000000')
+        self.assertEqual(format_unit_value(1e8, '.3f', 'duration', 'seconds'),
+                         '1e+08')
+
+    def test_parse_unit_value(self):
+        """Test parse_unit_value."""
+        self.assertIsNone(parse_unit_value(None, 'x', 'x', 'x'))
+        self.assertIsNone(parse_unit_value('', 'x', 'x', 'x'))
+        self.assertEqual(parse_unit_value('100', '.3f', 'duration', None), 100)
+        val = parse_unit_value('100000', '.3f', 'duration', 'milliseconds')
+        self.assertIsInstance(val, float)
+        self.assertEqual(val, 100000)
+        val = parse_unit_value('100s', '.3f', 'duration', 'milliseconds')
+        self.assertIsInstance(val, float)
+        self.assertEqual(val, 100000)
+        val = parse_unit_value('100', 'd', None, None)
+        self.assertIsInstance(val, int)
+        self.assertEqual(val, 100)
+        with self.assertRaises(ValueError):
+            parse_unit_value('inf', '.3f', 'duration', 'milliseconds')
+        self.assertEqual(parse_unit_value('2019-01-05T10:39:23.000', None, 'datetime',
+                                          'YMDhms'), 600000000)
+
+    def test_parse_form_type(self):
+        """Test parse_form_type."""
+        self.assertEqual(parse_form_type(None), (None, None, None))
+        self.assertEqual(parse_form_type('X'), ('X', None, None))
+        self.assertEqual(parse_form_type('X:Y'), ('X', None, 'Y'))
+        self.assertEqual(parse_form_type('X%Z'), ('X', 'Z', None))
+        self.assertEqual(parse_form_type('X%Z:Y'), ('X', 'Z', 'Y'))
+
+    def test_get_single_parse_function(self):
+        """Test get_single_parse_function."""
+        self.assertIsNone(get_single_parse_function(None))
+        self.assertIsNone(get_single_parse_function('datetime'))
+        self.assertEqual(get_single_parse_function('range_cassini_rev_no'),
+                         parse_cassini_orbit)
+
+    def test_get_single_format_function(self):
+        """Test get_single_format_function."""
+        self.assertIsNone(get_single_format_function(None))
+        self.assertIsNone(get_single_format_function('datetime'))
+        self.assertEqual(get_single_format_function('range_cassini_rev_no'),
+                         format_cassini_orbit)
+
+
+if __name__ == '__main__': # pragma: no cover
     unittest.main()

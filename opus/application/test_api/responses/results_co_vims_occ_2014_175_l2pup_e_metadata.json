@@ -33,16 +33,16 @@
         "imagetype": null
     },
     "Wavelength Constraints": {
-        "wavelength1": "0.8842",
-        "wavelength2": "5.1225",
-        "waveres1": "0.01662",
-        "waveres2": "0.01662",
-        "waveno1": "1952.1717911",
-        "waveno2": "11309.6584483",
-        "wavenores1": "6.333839955",
-        "wavenores2": "212.58371795",
-        "specflag": "Yes",
-        "specsize": "256",
+        "wavelength1": "2.866",
+        "wavelength2": "2.977",
+        "waveres1": "0.111",
+        "waveres2": "0.111",
+        "waveno1": "3359.0863285",
+        "waveno2": "3489.1835311",
+        "wavenores1": "130.097202535",
+        "wavenores2": "130.097202535",
+        "specflag": "No",
+        "specsize": null,
         "polarizationtype": "None"
     },
     "Occultation/Reflectance Profiles Constraints": {
