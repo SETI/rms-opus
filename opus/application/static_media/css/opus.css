@@ -2211,7 +2211,7 @@ grouping icon with non-grouping checkboxes */
 
 /* Increase the indentation of subcategories for mult */
 .mult_group {
-    padding-left: 4% !important;
+    padding-left: 1.2em !important;
 }
 
 /* detail tab */
