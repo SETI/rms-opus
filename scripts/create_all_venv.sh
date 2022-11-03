@@ -9,6 +9,8 @@ then
     exit -1
 fi
 
+deactivate
+
 for VERSION in 3.8 3.9 3.10 3.11
 do
     echo
