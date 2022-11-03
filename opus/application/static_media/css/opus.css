@@ -2209,6 +2209,11 @@ grouping icon with non-grouping checkboxes */
     padding-left: 1%;
 }
 
+/* Increase the indentation of subcategories for mult */
+.mult_group {
+    padding-left: 4% !important;
+}
+
 /* detail tab */
 .op-detail-metadata {
     /* Make detail left pane shrink proportionally when window is narrow
