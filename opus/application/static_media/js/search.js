@@ -534,7 +534,7 @@ var o_search = {
     },
 
     addCheckMarkForCategories: function(slug) {
-        let categories = $(`#widget__${slug} .mult_group`);
+        let categories = $(`#widget__${slug} .mult-group`);
         // Check each checkbox under each category. If a category
         // has any checked checkboxes, add a check mark next to the
         // category name
@@ -549,12 +549,12 @@ var o_search = {
             }
 
             let groupName = $(cat).data("group");
-            let parentCatClassName = `mult_group_${groupName}`;
+            let parentCatClassName = `mult-group-${groupName}`;
             let checkMarkClassName = `${parentCatClassName}_checked`;
 
             // Add the check mark right next to the category if any checkbox inside the
             // category is checked && check mark doesn't exist
-            if (isChecked && $(`.mult_group_${groupName} .${checkMarkClassName}`).length === 0) {
+            if (isChecked && $(`.mult-group-${groupName} .${checkMarkClassName}`).length === 0) {
                 let checkMark = `<span class="${checkMarkClassName} op-mult-group-checked-indication">` +
                                 "<i class='fa fa-check'></i></span>";
                 $(`.${parentCatClassName}`).append(checkMark);
@@ -1277,14 +1277,14 @@ var o_search = {
                 // Count the total hints under each group name and display them in the ui
                 // If the hints are all "--" under a group, we will display "--" next to
                 // the group name.
-                $("#" + widget + " .mult_group").each( function() {
+                $("#" + widget + " .mult-group").each( function() {
                     let sum = 0;
                     // The flag used to determine if we will display the total hints or "--"
                     let displaySum = false;
                     let group = $(this).data("group");
-                    let groupClass = `.mult_group_${group}`;
+                    let groupClass = `.mult-group-${group}`;
 
-                    $(`#${widget} .mult_group[data-group="${group}"] .${hintsTextClass}`).each(function() {
+                    $(`#${widget} .mult-group[data-group="${group}"] .${hintsTextClass}`).each(function() {
                         let multVal = $(this).data("value");
                         let multValInt = parseInt(multVal);
                         if (!isNaN(multValInt)) {

@@ -138,8 +138,8 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (mutation.type === "attributes" && idx === lastMutationIdx &&
-                    mutation.target.classList.value.match(/mult_group/)) {
-                    // If new mult_group is open inside widgets, we update ps
+                    mutation.target.classList.value.match(/mult-group/)) {
+                    // If new mult-group is open inside widgets, we update ps
                     let multGroupContentsHeight = mutation.target.clientHeight;
                     let widgetContainerBottomPosition = $("#search #widget-container").offset().top +
                                                         $("#search #widget-container").height();

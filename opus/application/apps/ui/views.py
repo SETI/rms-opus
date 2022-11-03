@@ -289,14 +289,14 @@ def api_get_widget(request, **kwargs):
 
             # If it's a brand new category, we will create a new mult group container
             html += ("\n\n"
-                     +'<div class="mult_group_label_container'
-                     +' mult_group_' + str(current_hierarchy) + '">'
+                     +'<div class="mult-group-label-container'
+                     +' mult-group-' + str(current_hierarchy) + '">'
                      +'<span class="indicator fa fa-plus">'
                      +'</span>'
-                     +'<span class="mult_group_label">'
+                     +'<span class="mult-group-label">'
                      +str(dir) + '</span>'
                      +'<span class="hints"></span></div>'
-                     +'<ul class="mult_group"'
+                     +'<ul class="mult-group"'
                      +' data-group=' + str(current_hierarchy) + '>')
             if idx == len(dir_list) - 1:
                 html += (SearchForm(form_vals,

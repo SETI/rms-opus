@@ -59,12 +59,12 @@
                     <!-- Customize inputs in the widget -->
                     {% if customized_input %}
                         {% for group_info, choices in grouped_options.items %}
-                            <div class="mult_group_label_container mult_group_{{ group_info.0 }}">
+                            <div class="mult-group-label-container mult-group-{{ group_info.0 }}">
                                 <span class="indicator fa fa-plus"></span>
-                                <span class="mult_group_label">{{ group_info.0 }}</span>
+                                <span class="mult-group-label">{{ group_info.0 }}</span>
                                 <span class="hints"></span>
                             </div>
-                            <ul class="mult_group" data-group="{{ group_info.0 }}">
+                            <ul class="mult-group" data-group="{{ group_info.0 }}">
                                 {% include "ui/customized_input.html" with
                                     slug=slug
                                     options=choices
