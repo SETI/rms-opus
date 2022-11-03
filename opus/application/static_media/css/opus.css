@@ -2185,7 +2185,7 @@ even when screen is narrow */
     font-weight:bold;
 }
 
-.op-checked-indication {
+.op-mult-group-checked-indication {
     margin: 0 2px 0 5px;
 }
 

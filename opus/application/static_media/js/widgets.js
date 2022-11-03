@@ -984,12 +984,14 @@ var o_widgets = {
          */
         for (const input of targetInputs) {
             if ($(input).attr("id") && $(input).attr("id").split("_")[0] === slug) {
-                let multGroup = $(input).parents(".mult_group");
-                let groupName = $(input).parents(".mult_group").attr("data-group");
-                let multGroupLabel = $(`.mult_group_${groupName}`);
-                multGroupLabel.find('.indicator').addClass('fa-minus');
-                multGroupLabel.find('.indicator').removeClass('fa-plus');
-                multGroup.slideDown("fast");
+                let parentsMultGroup = $(input).parents(".mult_group");
+                for (let parent of parentsMultGroup) {
+                    let groupName = $(parent).attr("data-group");
+                    let multGroupLabel = $(`.mult_group_${groupName}`);
+                    multGroupLabel.find('.indicator').addClass('fa-minus');
+                    multGroupLabel.find('.indicator').removeClass('fa-plus');
+                    $(parent).slideDown("fast");
+                }
             }
         }
     },

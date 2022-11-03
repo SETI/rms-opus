@@ -535,15 +535,17 @@ var o_search = {
 
     addCheckMarkForCategories: function(slug) {
         let categories = $(`#widget__${slug} .mult_group`);
-        // Check each checkboxes under each category. If a category
-        // has any checked checkbox, add a check mark next to the
+        // Check each checkbox under each category. If a category
+        // has any checked checkboxes, add a check mark next to the
         // category name
         for (let cat of categories) {
             let isChecked = false;
             let checkboxes = $(cat).find("input.multichoice");
             for (let checkbox of checkboxes) {
                 isChecked = $(checkbox).is(":checked");
-                if (isChecked) {break;}
+                if (isChecked) {
+                    break;
+                }
             }
 
             let groupName = $(cat).data("group");
@@ -553,11 +555,11 @@ var o_search = {
             // Add the check mark right next to the category if any checkbox inside the
             // category is checked && check mark doesn't exist
             if (isChecked && $(`.mult_group_${groupName} .${checkMarkClassName}`).length === 0) {
-                let checkMark = `<span class="${checkMarkClassName} op-checked-indication">` +
+                let checkMark = `<span class="${checkMarkClassName} op-mult-group-checked-indication">` +
                                 "<i class='fa fa-check'></i></span>";
                 $(`.${parentCatClassName}`).append(checkMark);
             } else if (!isChecked) {
-                // Remove the check mark if none of checkboxes under that category is checked.
+                // Remove the check mark if none of checkboxes under that category are checked.
                 $(`.${checkMarkClassName}`).remove();
             }
         }
