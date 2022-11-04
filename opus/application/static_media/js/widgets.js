@@ -97,7 +97,7 @@ var o_widgets = {
         });
 
         // open/close mult groupings in widgets
-        $("#search").on("click", ".mult_group_label_container", function() {
+        $("#search").on("click", ".mult-group-label-container", function() {
             $(this).find(".indicator").toggleClass("fa-plus");
             $(this).find(".indicator").toggleClass("fa-minus");
             let multGroupContents = $(this).next();
@@ -984,12 +984,14 @@ var o_widgets = {
          */
         for (const input of targetInputs) {
             if ($(input).attr("id") && $(input).attr("id").split("_")[0] === slug) {
-                let multGroup = $(input).parents(".mult_group");
-                let groupName = $(input).parents(".mult_group").attr("data-group");
-                let multGroupLabel = $(`.mult_group_${groupName}`);
-                multGroupLabel.find('.indicator').addClass('fa-minus');
-                multGroupLabel.find('.indicator').removeClass('fa-plus');
-                multGroup.slideDown("fast");
+                let parentsMultGroup = $(input).parents(".mult-group");
+                for (let parent of parentsMultGroup) {
+                    let groupName = $(parent).attr("data-group");
+                    let multGroupLabel = $(`.mult-group-${groupName}`);
+                    multGroupLabel.find('.indicator').addClass('fa-minus');
+                    multGroupLabel.find('.indicator').removeClass('fa-plus');
+                    $(parent).slideDown("fast");
+                }
             }
         }
     },
@@ -998,7 +1000,7 @@ var o_widgets = {
         /**
          * Expand the corresponding input groups based on the selected planet.
          */
-        let mult_id = ".mult_group_" + selectedPlanet.attr("value");
+        let mult_id = ".mult-group-" + selectedPlanet.attr("value");
         $(mult_id).find(".indicator").addClass("fa-minus");
         $(mult_id).find(".indicator").removeClass("fa-plus");
         $(mult_id).next().slideDown("fast");
@@ -1436,6 +1438,9 @@ var o_widgets = {
             } else {
                 o_search.getHinting(slug);
             }
+
+            // Add check mark for mult categories
+            o_search.addCheckMarkForCategories(slug);
 
             // If an input widget just got opened and input slugs are not in opus.selections,
             // we need to update opus.selections to make sure input slugs exist.

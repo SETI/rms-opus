@@ -5,6 +5,7 @@
 # It contains information on the observation and basic utility methods.
 ################################################################################
 
+import json
 import pdsfile
 
 from config_targets import (TARGET_NAME_INFO,
@@ -354,22 +355,31 @@ class ObsBase(object):
                 planet_id = 'OTHER'
         return PLANET_GROUP_MAPPING[planet_id]
 
-    def _create_mult(self, col_val, disp_name=None, disp_order=None,
-                     grouping=None, group_disp_order=None, tooltip=None):
+    def _create_mult(self, col_val, disp_name=None, disp='Y', disp_order=None,
+                     grouping=None, group_disp_order=None, tooltip=None, aliases=None):
         data_dict = {}
         data_dict['col_val'] = col_val
+        data_dict['disp'] = disp
         data_dict['disp_name'] = disp_name
         data_dict['disp_order'] = disp_order
         data_dict['grouping'] = grouping
         data_dict['group_disp_order'] = group_disp_order
         data_dict['tooltip'] = tooltip
+        data_dict['aliases'] = json.dumps(aliases) if aliases else None
+        # For testing purpose: uncomment the following code to hide the Dark field
+        # under "Other" in target widget and also store aliases for the field.
+        # if col_val == 'DARK':
+        #     data_dict['disp'] = 'N'
+        #     aliases_list = ['dark_1', 'dark_2', 'dark_3']
+        #     data_dict['aliases'] = json.dumps(aliases_list)
         return data_dict
 
-    def _create_mult_keep_case(self, col_val, disp_order=None, grouping=None,
-                               group_disp_order=None, tooltip=None):
-        return self._create_mult(col_val=col_val, disp_name=col_val,
+    def _create_mult_keep_case(self, col_val, disp='Y', disp_order=None, grouping=None,
+                               group_disp_order=None, tooltip=None, aliases=None):
+        return self._create_mult(col_val=col_val, disp_name=col_val, disp=disp,
                                  disp_order=disp_order, grouping=grouping,
-                                 group_disp_order=group_disp_order, tooltip=tooltip)
+                                 group_disp_order=group_disp_order,
+                                 tooltip=tooltip, aliases=aliases)
 
     def _pdsfile_from_filespec(self, filespec):
         # Create a PdsFile object from a primary filespec.

@@ -38,6 +38,11 @@
         "field_default": null
     },
     {
+        "field_name": "aliases",
+        "field_type": "json",
+        "field_default": null
+    },
+    {
         "field_name": "timestamp",
         "field_type": "timestamp"
     }
