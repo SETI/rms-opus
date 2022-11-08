@@ -11,9 +11,6 @@ from rest_framework.test import RequestsClient
 from tools.app_utils import (HTTP404_BAD_LIMIT,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_CATEGORY,
-                             HTTP404_UNKNOWN_OPUS_ID,
-                             HTTP404_UNKNOWN_RING_OBS_ID,
                              HTTP404_UNKNOWN_SLUG)
 
 from .api_test_helper import ApiTestHelper
@@ -23,6 +20,7 @@ import settings
 class ApiSearchTests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        # self.UPDATE_FILES = True
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -35,7 +33,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000000
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD  = 1000000
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 1000000
-        if settings.TEST_GO_LIVE: # pragma: no cover
+        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -55,11 +53,11 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
         if 'full_search' not in expected:
-            if 'full_search' in jdata: # pragma: no cover
+            if 'full_search' in jdata: # pragma: no cover - for future test cases
                 del jdata['full_search']
         new_choices = []
         for choice in jdata['choices']:
-            if choice in expected['choices']: # pragma: no cover
+            if choice in expected['choices']: # pragma: no cover - for future test cases
                 new_choices.append(choice)
         print('Got:')
         print(str(jdata))
@@ -79,7 +77,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: empty no reqno"
         url = '/__api/normalizeinput.json'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_empty_reqno(self):
         "[test_search_api.py] /api/normalizeinput: empty"
@@ -91,13 +89,14 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: empty reqno bad"
         url = '/__api/normalizeinput.json?reqno=X'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_bad_slug(self):
         "[test_search_api.py] /api/normalizeinput: bad slug"
         url = '/__api/normalizeinput.json?fredethel=1234&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID('/__api/normalizeinput.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_string_empty(self):
         "[test_search_api.py] /api/normalizeinput: string empty"
@@ -423,6 +422,25 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
         self._run_json_equal(url, expected)
 
+    def test__api_normalizeinput_unit8(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & no unit (default unit) & sourceunit: cm diff order"
+        url = '/__api/normalizeinput.json?sourceunit-wavelength=cm&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
+        expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit9(self):
+        "[test_search_api.py] /api/normalizeinput: sourceunit with numeric suffix"
+        url = '/__api/normalizeinput.json?sourceunit-wavelength1=cm&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
+        self._run_status_equal(url, 404,
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/normalizeinput.json'))
+
+    def test__api_normalizeinput_unit10(self):
+        "[test_search_api.py] /api/normalizeinput: sourceunit bad value"
+        url = '/__api/normalizeinput.json?sourceunit-wavelength=fred&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
+        expected = {"wavelength1": "0.0001", "wavelength2": "0.03", "reqno": 123}
+        self._run_json_equal(url, expected)
+
     def test__api_normalizeinput_unit_overflow(self):
         "[test_search_api.py] /api/normalizeinput: wavelength overflow basic unit"
         url = '/__api/normalizeinput.json?wavelength1=1e307&unit-wavelength=cm&reqno=123'
@@ -435,6 +453,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"wavelength1": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
+
             ########################################################
             ######### /__api/stringsearchchoices API TESTS #########
             ########################################################
@@ -443,50 +462,75 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/stringsearchchoices: bad slug"
         url = '/__api/stringsearchchoices/fredethel.json?reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_UNKNOWN_SLUG('fredethel',
-                                '/__api/stringsearchchoices/fredethel.json'))
+                               HTTP404_UNKNOWN_SLUG('fredethel',
+                                   '/__api/stringsearchchoices/fredethel.json'))
 
     def test__api_stringsearchchoices_bad_limit(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit"
         url = '/__api/stringsearchchoices/volumeid.json?limit=0A&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('0A',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('0A',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_n1(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit -1"
         url = '/__api/stringsearchchoices/volumeid.json?limit=-1&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('-1',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('-1',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_0(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 0"
         url = '/__api/stringsearchchoices/volumeid.json?limit=0&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('0',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('0',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_1000000000001(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 1000000000001"
         url = '/__api/stringsearchchoices/volumeid.json?limit=1000000000001&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_LIMIT('1000000000001',
-                                '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_LIMIT('1000000000001',
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_search(self):
         "[test_search_api.py] /api/stringsearchchoices: bad search"
         url = '/__api/stringsearchchoices/volumeid.json?fredethel=2&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
-                            '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_bad_search2(self):
         "[test_search_api.py] /api/stringsearchchoices: bad search2"
         url = '/__api/stringsearchchoices/volumeid.json?missionid=A&reqno=123'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
-                            '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_SEARCH_PARAMS_INVALID(
+                                   '/__api/stringsearchchoices/volumeid.json'))
+
+    def test__api_stringsearchchoices_opusid_COISS_2002_regex_good(self):
+        "[test_search_api.py] /api/stringsearchchoices: opusid volumeid COISS_2002 regex good"
+        url = r'/opus/__api/stringsearchchoices/opusid.json?volumeid=COISS_2002&opusid=co-iss-n14609\d0&qtype-opusid=regex&reqno=123'
+        expected = {'choices': ['<b>co-iss-n1460960</b>653',
+                                '<b>co-iss-n1460960</b>868',
+                                '<b>co-iss-n1460960</b>908',
+                                '<b>co-iss-n1460960</b>944',
+                                '<b>co-iss-n1460960</b>992',
+                                '<b>co-iss-n1460970</b>939',
+                                '<b>co-iss-n1460980</b>093',
+                                '<b>co-iss-n1460980</b>638',
+                                '<b>co-iss-n1460980</b>902',
+                                '<b>co-iss-n1460980</b>958'],
+                    'full_search': False,
+                    'truncated_results': False, "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_opusid_COISS_2002_regex_bad(self):
+        "[test_search_api.py] /api/stringsearchchoices: opusid volumeid COISS_2002 regex bad"
+        url = r'/opus/__api/stringsearchchoices/opusid.json?volumeid=COISS_2002&opusid=co-iss-n14609\d0\&qtype-opusid=regex&reqno=123'
+        expected = {'choices': [],
+                    'full_search': True,
+                    'truncated_results': False, "reqno": 123}
+        self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_volumeid_empty_bigcache(self):
         "[test_search_api.py] /api/stringsearchchoices: volumeid empty"
@@ -509,8 +553,8 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/stringsearchchoices: volumeid none no reqno"
         url = '/__api/stringsearchchoices/volumeid.json?volumeid=BAD_VOLUME'
         self._run_status_equal(url, 404,
-                    HTTP404_BAD_OR_MISSING_REQNO(
-                            '/__api/stringsearchchoices/volumeid.json'))
+                               HTTP404_BAD_OR_MISSING_REQNO(
+                                   '/__api/stringsearchchoices/volumeid.json'))
 
     def test__api_stringsearchchoices_volumeid_GO_0017(self):
         "[test_search_api.py] /api/stringsearchchoices: volumeid GO_0017"
@@ -593,7 +637,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_contains_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 contains good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNA volumeid COISS_2002 contains good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNA&qtype-datasetid=contains&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -601,7 +645,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_contains_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 contains bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNAISSWA volumeid COISS_2002 contains bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNAISSWA&qtype-datasetid=contains&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -609,7 +653,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_ends_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 ends good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid V1.0 volumeid COISS_2002 ends good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1.0&qtype-datasetid=ends&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>'],
                     'full_search': False,
@@ -617,7 +661,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_ends_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 ends bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid O-S volumeid COISS_2002 ends bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=O-S&qtype-datasetid=ends&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -625,7 +669,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_matches_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 matches good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNA volumeid COISS_2002 matches good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNA&qtype-datasetid=matches&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -633,7 +677,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_matches_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 matches bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNAX volumeid COISS_2002 matches bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=ISSNAX&qtype-datasetid=matches&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -641,7 +685,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 excludes good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid V1 volumeid COISS_2002 excludes good"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1&qtype-datasetid=excludes&reqno=123'
         expected = {'choices': [],
                     'full_search': False,
@@ -649,7 +693,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 excludes bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid V1X volumeid COISS_2002 excludes bad"
         url = '/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1X&qtype-datasetid=excludes&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -657,7 +701,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_regex_good(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 regex good"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid [A-Z]{3}NA volumeid COISS_2002 regex good"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=[A-Z]{3}NA&qtype-datasetid=regex&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
@@ -665,7 +709,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     def test__api_stringsearchchoices_datasetid_COISS_2002_regex_bad(self):
-        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 regex bad"
+        "[test_search_api.py] /api/stringsearchchoices: datasetid [A-Z]{3}(NA volumeid COISS_2002 regex bad"
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=[A-Z]{3}(NA&qtype-datasetid=regex&reqno=123'
         expected = {'choices': [],
                     'full_search': True,

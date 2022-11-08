@@ -69,12 +69,6 @@
   },
   "versions": {
     "co-iss-w1866145657": {
-      "2": {
-        "coiss_calib": [
-          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.IMG",
-          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.LBL"
-        ]
-      },
       "Current": {
         "coiss_raw": [
           "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.IMG",
@@ -139,6 +133,12 @@
         ],
         "browse_full": [
           "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_full.png"
+        ]
+      },
+      "2": {
+        "coiss_calib": [
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.IMG",
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.LBL"
         ]
       }
     }

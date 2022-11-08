@@ -6,8 +6,6 @@
 #
 ################################################################################
 
-from collections import OrderedDict
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
 
@@ -37,7 +35,7 @@ def get_pds_products(opus_id_list,
 
     opus_id_list can be a string or a list.
 
-    WARNING: The returned OrderedDict() is not currently guaranteed to be in the same
+    WARNING: The returned dict is not currently guaranteed to be in the same
              order as opus_id_list. Instead it is in a sorted order.
 
     product_types can be a simple string, a comma-separated string, or a list.
@@ -49,8 +47,7 @@ def get_pds_products(opus_id_list,
         the URL, path, and checksum.
     """
     assert loc_type in ('path', 'url', 'raw'), loc_type
-    if opus_id_list is None:
-        return {}
+    assert opus_id_list is not None
 
     if not isinstance(product_types, (list, tuple)):
         product_types = product_types.lower().split(',')
@@ -58,10 +55,9 @@ def get_pds_products(opus_id_list,
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
 
-    if len(opus_id_list) == 0 or len(product_types) == 0:
-        return {}
+    assert len(opus_id_list) > 0 and len(product_types) > 0
 
-    results = OrderedDict() # Dict of opus_ids
+    results = {} # Dict of opus_ids
 
     cursor = connection.cursor()
     q = connection.ops.quote_name
@@ -130,7 +126,7 @@ def get_pds_products(opus_id_list,
     # We do this here so if there aren't any products, there's still an empty
     # dictionary returned
     for opus_id in opus_id_list:
-        results[opus_id] = OrderedDict() # Dict of versions
+        results[opus_id] = {} # Dict of versions
 
     for row in cursor:
         path = None
@@ -149,7 +145,7 @@ def get_pds_products(opus_id_list,
         # sort order
         sort_order = int(sort_order[6:])
         if version_name not in results[opus_id]:
-            results[opus_id][version_name] = OrderedDict()
+            results[opus_id][version_name] = {}
         product_type = (category, sort_order, short_name, full_name)
         if product_type not in results[opus_id][version_name]:
             results[opus_id][version_name][product_type] = []
@@ -199,10 +195,6 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
     elif not isinstance(sizes, (list, tuple)):
         sizes = [sizes]
 
-    if preview_jsons:
-        if not isinstance(preview_jsons, (list, tuple)):
-            preview_jsons = [preview_jsons]
-
     product_types = []
     for size in sizes:
         product_types += settings.PREVIEW_SIZE_TO_PDS_TYPE[size]
@@ -216,13 +208,13 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
         else:
             try:
                 preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist: # pragma: no cover - import error
                 log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)
         viewset = None
-        if preview_json:
+        if preview_json: # pragma: no cover - import error
             viewset = pdsviewable.PdsViewSet.from_dict(preview_json)
-        data = OrderedDict({'opus_id':  opus_id})
+        data = {'opus_id': opus_id}
         for size in sizes:
             viewable = None
             if viewset:
@@ -234,9 +226,9 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                     viewable = viewset.medium
                 elif size == 'full':
                     viewable = viewset.full_size
-                else:
+                else: # pragma: no cover - error catchall
                     log.error('Unknown image size "%s"', size)
-            if not preview_json or not viewset:
+            if not preview_json or not viewset: # pragma: no cover
                 # log.error('No preview image size "%s" found for '
                 #           +'opus_id "%s"', size, opus_id)
                 if ignore_missing:
@@ -271,7 +263,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
 
     selected_browse_products = browse_products[opus_id].get(version_name, [])
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
-    if len(selected_browse_products) == 0:
+    if len(selected_browse_products) == 0: # pragma: no cover - thumbnails not available
         return [(settings.THUMBNAIL_NOT_FOUND, settings.THUMBNAIL_NOT_FOUND)]
     res = []
     # One opus id could have multiple previews, for example:
@@ -283,12 +275,15 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
         for browse_url in selected_browse_products[p]:
             if '_med.' in browse_url:
                 basename, _, _ = browse_url.partition('_med.')
-                if basename in disp_prod_dict:
+                if basename in disp_prod_dict: # pragma: no cover -
+                    # The order of browse products is usually medium,full
+                    # so this never gets triggered, since it would require
+                    # the full image to come first.
                     res.append((browse_url, disp_prod_dict[basename]))
                     continue
             else: # '_full.' in browse_url
                 basename, _, _ = browse_url.partition('_full.')
-                if basename in disp_prod_dict:
+                if basename in disp_prod_dict: # pragma: no cover - see above
                     res.append((disp_prod_dict[basename], browse_url))
                     continue
             disp_prod_dict[basename] = browse_url

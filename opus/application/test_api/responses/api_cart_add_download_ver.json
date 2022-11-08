@@ -1,0 +1,221 @@
+{
+  "total_download_count": 0,
+  "total_download_size": 0,
+  "total_download_size_pretty": "0B",
+  "product_cat_dict": {
+    "Cassini CIRS-Specific Products": {
+      "Current": [
+        {
+          "slug_name": "cocirs_spec",
+          "tooltip": "Calibrated interferograms (SPEC*.DAT) for Cassini CIRS. Files are in binary format and contain re-gridded, interpolated spectra. Associated labels (SPEC*.LBL) are text files that contain information about the data files.",
+          "product_type": "Calibrated Interferograms",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 29682123,
+          "download_size_pretty": "28M",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_spec@Current"
+        },
+        {
+          "slug_name": "cocirs_geo",
+          "tooltip": "Text files (GEO*_XXX.TAB) that tabulate the planetary system geometry for every body (identified by its NAIF ID, XXX) that appeared inside any CIRS spectrum within the time frame of an observation. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files. Also included is GEODATA.FMT, which describes the format of the table file.",
+          "product_type": "System Geometry",
+          "product_count": 1,
+          "download_count": 17,
+          "download_size": 5488695,
+          "download_size_pretty": "5M",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_geo@Current"
+        },
+        {
+          "slug_name": "cocirs_ispm",
+          "tooltip": "Text files (ISPM*_FPx.TAB) that tabulate the instrument parameters and timing information for each of the interferograms in an observation for detector FPx. Associated labels (ISPM*_FPx.LBL) are text files that contain information about the table files. Also included is ISPMDATA.FMT, which describes the format of the table file.",
+          "product_type": "Observation Metadata",
+          "product_count": 1,
+          "download_count": 3,
+          "download_size": 2759329,
+          "download_size_pretty": "2M",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_ispm@Current"
+        },
+        {
+          "slug_name": "cocirs_poi",
+          "tooltip": "Text files (POI*_FPx.TAB) that tabulate the footprint geometry on a body for each of the interferograms in an observation for detector FPx. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is POIDATA.FMT, which describes the format of the table file.",
+          "product_type": "Footprint Geometry on Bodies",
+          "product_count": 1,
+          "download_count": 3,
+          "download_size": 14897969,
+          "download_size_pretty": "14M",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_poi@Current"
+        },
+        {
+          "slug_name": "cocirs_rin",
+          "tooltip": "Text files (RIN*_FPx.TAB) that tabulate the footprint geometry on the rings for each of the interferograms in this observation for detector FPx. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is RINDATA.FMT, which describes the format of the table file.",
+          "product_type": "Footprint Geometry on Rings",
+          "product_count": 1,
+          "download_count": 3,
+          "download_size": 11213057,
+          "download_size_pretty": "10M",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_rin@Current"
+        },
+        {
+          "slug_name": "cocirs_tar",
+          "tooltip": "Text files (TAR*_FPx.TAB) that tabulate which objects fall within the field of view for detector FPx. Associated labels (TAR*_XXX.LBL) are text files that contain information about the table files. Also included is TARDATA.FMT, which describes the format of the table file.",
+          "product_type": "Target Body Identifications",
+          "product_count": 1,
+          "download_count": 3,
+          "download_size": 1325114,
+          "download_size_pretty": "1M",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_tar@Current"
+        },
+        {
+          "slug_name": "cocirs_browse_target",
+          "tooltip": "Diagrams (IMG*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on the default target. Associated labels (IMG*_FPx.LBL) are text files that contain information about the footprint diagrams.",
+          "product_type": "Extra Browse Diagram (Default)",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 538870,
+          "download_size_pretty": "526K",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_browse_target@Current"
+        },
+        {
+          "slug_name": "cocirs_browse_saturn",
+          "tooltip": "Diagrams (POI*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on Saturn. Associated labels (POI*_FPx.LBL) are text files that contain information about the footprint diagrams.",
+          "product_type": "Extra Browse Diagram (Saturn)",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 538870,
+          "download_size_pretty": "526K",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_browse_saturn@Current"
+        },
+        {
+          "slug_name": "cocirs_browse_rings",
+          "tooltip": "Diagrams (RIN*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on Saturn's rings. Associated labels (RIN*_FPx.LBL) are text files that contain information about the footprint diagrams.",
+          "product_type": "Extra Browse Diagram (Rings)",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 210553,
+          "download_size_pretty": "205K",
+          "default_checked": 1,
+          "product_type_with_version": "cocirs_browse_rings@Current"
+        },
+        {
+          "slug_name": "cocirs_documentation",
+          "tooltip": "RMS-curated document collection for Cassini CIRS observations.",
+          "product_type": "Documentation",
+          "product_count": 1,
+          "download_count": 4,
+          "download_size": 41581153,
+          "download_size_pretty": "39M",
+          "default_checked": 0,
+          "product_type_with_version": "cocirs_documentation@Current"
+        }
+      ]
+    },
+    "Browse Products": {
+      "Current": [
+        {
+          "slug_name": "browse_thumb",
+          "tooltip": "Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (thumbnail)",
+          "product_count": 1,
+          "download_count": 1,
+          "download_size": 4990,
+          "download_size_pretty": "4K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_thumb@Current"
+        },
+        {
+          "slug_name": "browse_small",
+          "tooltip": "Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (small)",
+          "product_count": 1,
+          "download_count": 1,
+          "download_size": 12968,
+          "download_size_pretty": "12K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_small@Current"
+        },
+        {
+          "slug_name": "browse_medium",
+          "tooltip": "Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (medium)",
+          "product_count": 1,
+          "download_count": 1,
+          "download_size": 33278,
+          "download_size_pretty": "32K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_medium@Current"
+        },
+        {
+          "slug_name": "browse_full",
+          "tooltip": "Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (full)",
+          "product_count": 1,
+          "download_count": 1,
+          "download_size": 114171,
+          "download_size_pretty": "111K",
+          "default_checked": 1,
+          "product_type_with_version": "browse_full@Current"
+        }
+      ]
+    },
+    "Diagram Products": {
+      "Current": [
+        {
+          "slug_name": "diagram_thumb",
+          "tooltip": "Thumbnail-size (often 100x100) JPEGs of diagrams that attempt to convey the context of observations (such as the extent of surface coverage) in a visual way.",
+          "product_type": "Browse Diagram (thumbnail)",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 9727,
+          "download_size_pretty": "9K",
+          "default_checked": 0,
+          "product_type_with_version": "diagram_thumb@Current"
+        },
+        {
+          "slug_name": "diagram_small",
+          "tooltip": "Small-size JPEGs of diagrams that attempt to convey the context of observations (such as the extent of surface coverage) in a visual way.",
+          "product_type": "Browse Diagram (small)",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 26448,
+          "download_size_pretty": "25K",
+          "default_checked": 0,
+          "product_type_with_version": "diagram_small@Current"
+        },
+        {
+          "slug_name": "diagram_medium",
+          "tooltip": "Medium-size JPEGs of diagrams that attempt to convey the context of observations (such as the extent of surface coverage) in a visual way.",
+          "product_type": "Browse Diagram (medium)",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 61943,
+          "download_size_pretty": "60K",
+          "default_checked": 0,
+          "product_type_with_version": "diagram_medium@Current"
+        },
+        {
+          "slug_name": "diagram_full",
+          "tooltip": "Full-size JPEGs of diagrams that attempt to convey the context of observations (such as the extent of surface coverage) in a visual way.",
+          "product_type": "Browse Diagram (full)",
+          "product_count": 1,
+          "download_count": 2,
+          "download_size": 199074,
+          "download_size_pretty": "194K",
+          "default_checked": 1,
+          "product_type_with_version": "diagram_full@Current"
+        }
+      ]
+    }
+  },
+  "error": false,
+  "count": 1,
+  "recycled_count": 0,
+  "reqno": 101010101
+}

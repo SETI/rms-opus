@@ -75,7 +75,7 @@ There are three basic types of fields stored in the database: _multiple-choice_,
 
 <h2 id="retrievingmetadata">Retrieving Metadata</h2>
 
-Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<fieldid_list>`, where `<fieldid_list>` is a comma-separated list of `fieldid`. For example:
+Some API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<fieldid_list>`, where `<fieldid_list>` is a comma-separated list of `fieldid`. For example:
 
 %CODE%
 cols=opusid,instrument,planet,target,time1,time2
@@ -861,7 +861,7 @@ Examples:
       }
     }
   }
-}    
+}
 %ENDCODE%
 
 * Retrieve raw images ("Current" version) only for a Galileo SSI observation in JSON format.

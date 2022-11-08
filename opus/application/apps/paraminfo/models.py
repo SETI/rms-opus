@@ -71,9 +71,6 @@ class ParamInfo(models.Model):
 
     def body_qualified_label(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
-        if self.label is None: # pragma: no cover
-            return None
-
         pretty_name = (TableNames.objects
                        .get(table_name=self.category_name).label)
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
@@ -136,8 +133,6 @@ class ParamInfo(models.Model):
 
     def fully_qualified_label_results(self):
         ret = self.body_qualified_label_results()
-        if ret is None: # pragma: no cover
-            return None
         units = self.get_units()
         if units != '':
             ret += ' '+units
@@ -154,9 +149,7 @@ class ParamInfo(models.Model):
         return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
 
     def get_ranges_info(self):
-        """
-        Get the ranges info except units & qtype
-        """
+        """Get the ranges info except units & qtype."""
         ranges = {}
         if self.ranges:
             ranges = json.loads(self.ranges)

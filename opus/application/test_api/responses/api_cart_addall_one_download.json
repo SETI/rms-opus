@@ -1,0 +1,265 @@
+{
+  "total_download_count": 510,
+  "total_download_size": 166162601,
+  "total_download_size_pretty": "158M",
+  "product_cat_dict": {
+    "Voyager ISS-Specific Products": {
+      "Current": [
+        {
+          "slug_name": "vgiss_raw",
+          "tooltip": "Raw image files (*_RAW.IMG) for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions.",
+          "product_type": "Raw Image",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 28148748,
+          "download_size_pretty": "26M",
+          "default_checked": 1,
+          "product_type_with_version": "vgiss_raw@Current"
+        },
+        {
+          "slug_name": "vgiss_cleaned",
+          "tooltip": "Cleaned image files (*_CLEANED.IMG) for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Apparent flaws in the raw image, including reseau markings and spikes, have been removed.",
+          "product_type": "Cleaned Image",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 21936280,
+          "download_size_pretty": "20M",
+          "default_checked": 1,
+          "product_type_with_version": "vgiss_cleaned@Current"
+        },
+        {
+          "slug_name": "vgiss_calib",
+          "tooltip": "Calibrated image files (*_CALIB.IMG) for Voyager ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are calibrated versions of the cleaned images (*_CLEANED.IMG).",
+          "product_type": "Calibrated Image",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 43769972,
+          "download_size_pretty": "41M",
+          "default_checked": 1,
+          "product_type_with_version": "vgiss_calib@Current"
+        },
+        {
+          "slug_name": "vgiss_geomed",
+          "tooltip": "Calibrated and geometrically corrected image files (*_GEOMED.IMG) for Voyager ISS. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG).",
+          "product_type": "Geometrically Corrected Image",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 68190894,
+          "download_size_pretty": "65M",
+          "default_checked": 1,
+          "product_type_with_version": "vgiss_geomed@Current"
+        },
+        {
+          "slug_name": "vgiss_resloc",
+          "tooltip": "Files describing the determined location of the reseau markings for an image. Locations are provided in VICAR format (*_RESLOC.DAT) and text format (*_RESLOC.TAB). An associated label (*_RESLOC.LBL) is a text file that contains information about the *.DAT and *.TAB files.",
+          "product_type": "Reseau Table",
+          "product_count": 34,
+          "download_count": 102,
+          "download_size": 672296,
+          "download_size_pretty": "656K",
+          "default_checked": 1,
+          "product_type_with_version": "vgiss_resloc@Current"
+        },
+        {
+          "slug_name": "vgiss_geoma",
+          "tooltip": "Files describing the nominal and measured reseau mark locations used to geometrically correct the image. Locations are provided in VICAR format (*_GEOMA.DAT) and text format (*_GEOMA.TAB). An associated label (*_GEOMA.LBL) is a text file that contains information about the *.DAT and *.TAB files.",
+          "product_type": "Geometric Tiepoint Table",
+          "product_count": 34,
+          "download_count": 102,
+          "download_size": 1424003,
+          "download_size_pretty": "1M",
+          "default_checked": 1,
+          "product_type_with_version": "vgiss_geoma@Current"
+        },
+        {
+          "slug_name": "vgiss_raw_browse",
+          "tooltip": "Preview images (*_RAW.JPG) for the raw image files for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions.",
+          "product_type": "Extra Preview (raw)",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 1963297,
+          "download_size_pretty": "1M",
+          "default_checked": 0,
+          "product_type_with_version": "vgiss_raw_browse@Current"
+        },
+        {
+          "slug_name": "vgiss_cleaned_browse",
+          "tooltip": "Preview images (*_CLEANED.JPG) for the cleaned image files for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Apparent flaws in the raw image, including reseau markings and spikes, have been removed.",
+          "product_type": "Extra Preview (cleaned)",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 1512756,
+          "download_size_pretty": "1M",
+          "default_checked": 0,
+          "product_type_with_version": "vgiss_cleaned_browse@Current"
+        },
+        {
+          "slug_name": "vgiss_calib_browse",
+          "tooltip": "Preview images (*_CALIB.JPG) for the calibrated image files for Voyager ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are calibrated versions of the cleaned images (*_CLEANED.IMG).",
+          "product_type": "Extra Preview (calibrated)",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 2361266,
+          "download_size_pretty": "2M",
+          "default_checked": 0,
+          "product_type_with_version": "vgiss_calib_browse@Current"
+        },
+        {
+          "slug_name": "vgiss_geomed_browse",
+          "tooltip": "Preview images (*_GEOMED.JPG) for the calibrated and geometrically corrected image files for Voyager ISS. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG).",
+          "product_type": "Extra Preview (geometrically corrected)",
+          "product_count": 34,
+          "download_count": 68,
+          "download_size": 2665121,
+          "download_size_pretty": "2M",
+          "default_checked": 0,
+          "product_type_with_version": "vgiss_geomed_browse@Current"
+        },
+        {
+          "slug_name": "vgiss_documentation",
+          "tooltip": "RMS-curated document collection for Voyager ISS observations.",
+          "product_type": "Documentation",
+          "product_count": 34,
+          "download_count": 5,
+          "download_size": 385675,
+          "download_size_pretty": "376K",
+          "default_checked": 0,
+          "product_type_with_version": "vgiss_documentation@Current"
+        }
+      ]
+    },
+    "Metadata Products": {
+      "Current": [
+        {
+          "slug_name": "rms_index",
+          "tooltip": "Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "RMS Node Augmented Index",
+          "product_count": 34,
+          "download_count": 2,
+          "download_size": 1881025,
+          "download_size_pretty": "1M",
+          "default_checked": 0,
+          "product_type_with_version": "rms_index@Current"
+        },
+        {
+          "slug_name": "raw_image_index",
+          "tooltip": "Text files ([volume]_raw_image_index.tab) that tabulate information about the raw image for each observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Raw Image Index",
+          "product_count": 34,
+          "download_count": 2,
+          "download_size": 324742,
+          "download_size_pretty": "317K",
+          "default_checked": 0,
+          "product_type_with_version": "raw_image_index@Current"
+        },
+        {
+          "slug_name": "supplemental_index",
+          "tooltip": "Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Supplemental Index",
+          "product_count": 34,
+          "download_count": 2,
+          "download_size": 161366,
+          "download_size_pretty": "157K",
+          "default_checked": 0,
+          "product_type_with_version": "supplemental_index@Current"
+        },
+        {
+          "slug_name": "inventory",
+          "tooltip": "Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Target Body Inventory",
+          "product_count": 34,
+          "download_count": 2,
+          "download_size": 81999,
+          "download_size_pretty": "80K",
+          "default_checked": 0,
+          "product_type_with_version": "inventory@Current"
+        },
+        {
+          "slug_name": "planet_geometry",
+          "tooltip": "Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Planet Geometry Index",
+          "product_count": 25,
+          "download_count": 2,
+          "download_size": 306984,
+          "download_size_pretty": "299K",
+          "default_checked": 0,
+          "product_type_with_version": "planet_geometry@Current"
+        },
+        {
+          "slug_name": "moon_geometry",
+          "tooltip": "Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Moon Geometry Index",
+          "product_count": 25,
+          "download_count": 2,
+          "download_size": 1775636,
+          "download_size_pretty": "1M",
+          "default_checked": 0,
+          "product_type_with_version": "moon_geometry@Current"
+        },
+        {
+          "slug_name": "ring_geometry",
+          "tooltip": "Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+          "product_type": "Ring Geometry Index",
+          "product_count": 25,
+          "download_count": 2,
+          "download_size": 509704,
+          "download_size_pretty": "497K",
+          "default_checked": 0,
+          "product_type_with_version": "ring_geometry@Current"
+        }
+      ]
+    },
+    "Browse Products": {
+      "Current": [
+        {
+          "slug_name": "browse_thumb",
+          "tooltip": "Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (thumbnail)",
+          "product_count": 34,
+          "download_count": 34,
+          "download_size": 49298,
+          "download_size_pretty": "48K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_thumb@Current"
+        },
+        {
+          "slug_name": "browse_small",
+          "tooltip": "Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (small)",
+          "product_count": 34,
+          "download_count": 34,
+          "download_size": 117246,
+          "download_size_pretty": "114K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_small@Current"
+        },
+        {
+          "slug_name": "browse_medium",
+          "tooltip": "Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (medium)",
+          "product_count": 34,
+          "download_count": 34,
+          "download_size": 428816,
+          "download_size_pretty": "418K",
+          "default_checked": 0,
+          "product_type_with_version": "browse_medium@Current"
+        },
+        {
+          "slug_name": "browse_full",
+          "tooltip": "Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.",
+          "product_type": "Browse Image (full)",
+          "product_count": 34,
+          "download_count": 34,
+          "download_size": 2020408,
+          "download_size_pretty": "1M",
+          "default_checked": 1,
+          "product_type_with_version": "browse_full@Current"
+        }
+      ]
+    }
+  },
+  "error": false,
+  "count": 34,
+  "recycled_count": 0,
+  "reqno": 9878
+}

@@ -1,12 +1,11 @@
 import os
 import sys
-from collections import OrderedDict
 
 _HAS_MEMCACHE = False
 try: # pragma: no cover
     import memcache
     _HAS_MEMCACHE = True
-except ImportError:
+except ImportError: # pragma: no cover
     pass
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
@@ -154,7 +153,7 @@ if _HAS_MEMCACHE: # pragma: no cover
         },
     }
 else:
-    CACHES = {
+    CACHES = { # pragma: no cover
        'default': {
            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
            # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
@@ -328,9 +327,9 @@ PREVIEW_SIZE_TO_PDS_TYPE = {
 }
 
 PREVIEW_GUIDES = {
-    'COCIRS': 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt',
-    'COUVIS': 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt',
-    'COVIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
+    'Cassini CIRS': 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt',
+    'Cassini UVIS': 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt',
+    'Cassini VIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
 }
 
 # Browse products displayed in OPUS detail tab

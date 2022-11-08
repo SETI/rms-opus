@@ -1,0 +1,39 @@
+{
+  "page": [],
+  "limit": 100,
+  "count": 0,
+  "order": "time1,opusid",
+  "order_list": [
+    {
+      "slug": "time1",
+      "label": "Observation Start Time",
+      "descending": false,
+      "removeable": true
+    },
+    {
+      "slug": "opusid",
+      "label": "OPUS ID",
+      "descending": false,
+      "removeable": false
+    }
+  ],
+  "columns": [
+    "OPUS ID",
+    "Instrument Name",
+    "Planet",
+    "Intended Target Name(s)",
+    "Observation Start Time (YMDhms)",
+    "Observation Duration (secs)"
+  ],
+  "columns_no_units": [
+    "OPUS ID",
+    "Instrument Name",
+    "Planet",
+    "Intended Target Name(s)",
+    "Observation Start Time",
+    "Observation Duration"
+  ],
+  "total_obs_count": 0,
+  "reqno": 5,
+  "start_obs": 1
+}

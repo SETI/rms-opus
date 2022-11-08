@@ -1,8 +1,10 @@
 # opus/application/test_api/api_test_helper.py
+from curses import start_color
 import difflib
 from io import BytesIO
 import json
 import os
+import re
 import tarfile
 import zipfile
 
@@ -11,16 +13,16 @@ import settings
 _RESPONSES_FILE_ROOT = 'test_api/responses/'
 
 class ApiTestHelper:
-    # If this is set to true, then instead of comparing responses to files
+    # If this is set to True, then instead of comparing responses to files
     # we overwrite the files with the response to update the test results.
     # Use with extreme caution!
     UPDATE_FILES = False
 
     def _get_response(self, url):
         if (not settings.TEST_GO_LIVE or
-            settings.TEST_GO_LIVE == "production"): # pragma: no cover
+            settings.TEST_GO_LIVE == "production"):
             url = "https://opus.pds-rings.seti.org" + url
-        else: # pragma: no cover
+        else:
             url = "http://dev.pds.seti.org" + url
         return self.client.get(url)
 
@@ -44,7 +46,7 @@ class ApiTestHelper:
             for key in data:
                 ApiTestHelper._depth_first_remove(data[key], ignore_list)
         if isinstance(data, list):
-            for ignore in ignore_list: # pragma: no cover
+            for ignore in ignore_list:
                 while ignore in data:
                     data.remove(ignore)
             for el in data:
@@ -52,6 +54,8 @@ class ApiTestHelper:
 
     @staticmethod
     def _print_clean_diffs(got, expected):
+        if len(got) > 10000 or len(expected) > 10000:
+            return # Too slow
         print('Diffs:')
         diff = difflib.SequenceMatcher(a=got, b=expected)
         for tag, i1, i2, j1, j2 in diff.get_opcodes():
@@ -153,6 +157,77 @@ class ApiTestHelper:
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(resp, expected)
+
+    @staticmethod
+    def _remove_range(s, start_str, end_str):
+        ret = ''
+        ind = s.find(start_str)
+        if ind == -1:
+            return s
+        ret = s[:ind+len(start_str)]
+        if end_str:
+            ind = s.find(end_str)
+            if ind != -1:
+                ret += s[ind:]
+        return ret
+
+    def _run_html_range_file(self, url, exp_file, start_str, end_str):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
+            expected = fp.read()
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        expected = self._remove_range(expected, start_str, end_str)
+        resp = self._remove_range(resp, start_str, end_str)
+        if self.UPDATE_FILES:
+            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+                fp.write(resp)
+            return
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        if resp != expected:
+            self._print_clean_diffs(resp, expected)
+        self.assertEqual(resp, expected)
+
+    def _run_html_contains(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = resp[:len(expected)]
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        if expected not in resp:
+            self._print_clean_diffs(resp, expected)
+            self.assertTrue(False)
+
+    def _run_html_not_contains(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        expected = str(expected)[2:-1]
+        expected = (expected.replace('\\\\r', '').replace('\\r', '')
+                    .replace('\r', ''))
+        resp = str(response.content)[2:-1]
+        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = resp[:len(expected)]
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        if expected in resp:
+            self._print_clean_diffs(resp, expected)
+            self.assertTrue(False)
 
     @staticmethod
     def _cleanup_csv(text):

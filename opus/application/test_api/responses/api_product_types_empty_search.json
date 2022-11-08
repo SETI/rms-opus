@@ -1,0 +1,1479 @@
+[
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_spec",
+    "description": "Calibrated Interferograms",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_cube",
+    "description": "Spectral Image Cube",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_cube",
+    "description": "Spectral Image Cube",
+    "version_number": 30000,
+    "version_name": "3"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_extra",
+    "description": "Extra Cube Preview Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_extra",
+    "description": "Extra Cube Preview Image",
+    "version_number": 30000,
+    "version_name": "3"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_geo",
+    "description": "System Geometry",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_ispm",
+    "description": "Observation Metadata",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_poi",
+    "description": "Footprint Geometry on Bodies",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_rin",
+    "description": "Footprint Geometry on Rings",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_tar",
+    "description": "Target Body Identifications",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_browse_target",
+    "description": "Extra Browse Diagram (Default)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_browse_saturn",
+    "description": "Extra Browse Diagram (Saturn)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_browse_rings",
+    "description": "Extra Browse Diagram (Rings)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini CIRS",
+    "product_type": "cocirs_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_raw",
+    "description": "Raw Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_calib",
+    "description": "Calibrated Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_calib",
+    "description": "Calibrated Image",
+    "version_number": 20000,
+    "version_name": "2"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_calib",
+    "description": "Calibrated Image",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_thumb",
+    "description": "Extra Preview (thumbnail)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_medium",
+    "description": "Extra Preview (medium)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_full",
+    "description": "Extra Preview (full)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_best_res",
+    "description": "Occultation Profile (~1 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_best_res",
+    "description": "Occultation Profile (~1 km)",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_10km_res",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_10km_res",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_dlp",
+    "description": "Diffraction-Ltd Occultation Profile",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_cal",
+    "description": "Occultation Calibration Parameters",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_cal",
+    "description": "Occultation Calibration Parameters",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_geo",
+    "description": "Occultation Geometry Parameters",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_geo",
+    "description": "Occultation Geometry Parameters",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_doc",
+    "description": "Occultation Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_doc",
+    "description": "Occultation Documentation",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini RSS",
+    "product_type": "corss_occ_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_01",
+    "description": "Occultation Profile (1 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_raw",
+    "description": "Raw Data",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_01",
+    "description": "Occultation Profile (1 km)",
+    "version_number": 20100,
+    "version_name": "2.1"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_01",
+    "description": "Occultation Profile (1 km)",
+    "version_number": 20000,
+    "version_name": "2.0"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_01",
+    "description": "Occultation Profile (1 km)",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_calib_corr",
+    "description": "Calibration Data",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_10",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_10",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 20100,
+    "version_name": "2.1"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_10",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 20000,
+    "version_name": "2.0"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_10",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini UVIS",
+    "product_type": "couvis_occ_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_raw",
+    "description": "Raw Cube",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_occ_01",
+    "description": "Occultation Profile (1 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_occ_01",
+    "description": "Occultation Profile (1 km)",
+    "version_number": 20000,
+    "version_name": "2.0"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_occ_01",
+    "description": "Occultation Profile (1 km)",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_occ_10",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_occ_10",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 20000,
+    "version_name": "2.0"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_occ_10",
+    "description": "Occultation Profile (10 km)",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_occ_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_thumb",
+    "description": "Extra Preview (thumbnail)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_medium",
+    "description": "Extra Preview (medium)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_full",
+    "description": "Extra Preview (full)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini VIMS",
+    "product_type": "covims_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Earth-based Occultations",
+    "product_type": "ebro_profile",
+    "description": "Occultation Profile",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Earth-based Occultations",
+    "product_type": "ebro_geom",
+    "description": "Geometry Table",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Earth-based Occultations",
+    "product_type": "ebro_preview",
+    "description": "Preview Plot",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Earth-based Occultations",
+    "product_type": "ebro_diagram",
+    "description": "Geometry Diagram",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Earth-based Occultations",
+    "product_type": "ebro_source",
+    "description": "Source Data",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Galileo SSI",
+    "product_type": "gossi_raw",
+    "description": "Raw Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Galileo SSI",
+    "product_type": "gossi_sl9",
+    "description": "Image with SL9 graphics overlay",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Galileo SSI",
+    "product_type": "gossi_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Galileo SSI",
+    "product_type": "gossi_raw_alternate",
+    "description": "Raw Image (Superseded Processing)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_text",
+    "description": "FITS Header Text",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_text",
+    "description": "FITS Header Text",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_text",
+    "description": "FITS Header Text",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_tiff",
+    "description": "Raw Data Preview (lossless)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_tiff",
+    "description": "Raw Data Preview (lossless)",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_tiff",
+    "description": "Raw Data Preview (lossless)",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_raw",
+    "description": "Raw Data Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_raw",
+    "description": "Raw Data Preview",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_raw",
+    "description": "Raw Data Preview",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_calib",
+    "description": "Calibrated Data Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_calib",
+    "description": "Calibrated Data Preview",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_calib",
+    "description": "Calibrated Data Preview",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_summed",
+    "description": "Calibrated Summed Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_summed",
+    "description": "Calibrated Summed Preview",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_summed",
+    "description": "Calibrated Summed Preview",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_drizzled",
+    "description": "Calibrated Geometrically Corrected Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_drizzled",
+    "description": "Calibrated Geometrically Corrected Preview",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_drizzled",
+    "description": "Calibrated Geometrically Corrected Preview",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_ima",
+    "description": "Pre-mosaic Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_mosaic",
+    "description": "Mosaic Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_1d_spectrum",
+    "description": "1-D Spectrum Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_1d_spectrum",
+    "description": "1-D Spectrum Preview",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_1d_spectrum",
+    "description": "1-D Spectrum Preview",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_2d_spectrum",
+    "description": "2-D Spectrum Preview",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_2d_spectrum",
+    "description": "2-D Spectrum Preview",
+    "version_number": 10100,
+    "version_name": "1.1"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_2d_spectrum",
+    "description": "2-D Spectrum Preview",
+    "version_number": 10000,
+    "version_name": "1.0"
+  },
+  {
+    "category": "HST",
+    "product_type": "hst_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_raw",
+    "description": "Raw Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_raw",
+    "description": "Raw Image",
+    "version_number": 20000,
+    "version_name": "2"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_raw",
+    "description": "Raw Image",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_raw_alternate",
+    "description": "Raw Image Alternate Downlink",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_raw_alternate",
+    "description": "Raw Image Alternate Downlink",
+    "version_number": 20000,
+    "version_name": "2"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_calib",
+    "description": "Calibrated Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_calib",
+    "description": "Calibrated Image",
+    "version_number": 20000,
+    "version_name": "2"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_calib",
+    "description": "Calibrated Image",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_calib_alternate",
+    "description": "Calibrated Image Alternate Downlink",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_calib_alternate",
+    "description": "Calibrated Image Alternate Downlink",
+    "version_number": 20000,
+    "version_name": "2"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_calib_browse",
+    "description": "Extra Preview (calibrated)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons LORRI",
+    "product_type": "nh_lorri_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_raw",
+    "description": "Raw Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_raw",
+    "description": "Raw Image",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_raw_alternate",
+    "description": "Raw Image Alternate Downlink",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_raw_alternate",
+    "description": "Raw Image Alternate Downlink",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_calib",
+    "description": "Calibrated Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_calib",
+    "description": "Calibrated Image",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_calib_alternate",
+    "description": "Calibrated Image Alternate Downlink",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_calib_alternate",
+    "description": "Calibrated Image Alternate Downlink",
+    "version_number": 10000,
+    "version_name": "1"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_calib_browse",
+    "description": "Extra Preview (calibrated)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "New Horizons MVIC",
+    "product_type": "nh_mvic_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_raw",
+    "description": "Raw Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_cleaned",
+    "description": "Cleaned Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_prof_02",
+    "description": "Intensity Profile (2 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_prof_04",
+    "description": "Intensity Profile (4 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_prof_10",
+    "description": "Intensity Profile (10 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_prof_20",
+    "description": "Intensity Profile (20 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_calib",
+    "description": "Calibrated Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_prof_img_ann",
+    "description": "Source Images (annotated)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_prof_img_cal",
+    "description": "Source Images (calibrated)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_prof_img_raw",
+    "description": "Source Images (raw)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_geomed",
+    "description": "Geometrically Corrected Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_resloc",
+    "description": "Reseau Table",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_geoma",
+    "description": "Geometric Tiepoint Table",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_raw_browse",
+    "description": "Extra Preview (raw)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_cleaned_browse",
+    "description": "Extra Preview (cleaned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_calib_browse",
+    "description": "Extra Preview (calibrated)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_geomed_browse",
+    "description": "Extra Preview (geometrically corrected)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager ISS",
+    "product_type": "vgiss_documentation",
+    "description": "Documentation",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_best",
+    "description": "Calibrated Profile (finest resolution)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_all",
+    "description": "Calibrated Profile (overview)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_0_2",
+    "description": "Calibrated Profile (200 m)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_0_5",
+    "description": "Calibrated Profile (500 m)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_01",
+    "description": "Calibrated Profile (1 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_02",
+    "description": "Calibrated Profile (2 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_05",
+    "description": "Calibrated Profile (5 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_10",
+    "description": "Calibrated Profile (10 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_20",
+    "description": "Calibrated Profile (20 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_50",
+    "description": "Calibrated Profile (50 km)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_raw",
+    "description": "Raw Data",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_cal",
+    "description": "Calibration Model",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_geo",
+    "description": "Geometry Model",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_img",
+    "description": "Support Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_jit",
+    "description": "Jitter File",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_j2000",
+    "description": "Vector Tables (J2000 frame)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_ring",
+    "description": "Vector Tables (ring frame)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager PPS",
+    "product_type": "vgpps_occ_test",
+    "description": "Additional Star Tests",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv0_05",
+    "description": "50 m inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv0_4",
+    "description": "400 m inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv0_2",
+    "description": "200 m inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv01",
+    "description": "1 km inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv0_2",
+    "description": "200 m inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv05",
+    "description": "5 km inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv0_5",
+    "description": "500 m inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_inv01",
+    "description": "1 km inversion, old pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam0_025",
+    "description": "25 m resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam0_05",
+    "description": "50 m resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam0_1",
+    "description": "100 m resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam0_2",
+    "description": "200 m resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam0_25",
+    "description": "250 m resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam0_5",
+    "description": "500 m resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam01",
+    "description": "1 km resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam02",
+    "description": "2 km resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam02_5",
+    "description": "2.5 km resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam05",
+    "description": "5 km resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam10",
+    "description": "10 km resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam20",
+    "description": "20 km resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager RSS",
+    "product_type": "vgrss_occ_sam50",
+    "description": "50 km resampled, new pole",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_full_res",
+    "description": "Calibrated Profile (full resolution)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_sampled_2",
+    "description": "Calibrated Profile (2x subsampled)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_sampled_3",
+    "description": "Calibrated Profile (3x subsampled)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_sampled_4",
+    "description": "Calibrated Profile (4x subsampled)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_sampled_5",
+    "description": "Calibrated Profile (5x subsampled)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_0_2",
+    "description": "Calibrated Profile (200 m binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_0_5",
+    "description": "Calibrated Profile (500 m binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_01",
+    "description": "Calibrated Profile (1 km binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_02",
+    "description": "Calibrated Profile (2 km binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_05",
+    "description": "Calibrated Profile (5 km binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_10",
+    "description": "Calibrated Profile (10 km binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_20",
+    "description": "Calibrated Profile (20 km binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_50",
+    "description": "Calibrated Profile (50 km binned)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_coadd",
+    "description": "Raw Coadded Spectra",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_spec",
+    "description": "Raw Spectra",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_cal",
+    "description": "Calibration Model",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_geo",
+    "description": "Geometry Model",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_img",
+    "description": "Support Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_j2000",
+    "description": "Vector Tables (J2000 frame)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Voyager UVS",
+    "product_type": "vguvs_occ_ring",
+    "description": "Vector Tables (ring frame)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "rms_index",
+    "description": "RMS Node Augmented Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "hstfiles_index",
+    "description": "HST Files Associations Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "raw_image_index",
+    "description": "Raw Image Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "cube_index",
+    "description": "Cube Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "profile_index",
+    "description": "Profile Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "supplemental_index",
+    "description": "Supplemental Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "inventory",
+    "description": "Target Body Inventory",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "planet_geometry",
+    "description": "Planet Geometry Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "moon_geometry",
+    "description": "Moon Geometry Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "metadata",
+    "product_type": "ring_geometry",
+    "description": "Ring Geometry Index",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "browse",
+    "product_type": "browse_thumb",
+    "description": "Browse Image (thumbnail)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "browse",
+    "product_type": "browse_small",
+    "description": "Browse Image (small)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "browse",
+    "product_type": "browse_medium",
+    "description": "Browse Image (medium)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "browse",
+    "product_type": "browse_full",
+    "description": "Browse Image (full)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "diagram",
+    "product_type": "diagram_thumb",
+    "description": "Browse Diagram (thumbnail)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "diagram",
+    "product_type": "diagram_small",
+    "description": "Browse Diagram (small)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "diagram",
+    "product_type": "diagram_medium",
+    "description": "Browse Diagram (medium)",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "diagram",
+    "product_type": "diagram_full",
+    "description": "Browse Diagram (full)",
+    "version_number": 999999,
+    "version_name": "Current"
+  }
+]

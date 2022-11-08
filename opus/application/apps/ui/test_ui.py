@@ -35,15 +35,13 @@ class uiTests(TestCase):
             ######### api_notifications UNIT TESTS #########
             ################################################
 
-    def test__api_notifications_no_request(self):
-        "[test_ui.py] api_notifications: no request"
-        # Set META to None so that TypeError won't be raised by never_cache
-        # in Django 4.
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_notifications_no_meta(self):
+        "[test_ui.py] api_notifications: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__notifications.json'):
-            api_notifications(no_request)
+            api_notifications(request)
 
     def test__api_notifications_no_get(self):
         "[test_ui.py] api_notifications: no GET"
@@ -145,13 +143,13 @@ class uiTests(TestCase):
             ######### api_normalize_url UNIT TESTS #########
             ################################################
 
-    def test__api_normalize_url_no_request(self):
-        "[test_ui.py] api_normalize_url: no request"
-        no_request = self.factory.get('dummy')
-        no_request.META = None
+    def test__api_normalize_url_no_meta(self):
+        "[test_ui.py] api_normalize_url: no META"
+        request = self.factory.get('dummy')
+        request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__normalizeurl.json'):
-            api_normalize_url(no_request)
+            api_normalize_url(request)
 
     def test__api_normalize_url_no_get(self):
         "[test_ui.py] api_normalize_url: no GET"

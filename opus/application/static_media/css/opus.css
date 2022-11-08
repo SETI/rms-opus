@@ -2300,24 +2300,33 @@ even when screen is narrow */
     font-weight:bold;
 }
 
-.mult_group_label {
+.op-mult-group-checked-indication {
+    margin: 0 2px 0 5px;
+}
+
+.mult-group-label {
     padding: 5px 4px;
     padding-left: 5px;
 }
 
-.mult_group {
+.mult-group {
     padding-left: 0;
     display: none;
 }
 
-.mult_group > .multichoice {
+.mult-group > .multichoice {
     padding-left: 0;
 }
 
 /* For widget with a mix of grouping and non-grouping checkboxes, left align
 grouping icon with non-grouping checkboxes */
-.mult_group_label_container {
+.mult-group-label-container {
     padding-left: 1%;
+}
+
+/* Increase the indentation of subcategories for mult */
+.mult-group {
+    padding-left: 1.2em !important;
 }
 
 /* detail tab */

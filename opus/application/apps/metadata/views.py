@@ -19,7 +19,6 @@
 #
 ################################################################################
 
-from collections import OrderedDict
 import logging
 
 import settings
@@ -114,7 +113,7 @@ def api_get_result_count(request, fmt, internal=False):
         raise ret
 
     count, _, err = get_result_count_helper(request, api_code)
-    if err is not None: # pragma: no cover
+    if err is not None: # pragma: no cover - database error
         exit_api_call(api_code, err)
         return err
 
@@ -137,7 +136,7 @@ def api_get_result_count(request, fmt, internal=False):
                      {'data': data})
     elif fmt == 'csv':
         ret = csv_response('result_count', [['result count', count]])
-    else: # pragma: no cover
+    else: # pragma: no cover - error catchall
         log.error('api_get_result_count: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
@@ -189,6 +188,12 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
+    if fmt not in ('json', 'html', 'csv'):
+        log.error('api_get_mult_counts: Unknown format "%s"', fmt)
+        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
+        exit_api_call(api_code, ret)
+        raise ret
+
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None or throw_random_http404_error():
         log.error('api_get_mult_counts: Failed to get selections for slug %s, '
@@ -215,7 +220,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         del selections[param_qualified_name]
 
     cache_num, cache_new_flag = set_user_search_number(selections, extras)
-    if cache_num is None or throw_random_http500_error(): # pragma: no cover
+    if cache_num is None or throw_random_http500_error(): # pragma: no cover -
+        # database error
         log.error('api_get_mult_counts: Failed to create user_selections entry'
                   +' for *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -238,9 +244,9 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         try:
             mult_model = apps.get_model('search',
                                         mult_name.title().replace('_',''))
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise LookupError
-        except LookupError: # pragma: no cover
+        except LookupError: # pragma: no cover - configuration error
             log.error('api_get_mult_counts: Could not get_model for %s',
                       mult_name.title().replace('_',''))
             ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -250,9 +256,9 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         try:
             table_model = apps.get_model('search',
                                          table_name.title().replace('_',''))
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise LookupError
-        except LookupError: # pragma: no cover
+        except LookupError: # pragma: no cover - configuration error
             log.error('api_get_mult_counts: Could not get_model for %s',
                       table_name.title().replace('_',''))
             ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -285,7 +291,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         user_table = get_user_query_table(selections, extras, api_code=api_code)
 
         if ((selections and not user_table) or
-            throw_random_http500_error()): # pragma: no cover
+            throw_random_http500_error()): # pragma: no cover - database corruption
             log.error('api_get_mult_counts: has selections but no user_table '
                       +'found *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -316,9 +322,9 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
                 mult = mult_model.objects.get(id=mult_id)
                 mult_disp_order = mult.disp_order
                 mult_label = mult.label
-                if throw_random_http500_error(): # pragma: no cover
+                if throw_random_http500_error(): # pragma: no cover - internal debugging
                     raise ObjectDoesNotExist
-            except ObjectDoesNotExist: # pragma: no cover
+            except ObjectDoesNotExist: # pragma: no cover - import error
                 log.error('api_get_mult_counts: Could not find mult entry for '
                           +'mult_model %s id %s', str(mult_model), str(mult_id))
                 ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -329,7 +335,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
                                      (mult_label, row[1])))
         mult_result_list.sort()
 
-        mults = OrderedDict()  # info to return
+        mults = {}  # info to return
         for _, mult_info in mult_result_list:
             mults[mult_info[0]] = mult_info[1]
 
@@ -350,14 +356,10 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         ret = json_response(data)
     elif fmt == 'html':
         ret = render(request, 'metadata/mults.html', data)
-    elif fmt == 'csv':
+    else:
+        assert fmt == 'csv'
         ret = csv_response(slug, [list(mults.values())],
                            column_names=list(mults.keys()))
-    else:
-        log.error('api_get_mult_counts: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
 
     exit_api_call(api_code, ret)
     return ret
@@ -417,6 +419,12 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
+    if fmt not in ('json', 'html', 'csv'):
+        log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
+        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
+        exit_api_call(api_code, ret)
+        raise ret
+
     param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info or throw_random_http404_error():
         log.error('get_range_endpoints: Could not find param_info entry for '+
@@ -445,9 +453,9 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     try:
         table_model = apps.get_model('search',
                                      table_name.title().replace('_',''))
-        if throw_random_http500_error(): # pragma: no cover
+        if throw_random_http500_error(): # pragma: no cover - internal debugging
             raise LookupError
-    except LookupError: # pragma: no cover
+    except LookupError: # pragma: no cover - configuration error
         log.error('api_get_range_endpoints: Could not get_model for %s',
                   table_name.title().replace('_',''))
         ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
@@ -482,7 +490,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     if selections:
         user_table = get_user_query_table(selections, extras, api_code=api_code)
         if (user_table is None or
-            throw_random_http500_error()): # pragma: no cover
+            throw_random_http500_error()): # pragma: no cover - database corruption
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -498,7 +506,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
                  + ':units:' + str(units))
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
-        if cache_num is None: # pragma: no cover
+        if cache_num is None: # pragma: no cover - database error
             log.error('api_get_range_endpoints: Failed to create cache table '
                       +'for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -570,17 +578,13 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         ret = render(request,
                      'metadata/endpoints.html',
                      {'data': range_endpoints})
-    elif fmt == 'csv':
+    else:
+        assert fmt == 'csv'
         ret = csv_response(slug, [[range_endpoints['min'],
                                    range_endpoints['max'],
                                    range_endpoints['nulls'],
                                    range_endpoints['units']]],
                            ['min', 'max', 'nulls', 'units'])
-    else:
-        log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
 
     exit_api_call(api_code, ret)
     return ret
@@ -642,7 +646,7 @@ def api_get_fields(request, fmt, slug=None):
     collapse = request.GET.get('collapse', '0')
     try:
         collapse = int(collapse) != 0
-        if throw_random_http404_error(): # pragma: no cover
+        if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
     except ValueError:
         ret = Http404(HTTP404_BAD_COLLAPSE(collapse, request))
@@ -674,7 +678,7 @@ def get_result_count_helper(request, api_code):
 
     table = get_user_query_table(selections, extras, api_code=api_code)
 
-    if not table or throw_random_http500_error(): # pragma: no cover
+    if not table or throw_random_http500_error(): # pragma: no cover - internal debugging
         log.error('get_result_count_helper: Could not find/create query table '
                   +'for request %s', str(request.GET))
         ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
@@ -689,9 +693,9 @@ def get_result_count_helper(request, api_code):
         try:
             cursor.execute(sql)
             count = cursor.fetchone()[0]
-            if throw_random_http500_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover - internal debugging
                 raise DatabaseError('random')
-        except DatabaseError as e: # pragma: no cover
+        except DatabaseError as e: # pragma: no cover - database error
             log.error('get_result_count_helper: SQL query failed for request '
                       +'%s: SQL "%s" ERR "%s"',
                       str(request.GET), sql, str(e))
@@ -702,14 +706,12 @@ def get_result_count_helper(request, api_code):
 
     return count, table, None
 
-def get_cart_count(session_id, recycled=False):
+def get_cart_count(session_id):
     "Return the number of items in the current cart."
     count = (Cart.objects
              .filter(session_id__exact=session_id)
              .filter(recycled=0)
              .count())
-    if not recycled:
-        return count
     recycled_count = (Cart.objects
              .filter(session_id__exact=session_id)
              .filter(recycled=1)
@@ -728,10 +730,6 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         else:
             fields = ParamInfo.objects.all()
         fields.order_by('category_name', 'slug')
-        # We cheat with the HTML return because we want to collapse all the
-        # surface geometry down to a single target version to save screen
-        # space. This is a horrible hack, but for right now we just assume
-        # there will always be surface geometry data for Saturn.
         return_obj = {}
         for f in fields:
             if not f.slug:
@@ -748,8 +746,14 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                     f.referred_slug = referred_slug
                     f.category_name = category
                     f.disp_order = disp_order
-                else:
+                else: # pragma: no cover - protection against future bugs
+                    # There shouldn't be a case where BOTH the slug and
+                    # referred_slug are None, but just to be careful...
                     continue
+            # We cheat with the HTML return because we want to collapse all the
+            # surface geometry down to a single target version to save screen
+            # space. This is a horrible hack, but for right now we just assume
+            # there will always be surface geometry data for Saturn.
             if (collapse and
                 f.slug.startswith('SURFACEGEO') and
                 not f.slug.startswith('SURFACEGEOsaturn')):
@@ -763,9 +767,9 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             if collapse and cat.find('Surface Geometry Constraints') != -1:
                 cat = cat.replace('Saturn', '<TARGET>')
 
-            return_obj[cat] = return_obj.get(cat, OrderedDict())
+            return_obj[cat] = return_obj.get(cat, {})
 
-            entry = OrderedDict()
+            entry = {}
             return_obj[cat]['table_order'] = table_name.disp_order
             entry['disp_order'] = f.disp_order
             collapsed_slug = f.slug
@@ -788,17 +792,19 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                         f_type = 'range_integer'
                     elif form_type_format[-1] == 'f':
                         f_type = 'range_float'
-                    else:
+                    else: # pragma: no cover - error catchall
                         log.warning('Unparseable form type '+str(f.form_type))
                 elif form_type_unit_id == 'datetime':
                     f_type = 'range_time'
                 elif form_type_unit_id is not None:
                     f_type = 'range_special'
+                else: # pragma: no cover - error catchall
+                    f_type = 'Internal Error'
             elif form_type in settings.MULT_FORM_TYPES:
                 f_type = 'multiple'
             elif form_type == 'STRING':
                 f_type = 'string'
-            else:
+            else: # pragma: no cover - error catchall
                 log.warning('Unparseable form type '+str(f.form_type))
             entry['type'] = f_type
             entry['label'] = f.label_results
@@ -819,13 +825,11 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
 
         # Organize return_obj before returning
         # Sort categories by table_order
-        return_obj = OrderedDict(sorted(return_obj.items(),
-                                 key=lambda x: x[1]['table_order']))
+        return_obj = dict(sorted(return_obj.items(), key=lambda x: x[1]['table_order']))
         for cat, cat_data in return_obj.items():
             del cat_data['table_order']
             # Sort slugs of each category by disp_order
-            cat_data = OrderedDict(sorted(cat_data.items(),
-                                   key=lambda x: x[1]['disp_order']))
+            cat_data = dict(sorted(cat_data.items(), key=lambda x: x[1]['disp_order']))
             return_obj[cat] = cat_data
             for key, val in cat_data.items():
                 del val['disp_order']
@@ -859,7 +863,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                              )]
                 rows += row_data
         ret = csv_response('fields', rows, labels)
-    else:
+    else: # pragma: no cover - error catchall
         log.error('get_fields_info: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
         exit_api_call(api_code, ret)
