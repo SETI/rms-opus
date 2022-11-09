@@ -199,6 +199,7 @@ Generally speaking, you can think of the OPUS schema as having only one `obs` ta
     | display          | enum('Y','N') | NO   |     | Y                 |
     | grouping         | char(100)     | YES  |     | NULL              |
     | group_disp_order | char(100)     | YES  |     | NULL              |
+    | aliases          | json          | YES  |     | NULL              |
     | timestamp        | timestamp     | YES  |     | CURRENT_TIMESTAMP |
     +------------------+---------------+------+-----+-------------------+
 
@@ -211,7 +212,8 @@ The fields are:
 - `display`: An indication of whether the value should be displayed or hidden in the UI. At this time all entries have a value of 'Y'.
 - `grouping`: The name of the group this option belongs to. In the UI items in the same group will be collected together under a common, collasible header.
 - `group_disp_order`: A string that is used to sort the names of the groups.
-` `timestamp`: The date and time the entry was last modified.
+- `aliases`: A JSON-encoded list of strings representing alias names for this value, for example historical names for a target.
+- `timestamp`: The date and time the entry was last modified.
 
 For example, here are the entries for the `planet_id` field (timestamp removed for brevity):
 
