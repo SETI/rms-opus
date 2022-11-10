@@ -15,6 +15,9 @@ nohup.out
 
 .vscode
 *venv*
+!scripts/*
+test_out*
+coverage_out*
 opus_secrets.py
 
 migrations/
