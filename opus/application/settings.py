@@ -17,6 +17,9 @@ if _HAS_MEMCACHE:
     except ConnectionRefusedError:
         _HAS_MEMCACHE = False
 
+# Leave for future debugging
+# print('memcache', _HAS_MEMCACHE)
+
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
