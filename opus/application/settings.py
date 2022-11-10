@@ -1,28 +1,37 @@
 import os
 import sys
 
+# First check to see if we have the memcache package installed
 _HAS_MEMCACHE = False
 try: # pragma: no cover
-    import memcache
+    import pymemcache
     _HAS_MEMCACHE = True
 except ImportError: # pragma: no cover
     pass
+
+# Now check to see if memcached is actually running
+if _HAS_MEMCACHE:
+    try:
+        memcache_client = pymemcache.client.base.Client(('127.0.0.1', 11211))
+        memcache_client.set('__test_key__', 'test_val')
+    except ConnectionRefusedError:
+        _HAS_MEMCACHE = False
+
+# Leave for future debugging
+# print('memcache', _HAS_MEMCACHE)
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, PDS_OPUS_ROOT) # So we can import secrets
+sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
 
 from opus_secrets import *
 
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_TOOLS_PATH))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_WEBTOOLS_PATH))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_OPUS_LIB_PATH))
-
-import opus_support
-import julian
+sys.path.insert(0, PDS_TOOLS_PATH)
+sys.path.insert(0, PDS_WEBTOOLS_PATH)
+sys.path.insert(0, PDS_OPUS_LIB_PATH)
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
@@ -120,7 +129,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'django_memcached',
     'django.contrib.admindocs',
     'django.forms',
     'storages',
@@ -147,7 +155,7 @@ REST_FRAMEWORK = {
 if _HAS_MEMCACHE: # pragma: no cover
     CACHES = {
         "default": {
-            "BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
+            "BACKEND":"django.core.cache.backends.memcached.PyMemcacheCache",
             "LOCATION": "127.0.0.1:11211",
     	    "TIMEOUT": None,
         },
@@ -156,7 +164,7 @@ else:
     CACHES = { # pragma: no cover
        'default': {
            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-           # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        #    'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
 

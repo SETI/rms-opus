@@ -1,7 +1,7 @@
 - Fixes #XXX
 - Were any Django, import pipeline, or table_schema files modified? Y/N
   - If YES:
-    - Database used: XXX
+    - Database used (or new import): XXX
     - FLAKE8 run on modified code: Y/NA
     - All Django tests pass: Y/NA
     - Code coverage run and still at 100%: Y/NA
@@ -17,6 +17,7 @@
   - FAQ
   - API Guide
   - Tooltips
+  - Import/database schema
 
 Description of changes:
 

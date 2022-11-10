@@ -1852,7 +1852,7 @@ Supported return formats: `json`, `csv`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `collapse=<N>` | If `collapse=1` is given, collapse all surface geometry entries into single generic-target entries |
+| `collapse=<N>` | If `collapse=1` is given, collapse all surface geometry entries into single generic-target entries | 0 |
 
 #### JSON Return Format
 
