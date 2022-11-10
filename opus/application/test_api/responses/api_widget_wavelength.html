@@ -15,8 +15,8 @@
 >&nbsp;</span>
 </div>
 </div>
-<span class="float-right border-left border-dark">
-<a href="#card__wavelength" data-toggle="collapse" data-target="#card__wavelength" aria-expanded="true">
+<span class="float-end border-start border-dark">
+<a href="#card__wavelength" data-bs-toggle="collapse" data-bs-target="#card__wavelength" aria-expanded="true">
 <i class="icon-action fa fa-chevron-down pull-right"></i>
 </a>
 <a href="#" data-action="close" data-slug="wavelength" class="close_card">
@@ -36,11 +36,11 @@ range-widget
 <!-- Customize inputs in the widget -->
 <ul class="op-search-inputs-set"><li>
 Min:
-<input type="text" name="wavelength1" class="op-range-input-min RANGE op-ranges-dropdown-menu dropdown-toggle" placeholder="Wavelength or Color" autocomplete="off" data-slugname="wavelength" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+<input type="text" name="wavelength1" class="op-range-input-min RANGE op-ranges-dropdown-menu dropdown-toggle" placeholder="Wavelength or Color" autocomplete="off" data-slugname="wavelength" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 </li>
 <li>
 Max:
-<input type="text" name="wavelength2" class="op-range-input-max RANGE " placeholder="" autocomplete="off" data-slugname="wavelength" data-toggle="" aria-haspopup="true" aria-expanded="false">
+<input type="text" name="wavelength2" class="op-range-input-max RANGE " placeholder="" autocomplete="off" data-slugname="wavelength" data-bs-toggle="" aria-haspopup="true" aria-expanded="false">
 </li>
 <li>
 <select name="qtype-wavelength" tabindex="0" class="RANGE">
@@ -50,18 +50,17 @@ Max:
 </select>
 </li></ul>
 </ul>
-<div class="op-preprogrammed-ranges">
-<ul class="dropdown-menu op-scrollable-menu pl-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
-<li class="mr-0 d-block" data-category="pds4-wavelength-ranges">
-<a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#pds4-wavelength-ranges" role="button" aria-expanded="false" aria-controls="pds4-wavelength-ranges">PDS4 Wavelength Ranges</a>
-<div class="container collapse" id="pds4-wavelength-ranges" data-widget="widget__wavelength" data-mininput="wavelength1">
+<ul class="dropdown-menu op-preprogrammed-ranges op-scrollable-menu ps-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
+<li class="me-0 d-block" data-category="pds4-wavelength-ranges">
+<a class="dropdown-item bg-light dropdown-toggle collapsed" data-bs-toggle="collapse" href="#pds4-wavelength-ranges" role="button" aria-expanded="false" aria-controls="pds4-wavelength-ranges">PDS4 Wavelength Ranges</a>
+<div class="container collapse g-sm-3" id="pds4-wavelength-ranges" data-widget="widget__wavelength" data-mininput="wavelength1">
 <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
 <div class="col-4">
 </div>
-<div class="col-4 font-weight-bold text-right">
+<div class="col-4 fw-bold text-end">
 Min
 </div>
-<div class="col-4 font-weight-bold text-right">
+<div class="col-4 fw-bold text-end">
 Max
 </div>
 </div>
@@ -69,10 +68,10 @@ Max
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.01
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.4
 </div>
 </div>
@@ -80,10 +79,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 100
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 4,000
 </div>
 </div>
@@ -91,10 +90,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 10
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 400
 </div>
 </div>
@@ -102,10 +101,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.000001
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.00004
 </div>
 </div>
@@ -113,10 +112,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visible
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.39
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.7
 </div>
 </div>
@@ -124,10 +123,10 @@ Visible
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visible
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 3,900
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 7,000
 </div>
 </div>
@@ -135,10 +134,10 @@ Visible
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visible
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 390
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 700
 </div>
 </div>
@@ -146,10 +145,10 @@ Visible
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visible
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.000039
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.00007
 </div>
 </div>
@@ -157,10 +156,10 @@ Visible
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Near Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.65
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 5
 </div>
 </div>
@@ -168,10 +167,10 @@ Near Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Near Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 6,500
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 50,000
 </div>
 </div>
@@ -179,10 +178,10 @@ Near Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Near Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 650
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 5,000
 </div>
 </div>
@@ -190,10 +189,10 @@ Near Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Near Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.000065
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0005
 </div>
 </div>
@@ -201,10 +200,10 @@ Near Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.75
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 300
 </div>
 </div>
@@ -212,10 +211,10 @@ Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 7,500
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 3,000,000
 </div>
 </div>
@@ -223,10 +222,10 @@ Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 750
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 300,000
 </div>
 </div>
@@ -234,10 +233,10 @@ Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.000075
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.03
 </div>
 </div>
@@ -245,10 +244,10 @@ Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Far Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 30
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 300
 </div>
 </div>
@@ -256,10 +255,10 @@ Far Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Far Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 300,000
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 3,000,000
 </div>
 </div>
@@ -267,10 +266,10 @@ Far Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Far Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 30,000
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 300,000
 </div>
 </div>
@@ -278,25 +277,25 @@ Far Infrared
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Far Infrared
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.003
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.03
 </div>
 </div>
 </div>
 </li>
-<li class="mr-0 d-block" data-category="crc-wavelength-ranges">
-<a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#crc-wavelength-ranges" role="button" aria-expanded="false" aria-controls="crc-wavelength-ranges">CRC Wavelength Ranges</a>
-<div class="container collapse" id="crc-wavelength-ranges" data-widget="widget__wavelength" data-mininput="wavelength1">
+<li class="me-0 d-block" data-category="crc-wavelength-ranges">
+<a class="dropdown-item bg-light dropdown-toggle collapsed" data-bs-toggle="collapse" href="#crc-wavelength-ranges" role="button" aria-expanded="false" aria-controls="crc-wavelength-ranges">CRC Wavelength Ranges</a>
+<div class="container collapse g-sm-3" id="crc-wavelength-ranges" data-widget="widget__wavelength" data-mininput="wavelength1">
 <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
 <div class="col-4">
 </div>
-<div class="col-4 font-weight-bold text-right">
+<div class="col-4 fw-bold text-end">
 Min
 </div>
-<div class="col-4 font-weight-bold text-right">
+<div class="col-4 fw-bold text-end">
 Max
 </div>
 </div>
@@ -304,10 +303,10 @@ Max
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Violet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.4
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.424
 </div>
 </div>
@@ -315,10 +314,10 @@ Violet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Violet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 4,000
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 4,240
 </div>
 </div>
@@ -326,10 +325,10 @@ Violet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Violet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 400
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 424
 </div>
 </div>
@@ -337,10 +336,10 @@ Violet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Violet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.00004
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000424
 </div>
 </div>
@@ -348,10 +347,10 @@ Violet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.424
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.491
 </div>
 </div>
@@ -359,10 +358,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 4,240
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 4,910
 </div>
 </div>
@@ -370,10 +369,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 424
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 491
 </div>
 </div>
@@ -381,10 +380,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000424
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000491
 </div>
 </div>
@@ -392,10 +391,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Green
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.491
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.575
 </div>
 </div>
@@ -403,10 +402,10 @@ Green
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Green
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 4,910
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 5,750
 </div>
 </div>
@@ -414,10 +413,10 @@ Green
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Green
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 491
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 575
 </div>
 </div>
@@ -425,10 +424,10 @@ Green
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Green
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000491
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000575
 </div>
 </div>
@@ -436,10 +435,10 @@ Green
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Yellow
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.575
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.585
 </div>
 </div>
@@ -447,10 +446,10 @@ Yellow
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Yellow
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 5,750
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 5,850
 </div>
 </div>
@@ -458,10 +457,10 @@ Yellow
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Yellow
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 575
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 585
 </div>
 </div>
@@ -469,10 +468,10 @@ Yellow
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Yellow
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000575
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000585
 </div>
 </div>
@@ -480,10 +479,10 @@ Yellow
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Orange
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.585
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.647
 </div>
 </div>
@@ -491,10 +490,10 @@ Orange
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Orange
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 5,850
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 6,470
 </div>
 </div>
@@ -502,10 +501,10 @@ Orange
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Orange
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 585
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 647
 </div>
 </div>
@@ -513,10 +512,10 @@ Orange
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Orange
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000585
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000647
 </div>
 </div>
@@ -524,10 +523,10 @@ Orange
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Red
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.647
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.7
 </div>
 </div>
@@ -535,10 +534,10 @@ Red
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Red
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 6,470
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 7,000
 </div>
 </div>
@@ -546,10 +545,10 @@ Red
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Red
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 647
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 700
 </div>
 </div>
@@ -557,25 +556,25 @@ Red
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Red
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000647
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.00007
 </div>
 </div>
 </div>
 </li>
-<li class="mr-0 d-block" data-category="johnson-filters">
-<a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#johnson-filters" role="button" aria-expanded="false" aria-controls="johnson-filters">Johnson Filters</a>
-<div class="container collapse" id="johnson-filters" data-widget="widget__wavelength" data-mininput="wavelength1">
+<li class="me-0 d-block" data-category="johnson-filters">
+<a class="dropdown-item bg-light dropdown-toggle collapsed" data-bs-toggle="collapse" href="#johnson-filters" role="button" aria-expanded="false" aria-controls="johnson-filters">Johnson Filters</a>
+<div class="container collapse g-sm-3" id="johnson-filters" data-widget="widget__wavelength" data-mininput="wavelength1">
 <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
 <div class="col-4">
 </div>
-<div class="col-4 font-weight-bold text-right">
+<div class="col-4 fw-bold text-end">
 Min
 </div>
-<div class="col-4 font-weight-bold text-right">
+<div class="col-4 fw-bold text-end">
 Max
 </div>
 </div>
@@ -583,10 +582,10 @@ Max
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.332
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.398
 </div>
 </div>
@@ -594,10 +593,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 3,320
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 3,980
 </div>
 </div>
@@ -605,10 +604,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 332
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 398
 </div>
 </div>
@@ -616,10 +615,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Ultraviolet
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000332
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000398
 </div>
 </div>
@@ -627,10 +626,10 @@ Ultraviolet
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.398
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.492
 </div>
 </div>
@@ -638,10 +637,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 3,980
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 4,920
 </div>
 </div>
@@ -649,10 +648,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 398
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 492
 </div>
 </div>
@@ -660,10 +659,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Blue
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000398
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000492
 </div>
 </div>
@@ -671,10 +670,10 @@ Blue
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visual
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.507
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.595
 </div>
 </div>
@@ -682,10 +681,10 @@ Visual
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visual
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 5,070
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 5,950
 </div>
 </div>
@@ -693,10 +692,10 @@ Visual
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visual
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 507
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 595
 </div>
 </div>
@@ -704,17 +703,16 @@ Visual
 <div class="col-4 op-preprogrammed-ranges-data-name">
 Visual
 </div>
-<div class="col-4 op-preprogrammed-ranges-min-data text-right">
+<div class="col-4 op-preprogrammed-ranges-min-data text-end">
 0.0000507
 </div>
-<div class="col-4 op-preprogrammed-ranges-max-data text-right">
+<div class="col-4 op-preprogrammed-ranges-max-data text-end">
 0.0000595
 </div>
 </div>
 </div>
 </li>
 </ul>
-</div>
 </div>
 </article>
 </div><!-- /widget-body -->

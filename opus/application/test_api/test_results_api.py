@@ -385,9 +385,8 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_metadata_vg_iss_2_s_c4360845_default_html_private(self):
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default html private"
         url = '/__api/metadata/vg-iss-2-s-c4360845.html'
-        expected = b'<ul id="detail__data_general_constraints" class="op-detail-list">\n<li class="op-detail-entry">\n<i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-bs-toggle="tooltip"\ntitle="'
-        self._run_html_startswith(url, expected)
-
+        self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_html_private.html')
+ 
     def test__api_metadata_vg_iss_2_s_c4360845_default_csv(self):
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default csv"
         url = '/api/metadata/vg-iss-2-s-c4360845.csv'
