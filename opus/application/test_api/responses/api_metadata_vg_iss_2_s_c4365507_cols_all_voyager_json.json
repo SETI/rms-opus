@@ -1,47 +1,47 @@
 [
-  {
-    "opusid": "vg-iss-2-s-c4365507"
-  },
-  {
-    "VOYAGERmissionphasename": "Saturn Encounter"
-  },
-  {
-    "VOYAGERspacecraftclockcount1": "43655:06:544"
-  },
-  {
-    "VOYAGERspacecraftclockcount2": "43655:07:001"
-  },
-  {
-    "VOYAGERert": "1981-08-14T12:24:54.000"
-  },
-  {
-    "VGISScamera": "Narrow Angle"
-  },
-  {
-    "VGISSfilter": "UV"
-  },
-  {
-    "VGISSfilternumber": "7"
-  },
-  {
-    "VGISSshuttermode": "NAONLY"
-  },
-  {
-    "VGISSeditmode": "1:3"
-  },
-  {
-    "VGISSgainmode": "Low"
-  },
-  {
-    "VGISSscanmode": "1:1"
-  },
-  {
-    "VGISSimageid": "0570S2-012"
-  },
-  {
-    "VGISSusablelines": "800"
-  },
-  {
-    "VGISSusablesamples": "544"
-  }
+    {
+        "opusid": "vg-iss-2-s-c4365507"
+    },
+    {
+        "VOYAGERmissionphasename": "Saturn Encounter"
+    },
+    {
+        "VOYAGERspacecraftclockcount1": "43655:06:544"
+    },
+    {
+        "VOYAGERspacecraftclockcount2": "43655:07:001"
+    },
+    {
+        "VOYAGERert": "1981-08-14T12:24:54.000"
+    },
+    {
+        "VGISScamera": "Narrow Angle"
+    },
+    {
+        "VGISSfilter": "UV"
+    },
+    {
+        "VGISSfilternumber": "7"
+    },
+    {
+        "VGISSshuttermode": "NAONLY"
+    },
+    {
+        "VGISSeditmode": "1:3"
+    },
+    {
+        "VGISSgainmode": "Low"
+    },
+    {
+        "VGISSscanmode": "1:1"
+    },
+    {
+        "VGISSimageid": "0570S2-012"
+    },
+    {
+        "VGISSusablelines": "800"
+    },
+    {
+        "VGISSusablesamples": "544"
+    }
 ]

@@ -1,121 +1,121 @@
 [
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_raw",
-    "description": "Raw Image",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_calib",
-    "description": "Calibrated Image",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_calib",
-    "description": "Calibrated Image",
-    "version_number": 20000,
-    "version_name": "2"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_calib",
-    "description": "Calibrated Image",
-    "version_number": 10000,
-    "version_name": "1"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_thumb",
-    "description": "Extra Preview (thumbnail)",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_medium",
-    "description": "Extra Preview (medium)",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_full",
-    "description": "Extra Preview (full)",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_documentation",
-    "description": "Documentation",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "metadata",
-    "product_type": "rms_index",
-    "description": "RMS Node Augmented Index",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "metadata",
-    "product_type": "inventory",
-    "description": "Target Body Inventory",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "metadata",
-    "product_type": "planet_geometry",
-    "description": "Planet Geometry Index",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "metadata",
-    "product_type": "moon_geometry",
-    "description": "Moon Geometry Index",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "metadata",
-    "product_type": "ring_geometry",
-    "description": "Ring Geometry Index",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "browse",
-    "product_type": "browse_thumb",
-    "description": "Browse Image (thumbnail)",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "browse",
-    "product_type": "browse_small",
-    "description": "Browse Image (small)",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "browse",
-    "product_type": "browse_medium",
-    "description": "Browse Image (medium)",
-    "version_number": 999999,
-    "version_name": "Current"
-  },
-  {
-    "category": "browse",
-    "product_type": "browse_full",
-    "description": "Browse Image (full)",
-    "version_number": 999999,
-    "version_name": "Current"
-  }
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_raw",
+        "description": "Raw Image",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_calib",
+        "description": "Calibrated Image",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_calib",
+        "description": "Calibrated Image",
+        "version_number": 20000,
+        "version_name": "2"
+    },
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_calib",
+        "description": "Calibrated Image",
+        "version_number": 10000,
+        "version_name": "1"
+    },
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_thumb",
+        "description": "Extra Preview (thumbnail)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_medium",
+        "description": "Extra Preview (medium)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_full",
+        "description": "Extra Preview (full)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini ISS",
+        "product_type": "coiss_documentation",
+        "description": "Documentation",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "metadata",
+        "product_type": "rms_index",
+        "description": "RMS Node Augmented Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "metadata",
+        "product_type": "inventory",
+        "description": "Target Body Inventory",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "metadata",
+        "product_type": "planet_geometry",
+        "description": "Planet Geometry Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "metadata",
+        "product_type": "moon_geometry",
+        "description": "Moon Geometry Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "metadata",
+        "product_type": "ring_geometry",
+        "description": "Ring Geometry Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "browse",
+        "product_type": "browse_thumb",
+        "description": "Browse Image (thumbnail)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "browse",
+        "product_type": "browse_small",
+        "description": "Browse Image (small)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "browse",
+        "product_type": "browse_medium",
+        "description": "Browse Image (medium)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "browse",
+        "product_type": "browse_full",
+        "description": "Browse Image (full)",
+        "version_number": 999999,
+        "version_name": "Current"
+    }
 ]
