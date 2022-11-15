@@ -1,8 +1,4 @@
 /* opus-specific values live here... */
-:root {
-    --op-cart-panel-width-break: 1100px;
-}
-
 body {
     overflow: hidden;
 }
@@ -48,29 +44,29 @@ a {
 }
 
 .dropdown-item {
-  position: relative;
-  padding: 10px 20px;
-  border-bottom: 1px solid #c8ced3;
+    position: relative;
+    padding: 10px 20px;
+    border-bottom: 1px solid #c8ced3;
 }
 
 .dropdown-item:last-child {
-  border-bottom: 0;
+    border-bottom: 0;
 }
 
 .dropdown-item i {
-  display: inline-block;
-  width: 20px;
-  margin-right: 10px;
-  margin-left: -10px;
-  color: #c8ced3;
-  text-align: center;
+    display: inline-block;
+    width: 20px;
+    margin-right: 10px;
+    margin-left: -10px;
+    color: #c8ced3;
+    text-align: center;
 }
 
 .dropdown-header {
-  font-size: 0.765625rem;
-  padding: 8px 20px;
-  background: #e4e7ea;
-  border-bottom: 1px solid #c8ced3;
+    font-size: 0.765625rem;
+    padding: 8px 20px;
+    background: #e4e7ea;
+    border-bottom: 1px solid #c8ced3;
 }
 
 .table {
@@ -78,14 +74,14 @@ a {
 }
 
 .no-gutters {
-  margin-right: 0;
-  margin-left: 0;
+    margin-right: 0;
+    margin-left: 0;
 }
 
 .no-gutters > .col,
 .no-gutters > [class*="col-"] {
-  padding-right: 0;
-  padding-left: 0;
+    padding-right: 0;
+    padding-left: 0;
 }
 
 
@@ -456,6 +452,7 @@ to 100%, this will make the shrinking look smoother */
 .op-search-menu .dropdown-toggle.collapsed::after {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
 }
 
 /* Rotate triangle arrows when menu category is clicked */
@@ -466,6 +463,7 @@ to 100%, this will make the shrinking look smoother */
 .op-search-menu .dropdown-toggle.collapsed .op-menu-arrow {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
 }
 
 
@@ -1662,9 +1660,9 @@ footer for popover window */
 }
 
 .op-links-popover {
-  --bs-popover-border-color: var(--bs-primary);
-  --bs-popover-header-bg: var(--bs-primary);
-  --bs-popover-header-color: var(--bs-white);
+    --bs-popover-border-color: var(--bs-primary);
+    --bs-popover-header-bg: var(--bs-primary);
+    --bs-popover-header-color: var(--bs-white);
 }
 
 .op-zipped-files {
@@ -1961,7 +1959,6 @@ panel are properly separated */
     padding-left: 0.5em;
     margin-top: 0.35em;
     color: var(--cui-navbar-color);
-    /* padding-top: 0.5em; */
 }
 
 .op-sort-order-icon {
@@ -2291,8 +2288,8 @@ even when screen is narrow */
 }
 
 .badge.rounded-pill {
-  padding-right: 0.6em;
-  padding-left: 0.6em;
+    padding-right: 0.6em;
+    padding-left: 0.6em;
 }
 
 .badge-xlg {

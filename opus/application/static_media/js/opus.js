@@ -1072,9 +1072,9 @@ var opus = {
                 pdfURL = baseURL + "gettingstarted.pdf";
                 header = "Getting Started with OPUS";
                 break;
-            case "COCIRS":
-            case "COUVIS":
-            case "COVIMS":
+            case "Cassini CIRS":
+            case "Cassini UVIS":
+            case "Cassini VIMS":
                 opus.displayImageInterpretation(action);
                 return;
             case "contact":
