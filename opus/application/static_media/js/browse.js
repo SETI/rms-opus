@@ -1593,7 +1593,7 @@ var o_browse = {
     },
 
     getDataTableInputElement: function(opusId) {
-        return $(`.op-data-table div[data-id=${opusId}] input`);
+        return $(`.op-data-table div[data-id=${opusId}]`).parent();
     },
 
     highlightStartOfRange: function(opusId) {
