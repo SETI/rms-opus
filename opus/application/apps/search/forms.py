@@ -111,7 +111,10 @@ class SearchForm(forms.Form):
                 model = apps.get_model('search', mult_param.title().replace('_',''))
 
                 # grouped mult fields
-                choices = [(mult.label, mult.label) for mult in model.objects.filter(grouping=grouping, display='Y').order_by('disp_order')]
+                choices = [(mult.label, mult.label) for mult in
+                                   model.objects
+                                   .filter(grouping=grouping, display='Y')
+                                   .order_by('disp_order')]
 
                 if param_qualified_name == 'obs_surface_geometry_name.target_name':
                     self.fields[slug] = forms.CharField(
