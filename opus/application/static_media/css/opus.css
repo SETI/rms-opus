@@ -3378,6 +3378,10 @@ when wrapping into the 2nd line */
         display: none !important;
     }
 
+    .op-links-popover {
+        display: none;
+    }
+
     /* When footer is gone, make sure range select info box at the lower left
     corner has the proper height */
     .op-range-select-info-box.op-range-select {
