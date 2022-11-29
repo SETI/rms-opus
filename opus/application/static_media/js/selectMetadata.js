@@ -449,7 +449,6 @@ var o_selectMetadata = {
         o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
         o_browse.clearObservationData(true); // Leave startobs alone
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-        o_utils.disableUserInteraction();
         o_selectMetadata.reRender();
         // if the metadata is no longer default, we need to enable the reset button on the Search tab
         if (!opus.isMetadataDefault()) {

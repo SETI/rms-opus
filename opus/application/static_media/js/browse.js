@@ -381,7 +381,7 @@ var o_browse = {
             }
             let slug = $(this).closest("ul").data("slug");
             // save anything that was changed via sort/trash before the dropdown is displayed
-            o_browse.onDoneUpdateMetadataDetails();
+            o_browse.onDoneUpdateMetadataDetails(e);
             o_browse.showMetadataList(e);
             $("#op-add-metadata-fields").data("slug", slug);
 
@@ -395,7 +395,7 @@ var o_browse = {
             if ($("a.op-metadata-detail-remove").length <= 1) {
                 $("a.op-metadata-detail-remove").addClass("op-button-disabled");
             }
-            o_browse.onDoneUpdateMetadataDetails();
+            o_browse.onDoneUpdateMetadataDetails(e);
             return false;
         });
 
@@ -434,7 +434,6 @@ var o_browse = {
                 $((`${contextMenu} .op-select-list a[data-slug="${slug}"]`)).hide();
 
                 o_selectMetadata.saveChanges();
-                o_selectMetadata.reRender();
             }
             // remove the disable in case there was only one field to start with...
             $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
@@ -2785,7 +2784,6 @@ var o_browse = {
     },
 
     onDoneUpdateFromTableMetadataDetails: function(e) {
-        o_utils.disableUserInteraction();
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
         if (opus.prefs.cols.length <= 1) {
             $("a.op-metadata-detail-remove").addClass("op-button-disabled");
@@ -2831,7 +2829,6 @@ var o_browse = {
     },
 
     onDoneUpdateMetadataDetails: function(e) {
-        o_utils.disableUserInteraction();
         let columnOrder = $.map($(".op-metadata-details ul"), function(n, i) {
             return $(n).data("slug");
         });
@@ -2841,9 +2838,6 @@ var o_browse = {
             o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
             // passing in false indicates to not close the gallery view on loadData
             o_selectMetadata.saveChanges();
-            o_selectMetadata.reRender();
-        } else {
-            o_utils.enableUserInteraction();
         }
         o_browse.hideMetadataList();
     },
@@ -2859,7 +2853,7 @@ var o_browse = {
             tolerance: "pointer",
             helper: "clone",
             stop: function(e, ui) {
-                o_browse.onDoneUpdateMetadataDetails();
+                o_browse.onDoneUpdateMetadataDetails(e);
                 o_browse.isSortingHappening = false;
             },
             start: function(e, ui) {
