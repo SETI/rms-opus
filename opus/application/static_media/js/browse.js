@@ -2791,7 +2791,6 @@ var o_browse = {
             $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
         }
         o_selectMetadata.saveChanges();
-        o_selectMetadata.reRender();
         o_browse.hideMetadataList();
         o_browse.hideTableMetadataTools();
     },
