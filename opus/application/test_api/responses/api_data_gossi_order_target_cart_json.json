@@ -1,3857 +1,3857 @@
 {
-  "page_no": 1,
-  "limit": 100000000,
-  "count": 479,
-  "available": 29689,
-  "order": "target,-observationduration,time1,opusid",
-  "labels": [
-    "OPUS ID",
-    "Instrument Name",
-    "Planet",
-    "Intended Target Name(s)",
-    "Observation Start Time (YMDhms)",
-    "Observation Duration (secs)"
-  ],
-  "columns": [
-    "OPUS ID",
-    "Instrument Name",
-    "Planet",
-    "Intended Target Name(s)",
-    "Observation Start Time (YMDhms)",
-    "Observation Duration (secs)"
-  ],
-  "page": [
-    [
-      "go-ssi-c0360025826",
-      "Galileo SSI",
-      "Jupiter",
-      "Amalthea",
-      "1996-09-07T08:18:08.708",
-      "1.0625"
-    ],
-    [
-      "go-ssi-c0368495800",
-      "Galileo SSI",
-      "Jupiter",
-      "Amalthea",
-      "1996-11-05T19:38:54.878",
-      "1.0625"
-    ],
-    [
-      "go-ssi-c0360025836",
-      "Galileo SSI",
-      "Jupiter",
-      "Amalthea",
-      "1996-09-07T08:18:17.508",
-      "0.7958"
-    ],
-    [
-      "go-ssi-c0368495820",
-      "Galileo SSI",
-      "Jupiter",
-      "Amalthea",
-      "1996-11-05T19:39:12.479",
-      "0.5292"
-    ],
-    [
-      "go-ssi-c0360025813",
-      "Galileo SSI",
-      "Jupiter",
-      "Amalthea",
-      "1996-09-07T08:18:00.441",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368603500",
-      "Galileo SSI",
-      "Jupiter",
-      "Amalthea",
-      "1996-11-06T13:47:53.321",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368495813",
-      "Galileo SSI",
-      "Jupiter",
-      "Amalthea",
-      "1996-11-05T19:39:04.045",
-      "0.0625"
-    ],
-    [
-      "go-ssi-c0368211968",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-03T19:49:07.986",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368212000",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-03T19:49:23.318",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368211922",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-03T19:48:37.390",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0360198968",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-09-08T13:28:51.079",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368211945",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-03T19:48:52.755",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0360198468",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-09-08T13:23:47.780",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0367064500",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-26T18:26:53.913",
-      "0.0625"
-    ],
-    [
-      "go-ssi-c0364621700",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-09T14:47:29.500",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0364664800",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-09T22:03:16.818",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0365386300",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-14T23:38:26.548",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0366559700",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-23T05:22:48.777",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0366563200",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-23T05:58:12.109",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0367001800",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-26T07:52:55.945",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0367062000",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-26T18:01:37.256",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0367397900",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-29T02:37:56.463",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0367400400",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-29T03:03:13.129",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0368211900",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-03T19:48:22.826",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0368211901",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-03T19:48:22.826",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0368281000",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T07:27:03.467",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0360322900",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-09-09T10:21:57.781",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0360323000",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-09-09T10:22:54.781",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0366998300",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-26T07:17:32.621",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0367528000",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-30T00:33:23.757",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0368292900",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T09:27:28.138",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0368293000",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T09:28:28.804",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0368293100",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T09:29:29.471",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0368293101",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T09:29:29.471",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0368293200",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T09:30:30.138",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0372384200",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-12-03T02:54:56.609",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0373505900",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-12-10T23:56:34.190",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0374037400",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-12-14T17:30:37.325",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0367524500",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-29T23:58:00.429",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0367664400",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-30T23:32:33.043",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0367667900",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-10-31T00:07:56.375",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0368317400",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:35:06.137",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368317649",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:37:39.211",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317653",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:37:41.878",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317656",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:37:43.878",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317660",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:37:46.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317661",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:37:46.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317663",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:37:48.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317753",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:42.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317754",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:42.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317756",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:44.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317757",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:44.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317760",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:47.211",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317761",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:47.211",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317763",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:49.211",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317767",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:51.878",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317768",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:38:51.878",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317884",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:40:03.878",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317888",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:40:06.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317900",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:40:08.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368317901",
-      "Galileo SSI",
-      "Jupiter",
-      "Callisto",
-      "1996-11-04T13:40:08.544",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0349875213",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:44:13.734",
-      "0.5292"
-    ],
-    [
-      "go-ssi-c0349875226",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:44:22.400",
-      "0.5292"
-    ],
-    [
-      "go-ssi-c0360063926",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-09-07T14:43:22.961",
-      "0.5292"
-    ],
-    [
-      "go-ssi-c0349875178",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:43:56.534",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349875200",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:44:05.200",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0360063913",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-09-07T14:43:14.427",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368976678",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-09T04:41:12.499",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0368976713",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-09T04:41:29.832",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0368976739",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-09T04:41:47.166",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349875152",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:43:39.308",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0349875165",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:43:47.975",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0360063900",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-09-07T14:43:05.869",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0359251000",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-09-01T21:43:46.856",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359258600",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-09-01T23:00:37.520",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0366474700",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-10-22T15:03:22.159",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0366478100",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-10-22T15:37:44.823",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368639400",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-06T19:50:52.683",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368639413",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-06T19:51:01.350",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368639426",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-06T19:51:10.016",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368639600",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-06T19:52:53.087",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368976765",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-09T04:42:04.557",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368976800",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-09T04:42:21.890",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368976826",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-11-09T04:42:39.223",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0372693800",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-05T07:05:20.501",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0372696200",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-05T07:29:36.500",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0373033400",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-07T16:19:04.374",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0373036000",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-07T16:45:21.707",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0373984400",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-14T08:34:44.020",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0373986400",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-14T08:54:57.352",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0372447500",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-03T13:34:58.597",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0372450000",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-03T14:00:15.263",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0372552800",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-04T07:19:40.558",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0372555300",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-04T07:44:57.224",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0373716400",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-12T11:24:57.456",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0373718900",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-12T11:50:14.122",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0373977900",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-14T07:29:00.692",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0373980600",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-12-14T07:56:18.691",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0349875100",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:43:04.663",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0349875113",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:43:13.329",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0349875126",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:43:21.996",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0349875139",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T01:43:30.663",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0349887313",
-      "Galileo SSI",
-      "Jupiter",
-      "Europa",
-      "1996-06-28T03:46:34.658",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0349632122",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-26T08:46:19.234",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349632145",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-26T08:46:34.565",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349632168",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-26T08:46:49.896",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0359944200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:32:47.739",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0359944222",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:33:02.412",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349632100",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-26T08:46:04.627",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349761200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:31:25.327",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349761213",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:31:33.994",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349761226",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:31:42.661",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0359944168",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:32:32.557",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349632000",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-26T08:45:09.395",
-      "0.0625"
-    ],
-    [
-      "go-ssi-c0349632200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-26T08:47:05.395",
-      "0.0625"
-    ],
-    [
-      "go-ssi-c0359944145",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:32:17.243",
-      "0.0625"
-    ],
-    [
-      "go-ssi-c0349761239",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:31:51.352",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0347559500",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-11T19:29:48.214",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0347569700",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-11T21:12:56.210",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0348207300",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-16T08:39:46.630",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0348210800",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-16T09:15:09.962",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0348401900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-17T17:27:23.888",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0348405300",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-17T18:01:46.553",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0348554200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-18T19:07:19.162",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0348557600",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-18T19:41:41.827",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0349137800",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-22T21:28:09.603",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0349141200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-22T22:02:32.268",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0356000600",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-08-10T01:58:38.944",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0356004100",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-08-10T02:34:02.276",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0357746600",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-08-22T08:12:38.076",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0366847000",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-10-25T05:47:44.011",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0372352200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-12-02T21:31:23.288",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0373580500",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-12-11T12:30:51.496",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0373944000",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-12-14T01:46:14.693",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0347590500",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-12T00:43:14.872",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0347593900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-12T01:17:37.538",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0347843900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-13T19:25:24.108",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0347847300",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-13T19:59:46.773",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0347996200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-14T21:05:19.382",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0348002300",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-14T22:07:00.046",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0348842200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-20T19:39:19.054",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0349096900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-22T14:34:36.956",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0349100400",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-22T15:10:00.288",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0349155100",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-23T00:23:04.933",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0349158600",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-23T00:58:28.265",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0357628900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-08-21T12:22:33.457",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0357632400",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-08-21T12:57:56.789",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0358039500",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-08-24T09:34:10.637",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0359262100",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-01T23:36:00.848",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0366234300",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-10-20T22:32:39.577",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0366237800",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-10-20T23:08:02.909",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0366374300",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-10-21T22:08:12.858",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0366377700",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-10-21T22:42:35.524",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0372348800",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-12-02T20:57:00.626",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0373511700",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-12-11T00:55:12.859",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0346405900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-03T17:05:38.002",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0346409400",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-03T17:41:01.334",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0347170900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-09T02:00:37.705",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0347174400",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-09T02:36:01.037",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0347449900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-11T01:01:37.597",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0347769100",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-13T06:49:05.475",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0348065400",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-15T08:45:00.692",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349193900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-23T06:55:23.588",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349758939",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:08:36.036",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349758952",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:08:44.704",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349758965",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:08:53.370",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349758978",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:09:02.036",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349759013",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:09:19.370",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349759026",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:09:28.036",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349759039",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:09:36.704",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349759052",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:09:45.370",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760100",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:20:18.036",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760122",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:20:32.709",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760145",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:20:48.041",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760168",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:21:03.372",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760200",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:21:18.703",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760222",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:21:33.375",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760245",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:21:48.707",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0349760268",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-06-27T06:22:04.038",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0358042900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-08-24T10:08:33.307",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359322300",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-02T09:44:42.162",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359942400",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:14:35.932",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359942413",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:14:44.597",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359942426",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:14:53.264",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359942439",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:15:01.932",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359944426",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:35:06.597",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359944439",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:35:15.263",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359944452",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:35:23.931",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359944639",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:37:16.597",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359944652",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:37:25.263",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359944739",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:38:17.263",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359945600",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:46:57.263",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359945613",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:47:05.931",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0373577100",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-12-11T11:56:28.838",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0373794900",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-12-13T00:38:40.757",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0359946135",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:23.004",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946139",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:25.671",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946142",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:27.671",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946146",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:30.337",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946149",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:32.337",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946153",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:35.004",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946167",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:44.337",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946170",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:46.337",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946174",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:49.004",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946177",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:51.004",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946181",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:53.671",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946184",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:55.671",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359946188",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:58.337",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0359945481",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:45:49.005",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945484",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:45:51.005",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945488",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:45:53.672",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945500",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:45:55.672",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945504",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:45:58.339",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945507",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:46:00.339",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945511",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:46:03.005",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945514",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:46:05.005",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945518",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:46:07.672",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359945521",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:46:09.672",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359946156",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:37.005",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359946160",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:39.672",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0359946163",
-      "Galileo SSI",
-      "Jupiter",
-      "Ganymede",
-      "1996-09-06T18:52:41.672",
-      "0.0042"
-    ],
-    [
-      "go-ssi-c0368981445",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-09T05:29:16.168",
-      "12.7958"
-    ],
-    [
-      "go-ssi-c0368981500",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-09T05:29:46.830",
-      "12.7958"
-    ],
-    [
-      "go-ssi-c0350029700",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T03:46:15.874",
-      "2.1292"
-    ],
-    [
-      "go-ssi-c0350013888",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T01:06:31.413",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0350024288",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T02:51:40.742",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349673978",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-26T15:49:35.278",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349673988",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-26T15:49:49.278",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0350029742",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T03:46:46.811",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0359986604",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-07T01:41:32.193",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0359986607",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-07T01:41:34.193",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349542188",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-25T17:37:10.696",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349746326",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-27T04:01:03.283",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349746336",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-27T04:01:11.950",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359402500",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-02T23:15:38.374",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359408900",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-03T00:20:21.039",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359415300",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-03T01:25:03.703",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359624500",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-04T12:40:18.291",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359632000",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-04T13:56:08.289",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359639300",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-04T15:09:56.953",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359646300",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-04T16:20:43.617",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359659900",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-04T18:38:14.278",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359703842",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T02:02:36.933",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359710142",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T03:06:18.930",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359716542",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T04:11:01.595",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359722942",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T05:15:44.259",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359729642",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T06:23:28.923",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359736542",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T07:33:14.920",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359743742",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T08:46:02.918",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359750642",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T09:55:48.915",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359759242",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T11:22:46.245",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359766942",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T12:40:37.576",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359775242",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T14:04:32.906",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359783842",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T15:31:30.236",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359792842",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T17:02:30.233",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359801942",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T18:34:30.896",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359811442",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T20:10:34.226",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359841142",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-06T01:10:52.215",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359851342",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-06T02:54:00.211",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359872242",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-06T06:25:19.536",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359882742",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-06T08:11:29.533",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359892942",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-06T09:54:37.529",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0359903542",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-06T11:41:48.191",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349542178",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-25T17:36:56.729",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0359653300",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-04T17:31:30.314",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0359697642",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-05T00:59:55.635",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0350013800",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T01:05:30.896",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0350013845",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T01:06:00.900",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0350024200",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T02:50:40.226",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0350024245",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-29T02:51:10.230",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349673952",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-26T15:49:18.044",
-      "0.0625"
-    ],
-    [
-      "go-ssi-c0349673965",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-26T15:49:26.712",
-      "0.0625"
-    ],
-    [
-      "go-ssi-c0349746300",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-27T04:00:46.025",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0349746313",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-27T04:00:54.692",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0359986578",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-07T01:41:21.898",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0359986600",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-09-07T01:41:29.635",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0349542152",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-25T17:36:39.446",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0349542165",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-06-25T17:36:48.113",
-      "0.0292"
-    ],
-    [
-      "go-ssi-c0367030200",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-10-26T12:40:05.285",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0367035700",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-10-26T13:35:41.948",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368558252",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-06T06:10:26.046",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368578900",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-06T09:39:09.373",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368599800",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-06T13:10:28.698",
-      "0.0125"
-    ],
-    [
-      "go-ssi-c0368558239",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-06T06:10:17.384",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368599813",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-06T13:10:37.368",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368620000",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-06T16:34:43.361",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368641300",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-11-06T20:10:05.353",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0372343200",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-12-02T20:00:23.303",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0372345600",
-      "Galileo SSI",
-      "Jupiter",
-      "Io",
-      "1996-12-02T20:24:39.302",
-      "0.0062"
-    ],
-    [
-      "go-ssi-c0368976900",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T04:43:02.299",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368977500",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T04:49:06.298",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368978100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T04:55:10.298",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368978700",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T05:01:14.298",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368979400",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T05:08:18.964",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368979900",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T05:13:22.298",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368980400",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T05:18:25.631",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368980900",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T05:23:28.964",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368990100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T06:56:30.294",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368990300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T06:58:31.627",
-      "51.1958"
-    ],
-    [
-      "go-ssi-c0368410500",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T05:16:25.711",
-      "2.1292"
-    ],
-    [
-      "go-ssi-c0368410501",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T05:16:25.711",
-      "2.1292"
-    ],
-    [
-      "go-ssi-c0368410545",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T05:16:55.715",
-      "2.1292"
-    ],
-    [
-      "go-ssi-c0368410546",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T05:16:55.715",
-      "2.1292"
-    ],
-    [
-      "go-ssi-c0368991100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T07:06:56.693",
-      "1.0625"
-    ],
-    [
-      "go-ssi-c0359509500",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:17:31.501",
-      "0.5292"
-    ],
-    [
-      "go-ssi-c0349659145",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:19:34.554",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349659222",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:20:19.890",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349659345",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:21:35.888",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349659422",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:22:21.223",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349666000",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:28:50.548",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349666068",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:29:35.883",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349674268",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:52:30.546",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0359509400",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:16:30.901",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0359509445",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:17:00.905",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0359509545",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:18:01.572",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368369268",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:19:36.594",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368369322",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:20:06.599",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368392645",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T02:15:58.921",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368441500",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:29:53.232",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368441522",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:30:07.905",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368441600",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:30:53.899",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368441622",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:31:08.572",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368450322",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:59:06.568",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368450345",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:59:21.900",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368456322",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:59:46.566",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0349605745",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:19:38.641",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349605768",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:19:53.973",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349605800",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:20:09.304",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349605801",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:20:09.304",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349605822",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:20:23.977",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349605845",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:20:39.308",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349605868",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:20:54.639",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:21:05.950",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659322",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:21:20.624",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659323",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:21:20.624",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659368",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:21:51.285",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659400",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:22:06.617",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659445",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:22:36.622",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659468",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:22:51.953",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659469",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:22:51.953",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659500",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:23:07.284",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659522",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:23:21.956",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659545",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:23:37.287",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349659568",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:23:52.619",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666145",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:30:21.285",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666168",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:30:36.616",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666200",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:30:51.947",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666201",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:30:51.947",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666222",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:31:06.620",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666245",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:31:21.951",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666268",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:31:37.284",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349674100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:50:44.611",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349674101",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:50:44.611",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349674122",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:50:59.285",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0359509245",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:14:59.638",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0359509300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:15:30.301",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0359509345",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:16:00.306",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368369245",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:19:21.329",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368369246",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:19:21.329",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368369300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:19:51.992",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368369301",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:19:51.992",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368388600",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T01:35:00.652",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368388622",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T01:35:15.324",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368388623",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T01:35:15.324",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368388645",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T01:35:30.656",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368388668",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T01:35:45.987",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368392745",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T02:16:59.654",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368401145",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T03:41:55.652",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368441545",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:30:23.302",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368441568",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:30:38.634",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368441645",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:31:23.969",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368441668",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:31:39.300",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450000",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:55:49.962",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450022",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:56:04.635",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450045",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:56:19.966",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450068",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:56:35.297",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:56:50.628",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450122",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:57:05.301",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450145",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:57:20.633",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368450168",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:57:35.964",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456000",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:56:29.961",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456022",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:56:44.632",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456045",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:56:59.964",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456068",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:57:15.295",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:57:30.626",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456122",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:57:45.300",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456145",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:58:00.631",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368456168",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:58:15.962",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0349666300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:31:52.648",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666301",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:31:52.648",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666322",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:32:07.320",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666345",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:32:22.652",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666346",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:32:22.652",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666368",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:32:37.983",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666400",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:32:53.314",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666422",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:33:07.987",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666445",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:33:23.318",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666468",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:33:38.650",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666500",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:33:53.981",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666522",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:34:08.654",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666545",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:34:23.985",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349666568",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:34:39.316",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349674145",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:51:14.649",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349674146",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:51:14.649",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349674168",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:51:29.980",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349674200",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:51:45.311",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349674222",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:51:59.984",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368450200",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:57:51.329",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368450222",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:58:06.002",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368450245",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:58:21.333",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368450268",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:58:36.664",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368450300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:58:51.995",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368450368",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T11:59:37.331",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368456200",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:58:31.326",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368456222",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:58:45.999",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368456245",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:59:01.331",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368456268",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:59:16.662",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368456300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T12:59:31.993",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368456345",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T13:00:01.997",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368456368",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T13:00:17.329",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0349659000",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:18:04.017",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659001",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:18:04.017",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659022",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:18:18.690",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659045",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:18:34.021",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659068",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:18:49.353",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:19:04.684",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659122",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:19:19.357",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659200",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:20:05.351",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349659268",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:20:50.686",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0359509200",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-09-03T17:14:29.701",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0368369222",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:19:06.066",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0368441400",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:28:52.699",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0368441422",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:29:07.372",
-      "0.1292"
-    ],
-    [
-      "go-ssi-c0349605600",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:18:08.054",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349605601",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:18:08.054",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349605622",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:18:22.727",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349605645",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:18:38.058",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349605668",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:18:53.390",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349605700",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:19:08.721",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349605722",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T04:19:23.394",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349659168",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:19:50.036",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349659245",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T13:20:35.371",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349666022",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:29:05.371",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349666045",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:29:20.702",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349666100",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:29:51.364",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349666122",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T14:30:06.037",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349674300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:52:46.028",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349674322",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:53:00.701",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368369200",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:18:51.409",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368369201",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-04T22:18:51.409",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368441300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:27:52.049",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368441322",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:28:06.722",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368441345",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:28:22.053",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368441368",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:28:37.384",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368441445",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:29:22.720",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368441468",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-05T10:29:38.051",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0349674245",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-06-26T15:52:15.390",
-      "0.0458"
-    ],
-    [
-      "go-ssi-c0368976300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T04:37:23.886",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0368976301",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T04:37:23.886",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0368976400",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T04:38:24.553",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0368976401",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter",
-      "1996-11-09T04:38:24.553",
-      "0.0208"
-    ],
-    [
-      "go-ssi-c0368976000",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:34:16.299",
-      "0.5292"
-    ],
-    [
-      "go-ssi-c0368991522",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T07:11:14.300",
-      "0.5292"
-    ],
-    [
-      "go-ssi-c0368975900",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:33:15.699",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368975922",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:33:30.372",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368991500",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T07:10:59.693",
-      "0.3958"
-    ],
-    [
-      "go-ssi-c0368975945",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:33:45.770",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368975968",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:34:01.101",
-      "0.2625"
-    ],
-    [
-      "go-ssi-c0368974126",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:15:21.133",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368974139",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:15:29.800",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368992300",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T07:19:05.126",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368992339",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T07:19:31.126",
-      "0.1958"
-    ],
-    [
-      "go-ssi-c0368974113",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T04:15:12.516",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0368991900",
-      "Galileo SSI",
-      "Jupiter",
-      "Jupiter Rings",
-      "1996-11-09T07:15:02.510",
-      "0.0958"
-    ],
-    [
-      "go-ssi-c0360361122",
-      "Galileo SSI",
-      "Jupiter",
-      "None",
-      "1996-09-09T16:48:21.788",
-      "0"
-    ],
-    [
-      "go-ssi-c0360361145",
-      "Galileo SSI",
-      "Jupiter",
-      "None",
-      "1996-09-09T16:48:37.119",
-      "0"
-    ],
-    [
-      "go-ssi-c0360361168",
-      "Galileo SSI",
-      "Jupiter",
-      "None",
-      "1996-09-09T16:48:52.450",
-      "0"
-    ],
-    [
-      "go-ssi-c0360361200",
-      "Galileo SSI",
-      "Jupiter",
-      "None",
-      "1996-09-09T16:49:07.782",
-      "0"
-    ],
-    [
-      "go-ssi-c0368591600",
-      "Galileo SSI",
-      "Jupiter",
-      "Thebe",
-      "1996-11-06T11:47:33.943",
-      "0.1958"
+    "page_no": 1,
+    "limit": 100000000,
+    "count": 479,
+    "available": 29689,
+    "order": "target,-observationduration,time1,opusid",
+    "labels": [
+        "OPUS ID",
+        "Instrument Name",
+        "Planet",
+        "Intended Target Name(s)",
+        "Observation Start Time (YMDhms)",
+        "Observation Duration (secs)"
+    ],
+    "columns": [
+        "OPUS ID",
+        "Instrument Name",
+        "Planet",
+        "Intended Target Name(s)",
+        "Observation Start Time (YMDhms)",
+        "Observation Duration (secs)"
+    ],
+    "page": [
+        [
+            "go-ssi-c0360025826",
+            "Galileo SSI",
+            "Jupiter",
+            "Amalthea",
+            "1996-09-07T08:18:08.708",
+            "1.0625"
+        ],
+        [
+            "go-ssi-c0368495800",
+            "Galileo SSI",
+            "Jupiter",
+            "Amalthea",
+            "1996-11-05T19:38:54.878",
+            "1.0625"
+        ],
+        [
+            "go-ssi-c0360025836",
+            "Galileo SSI",
+            "Jupiter",
+            "Amalthea",
+            "1996-09-07T08:18:17.508",
+            "0.7958"
+        ],
+        [
+            "go-ssi-c0368495820",
+            "Galileo SSI",
+            "Jupiter",
+            "Amalthea",
+            "1996-11-05T19:39:12.479",
+            "0.5292"
+        ],
+        [
+            "go-ssi-c0360025813",
+            "Galileo SSI",
+            "Jupiter",
+            "Amalthea",
+            "1996-09-07T08:18:00.441",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368603500",
+            "Galileo SSI",
+            "Jupiter",
+            "Amalthea",
+            "1996-11-06T13:47:53.321",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368495813",
+            "Galileo SSI",
+            "Jupiter",
+            "Amalthea",
+            "1996-11-05T19:39:04.045",
+            "0.0625"
+        ],
+        [
+            "go-ssi-c0368211968",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-03T19:49:07.986",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368212000",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-03T19:49:23.318",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368211922",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-03T19:48:37.390",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0360198968",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-09-08T13:28:51.079",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368211945",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-03T19:48:52.755",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0360198468",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-09-08T13:23:47.780",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0367064500",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-26T18:26:53.913",
+            "0.0625"
+        ],
+        [
+            "go-ssi-c0364621700",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-09T14:47:29.500",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0364664800",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-09T22:03:16.818",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0365386300",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-14T23:38:26.548",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0366559700",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-23T05:22:48.777",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0366563200",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-23T05:58:12.109",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0367001800",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-26T07:52:55.945",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0367062000",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-26T18:01:37.256",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0367397900",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-29T02:37:56.463",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0367400400",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-29T03:03:13.129",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0368211900",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-03T19:48:22.826",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0368211901",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-03T19:48:22.826",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0368281000",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T07:27:03.467",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0360322900",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-09-09T10:21:57.781",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0360323000",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-09-09T10:22:54.781",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0366998300",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-26T07:17:32.621",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0367528000",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-30T00:33:23.757",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0368292900",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T09:27:28.138",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0368293000",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T09:28:28.804",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0368293100",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T09:29:29.471",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0368293101",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T09:29:29.471",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0368293200",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T09:30:30.138",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0372384200",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-12-03T02:54:56.609",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0373505900",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-12-10T23:56:34.190",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0374037400",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-12-14T17:30:37.325",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0367524500",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-29T23:58:00.429",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0367664400",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-30T23:32:33.043",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0367667900",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-10-31T00:07:56.375",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0368317400",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:35:06.137",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368317649",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:37:39.211",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317653",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:37:41.878",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317656",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:37:43.878",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317660",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:37:46.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317661",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:37:46.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317663",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:37:48.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317753",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:42.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317754",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:42.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317756",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:44.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317757",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:44.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317760",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:47.211",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317761",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:47.211",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317763",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:49.211",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317767",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:51.878",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317768",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:38:51.878",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317884",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:40:03.878",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317888",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:40:06.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317900",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:40:08.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368317901",
+            "Galileo SSI",
+            "Jupiter",
+            "Callisto",
+            "1996-11-04T13:40:08.544",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0349875213",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:44:13.734",
+            "0.5292"
+        ],
+        [
+            "go-ssi-c0349875226",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:44:22.400",
+            "0.5292"
+        ],
+        [
+            "go-ssi-c0360063926",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-09-07T14:43:22.961",
+            "0.5292"
+        ],
+        [
+            "go-ssi-c0349875178",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:43:56.534",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349875200",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:44:05.200",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0360063913",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-09-07T14:43:14.427",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368976678",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-09T04:41:12.499",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0368976713",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-09T04:41:29.832",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0368976739",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-09T04:41:47.166",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349875152",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:43:39.308",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0349875165",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:43:47.975",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0360063900",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-09-07T14:43:05.869",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0359251000",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-09-01T21:43:46.856",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359258600",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-09-01T23:00:37.520",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0366474700",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-10-22T15:03:22.159",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0366478100",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-10-22T15:37:44.823",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368639400",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-06T19:50:52.683",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368639413",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-06T19:51:01.350",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368639426",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-06T19:51:10.016",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368639600",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-06T19:52:53.087",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368976765",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-09T04:42:04.557",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368976800",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-09T04:42:21.890",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368976826",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-11-09T04:42:39.223",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0372693800",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-05T07:05:20.501",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0372696200",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-05T07:29:36.500",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0373033400",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-07T16:19:04.374",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0373036000",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-07T16:45:21.707",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0373984400",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-14T08:34:44.020",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0373986400",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-14T08:54:57.352",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0372447500",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-03T13:34:58.597",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0372450000",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-03T14:00:15.263",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0372552800",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-04T07:19:40.558",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0372555300",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-04T07:44:57.224",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0373716400",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-12T11:24:57.456",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0373718900",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-12T11:50:14.122",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0373977900",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-14T07:29:00.692",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0373980600",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-12-14T07:56:18.691",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0349875100",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:43:04.663",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0349875113",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:43:13.329",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0349875126",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:43:21.996",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0349875139",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T01:43:30.663",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0349887313",
+            "Galileo SSI",
+            "Jupiter",
+            "Europa",
+            "1996-06-28T03:46:34.658",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0349632122",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-26T08:46:19.234",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349632145",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-26T08:46:34.565",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349632168",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-26T08:46:49.896",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0359944200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:32:47.739",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0359944222",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:33:02.412",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349632100",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-26T08:46:04.627",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349761200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:31:25.327",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349761213",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:31:33.994",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349761226",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:31:42.661",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0359944168",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:32:32.557",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349632000",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-26T08:45:09.395",
+            "0.0625"
+        ],
+        [
+            "go-ssi-c0349632200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-26T08:47:05.395",
+            "0.0625"
+        ],
+        [
+            "go-ssi-c0359944145",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:32:17.243",
+            "0.0625"
+        ],
+        [
+            "go-ssi-c0349761239",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:31:51.352",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0347559500",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-11T19:29:48.214",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0347569700",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-11T21:12:56.210",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0348207300",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-16T08:39:46.630",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0348210800",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-16T09:15:09.962",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0348401900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-17T17:27:23.888",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0348405300",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-17T18:01:46.553",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0348554200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-18T19:07:19.162",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0348557600",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-18T19:41:41.827",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0349137800",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-22T21:28:09.603",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0349141200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-22T22:02:32.268",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0356000600",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-08-10T01:58:38.944",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0356004100",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-08-10T02:34:02.276",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0357746600",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-08-22T08:12:38.076",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0366847000",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-10-25T05:47:44.011",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0372352200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-12-02T21:31:23.288",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0373580500",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-12-11T12:30:51.496",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0373944000",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-12-14T01:46:14.693",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0347590500",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-12T00:43:14.872",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0347593900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-12T01:17:37.538",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0347843900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-13T19:25:24.108",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0347847300",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-13T19:59:46.773",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0347996200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-14T21:05:19.382",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0348002300",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-14T22:07:00.046",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0348842200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-20T19:39:19.054",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0349096900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-22T14:34:36.956",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0349100400",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-22T15:10:00.288",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0349155100",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-23T00:23:04.933",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0349158600",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-23T00:58:28.265",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0357628900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-08-21T12:22:33.457",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0357632400",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-08-21T12:57:56.789",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0358039500",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-08-24T09:34:10.637",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0359262100",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-01T23:36:00.848",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0366234300",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-10-20T22:32:39.577",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0366237800",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-10-20T23:08:02.909",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0366374300",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-10-21T22:08:12.858",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0366377700",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-10-21T22:42:35.524",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0372348800",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-12-02T20:57:00.626",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0373511700",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-12-11T00:55:12.859",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0346405900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-03T17:05:38.002",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0346409400",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-03T17:41:01.334",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0347170900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-09T02:00:37.705",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0347174400",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-09T02:36:01.037",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0347449900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-11T01:01:37.597",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0347769100",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-13T06:49:05.475",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0348065400",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-15T08:45:00.692",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349193900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-23T06:55:23.588",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349758939",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:08:36.036",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349758952",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:08:44.704",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349758965",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:08:53.370",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349758978",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:09:02.036",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349759013",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:09:19.370",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349759026",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:09:28.036",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349759039",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:09:36.704",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349759052",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:09:45.370",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760100",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:20:18.036",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760122",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:20:32.709",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760145",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:20:48.041",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760168",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:21:03.372",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760200",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:21:18.703",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760222",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:21:33.375",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760245",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:21:48.707",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0349760268",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-06-27T06:22:04.038",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0358042900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-08-24T10:08:33.307",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359322300",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-02T09:44:42.162",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359942400",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:14:35.932",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359942413",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:14:44.597",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359942426",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:14:53.264",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359942439",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:15:01.932",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359944426",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:35:06.597",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359944439",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:35:15.263",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359944452",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:35:23.931",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359944639",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:37:16.597",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359944652",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:37:25.263",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359944739",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:38:17.263",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359945600",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:46:57.263",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359945613",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:47:05.931",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0373577100",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-12-11T11:56:28.838",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0373794900",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-12-13T00:38:40.757",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0359946135",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:23.004",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946139",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:25.671",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946142",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:27.671",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946146",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:30.337",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946149",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:32.337",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946153",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:35.004",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946167",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:44.337",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946170",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:46.337",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946174",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:49.004",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946177",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:51.004",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946181",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:53.671",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946184",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:55.671",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359946188",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:58.337",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0359945481",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:45:49.005",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945484",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:45:51.005",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945488",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:45:53.672",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945500",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:45:55.672",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945504",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:45:58.339",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945507",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:46:00.339",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945511",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:46:03.005",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945514",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:46:05.005",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945518",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:46:07.672",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359945521",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:46:09.672",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359946156",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:37.005",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359946160",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:39.672",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0359946163",
+            "Galileo SSI",
+            "Jupiter",
+            "Ganymede",
+            "1996-09-06T18:52:41.672",
+            "0.0042"
+        ],
+        [
+            "go-ssi-c0368981445",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-09T05:29:16.168",
+            "12.7958"
+        ],
+        [
+            "go-ssi-c0368981500",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-09T05:29:46.830",
+            "12.7958"
+        ],
+        [
+            "go-ssi-c0350029700",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T03:46:15.874",
+            "2.1292"
+        ],
+        [
+            "go-ssi-c0350013888",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T01:06:31.413",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0350024288",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T02:51:40.742",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349673978",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-26T15:49:35.278",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349673988",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-26T15:49:49.278",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0350029742",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T03:46:46.811",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0359986604",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-07T01:41:32.193",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0359986607",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-07T01:41:34.193",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349542188",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-25T17:37:10.696",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349746326",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-27T04:01:03.283",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349746336",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-27T04:01:11.950",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359402500",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-02T23:15:38.374",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359408900",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-03T00:20:21.039",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359415300",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-03T01:25:03.703",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359624500",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-04T12:40:18.291",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359632000",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-04T13:56:08.289",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359639300",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-04T15:09:56.953",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359646300",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-04T16:20:43.617",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359659900",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-04T18:38:14.278",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359703842",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T02:02:36.933",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359710142",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T03:06:18.930",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359716542",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T04:11:01.595",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359722942",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T05:15:44.259",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359729642",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T06:23:28.923",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359736542",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T07:33:14.920",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359743742",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T08:46:02.918",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359750642",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T09:55:48.915",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359759242",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T11:22:46.245",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359766942",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T12:40:37.576",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359775242",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T14:04:32.906",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359783842",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T15:31:30.236",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359792842",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T17:02:30.233",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359801942",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T18:34:30.896",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359811442",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T20:10:34.226",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359841142",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-06T01:10:52.215",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359851342",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-06T02:54:00.211",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359872242",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-06T06:25:19.536",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359882742",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-06T08:11:29.533",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359892942",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-06T09:54:37.529",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0359903542",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-06T11:41:48.191",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349542178",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-25T17:36:56.729",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0359653300",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-04T17:31:30.314",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0359697642",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-05T00:59:55.635",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0350013800",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T01:05:30.896",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0350013845",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T01:06:00.900",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0350024200",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T02:50:40.226",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0350024245",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-29T02:51:10.230",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349673952",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-26T15:49:18.044",
+            "0.0625"
+        ],
+        [
+            "go-ssi-c0349673965",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-26T15:49:26.712",
+            "0.0625"
+        ],
+        [
+            "go-ssi-c0349746300",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-27T04:00:46.025",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0349746313",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-27T04:00:54.692",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0359986578",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-07T01:41:21.898",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0359986600",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-09-07T01:41:29.635",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0349542152",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-25T17:36:39.446",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0349542165",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-06-25T17:36:48.113",
+            "0.0292"
+        ],
+        [
+            "go-ssi-c0367030200",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-10-26T12:40:05.285",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0367035700",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-10-26T13:35:41.948",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368558252",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-06T06:10:26.046",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368578900",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-06T09:39:09.373",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368599800",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-06T13:10:28.698",
+            "0.0125"
+        ],
+        [
+            "go-ssi-c0368558239",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-06T06:10:17.384",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368599813",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-06T13:10:37.368",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368620000",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-06T16:34:43.361",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368641300",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-11-06T20:10:05.353",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0372343200",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-12-02T20:00:23.303",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0372345600",
+            "Galileo SSI",
+            "Jupiter",
+            "Io",
+            "1996-12-02T20:24:39.302",
+            "0.0062"
+        ],
+        [
+            "go-ssi-c0368976900",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T04:43:02.299",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368977500",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T04:49:06.298",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368978100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T04:55:10.298",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368978700",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T05:01:14.298",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368979400",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T05:08:18.964",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368979900",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T05:13:22.298",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368980400",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T05:18:25.631",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368980900",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T05:23:28.964",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368990100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T06:56:30.294",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368990300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T06:58:31.627",
+            "51.1958"
+        ],
+        [
+            "go-ssi-c0368410500",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T05:16:25.711",
+            "2.1292"
+        ],
+        [
+            "go-ssi-c0368410501",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T05:16:25.711",
+            "2.1292"
+        ],
+        [
+            "go-ssi-c0368410545",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T05:16:55.715",
+            "2.1292"
+        ],
+        [
+            "go-ssi-c0368410546",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T05:16:55.715",
+            "2.1292"
+        ],
+        [
+            "go-ssi-c0368991100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T07:06:56.693",
+            "1.0625"
+        ],
+        [
+            "go-ssi-c0359509500",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:17:31.501",
+            "0.5292"
+        ],
+        [
+            "go-ssi-c0349659145",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:19:34.554",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349659222",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:20:19.890",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349659345",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:21:35.888",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349659422",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:22:21.223",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349666000",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:28:50.548",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349666068",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:29:35.883",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349674268",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:52:30.546",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0359509400",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:16:30.901",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0359509445",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:17:00.905",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0359509545",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:18:01.572",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368369268",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:19:36.594",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368369322",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:20:06.599",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368392645",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T02:15:58.921",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368441500",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:29:53.232",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368441522",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:30:07.905",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368441600",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:30:53.899",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368441622",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:31:08.572",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368450322",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:59:06.568",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368450345",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:59:21.900",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368456322",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:59:46.566",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0349605745",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:19:38.641",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349605768",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:19:53.973",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349605800",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:20:09.304",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349605801",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:20:09.304",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349605822",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:20:23.977",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349605845",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:20:39.308",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349605868",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:20:54.639",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:21:05.950",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659322",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:21:20.624",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659323",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:21:20.624",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659368",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:21:51.285",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659400",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:22:06.617",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659445",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:22:36.622",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659468",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:22:51.953",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659469",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:22:51.953",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659500",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:23:07.284",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659522",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:23:21.956",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659545",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:23:37.287",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349659568",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:23:52.619",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666145",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:30:21.285",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666168",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:30:36.616",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666200",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:30:51.947",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666201",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:30:51.947",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666222",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:31:06.620",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666245",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:31:21.951",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666268",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:31:37.284",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349674100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:50:44.611",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349674101",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:50:44.611",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349674122",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:50:59.285",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0359509245",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:14:59.638",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0359509300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:15:30.301",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0359509345",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:16:00.306",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368369245",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:19:21.329",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368369246",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:19:21.329",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368369300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:19:51.992",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368369301",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:19:51.992",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368388600",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T01:35:00.652",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368388622",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T01:35:15.324",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368388623",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T01:35:15.324",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368388645",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T01:35:30.656",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368388668",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T01:35:45.987",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368392745",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T02:16:59.654",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368401145",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T03:41:55.652",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368441545",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:30:23.302",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368441568",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:30:38.634",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368441645",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:31:23.969",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368441668",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:31:39.300",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450000",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:55:49.962",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450022",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:56:04.635",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450045",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:56:19.966",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450068",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:56:35.297",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:56:50.628",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450122",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:57:05.301",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450145",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:57:20.633",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368450168",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:57:35.964",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456000",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:56:29.961",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456022",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:56:44.632",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456045",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:56:59.964",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456068",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:57:15.295",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:57:30.626",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456122",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:57:45.300",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456145",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:58:00.631",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368456168",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:58:15.962",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0349666300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:31:52.648",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666301",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:31:52.648",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666322",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:32:07.320",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666345",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:32:22.652",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666346",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:32:22.652",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666368",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:32:37.983",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666400",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:32:53.314",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666422",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:33:07.987",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666445",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:33:23.318",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666468",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:33:38.650",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666500",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:33:53.981",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666522",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:34:08.654",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666545",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:34:23.985",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349666568",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:34:39.316",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349674145",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:51:14.649",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349674146",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:51:14.649",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349674168",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:51:29.980",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349674200",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:51:45.311",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349674222",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:51:59.984",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368450200",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:57:51.329",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368450222",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:58:06.002",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368450245",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:58:21.333",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368450268",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:58:36.664",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368450300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:58:51.995",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368450368",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T11:59:37.331",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368456200",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:58:31.326",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368456222",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:58:45.999",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368456245",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:59:01.331",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368456268",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:59:16.662",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368456300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T12:59:31.993",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368456345",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T13:00:01.997",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368456368",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T13:00:17.329",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0349659000",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:18:04.017",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659001",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:18:04.017",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659022",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:18:18.690",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659045",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:18:34.021",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659068",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:18:49.353",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:19:04.684",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659122",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:19:19.357",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659200",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:20:05.351",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349659268",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:20:50.686",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0359509200",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-09-03T17:14:29.701",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0368369222",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:19:06.066",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0368441400",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:28:52.699",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0368441422",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:29:07.372",
+            "0.1292"
+        ],
+        [
+            "go-ssi-c0349605600",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:18:08.054",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349605601",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:18:08.054",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349605622",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:18:22.727",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349605645",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:18:38.058",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349605668",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:18:53.390",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349605700",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:19:08.721",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349605722",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T04:19:23.394",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349659168",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:19:50.036",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349659245",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T13:20:35.371",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349666022",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:29:05.371",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349666045",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:29:20.702",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349666100",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:29:51.364",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349666122",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T14:30:06.037",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349674300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:52:46.028",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349674322",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:53:00.701",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368369200",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:18:51.409",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368369201",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-04T22:18:51.409",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368441300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:27:52.049",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368441322",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:28:06.722",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368441345",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:28:22.053",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368441368",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:28:37.384",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368441445",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:29:22.720",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368441468",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-05T10:29:38.051",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0349674245",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-06-26T15:52:15.390",
+            "0.0458"
+        ],
+        [
+            "go-ssi-c0368976300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T04:37:23.886",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0368976301",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T04:37:23.886",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0368976400",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T04:38:24.553",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0368976401",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter",
+            "1996-11-09T04:38:24.553",
+            "0.0208"
+        ],
+        [
+            "go-ssi-c0368976000",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:34:16.299",
+            "0.5292"
+        ],
+        [
+            "go-ssi-c0368991522",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T07:11:14.300",
+            "0.5292"
+        ],
+        [
+            "go-ssi-c0368975900",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:33:15.699",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368975922",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:33:30.372",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368991500",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T07:10:59.693",
+            "0.3958"
+        ],
+        [
+            "go-ssi-c0368975945",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:33:45.770",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368975968",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:34:01.101",
+            "0.2625"
+        ],
+        [
+            "go-ssi-c0368974126",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:15:21.133",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368974139",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:15:29.800",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368992300",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T07:19:05.126",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368992339",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T07:19:31.126",
+            "0.1958"
+        ],
+        [
+            "go-ssi-c0368974113",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T04:15:12.516",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0368991900",
+            "Galileo SSI",
+            "Jupiter",
+            "Jupiter Rings",
+            "1996-11-09T07:15:02.510",
+            "0.0958"
+        ],
+        [
+            "go-ssi-c0360361122",
+            "Galileo SSI",
+            "Jupiter",
+            "None",
+            "1996-09-09T16:48:21.788",
+            "0"
+        ],
+        [
+            "go-ssi-c0360361145",
+            "Galileo SSI",
+            "Jupiter",
+            "None",
+            "1996-09-09T16:48:37.119",
+            "0"
+        ],
+        [
+            "go-ssi-c0360361168",
+            "Galileo SSI",
+            "Jupiter",
+            "None",
+            "1996-09-09T16:48:52.450",
+            "0"
+        ],
+        [
+            "go-ssi-c0360361200",
+            "Galileo SSI",
+            "Jupiter",
+            "None",
+            "1996-09-09T16:49:07.782",
+            "0"
+        ],
+        [
+            "go-ssi-c0368591600",
+            "Galileo SSI",
+            "Jupiter",
+            "Thebe",
+            "1996-11-06T11:47:33.943",
+            "0.1958"
+        ]
     ]
-  ]
 }

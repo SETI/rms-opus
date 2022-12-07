@@ -88,7 +88,7 @@ class ApiTestHelper:
         jdata = json.loads(response.content)
         if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
-                fp.write(json.dumps(jdata, indent=2)+'\n')
+                fp.write(json.dumps(jdata, indent=4))
             return
         with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
             expected = json.loads(fp.read())

@@ -56,7 +56,7 @@ var o_selectMetadata = {
             });
         });
 
-        $("#op-select-metadata .close").on("click", function(e) {
+        $("#op-select-metadata .btn-close").on("click", function(e) {
             clickedX = true;
         });
 
@@ -66,7 +66,7 @@ var o_selectMetadata = {
                 // only pop up the confirm modal if the user clicked the 'X' in the corner
                 if (clickedX) {
                     clickedX = false;
-                    let targetModal = $(this).find("[data-target]").data("target");
+                    let targetModal = $(this).find("[data-bs-target]").data("bs-target");
                     $(`#${targetModal}`).modal("show");
                 } else {
                     o_selectMetadata.saveChanges();
@@ -339,7 +339,7 @@ var o_selectMetadata = {
         let unitDropdown = "";
         if (dispUnit) {
             unitDropdown += `(<div class="op-units-dropdown dropdown d-inline">
-            <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${dispUnit}</a>
+            <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${dispUnit}</a>
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
             for (let unit in units) {
@@ -449,7 +449,6 @@ var o_selectMetadata = {
         o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
         o_browse.clearObservationData(true); // Leave startobs alone
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-        o_utils.disableUserInteraction();
         o_selectMetadata.reRender();
         // if the metadata is no longer default, we need to enable the reset button on the Search tab
         if (!opus.isMetadataDefault()) {
@@ -468,7 +467,7 @@ var o_selectMetadata = {
          */
         $(".op-select-metadata-headers").show(); // Show now so computations are accurate
         $(".op-select-metadata-headers-hr").show();
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $(".op-reset-opus").outerHeight() +
                             $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let modalHeaderHeight = $("#op-select-metadata .modal-header").outerHeight();

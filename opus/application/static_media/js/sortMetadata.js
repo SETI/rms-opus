@@ -38,7 +38,7 @@ let o_sortMetadata = {
             stop: function(event, ui) {
                 // rebuild new search order and reload page
                 let newOrder = [];
-                $(this).find(".list-inline-item span.badge-pill").each(function(index, obj) {
+                $(this).find(".list-inline-item span.rounded-pill ").each(function(index, obj) {
                     let slug = $(obj).data("slug");
                     let descending = ($(obj).data("descending") === true ? "-" : "");
                     newOrder.push(`${descending}${slug}`);
@@ -206,7 +206,7 @@ let o_sortMetadata = {
             let slug = $(obj).data("slug");
             let label = $(obj).data("label");
             if ($(obj).find(".op-column-ordering").data("sort") === "none") {
-                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#">${label}</a>`;
+                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#" >${label}</a>`;
             }
         });
         $("#op-add-sort-metadata .op-sort-list").html(html);
@@ -262,13 +262,13 @@ let o_sortMetadata = {
             let itemClasses = (slug === "opusid" ? "op-sort-last" : "list-inline-item op-sort-only");
 
             let listHtml = `<div class='${itemClasses}'>`;
-            listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;
+            listHtml += `<span class='badge rounded-pill bg-light' data-slug="${slug}" data-descending="${isDescending}">`;
             if (removeable) {
                 listHtml += "<span class='op-remove-sort op-sort-tooltip' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }
             listHtml += `<span class='op-flip-sort op-sort-tooltip' title='${orderTooltip}'>`;
             listHtml += label;
-            listHtml += (isDescending ? `<i class="${pillSortUpArrow} ml-1"></i>` : `<i class="${pillSortDownArrow} ml-1"></i>`);
+            listHtml += (isDescending ? `<i class="${pillSortUpArrow} ms-1"></i>` : `<i class="${pillSortDownArrow} ms-1"></i>`);
             listHtml += "</span></span></div>";
 
             let fullSlug = slug;

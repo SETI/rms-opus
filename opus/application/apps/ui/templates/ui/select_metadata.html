@@ -4,7 +4,7 @@
 <div class="row op-select-metadata-headers">
     <div class="col">
         <div class="op-all-metadata-column-header">
-            <div class="text-center font-weight-bold h5">Available Metadata Fields</div>
+            <div class="text-center fw-bold h5">Available Metadata Fields</div>
             Click on a field name to include (or exclude) it from the Selected Metadata list.
             To show Surface Geometry Constraints, use the Surface Geometry Target Selector on
             the Search tab.
@@ -12,7 +12,7 @@
     </div>
     <div class="col">
         <div class="op-selected-metadata-column-header">
-            <div class="text-center font-weight-bold h5">Selected Metadata Fields</div>
+            <div class="text-center fw-bold h5">Selected Metadata Fields</div>
             These fields will be shown in the Table View, Slideshow, and Detail tab and
             will be included in downloaded CSV files and archives. Fields can be reordered
             with drag-and-drop.
@@ -20,9 +20,6 @@
     </div>
 </div>
 <hr class="op-select-metadata-headers-hr">
-<div class="op-select-metadata-load-status">
-    <div class='loader'></div>
-</div>
 
 <div class="row op-select-metadata-row-contents">
     <div class="col">
@@ -32,7 +29,7 @@
     </div>
 
     <div class="col">
-        <div class="op-selected-metadata-column">
+        <div class="row op-selected-metadata-column">
       	    <ul>
                 {% for slug, param_info in all_slugs_info.items %}
       		        <li id="cchoose__{{ slug }}">
@@ -42,7 +39,7 @@
                         <span>{{ param_info.body_qualified_label_results }}
                         {% if param_info.units %}
                             (<div class="op-units-dropdown dropdown d-inline">
-                                <a class="op-{{ param_info.slug }}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" data-prevdispvalue="{{ param_info.disp_unit }}" aria-haspopup="true" aria-expanded="false">
+                                <a class="op-{{ param_info.slug }}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" data-prevdispvalue="{{ param_info.disp_unit }}" aria-haspopup="true" aria-expanded="false">
                                 {{ param_info.disp_unit }}
                                 </a>
                                 <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">

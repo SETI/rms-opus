@@ -27,8 +27,8 @@
                     >&nbsp;</span>
                 </div>
             </div>
-            <span class="float-right border-left border-dark">
-                <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
+            <span class="float-end border-start border-dark">
+                <a href="#card__{{ slug }}" data-bs-toggle="collapse" data-bs-target="#card__{{ slug }}" aria-expanded="true">
                     <i class="icon-action fa fa-chevron-down pull-right"></i>
                 </a>
                 <a href="#" data-action="close" data-slug="{{ slug }}" class="close_card">
@@ -82,19 +82,18 @@
                     {% endif %}
                 </ul>
                 {% if ranges %}
-                    <div class="op-preprogrammed-ranges">
-                        <ul class="dropdown-menu op-scrollable-menu pl-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
+                        <ul class="dropdown-menu op-preprogrammed-ranges op-scrollable-menu ps-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
                             {% for range_data_entry in ranges %}
-                                <li class="mr-0 d-block" data-category="{{ range_data_entry.cat_name|slugify }}">
-                                    <a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#{{ range_data_entry.cat_name|slugify }}" role="button" aria-expanded="false" aria-controls="{{ range_data_entry.cat_name|slugify }}">{{ range_data_entry.cat_name }}</a>
-                                    <div class="container collapse" id="{{ range_data_entry.cat_name|slugify }}" data-widget="widget__{{ slug }}" data-mininput="{{ slug }}1">
+                                <li class="me-0 d-block" data-category="{{ range_data_entry.cat_name|slugify }}">
+                                    <a class="dropdown-item bg-light dropdown-toggle collapsed" data-bs-toggle="collapse" href="#{{ range_data_entry.cat_name|slugify }}" role="button" aria-expanded="false" aria-controls="{{ range_data_entry.cat_name|slugify }}">{{ range_data_entry.cat_name }}</a>
+                                    <div class="container collapse g-sm-3" id="{{ range_data_entry.cat_name|slugify }}" data-widget="widget__{{ slug }}" data-mininput="{{ slug }}1">
                                         <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
                                             <div class="col-4">
                                             </div>
-                                            <div class="col-4 font-weight-bold text-right">
+                                            <div class="col-4 fw-bold text-end">
                                                 {{ range_data_entry.heading1|safe }}
                                             </div>
-                                            <div class="col-4 font-weight-bold text-right">
+                                            <div class="col-4 fw-bold text-end">
                                                 {{ range_data_entry.heading2|safe }}
                                             </div>
                                         </div>
@@ -104,12 +103,12 @@
                                                     <div class="col-4 op-preprogrammed-ranges-data-name">
                                                         {{ range_info.name }}
                                                     </div>
-                                                    <div class="col-4 op-preprogrammed-ranges-min-data text-right">
+                                                    <div class="col-4 op-preprogrammed-ranges-min-data text-end">
                                                         {% if range_info.field1 %}
                                                             {{ val1|intcomma }}
                                                         {% endif %}
                                                     </div>
-                                                    <div class="col-4 op-preprogrammed-ranges-max-data text-right">
+                                                    <div class="col-4 op-preprogrammed-ranges-max-data text-end">
                                                         {% if range_info.field2 %}
                                                             {{ val2|intcomma }}
                                                         {% endif %}
@@ -121,7 +120,6 @@
                                 </li>
                             {% endfor %}
                         </ul>
-                    </div>
                 {% endif %}
             </div>
         </article>

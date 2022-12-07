@@ -8,7 +8,7 @@
                         {% for name, param_info in all_info.items %}
                             {% if name == param %}
                                 {% if param_info.get_tooltip_results %}
-                                    <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-toggle="tooltip"
+                                    <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-bs-toggle="tooltip"
                                         title="{{ param_info.get_tooltip_results|striptags }}"></i>&nbsp;
                                 {% endif %}
                                 <div class="op-detail-entry-values-wrapper">

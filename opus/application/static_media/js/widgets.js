@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $ */
-/* globals o_browse, o_hash, o_menu, o_search, o_selectMetadata, o_utils, opus */
+/* globals o_browse, o_hash, o_menu, o_search, o_selectMetadata, o_utils, opus, bootstrap */
 
 // font awesome icon class
 const trashIcon = "far fa-trash-alt";
@@ -144,7 +144,7 @@ var o_widgets = {
                     o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "class");
                     o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "name");
                     o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "href");
-                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-target");
+                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-bs-target");
                     o_widgets.updateSURFACEGEOattrInPlace(closeIcon, newTargetSlug, "data-slug");
 
                     // Update attributes in card body
@@ -220,7 +220,10 @@ var o_widgets = {
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
                 o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                 // close dropdown and trigger the search
-                $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`).dropdown("toggle");
+                let inputToTriggerDropdown = $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`);
+                let dropdownInstance = new bootstrap.Dropdown(inputToTriggerDropdown[0]);
+                dropdownInstance.toggle();
+
                 $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).trigger("change");
 
                 let minInput = $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`);
@@ -790,9 +793,7 @@ var o_widgets = {
         /**
          * Remove all highlighted text and make sure all category are collpased
          */
-        let preprogrammedRangesDropdown = (targetInput
-                                           .next(".op-preprogrammed-ranges")
-                                           .find(".op-scrollable-menu"));
+        let preprogrammedRangesDropdown = targetInput.next(".op-preprogrammed-ranges");
         let preprogrammedRangesInfo = preprogrammedRangesDropdown.find("li");
 
         // If ranges info is not available, return from the function.
@@ -1233,7 +1234,7 @@ var o_widgets = {
                 let qtypeValue = $(`#widget__${slug} .op-widget-main select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
-                                    <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
+                                    <a class="text-dark" tabindex="0" data-bs-toggle="popover" data-bs-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
 
                     // Make sure help icon is attached to the end of each set of inputs
@@ -1324,15 +1325,17 @@ var o_widgets = {
 
                 // Close dropdown list when ps scrolling is happening in widget container
                 if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
-                    // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
+                    // Note: the selector to toggle dropdown should be the one with data-bs-toggle="dropdown"
                     // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
-                    $(`#${widget} input.op-range-input-min`).dropdown("toggle");
+                    let inputToTriggerDropdown = $(`#${widget} input.op-range-input-min`);
+                    let dropdownInstance = new bootstrap.Dropdown(inputToTriggerDropdown[0]);
+                    dropdownInstance.toggle();
                 }
             });
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
                 let addInputIcon = ('<li class="op-add-inputs">' +
-                                    '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn \
+                                    '<button type="button" class="ms-2 p-0 btn btn-small btn-link op-add-inputs-btn \
                                     op-input-action-tooltip" title="Add a new set of search inputs"' +
                                     `data-widget="widget__${slug}" data-slug="${slug}">` +
                                     `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`);

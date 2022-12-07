@@ -277,6 +277,7 @@ var opus = {
 
         // Start the result count spinner and do the yellow flash
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
+        $(`a[href="#${opus.getCurrentTab()}"]`).addClass("active");
 
         // Start the observation number slider spinner - no point in doing a flash here
         // and only set the spinner for the #browse tab, as changing search parameters does not affect the cart
@@ -605,7 +606,7 @@ var opus = {
         /**
          * Set the height of the "Help" panel based on the browser size.
          */
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let cardHeaderHeight = $("#op-help-panel .card-header").outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + cardHeaderHeight;
@@ -843,15 +844,19 @@ var opus = {
         });
 
         // Clicking on the "X" in the corner of the help pane
-        $("#op-help-panel .close, .op-overlay").on("click", function() {
+        $("#op-help-panel .btn-close, .op-overlay").on("click", function() {
             opus.hideHelpAndCartPanels();
             return false;
         });
 
         // Behavior for help submenu
         $("#op-help .dropdown-submenu .dropdown-item").on("click", function(e) {
-            $(this).next(".dropdown-menu").toggle("show");
             e.stopPropagation();
+            if($(this).hasClass("show")) {
+                $(this).next(".dropdown-menu").show("slow");
+            } else {
+                $(this).next(".dropdown-menu").hide();
+            }
         });
 
         // Click on items inside submenu, we execute something and close the whole dropdown.
@@ -869,7 +874,7 @@ var opus = {
 
         // Clicking on either of the Reset buttons
         $(".op-reset-button button").on("click", function() {
-            let targetModal = $(this).data("target");
+            let targetModal = $(this).data("bs-target");
 
             if (!$.isEmptyObject(opus.selections) || !opus.isDrawnWidgetsListDefault()) {
                 $(targetModal).modal("show");
@@ -924,7 +929,7 @@ var opus = {
 
         // Handle the Submit or Cancel buttons for the various confirm modals we can pop up
         $(".op-confirm-modal").on("click", ".btn", function() {
-            let target = $(this).data("target");
+            let target = $(this).data("bs-target");
             switch ($(this).attr("type")) {
                 case "submit":
                     switch(target) {
@@ -1067,9 +1072,9 @@ var opus = {
                 pdfURL = baseURL + "gettingstarted.pdf";
                 header = "Getting Started with OPUS";
                 break;
-            case "COCIRS":
-            case "COUVIS":
-            case "COVIMS":
+            case "Cassini CIRS":
+            case "Cassini UVIS":
+            case "Cassini VIMS":
                 opus.displayImageInterpretation(action);
                 return;
             case "contact":
@@ -1094,7 +1099,7 @@ var opus = {
 
         $("#op-help-panel").addClass("op-no-select");
         $(".op-cite-opus-btn").addClass(".op-prevent-pointer-events");
-        $("#op-help-panel .op-header-text").html(`<h2>${header}</h2>`);
+        $("#op-help-panel .op-header-text").html(`${header}`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
 

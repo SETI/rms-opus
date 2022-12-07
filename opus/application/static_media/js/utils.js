@@ -201,7 +201,7 @@ $.fn.isOnScreen = function(scope, slop) {
     if (this.is("tr")) {
         top += $("th").outerHeight();
         // For a table item, the bottom border will be the top of the footer.
-        bottom = $(".app-footer").offset().top;
+        bottom = $(".footer").offset().top;
         // Make sure highlighted table item is fully displayed.
         offset = elementHeight;
     } else {

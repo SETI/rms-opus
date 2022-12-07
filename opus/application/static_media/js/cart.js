@@ -24,22 +24,22 @@ const downloadLinksPBMaxHeight = 200;
 // is no proper way to distinguish between them because the 2nd one is the duplicate of
 // the 1st one).
 const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
-                                     "<div class='arrow'></div>" +
+                                     "<div class='popover-arrow'></div>" +
                                      "<h3 class='popover-header'></h3>" +
                                      "<div class='popover-body'></div>" +
                                      "<div class='popover-footer'>" +
                                      "<a tabindex='0' role='button' class='op-cite-opus-btn op-no-select'>" +
                                      "How to Cite OPUS" +
                                      "</a>" +
-                                     "<button class='op-clear-history-btn btn btn-sm btn-secondary op-download-popover-tooltip'" +
-                                     "type='button' title='Clear all history' disabled>Clear All</button></div>" +
+                                     "<a class='op-clear-history-btn op-download-popover-tooltip btn btn-sm btn-secondary'" +
+                                     "type='button' title='Clear all history' disabled>Clear All</a></div>" +
                                      "</div>";
 const downloadLinksPopoverTitle = "Download Archive Links" +
-                                  "<button " +
-                                  "class='close-download-links-history btn-sm py-0 pr-0 pl-2 border-0' " +
+                                  "<a " +
+                                  "class='op-close-download-links-history btn-sm py-0 pe-0 ps-2 border-0' " +
                                   "type='button'>&nbsp;" +
                                   "<i class='fas fa-times'></i>" +
-                                  "</button>";
+                                  "</a>";
 
 /* jshint varstmt: false */
 var o_cart = {
@@ -127,7 +127,7 @@ var o_cart = {
         });
 
         // Clicking on the "X" in the corner of the download data panel
-        $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
+        $("#op-cart-download-panel .btn-close, .op-overlay").on("click", function() {
             opus.hideHelpAndCartPanels();
             return false;
         });
@@ -193,7 +193,7 @@ var o_cart = {
         });
 
         // Initialize popover window for download links at the lower right corner in footer area.
-        $(".app-footer .op-download-links-btn").popover({
+        $(".op-download-links-btn").popover({
             html: true,
             container: "body",
             title: downloadLinksPopoverTitle,
@@ -205,13 +205,14 @@ var o_cart = {
             // add event handler manually, we need to click the button twice to close a
             // manually open popover.
             trigger: "manual",
+            customClass: "op-links-popover",
             content: function() {
                 return $("#op-download-links").html();
             }
         });
 
         // Init tooltipster after popover is about to show.
-        $(".app-footer .op-download-links-btn").on("show.bs.popover", function () {
+        $(".op-download-links-btn").on("shown.bs.popover", function () {
             $(".op-download-popover-tooltip").tooltipster({
                 maxWidth: opus.tooltipsMaxWidth,
                 theme: opus.tooltipsTheme,
@@ -220,21 +221,28 @@ var o_cart = {
         });
 
         // Toggle popover window when clicking download history button at the footer
-        $(".app-footer .op-download-links-btn").on("click", function() {
-            $(".app-footer .op-download-links-btn").popover("toggle");
+        $(".op-download-links-btn").on("click", function() {
+            if ($(".op-links-popover").hasClass("show")) {
+                $(".op-download-links-btn").popover("hide");
+            } else {
+                $(".op-download-links-btn").popover("show");
+                $(".op-download-links-contents .spinner").hide();
+            }
+            // Properly position the popover
+            $(".op-download-links-btn").popover("update");
         });
 
         // Close popover when clicking "x" button on the popover title
-        $(document).on("click", ".close-download-links-history", function() {
-            $(".app-footer .op-download-links-btn").popover("hide");
+        $(document).on("click", ".op-close-download-links-history", function(e) {
+            $(".op-download-links-btn").popover("hide");
         });
 
-        $(document).on("click", ".op-clear-history-btn", function() {
+        $(document).on("click", ".op-clear-history-btn", function(e) {
             o_cart.clearDownloadLinksHistory();
         });
 
         // Handle the "How to Cite OPUS" button
-        $(document).on("click", ".op-cite-opus-btn", function() {
+        $(document).on("click", ".op-cite-opus-btn", function(e) {
             if (!$(".op-cite-opus-btn").hasClass("op-prevent-pointer-events")) {
                 opus.displayHelpPane("citing");
             }
@@ -335,7 +343,7 @@ var o_cart = {
         // We use detach here to keep the event handlers attached to elements
         let html = $("#op-download-options-container").detach();
         if ($(window).width() <= cartLeftPaneThreshold) {
-            $("#op-cart-download-panel .op-header-text").html("<h2>Download Data</h2>");
+            $("#op-cart-download-panel .op-header-text").html("<h3>Download Data</h3>");
             $("#op-cart-download-panel .op-card-contents").html(html);
             $(".op-download-panel-title").hide();
         } else {
@@ -372,11 +380,12 @@ var o_cart = {
         opus.downloadInProcess = true;
 
         // Open the download links popover so the user can see the spinner
-        $(".op-download-links-btn").show();
-        $(".app-footer .op-download-links-btn").popover("show");
+        //$(".op-download-links-btn").show();
+        if (!$(".op-links-popover").hasClass("show")) {
+            $(".op-download-links-btn").popover("show");
+        }
+        $(".op-download-links-btn").popover("update");
         $(".op-download-links-contents .spinner").show();
-        // prevent popover window from jumping when displaying the spinner
-        $(".app-footer .op-download-links-btn").popover("update");
 
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -394,7 +403,7 @@ var o_cart = {
                 if (data.error !== undefined) {
                     // hide the spinner and display error message in an open modal
                     $(".op-download-links-contents .spinner").hide();
-                    $(".app-footer .op-download-links-btn").popover("update");
+                    $(".op-download-links-btn").popover("update");
                     $("#op-download-links-error-msg-modal .modal-body").text(data.error);
                     $("#op-download-links-error-msg-modal").modal("show");
                 } else {
@@ -403,24 +412,25 @@ var o_cart = {
                     // (when popover is open) are synced up with updates. To achieve this, we have to call show
                     // method from popover to update content, and make sure the selector managing DOM are selecting
                     // the same elements in both #op-download-links and .popover-body. (length === 2).
-                    $(".op-download-links-btn").show();
-                    $(".app-footer .op-download-links-btn").popover("show");
+                    $(".op-download-links-btn").popover("update");
 
                     // Set the max height for the window of download links history
                     $(".popover-body").css("max-height", downloadLinksPBMaxHeight);
                     $(".op-download-links-contents .op-empty-history").remove();
                     $(".op-download-links-contents .spinner").hide();
-                    let latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
+                    let filename = data.filename.replace("<URL>", "");
+                    let latestLink = $(`<li><a href = "${filename}" download>${filename}</a></li>`);
                     $(".op-download-links-contents ul.op-zipped-files li:nth-child(1)").after(latestLink);
-                    $(".op-clear-history-btn").prop("disabled", false);
+                    $(".op-clear-history-btn").removeClass("op-a-tag-btn-disabled");
                     $(".op-download-links-btn").removeClass("op-a-tag-btn-disabled");
                     o_cart.enablePSinDownloadLinksWindow();
+                    $(".op-download-links-btn").popover("update");
                 }
             },
             error: function(e) {
                 // hide the spinner and display error message in an open modal
                 $(".op-download-links-contents .spinner").hide();
-                $(".app-footer .op-download-links-btn").popover("update");
+                //$(".op-download-links-btn").popover("update");
                 $("#op-download-links-error-msg-modal .modal-body").text(errorMsg);
                 $("#op-download-links-error-msg-modal").modal("show");
             },
@@ -449,16 +459,15 @@ var o_cart = {
         /**
          * Clear the download links history in the popover window
          */
-        $(".app-footer .op-download-links-btn").popover("show");
         $(".op-zipped-files li:not(:first-child)").remove();
-        $(".app-footer .op-download-links-btn").popover("update");
-        $(".op-clear-history-btn").prop("disabled", true);
+        $(".op-download-links-btn").popover("update");
+        $(".op-clear-history-btn").addClass("op-a-tag-btn-disabled");
         $(".op-download-links-btn").addClass("op-a-tag-btn-disabled");
     },
 
     adjustProductInfoHeight: function() {
         let containerHeight = o_browse.calculateGalleryHeight();
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $(".op-reset-opus").outerHeight() +
                             $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
@@ -500,11 +509,11 @@ var o_cart = {
         }
 
         if (status.recycled_count === 0) {
-            $("[data-target='#op-empty-recycle-bin-modal']").addClass("op-button-disabled");
-            $("[data-target='#op-restore-recycle-bin-modal']").addClass("op-button-disabled");
+            $("[data-bs-target='#op-empty-recycle-bin-modal']").addClass("op-button-disabled");
+            $("[data-bs-target='#op-restore-recycle-bin-modal']").addClass("op-button-disabled");
         } else {
-            $("[data-target='#op-empty-recycle-bin-modal']").removeClass("op-button-disabled");
-            $("[data-target='#op-restore-recycle-bin-modal']").removeClass("op-button-disabled");
+            $("[data-bs-target='#op-empty-recycle-bin-modal']").removeClass("op-button-disabled");
+            $("[data-bs-target='#op-restore-recycle-bin-modal']").removeClass("op-button-disabled");
         }
 
         if (status.count === 0) {

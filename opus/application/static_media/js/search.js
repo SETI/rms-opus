@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, PerfectScrollbar */
-/* globals o_browse, o_hash, o_menu, o_utils, o_widgets, opus */
+/* globals o_browse, o_hash, o_menu, o_utils, o_widgets, opus, bootstrap */
 
 /* jshint varstmt: false */
 var o_search = {
@@ -90,9 +90,7 @@ var o_search = {
             $(this).removeClass("search_input_invalid_no_focus");
 
             // Open the dropdown properly when user tabs to focus in.
-            let preprogrammedRangesDropdown = ($(this)
-                                               .next(".op-preprogrammed-ranges")
-                                               .find(".op-scrollable-menu"));
+            let preprogrammedRangesDropdown = $(this).next(".op-preprogrammed-ranges");
 
             o_search.rangesNameTotalMatchedCounter[slugWithId] =
             (o_search.rangesNameTotalMatchedCounter[slugWithId] || 0);
@@ -101,7 +99,8 @@ var o_search = {
                 (!currentValue || o_search.rangesNameTotalMatchedCounter[slugWithId] > 0) &&
                 !preprogrammedRangesDropdown.hasClass("show") && !o_widgets.isReFocusingBackToInput) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
-                $(this).dropdown("toggle");
+                let dropdownInstance = new bootstrap.Dropdown($(this)[0]);
+                dropdownInstance.toggle();
             }
         });
 
@@ -139,15 +138,6 @@ var o_search = {
                 $(this).removeClass("search_input_valid");
                 $(this).removeClass("search_input_invalid");
                 $(this).addClass("search_input_original");
-            }
-
-            // Close the dropdown properly when user focuses out.
-            let preprogrammedRangesDropdown = ($(this)
-                                               .next(".op-preprogrammed-ranges")
-                                               .find(".op-scrollable-menu"));
-            if (preprogrammedRangesDropdown.length !== 0 &&
-                preprogrammedRangesDropdown.hasClass("show")) {
-                $(this).dropdown("toggle");
             }
 
             o_widgets.isKeepingRangesDropdownOpen = false;
@@ -264,7 +254,7 @@ var o_search = {
                             o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                             o_search.rangesNameTotalMatchedCounter[slugWithId] = 0;
                             // close dropdown and trigger the search
-                            $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).dropdown("toggle");
+                            $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).next(".op-preprogrammed-ranges").toggleClass("show");
                             $(`#${widgetId} input.RANGE[name="${inputName}"]`).trigger("change");
                             let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
                             $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`).trigger("change");
@@ -276,13 +266,13 @@ var o_search = {
             } else {
                 // close the dropdown
                 let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
-                let preprogrammedRangesDropdown = (inputToTriggerDropdown
-                                                   .next(".op-preprogrammed-ranges")
-                                                   .find(".op-scrollable-menu"));
+                let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
 
                 if (preprogrammedRangesDropdown.hasClass("show")) {
-                    inputToTriggerDropdown.dropdown("toggle");
+                    let dropdownInstance = new bootstrap.Dropdown(inputToTriggerDropdown[0]);
+                    dropdownInstance.toggle();
                 }
+
             }
 
             o_search.stringOrRangeChanged(e.target);
@@ -725,7 +715,7 @@ var o_search = {
         // Make sure dropdown is not shown if user focus into an input with numerical value or
         // string value with no match.
         $("#search").on("show.bs.dropdown", function(e) {
-            let minInput = $(e.target).find("input.op-ranges-dropdown-menu");
+            let minInput = $(e.target);
             if (minInput.length === 0) {
                 return;
             }
@@ -758,9 +748,7 @@ var o_search = {
         let slugWithId = `${slug}_${uniqueid}`;
         // Need to be more specific to select the corresponding one
         let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
-        let preprogrammedRangesDropdown = (inputToTriggerDropdown
-                                           .next(".op-preprogrammed-ranges")
-                                           .find(".op-scrollable-menu"));
+        let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
         let preprogrammedRangesInfo = preprogrammedRangesDropdown.find("li");
 
         // If ranges info is not available, return from the function.
@@ -834,13 +822,14 @@ var o_search = {
         }
         o_search.inputsRangesNameMatchedInfo[slugWithId] = o_utils.deepCloneObj(o_search.rangesNameMatchedCounterByCategory);
 
+        let dropdownInstance = new bootstrap.Dropdown(inputToTriggerDropdown[0]);
         if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
-                inputToTriggerDropdown.dropdown("toggle");
+                dropdownInstance.toggle();
             }
         } else {
             if (!preprogrammedRangesDropdown.hasClass("show")) {
-                inputToTriggerDropdown.dropdown("toggle");
+                dropdownInstance.toggle();
             }
         }
     },
@@ -1088,9 +1077,9 @@ var o_search = {
     searchBarContainerHeight: function() {
         let mainNavHeight = $(".op-reset-opus").outerHeight() +
                             $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let resetButtonHeight = $(".op-reset-button").outerHeight();
-        let dividerHeight = $(".shadow-divider").outerHeight();
+        let dividerHeight = $(".op-shadow-divider").outerHeight();
         let offset = mainNavHeight + footerHeight + resetButtonHeight + dividerHeight;
         return $("#search").height() - offset;
     },
@@ -1117,7 +1106,7 @@ var o_search = {
     },
 
     searchWidgetHeightChanged: function(offset=0) {
-        let footerHeight = $(".app-footer").outerHeight();
+        let footerHeight = $(".footer").outerHeight();
         let mainNavHeight = $(".op-reset-opus").outerHeight() +
                             $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let totalNonSearchAreaHeight = footerHeight + mainNavHeight;
