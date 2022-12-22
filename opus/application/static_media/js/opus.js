@@ -474,34 +474,6 @@ var opus = {
         }
     },
 
-    hideTawkChat: function(action) {
-        $("iframe").each(function(index) {
-            let elem = $(this).contents().find("div#tawkchat-minified-box");
-            if (elem.length > 0) {
-                if (elem.find("#minimizeChatMinifiedBtn").hasClass("hide")) {
-                    elem.hide();
-                }
-            }
-            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
-            if (elem.length > 0) {
-                elem.hide();
-            }
-        });
-    },
-
-    showTawkChat: function(action) {
-        $("iframe").each(function(index) {
-            let elem = $(this).contents().find("div#tawkchat-minified-box");
-            if (elem.length > 0) {
-                elem.show();
-            }
-            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
-            if (elem.length > 0) {
-                elem.show();
-            }
-        });
-    },
-
     changeTab: function(tab) {
         /**
          * This is the event handler for the user clicking on one of the main nav
@@ -545,29 +517,25 @@ var opus = {
                 // uses opacity, and we're already using opacity for the text
                 // and background image, so it flashes bright and then dims
                 $(".feedbackTab").show();
-                opus.showTawkChat();
                 o_search.activateSearchTab();
                 break;
 
             case "browse":
                 $("#browse").fadeIn();
                 $(".feedbackTab").hide();
-                opus.hideTawkChat();
-                o_browse.activateBrowseTab();
+                 o_browse.activateBrowseTab();
                 break;
 
             case "detail":
                 $("#detail").fadeIn();
                 $(".feedbackTab").show();
-                opus.showTawkChat();
                 o_detail.activateDetailTab(opus.prefs.detail);
                 break;
 
             case "cart":
                 $("#cart").fadeIn();
                 $(".feedbackTab").hide();
-                opus.hideTawkChat();
-                o_cart.activateCartTab();
+                 o_cart.activateCartTab();
                 break;
 
             default:
