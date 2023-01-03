@@ -523,7 +523,7 @@ var opus = {
             case "browse":
                 $("#browse").fadeIn();
                 $(".feedbackTab").hide();
-                 o_browse.activateBrowseTab();
+                o_browse.activateBrowseTab();
                 break;
 
             case "detail":
@@ -535,7 +535,7 @@ var opus = {
             case "cart":
                 $("#cart").fadeIn();
                 $(".feedbackTab").hide();
-                 o_cart.activateCartTab();
+                o_cart.activateCartTab();
                 break;
 
             default:
