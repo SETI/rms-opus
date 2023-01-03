@@ -72,10 +72,6 @@ ALLOWED_HOSTS = ('127.0.0.1',
 #   https://www.google.com/search?q=django+secret+generator
 SECRET_KEY = '<SECRET_KEY>'
 
-# Tawk.to key.  During testing of the chat functionality, set this key
-# to the test widget instead of the production widget key.
-CHAT_KEY = '<CHAT_KEY>'
-
 # Where static files are served from in a production environment
 # This is ignored in a non-production environment
 STATIC_ROOT = '<STATIC_ROOT>'
