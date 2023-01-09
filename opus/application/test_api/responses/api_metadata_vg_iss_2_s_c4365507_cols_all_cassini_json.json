@@ -1,56 +1,56 @@
 [
-  {
-    "opusid": "vg-iss-2-s-c4365507"
-  },
-  {
-    "volumeid": "VGISS_6210"
-  },
-  {
-    "greaterpixelsize": "800"
-  },
-  {
-    "lesserpixelsize": "544"
-  },
-  {
-    "wavelength1": "0.28"
-  },
-  {
-    "wavelength2": "0.37"
-  },
-  {
-    "CASSINIobsname": "N/A"
-  },
-  {
-    "CASSINIactivityname": "N/A"
-  },
-  {
-    "CASSINImissionphasename": "N/A"
-  },
-  {
-    "CASSINItargetcode": "N/A"
-  },
-  {
-    "CASSINIrevnoint": "N/A"
-  },
-  {
-    "CASSINIprimeinst": "N/A"
-  },
-  {
-    "CASSINIisprime": "N/A"
-  },
-  {
-    "CASSINIsequenceid": "N/A"
-  },
-  {
-    "CASSINIspacecraftclockcount1": "N/A"
-  },
-  {
-    "CASSINIspacecraftclockcount2": "N/A"
-  },
-  {
-    "CASSINIert1": "N/A"
-  },
-  {
-    "CASSINIert2": "N/A"
-  }
+    {
+        "opusid": "vg-iss-2-s-c4365507"
+    },
+    {
+        "volumeid": "VGISS_6210"
+    },
+    {
+        "greaterpixelsize": "800"
+    },
+    {
+        "lesserpixelsize": "544"
+    },
+    {
+        "wavelength1": "0.28"
+    },
+    {
+        "wavelength2": "0.37"
+    },
+    {
+        "CASSINIobsname": "N/A"
+    },
+    {
+        "CASSINIactivityname": "N/A"
+    },
+    {
+        "CASSINImissionphasename": "N/A"
+    },
+    {
+        "CASSINItargetcode": "N/A"
+    },
+    {
+        "CASSINIrevnoint": "N/A"
+    },
+    {
+        "CASSINIprimeinst": "N/A"
+    },
+    {
+        "CASSINIisprime": "N/A"
+    },
+    {
+        "CASSINIsequenceid": "N/A"
+    },
+    {
+        "CASSINIspacecraftclockcount1": "N/A"
+    },
+    {
+        "CASSINIspacecraftclockcount2": "N/A"
+    },
+    {
+        "CASSINIert1": "N/A"
+    },
+    {
+        "CASSINIert2": "N/A"
+    }
 ]

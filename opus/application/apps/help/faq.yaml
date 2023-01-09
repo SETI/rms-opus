@@ -52,13 +52,13 @@ General Questions:
             </span>
             <ul class="sort-contents list-inline">
             <li class="list-inline-item">
-            <span class="badge badge-pill badge-dark">
+            <span class="badge rounded-pill bg-dark">
             <i class="fas fa-times-circle"></i>Observation Start Time
             <i class="fas fa-arrow-circle-down"></i>
             </span>
             </li>
             <li class="list-inline-item">
-            <span class="badge badge-pill badge-dark">
+            <span class="badge rounded-pill bg-dark">
             OPUS ID
             <i class="fas fa-arrow-circle-down"></i>
             </span>

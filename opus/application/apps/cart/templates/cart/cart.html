@@ -4,7 +4,7 @@
         <div class="op-download-options-header border-bottom border-light">
             <span class="op-download-panel-title"><h1>Download Data</h1></span>
             <div class="op-cart-totals mb-1">
-                <p class="op-total-size mb-0 mr-3">Total Size (before zip):
+                <p class="op-total-size mb-0 me-3">Total Size (before zip):
                     <span class="spinner">&nbsp;</span>
                     <span id="op-total-download-size">{{ total_download_size_pretty }}</span>
                 </p>
@@ -81,13 +81,13 @@
             </div>
         </div>
         <div class="op-download-options-product-types w-100">
-            <div class="row op-product-type-table-header font-weight-bold border-bottom border-light no-gutters mr-3">
+            <div class="row op-product-type-table-header fw-bold border-bottom border-light no-gutters me-3">
                 <div class="col-7">Product Type</div>
-                <div class="col text-right"># Obs</div>
-                <div class="col text-right"># Files</div>
-                <div class="col text-right">Size</div>
+                <div class="col text-end"># Obs</div>
+                <div class="col text-end"># Files</div>
+                <div class="col text-end">Size</div>
             </div>
-            <div class="op-product-type-table-body pr-3">
+            <div class="op-product-type-table-body pe-3">
                 {% for product_cat, product_versions in product_cat_dict.items %}
                     <div class="row no-gutters bg-secondary">
                         <div class="col-12">

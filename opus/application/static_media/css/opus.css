@@ -1,8 +1,4 @@
 /* opus-specific values live here... */
-:root {
-    --op-cart-panel-width-break: 1100px;
-}
-
 body {
     overflow: hidden;
 }
@@ -17,6 +13,10 @@ body.modal-open .navbar {
     padding-right: 16px !important;
 }
 
+a {
+    text-decoration: none;
+}
+
 .app-body {
     margin-top: 3.8em !important;
     overflow: hidden;
@@ -24,7 +24,6 @@ body.modal-open .navbar {
 
 .container-fluid {
     padding: 0;
-    margin-bottom: -12px;
 }
 
 .dictionary {
@@ -39,6 +38,52 @@ body.modal-open .navbar {
 .navbar-brand {
     width: 3em !important;
 }
+
+.dropdown-menu {
+    padding: 0 0;
+}
+
+.dropdown-item {
+    position: relative;
+    padding: 10px 20px;
+    border-bottom: 1px solid #c8ced3;
+}
+
+.dropdown-item:last-child {
+    border-bottom: 0;
+}
+
+.dropdown-item i {
+    display: inline-block;
+    width: 20px;
+    margin-right: 10px;
+    margin-left: -10px;
+    color: #c8ced3;
+    text-align: center;
+}
+
+.dropdown-header {
+    font-size: 0.765625rem;
+    padding: 8px 20px;
+    background: #e4e7ea;
+    border-bottom: 1px solid #c8ced3;
+}
+
+.table {
+    max-width: 100%;
+}
+
+.no-gutters {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.no-gutters > .col,
+.no-gutters > [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+}
+
 
 /* Make the main nav bar just a little taller than normal (style says 8px) */
 #op-main-nav {
@@ -62,16 +107,18 @@ even when the browser size is narrow. */
 #op-main-nav .navbar-nav .nav-link.show,
 #op-main-nav .navbar-nav .show>.nav-link
 {
-    color: var(--dark); /* From style.css */
+    color: var(--cui-dark); /* From style.css */
 }
 #op-main-nav .navbar-nav .nav-link.active:hover,
-#op-main-nav .navbar-nav .nav-link.open:hover {
-    color: var(--white); /* From style.css */
+#op-main-nav .navbar-nav .nav-link.open:hover,
+#op-main-nav .navbar-nav .nav-link:hover {
+    color: var(--cui-nav-link-hover-color); /* From style.css */
+    text-decoration: none;
 }
 
 /* Remove annoying dotted border in Firefox */
 #op-main-nav .navbar-nav .nav-link {
-    outline: none; !important
+    outline: none !important;
 }
 
 #op-main-nav .op-nav-detail-image {
@@ -138,6 +185,10 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
 #op-help-menu {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+}
+
+#op-help-menu.show:hover {
+    color: var(--cui-dark) !important;
 }
 
 #op-interpret-image-menu {
@@ -401,6 +452,7 @@ to 100%, this will make the shrinking look smoother */
 .op-search-menu .dropdown-toggle.collapsed::after {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
 }
 
 /* Rotate triangle arrows when menu category is clicked */
@@ -411,6 +463,7 @@ to 100%, this will make the shrinking look smoother */
 .op-search-menu .dropdown-toggle.collapsed .op-menu-arrow {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
 }
 
 
@@ -460,9 +513,11 @@ to 100%, this will make the shrinking look smoother */
     box-sizing: border-box;
 }
 
-hr.shadow-divider {
+hr.op-shadow-divider {
     height: 10px;
     border: 0;
+    background-color: rgba(0,0,0,0);
+    opacity: 1;
     box-shadow: 0 9px 9px -10px #8c8b8b inset;
 }
 
@@ -589,17 +644,23 @@ ul.op-search-menu {
     border-width: 3px;
 }
 
+.modal-header .btn-close i {
+    font-size: 1.5rem;
+}
+
 .modal-content {
     border-radius: 1%;
 }
 
 /* Make sure "x" button in metadata-dialog is not cut off */
-.modal-content .close i {
+.modal-content .btn-close i {
     line-height: 1.1em;
 }
 
 .modal-footer .left-container {
-    width: 74%;
+    position: absolute;
+    left: 0;
+    padding: 1rem;
 }
 
 .op-thumbnail-container .op-modal-overlay,
@@ -665,8 +726,8 @@ ul.op-search-menu {
     opacity: 1;
 }
 
-tr.op-modal-show {
-    color: #167495;
+tr.op-modal-show  > * {
+    color: var(--cui-btn-link-hover-color) !important;
     opacity: 0.92;
     filter: alpha(opacity=92);
 }
@@ -762,12 +823,14 @@ th.sticky-header {
     padding: 0;
 }
 
+.op-data-table tbody {
+    color: var(--cui-table-border-color);
+}
+
 .op-data-table th {
-    vertical-align: middle;
     /* Fix the hidden th left/right border in firebox */
     background-clip: padding-box;
     text-align: center;
-    /* padding-right: 10px; */
 }
 
 .op-data-table th a {
@@ -850,6 +913,12 @@ th.sticky-header {
     width: 100%;
     position: relative;
     overflow: hidden;
+}
+
+/* Remove the little gap on top of the table header when
+scolling the browse table view */
+.op-data-table-view tr {
+    border-top: 0px;
 }
 
 .op-data-table-view .ps__rail-y {
@@ -954,6 +1023,10 @@ button.op-mini-thumbnail-zoom {
     align-items: center;
 }
 
+#op-select-metadata .modal-header .btn-close {
+    color: rgb(240, 243, 245);
+}
+
 /* make modal width shrink smoothly with screen */
 #op-select-metadata .modal-dialog {
     /* max-width: 1100px; */
@@ -984,9 +1057,9 @@ button.op-mini-thumbnail-zoom {
 }
 
 #op-select-metadata .op-download-csv {
-    position: fixed;
-    bottom: 5.5em;
-    right: 1.25em;
+    position: relative;
+    float: right;
+    margin-top: 1rem;
 }
 
 /* Add spacing between each menu item in select metadata menu */
@@ -1018,6 +1091,11 @@ button.op-mini-thumbnail-zoom {
 /* Make the first category name closer to the border line above it. */
 .op-menu-first-category .op-submenu-category {
     padding-top: 0 !important;
+}
+
+a.op-submenu-category,
+.list-group-item a {
+    text-decoration: none;
 }
 
 /* Make sure the a tags for categories take up full width in select metadata
@@ -1191,10 +1269,6 @@ without resizing image proportionally. */
     max-height: 100%;
 }
 
-#op-metadata-detail-view {
-    height: 100%;
-}
-
 .op-tune-image-size {
     height: 88% !important;
 }
@@ -1212,11 +1286,9 @@ without resizing image proportionally. */
 
 /* prevent weird browser y-scrollbar */
 #op-metadata-detail-view {
+    height: 100%;
     overflow-y: hidden;
     pointer-events: none;
-    /* Make sure metadata modal will not be covered by the main nav when screen
-    is short & narrow */
-    z-index: 1031;
 }
 
 #op-metadata-detail-view .modal-content {
@@ -1245,20 +1317,38 @@ without resizing image proportionally. */
     padding-right: 0.5em;
 }
 
-#op-metadata-detail-view-content div.close {
+/* Make sure the right part of the slide modal will take proper space when slide
+modal is narrow */
+.op-remove-col {
+    flex: 1 0 auto !important;
+    width: 100%;
+}
+
+#op-metadata-detail-view-content .btn-close {
     position: absolute;
     float: right;
-    top: 0.4em;
-    right: 0.5em;
+    top: 0.2em;
+    right: 0.6em;
     z-index: 999;
     opacity: 1;
     text-shadow: 0 1px 0 black;
+    color: var(--cui-btn-link-color);
+    font-size: 1.5em;
 }
 
 .op-metadata-detail-view-body {
     position: relative;
     height: 100%;
     border-radius: 1%;
+}
+
+.op-metadata-detail-view-body .right {
+    position: relative;
+}
+
+/* set the font color for metadata slide modal */
+.op-metadata-details .list-inline {
+    color: #ffffff;
 }
 
 .op-metadata-detail-view-body .contents:hover {
@@ -1398,6 +1488,7 @@ a:-webkit-any-link, a::any-link {
 
 #cart .op-cart-gallery-side {
     background-color: #303030; /* #383838; */
+    position: relative;
 }
 
 #cart-sidebar {
@@ -1544,16 +1635,14 @@ panel */
 }
 
 /* Make the "x" button in download links popover stays at the right. */
-.close-download-links-history {
+.op-close-download-links-history {
     float: right;
-    /* We didn't use bg-light class from bootstrap because bootstrap popover
-    header background has a different color (not belong to any bootstrap color
-    class) from bg-light. */
-    background-color: #F7F7F7;
+    --cui-link-color: var(--cui-popover-header-color);
+    --cui-link-hover-color: var(--cui-popover-header-color);
 }
 
 /* Remove the outline for "x" icon in download history window when it's clicked. */
-.close-download-links-history:focus {
+.op-close-download-links-history:focus {
     outline: none;
 }
 
@@ -1568,6 +1657,12 @@ footer for popover window */
     justify-content: space-between;
     padding: 0.2rem;
     border-top: 1px solid #e4e7ea;
+}
+
+.op-links-popover {
+    --bs-popover-border-color: var(--bs-primary);
+    --bs-popover-header-bg: var(--bs-primary);
+    --bs-popover-header-color: var(--bs-white);
 }
 
 .op-zipped-files {
@@ -1863,11 +1958,10 @@ panel are properly separated */
     display: inline-flex;
     padding-left: 0.5em;
     margin-top: 0.35em;
-    /* padding-top: 0.5em; */
+    color: var(--cui-navbar-color);
 }
 
 .op-sort-order-icon {
-    opacity: 0.5 !important;
     vertical-align: middle;
     padding-right: 0.3em;
     white-space: nowrap;
@@ -1889,6 +1983,10 @@ panel are properly separated */
 .op-sort-contents .list-inline-item {
     opacity: 0.7;
     margin-bottom: -10px;
+}
+
+.op-sort-contents span {
+    color: var(--cui-dark);
 }
 
 .op-sort-last {
@@ -1932,17 +2030,26 @@ panel are properly separated */
     is wider */
     width: calc(90% - 9rem);
     height: .1em;
+    font-size: 1.1em;
+    font-family: Verdana,Arial,sans-serif;
+}
+
+.op-observation-slider .ui-state-focus {
+    outline: none;
+    background: inherit;
+    border: 1px solid #c5c5c5;
 }
 
 .op-observation-text {
     margin-left: 45px;
     padding-right: .5em;
-    opacity: 0.5;
+    color: var(--cui-navbar-color);
 }
 
 .op-observation-number {
     text-align: center;
     vertical-align: middle;
+    color: var(--cui-dark);
 }
 
 .ui-slider-horizontal .ui-slider-handle {
@@ -2178,6 +2285,11 @@ even when screen is narrow */
 
 #op-cart-summary .button-container button {
     margin-bottom: 1em;
+}
+
+.badge.rounded-pill {
+    padding-right: 0.6em;
+    padding-left: 0.6em;
 }
 
 .badge-xlg {
@@ -2491,21 +2603,16 @@ footer {
     width: 100%;
     color: white;
     text-align: center;
-    margin-left: 0px  !important;
     z-index: 9999;
+    min-height: 1rem !important;
 }
 
-.footer .container {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 42px;
-    padding: 10px 20px;
-    text-align: right;
+footer p {
+    margin-bottom: 0.25rem;
 }
 
-.footer a {
-    white-space: nowrap;
+footer a:hover {
+  text-decoration: underline;
 }
 
 .op-twitter {
@@ -2638,8 +2745,13 @@ footer {
 }
 
 /* Center the "x" icon in help panel */
-#op-help-panel .close {
+#op-help-panel .btn-close, #op-cart-download-panel .btn-close {
     display: flex;
+    content: "\f057";
+    float: right;
+    font-size: 1.3125rem;
+    line-height: 1;
+    text-shadow: 0 1px 0 #fff;
 }
 
 #op-help-panel .card-body {
@@ -2658,6 +2770,7 @@ gap next to ps */
 
 .op-overlay {
     display: none;
+    top: 0;
     position: fixed;
     /* full screen */
     width: 100vw;
@@ -2838,8 +2951,6 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 .hvr-ripple-in {
-    display: inline-block;
-    vertical-align: middle;
     -webkit-transform: perspective(1px) translateZ(0);
     transform: perspective(1px) translateZ(0);
     position: relative;
@@ -2851,19 +2962,14 @@ ul.ui-autocomplete a.ui-state-active {
     content: '';
     position: absolute;
     border: #20c997 solid 6px;
-    top: -12px;
-    right: -12px;
-    bottom: -12px;
-    left: -12px;
+    top: -10px;
+    right: -10px;
+    bottom: -10px;
+    left: -10px;
     opacity: 0.5;
     animation: hvr-ripple-in 1s infinite;
     -webkit-animation: hvr-ripple-in 1s infinite;
     z-index: 9999;
-}
-
-/* Make sure ranges info div not splitting input min and max into two lines */
-.op-preprogrammed-ranges {
-    display: inline !important;
 }
 
 /* Styling for ranges info dropdown */
@@ -2872,9 +2978,10 @@ ul.ui-autocomplete a.ui-state-active {
     color: inherit;
 }
 
-/* Enable default scrollbar for ranges info & unit dropdown */
+/* Enable default scrollbar for ranges info dropdown */
 .op-selected-metadata-column .op-scrollable-menu,
-.op-preprogrammed-ranges .op-scrollable-menu {
+.op-preprogrammed-ranges.op-scrollable-menu {
+    max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
     border-width: 2px;
@@ -2914,14 +3021,14 @@ under select metadata modal in browse view */
 
 @media (max-width: 680px) {
     /* When browser is narrow, we increase the width to squeeze in the long numbers */
-    .op-preprogrammed-ranges .op-scrollable-menu {
+    .op-preprogrammed-ranges.op-scrollable-menu {
         max-width: 125% !important;
     }
 }
 
 @media (max-width: 710px) {
     /* When browser is narrow, we increase the width to squeeze in the long numbers */
-    .op-preprogrammed-ranges .op-scrollable-menu {
+    .op-preprogrammed-ranges.op-scrollable-menu {
         max-width: 122%;
     }
 }
@@ -2959,7 +3066,7 @@ under select metadata modal in browse view */
 }
 
 /* Make sure ranges names can be wrapped when dropdown width is narrow */
-.op-preprogrammed-ranges .op-scrollable-menu li {
+.op-preprogrammed-ranges.op-scrollable-menu li {
     white-space: normal;
 }
 
@@ -2990,11 +3097,6 @@ under select metadata modal in browse view */
     }
 }
 
-.op-preprogrammed-ranges-data-name {
-    /* white-space: nowrap; */
-    width: 100%;
-}
-
 /* Hide values for different units in preprogrammed ranges */
 .op-hide-different-units-info {
     display: none !important;
@@ -3022,21 +3124,14 @@ under select metadata modal in browse view */
 
 /* Rotate arrow icon when ranges dropdown list or expandable contents are
 expanded/collapsed */
-.op-preprogrammed-ranges .dropdown-toggle::after,
-.op-preprogrammed-ranges #op-ranges-dropdown-menu::after  {
+.op-preprogrammed-ranges .dropdown-toggle::after {
     transition: all .3s;
     -webkit-transition: all .3s;
 }
 
-.op-preprogrammed-ranges .dropdown-toggle.collapsed::after,
-.op-preprogrammed-ranges #op-ranges-dropdown-menu::after {
+.op-preprogrammed-ranges .dropdown-toggle.collapsed::after {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
-}
-
-.op-preprogrammed-ranges.show #op-ranges-dropdown-menu::after {
-    transform: rotate(0);
-    -webkit-transform: rotate(0);
 }
 
 .op-hide-element {
@@ -3104,12 +3199,10 @@ wiggling when mouse over autocomplete menu items */
 /* Styling for horizontal divider between OR label when there are multiple
 searches */
 .op-or-label-divider {
-    border: 1px solid;
     margin: 0px;
     display: inline-block;
     width: 10%;
     vertical-align: middle;
-    opacity: 0.5;
 }
 
 /* Disable a button (or a tag button) */
@@ -3143,11 +3236,12 @@ at the right of -- OR -- label. */
     /* default is 10px at top and bottom, and total menu height 368px */
     padding-top: 0.25em;
     padding-bottom: 0.25em;
+    color: #000;
 }
 
 /* Make sure hamburger menu will not be covered by metadata modal */
 #op-obs-menu {
-    z-index: 1032;
+    z-index: 1100;
 }
 
 /* Styling for the first column of table header in browse tab */
@@ -3253,6 +3347,13 @@ when wrapping into the 2nd line */
     margin-bottom: 0 !important
 }
 
+#op-main-nav .navbar-toggler {
+    font-size: 1.09375rem;
+}
+
+#op-main-nav .navbar-toggler:focus {
+    box-shadow: 0 0 0 0.05rem;
+}
 
 /* ************************************************************************** */
 /* The followings are for mobile support (width: 550px and height: 270px)     */
@@ -3275,6 +3376,10 @@ when wrapping into the 2nd line */
     will not take up the space when hidden */
     .app-footer {
         display: none !important;
+    }
+
+    .op-links-popover {
+        display: none;
     }
 
     /* When footer is gone, make sure range select info box at the lower left
@@ -3420,7 +3525,7 @@ when wrapping into the 2nd line */
     }
 
     /* Reduce the size of font awesome icon in slide show */
-    #op-metadata-detail-view .close i {
+    #op-metadata-detail-view .btn-close i {
         font-size: 1.1em;
     }
 
@@ -3464,8 +3569,8 @@ when wrapping into the 2nd line */
     }
 
     /* Shrink "x" icon in download & help panel when screen is narrow or short */
-    #op-cart-download-panel .close i,
-    #op-help-panel .close i {
+    #op-cart-download-panel .btn-close i,
+    #op-help-panel .btn-close i {
         font-size: 1.1em;
     }
 

@@ -1,16 +1,16 @@
 {
-  "data": [
-    {
-      "opus_id": "co-iss-w1866145657",
-      "alt_text": "W1866145657_1_small.jpg",
-      "size_bytes": 8511,
-      "width": 256,
-      "height": 256,
-      "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg",
-      "path": "https://opus.pds-rings.seti.org/holdings/previews/",
-      "img": "COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg",
-      "small": "COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg",
-      "ring_obs_id": "S_IMG_CO_ISS_1866145657_W"
-    }
-  ]
+    "data": [
+        {
+            "opus_id": "co-iss-w1866145657",
+            "alt_text": "W1866145657_1_small.jpg",
+            "size_bytes": 8511,
+            "width": 256,
+            "height": 256,
+            "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg",
+            "path": "https://opus.pds-rings.seti.org/holdings/previews/",
+            "img": "COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg",
+            "small": "COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg",
+            "ring_obs_id": "S_IMG_CO_ISS_1866145657_W"
+        }
+    ]
 }

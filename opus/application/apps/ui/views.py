@@ -87,11 +87,6 @@ class main_site(TemplateView): # pragma: no cover - only accessed from browser
             settings.OPUS_FILE_VERSION = get_git_version()
         context['VERSION_SUFFIX'] = '?version='+settings.OPUS_FILE_VERSION
         context['allow_fallback'] = True
-        try:
-            chat_key = settings.CHAT_KEY
-        except:
-            chat_key = None
-        context['chat_key'] = chat_key
         return context
 
 @never_cache
