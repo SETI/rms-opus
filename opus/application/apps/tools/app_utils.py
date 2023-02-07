@@ -205,7 +205,7 @@ def get_git_version(force_valid=False, use_tag=False):
         if tag.startswith('v'):
             tag = tag[1:]
         ret = tag
-    else:
+    else: # pragma: no cover
         ret = commit_id
 
     os.chdir(curcwd)
