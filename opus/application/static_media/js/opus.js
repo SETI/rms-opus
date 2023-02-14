@@ -39,8 +39,8 @@ var opus = {
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
     searchChangeDelay: 1000, // How long to wait after a search changes to do the new search
-    // spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
-    spinnerDelay: 3000, // The amount of time to wait before showing a spinner in case the API returns quickly
+    spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
+
 
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
