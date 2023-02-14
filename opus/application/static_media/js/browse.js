@@ -2429,6 +2429,8 @@ var o_browse = {
             if (startObs === firstObs && firstObs !== 1) {
                 $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
             }
+
+            o_browse.hidePageLoaderSpinner();
         });
     },
 
@@ -2475,6 +2477,7 @@ var o_browse = {
             // when browser is resized in the middle of infiniteScroll load.
             o_browse.updateSliderHandle(view, false, true);
         }
+        o_browse.hidePageLoaderSpinner();
     },
 
     activateBrowseTab: function() {
