@@ -2429,7 +2429,6 @@ var o_browse = {
             if (startObs === firstObs && firstObs !== 1) {
                 $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
             }
-
             o_browse.hidePageLoaderSpinner();
         });
     },

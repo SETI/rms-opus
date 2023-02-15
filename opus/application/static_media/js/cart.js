@@ -654,7 +654,6 @@ var o_cart = {
                         $(`.op-cart-deselect-btn[data-category="${productCategory}"]`).prop("disabled", true);
                     }
                 }
-
                 o_browse.hidePageLoaderSpinner();
             });
         } else {

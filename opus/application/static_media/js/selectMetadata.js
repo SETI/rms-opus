@@ -311,7 +311,6 @@ var o_selectMetadata = {
                 o_selectMetadata.adjustHeight();
                 o_selectMetadata.hideOrShowPS();
                 o_selectMetadata.hideOrShowMenuPS();
-                console.log("hide loader in o selectMetadta")
                 o_selectMetadata.hideMenuLoaderSpinner();
                 o_selectMetadata.rendered = true;
             });
