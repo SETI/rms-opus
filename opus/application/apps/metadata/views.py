@@ -736,7 +736,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                 disp_order = f.disp_order
                 # A referred slug will never contain a unit specifier
                 f = get_param_info_by_slug(referred_slug, 'col',
-                                            allow_units_override=False)
+                                           allow_units_override=False)
                 f.label = f.body_qualified_label()
                 f.label_results = f.body_qualified_label_results(True)
                 f.referred_slug = referred_slug
@@ -772,14 +772,13 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         if collapse:
             collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
                                                                 '<TARGET>')
-            entry['category'] = table_name.label.replace('Saturn',
-                                                            '<TARGET>')
+            entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
         else:
             entry['field_id'] = f.slug
             entry['category'] = table_name.label
         f_type = None
         (form_type, form_type_format,
-            form_type_unit_id) = parse_form_type(f.form_type)
+         form_type_unit_id) = parse_form_type(f.form_type)
         if form_type in settings.RANGE_FORM_TYPES:
             if form_type == 'LONG':
                 f_type = 'range_longitude'
