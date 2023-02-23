@@ -109,6 +109,7 @@ let o_sortMetadata = {
 
             o_hash.updateURLFromCurrentHash();
             o_sortMetadata.renderSortedDataFromBeginning();
+            o_browse.hidePageLoaderSpinner();
         });
 
         $(".op-sort-contents").on("click", ".op-sort-order-add-icon", function(e) {
@@ -188,6 +189,7 @@ let o_sortMetadata = {
 
         o_hash.updateURLFromCurrentHash();
         o_sortMetadata.renderSortedDataFromBeginning();
+        o_browse.hidePageLoaderSpinner();
     },
 
     hideMenu: function() {

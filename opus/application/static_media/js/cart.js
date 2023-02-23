@@ -593,6 +593,7 @@ var o_cart = {
 
             $.getJSON(url, function(data) {
                 if (data.reqno < o_cart.lastProductCountRequestNo) {
+                    o_browse.hidePageLoaderSpinner();
                     return;
                 }
                 // this div lives in the nav menu template
@@ -653,6 +654,7 @@ var o_cart = {
                         $(`.op-cart-deselect-btn[data-category="${productCategory}"]`).prop("disabled", true);
                     }
                 }
+                o_browse.hidePageLoaderSpinner();
             });
         } else {
             // Make sure "Add all results to cart" is still hidden in cart tab when user switches

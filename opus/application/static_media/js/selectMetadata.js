@@ -160,11 +160,14 @@ var o_selectMetadata = {
     },
 
     showMenuLoaderSpinner: function() {
-        o_selectMetadata.spinnerTimer = setTimeout(function() {
-            $(".op-select-metadata-load-status > .loader").show();
-            $(".op-select-metadata-row-contents").css("opacity", "0.1");
-            o_utils.disableUserInteraction();
-        }, opus.spinnerDelay);
+        if (o_selectMetadata.spinnerTimer === null) {
+            o_selectMetadata.spinnerTimer = setTimeout(function() {
+                $(".op-select-metadata-load-status > .loader").show();
+                $(".op-select-metadata-row-contents").css("opacity", "0.1");
+                o_utils.disableUserInteraction();
+            }, opus.spinnerDelay);
+        }
+
     },
 
     hideMenuLoaderSpinner: function() {
@@ -213,6 +216,7 @@ var o_selectMetadata = {
 
             $.getJSON(url, function(data) {
                 if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
+                    o_selectMetadata.hideMenuLoaderSpinner()
                     return;
                 }
                 // cleanup first
