@@ -61,6 +61,7 @@ var o_menu = {
 
         $.getJSON(url, function(data) {
             if (data.reqno < o_menu.lastSearchMenuRequestNo) {
+                clearTimeout(spinnerTimer);
                 return;
             }
             $("#sidebar").html(data.html);

@@ -293,6 +293,7 @@ class ToInfoMap:
                 text = file.read()
         else:
             response = requests.get(url)
+            response.raise_for_status()
             text = response.text
         info = json.loads(text)
 
