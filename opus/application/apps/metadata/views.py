@@ -807,7 +807,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         entry['full_label'] = f.body_qualified_label_results()
         entry['full_search_label'] = f.body_qualified_label()
         (form_type, form_type_format,
-            form_type_unit_id) = parse_form_type(f.form_type)
+         form_type_unit_id) = parse_form_type(f.form_type)
         entry['default_units'] = get_default_unit(form_type_unit_id)
         entry['available_units'] = get_valid_units(form_type_unit_id)
         if f.old_slug and collapse: # Backwards compatibility
