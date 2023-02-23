@@ -216,7 +216,7 @@ var o_selectMetadata = {
 
             $.getJSON(url, function(data) {
                 if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
-                    o_selectMetadata.hideMenuLoaderSpinner()
+                    o_selectMetadata.hideMenuLoaderSpinner();
                     return;
                 }
                 // cleanup first

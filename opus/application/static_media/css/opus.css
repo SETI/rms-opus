@@ -539,7 +539,7 @@ ul.op-search-menu {
     opacity: 0;
     transition: opacity .4s;
     -moz-transition: opacity .4s;
-    -webkit-transition: opacity: .4s;
+    -webkit-transition: opacity .4s;
 }
 
 /* Remove hyperlink underlines from chevron and X on widget title */
@@ -571,7 +571,6 @@ ul.op-search-menu {
 }
 
 .op-thumbnail-container {
-    display: inline-block;
     float: left;
     position: relative;
     margin: 1px;
@@ -1859,9 +1858,6 @@ to stay in one line */
         flex-basis: 90%;
     }
 
-    #cart .op-sort-order-container {
-    }
-
     /* move the second line down to make room for the slider*/
     #cart .op-download-options {
         display: inline-flex;
@@ -2613,11 +2609,6 @@ footer p {
 
 footer a:hover {
   text-decoration: underline;
-}
-
-.op-twitter {
-    bottom: .15em;
-    position: absolute;
 }
 
 #op-help-panel {
