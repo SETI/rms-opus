@@ -644,8 +644,6 @@ var o_cart = {
                     let productCategory = $(cat).data("category");
                     let productInputs = $(`input[data-category="${productCategory}"]`);
 
-                    let prodTypeSelectAllBtn = $(`.op-cart-select-btn[data-category="${productCategory}"]`);
-                    let prodTypeDeselectAllBtn = $(`.op-cart-deselect-btn[data-category="${productCategory}"]`);
                     let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
                     let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
                     if (isAllCatOptionsChecked) {

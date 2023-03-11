@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* jshint multistr: true */
-/* globals opus */
+/* globals opus, $ */
 
 /* jshint varstmt: false */
 var o_utils = {
