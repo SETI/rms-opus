@@ -1908,7 +1908,7 @@ var o_browse = {
             // move around the same row in the browse table view. Without this
             // function, the tooltip will always open in the middle of the row.
             functionPosition: function(instance, helper, position){
-                return o_utils.setPreviewImageTooltipPosition(helper, position);
+                return o_utils.setTableColumnToolTipPostion(helper, position);
             }
         });
 

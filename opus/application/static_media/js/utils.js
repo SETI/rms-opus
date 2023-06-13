@@ -141,6 +141,33 @@ var o_utils = {
         }, opus.tooltipsDelay);
     },
 
+    setTableColumnToolTipPostion: function(helper, position) {
+        let tooltipWidth = position.size.width;
+        let tooltipHeight = position.size.height;
+        let offsetToWindow = 5;
+        let arrowOffset = 15;
+        let windowWidth = helper.geo.window.size.width;
+        // make sure the tooltip is not cut off.
+        if (opus.mouseY - tooltipHeight - offsetToWindow < 0) {
+            position.side = "bottom";
+        } else {
+            position.side = "top";
+        }
+        // Make sure tooltip stay at the top border of the table row.
+        position.coord.top += 5
+
+        if (opus.mouseX + tooltipWidth + offsetToWindow > windowWidth) {
+            position.coord.left = opus.mouseX - tooltipWidth + arrowOffset;
+        } else if (opus.mouseX - tooltipWidth - offsetToWindow < 0) {
+            position.coord.left = opus.mouseX - arrowOffset;
+        } else {
+            position.coord.left = opus.mouseX - tooltipWidth/2;
+        }
+
+        position.target = opus.mouseX;
+        return position;
+    },
+
     // Set the position of the preview image tooltip
     setPreviewImageTooltipPosition: function(helper, position) {
         let tooltipWidth = position.size.width;
