@@ -1819,7 +1819,7 @@ var o_browse = {
                 galleryHtml += '<div class="op-modal-overlay">';
                 galleryHtml += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
-                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element op-browse-gallery-tooltip" title="Last viewed in slideshow mode"></div>`;
+                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element op-browse-gallery-bino-tooltip" title="Last viewed in slideshow mode"></div>`;
 
                 // recycle bin icon container
                 galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')} op-browse-gallery-tooltip" title="${mainTitle}">`;
@@ -1900,8 +1900,24 @@ var o_browse = {
             contentAsHTML: true,
             debug: false,
             functionPosition: function(instance, helper, position){
-                // Set the tooltip postion next to the "Detail icon"
+                // Set the tooltip postion next to the "Detail" icon
                 position.target += $(`${tab} .op-thumbnail-container`).width();
+                return position
+            }
+        });
+
+        // For the tooltip of the binoculars icon on the gallery view
+        $(`${tab} .op-browse-gallery-bino-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
+            contentAsHTML: true,
+            debug: false,
+            functionPosition: function(instance, helper, position){
+                // Set the tooltip postion next to the bincoulars icon, 10 is the offest
+                // to move the tooltip to the top of the binoculars icon. Without the offset,
+                // tooltip will be on the top left corner of the binoculars icon.
+                position.target -= ($(`${tab} .op-thumbnail-container`).width()/2 - 10);
                 return position
             }
         });
