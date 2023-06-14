@@ -1828,7 +1828,7 @@ var o_browse = {
 
                 // detail overlay
                 let hideDetail = (opus.prefs.detail === opusId ?  "" : "op-hide-element");
-                galleryHtml += `<div class="op-detail-overlay text-success op-browse-gallery-tooltip ${hideDetail}" title="Shown on Detail tab"></div>`;
+                galleryHtml += `<div class="op-detail-overlay text-success op-browse-gallery-detail-tooltip ${hideDetail}" title="Shown on Detail tab"></div>`;
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
@@ -1891,6 +1891,22 @@ var o_browse = {
             contentAsHTML: true,
             debug: false,
         });
+
+        // For the tooltip of the "Detail" icon on the gallery view
+        $(`${tab} .op-browse-gallery-detail-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
+            contentAsHTML: true,
+            debug: false,
+            functionPosition: function(instance, helper, position){
+                // Set the tooltip postion next to the "Detail icon"
+                position.target += $(`${tab} .op-thumbnail-container`).width();
+                return position
+            }
+        });
+
+        // For the tooltips of the table view
         $(`${tab} .op-browse-table-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
