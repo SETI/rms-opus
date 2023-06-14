@@ -136,7 +136,17 @@ var o_utils = {
         opus.mouseY = e.clientY;
         opus.timer = setTimeout(function() {
             if (targetTooltipster.length) {
-                targetTooltipster.tooltipster("instance").reposition();
+                // If the table sorting (redrawing) happened right at the moment when a tooltips instance
+                // is about to reposition, an error message will complain about we try access an
+                // uninitialized element (due to table redrawing). We don't need to worry about this error
+                // because the tooltip instance will get initialized again once redrawing is done and no
+                // weird behavior with this. Instead of removing and adding this event listener again, we
+                // ignore this error when it happens.
+                try {
+                    targetTooltipster.tooltipster("instance").reposition();
+                } catch (e) {
+                    return
+                }
             }
         }, opus.tooltipsDelay);
     },
