@@ -164,7 +164,7 @@ var o_utils = {
             position.side = "top";
         }
         // Make sure tooltip stay at the top border of the table row.
-        position.coord.top += 5
+        position.coord.top += 5;
 
         if (opus.mouseX + tooltipWidth + offsetToWindow > windowWidth) {
             position.coord.left = opus.mouseX - tooltipWidth + arrowOffset;

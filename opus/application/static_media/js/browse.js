@@ -1900,9 +1900,11 @@ var o_browse = {
             contentAsHTML: true,
             debug: false,
             functionPosition: function(instance, helper, position){
-                // Set the tooltip postion next to the "Detail" icon
+                // Set the tooltip postion next to the "Detail" icon, 10 is the offset to move
+                // the tooltip to the upper middle of the "Detail" icon.
+                position.coord.left += 10;
                 position.target += $(`${tab} .op-thumbnail-container`).width();
-                return position
+                return position;
             }
         });
 
@@ -1918,7 +1920,7 @@ var o_browse = {
                 // to move the tooltip to the top of the binoculars icon. Without the offset,
                 // tooltip will be on the top left corner of the binoculars icon.
                 position.target -= ($(`${tab} .op-thumbnail-container`).width()/2 - 10);
-                return position
+                return position;
             }
         });
 
