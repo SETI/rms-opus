@@ -2989,6 +2989,7 @@ var o_browse = {
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
+            side: "left",
         });
 
         // if it was last in edit mode, open in edit mode...
