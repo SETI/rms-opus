@@ -8,6 +8,7 @@
 /* globals MAX_SELECTIONS_ALLOWED */
 
 const infiniteScrollUpThreshold = 100;
+const galleryAndTableTooltipsDelay = 1000;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -1887,7 +1888,7 @@ var o_browse = {
         $(`${tab} .op-browse-gallery-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
-            delay: opus.tooltipsDelay,
+            delay: galleryAndTableTooltipsDelay,
             contentAsHTML: true,
             debug: false,
         });
@@ -1928,7 +1929,7 @@ var o_browse = {
         $(`${tab} .op-browse-table-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
-            delay: opus.tooltipsDelay,
+            delay: galleryAndTableTooltipsDelay,
             contentAsHTML: true,
             debug: false,
             functionBefore: function(instance, helper){
