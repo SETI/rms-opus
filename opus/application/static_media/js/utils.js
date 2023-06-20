@@ -145,7 +145,7 @@ var o_utils = {
                 try {
                     targetTooltipster.tooltipster("instance").reposition();
                 } catch (e) {
-                    return
+                    return;
                 }
             }
         }, opus.tooltipsDelay);
