@@ -12,9 +12,9 @@ function removeSpecialChars(str) {
 
 function postContents(response, searchText) {
   var html = "";
-  definition = removeSpecialChars(response.definition)
+  definition = removeSpecialChars(response.definition);
   if (searchText != undefined) {
-    definition = definition.replacei(searchText, "<mark class='search'>"+searchText+"</mark>")
+    definition = definition.replacei(searchText, "<mark class='search'>"+searchText+"</mark>");
   }
   var context = (response.context__description == undefined ? response.context: response.context__description);
   html += "<div class='context'>" + context + "</div></br>";
@@ -35,7 +35,7 @@ function buildDefinitionListHTML(response, searchText) {
       var term_next = (next < length && (response[next].term__term_nice === undefined ? response[next].term : response[next].term__term_nice));
 
       html += "<li>";
-      html += "<div class='term'>" + term.replace(/:/g, ": ").replace(/_/g, " ").toTitleCase(); + "</div></br>";
+      html += "<div class='term'>" + term.replace(/:/g, ": ").replace(/_/g, " ").toTitleCase() + "</div></br>";
       // this should actually be a while loop...term.replace(/_/g, ". ").
       if (next < length && (term == term_next)) {
         html += "<ul>";
@@ -58,7 +58,7 @@ function buildDefinitionListHTML(response, searchText) {
 function searchDictionary(searchText, thepanel) {
   var url = "/__dictionary/search.json?term=" + searchText;
   $.getJSON(url, function(response) {
-      var html = buildDefinitionListHTML(response, searchText)
+      var html = buildDefinitionListHTML(response, searchText);
       thepanel.html(html);
   });
 }
@@ -74,10 +74,10 @@ $( function() {
       currentElement = targetElement;
     }
     if ($("#"+targetElement).length == 0) {
-      $("#dictionaryContainer").append("<div id='"+targetElement+"' class='dictionaryContent'>Loading... please wait.</div>")
+      $("#dictionaryContainer").append("<div id='"+targetElement+"' class='dictionaryContent'>Loading... please wait.</div>");
       var url = "/__dictionary/list.json?alpha=" + event.currentTarget.id;
       $.getJSON(url, function(response) {
-        var html = buildDefinitionListHTML(response)
+        var html = buildDefinitionListHTML(response);
         $("#"+targetElement).html(html);
       });
     }
