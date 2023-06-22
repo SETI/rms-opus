@@ -105,7 +105,7 @@ var o_detail = {
                     });
 
                     for (let idx = 0; idx < categories.length; idx++) {
-                        const currentDeferred =  arrOfDeferred[idx];
+                        const currentDeferred = arrOfDeferred[idx];
                         let tableName = categories[idx].table_name;
                         let label = categories[idx].label;
                         let html = '<h3>' + label + '</h3><div class="detail_' + tableName + '">Loading <span class="spinner">&nbsp;</span></div>';
