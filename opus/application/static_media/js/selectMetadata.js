@@ -346,7 +346,7 @@ var o_selectMetadata = {
             <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${dispUnit}</a>
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
-            for (let unit in units) {
+            for (let unit of Object.keys(units)) {
                 unitDropdown += `<a class="dropdown-item" data-defaultunit="${defaultUnit}" data-value="${unit}" data-dispvalue="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
             }
             unitDropdown += "</div></div>)";

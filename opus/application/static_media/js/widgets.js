@@ -1123,7 +1123,7 @@ var o_widgets = {
              } else if (form_type == 'STRING') {
                  let s_arr = [];
                  let last_qtype = '';
-                 for (let key in opus.selections[slug]) {
+                 for (let key of Object.keys(opus.selections[slug])) {
                      let value = opus.selections[slug][key];
                      let qtype;
                      try {
@@ -1159,8 +1159,7 @@ var o_widgets = {
          // this is for when you are first drawing the browse tab and there
          // multiple widgets being requested at once and we want to preserve their order
          // and avoid race conditions that will throw them out of order
-         for (let k in opus.prefs.widgets) {
-             let slug = opus.prefs.widgets[k];
+         for (let slug of opus.prefs.widgets) {
              let widget = 'widget__' + slug;
              let html = '<li id="' + widget + '" class="widget"></li>';
              $(html).appendTo('#op-search-widgets ');

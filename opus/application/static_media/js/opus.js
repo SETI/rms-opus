@@ -711,9 +711,11 @@ var opus = {
             let newSlugArr = normalizeURLData.new_slugs;
             let newURLHash = [];
             for (const slugObj of newSlugArr) {
+                const currentURLHash = []
                 $.each(slugObj, function(slug, value) {
-                    newURLHash.push(`${slug}=${value}`);
+                    currentURLHash.push(`${slug}=${value}`);
                 });
+                newURLHash.concat(currentURLHash);
             }
             // Encode and update new URL in browser:
             newURLHash = o_hash.encodeHashArray(newURLHash);
