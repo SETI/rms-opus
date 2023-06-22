@@ -715,7 +715,7 @@ var opus = {
                 $.each(slugObj, function(slug, value) {
                     currentURLHash.push(`${slug}=${value}`);
                 });
-                newURLHash.concat(currentURLHash);
+                newURLHash = newURLHash.concat(currentURLHash);
             }
             // Encode and update new URL in browser:
             newURLHash = o_hash.encodeHashArray(newURLHash);
