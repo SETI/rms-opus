@@ -711,7 +711,7 @@ var opus = {
             let newSlugArr = normalizeURLData.new_slugs;
             let newURLHash = [];
             for (const slugObj of newSlugArr) {
-                const currentURLHash = []
+                const currentURLHash = [];
                 $.each(slugObj, function(slug, value) {
                     currentURLHash.push(`${slug}=${value}`);
                 });
