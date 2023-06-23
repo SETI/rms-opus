@@ -8,6 +8,7 @@
 /* globals MAX_SELECTIONS_ALLOWED */
 
 const infiniteScrollUpThreshold = 100;
+const galleryAndTableTooltipsDelay = 1000;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -1819,7 +1820,7 @@ var o_browse = {
                 galleryHtml += '<div class="op-modal-overlay">';
                 galleryHtml += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
-                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element op-browse-gallery-tooltip" title="Last viewed in slideshow mode"></div>`;
+                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element op-browse-gallery-binocular-tooltip" title="Last viewed in slideshow mode"></div>`;
 
                 // recycle bin icon container
                 galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')} op-browse-gallery-tooltip" title="${mainTitle}">`;
@@ -1828,7 +1829,7 @@ var o_browse = {
 
                 // detail overlay
                 let hideDetail = (opus.prefs.detail === opusId ?  "" : "op-hide-element");
-                galleryHtml += `<div class="op-detail-overlay text-success op-browse-gallery-tooltip ${hideDetail}" title="Shown on Detail tab"></div>`;
+                galleryHtml += `<div class="op-detail-overlay text-success op-browse-gallery-detail-tooltip ${hideDetail}" title="Shown on Detail tab"></div>`;
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
@@ -1887,14 +1888,48 @@ var o_browse = {
         $(`${tab} .op-browse-gallery-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
-            delay: opus.tooltipsDelay,
+            delay: galleryAndTableTooltipsDelay,
             contentAsHTML: true,
             debug: false,
         });
-        $(`${tab} .op-browse-table-tooltip`).tooltipster({
+
+        // For the tooltip of the "Detail" icon on the gallery view
+        $(`${tab} .op-browse-gallery-detail-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
+            contentAsHTML: true,
+            debug: false,
+            functionPosition: function(instance, helper, position){
+                // Set the tooltip postion next to the "Detail" icon, 10 is the offset to move
+                // the tooltip to the upper middle of the "Detail" icon.
+                position.coord.left += 10;
+                position.target += $(`${tab} .op-thumbnail-container`).width();
+                return position;
+            }
+        });
+
+        // For the tooltip of the binoculars icon on the gallery view
+        $(`${tab} .op-browse-gallery-binocular-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: opus.tooltipsDelay,
+            contentAsHTML: true,
+            debug: false,
+            functionPosition: function(instance, helper, position){
+                // Set the tooltip postion next to the bincoulars icon, 10 is the offest
+                // to move the tooltip to the top of the binoculars icon. Without the offset,
+                // tooltip will be on the top left corner of the binoculars icon.
+                position.target -= ($(`${tab} .op-thumbnail-container`).width()/2 - 10);
+                return position;
+            }
+        });
+
+        // For the tooltips of the table view
+        $(`${tab} .op-browse-table-tooltip`).tooltipster({
+            maxWidth: opus.tooltipsMaxWidth,
+            theme: opus.tooltipsTheme,
+            delay: galleryAndTableTooltipsDelay,
             contentAsHTML: true,
             debug: false,
             functionBefore: function(instance, helper){
@@ -1908,7 +1943,7 @@ var o_browse = {
             // move around the same row in the browse table view. Without this
             // function, the tooltip will always open in the middle of the row.
             functionPosition: function(instance, helper, position){
-                return o_utils.setPreviewImageTooltipPosition(helper, position);
+                return o_utils.setTableColumnToolTipPostion(helper, position);
             }
         });
 
@@ -2955,6 +2990,7 @@ var o_browse = {
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
+            side: "left",
         });
 
         // if it was last in edit mode, open in edit mode...
@@ -2974,16 +3010,16 @@ var o_browse = {
             let buttonInfo = o_browse.cartButtonInfo(action);
 
             // prev/next buttons - put this in op-metadata-detail-view html...
-            let html = `<div class="col"><a href="#" class="op-cart-toggle op-metadatabox-tooltip" data-id="${opusId}" title="${buttonInfo[tab].title} (or press spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            let html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}"><i class="${buttonInfo[tab].icon} fa-2x float-left op-metadatabox-tooltip" title="${buttonInfo[tab].title} (or press spacebar)"></i></a></div>`;
             html += `<div class="col text-center op-obs-direction">`;
             let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
             let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-            html += `<a href="#" class="op-prev text-center ${opPrevDisabled} op-metadatabox-tooltip" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
-            html += `<a href="#" class="op-next ${opNextDisabled} op-metadatabox-tooltip" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
+            html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}"><i class="far fa-arrow-alt-circle-left fa-2x  op-metadatabox-tooltip" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"></i></a>`;
+            html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}"><i class="far fa-arrow-alt-circle-right fa-2x op-metadatabox-tooltip" title="Next image: ${nextPrevHandles.next} (right arrow key)"></i></a>`;
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col text-start"><a href="#" class="menu pe-3 float-end text-center op-metadatabox-tooltip" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            html += `<div class="col text-start"><a href="#" class="menu pe-3 float-end text-center" role="button" data-id="${opusId}"><i class="fas fa-bars fa-2x op-metadatabox-tooltip" title="More options"></i></a></div>`;
             $(".op-metadata-detail-view-body .bottom").html(html);
 
             // update the binoculars here
@@ -3005,6 +3041,7 @@ var o_browse = {
                 maxWidth: opus.tooltipsMaxWidth,
                 theme: opus.tooltipsTheme,
                 delay: opus.tooltipsDelay,
+
             });
 
             $(".op-metadatabox-img-tooltip").tooltipster({
