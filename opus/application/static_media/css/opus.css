@@ -1950,6 +1950,11 @@ panel are properly separated */
     margin-bottom: 0;
 }
 
+/* Override the table row (.table > :not(caption) > * > *) color in style.css */
+.text-success td {
+    color: var(--cui-success, #2eb85c) !important;
+}
+
 .op-sort-order-container {
     display: inline-flex;
     padding-left: 0.5em;
