@@ -1930,12 +1930,24 @@ is wide enough */
     display: none;
     position: absolute;
     left: 0;
-    z-index: 9999;
+    /* Make sure this value is larger than the z-index of .op-overlay and smaller than
+    the z-index of #op-download-links-error-msg-modal */
+    z-index: 9998;
     top: 2em;
     /* Fix the width of the panel so that it will increase when browser
     is wider*/
     width: 36em;
 }
+
+/* Download error modal */
+#op-download-links-error-msg-modal {
+    z-index: 9999;
+    /* Add a transparent black background as an extra backdrop to cover the download
+    panel when the screen is small */
+    background: rgba(0, 0, 0, 0.3);
+}
+
+
 
 /* Make sure "x" and download data title in header of download data
 panel are properly separated */
