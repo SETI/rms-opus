@@ -1820,7 +1820,7 @@ var o_browse = {
                 galleryHtml += '<div class="op-modal-overlay">';
                 galleryHtml += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
-                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element op-browse-gallery-bino-tooltip" title="Last viewed in slideshow mode"></div>`;
+                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element op-browse-gallery-binocular-tooltip" title="Last viewed in slideshow mode"></div>`;
 
                 // recycle bin icon container
                 galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')} op-browse-gallery-tooltip" title="${mainTitle}">`;
@@ -1910,7 +1910,7 @@ var o_browse = {
         });
 
         // For the tooltip of the binoculars icon on the gallery view
-        $(`${tab} .op-browse-gallery-bino-tooltip`).tooltipster({
+        $(`${tab} .op-browse-gallery-binocular-tooltip`).tooltipster({
             maxWidth: opus.tooltipsMaxWidth,
             theme: opus.tooltipsTheme,
             delay: opus.tooltipsDelay,
