@@ -524,9 +524,9 @@ var o_cart = {
 
         // update the panel numbers if we received them...
         if (status.product_cat_dict !== undefined) {
-            for (let pretty_name in status.product_cat_dict) {
+            for (let pretty_name of Object.keys(status.product_cat_dict)) {
                 let prod = status.product_cat_dict[pretty_name];
-                for (let ver in prod) {
+                for (let ver of Object.keys(prod)) {
                     let slugList = prod[ver];
                     for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
                         let slugName = slugList[slugNdx].slug_name;

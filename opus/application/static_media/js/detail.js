@@ -104,18 +104,18 @@ var o_detail = {
                         arrOfDeferred.push($.Deferred());
                     });
 
-                    for (let index in categories) {
-                        let tableName = categories[index].table_name;
-                        let label = categories[index].label;
+                    for (let idx = 0; idx < categories.length; idx++) {
+                        const currentDeferred = arrOfDeferred[idx];
+                        let tableName = categories[idx].table_name;
+                        let label = categories[idx].label;
                         let html = '<h3>' + label + '</h3><div class="detail_' + tableName + '">Loading <span class="spinner">&nbsp;</span></div>';
                         $("#all_metadata_" + opusId).append(html);
 
                         // now send for data
                         let urlMetadata = `/opus/__api/metadata/${opusId}.html?cats=${tableName}&url_cols=${colStr}`;
-                        $("#all_metadata_" + opusId + ' .detail_' + tableName)
-                            .load(urlMetadata, function() {
+                        $("#all_metadata_" + opusId + ' .detail_' + tableName).load(urlMetadata, function() {
                                 $(this).hide().slideDown("fast");
-                                arrOfDeferred[index].resolve();
+                                currentDeferred.resolve();
                             }
                         );
 
@@ -180,7 +180,11 @@ var o_detail = {
             textArea.select();
             return new Promise((res, rej) => {
                 // here the magic happens
-                document.execCommand('copy') ? res() : rej();
+                if (document.execCommand('copy')) {
+                    res();
+                } else {
+                    rej();
+                }
                 textArea.remove();
             });
         }

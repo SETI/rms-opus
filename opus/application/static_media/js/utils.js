@@ -27,7 +27,7 @@ var o_utils = {
         if (Object.keys(obj1).length !== Object.keys(obj2).length) {
             return false;
         }
-        for (const key in obj1) {
+        for (const key of Object.keys(obj1)) {
             if (!(key in obj2)) {
                 return false;
             } else {

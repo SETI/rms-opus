@@ -1842,7 +1842,7 @@ var o_browse = {
 
                 // table row
                 let checked = item.cart_state === "cart" ? " checked" : "";
-                let recycled = (tab === "#cart" && item.cart_state === "recycle") ? "class='text-success op-recycled'" : "";
+                let recycled = (tab === "#cart" && item.cart_state === "recycle") ? "text-success op-recycled" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let minimenu = `<a class="op-browse-table-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
                 let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group op-browse-table-tooltip" title="Click to ${buttonInfo[tab].title.toLowerCase()}<br>Shift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
@@ -1850,7 +1850,7 @@ var o_browse = {
                 let miniThumbnail = `<img class="op-browse-table-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 row += `<td class="op-mini-thumbnail op-mini-thumbnail-zoom"><div>${miniThumbnail}</div></td>`;
 
-                let tr = `<tr class="op-browse-table-tooltip" data-id="${opusId}" ${recycled} data-bs-target="#op-metadata-detail-view" data-obs="${item.obs_num}" title="${mainTitle}">`;
+                let tr = `<tr class="op-browse-table-tooltip ${recycled}" data-id="${opusId}" data-bs-target="#op-metadata-detail-view" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(idx, cell) {
                     let slug = slugs[idx];
                     slug = o_utils.getSlugWithoutUnit(slug);

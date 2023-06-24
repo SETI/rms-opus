@@ -773,7 +773,7 @@ var o_search = {
                     preprogrammedRangesDropdown.find("a.dropdown-item").removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);
-                    for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
+                    for (const eachCat of Object.keys(o_search.rangesNameMatchedCounterByCategory)) {
                         o_search.rangesNameMatchedCounterByCategory[eachCat] = 0;
                     }
                 } else if (dataName.includes(currentInputValue)) {
