@@ -66,7 +66,7 @@ let o_sortMetadata = {
                 // if there are two or less sort options, always select append
                 let append = (!inOrderList && opus.prefs.order.length <=2 ? false : true);
                 // control/shift keys overrides and always appends
-                append |= (e.ctrlKey || e.metaKey || e.shiftKey);
+                append = append || (e.ctrlKey || e.metaKey || e.shiftKey);
                 o_sortMetadata.onClickSortOrder(slug, append);
             } else {
                 $("#op-overwrite-sort-order").modal("show").data("slug", slug);
@@ -109,6 +109,7 @@ let o_sortMetadata = {
 
             o_hash.updateURLFromCurrentHash();
             o_sortMetadata.renderSortedDataFromBeginning();
+            o_browse.hidePageLoaderSpinner();
         });
 
         $(".op-sort-contents").on("click", ".op-sort-order-add-icon", function(e) {
@@ -188,6 +189,7 @@ let o_sortMetadata = {
 
         o_hash.updateURLFromCurrentHash();
         o_sortMetadata.renderSortedDataFromBeginning();
+        o_browse.hidePageLoaderSpinner();
     },
 
     hideMenu: function() {

@@ -160,11 +160,14 @@ var o_selectMetadata = {
     },
 
     showMenuLoaderSpinner: function() {
-        o_selectMetadata.spinnerTimer = setTimeout(function() {
-            $(".op-select-metadata-load-status > .loader").show();
-            $(".op-select-metadata-row-contents").css("opacity", "0.1");
-            o_utils.disableUserInteraction();
-        }, opus.spinnerDelay);
+        if (o_selectMetadata.spinnerTimer === null) {
+            o_selectMetadata.spinnerTimer = setTimeout(function() {
+                $(".op-select-metadata-load-status > .loader").show();
+                $(".op-select-metadata-row-contents").css("opacity", "0.1");
+                o_utils.disableUserInteraction();
+            }, opus.spinnerDelay);
+        }
+
     },
 
     hideMenuLoaderSpinner: function() {
@@ -213,6 +216,7 @@ var o_selectMetadata = {
 
             $.getJSON(url, function(data) {
                 if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
+                    o_selectMetadata.hideMenuLoaderSpinner();
                     return;
                 }
                 // cleanup first
@@ -342,7 +346,7 @@ var o_selectMetadata = {
             <a class="op-${slug}-units-dropdown-toggle dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">${dispUnit}</a>
             <div class="dropdown-menu op-scrollable-menu" aria-labelledby="dropdownMenuLink">`;
             let units = $(menuSelector).data("availunits");
-            for (let unit in units) {
+            for (let unit of Object.keys(units)) {
                 unitDropdown += `<a class="dropdown-item" data-defaultunit="${defaultUnit}" data-value="${unit}" data-dispvalue="${units[unit]}" data-slug="${slug}" href="#">${units[unit]}</a>`;
             }
             unitDropdown += "</div></div>)";

@@ -77,8 +77,6 @@ class ErrorReader(object):
         error_entries = [entry for entry in error_entries
                          # skip the ignored IPs
                          if not any(entry.host_ip in network for network in self._ignored_ips)
-                         # private networks mean a VPN or the local link
-                         if not entry.host_ip.is_private
                          # we don't are about "URL not found" messages
                          if not self._ignore_error_message(entry)]
         return error_entries

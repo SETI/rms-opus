@@ -1500,11 +1500,9 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                         f'Volume "{volume_id}" is missing row files under '+
                         f'shelves/index for {logical_path}')
 
-                # Check if corresponding shelves/info files exist, if not, we
-                # skip the file.
-                try:
-                    file.shelf_lookup('info')
-                except OSError:
+                # If the pdsfile is expecting the shelf file, check if corresponding
+                # shelves/info files exist, if not, we skip the file.
+                if file.shelf_exists_if_expected() is False:
                     import_util.log_nonrepeating_warning(
                         'Missing corresponding ' +
                         f'shelves/info for {file.abspath}')

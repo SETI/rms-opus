@@ -539,7 +539,7 @@ ul.op-search-menu {
     opacity: 0;
     transition: opacity .4s;
     -moz-transition: opacity .4s;
-    -webkit-transition: opacity: .4s;
+    -webkit-transition: opacity .4s;
 }
 
 /* Remove hyperlink underlines from chevron and X on widget title */
@@ -571,7 +571,6 @@ ul.op-search-menu {
 }
 
 .op-thumbnail-container {
-    display: inline-block;
     float: left;
     position: relative;
     margin: 1px;
@@ -1859,9 +1858,6 @@ to stay in one line */
         flex-basis: 90%;
     }
 
-    #cart .op-sort-order-container {
-    }
-
     /* move the second line down to make room for the slider*/
     #cart .op-download-options {
         display: inline-flex;
@@ -1934,12 +1930,24 @@ is wide enough */
     display: none;
     position: absolute;
     left: 0;
-    z-index: 9999;
+    /* Make sure this value is larger than the z-index of .op-overlay and smaller than
+    the z-index of #op-download-links-error-msg-modal */
+    z-index: 9998;
     top: 2em;
     /* Fix the width of the panel so that it will increase when browser
     is wider*/
     width: 36em;
 }
+
+/* Download error modal */
+#op-download-links-error-msg-modal {
+    z-index: 9999;
+    /* Add a transparent black background as an extra backdrop to cover the download
+    panel when the screen is small */
+    background: rgba(0, 0, 0, 0.3);
+}
+
+
 
 /* Make sure "x" and download data title in header of download data
 panel are properly separated */
@@ -1952,6 +1960,11 @@ panel are properly separated */
 #op-cart-download-panel .card-header h3,
 #op-cart-download-panel .card-header h2 {
     margin-bottom: 0;
+}
+
+/* Override the table row (.table > :not(caption) > * > *) color in style.css */
+.text-success td {
+    color: var(--cui-success, #2eb85c) !important;
 }
 
 .op-sort-order-container {
@@ -2613,11 +2626,6 @@ footer p {
 
 footer a:hover {
   text-decoration: underline;
-}
-
-.op-twitter {
-    bottom: .15em;
-    position: absolute;
 }
 
 #op-help-panel {

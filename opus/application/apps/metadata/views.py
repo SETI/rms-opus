@@ -721,120 +721,113 @@ def get_cart_count(session_id):
 # This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
     "Helper routine for api_get_fields."
-    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
-                 + ':getFields:field:' + str(slug) + ':' + str(collapse))
-    return_obj = cache.get(cache_key)
-    if return_obj is None:
-        if slug:
-            fields = ParamInfo.objects.filter(slug=slug)
+    if slug:
+        fields = ParamInfo.objects.filter(slug=slug)
+    else:
+        fields = ParamInfo.objects.all()
+    fields.order_by('category_name', 'slug')
+    return_obj = {}
+    for f in fields:
+        if not f.slug:
+            # Include referred slug
+            if f.referred_slug is not None:
+                referred_slug = f.referred_slug
+                category = f.category_name
+                disp_order = f.disp_order
+                # A referred slug will never contain a unit specifier
+                f = get_param_info_by_slug(referred_slug, 'col',
+                                           allow_units_override=False)
+                f.label = f.body_qualified_label()
+                f.label_results = f.body_qualified_label_results(True)
+                f.referred_slug = referred_slug
+                f.category_name = category
+                f.disp_order = disp_order
+            else: # pragma: no cover - protection against future bugs
+                # There shouldn't be a case where BOTH the slug and
+                # referred_slug are None, but just to be careful...
+                continue
+        # We cheat with the HTML return because we want to collapse all the
+        # surface geometry down to a single target version to save screen
+        # space. This is a horrible hack, but for right now we just assume
+        # there will always be surface geometry data for Saturn.
+        if (collapse and
+            f.slug.startswith('SURFACEGEO') and
+            not f.slug.startswith('SURFACEGEOsaturn')):
+            continue
+        if f.slug.startswith('**'):
+            # Internal use only
+            continue
+
+        table_name = TableNames.objects.get(table_name=f.category_name)
+        cat = table_name.label
+        if collapse and cat.find('Surface Geometry Constraints') != -1:
+            cat = cat.replace('Saturn', '<TARGET>')
+
+        return_obj[cat] = return_obj.get(cat, {})
+
+        entry = {}
+        return_obj[cat]['table_order'] = table_name.disp_order
+        entry['disp_order'] = f.disp_order
+        collapsed_slug = f.slug
+        if collapse:
+            collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
+                                                                '<TARGET>')
+            entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
         else:
-            fields = ParamInfo.objects.all()
-        fields.order_by('category_name', 'slug')
-        return_obj = {}
-        for f in fields:
-            if not f.slug:
-                # Include referred slug
-                if f.referred_slug is not None:
-                    referred_slug = f.referred_slug
-                    category = f.category_name
-                    disp_order = f.disp_order
-                    # A referred slug will never contain a unit specifier
-                    f = get_param_info_by_slug(referred_slug, 'col',
-                                               allow_units_override=False)
-                    f.label = f.body_qualified_label()
-                    f.label_results = f.body_qualified_label_results(True)
-                    f.referred_slug = referred_slug
-                    f.category_name = category
-                    f.disp_order = disp_order
-                else: # pragma: no cover - protection against future bugs
-                    # There shouldn't be a case where BOTH the slug and
-                    # referred_slug are None, but just to be careful...
-                    continue
-            # We cheat with the HTML return because we want to collapse all the
-            # surface geometry down to a single target version to save screen
-            # space. This is a horrible hack, but for right now we just assume
-            # there will always be surface geometry data for Saturn.
-            if (collapse and
-                f.slug.startswith('SURFACEGEO') and
-                not f.slug.startswith('SURFACEGEOsaturn')):
-                continue
-            if f.slug.startswith('**'):
-                # Internal use only
-                continue
-
-            table_name = TableNames.objects.get(table_name=f.category_name)
-            cat = table_name.label
-            if collapse and cat.find('Surface Geometry Constraints') != -1:
-                cat = cat.replace('Saturn', '<TARGET>')
-
-            return_obj[cat] = return_obj.get(cat, {})
-
-            entry = {}
-            return_obj[cat]['table_order'] = table_name.disp_order
-            entry['disp_order'] = f.disp_order
-            collapsed_slug = f.slug
-            if collapse:
-                collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
-                                                                    '<TARGET>')
-                entry['category'] = table_name.label.replace('Saturn',
-                                                             '<TARGET>')
-            else:
-                entry['field_id'] = f.slug
-                entry['category'] = table_name.label
-            f_type = None
-            (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(f.form_type)
-            if form_type in settings.RANGE_FORM_TYPES:
-                if form_type == 'LONG':
-                    f_type = 'range_longitude'
-                elif form_type_format is not None:
-                    if form_type_format[-1] == 'd':
-                        f_type = 'range_integer'
-                    elif form_type_format[-1] == 'f':
-                        f_type = 'range_float'
-                    else: # pragma: no cover - error catchall
-                        log.warning('Unparseable form type '+str(f.form_type))
-                elif form_type_unit_id == 'datetime':
-                    f_type = 'range_time'
-                elif form_type_unit_id is not None:
-                    f_type = 'range_special'
+            entry['field_id'] = f.slug
+            entry['category'] = table_name.label
+        f_type = None
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(f.form_type)
+        if form_type in settings.RANGE_FORM_TYPES:
+            if form_type == 'LONG':
+                f_type = 'range_longitude'
+            elif form_type_format is not None:
+                if form_type_format[-1] == 'd':
+                    f_type = 'range_integer'
+                elif form_type_format[-1] == 'f':
+                    f_type = 'range_float'
                 else: # pragma: no cover - error catchall
-                    f_type = 'Internal Error'
-            elif form_type in settings.MULT_FORM_TYPES:
-                f_type = 'multiple'
-            elif form_type == 'STRING':
-                f_type = 'string'
+                    log.warning('Unparseable form type '+str(f.form_type))
+            elif form_type_unit_id == 'datetime':
+                f_type = 'range_time'
+            elif form_type_unit_id is not None:
+                f_type = 'range_special'
             else: # pragma: no cover - error catchall
-                log.warning('Unparseable form type '+str(f.form_type))
-            entry['type'] = f_type
-            entry['label'] = f.label_results
-            entry['search_label'] = f.label
-            entry['full_label'] = f.body_qualified_label_results()
-            entry['full_search_label'] = f.body_qualified_label()
-            (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(f.form_type)
-            entry['default_units'] = get_default_unit(form_type_unit_id)
-            entry['available_units'] = get_valid_units(form_type_unit_id)
-            if f.old_slug and collapse: # Backwards compatibility
-                entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
-            else:
-                entry['old_slug'] = f.old_slug
-            entry['slug'] = entry['field_id'] # Backwards compatibility
-            entry['linked'] = True if f.referred_slug else False
-            return_obj[cat][collapsed_slug] = entry
+                f_type = 'Internal Error'
+        elif form_type in settings.MULT_FORM_TYPES:
+            f_type = 'multiple'
+        elif form_type == 'STRING':
+            f_type = 'string'
+        else: # pragma: no cover - error catchall
+            log.warning('Unparseable form type '+str(f.form_type))
+        entry['type'] = f_type
+        entry['label'] = f.label_results
+        entry['search_label'] = f.label
+        entry['full_label'] = f.body_qualified_label_results()
+        entry['full_search_label'] = f.body_qualified_label()
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(f.form_type)
+        entry['default_units'] = get_default_unit(form_type_unit_id)
+        entry['available_units'] = get_valid_units(form_type_unit_id)
+        if f.old_slug and collapse: # Backwards compatibility
+            entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
+        else:
+            entry['old_slug'] = f.old_slug
+        entry['slug'] = entry['field_id'] # Backwards compatibility
+        entry['linked'] = True if f.referred_slug else False
+        return_obj[cat][collapsed_slug] = entry
 
-        # Organize return_obj before returning
-        # Sort categories by table_order
-        return_obj = dict(sorted(return_obj.items(), key=lambda x: x[1]['table_order']))
-        for cat, cat_data in return_obj.items():
-            del cat_data['table_order']
-            # Sort slugs of each category by disp_order
-            cat_data = dict(sorted(cat_data.items(), key=lambda x: x[1]['disp_order']))
-            return_obj[cat] = cat_data
-            for key, val in cat_data.items():
-                del val['disp_order']
-
-        cache.set(cache_key, return_obj)
+    # Organize return_obj before returning
+    # Sort categories by table_order
+    return_obj = dict(sorted(return_obj.items(), key=lambda x: x[1]['table_order']))
+    for cat, cat_data in return_obj.items():
+        del cat_data['table_order']
+        # Sort slugs of each category by disp_order
+        cat_data = dict(sorted(cat_data.items(), key=lambda x: x[1]['disp_order']))
+        return_obj[cat] = cat_data
+        for key, val in cat_data.items():
+            del val['disp_order']
 
     if fmt == 'raw':
         ret = return_obj

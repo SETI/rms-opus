@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* jshint multistr: true */
-/* globals opus */
+/* globals opus, $ */
 
 /* jshint varstmt: false */
 var o_utils = {
@@ -27,7 +27,7 @@ var o_utils = {
         if (Object.keys(obj1).length !== Object.keys(obj2).length) {
             return false;
         }
-        for (const key in obj1) {
+        for (const key of Object.keys(obj1)) {
             if (!(key in obj2)) {
                 return false;
             } else {
@@ -136,9 +136,46 @@ var o_utils = {
         opus.mouseY = e.clientY;
         opus.timer = setTimeout(function() {
             if (targetTooltipster.length) {
-                targetTooltipster.tooltipster("instance").reposition();
+                // If the table sorting (redrawing) happened right at the moment when a tooltips instance
+                // is about to reposition, an error message will complain about we try access an
+                // uninitialized element (due to table redrawing). We don't need to worry about this error
+                // because the tooltip instance will get initialized again once redrawing is done and no
+                // weird behavior with this. Instead of removing and adding this event listener again, we
+                // ignore this error when it happens.
+                try {
+                    targetTooltipster.tooltipster("instance").reposition();
+                } catch (e) {
+                    return;
+                }
             }
         }, opus.tooltipsDelay);
+    },
+
+    setTableColumnToolTipPostion: function(helper, position) {
+        let tooltipWidth = position.size.width;
+        let tooltipHeight = position.size.height;
+        let offsetToWindow = 5;
+        let arrowOffset = 15;
+        let windowWidth = helper.geo.window.size.width;
+        // make sure the tooltip is not cut off.
+        if (opus.mouseY - tooltipHeight - offsetToWindow < 0) {
+            position.side = "bottom";
+        } else {
+            position.side = "top";
+        }
+        // Make sure tooltip stay at the top border of the table row.
+        position.coord.top += 5;
+
+        if (opus.mouseX + tooltipWidth + offsetToWindow > windowWidth) {
+            position.coord.left = opus.mouseX - tooltipWidth + arrowOffset;
+        } else if (opus.mouseX - tooltipWidth - offsetToWindow < 0) {
+            position.coord.left = opus.mouseX - arrowOffset;
+        } else {
+            position.coord.left = opus.mouseX - tooltipWidth/2;
+        }
+
+        position.target = opus.mouseX;
+        return position;
     },
 
     // Set the position of the preview image tooltip

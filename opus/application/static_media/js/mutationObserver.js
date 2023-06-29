@@ -4,6 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* jshint multistr: true */
+/* exported o_mutationObserver */
 /* globals $, _ */
 /* globals o_browse, o_cart, o_search, o_selectMetadata, opus */
 

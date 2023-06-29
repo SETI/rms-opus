@@ -803,23 +803,6 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
             ######### /api/fields: API TESTS #########
             ##########################################
 
-    # Test caching (only visible with code coverage)
-    def test__api_fields_time1_cache(self):
-        "[test_metadata_api.py] /api/fields: time1 json cache"
-        url = '/api/fields/time1.json'
-        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
-        self._run_json_equal(url, expected)
-        url = '/api/fields/time1.json'
-        self._run_json_equal(url, expected)
-        url = '/api/fields/time1.json'
-        self._run_json_equal(url, expected)
-        url = '/api/fields/time1.json'
-        self._run_json_equal(url, expected)
-        url = '/api/fields/time1.json'
-        self._run_json_equal(url, expected)
-        url = '/api/fields/time1.json'
-        self._run_json_equal(url, expected)
-
     def test__api_fields_time1_json(self):
         "[test_metadata_api.py] /api/fields: time1 json"
         url = '/api/fields/time1.json'
@@ -867,35 +850,3 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         url = '/api/fields.json?collapse=X'
         self._run_status_equal(url, 404,
                                HTTP404_BAD_COLLAPSE('X', '/api/fields.json'))
-
-    def test__api_fields_all_cache(self):
-        "[test_metadata_api.py] /api/fields: all json cache"
-        url = '/api/fields.json'
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata1 = json.loads(response.content)
-        url = '/api/fields.json'
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata2 = json.loads(response.content)
-        url = '/api/fields.json?collapse=1'
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdatac1 = json.loads(response.content)
-        url = '/api/fields.json'
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdata3 = json.loads(response.content)
-        url = '/api/fields.json?collapse=1'
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
-        jdatac2 = json.loads(response.content)
-        self.assertEqual(jdata1, jdata2)
-        self.assertEqual(jdata2, jdata3)
-        self.assertEqual(jdatac1, jdatac2)
-        self.assertNotEqual(jdata1, jdatac1)
