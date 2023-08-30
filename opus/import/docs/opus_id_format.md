@@ -258,7 +258,7 @@ OPUS IDs for ring occultations follow the format:
 
 OPUS IDs for atmosphere occultations follow the format:
 
-`<mission>-<instrument>-occ-<year>-<doy>-<source>-atmos-<direction>`
+`<mission>-<instrument>-occ-<year>-<doy>-<source>-<body>-<direction>`
 
 - `<instrument>` is the instrument on the spacecraft, or the detector of a ground-based telescope, if known. See below for details.
 - `<year>` is the four-digit year.
@@ -270,6 +270,8 @@ OPUS IDs for atmosphere occultations follow the format:
     - For the Voyager RSS occultatoins, `<source>` is defined as `<band>`, such as `s63`.
 - Ring only: `<ringname>` is the optional name of the ring covered by the occultation. If no ring name is specified, then more than one ring is covered.
   - For Uranus: `alpha`, `beta`, `delta`, `epsilon`, `eta`, `gamma`, `lambda`, `four`, `five`, `six`, or `ringpl` for the entire ring plane.
+- Atmosphere only: `<body>` is the name of the body whose atmosphere is being
+  probed. Examples include `saturn`, `uranus`, or `titan`.
 - `<direction>` is the direction of the occultation: `i` for ingress, `e` for `egress`, or `b` for both.
 
 For ground-based telescopes, the particular detector is often not specified or
@@ -291,4 +293,4 @@ Example OPUS IDs for various instruments:
 | Voyager PPS     | `vg-pps-2-u-occ-1986-024-betper-four-i` |
 | Lick CCD Camera | `lick1m-ccdc-occ-1989-184-28sgr-i` |
 | Palomar 5.08m   | `pal5m08-insb-occ-2002-210-u0201-alpha-i` |
-| Palomar 5.08m   | `pal5m08-insb-occ-2002-210-u0201-atmos-i` |
+| Palomar 5.08m   | `pal5m08-insb-occ-2002-210-u0201-uranus-i` |
