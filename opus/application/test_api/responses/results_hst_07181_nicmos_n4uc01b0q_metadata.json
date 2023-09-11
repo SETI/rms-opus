@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "HSTN0_7181",
+        "bundleid": "HSTN0_7181",
         "datasetid": "HST-U-NICMOS-5-ID7181-V1.0",
         "productid": "N4UC01B0Q",
+        "primarylid": null,
         "productcreationtime": "2017-12-20T15:24:59.000",
         "primaryfilespec": "HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
         "opusid": "hst-07181-nicmos-n4uc01b0q",

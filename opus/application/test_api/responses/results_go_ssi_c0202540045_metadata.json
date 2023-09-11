@@ -17,9 +17,10 @@
         "declination2": "-3.5407"
     },
     "PDS Constraints": {
-        "volumeid": "GO_0016",
+        "bundleid": "GO_0016",
         "datasetid": "GO-A/C-SSI-2-REDR-V1.1",
         "productid": "IMG",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "GO_0016/IDA/C0202540045R.IMG",
         "opusid": "go-ssi-c0202540045",

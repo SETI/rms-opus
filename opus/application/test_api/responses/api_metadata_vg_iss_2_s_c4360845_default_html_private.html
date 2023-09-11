@@ -178,14 +178,14 @@ Declination (Max) (degrees):&nbsp;
 <ul id="detail__data_pds_constraints" class="op-detail-list">
 <li class="op-detail-entry">
 <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-bs-toggle="tooltip"
-title="The PDS3 volume containing the observation. Volumes are artificial constructs used to group consecutive observations into manageable chunks. They are formatted as MMIII_NNNN, where MMIII is an abbreviation for the mission and instrument (e.g. COISS for Cassini Orbiter ISS) and NNNN is a four-digit volume number. Hubble volumes have 5-digit volume numbers and are formatted as HSTIN_NNNN. See Help/Volumes for the list of volumes available in OPUS."></i>&nbsp;
+title="The PDS4 bundle or PDS3 volume containing the observation. PDS4 bundles are semantically-meaningful constructs used to group similar observations. PDS3 volumes are artificial constructs used to group consecutive observations into manageable chunks. They are formatted as MMIII_NNNN, where MMIII is an abbreviation for the mission and instrument (e.g. COISS for Cassini Orbiter ISS) and NNNN is a four-digit volume number. Hubble volumes have 5-digit volume numbers and are formatted as HSTIN_NNNN. See Help/Volumes for the list of volumes available in OPUS."></i>&nbsp;
 <div class="op-detail-entry-values-wrapper">
-Volume ID:&nbsp;
+Bundle/Volume ID:&nbsp;
 <span class="op-detail-entry-values">VGISS_6210
-<a href="/opus/#/volumeid=VGISS_6210&qtype-volumeid=matches"
+<a href="/opus/#/bundleid=VGISS_6210&qtype-bundleid=matches"
 target="_blank">
 <i class="fas fa-search op-detail-metadata-tooltip"
-title='Open a new browser tab containing OPUS that searches for "Volume ID" equal to "VGISS_6210"'></i>
+title='Open a new browser tab containing OPUS that searches for "Bundle/Volume ID" equal to "VGISS_6210"'></i>
 </a>
 </span>
 </div>
@@ -194,26 +194,40 @@ title='Open a new browser tab containing OPUS that searches for "Volume ID" equa
 <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-bs-toggle="tooltip"
 title="A string assigned by the PDS describing a PDS3 data set. Data sets are often aggregations of multiple volumes. A Data Set ID usually encodes, at a minimum, the mission, instrument, and version number of the data as provided by the instrument team."></i>&nbsp;
 <div class="op-detail-entry-values-wrapper">
-Data Set ID:&nbsp;
+PDS3 Data Set ID:&nbsp;
 <span class="op-detail-entry-values">VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0
 <a href="/opus/#/datasetid=VG1%2FVG2-S-ISS-2%2F3%2F4%2F6-PROCESSED-V1.0&qtype-datasetid=matches"
 target="_blank">
 <i class="fas fa-search op-detail-metadata-tooltip"
-title='Open a new browser tab containing OPUS that searches for "Data Set ID" equal to "VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0"'></i>
+title='Open a new browser tab containing OPUS that searches for "PDS3 Data Set ID" equal to "VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0"'></i>
 </a>
 </span>
 </div>
 </li>
 <li class="op-detail-entry">
 <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-bs-toggle="tooltip"
-title="A permanent identifier assigned to a data product by the PDS that is unique within its data set."></i>&nbsp;
+title="A permanent identifier assigned to a PDS3 data product by the PDS that is unique within its data set."></i>&nbsp;
 <div class="op-detail-entry-values-wrapper">
-Product ID:&nbsp;
+PDS3 Product ID:&nbsp;
 <span class="op-detail-entry-values">C4360845_RAW.IMG
 <a href="/opus/#/productid=C4360845_RAW.IMG&qtype-productid=matches"
 target="_blank">
 <i class="fas fa-search op-detail-metadata-tooltip"
-title='Open a new browser tab containing OPUS that searches for "Product ID" equal to "C4360845_RAW.IMG"'></i>
+title='Open a new browser tab containing OPUS that searches for "PDS3 Product ID" equal to "C4360845_RAW.IMG"'></i>
+</a>
+</span>
+</div>
+</li>
+<li class="op-detail-entry">
+<i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-bs-toggle="tooltip"
+title="A Logical IDentifier assigned to a PDS4 data product. While each individual data product has its own LID, the LID used here is the one identified by OPUS as the primary data product. If searching by LID, it may be most productive to perform a partial string search on the LID prefix."></i>&nbsp;
+<div class="op-detail-entry-values-wrapper">
+Primary Product LID:&nbsp;
+<span class="op-detail-entry-values">None
+<a href="/opus/#/primarylid=NULL&qtype-primarylid=matches"
+target="_blank">
+<i class="fas fa-search op-detail-metadata-tooltip"
+title='Open a new browser tab containing OPUS that searches for "Primary Product LID" equal to "None"'></i>
 </a>
 </span>
 </div>
@@ -229,7 +243,7 @@ Product Creation Time (YMDhms):&nbsp;
 </li>
 <li class="op-detail-entry">
 <i class="fas fa-info-circle op-detail-entry-icon op-detail-metadata-tooltip" data-bs-toggle="tooltip"
-title="The full primary data filename, including the path, relative to its containing volume in the PDS archive."></i>&nbsp;
+title="The full primary data product filename, including the path, relative to its containing bundle/volume in the PDS archive."></i>&nbsp;
 <div class="op-detail-entry-values-wrapper">
 Primary File Spec:&nbsp;
 <span class="op-detail-entry-values">VGISS_6210/DATA/C43608XX/C4360845_RAW.LBL

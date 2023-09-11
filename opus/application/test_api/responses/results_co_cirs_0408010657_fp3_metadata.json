@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "COCIRS_5408",
+        "bundleid": "COCIRS_5408",
         "datasetid": "CO-S-CIRS-2/3/4-REFORMATTED-V1.0",
         "productid": "SPEC0408010657_FP3.DAT",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "COCIRS_5408/DATA/APODSPEC/SPEC0408010657_FP3.DAT",
         "opusid": "co-cirs-0408010657-fp3",

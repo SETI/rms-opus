@@ -17,9 +17,10 @@
         "declination2": "46.006332"
     },
     "PDS Constraints": {
-        "volumeid": "VG_2802",
+        "bundleid": "VG_2802",
         "datasetid": "VG1/VG2-SR/UR/NR-UVS-2/4-OCC-V1.0",
         "productid": "FILTER01/US3F01.TAB",
+        "primarylid": null,
         "productcreationtime": "2003-12-18T16:00:00.000",
         "primaryfilespec": "VG_2802/EASYDATA/FILTER01/US3F01.LBL",
         "opusid": "vg-uvs-1-s-occ-1980-317-iother-e",

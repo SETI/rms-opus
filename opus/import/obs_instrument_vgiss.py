@@ -38,9 +38,9 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         return 'VGISS'
 
     def opus_id_from_supp_index_row(self, supp_row):
-        volume_id = supp_row['VOLUME_NAME']
+        bundle_id = supp_row['VOLUME_NAME']
         filespec = supp_row['FILE_SPECIFICATION_NAME']
-        full_filespec = volume_id + '/' + filespec
+        full_filespec = bundle_id + '/' + filespec
         pdsf = self._pdsfile_from_filespec(full_filespec)
         opus_id = pdsf.opus_id
         if not opus_id:
@@ -184,8 +184,8 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
     def field_obs_instrument_vgiss_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_vgiss_volume_id(self):
-        return self.volume
+    def field_obs_instrument_vgiss_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_vgiss_instrument_id(self):
         return self.instrument_id

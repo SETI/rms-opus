@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "COCIRS_0406",
+        "bundleid": "COCIRS_0406",
         "datasetid": "CO-S-CIRS-2/3/4-TSDR-V3.2",
         "productid": "000PH_FP3DAYMAP001_CI004_609_F1_038E.LBL",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E.LBL",
         "opusid": "co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e",

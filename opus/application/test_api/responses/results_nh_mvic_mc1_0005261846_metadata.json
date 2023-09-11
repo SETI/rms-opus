@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "NHLAMV_1001",
+        "bundleid": "NHLAMV_1001",
         "datasetid": "NH-X-MVIC-2-LAUNCH-V2.0",
         "productid": "MC1_0005261846_0X536_ENG_1",
+        "primarylid": null,
         "productcreationtime": "2009-02-27T03:10:40.000",
         "primaryfilespec": "NHLAMV_1001/data/20060321_000526/mc1_0005261846_0x536_eng_1.lbl",
         "opusid": "nh-mvic-mc1_0005261846",

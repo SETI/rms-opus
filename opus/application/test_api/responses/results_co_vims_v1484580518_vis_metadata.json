@@ -17,9 +17,10 @@
         "declination2": "5.39657"
     },
     "PDS Constraints": {
-        "volumeid": "COVIMS_0006",
+        "bundleid": "COVIMS_0006",
         "datasetid": "CO-E/V/J/S-VIMS-2-QUBE-V1.0",
         "productid": "1/1484580518_1",
+        "primarylid": null,
         "productcreationtime": "2005-01-17T09:44:55.000",
         "primaryfilespec": "COVIMS_0006/data/2005015T175855_2005016T184233/v1484580518_1.qub",
         "opusid": "co-vims-v1484580518_vis",

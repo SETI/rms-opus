@@ -41,47 +41,47 @@ class DBIntegrityTest(TestCase):
     ######### DATABASE INTEGRITY CHECKS #########
     #############################################
 
-    def test__pds_image_wl_volume_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_pds, obs_type_image, obs_wavelength, obs_profile
-           Test that the observation count per volume is the same in
+    def test__pds_image_wl_bundle_counts_match_obs_general(self):
+        """DB Integrity: bundles in obs_general = obs_pds, obs_type_image, obs_wavelength, obs_profile
+           Test that the observation count per bundle is the same in
            obs_general, obs_pds, obs_type_image, and obs_wavelength, since
            these tables should all include the exact same set of observations.
         """
         self.maxDiff = None
-        obs = (ObsGeneral.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        pds = (ObsPds.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+        obs = (ObsGeneral.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        pds = (ObsPds.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         self.assertEqual(list(obs), list(pds))
-        img = (ObsTypeImage.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+        img = (ObsTypeImage.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         self.assertEqual(list(obs), list(img))
-        wl = (ObsWavelength.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+        wl = (ObsWavelength.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         self.assertEqual(list(obs), list(wl))
-        wl = (ObsProfile.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+        wl = (ObsProfile.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         self.assertEqual(list(obs), list(wl))
 
     def test__cassini_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_mission_cassini
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_mission_cassini
+           Test that the observation count per bundle is the same in
            obs_general for mission_id='CO' and obs_mission_cassini.
         """
         mission_id = (MultObsGeneralMissionId.objects.values_list('id')
                       .filter(value='CO'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(mission_id=mission_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsMissionCassini.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsMissionCassini.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -89,19 +89,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__galileo_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_mission_galileo
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_mission_galileo
+           Test that the observation count per bundle is the same in
            obs_general for mission_id='GO' and obs_mission_galileo.
         """
         mission_id = (MultObsGeneralMissionId.objects.values_list('id')
                       .filter(value='GO'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(mission_id=mission_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsMissionGalileo.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsMissionGalileo.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -109,19 +109,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__hubble_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_mission_hubble
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_mission_hubble
+           Test that the observation count per bundle is the same in
            obs_general for mission_id='HST' and obs_mission_hubble.
         """
         mission_id = (MultObsGeneralMissionId.objects.values_list('id')
                       .filter(value='HST'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(mission_id=mission_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsMissionHubble.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsMissionHubble.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -129,19 +129,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__nh_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_mission_new_horizons
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_mission_new_horizons
+           Test that the observation count per bundle is the same in
            obs_general for mission_id='NH' and obs_mission_newhorizons.
         """
         mission_id = (MultObsGeneralMissionId.objects.values_list('id')
                       .filter(value='NH'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(mission_id=mission_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsMissionNewHorizons.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsMissionNewHorizons.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -149,19 +149,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__voyager_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_mission_voyager
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_mission_voyager
+           Test that the observation count per bundle is the same in
            obs_general for mission_id='VG' and obs_mission_voyager.
         """
         mission_id = (MultObsGeneralMissionId.objects.values_list('id')
                       .filter(value='VG'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(mission_id=mission_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsMissionVoyager.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsMissionVoyager.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
            self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -169,19 +169,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__cocirs_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_cocirs
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_cocirs
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='COCIRS' and obs_instrument_cocirs.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='COCIRS'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentCocirs.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentCocirs.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -189,19 +189,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__coiss_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_coiss
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_coiss
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='COISS' and obs_instrument_coiss.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='COISS'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentCoiss.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentCoiss.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -209,20 +209,20 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__couvis_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_couvis
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_couvis
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='COUVIS' and obs_instrument_couvis.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='COUVIS'))[0][0]
         print(instrument_id)
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentCouvis.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentCouvis.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -230,19 +230,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__covims_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_covims
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_covims
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='COVIMS' and obs_instrument_covims.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='COVIMS'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentCovims.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentCovims.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -250,19 +250,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__gossi_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_gossi
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_gossi
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='GOSSI' and obs_instrument_gossi.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='GOSSI'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentGossi.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentGossi.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -270,19 +270,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__nhlorri_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_nhlorri
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_nhlorri
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='NHLORRI' and obs_instrument_nhlorri.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='NHLORRI'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentNhlorri.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentNhlorri.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -290,19 +290,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__nhmvic_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_nhmvic
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_nhmvic
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='NHMVIC' and obs_instrument_nhmvic.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='NHMVIC'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentNhmvic.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentNhmvic.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover
@@ -310,19 +310,19 @@ class DBIntegrityTest(TestCase):
                 raise
 
     def test__vgiss_counts_match_obs_general(self):
-        """DB Integrity: volumes in obs_general = obs_instrument_vgiss
-           Test that the observation count per volume is the same in
+        """DB Integrity: bundles in obs_general = obs_instrument_vgiss
+           Test that the observation count per bundle is the same in
            obs_general for instrument_id='VGISS' and obs_instrument_vgiss.
         """
         instrument_id = (MultObsGeneralInstrumentId.objects.values_list('id')
                          .filter(value='VGISS'))[0][0]
-        obs = (ObsGeneral.objects.values_list('volume_id')
+        obs = (ObsGeneral.objects.values_list('bundle_id')
                .filter(instrument_id=instrument_id)
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
-        ref = (ObsInstrumentVgiss.objects.values_list('volume_id')
-               .annotate(Count('volume_id'))
-               .order_by('volume_id'))
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
+        ref = (ObsInstrumentVgiss.objects.values_list('bundle_id')
+               .annotate(Count('bundle_id'))
+               .order_by('bundle_id'))
         try:
             self.assertEqual(list(obs), list(ref))
         except Exception as e: # pragma: no cover

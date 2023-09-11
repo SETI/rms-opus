@@ -38,7 +38,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "data/20070108_003059/lor_0030598439_0x630_eng.lbl"
         filespec = self._index_col('PATH_NAME') + self._index_col('FILE_NAME')
-        return self.volume + '/' + filespec
+        return self.bundle + '/' + filespec
 
     def convert_filespec_from_lbl(self, filespec):
         filespec = filespec.replace('.lbl', '.fit')
@@ -156,8 +156,8 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
     def field_obs_instrument_nhmvic_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_nhmvic_volume_id(self):
-        return self.volume
+    def field_obs_instrument_nhmvic_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_nhmvic_instrument_id(self):
         return self.instrument_id
