@@ -27,152 +27,152 @@ import instruments
 # GENERAL UTILITIES
 ################################################################################
 
-def yield_import_volume_ids(arguments):
-    volume_descs = []
+def yield_import_bundle_ids(arguments):
+    bundle_descs = []
     exclude_list = []
-    if arguments.exclude_volumes:
-        exclude_list = arguments.exclude_volumes.split(',')
-    if arguments.volumes:
-        for volumes in arguments.volumes:
-            orig_volume_descs = volumes.split(',')
-            for desc in orig_volume_descs:
+    if arguments.exclude_bundles:
+        exclude_list = arguments.exclude_bundles.split(',')
+    if arguments.bundles:
+        for bundles in arguments.bundles:
+            orig_bundle_descs = bundles.split(',')
+            for desc in orig_bundle_descs:
                 if desc.upper() == 'ALL':
-                    volume_descs.append('COISS_1xxx')
-                    volume_descs.append('COISS_2xxx')
-                    volume_descs.append('COCIRS_0xxx')
-                    volume_descs.append('COCIRS_1xxx')
-                    volume_descs.append('COCIRS_5xxx')
-                    volume_descs.append('COCIRS_6xxx')
-                    volume_descs.append('COUVIS_0xxx')
-                    volume_descs.append('COVIMS_0xxx')
-                    volume_descs.append('VGISS_5xxx')
-                    volume_descs.append('VGISS_6xxx')
-                    volume_descs.append('VGISS_7xxx')
-                    volume_descs.append('VGISS_8xxx')
-                    volume_descs.append('GO_0xxx')
-                    volume_descs.append('HSTIx_xxxx')
-                    volume_descs.append('HSTJx_xxxx')
-                    volume_descs.append('HSTNx_xxxx')
-                    volume_descs.append('HSTOx_xxxx')
-                    volume_descs.append('HSTUx_xxxx')
-                    volume_descs.append('NHxxLO_xxxx')
-                    volume_descs.append('NHxxMV_xxxx')
-                    volume_descs.append('EBROCC_xxxx')
-                    volume_descs.append('CORSS_8xxx')
-                    volume_descs.append('COUVIS_8xxx')
-                    volume_descs.append('COVIMS_8xxx')
-                    volume_descs.append('VG_28xx')
+                    bundle_descs.append('COISS_1xxx')
+                    bundle_descs.append('COISS_2xxx')
+                    bundle_descs.append('COCIRS_0xxx')
+                    bundle_descs.append('COCIRS_1xxx')
+                    bundle_descs.append('COCIRS_5xxx')
+                    bundle_descs.append('COCIRS_6xxx')
+                    bundle_descs.append('COUVIS_0xxx')
+                    bundle_descs.append('COVIMS_0xxx')
+                    bundle_descs.append('VGISS_5xxx')
+                    bundle_descs.append('VGISS_6xxx')
+                    bundle_descs.append('VGISS_7xxx')
+                    bundle_descs.append('VGISS_8xxx')
+                    bundle_descs.append('GO_0xxx')
+                    bundle_descs.append('HSTIx_xxxx')
+                    bundle_descs.append('HSTJx_xxxx')
+                    bundle_descs.append('HSTNx_xxxx')
+                    bundle_descs.append('HSTOx_xxxx')
+                    bundle_descs.append('HSTUx_xxxx')
+                    bundle_descs.append('NHxxLO_xxxx')
+                    bundle_descs.append('NHxxMV_xxxx')
+                    bundle_descs.append('EBROCC_xxxx')
+                    bundle_descs.append('CORSS_8xxx')
+                    bundle_descs.append('COUVIS_8xxx')
+                    bundle_descs.append('COVIMS_8xxx')
+                    bundle_descs.append('VG_28xx')
                 elif desc.upper() == 'CASSINI':
-                    volume_descs.append('COISS_1xxx')
-                    volume_descs.append('COISS_2xxx')
-                    volume_descs.append('COCIRS_0xxx')
-                    volume_descs.append('COCIRS_1xxx')
-                    volume_descs.append('COCIRS_5xxx')
-                    volume_descs.append('COCIRS_6xxx')
-                    volume_descs.append('COUVIS_0xxx')
-                    volume_descs.append('COVIMS_0xxx')
-                    volume_descs.append('CORSS_8xxx')
-                    volume_descs.append('COUVIS_8xxx')
-                    volume_descs.append('COVIMS_8xxx')
+                    bundle_descs.append('COISS_1xxx')
+                    bundle_descs.append('COISS_2xxx')
+                    bundle_descs.append('COCIRS_0xxx')
+                    bundle_descs.append('COCIRS_1xxx')
+                    bundle_descs.append('COCIRS_5xxx')
+                    bundle_descs.append('COCIRS_6xxx')
+                    bundle_descs.append('COUVIS_0xxx')
+                    bundle_descs.append('COVIMS_0xxx')
+                    bundle_descs.append('CORSS_8xxx')
+                    bundle_descs.append('COUVIS_8xxx')
+                    bundle_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'COISS':
-                    volume_descs.append('COISS_1xxx')
-                    volume_descs.append('COISS_2xxx')
+                    bundle_descs.append('COISS_1xxx')
+                    bundle_descs.append('COISS_2xxx')
                 elif desc.upper() == 'COCIRS':
-                    volume_descs.append('COCIRS_0xxx')
-                    volume_descs.append('COCIRS_1xxx')
-                    volume_descs.append('COCIRS_5xxx')
-                    volume_descs.append('COCIRS_6xxx')
+                    bundle_descs.append('COCIRS_0xxx')
+                    bundle_descs.append('COCIRS_1xxx')
+                    bundle_descs.append('COCIRS_5xxx')
+                    bundle_descs.append('COCIRS_6xxx')
                 elif desc.upper() == 'COUVIS':
-                    volume_descs.append('COUVIS_0xxx')
-                    volume_descs.append('COUVIS_8xxx')
+                    bundle_descs.append('COUVIS_0xxx')
+                    bundle_descs.append('COUVIS_8xxx')
                 elif desc.upper() == 'COVIMS':
-                    volume_descs.append('COVIMS_0xxx')
-                    volume_descs.append('COVIMS_8xxx')
+                    bundle_descs.append('COVIMS_0xxx')
+                    bundle_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'CORSS':
-                    volume_descs.append('CORSS_8xxx')
+                    bundle_descs.append('CORSS_8xxx')
                 elif desc.upper() == 'VOYAGER':
-                    volume_descs.append('VGISS_5xxx')
-                    volume_descs.append('VGISS_6xxx')
-                    volume_descs.append('VGISS_7xxx')
-                    volume_descs.append('VGISS_8xxx')
-                    volume_descs.append('VG_28xx')
+                    bundle_descs.append('VGISS_5xxx')
+                    bundle_descs.append('VGISS_6xxx')
+                    bundle_descs.append('VGISS_7xxx')
+                    bundle_descs.append('VGISS_8xxx')
+                    bundle_descs.append('VG_28xx')
                 elif desc.upper() == 'VGISS':
-                    volume_descs.append('VGISS_5xxx')
-                    volume_descs.append('VGISS_6xxx')
-                    volume_descs.append('VGISS_7xxx')
-                    volume_descs.append('VGISS_8xxx')
-                    volume_descs.append('VG_2810')
+                    bundle_descs.append('VGISS_5xxx')
+                    bundle_descs.append('VGISS_6xxx')
+                    bundle_descs.append('VGISS_7xxx')
+                    bundle_descs.append('VGISS_8xxx')
+                    bundle_descs.append('VG_2810')
                 elif desc.upper() == 'VGPPS':
-                    volume_descs.append('VG_2801')
+                    bundle_descs.append('VG_2801')
                 elif desc.upper() == 'VGUVS':
-                    volume_descs.append('VG_2802')
+                    bundle_descs.append('VG_2802')
                 elif desc.upper() == 'VGRSS':
-                    volume_descs.append('VG_2803')
+                    bundle_descs.append('VG_2803')
                 elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
-                    volume_descs.append('GO_0xxx')
+                    bundle_descs.append('GO_0xxx')
                 elif desc.upper() == 'HST' or desc.upper() == 'HUBBLE':
-                    volume_descs.append('HSTIx_xxxx')
-                    volume_descs.append('HSTJx_xxxx')
-                    volume_descs.append('HSTNx_xxxx')
-                    volume_descs.append('HSTOx_xxxx')
-                    volume_descs.append('HSTUx_xxxx')
+                    bundle_descs.append('HSTIx_xxxx')
+                    bundle_descs.append('HSTJx_xxxx')
+                    bundle_descs.append('HSTNx_xxxx')
+                    bundle_descs.append('HSTOx_xxxx')
+                    bundle_descs.append('HSTUx_xxxx')
                 elif desc.upper() == 'NH' or desc.upper() == 'NEWHORIZONS':
-                    volume_descs.append('NHxxLO_xxxx')
-                    volume_descs.append('NHxxMV_xxxx')
+                    bundle_descs.append('NHxxLO_xxxx')
+                    bundle_descs.append('NHxxMV_xxxx')
                 elif desc.upper() == 'NHLORRI':
-                    volume_descs.append('NHxxLO_xxxx')
+                    bundle_descs.append('NHxxLO_xxxx')
                 elif desc.upper() == 'NHMVIC':
-                    volume_descs.append('NHxxMV_xxxx')
+                    bundle_descs.append('NHxxMV_xxxx')
                 elif desc.upper() == 'EBROCC':
-                    volume_descs.append('EBROCC_xxxx')
+                    bundle_descs.append('EBROCC_xxxx')
                 else:
-                    volume_descs.append(desc)
+                    bundle_descs.append(desc)
         # First make sure everything is valid
         any_invalid = False
-        for volume_desc in volume_descs:
-            if volume_desc in exclude_list:
+        for bundle_desc in bundle_descs:
+            if bundle_desc in exclude_list:
                 continue
             try:
-                volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
+                bundle_pdsfile = pdsfile.PdsFile.from_path(bundle_desc)
             except (KeyError, ValueError):
                 any_invalid = True
                 impglobals.LOGGER.log('fatal',
-                           f'Bad volume descriptor {volume_desc}')
+                           f'Bad bundle descriptor {bundle_desc}')
             else:
-                if (not volume_pdsfile.is_volume_dir and
-                    not volume_pdsfile.is_volset_dir):
+                if (not bundle_pdsfile.is_volume_dir and
+                    not bundle_pdsfile.is_volset_dir):
                     any_invalid = True
                     impglobals.LOGGER.log('fatal',
-                     f'Volume descriptor not a volume or volset: {volume_desc}')
-                if not volume_pdsfile.exists:
+                     f'Volume descriptor not a bundle or volset: {bundle_desc}')
+                if not bundle_pdsfile.exists:
                     any_invalid = True
                     impglobals.LOGGER.log('fatal',
-                               f'Volume descriptor not found: {volume_desc}')
+                               f'Volume descriptor not found: {bundle_desc}')
         if any_invalid:
             sys.exit(-1)
         # Expand the volsets
         new_voldescs = []
-        for volume_desc in volume_descs:
-            volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
-            if volume_pdsfile.is_volset_dir:
-                childnames = volume_pdsfile.childnames
+        for bundle_desc in bundle_descs:
+            bundle_pdsfile = pdsfile.PdsFile.from_path(bundle_desc)
+            if bundle_pdsfile.is_volset_dir:
+                childnames = bundle_pdsfile.childnames
                 # Make sure 2001 is imported first and then 1001 second for each
-                # New Horizon volume. That way, the primary filespec will be
+                # New Horizon bundle. That way, the primary filespec will be
                 # raw in OPUS (same as pdsfile).
-                if volume_pdsfile.volset.startswith("NH"):
+                if bundle_pdsfile.volset.startswith("NH"):
                     childnames.reverse()
                 new_voldescs += childnames
             else:
-                new_voldescs.append(volume_desc)
-        # Now actually return the volume_ids
-        for volume_id in new_voldescs:
-            if volume_id in exclude_list:
+                new_voldescs.append(bundle_desc)
+        # Now actually return the bundle_ids
+        for bundle_id in new_voldescs:
+            if bundle_id in exclude_list:
                 impglobals.LOGGER.log('info',
-                           f'Excluding volume: {volume_id}')
+                           f'Excluding bundle: {bundle_id}')
                 continue
-            if volume_id.find('.') != -1:
+            if bundle_id.find('.') != -1:
                 continue # Sometimes a bad tar file gets stuck in the dir
-            yield volume_id
+            yield bundle_id
 
 def log_accumulated_warnings(title):
     if len(impglobals.PYTHON_WARNING_LIST) > 0:
@@ -341,8 +341,8 @@ def find_max_table_id(table_name):
 
 def _format_vol_line():
     ret = ''
-    if impglobals.CURRENT_VOLUME_ID is not None:
-        ret = impglobals.CURRENT_VOLUME_ID
+    if impglobals.CURRENT_BUNDLE_ID is not None:
+        ret = impglobals.CURRENT_BUNDLE_ID
         if impglobals.CURRENT_INDEX_ROW_NUMBER is not None:
             ret += ' index row '+str(impglobals.CURRENT_INDEX_ROW_NUMBER)
         if impglobals.CURRENT_PRIMARY_FILESPEC is not None:

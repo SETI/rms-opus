@@ -17,9 +17,10 @@
         "declination2": "60.71674"
     },
     "PDS Constraints": {
-        "volumeid": "COUVIS_8001",
+        "bundleid": "COUVIS_8001",
         "datasetid": "CO-SR-UVIS-HSP-2/4-OCC-V3.0",
         "productid": "UVIS_HSP_2009_015_GAMCAS_E_TAU01KM.TAB",
+        "primarylid": null,
         "productcreationtime": "2020-11-27T20:00:00.000",
         "primaryfilespec": "COUVIS_8001/data/UVIS_HSP_2009_015_GAMCAS_E_TAU01KM.LBL",
         "opusid": "co-uvis-occ-2009-015-gamcas-e",

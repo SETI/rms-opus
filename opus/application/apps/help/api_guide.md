@@ -57,7 +57,7 @@ Examples:
 
 * API call with one parameter:
 
-    %EXTLINK%%HOST%/opus/api/meta/result_count.json?volumeid=COISS_2001%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/meta/result_count.json?bundleid=COISS_2001%ENDEXTLINK%
 
 * API call with two parameters:
 
@@ -110,7 +110,7 @@ See the section on [Available Metadata Fields](#availablefields) below for more 
 Many API calls allow you to select which observations you want to return by specifying a set of search constraints. If no constraints are specified, all observations in the database are returned. A search constraint consists of a `searchid` and a desired value. For example:
 
 %CODE%
-volumeid=COISS_2001
+bundleid=COISS_2001
 %ENDCODE%
 
 When searching on a multiple-choice field, additional search values can be specified separated by commas. In this case, observations matching any of the values are returned:
@@ -124,7 +124,7 @@ Multiple-choice values are case-insensitive.
 More than one search constraint can be specified by joining them with `&`. When search constraints are specified for different metadata fields, they are "AND"ed together. For example:
 
 %CODE%
-volumeid=COISS_2001&planet=Saturn,Uranus,Neptune
+bundleid=COISS_2001&planet=Saturn,Uranus,Neptune
 %ENDCODE%
 
 will return any observation with Volume ID `COISS_2001` **and** a Planet value of `Saturn`, `Uranus`, or `Neptune`.
@@ -197,7 +197,7 @@ datasetid=CO-E&qtype-datasetid=begins
 * To search for Volume IDs "COISS_2001" or "COISS_2002":
 
 %CODE%
-volumeid_1=COISS_2001&qtype-volumeid_1=matches&volumeid_2=COISS_2002&qtype-volumeid_2=matches
+bundleid_1=COISS_2001&qtype-bundleid_1=matches&bundleid_2=COISS_2002&qtype-bundleid_2=matches
 %ENDCODE%
 
 * To search for ring radii between 110,000 and 130,000 km using the "any" qtype (the qtype is optional):
@@ -423,7 +423,7 @@ Examples:
     [...]
   },
   "PDS Constraints": {
-    "volumeid": "COISS_2111",
+    "bundleid": "COISS_2111",
     "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
     [...]
   },
@@ -457,7 +457,7 @@ Examples:
 %CODE%
 {
   "PDS Constraints": {
-    "volumeid": "COISS_2111",
+    "bundleid": "COISS_2111",
     "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
     "productid": "1_W1866600688.122",
     "productcreationtime": "2017-02-25T09:50:35.000",
@@ -745,7 +745,7 @@ Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
 
 * Retrieve all files associated with images of Pan in volume COISS_2111 in JSON format.
 
-    %EXTLINK%%HOST%/opus/api/files.json?volumeid=COISS_2111&target=pan%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/files.json?bundleid=COISS_2111&target=pan%ENDEXTLINK%
 
     Return value:
 
@@ -1101,7 +1101,7 @@ Examples:
 
 * Retrieve information in JSON format about all sizes of images for observations 10-11 from Cassini ISS volume COISS_2002.
 
-    %EXTLINK%%HOST%/opus/api/images.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/images.json?bundleid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Return value:
 
@@ -1134,7 +1134,7 @@ Examples:
 
 * Retrieve information in JSON format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
-    %EXTLINK%%HOST%/opus/api/images/med.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/images/med.json?bundleid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Return value:
 
@@ -1195,7 +1195,7 @@ Example:
 
 * Retrieve information in CSV format about all sizes of images for observations 10-11 from Cassini ISS volume COISS_2002.
 
-    %EXTLINK%%HOST%/opus/api/images.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/images.csv?bundleid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Return value:
 
@@ -1207,7 +1207,7 @@ co-iss-n1460962415,https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/
 
 * Retrieve information in CSV format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
-    %EXTLINK%%HOST%/opus/api/images/med.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/images/med.csv?bundleid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Return value:
 
@@ -1236,7 +1236,7 @@ Example:
 
 * Retrieve information in HTML format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
-    %EXTLINK%%HOST%/opus/api/images/med.html?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/images/med.html?bundleid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Return value:
 

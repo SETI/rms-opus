@@ -335,7 +335,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_cocirs_volume_5408(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume COCIRS_5408"
-        q = QueryDict('volumeid=COCIRS_5408&qtype-volumeid=begins')
+        q = QueryDict('bundleid=COCIRS_5408&qtype-bundleid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -346,7 +346,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_cocirs_volume_0406(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume COCIRS_0406"
-        q = QueryDict('volumeid=COCIRS_0406&qtype-volumeid=begins')
+        q = QueryDict('bundleid=COCIRS_0406&qtype-bundleid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -368,7 +368,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_coiss_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume COISS"
-        q = QueryDict('planet=SATURN&volumeid=COISS&qtype-volumeid=begins')
+        q = QueryDict('planet=SATURN&bundleid=COISS&qtype-bundleid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -390,7 +390,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_couvis_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume COUVIS"
-        q = QueryDict('volumeid=COUVIS&qtype-volumeid=begins')
+        q = QueryDict('bundleid=COUVIS&qtype-bundleid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -492,7 +492,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_vgiss_obs_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VGISS_6210"
-        q = QueryDict('volumeid=VGISS_6210')
+        q = QueryDict('bundleid=VGISS_6210')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -503,7 +503,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_vgpps_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VG_2801"
-        q = QueryDict('volumeid=VG_2801')
+        q = QueryDict('bundleid=VG_2801')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -514,7 +514,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_vguvs_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VG_2802"
-        q = QueryDict('volumeid=VG_2802')
+        q = QueryDict('bundleid=VG_2802')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -525,7 +525,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_vgrss_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VG_2803"
-        q = QueryDict('volumeid=VG_2803')
+        q = QueryDict('bundleid=VG_2803')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
@@ -536,7 +536,7 @@ class resultsTests(TestCase):
 
     def test__get_triggered_tables_vgiss_prof_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VG_2810"
-        q = QueryDict('volumeid=VG_2810')
+        q = QueryDict('bundleid=VG_2810')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',

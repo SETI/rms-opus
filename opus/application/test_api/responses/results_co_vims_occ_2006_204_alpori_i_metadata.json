@@ -17,9 +17,10 @@
         "declination2": "7.407064"
     },
     "PDS Constraints": {
-        "volumeid": "COVIMS_8001",
+        "bundleid": "COVIMS_8001",
         "datasetid": "CO-SR-VIMS-4/5-OCC-V2.1",
         "productid": "VIMS_2006_204_ALPORI_I_TAU_01KM.TAB",
+        "primarylid": null,
         "productcreationtime": "2019-02-11T22:20:20.000",
         "primaryfilespec": "COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_01KM.LBL",
         "opusid": "co-vims-occ-2006-204-alpori-i",

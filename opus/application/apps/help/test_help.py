@@ -13,7 +13,7 @@ from help.views import (api_about,
                         api_faq,
                         api_gettingstarted,
                         api_splash,
-                        api_volumes)
+                        api_bundles)
 
 import settings
 
@@ -54,24 +54,24 @@ class helpTests(TestCase):
 
 
             ##########################################
-            ######### api_volumes UNIT TESTS #########
+            ######### api_bundles UNIT TESTS #########
             ##########################################
 
-    def test__api_volumes_no_meta(self):
-        "[test_help.py] api_volumes: no META"
+    def test__api_bundles_no_meta(self):
+        "[test_help.py] api_bundles: no META"
         request = self.factory.get('dummy')
         request.META = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/volumes.html'):
-            api_volumes(request, 'html')
+            r'Internal error \(No request was provided\) for /__help/bundles.html'):
+            api_bundles(request, 'html')
 
-    def test__api_volumes_no_get(self):
-        "[test_help.py] api_volumes: no GET"
-        request = self.factory.get('__help/volumes.html')
+    def test__api_bundles_no_get(self):
+        "[test_help.py] api_bundles: no GET"
+        request = self.factory.get('__help/bundles.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/volumes.html'):
-            api_volumes(request, 'html')
+            r'Internal error \(No request was provided\) for /__help/bundles.html'):
+            api_bundles(request, 'html')
 
 
             ######################################

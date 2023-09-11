@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "CORSS_8001",
+        "bundleid": "CORSS_8001",
         "datasetid": "CO-SR-RSS-4/5-OCC-V2.0",
         "productid": "RSS_2005_123_K26_I_TAU_01KM.LBL",
+        "primarylid": null,
         "productcreationtime": "2018-10-03T13:52:31.000",
         "primaryfilespec": "CORSS_8001/data/Rev007/Rev007I/Rev007I_RSS_2005_123_K26_I/RSS_2005_123_K26_I_TAU_01KM.LBL",
         "opusid": "co-rss-occ-2005-123-rev007-k26-i",

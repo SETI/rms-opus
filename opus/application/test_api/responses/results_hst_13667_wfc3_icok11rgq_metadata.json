@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "HSTI1_3667",
+        "bundleid": "HSTI1_3667",
         "datasetid": "HST-P-WFC3-5-ID13667-V1.1",
         "productid": "ICOK11RGQ",
+        "primarylid": null,
         "productcreationtime": "2016-12-14T11:54:39.000",
         "primaryfilespec": "HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL",
         "opusid": "hst-13667-wfc3-icok11rgq",

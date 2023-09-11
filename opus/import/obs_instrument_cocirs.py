@@ -28,7 +28,7 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
     def primary_filespec(self):
         # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
         filespec = self._index_col('SPECTRUM_FILE_SPECIFICATION')
-        return self.volume + '/' + filespec
+        return self.bundle + '/' + filespec
 
     def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.LBL', '.IMG')
@@ -182,8 +182,8 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
     def field_obs_instrument_cocirs_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_cocirs_volume_id(self):
-        return self.volume
+    def field_obs_instrument_cocirs_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_cocirs_instrument_id(self):
         return self.instrument_id

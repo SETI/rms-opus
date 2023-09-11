@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "VG_2803",
+        "bundleid": "VG_2803",
         "datasetid": "VG1/VG2-SR/UR-RSS-4-OCC-V1.0",
         "productid": "KM00_25/RU4P2S4I.TAB",
+        "primarylid": null,
         "productcreationtime": "2002-12-29T16:00:00.000",
         "primaryfilespec": "VG_2803/U_RINGS/EASYDATA/KM00_25/RU4P2S4I.LBL",
         "opusid": "vg-rss-2-u-occ-1986-024-s43-four-i",

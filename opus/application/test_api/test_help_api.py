@@ -49,15 +49,15 @@ class ApiHelpTests(TestCase, ApiTestHelper):
             url = '/__help/about.pdf'
             self._run_status_equal(url, 200)
 
-    def test__api_help_volumes(self):
-        "[test_help_api.py] /__help: volumes"
-        url = '/__help/volumes.html'
-        self._run_html_equal_file(url, 'api_help_volumes.html')
+    def test__api_help_bundles(self):
+        "[test_help_api.py] /__help: bundles"
+        url = '/__help/bundles.html'
+        self._run_html_equal_file(url, 'api_help_bundles.html')
 
-    def test__api_help_volumes_pdf(self):
-        "[test_help_api.py] /__help: volumes pdf"
+    def test__api_help_bundles_pdf(self):
+        "[test_help_api.py] /__help: bundles pdf"
         if platform.system() == 'Linux': # pragma: no cover
-            url = '/__help/volumes.pdf'
+            url = '/__help/bundles.pdf'
             self._run_status_equal(url, 200)
 
     def test__api_help_faq(self):

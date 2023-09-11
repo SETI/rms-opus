@@ -37,7 +37,7 @@ class ObsMissionVoyager(ObsCommon):
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "DATA/C13854XX/C1385455_CALIB.LBL"
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.volume + '/' + filespec
+        return self.bundle + '/' + filespec
 
 
     ################################
@@ -61,8 +61,8 @@ class ObsMissionVoyager(ObsCommon):
     def field_obs_mission_voyager_opus_id(self):
         return self.opus_id
 
-    def field_obs_mission_voyager_volume_id(self):
-        return self.volume
+    def field_obs_mission_voyager_bundle_id(self):
+        return self.bundle
 
     def field_obs_mission_voyager_instrument_id(self):
         return self.instrument_id

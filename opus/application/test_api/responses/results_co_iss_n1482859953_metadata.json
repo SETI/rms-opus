@@ -17,9 +17,10 @@
         "declination2": "17.147198"
     },
     "PDS Constraints": {
-        "volumeid": "COISS_2008",
+        "bundleid": "COISS_2008",
         "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
         "productid": "1_N1482859953.121",
+        "primarylid": null,
         "productcreationtime": "2004-12-28T15:44:10.000",
         "primaryfilespec": "COISS_2008/data/1482676284_1483152379/N1482859953_2.IMG",
         "opusid": "co-iss-n1482859953",

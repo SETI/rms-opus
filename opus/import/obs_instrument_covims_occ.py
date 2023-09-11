@@ -112,8 +112,8 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
     def field_obs_instrument_covims_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_covims_volume_id(self):
-        return self.volume
+    def field_obs_instrument_covims_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_covims_instrument_id(self):
         return self.instrument_id

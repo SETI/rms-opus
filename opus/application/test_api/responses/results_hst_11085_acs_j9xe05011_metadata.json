@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "HSTJ1_1085",
+        "bundleid": "HSTJ1_1085",
         "datasetid": "HST-J-ACS-5-ID11085-V1.1",
         "productid": "J9XE05011",
+        "primarylid": null,
         "productcreationtime": "2013-06-17T15:42:22.000",
         "primaryfilespec": "HSTJ1_1085/DATA/VISIT_05/J9XE05011.LBL",
         "opusid": "hst-11085-acs-j9xe05011",

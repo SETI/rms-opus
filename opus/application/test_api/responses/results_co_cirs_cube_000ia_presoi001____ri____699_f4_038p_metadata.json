@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "COCIRS_0406",
+        "bundleid": "COCIRS_0406",
         "datasetid": "CO-S-CIRS-2/3/4-TSDR-V3.2",
         "productid": "000IA_PRESOI001____RI____699_F4_038P.LBL",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL",
         "opusid": "co-cirs-cube-000ia_presoi001____ri____699_f4_038p",

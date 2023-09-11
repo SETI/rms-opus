@@ -17,11 +17,11 @@ General Questions:
 
 
             For more information about OPUS, including which spacecraft and
-            instruments are available, see <b>About</b> under the
-            <b>Help</b> menu. For more information about which particular
-            data volumes are available in OPUS, see <B>Data Volumes</b> under
-            the <b>Help</b> menu. For more information about the third-party
-            API, see <b>API Guide</b> under the <b>Help</b> menu.
+            instruments are available, see <b>About</b> under the <b>Help</b>
+            menu. For more information about which particular bundles/volumes
+            are available in OPUS, see <B>Bundles/Volumes</b> under the
+            <b>Help</b> menu. For more information about the third-party API,
+            see <b>API Guide</b> under the <b>Help</b> menu.
     -
         Q: >
             What's new in OPUS3?
@@ -277,7 +277,7 @@ Using Search:
             <h4>Method 2</h4>
             <ol>
             <li>Restrict the search to whatever mission, instrument, time
-            period, volume, etc. that you are interested in.</li>
+            period, bundle/volume, etc. that you are interested in.</li>
             <li>Under <b>Surface Geometry Constraints</b> select the
             <b>Surface Geometry Target Selector</b> search field. Select the
             first body in the <b>Surface Geometry Target Selector</b> search
@@ -302,7 +302,7 @@ Using Search:
             <h4>Method 3</h4>
             <ol>
             <li>Restrict the search to whatever mission, instrument, time
-            period, volume, etc. that you are interested in.</li>
+            period, bundle/volume, etc. that you are interested in.</li>
             <li>Under <b>Surface Geometry Constraints</b> select the
             <b>Surface Geometry Target Selector</b> search field. Select the
             first body in the <b>Surface Geometry Target Selector</b> search
@@ -328,7 +328,7 @@ Using Search:
             <ol>
             <li>Restrict the search to the Cassini mission or a particular
             Cassini instrument. You can also restrict your search by time
-            period, volume, etc. at this time.</li>
+            period, bundle/volume, etc. at this time.</li>
             <li>Select the <b>Observation Name</b> search field
             under <b>Cassini Mission Constraints</b>. Enter "MUTUALEVE" in the
             search box using the <b>contains</b> search type.</li>

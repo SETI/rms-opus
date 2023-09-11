@@ -29,7 +29,7 @@
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
-        "field_name": "volume_id",
+        "field_name": "bundle_id",
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,

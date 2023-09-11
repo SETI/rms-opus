@@ -30,15 +30,15 @@
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
-        "field_name": "volume_id",
+        "field_name": "bundle_id",
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
-            "volume_id"
+            "bundle_id"
         ],
-        "comments": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The bundle_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "instrument_id",

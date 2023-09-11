@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "NHJUMV_1001",
+        "bundleid": "NHJUMV_1001",
         "datasetid": "NH-J-MVIC-2-JUPITER-V2.0",
         "productid": "MC0_0032528036_0X536_ENG_1",
+        "primarylid": null,
         "productcreationtime": "2009-02-27T03:12:24.000",
         "primaryfilespec": "NHJUMV_1001/data/20070131_003252/mc0_0032528036_0x536_eng_1.lbl",
         "opusid": "nh-mvic-mc0_0032528036",
