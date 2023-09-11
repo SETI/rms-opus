@@ -31,7 +31,7 @@
     },
     {
         "field_name": "bundle_id",
-        "field_type": "char11",
+        "field_type": "char75",
         "field_key": true,
         "field_notnull": true,
         "data_source": [
