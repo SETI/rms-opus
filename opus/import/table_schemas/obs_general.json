@@ -30,7 +30,7 @@
     },
     {
         "field_name": "bundle_id",
-        "field_type": "char11",
+        "field_type": "char75",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE"
