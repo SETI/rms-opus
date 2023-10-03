@@ -42,5 +42,5 @@ six==1.16.0
 sqlparse==0.4.3
 terminaltables==3.1.10
 toml==0.10.2
-urllib3==1.26.12
+urllib3==1.26.17
 zipp==3.10.0
