@@ -45,7 +45,7 @@
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "BUNDLE_ID",
-        "definition": "The PDS4 bundle or PDS3 volume containing the observation. PDS4 bundles are semantically-meaningful constructs used to group similar observations. PDS3 volumes are artificial constructs used to group consecutive observations into manageable chunks. They are formatted as MMIII_NNNN, where MMIII is an abbreviation for the mission and instrument (e.g. COISS for Cassini Orbiter ISS) and NNNN is a four-digit volume number. Hubble volumes have 5-digit volume numbers and are formatted as HSTIN_NNNN. See Help/Volumes for the list of volumes available in OPUS.",
+        "definition": "The PDS4 bundle or PDS3 volume containing the observation. PDS4 bundles are semantically-meaningful constructs used to group similar observations; the bundle name is descriptive and part of the LID for each included data product. PDS3 volumes are artificial constructs used to group consecutive observations into manageable chunks. They are formatted as MMIII_NNNN, where MMIII is an abbreviation for the mission and instrument (e.g. COISS for Cassini Orbiter ISS) and NNNN is a four-digit volume number. Hubble volumes have 5-digit volume numbers and are formatted as HSTIN_NNNN. See Bundles/Volumes under Help for the list of bundles and volumes available in OPUS.",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
