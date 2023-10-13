@@ -17,7 +17,7 @@ from opus_support import (get_single_parse_function,
 
 from config_data import *
 from config_targets import *
-import config_bundle_info as config_bundle_info
+import config_bundle_info
 import do_cart
 import do_django
 import impglobals
