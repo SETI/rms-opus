@@ -1,0 +1,17 @@
+coverage
+django
+django-storages
+djangorestframework
+hurry.filesize
+mistune
+mysqlclient
+numpy
+oyaml
+pdfkit
+pillow
+pip-tools
+pyparsing
+pytest
+qrcode
+regex
+requests
