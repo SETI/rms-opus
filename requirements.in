@@ -5,13 +5,13 @@ djangorestframework
 hurry.filesize
 mistune
 mysqlclient
-numpy
-oyaml
+numpy >= 1.26
 pdfkit
-pillow
+pillow >= 10.1
 pip-tools
 pyparsing
 pytest
+pyyaml >= 6.0.1
 qrcode
 regex
 requests
