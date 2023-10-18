@@ -235,95 +235,95 @@ def HTTP404_NO_REQUEST(s):
     return f'Internal error (No request was provided) for {s}'
 
 def HTTP404_BAD_OR_MISSING_REQNO(r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Internal error (Bad or missing reqno) for {r}'
 
 def HTTP404_MISSING_OPUS_ID(r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Missing OPUSID for {r}'
 
 def HTTP404_UNKNOWN_FORMAT(fmt, r):
-    if type(r) != str: # pragma: no cover - internal configuration failure
+    if not isinstance(r, str): # pragma: no cover - internal configuration failure
         r = r.path
     return f'Internal error (Unknown return format "{fmt}") for {r}'
 
 def HTTP404_BAD_OR_MISSING_RANGE(r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Internal error (Bad or missing range) for {r}'
 
 def HTTP404_BAD_DOWNLOAD(download, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Badly formatted download argument "{download}" for {r}'
 
 def HTTP404_BAD_RECYCLEBIN(recyclebin, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return (f'Internal error (Badly formatted recyclebin argument '
             f'"{recyclebin}") for {r}')
 
 def HTTP404_BAD_COLLAPSE(collapse, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Badly formatted collapse argument "{collapse}" for {r}'
 
 def HTTP404_BAD_LIMIT(limit, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Badly formatted limit "{limit}" for {r}'
 
 def HTTP404_BAD_STARTOBS(startobs, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Badly formatted startobs "{startobs}" for {r}'
 
 def HTTP404_BAD_PAGENO(pageno, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Badly formatted page number "{pageno}" for {r}'
 
 def HTTP404_BAD_OFFSET(offset, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Bad computed offset "{offset}" for {r}'
 
 def HTTP404_SEARCH_PARAMS_INVALID(r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Search parameters invalid for {r}'
 
 def HTTP404_UNKNOWN_SLUG(slug, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     if slug is None:
         return f'Unknown metadata field slug for {r}'
     return f'Unknown metadata field "{slug}" for {r}'
 
 def HTTP404_UNKNOWN_UNITS(units, slug, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Unknown units "{units}" for metadata field "{slug}" for {r}'
 
 def HTTP404_UNKNOWN_RING_OBS_ID(ringobsid, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Unknown RINGOBSID "{ringobsid}" for {r}'
 
 def HTTP404_UNKNOWN_OPUS_ID(opusid, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Unknown OPUSID "{opusid}" for {r}'
 
 def HTTP404_UNKNOWN_CATEGORY(r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Unknown category for {r}'
 
 def HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, r):
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return f'Unknown DOWNLOAD FILE FORMAT "{fmt}" for {r}'
 
@@ -333,17 +333,17 @@ def wrap_http500_string(s): # pragma: no cover - internal debugging
     return ret
 
 def HTTP500_SEARCH_CACHE_FAILED(r): # pragma: no cover - database error
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return wrap_http500_string(f'Internal database error for {r}')
 
 def HTTP500_DATABASE_ERROR(r): # pragma: no cover - database error
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return wrap_http500_string(
                 f'Internal database error for {r}')
 
 def HTTP500_INTERNAL_ERROR(r): # pragma: no cover - internal error
-    if type(r) != str:
+    if not isinstance(r, str):
         r = r.path
     return wrap_http500_string(f'Unspecified internal server error for {r}')

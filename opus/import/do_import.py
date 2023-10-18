@@ -464,7 +464,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         else:
             disp_order = label
 
-    if type(disp_order) == int or type(disp_order) == float:
+    if isinstance(disp_order, (int, float)):
         disp_order = '%030.9f' % disp_order
     if len(mult_table) == 0:
         next_id = 0
@@ -1299,7 +1299,7 @@ def import_observation_table(instrument_obj,
                             column_val = None
                     if column_val is not None and the_val is not None:
                         val_sentinel = table_column.get('val_sentinel', None)
-                        if type(val_sentinel) != list:
+                        if not isinstance(val_sentinel, list):
                             val_sentinel = [val_sentinel]
                         if the_val in val_sentinel:
                             column_val = None
