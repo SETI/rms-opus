@@ -555,7 +555,7 @@ def import_one_volume(volume_id):
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
     impglobals.CURRENT_PRIMARY_FILESPEC = None
 
-    volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
+    volume_pdsfile = pdsfile.pds3file.Pds3File.from_path(volume_id)
 
     if not volume_pdsfile.is_volume:
         import_util.log_error(f'{volume_id} is not a volume!')
@@ -668,7 +668,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                 valid_rows[row_no] = False
             good_row = None
             try:
-                deriv_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
+                deriv_filespec = pdsfile.pds3file.Pds3File.from_opus_id(opus_id).abspath
             except ValueError:
                 impglobals.CURRENT_INDEX_ROW_NUMBER = row_no
                 import_util.log_nonrepeating_warning(
@@ -730,7 +730,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
 
     if index_paths:
         for index_path in index_paths:
-            assoc_pdsfile = pdsfile.PdsFile.from_abspath(index_path)
+            assoc_pdsfile = pdsfile.pds3file.Pds3File.from_abspath(index_path)
             try:
                 basenames = assoc_pdsfile.childnames
             except KeyError:
@@ -1416,7 +1416,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     rows = []
 
     try:
-        pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
+        pdsf = pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
     except ValueError:
         import_util.log_nonrepeating_error(
                                     f'Failed to convert filespec "{filespec}"')

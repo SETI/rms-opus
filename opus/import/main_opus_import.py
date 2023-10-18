@@ -32,7 +32,7 @@ sys.path.insert(0, PROJECT_ROOT)
 
 import pdslogger # noqa: E402
 pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
-import pdsfile # noqa: E402
+from pdsfile import PdsFile, Pds3File, Pds4File
 
 from config_data import * # noqa: E402
 import do_cart # noqa: E402
@@ -408,17 +408,19 @@ try: # Top-level exception handling so we always log what's going on
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
     if not impglobals.ARGUMENTS.dont_use_shelves_only:
-        pdsfile.use_shelves_only()
-    pdsfile.require_shelves(True)
+        Pds3File.use_shelves_only()
+        Pds4File.use_shelves_only()
+    PdsFile.require_shelves(True)
     if impglobals.ARGUMENTS.override_pds_data_dir:
-        pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
+        Pds3File.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:
-        pdsfile.preload(PDS_DATA_DIR)
+        Pds3File.preload(PDS_DATA_DIR)
 
     # We do this after the preload because we don't want to see all the preload
     # debug messages.
     if not impglobals.ARGUMENTS.no_log_pdsfile:
-        import_util.pdsfile.set_logger(impglobals.LOGGER)
+        Pds3File.set_logger(impglobals.LOGGER)
+        Pds4File.set_logger(impglobals.LOGGER)
 
     try:
         impglobals.DATABASE = importdb.get_db(

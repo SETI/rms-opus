@@ -133,7 +133,7 @@ def yield_import_volume_ids(arguments):
             if volume_desc in exclude_list:
                 continue
             try:
-                volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
+                volume_pdsfile = pdsfile.pds3file.Pds3File.from_path(volume_desc)
             except (KeyError, ValueError):
                 any_invalid = True
                 impglobals.LOGGER.log('fatal',
@@ -153,7 +153,7 @@ def yield_import_volume_ids(arguments):
         # Expand the volsets
         new_voldescs = []
         for volume_desc in volume_descs:
-            volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
+            volume_pdsfile = pdsfile.pds3file.Pds3File.from_path(volume_desc)
             if volume_pdsfile.is_volset_dir:
                 childnames = volume_pdsfile.childnames
                 # Make sure 2001 is imported first and then 1001 second for each

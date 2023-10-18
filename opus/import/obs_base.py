@@ -388,7 +388,7 @@ class ObsBase(object):
         # .LBL and whatever the data file extension is. So we do the conversion
         # here.
         filespec = self.convert_filespec_from_lbl(filespec)
-        return pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
+        return pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
 
 
     # Helpers for time fields
