@@ -2,6 +2,7 @@ coverage
 django
 django-storages
 djangorestframework
+flake8
 hurry.filesize
 mistune
 mysqlclient

@@ -27,12 +27,16 @@ django-storages==1.13.1
     # via -r requirements.in
 djangorestframework==3.14.0
     # via -r requirements.in
+flake8==6.1.0
+    # via -r requirements.in
 hurry-filesize==0.9
     # via -r requirements.in
 idna==3.4
     # via requests
 iniconfig==1.1.1
     # via pytest
+mccabe==0.7.0
+    # via flake8
 mistune==2.0.4
     # via -r requirements.in
 mysqlclient==2.1.1
@@ -51,6 +55,10 @@ pip-tools==7.3.0
     # via -r requirements.in
 pluggy==1.0.0
     # via pytest
+pycodestyle==2.11.1
+    # via flake8
+pyflakes==3.1.0
+    # via flake8
 pyparsing==3.0.9
     # via
     #   -r requirements.in
