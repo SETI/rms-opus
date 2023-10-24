@@ -42,19 +42,18 @@
 5. Clone the repo
 
         cd <YOUR_PROJECTS_DIRECTORY>
-        git clone https://github.com/SETI/pds-opus.git
+        git clone https://github.com/SETI/rms-opus.git
 
-        However, it is a better practice to fork the repo first into your private GitHub account, and then clone from there.  
+        However, it is a better practice to fork the repo first into your private GitHub account, and then clone from there.
 
 6. Clone the other repos that are needed for support
 
         cd <YOUR_PROJECTS_DIRECTORY>
-        git clone https://github.com/SETI/pds-tools.git
-        git clone https://github.com/SETI/pds-webtools.git
+        git clone https://github.com/SETI/rms-webtools.git
 
 7. Create a virtualenv and install the dependencies
 
-        cd <PDS-OPUS DIRECTORY>
+        cd <RMS-OPUS DIRECTORY>
         virtualenv --python=<YOUR PYTHON 3.x EXECUTABLE> venv
 
         source venv/bin/activate
@@ -64,7 +63,7 @@
 
   - Copy the template:
 
-        cd <PDS-OPUS DIRECTORY>
+        cd <RMS-OPUS DIRECTORY>
         cp opus_secrets_template.py opus_secrets.py
 
     Update opus_secrets.py as needed for your system.
@@ -75,7 +74,7 @@
 
 10. Run migrate:
 
-    cd <PDS-OPUS DIRECTORY>/opus/application
+    cd <RMS-OPUS DIRECTORY>/opus/application
     python manage.py migrate
 
 11. Run the webserver

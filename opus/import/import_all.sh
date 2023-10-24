@@ -14,7 +14,7 @@ echo "***** About to import ALL PDS DATA into a new database *****"
 echo "************************************************************"
 echo
 echo "The current production database is:"
-grep "^DB_SCHEMA_NAME" /opus/src/pds-opus/opus_secrets.py
+grep "^DB_SCHEMA_NAME" /opus/src/rms-opus/opus_secrets.py
 echo
 echo "About to ERASE and import to this database:" $1
 echo "with these SQL parameters:" $2
@@ -26,7 +26,7 @@ if [ "$yn" != "YES" ]; then
     echo "Aborting"
     exit 1
 fi
-source ~/src/pds-opus/p3venv/activate
+source ~/src/rms-opus/p3venv/activate
 pip install -r ../../requirements-python3.txt
 echo "Running import with nohup - check nohup.out for status"
 nohup ./_import_all_internal.sh "$1" "$2" "$3" &

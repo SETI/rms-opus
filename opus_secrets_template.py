@@ -32,16 +32,16 @@ DB_PASSWORD = '<DB_PASSWORD>'
 # volumes, calibrated, metadata, previews, and diagrams.
 PDS_DATA_DIR = '<HOLDING_DIR>'
 
-# The directory where pds-opus lives.
-PDS_OPUS_PATH = '<PDS_OPUS_PATH>'
+# The directory where rms-opus lives.
+RMS_OPUS_PATH = '<RMS_OPUS_PATH>'
 
-# The directory where the pds-opus library lives. This should normally be
-# .../pds-opus/lib
-PDS_OPUS_LIB_PATH = os.path.join(PDS_OPUS_PATH, 'lib')
+# The directory where the rms-opus library lives. This should normally be
+# .../rms-opus/lib
+RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')
 
-# The directory where the pds-webtools repo lives. This should
-# normally be .../pds-webtools
-PDS_WEBTOOLS_PATH = '<PDS_WEBTOOLS_PATH>'
+# The directory where the rms-webtools repo lives. This should
+# normally be .../rms-webtools
+RMS_WEBTOOLS_PATH = '<RMS_WEBTOOLS_PATH>'
 
 
 ############################################
@@ -73,7 +73,7 @@ SECRET_KEY = '<SECRET_KEY>'
 STATIC_ROOT = '<STATIC_ROOT>'
 
 # Where static files are served from if this is a non-production environment,
-# usually .../pds-opus/opus/application/static_media
+# usually .../rms-opus/opus/application/static_media
 # If this is a production environment, this should be the same as STATIC_ROOT
 OPUS_STATIC_ROOT = '<OPUS_STATIC_ROOT>'
 
