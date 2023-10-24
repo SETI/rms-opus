@@ -82,13 +82,13 @@ regex==2022.10.31
     # via -r requirements.in
 requests==2.28.1
     # via -r requirements.in
-rms-julian==0.0.3
+rms-julian==0.0.4
     # via
     #   -r requirements.in
     #   rms-pdstable
 rms-pdsparser==0.0.2
     # via rms-pdstable
-rms-pdstable==0.0.1
+rms-pdstable==0.0.2
     # via -r requirements.in
 rms-textkernel==0.0.2
     # via rms-julian
