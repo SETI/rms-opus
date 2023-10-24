@@ -748,7 +748,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                     continue
                 assoc_label_path = os.path.join(index_path, basename)
                 if basename_upper.endswith('INVENTORY.LBL'):
-                    # The inventory files are in CSV format, but the pdstable.py
+                    # The inventory files are in CSV format, but the pdstable
                     # module can't read non-fixed-length records so we fake it up
                     # ourselves here.
                     table_filename = (assoc_label_path.replace('.LBL', '.CSV')

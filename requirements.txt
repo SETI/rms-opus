@@ -42,7 +42,10 @@ mistune==2.0.4
 mysqlclient==2.1.1
     # via -r requirements.in
 numpy==1.26.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   rms-julian
+    #   rms-textkernel
 packaging==21.3
     # via
     #   build
@@ -63,6 +66,8 @@ pyparsing==3.0.9
     # via
     #   -r requirements.in
     #   packaging
+    #   rms-julian
+    #   rms-textkernel
 pyproject-hooks==1.0.0
     # via build
 pytest==7.2.0
@@ -77,6 +82,16 @@ regex==2022.10.31
     # via -r requirements.in
 requests==2.28.1
     # via -r requirements.in
+rms-julian==0.0.3
+    # via
+    #   -r requirements.in
+    #   rms-pdstable
+rms-pdsparser==0.0.2
+    # via rms-pdstable
+rms-pdstable==0.0.1
+    # via -r requirements.in
+rms-textkernel==0.0.2
+    # via rms-julian
 sqlparse==0.4.3
     # via django
 urllib3==1.26.12

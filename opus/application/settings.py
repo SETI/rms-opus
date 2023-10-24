@@ -29,7 +29,6 @@ sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
 from opus_secrets import *
 
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
-sys.path.insert(0, PDS_TOOLS_PATH)
 sys.path.insert(0, PDS_WEBTOOLS_PATH)
 sys.path.insert(0, PDS_OPUS_LIB_PATH)
 

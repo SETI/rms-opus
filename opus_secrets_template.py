@@ -43,10 +43,6 @@ PDS_OPUS_LIB_PATH = os.path.join(PDS_OPUS_PATH, 'lib')
 # normally be .../pds-webtools
 PDS_WEBTOOLS_PATH = '<PDS_WEBTOOLS_PATH>'
 
-# The directory where the pds-tools repo lives. This should
-# normally be .../pds-tools
-PDS_TOOLS_PATH = '<PDS_TOOLS_PATH>'
-
 
 ############################################
 ### NEEDED FOR THE MAIN OPUS APPLICATION ###
