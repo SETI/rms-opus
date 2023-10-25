@@ -153,13 +153,13 @@ DICTIONARY_TERM_URL = '<DICTIONARY_URL>'
 ####################################
 
 # The pdsdd.full file including path
-DICTIONARY_PDSDD_FILE = os.path.join(PDS_OPUS_PATH,
+DICTIONARY_PDSDD_FILE = os.path.join(RMS_OPUS_PATH,
                                      'dictionary/pdsdd.full')
 
 # The contexts.csv file including path
-DICTIONARY_CONTEXTS_FILE = os.path.join(PDS_OPUS_PATH,
+DICTIONARY_CONTEXTS_FILE = os.path.join(RMS_OPUS_PATH,
                                         'dictionary/contexts.csv')
 
 # The location of the OPUS .json table_schema files
-DICTIONARY_JSON_SCHEMA_PATH = os.path.join(PDS_OPUS_PATH,
+DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH,
                                            'opus/import/table_schemas')

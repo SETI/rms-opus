@@ -4,26 +4,24 @@
 #
 #    pip-compile
 #
-asgiref==3.5.2
+asgiref==3.7.2
     # via django
-attrs==22.1.0
-    # via pytest
 build==1.0.3
     # via pip-tools
-certifi==2022.9.24
+certifi==2023.7.22
     # via requests
-charset-normalizer==2.1.1
+charset-normalizer==3.3.1
     # via requests
 click==8.1.7
     # via pip-tools
 coverage==7.3.2
     # via -r requirements.in
-django==4.1.3
+django==4.2.6
     # via
     #   -r requirements.in
     #   django-storages
     #   djangorestframework
-django-storages==1.13.1
+django-storages==1.14.2
     # via -r requirements.in
 djangorestframework==3.14.0
     # via -r requirements.in
@@ -33,20 +31,20 @@ hurry-filesize==0.9
     # via -r requirements.in
 idna==3.4
     # via requests
-iniconfig==1.1.1
+iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
-mistune==2.0.4
+mistune==3.0.2
     # via -r requirements.in
-mysqlclient==2.1.1
+mysqlclient==2.2.0
     # via -r requirements.in
 numpy==1.26.1
     # via
     #   -r requirements.in
     #   rms-julian
     #   rms-textkernel
-packaging==21.3
+packaging==23.2
     # via
     #   build
     #   pytest
@@ -56,45 +54,48 @@ pillow==10.1.0
     # via -r requirements.in
 pip-tools==7.3.0
     # via -r requirements.in
-pluggy==1.0.0
+pluggy==1.3.0
     # via pytest
 pycodestyle==2.11.1
     # via flake8
 pyflakes==3.1.0
     # via flake8
-pyparsing==3.0.9
+pyparsing==3.1.1
     # via
     #   -r requirements.in
-    #   packaging
     #   rms-julian
     #   rms-textkernel
+pypng==0.20220715.0
+    # via qrcode
 pyproject-hooks==1.0.0
     # via build
-pytest==7.2.0
+pytest==7.4.3
     # via -r requirements.in
-pytz==2022.6
+pytz==2023.3.post1
     # via djangorestframework
 pyyaml==6.0.1
     # via -r requirements.in
-qrcode==7.3.1
+qrcode==7.4.2
     # via -r requirements.in
-regex==2022.10.31
+regex==2023.10.3
     # via -r requirements.in
-requests==2.28.1
+requests==2.31.0
     # via -r requirements.in
-rms-julian==0.0.4
+rms-julian==0.0.5
     # via
     #   -r requirements.in
     #   rms-pdstable
-rms-pdsparser==0.0.2
+rms-pdsparser==0.0.3
     # via rms-pdstable
-rms-pdstable==0.0.2
+rms-pdstable==0.0.3
     # via -r requirements.in
-rms-textkernel==0.0.2
+rms-textkernel==0.0.3
     # via rms-julian
-sqlparse==0.4.3
+sqlparse==0.4.4
     # via django
-urllib3==1.26.12
+typing-extensions==4.8.0
+    # via qrcode
+urllib3==2.0.7
     # via requests
 wheel==0.41.2
     # via pip-tools
