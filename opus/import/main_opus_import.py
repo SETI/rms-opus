@@ -22,9 +22,8 @@ sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
 
 from opus_secrets import * # noqa: E402
 
-sys.path.insert(0, PDS_WEBTOOLS_PATH)
-sys.path.insert(0, PDS_TOOLS_PATH)
-sys.path.insert(0, PDS_OPUS_LIB_PATH)
+sys.path.insert(0, RMS_WEBTOOLS_PATH)
+sys.path.insert(0, RMS_OPUS_LIB_PATH)
 
 IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.dirname(IMPORT_ROOT)

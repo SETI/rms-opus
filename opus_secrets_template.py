@@ -32,20 +32,16 @@ DB_PASSWORD = '<DB_PASSWORD>'
 # volumes, calibrated, metadata, previews, and diagrams.
 PDS_DATA_DIR = '<HOLDING_DIR>'
 
-# The directory where pds-opus lives.
-PDS_OPUS_PATH = '<PDS_OPUS_PATH>'
+# The directory where rms-opus lives.
+RMS_OPUS_PATH = '<RMS_OPUS_PATH>'
 
-# The directory where the pds-opus library lives. This should normally be
-# .../pds-opus/lib
-PDS_OPUS_LIB_PATH = os.path.join(PDS_OPUS_PATH, 'lib')
+# The directory where the rms-opus library lives. This should normally be
+# .../rms-opus/lib
+RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')
 
-# The directory where the pds-webtools repo lives. This should
-# normally be .../pds-webtools
-PDS_WEBTOOLS_PATH = '<PDS_WEBTOOLS_PATH>'
-
-# The directory where the pds-tools repo lives. This should
-# normally be .../pds-tools
-PDS_TOOLS_PATH = '<PDS_TOOLS_PATH>'
+# The directory where the rms-webtools repo lives. This should
+# normally be .../rms-webtools
+RMS_WEBTOOLS_PATH = '<RMS_WEBTOOLS_PATH>'
 
 
 ############################################
@@ -77,7 +73,7 @@ SECRET_KEY = '<SECRET_KEY>'
 STATIC_ROOT = '<STATIC_ROOT>'
 
 # Where static files are served from if this is a non-production environment,
-# usually .../pds-opus/opus/application/static_media
+# usually .../rms-opus/opus/application/static_media
 # If this is a production environment, this should be the same as STATIC_ROOT
 OPUS_STATIC_ROOT = '<OPUS_STATIC_ROOT>'
 
@@ -157,13 +153,13 @@ DICTIONARY_TERM_URL = '<DICTIONARY_URL>'
 ####################################
 
 # The pdsdd.full file including path
-DICTIONARY_PDSDD_FILE = os.path.join(PDS_OPUS_PATH,
+DICTIONARY_PDSDD_FILE = os.path.join(RMS_OPUS_PATH,
                                      'dictionary/pdsdd.full')
 
 # The contexts.csv file including path
-DICTIONARY_CONTEXTS_FILE = os.path.join(PDS_OPUS_PATH,
+DICTIONARY_CONTEXTS_FILE = os.path.join(RMS_OPUS_PATH,
                                         'dictionary/contexts.csv')
 
 # The location of the OPUS .json table_schema files
-DICTIONARY_JSON_SCHEMA_PATH = os.path.join(PDS_OPUS_PATH,
+DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH,
                                            'opus/import/table_schemas')

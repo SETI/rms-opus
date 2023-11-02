@@ -1809,7 +1809,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             # obs_surface_geometry_name to continue to the UI
             continue
         new_div_list.append(div)
-        if type(div) == dict:
+        if isinstance(div, dict):
             div['first_category'] = first_category
         else:
             div.first_category = first_category

@@ -1,7 +1,7 @@
 #/bin/sh
 #
 # We assume a directory structure like:
-# .../opus/src/pds-opus
+# .../opus/src/rms-opus
 # .../opus/opus_venv
 #
 source ../../../opus_venv/bin/activate
