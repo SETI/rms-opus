@@ -796,7 +796,7 @@ def parse_time(iso, unit=None, **kwargs):
         elif unit == 'mjed':
             iso = 'MJED' + iso
     try:
-        (day, sec, time_type) = julian.day_sec_type_from_string(iso)
+        (day, sec, time_type) = julian.day_sec_from_string(iso, timesys=True)
     except:
         raise ValueError('Invalid time syntax: '+iso)
     if time_type != 'UTC':
@@ -821,7 +821,7 @@ def format_time_jd(tai, **kwargs):
     return 'JD%.8f' % jd
 
 def format_time_jed(tai, **kwargs):
-    jed = julian.jed_from_tai(tai)
+    jed = julian.jd_from_time(tai, timesys='TAI', jdsys='TDB')
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
@@ -836,7 +836,7 @@ def format_time_mjd(tai, **kwargs):
     return 'MJD%.8f' % mjd
 
 def format_time_mjed(tai, **kwargs):
-    mjed = julian.mjed_from_tai(tai)
+    mjed = julian.mjd_from_time(tai, timesys='TAI', mjdsys='TDB')
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
@@ -887,17 +887,17 @@ class TimeTest(unittest.TestCase):
 
     def test_parse(self):
         """Time parse"""
-        self.assertEqual(parse_time('1999-12-31T23:59:28.000'), 0)
-        self.assertEqual(parse_time('2019-005T10:39:23.000'), 600000000)
+        self.assertEqual(parse_time('2000-01-01T11:59:28.000'), 0)
+        self.assertEqual(parse_time('2019-005T22:39:23.000'), 600000000)
         self.assertEqual(julian.jd_from_time(julian.time_from_jd(0)), 0)
         self.assertAlmostEqual(julian.jd_from_time(julian.time_from_jd(1000.123)),
                                1000.123)
         self.assertEqual(julian.mjd_from_time(julian.time_from_mjd(0)), 0)
         self.assertAlmostEqual(julian.mjd_from_time(julian.time_from_mjd(1000.123)),
                                1000.123)
-        self.assertAlmostEqual(parse_time('JD2451544.49962963'), 0, places=3)
-        self.assertAlmostEqual(parse_time('JD2458488.94401620'), 600000000, places=3)
-        self.assertAlmostEqual(parse_time('2458488.94401620', unit='jd'), 600000000,
+        self.assertAlmostEqual(parse_time('JD2451544.99962963'), 0, places=3)
+        self.assertAlmostEqual(parse_time('JD2458489.44401620'), 600000000, places=3)
+        self.assertAlmostEqual(parse_time('2458489.44401620', unit='jd'), 600000000,
                                places=3)
         self.assertAlmostEqual(parse_time('JED2451544.49962963'), -64.18391461631109,
                                places=3)
@@ -2122,10 +2122,10 @@ class UnitConversionTests(unittest.TestCase):
         self.assertIsNone(format_unit_value(None, None, 'datetime', 'ydhms'))
         self.assertEqual(format_unit_value(600000000, None, 'datetime',
                                            'ydhms'),
-                         '2019-005T10:39:23.000')
+                         '2019-005T22:39:23.000')
         self.assertEqual(format_unit_value(600000000, None, 'datetime',
                                            'ymdhms'),
-                         '2019-01-05T10:39:23.000')
+                         '2019-01-05T22:39:23.000')
         self.assertEqual(format_unit_value(100.1, '.3f', 'duration', 'seconds'),
                          '100.1')
         self.assertEqual(format_unit_value(100.1, '.3f', None, None),
@@ -2166,7 +2166,7 @@ class UnitConversionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_unit_value('inf', '.3f', 'duration', 'milliseconds')
         self.assertEqual(parse_unit_value('2019-01-05T10:39:23.000', None, 'datetime',
-                                          'YMDhms'), 600000000)
+                                          'YMDhms'), 599956800.0)
 
     def test_parse_form_type(self):
         """Test parse_form_type."""
