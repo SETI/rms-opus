@@ -22,9 +22,9 @@ if _HAS_MEMCACHE:
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
-PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
+RMS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
+sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
 
 from opus_secrets import *
 
