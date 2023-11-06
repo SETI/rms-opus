@@ -1,5 +1,5 @@
 #!/bin/bash
-cd <DIR>/pds-opus/log_analyzer
+cd <DIR>/rms-opus/log_analyzer
 source <VENV>/bin/activate
 rm -rf /tmp/log_analyzer_results_temp
 mkdir /tmp/log_analyzer_results_temp

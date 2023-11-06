@@ -25,7 +25,7 @@ import platform
 import qrcode
 import re
 
-import oyaml as yaml # Cool package that preserves key order
+import yaml
 import pdfkit
 
 from django.http import Http404, HttpResponse, HttpRequest

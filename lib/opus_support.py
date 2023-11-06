@@ -16,19 +16,7 @@ import numpy as np
 import re
 import unittest
 
-try: # pragma: no cover
-    import julian # From pds-tools
-except ImportError: # pragma: no cover
-    # If we can't find julian, we need to add the directory for the pds-tools
-    # repo to our search path. This only happens when running tests.
-    import os
-    import sys
-    PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
-    PDS_OPUS_ROOT = os.path.dirname(PROJECT_ROOT)
-    sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
-    from opus_secrets import PDS_TOOLS_PATH
-    sys.path.insert(0, PDS_TOOLS_PATH)
-    import julian
+import julian
 
 DEG_RAD = np.degrees(1)
 

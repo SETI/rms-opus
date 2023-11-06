@@ -23,7 +23,7 @@ else:
 
 for field_name in sorted(index_dict.keys()):
     index_entry = index_dict[field_name.upper()]
-    if type(index_entry) != dict:
+    if not isinstance(index_entry, dict):
         continue
     index_description = index_entry['DESCRIPTION']
 
