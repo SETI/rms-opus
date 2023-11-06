@@ -181,7 +181,7 @@ def get_git_version(force_valid=False, use_tag=False):
     tag = None
 
     try:
-        os.chdir(settings.PDS_OPUS_PATH)
+        os.chdir(settings.RMS_OPUS_PATH)
         # decode here to convert byte object to string
         commit_id = (subprocess.check_output(['git', 'log', '--format=%H',
                                               '-n', '1'])
