@@ -755,6 +755,10 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                                       .replace('.lbl', '.csv'))
                     assoc_rows = []
                     assoc_label_dict = {} # Not used
+                    # Old inventory files use CSV, new inventory files use TAB
+                    if not os.path.exists(table_filename):
+                        table_filename = (table_filename.replace('.csv', '.tab')
+                                          .replace('.CSV', '.TAB'))
                     with open(table_filename, 'r') as table_file:
                         csvreader = csv.reader(table_file)
                         for row in csvreader:

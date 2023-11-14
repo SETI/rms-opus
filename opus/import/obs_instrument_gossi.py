@@ -86,6 +86,9 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
                 return None
         return super().opus_id_from_index_row(row)
 
+    def convert_filespec_from_lbl(self, filespec):
+        return filespec.replace('.LBL', '.IMG')
+
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###

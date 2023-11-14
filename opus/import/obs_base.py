@@ -110,6 +110,7 @@ class ObsBase(object):
         # the formats of the primary index, supplemental index, and geo index files
         # can be different, so it's not worth overriding this function for each
         # instrument.
+
         # This is just a sanity check. Not all indexes include the volume ID, so
         # we don't rely on getting it from there.
         volume_id = row.get('VOLUME_ID', None)
@@ -118,6 +119,7 @@ class ObsBase(object):
         if volume_id is not None and volume_id.rstrip('/') != self.volume:
             self._log_nonrepeating_error('Volume ID in index file inconsistent')
             return None
+
         filespec = row.get('FILE_SPECIFICATION_NAME', None)
         if filespec is None:
             path_name = row.get('PATH_NAME', '').strip('/') # NH
@@ -128,6 +130,7 @@ class ObsBase(object):
         if filespec is None:
             self._log_nonrepeating_error('Index missing FILESPEC field(s)')
             return None
+
         # In the case of GOSSI and COUVIS, the volume name is already prepended
         # to the filespec
         ret = filespec.strip('/')
@@ -135,6 +138,7 @@ class ObsBase(object):
             ret = self.volume + '/' + filespec.lstrip('/')
         if convert_lbl:
             ret = self.convert_filespec_from_lbl(ret)
+
         # This is a really horrid hack required because COVIMS_0xxx has two entries
         # per index row in the geo indexes (IR and VIS), but only one entry in the
         # supplemental index. The only way to know which row is which is to look at
@@ -146,6 +150,7 @@ class ObsBase(object):
                 sfx = components[-1]
                 if sfx in ('ir', 'vis'):
                     ret += '_'+sfx
+
         # Likewise, we have to do the same thing when looking up the row, but in
         # this case we have to get the phase name from this instance.
         if add_phase_from_inst and self.phase_name:

@@ -229,6 +229,9 @@ def safe_pdstable_read(filename):
 def safe_column(row, column_name, idx=None):
     "Read a value from a pdstable column accounting for the mask."
 
+    if column_name not in row:
+        return None
+
     if column_name+'_mask' not in row:
         if idx is None:
             return row[column_name]
