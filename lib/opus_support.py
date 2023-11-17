@@ -796,15 +796,15 @@ def parse_time(iso, unit=None, **kwargs):
         elif unit == 'mjed':
             iso = 'MJED' + iso
     try:
-        (day, sec, time_type) = julian.day_sec_type_from_string(iso)
+        (day, sec, time_type) = julian.day_sec_from_string(iso, timesys=True)
     except:
         raise ValueError('Invalid time syntax: '+iso)
-    if time_type != 'UTC':
-        raise ValueError('Invalid time syntax: '+iso)
+    if time_type not in ('UTC', 'TDB'):
+        raise ValueError(f'Invalid time system {time_type} when parsing {iso}')
     ret = julian.tai_from_day(day) + sec
     if ret < MIN_TIME or ret > MAX_TIME:
         raise ValueError
-    return ret
+    return float(ret)
 
 def format_time_ymd(tai, **kwargs):
     return julian.iso_from_tai(tai, ymd=True, digits=3)
@@ -821,7 +821,7 @@ def format_time_jd(tai, **kwargs):
     return 'JD%.8f' % jd
 
 def format_time_jed(tai, **kwargs):
-    jed = julian.jed_from_tai(tai)
+    jed = julian.jd_from_time(tai, timesys='TAI', jdsys='TDB')
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
@@ -836,7 +836,7 @@ def format_time_mjd(tai, **kwargs):
     return 'MJD%.8f' % mjd
 
 def format_time_mjed(tai, **kwargs):
-    mjed = julian.mjed_from_tai(tai)
+    mjed = julian.mjd_from_time(tai, timesys='TAI', mjdsys='TDB')
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
@@ -852,70 +852,70 @@ class TimeTest(unittest.TestCase):
     # interface is working.
     def test_format_ymd(self):
         """Time format: YMD"""
-        self.assertEqual(format_time_ymd(0), '1999-12-31T23:59:28.000')
-        self.assertEqual(format_time_ymd(600000000), '2019-01-05T10:39:23.000')
+        self.assertEqual(format_time_ymd(0), '2000-01-01T11:59:28.000')
+        self.assertEqual(format_time_ymd(600000000), '2019-01-05T22:39:23.000')
 
     def test_format_ydoy(self):
         """Time format: YDOY"""
-        self.assertEqual(format_time_ydoy(0), '1999-365T23:59:28.000')
-        self.assertEqual(format_time_ydoy(600000000), '2019-005T10:39:23.000')
+        self.assertEqual(format_time_ydoy(0), '2000-001T11:59:28.000')
+        self.assertEqual(format_time_ydoy(600000000), '2019-005T22:39:23.000')
 
     def test_format_jd(self):
         """Time format: JD"""
-        self.assertEqual(format_time_jd(0), 'JD2451544.49962963')
-        self.assertEqual(format_time_jd(600000000), 'JD2458488.94401620')
+        self.assertEqual(format_time_jd(0), 'JD2451544.99962963')
+        self.assertEqual(format_time_jd(600000000), 'JD2458489.44401620')
 
     def test_format_jed(self):
         """Time format: JED"""
-        self.assertEqual(format_time_jed(0), 'JED2451544.50037250')
-        self.assertEqual(format_time_jed(600000000), 'JED2458488.94481695')
+        self.assertEqual(format_time_jed(0), 'JED2451545.00037250')
+        self.assertEqual(format_time_jed(600000000), 'JED2458489.44481695')
 
     def test_format_mjd(self):
         """Time format: MJD"""
-        self.assertEqual(format_time_mjd(0), 'MJD51543.99962963')
-        self.assertEqual(format_time_mjd(600000000), 'MJD58488.44401620')
+        self.assertEqual(format_time_mjd(0), 'MJD51544.49962963')
+        self.assertEqual(format_time_mjd(600000000), 'MJD58488.94401620')
 
     def test_format_mjed(self):
         """Time format: MJED"""
-        self.assertEqual(format_time_mjed(0), 'MJED51544.00037250')
-        self.assertEqual(format_time_mjed(600000000), 'MJED58488.44481695')
+        self.assertEqual(format_time_mjed(0), 'MJED51544.50037250')
+        self.assertEqual(format_time_mjed(600000000), 'MJED58488.94481695')
 
     def test_format_et(self):
         """Time format: ET"""
-        self.assertEqual(format_time_et(0), '-43167.816')
-        self.assertEqual(format_time_et(600000000), '599956832.184')
+        self.assertEqual(format_time_et(0), '32.184')
+        self.assertEqual(format_time_et(600000000), '600000032.184')
 
     def test_parse(self):
         """Time parse"""
-        self.assertEqual(parse_time('1999-12-31T23:59:28.000'), 0)
-        self.assertEqual(parse_time('2019-005T10:39:23.000'), 600000000)
+        self.assertEqual(parse_time('2000-01-01T11:59:28.000'), 0)
+        self.assertEqual(parse_time('2019-005T22:39:23.000'), 600000000)
         self.assertEqual(julian.jd_from_time(julian.time_from_jd(0)), 0)
         self.assertAlmostEqual(julian.jd_from_time(julian.time_from_jd(1000.123)),
                                1000.123)
         self.assertEqual(julian.mjd_from_time(julian.time_from_mjd(0)), 0)
         self.assertAlmostEqual(julian.mjd_from_time(julian.time_from_mjd(1000.123)),
                                1000.123)
-        self.assertAlmostEqual(parse_time('JD2451544.49962963'), 0, places=3)
-        self.assertAlmostEqual(parse_time('JD2458488.94401620'), 600000000, places=3)
-        self.assertAlmostEqual(parse_time('2458488.94401620', unit='jd'), 600000000,
+        self.assertAlmostEqual(parse_time('JD2451544.99962963'), 0, places=3)
+        self.assertAlmostEqual(parse_time('JD2458489.44401620'), 600000000, places=3)
+        self.assertAlmostEqual(parse_time('2458489.44401620', unit='jd'), 600000000,
                                places=3)
-        self.assertAlmostEqual(parse_time('JED2451544.49962963'), -64.18391461631109,
+        self.assertAlmostEqual(parse_time('JED2451544.49962963'), -43199.999987363815,
                                places=3)
         self.assertAlmostEqual(parse_time('2451544.49962963', unit='jed'),
-                               -64.18391461631109, places=3)
-        self.assertAlmostEqual(parse_time('JED2458488.94401620'), 599999930.8156223,
+                               -43199.999987363815, places=3)
+        self.assertAlmostEqual(parse_time('JED2458488.94401620'), 599956799.9996822,
                                places=3)
-        self.assertAlmostEqual(parse_time('MJD51543.99962963'), 0, places=3)
-        self.assertAlmostEqual(parse_time('MJD58488.44401620'), 600000000, places=3)
-        self.assertAlmostEqual(parse_time('58488.44401620', unit='mjd'), 600000000,
+        self.assertAlmostEqual(parse_time('MJD51543.99962963'), -43199.99996787589, places=3)
+        self.assertAlmostEqual(parse_time('MJD58488.44401620'), 599956799.9996803, places=3)
+        self.assertAlmostEqual(parse_time('58488.44401620', unit='mjd'), 599956799.9996803,
                                places=3)
-        self.assertAlmostEqual(parse_time('MJED51543.99962963'), -64.18391461631109,
+        self.assertAlmostEqual(parse_time('MJED51543.99962963'), -43199.999987363815,
                                places=3)
         self.assertAlmostEqual(parse_time('51543.99962963', unit='mjed'),
-                               -64.18391461631109, places=3)
-        self.assertAlmostEqual(parse_time('MJED58488.44401620'), 599999930.8156223,
+                               -43199.99996787589, places=3)
+        self.assertAlmostEqual(parse_time('MJED58488.44401620'), 599956799.9996822,
                                places=3)
-        self.assertAlmostEqual(parse_time('50000', unit='et'), 93167.81604149533,
+        self.assertAlmostEqual(parse_time('50000', unit='et'), 49967.816055978896,
                                places=3)
         with self.assertRaises(ValueError):
             parse_time('nan')
@@ -923,6 +923,12 @@ class TimeTest(unittest.TestCase):
             parse_time('inf')
         with self.assertRaises(ValueError):
             parse_time('2000')
+        self.assertAlmostEqual(parse_time('2000-01-01 UTC'), -43168.0,
+                               places=3)
+        self.assertAlmostEqual(parse_time('2000-01-01 TDB'), -43168.0,
+                               places=3)
+        with self.assertRaises(ValueError):
+            parse_time('2000-01-01 TAI')
         with self.assertRaises(ValueError):
             parse_time('2000-01-01. TAI')
         with self.assertRaises(ValueError):
@@ -937,7 +943,7 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(format_time_jd(parse_time('JD2234567.123')),
                          'JD2234567.12300000')
         self.assertEqual(format_time_jed(parse_time('JED2234567.123')),
-                         'JED2234567.12300000')
+                         'JED2234567.12348824')
 
 
 ################################################################################
@@ -2122,10 +2128,10 @@ class UnitConversionTests(unittest.TestCase):
         self.assertIsNone(format_unit_value(None, None, 'datetime', 'ydhms'))
         self.assertEqual(format_unit_value(600000000, None, 'datetime',
                                            'ydhms'),
-                         '2019-005T10:39:23.000')
+                         '2019-005T22:39:23.000')
         self.assertEqual(format_unit_value(600000000, None, 'datetime',
                                            'ymdhms'),
-                         '2019-01-05T10:39:23.000')
+                         '2019-01-05T22:39:23.000')
         self.assertEqual(format_unit_value(100.1, '.3f', 'duration', 'seconds'),
                          '100.1')
         self.assertEqual(format_unit_value(100.1, '.3f', None, None),
@@ -2166,7 +2172,7 @@ class UnitConversionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_unit_value('inf', '.3f', 'duration', 'milliseconds')
         self.assertEqual(parse_unit_value('2019-01-05T10:39:23.000', None, 'datetime',
-                                          'YMDhms'), 600000000)
+                                          'YMDhms'), 599956800.0)
 
     def test_parse_form_type(self):
         """Test parse_form_type."""
