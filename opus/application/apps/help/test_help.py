@@ -8,12 +8,12 @@ from django.http import Http404
 from django.test import RequestFactory
 
 from help.views import (api_about,
+                        api_bundles,
                         api_citing_opus,
                         api_api_guide,
                         api_faq,
                         api_gettingstarted,
-                        api_splash,
-                        api_bundles)
+                        api_splash)
 
 import settings
 
