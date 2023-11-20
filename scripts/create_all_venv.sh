@@ -5,7 +5,7 @@
 #
 if [ ! -f requirements.txt ]
 then
-    echo "This script must be run in the pds-opus root directory"
+    echo "This script must be run in the rms-opus root directory"
     exit -1
 fi
 

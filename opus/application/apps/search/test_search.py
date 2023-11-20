@@ -118,8 +118,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('timesec1=2000-023T06:00:00&timesec2=2000-024T06:00:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
@@ -135,8 +135,8 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY-DDD format any"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&qtype-time=any')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
@@ -152,8 +152,8 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY-DDD format all"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&qtype-time=all')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['all']}
@@ -169,8 +169,8 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY-DDD format only"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&qtype-time=only')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only']}
@@ -187,8 +187,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('timesec1=2000-01-23T06:00:00&timesec2=2000-01-24T06:00:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
@@ -204,8 +204,8 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY MMM DD format"
         q = QueryDict('time1=2000+JAN+23+6:00:00&time2=2000+January+24+6:00:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
@@ -221,8 +221,8 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY/MM/DD format"
         q = QueryDict('time1=2000/1/23+06:00:00.000&time2=2000/01/24+06:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
@@ -239,8 +239,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1_1=2000-01-23T06:00:00&time2_1=2000-01-24T06:00:00')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1879232.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
@@ -257,8 +257,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0, 2008833.0],
-                        'obs_general.time2': [2008832.0, None]}
+        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
+                        'obs_general.time2': [1965632.0, None]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
@@ -275,8 +275,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('timesec1=2000-01-23T06:00:00&timesec2=2000-01-24T06:00:00&timesec1_2=2000-01-24T06:00:01&timesec2_2=2000-01-24T06:00:02')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0, 2008833.0],
-                        'obs_general.time2': [2008832.0, 2008834.0]}
+        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
+                        'obs_general.time2': [1965632.0, 1965634.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
@@ -293,8 +293,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time=all&qtype-time_2=only')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0, 2008833.0],
-                        'obs_general.time2': [2008832.0, 2008834.0]}
+        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
+                        'obs_general.time2': [1965632.0, 1965634.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['all', 'only']}
@@ -311,8 +311,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time=AlL&qtype-time_2=ONly')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0, 2008833.0],
-                        'obs_general.time2': [2008832.0, 2008834.0]}
+        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
+                        'obs_general.time2': [1965632.0, 1965634.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['all', 'only']}
@@ -329,8 +329,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time_2=only')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0, 2008833.0],
-                        'obs_general.time2': [2008832.0, 2008834.0]}
+        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
+                        'obs_general.time2': [1965632.0, 1965634.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'only']}
@@ -347,8 +347,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_20=2000-01-24T06:00:01&time2_20=2000-01-24T06:00:02&qtype-time=only')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [1922432.0, 2008833.0],
-                        'obs_general.time2': [2008832.0, 2008834.0]}
+        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
+                        'obs_general.time2': [1965632.0, 1965634.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only', 'any']}
@@ -365,8 +365,8 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1_1=&time2_2=&time1_3=2000-01-24T06:00:00&time2_3=2000-01-24T06:00:00&qtype-time_1=only')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [2008832.0],
-                        'obs_general.time2': [2008832.0]}
+        sel_expected = {'obs_general.time1': [1965632.0],
+                        'obs_general.time2': [1965632.0]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
@@ -383,7 +383,7 @@ class searchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1_1=&time2_2=&time1_3=2000-01-24T06:00:00&time2_3=&qtype-time_3=only')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_general.time1': [2008832.0],
+        sel_expected = {'obs_general.time1': [1965632.0],
                         'obs_general.time2': [None]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])

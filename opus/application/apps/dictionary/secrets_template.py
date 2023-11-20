@@ -22,9 +22,6 @@ DICTIONARY_DATABASE_NAME = 'XXX'
 # For PostgreSQL this is the schema name.
 DICTIONARY_SCHEMA_NAME = 'XXX'
 
-# The directory where the pds-tools repo lives.
-PDS_TOOLS_PATH = 'XXX'
-
 # The pdsdd.full file.
 PDSDD_FILE = 'XXX'
 

@@ -15,7 +15,8 @@
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/AAREADME.TXT"
             ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab",
@@ -56,7 +57,8 @@
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/AAREADME.TXT"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab",

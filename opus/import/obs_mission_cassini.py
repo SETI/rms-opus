@@ -277,14 +277,14 @@ class ObsMissionCassini(ObsCommon):
             count += '.000'
 
         ### VIMS
-        # See pds-opus issue #444
+        # See rms-opus issue #444
         if count.endswith('.971'):
             count = count.replace('.971', '.000')
         if count.endswith('.973'):
             count = count.replace('.973', '.000')
 
         ### UVIS
-        # See pds-opus issue #443
+        # See rms-opus issue #443
         if count.endswith('.324'):
             count = count.replace('.324', '.000')
 
