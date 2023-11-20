@@ -61,7 +61,7 @@ parser = argparse.ArgumentParser(
 # Database arguments
 parser.add_argument(
     '--read-only', action='store_true', default=False,
-    help='Don\'t modify or create any SQL table'
+    help="Don't modify or create any SQL table"
 )
 parser.add_argument(
     '--override-db-schema', type=str, default=None,
@@ -73,7 +73,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--dont-use-shelves-only', action='store_true', default=False,
-    help='Don\\t use shelve files only instead of looking at actual pdsdata bundles'
+    help='Look at actual pdsdata volumes/bundles instead of using shelve files'
 )
 
 # What to actually do - main import
