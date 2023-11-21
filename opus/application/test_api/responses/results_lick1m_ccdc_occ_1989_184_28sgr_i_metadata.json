@@ -17,9 +17,10 @@
         "declination2": "-22.392174"
     },
     "PDS Constraints": {
-        "volumeid": "EBROCC_0001",
+        "bundleid": "EBROCC_0001",
         "datasetid": "LICK1M-SR-CCDC-4-OCC-V1.0",
         "productid": "LICK_INGRESS",
+        "primarylid": null,
         "productcreationtime": "2003-07-08T23:27:22.000",
         "primaryfilespec": "EBROCC_0001/DATA/LICK1M/LIC_IPD.LBL",
         "opusid": "lick1m-ccdc-occ-1989-184-28sgr-i",

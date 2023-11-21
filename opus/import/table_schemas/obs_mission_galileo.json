@@ -24,12 +24,12 @@
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
-        "field_name": "volume_id",
-        "field_type": "char11",
+        "field_name": "bundle_id",
+        "field_type": "char75",
         "field_key": true,
         "field_notnull": true,
         "data_source": "COMPUTE",
-        "comments": "The volume_id is included here for ease of database manipulation only."
+        "comments": "The bundle_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "orbit_number",

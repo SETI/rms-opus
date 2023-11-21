@@ -17,9 +17,10 @@
         "declination2": "0.745027"
     },
     "PDS Constraints": {
-        "volumeid": "COUVIS_0002",
+        "bundleid": "COUVIS_0002",
         "datasetid": "CO-J-UVIS-2-CUBE-V1.2",
         "productid": "FUV2001_013_06_07",
+        "primarylid": null,
         "productcreationtime": "2012-01-28T00:00:00.000",
         "primaryfilespec": "COUVIS_0002/DATA/D2001_013/FUV2001_013_06_07.LBL",
         "opusid": "co-uvis-fuv2001_013_06_07",

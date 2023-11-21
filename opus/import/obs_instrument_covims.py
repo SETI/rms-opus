@@ -35,7 +35,7 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         # to actually find the matching row in the supplemental index dictionary.
         path_name = self._index_col('PATH_NAME')
         file_name = self._index_col('FILE_NAME')
-        return f'{self.volume}{path_name}/{file_name}'
+        return f'{self.bundle}{path_name}/{file_name}'
 
     def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.lbl', '.qub')
@@ -278,8 +278,8 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
     def field_obs_instrument_covims_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_covims_volume_id(self):
-        return self.volume
+    def field_obs_instrument_covims_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_covims_instrument_id(self):
         return self.instrument_id

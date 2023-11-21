@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "COCIRS_0406",
+        "bundleid": "COCIRS_0406",
         "datasetid": "CO-S-CIRS-2/3/4-TSDR-V3.2",
         "productid": "000RB_COMP001______CI005_680_F3_224R.LBL",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "COCIRS_0406/DATA/CUBE/RING_POLAR/000RB_COMP001______CI005_680_F3_224R.LBL",
         "opusid": "co-cirs-cube-000rb_comp001______ci005_680_f3_224r",

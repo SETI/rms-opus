@@ -17,9 +17,10 @@
         "declination2": "-22.392174"
     },
     "PDS Constraints": {
-        "volumeid": "EBROCC_0001",
+        "bundleid": "EBROCC_0001",
         "datasetid": "MCD27M-SR-IIRAR-4-OCC-V1.0",
         "productid": "MCD_INGRESS",
+        "primarylid": null,
         "productcreationtime": "2003-07-08T23:29:36.000",
         "primaryfilespec": "EBROCC_0001/DATA/MCD27M/MCD_IPD.LBL",
         "opusid": "mcd27m-iirar-occ-1989-184-28sgr-i",

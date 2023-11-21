@@ -48,8 +48,8 @@ class ObsProfile(ObsBase):
     def field_obs_profile_opus_id(self):
         return self.opus_id
 
-    def field_obs_profile_volume_id(self):
-        return self.volume
+    def field_obs_profile_bundle_id(self):
+        return self.bundle
 
     def field_obs_profile_instrument_id(self):
         return self.instrument_id

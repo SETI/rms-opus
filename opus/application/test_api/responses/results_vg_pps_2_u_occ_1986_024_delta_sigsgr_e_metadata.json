@@ -17,7 +17,7 @@
         "declination2": "-26.296724"
     },
     "PDS Constraints": {
-        "volumeid": "VG_2801",
+        "bundleid": "VG_2801",
         "datasetid": "VG2-SR/UR/NR-PPS-2/4-OCC-V1.0",
         "productid": "KM000_1/PU1P01DE.TAB",
         "productcreationtime": "2003-09-29T16:00:00.000",

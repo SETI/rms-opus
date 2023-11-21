@@ -90,7 +90,7 @@ class searchTests(TestCase):
 
     def test__api_string_search_choices_no_meta(self):
         "[test_search.py] api_string_search_choices: no META"
-        request = self.factory.get('/__api/stringsearchchoices/volumeid.json')
+        request = self.factory.get('/__api/stringsearchchoices/bundleid.json')
         request.META = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
@@ -98,7 +98,7 @@ class searchTests(TestCase):
 
     def test__api_string_search_choices_no_get(self):
         "[test_search.py] api_string_search_choices: no GET"
-        request = self.factory.get('/__api/stringsearchchoices/volumeid.json')
+        request = self.factory.get('/__api/stringsearchchoices/bundleid.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
@@ -1060,10 +1060,10 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_string_input_allow_empty_1(self):
         "[test_search.py] url_to_search_params: search allowing empty string input set 1"
-        q = QueryDict('volumeid_03=COISS')
+        q = QueryDict('bundleid_03=COISS')
         (selections, extras) = url_to_search_params(q, allow_empty=True)
-        sel_expected = {'obs_pds.volume_id': [None, None, 'COISS']}
-        qtypes_expected = {'obs_pds.volume_id': [None, None, 'contains']}
+        sel_expected = {'obs_pds.bundle_id': [None, None, 'COISS']}
+        qtypes_expected = {'obs_pds.bundle_id': [None, None, 'contains']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -1071,10 +1071,10 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_string_input_allow_empty_2(self):
         "[test_search.py] url_to_search_params: search allowing empty string input set 2"
-        q = QueryDict('qtype-volumeid_03=contains')
+        q = QueryDict('qtype-bundleid_03=contains')
         (selections, extras) = url_to_search_params(q, allow_empty=True)
-        sel_expected = {'obs_pds.volume_id': [None, None, None]}
-        qtypes_expected = {'obs_pds.volume_id': [None, None, 'contains']}
+        sel_expected = {'obs_pds.bundle_id': [None, None, None]}
+        qtypes_expected = {'obs_pds.bundle_id': [None, None, 'contains']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -1718,11 +1718,11 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_from_sort_multi(self):
         "[test_search.py] url_to_search_params: sort on descending opusid"
-        q = QueryDict('planet=Saturn&order=-opusid,RINGGEOphase1,-volumeid')
+        q = QueryDict('planet=Saturn&order=-opusid,RINGGEOphase1,-bundleid')
         (selections, extras) = url_to_search_params(q)
         sel_expected = {'obs_general.planet_id': ['Saturn']}
         order_expected = (['obs_general.opus_id', 'obs_ring_geometry.phase1',
-                           'obs_pds.volume_id'],
+                           'obs_pds.bundle_id'],
                           [True, False, True])
         qtypes_expected = {}
         units_expected = {}
@@ -2813,11 +2813,11 @@ class searchTests(TestCase):
 
     def test__string_query(self):
         "[test_search.py] string_query: string query with no qtype"
-        selections = {'obs_pds.volume_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id', [])
+        selections = {'obs_pds.bundle_id': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', [])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` LIKE %s'
+        expected = '`obs_pds`.`bundle_id` LIKE %s'
         expected_params = ['%ISS%']
         print(expected)
         print(expected_params)
@@ -2826,12 +2826,12 @@ class searchTests(TestCase):
 
     def test__string_query_contains(self):
         "[test_search.py] string_query: string query with qtype contains"
-        selections = {'obs_pds.volume_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['contains'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` LIKE %s'
+        expected = '`obs_pds`.`bundle_id` LIKE %s'
         expected_params = ['%ISS%']
         print(expected)
         print(expected_params)
@@ -2840,12 +2840,12 @@ class searchTests(TestCase):
 
     def test__string_query_begins(self):
         "[test_search.py] string_query: string query with qtype begins"
-        selections = {'obs_pds.volume_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['begins'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` LIKE %s'
+        expected = '`obs_pds`.`bundle_id` LIKE %s'
         expected_params = ['ISS%']
         print(expected)
         print(expected_params)
@@ -2854,12 +2854,12 @@ class searchTests(TestCase):
 
     def test__string_query_ends(self):
         "[test_search.py] string_query: string query with qtype ends"
-        selections = {'obs_pds.volume_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['ends'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` LIKE %s'
+        expected = '`obs_pds`.`bundle_id` LIKE %s'
         expected_params = ['%ISS']
         print(expected)
         print(expected_params)
@@ -2868,12 +2868,12 @@ class searchTests(TestCase):
 
     def test__string_query_matches(self):
         "[test_search.py] string_query: string query with qtype matches"
-        selections = {'obs_pds.volume_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['matches'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` = %s'
+        expected = '`obs_pds`.`bundle_id` = %s'
         expected_params = ['ISS']
         print(expected)
         print(expected_params)
@@ -2882,12 +2882,12 @@ class searchTests(TestCase):
 
     def test__string_query_excludes(self):
         "[test_search.py] string_query: string query with qtype excludes"
-        selections = {'obs_pds.volume_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['excludes'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` NOT LIKE %s'
+        expected = '`obs_pds`.`bundle_id` NOT LIKE %s'
         expected_params = ['%ISS%']
         print(expected)
         print(expected_params)
@@ -2896,12 +2896,12 @@ class searchTests(TestCase):
 
     def test__string_query_regex(self):
         "[test_search.py] string_query: string query with qtype regex"
-        selections = {'obs_pds.volume_id': [r'^COISS.\d\d\d\d$']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': [r'^COISS.\d\d\d\d$']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['regex'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` RLIKE %s'
+        expected = '`obs_pds`.`bundle_id` RLIKE %s'
         expected_params = [r'^COISS.\d\d\d\d$']
         print(expected)
         print(expected_params)
@@ -2910,8 +2910,8 @@ class searchTests(TestCase):
 
     def test__string_query_regex_bad(self):
         "[test_search.py] string_query: string query with qtype regex bad"
-        selections = {'obs_pds.volume_id': [r'^COISS.\d\d\d\d($']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': [r'^COISS.\d\d\d\d($']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['regex'])
         print(sql)
         print(params)
@@ -2920,12 +2920,12 @@ class searchTests(TestCase):
 
     def test__string_query_ends_special_chars(self):
         "[test_search.py] string_query: string query with qtype matches special chars"
-        selections = {'obs_pds.volume_id': ['ISS_\\%\\X\\']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS_\\%\\X\\']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['ends'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` LIKE %s'
+        expected = '`obs_pds`.`bundle_id` LIKE %s'
         expected_params = ['%ISS\\_\\\\\\%\\\\X\\\\']
         print(expected)
         print(expected_params)
@@ -2934,12 +2934,12 @@ class searchTests(TestCase):
 
     def test__string_query_matches_special_chars(self):
         "[test_search.py] string_query: string query with qtype matches special chars"
-        selections = {'obs_pds.volume_id': ['ISS_\\%\\X\\']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS_\\%\\X\\']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['matches'])
         print(sql)
         print(params)
-        expected = '`obs_pds`.`volume_id` = %s'
+        expected = '`obs_pds`.`bundle_id` = %s'
         expected_params = ['ISS_\\\\%\\\\X\\\\']
         print(expected)
         print(expected_params)
@@ -2948,12 +2948,12 @@ class searchTests(TestCase):
 
     def test__string_query_clause(self):
         "[test_search.py] string_query: string query with qtype clause"
-        selections = {'obs_pds.volume_id': ['ISS', 'COUVIS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS', 'COUVIS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['excludes', 'matches'])
         print(sql)
         print(params)
-        expected = '(`obs_pds`.`volume_id` NOT LIKE %s) OR (`obs_pds`.`volume_id` = %s)'
+        expected = '(`obs_pds`.`bundle_id` NOT LIKE %s) OR (`obs_pds`.`bundle_id` = %s)'
         expected_params = ['%ISS%', 'COUVIS']
         print(expected)
         print(expected_params)
@@ -2963,7 +2963,7 @@ class searchTests(TestCase):
     def test__string_query_bad_none(self):
         "[test_search.py] string_query: no selections"
         selections = None
-        sql, params = get_string_query(selections, 'obs_pds.volume_id', [])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', [])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2971,7 +2971,7 @@ class searchTests(TestCase):
 
     def test__string_query_bad_param(self):
         "[test_search.py] string_query: bad param"
-        selections = {'obs_pds.volume_id': ['ISS', 'COUVIS']}
+        selections = {'obs_pds.bundle_id': ['ISS', 'COUVIS']}
         sql, params = get_string_query(selections, 'obs_pds.note', [])
         print(sql)
         print(params)
@@ -2980,8 +2980,8 @@ class searchTests(TestCase):
 
     def test__string_query_bad_param_2(self):
         "[test_search.py] string_query: bad param 2"
-        selections = {'obs_pds.volume_idXX': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id', [])
+        selections = {'obs_pds.bundle_idXX': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', [])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2989,7 +2989,7 @@ class searchTests(TestCase):
 
     def test__string_query_bad_param_3(self):
         "[test_search.py] string_query: bad param 3"
-        selections = {'obs_pds.volume_id': ['ISS', 'COUVIS']}
+        selections = {'obs_pds.bundle_id': ['ISS', 'COUVIS']}
         sql, params = get_string_query(selections, 'obs_pds.noteXXX', [])
         print(sql)
         print(params)
@@ -2998,8 +2998,8 @@ class searchTests(TestCase):
 
     def test__string_query_clause_bad_length(self):
         "[test_search.py] string_query: string query with qtype clause inconsistent length"
-        selections = {'obs_pds.volume_id': ['ISS', 'COUVIS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS', 'COUVIS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['excludes', 'matches', 'excludes'])
         print(sql)
         print(params)
@@ -3008,8 +3008,8 @@ class searchTests(TestCase):
 
     def test__string_query_bad_qtype(self):
         "[test_search.py] string_query: string query with bad qtype"
-        selections = {'obs_pds.volume_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+        selections = {'obs_pds.bundle_id': ['ISS']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
                                        ['excludesXXX'])
         print(sql)
         print(params)
@@ -3079,8 +3079,8 @@ class searchTests(TestCase):
 
     def test__construct_query_string_regex_bad(self):
         "[test_search.py] construct_query_string: qtype regex bad"
-        selections = {'obs_pds.volume_id': [r'^COISS.\d\d\d\d($']}
-        extras = {'qtypes': {'obs_pds.volume_id': ['regex']}}
+        selections = {'obs_pds.bundle_id': [r'^COISS.\d\d\d\d($']}
+        extras = {'qtypes': {'obs_pds.bundle_id': ['regex']}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
@@ -3356,13 +3356,13 @@ class searchTests(TestCase):
         "[test_search.py] construct_query_string: sort order already joined #2"
         selections = {'obs_general.observation_duration1': [20],
                       'obs_general.observation_duration2': [None],
-                      'obs_pds.volume_id': ['COISS']}
-        extras = {'qtypes': {'obs_pds.volume_id': ['begins']},
+                      'obs_pds.bundle_id': ['COISS']}
+        extras = {'qtypes': {'obs_pds.bundle_id': ['begins']},
                   'order': (['obs_pds.data_set_id'], [True])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_general`.`observation_duration` >= %s) AND (`obs_pds`.`volume_id` LIKE %s) ORDER BY obs_pds.data_set_id DESC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_general`.`observation_duration` >= %s) AND (`obs_pds`.`bundle_id` LIKE %s) ORDER BY obs_pds.data_set_id DESC'
         expected_params = [20, 'COISS%']
         print(expected)
         print(expected_params)
@@ -3390,11 +3390,11 @@ class searchTests(TestCase):
         "[test_search.py] construct_query_string: sort order not already joined"
         selections = {'obs_general.observation_duration1': [20],
                       'obs_general.observation_duration2': [None]}
-        extras = {'order': (['obs_pds.volume_id'], [False])}
+        extras = {'order': (['obs_pds.bundle_id'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_pds.volume_id ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_pds.bundle_id ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -3476,7 +3476,7 @@ class searchTests(TestCase):
 
     def test__set_user_search_number_no_extras(self):
         "[test_search.py] set_user_search_number: no extras"
-        selections = {'obs_pds.volume_id': ['FRED']}
+        selections = {'obs_pds.bundle_id': ['FRED']}
         extras = {}
         num1 = set_user_search_number(selections, extras)
         extras = {'qtypes': {},
@@ -3488,15 +3488,15 @@ class searchTests(TestCase):
 
     def test__set_user_search_number_dead_qtype_str(self):
         "[test_search.py] set_user_search_number: dead qtype string"
-        selections = {'obs_pds.volume_id': ['FRED']}
-        extras = {'qtypes': {'obs_pds.volume_id': ['excludes']},
+        selections = {'obs_pds.bundle_id': ['FRED']}
+        extras = {'qtypes': {'obs_pds.bundle_id': ['excludes']},
                   'units': {},
-                  'order': (['obs_pds.volume_id'], [False])}
+                  'order': (['obs_pds.bundle_id'], [False])}
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_pds.volume_id': ['excludes'],
+        extras = {'qtypes': {'obs_pds.bundle_id': ['excludes'],
                              'obs_pds.data_set_id': ['matches']}, # goes away
                   'units': {},
-                  'order': (['obs_pds.volume_id'], [False])}
+                  'order': (['obs_pds.bundle_id'], [False])}
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (1, False))

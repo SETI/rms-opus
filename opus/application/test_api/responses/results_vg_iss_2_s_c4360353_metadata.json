@@ -17,9 +17,10 @@
         "declination2": "-2.536863"
     },
     "PDS Constraints": {
-        "volumeid": "VGISS_6210",
+        "bundleid": "VGISS_6210",
         "datasetid": "VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0",
         "productid": "C4360353_RAW.IMG",
+        "primarylid": null,
         "productcreationtime": "2012-05-01T16:00:00.000",
         "primaryfilespec": "VGISS_6210/DATA/C43603XX/C4360353_RAW.LBL",
         "opusid": "vg-iss-2-s-c4360353",

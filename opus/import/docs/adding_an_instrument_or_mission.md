@@ -3,7 +3,7 @@ To add a new instrument and/or mission:
 - Edit config.py and modify:
     MISSION_ID_TO_MISSION
     INSTRUMENT_ID_TO_MISSION_ID
-    VOLUME_ID_PREFIX_TO_INSTRUMENT_ID
+    BUNDLE_ID_PREFIX_TO_INSTRUMENT_ID
 
 - If new weird tables need to be added, modify:
     TABLES_TO_POPULATE

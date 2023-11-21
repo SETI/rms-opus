@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "COCIRS_1003",
+        "bundleid": "COCIRS_1003",
         "datasetid": "CO-S-CIRS-2/3/4-TSDR-V3.2",
         "productid": "128RI_LRLEMP001____IS____680_F3_039R.LBL",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "COCIRS_1003/DATA/CUBE/RING_POLAR/128RI_LRLEMP001____IS____680_F3_039R.LBL",
         "opusid": "co-cirs-cube-128ri_lrlemp001____is____680_f3_039r",

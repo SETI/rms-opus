@@ -11,7 +11,7 @@ def validate_param_info(namespace):
     # Every column in every obs_ table should have an entry in the param_info
     # table except for id and obs_general_id.
     # Exceptions are:
-    #   volume_id in tables other than obs_pds
+    #   bundle_id in tables other than obs_pds
     #   instrument_id in tables other than obs_general
 
     db = impglobals.DATABASE
@@ -42,7 +42,7 @@ def validate_param_info(namespace):
                  obs_table_name != 'obs_general') or
                 (field_name.startswith('mult_'))):
                 continue
-            if field_name == 'volume_id' and obs_table_name != 'obs_pds':
+            if field_name == 'bundle_id' and obs_table_name != 'obs_pds':
                 continue
             if (field_name == 'instrument_id' and
                 obs_table_name != 'obs_general'):

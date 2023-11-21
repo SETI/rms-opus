@@ -62,11 +62,11 @@ included:
       'IGNORE'
       'TAB:<TABLE_NAME>' in which case the data is the field name in the
                          referenced PDS or internal table, which must have
-                         already been read as part of loading the volume.
+                         already been read as part of loading the bundle/volume.
       'ARRAY:<TABLE_NAME>' in which case the data is the field name in the
                         referenced PDS or internal table, which must have
-                        already been read as part of loading the volume, then
-                        ':', then the number of the array element.
+                        already been read as part of loading the bundle/volume,
+                        then ':', then the number of the array element.
       'FUNCTION'         in which case the data is the name of the function
                          to execute. <INST> and <MISSION> are substituted.
                          If the function name starts with "~" then it is

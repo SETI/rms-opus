@@ -17,9 +17,10 @@
         "declination2": "-44.63974"
     },
     "PDS Constraints": {
-        "volumeid": "COVIMS_8001",
+        "bundleid": "COVIMS_8001",
         "datasetid": "CO-SR-VIMS-4/5-OCC-V2.1",
         "productid": "VIMS_2014_175_L2PUP_E_TAU_01KM.TAB",
+        "primarylid": null,
         "productcreationtime": "2019-02-12T14:58:12.000",
         "primaryfilespec": "COVIMS_8001/data/VIMS_2014_175_L2PUP_E_TAU_01KM.LBL",
         "opusid": "co-vims-occ-2014-175-l2pup-e",

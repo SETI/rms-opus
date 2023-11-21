@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "VG_2810",
+        "bundleid": "VG_2810",
         "datasetid": "VG1/VG2-SR-ISS-4-PROFILES-V1.0",
         "productid": "IS2_P0001_V01_KM002.TAB",
+        "primarylid": null,
         "productcreationtime": "2004-06-29T16:00:00.000",
         "primaryfilespec": "VG_2810/DATA/IS2_P0001_V01_KM002.LBL",
         "opusid": "vg-iss-2-s-prof",

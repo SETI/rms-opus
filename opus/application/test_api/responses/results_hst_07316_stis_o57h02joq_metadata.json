@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "HSTO0_7316",
+        "bundleid": "HSTO0_7316",
         "datasetid": "HST-S-STIS-5-ID7316-V1.2",
         "productid": "O57H02JOQ",
+        "primarylid": null,
         "productcreationtime": "2017-07-25T10:22:55.000",
         "primaryfilespec": "HSTO0_7316/DATA/VISIT_02/O57H02JOQ.LBL",
         "opusid": "hst-07316-stis-o57h02joq",

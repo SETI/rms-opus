@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "COCIRS_1003",
+        "bundleid": "COCIRS_1003",
         "datasetid": "CO-S-CIRS-2/3/4-TSDR-V3.2",
         "productid": "127EN_ICYPLU001____UV____699_F1_039E.LBL",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.LBL",
         "opusid": "co-cirs-cube-127en_icyplu001____uv____699_f1_039e",

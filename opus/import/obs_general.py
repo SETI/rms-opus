@@ -27,8 +27,8 @@ class ObsGeneral(ObsBase):
     def field_obs_general_opus_id(self):
         return self.opus_id
 
-    def field_obs_general_volume_id(self):
-        return self.volume
+    def field_obs_general_bundle_id(self):
+        return self.bundle
 
     def field_obs_general_instrument_id(self):
         return self._create_mult(self.instrument_id)
