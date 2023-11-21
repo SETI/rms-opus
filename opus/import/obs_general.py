@@ -116,11 +116,9 @@ class ObsGeneral(ObsBase):
                 }
             else:
                 browse_data = {'viewables': []}
-                # # XXX
-                # if (volset in VOLSETS_WITH_PREVIEWS and
-                #     not impglobals.ARGUMENTS.import_ignore_missing_images):
-                self._log_nonrepeating_warning(
-                    f'Missing all browse/diagram images for "{self.primary_filespec}"')
+                if not impglobals.ARGUMENTS.import_ignore_missing_images:
+                    self._log_nonrepeating_warning(
+                       f'Missing all browse/diagram images for "{self.primary_filespec}"')
 
         ret = json.dumps(browse_data)
         return ret
