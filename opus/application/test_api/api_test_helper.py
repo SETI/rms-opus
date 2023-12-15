@@ -105,10 +105,11 @@ class ApiTestHelper:
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
+        expected = (expected.replace(r'\\r', '').replace(r'\r', '')
+                    .replace('\r', '').replace(r'\n', '\n'))
         resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = (resp.replace(r'\\r', '').replace(r'\r', '').replace('\r', '')
+                .replace(r'\n', '\n'))
         print('Got:')
         print(resp)
         print('Expected:')
@@ -122,16 +123,19 @@ class ApiTestHelper:
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         if self.UPDATE_FILES:
+            content = response.content.decode()
+            content = content.replace(r'\n', '\n')
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
-                fp.write(response.content.decode())
+                fp.write(content)
             return
         with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
             expected = fp.read()
         expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
+        expected = (expected.replace(r'\\r', '').replace(r'\r', '')
+                    .replace('\r', '').replace(r'\n', '\n'))
         resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = (resp.replace(r'\\r', '').replace(r'\r', '').replace('\r', '')
+                .replace(r'\n', '\n'))
         print('Got:')
         print(resp)
         print('Expected:')
@@ -145,10 +149,11 @@ class ApiTestHelper:
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
+        expected = (expected.replace(r'\\r', '').replace(r'\r', '')
+                    .replace('\r', '').replace(r'\n', '\n'))
         resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = (resp.replace(r'\\r', '').replace(r'\r', '').replace('\r', '')
+                .replace(r'\n', '\n'))
         resp = resp[:len(expected)]
         print('Got:')
         print(resp)
@@ -178,12 +183,13 @@ class ApiTestHelper:
         with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
             expected = fp.read()
         resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = (resp.replace(r'\\r', '').replace(r'\r', '').replace('\r', '')
+                .replace(r'\n', '\n'))
         expected = self._remove_range(expected, start_str, end_str)
         resp = self._remove_range(resp, start_str, end_str)
         if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
-                fp.write(resp)
+                fp.write(resp.replace(r'\n', '\n'))
             return
         print('Got:')
         print(resp)
@@ -198,10 +204,11 @@ class ApiTestHelper:
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
+        expected = (expected.replace(r'\\r', '').replace(r'\r', '')
+                    .replace('\r', '').replace(r'\n', '\n'))
         resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = (resp.replace(r'\\r', '').replace(r'\r', '').replace('\r', '')
+                .replace(r'\n', '\n'))
         resp = resp[:len(expected)]
         print('Got:')
         print(resp)
@@ -216,10 +223,11 @@ class ApiTestHelper:
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
+        expected = (expected.replace(r'\\r', '').replace(r'\r', '')
+                    .replace('\r', '').replace(r'\n', '\n'))
         resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        resp = (resp.replace(r'\\r', '').replace(r'\r', '').replace('\r', '')
+                .replace(r'\n', '\n'))
         resp = resp[:len(expected)]
         print('Got:')
         print(resp)
