@@ -63,10 +63,12 @@ class ObsRingGeometry(ObsBase):
         return self._ring_geo_index_col('MAXIMUM_RING_DISTANCE')
 
     def field_obs_ring_geometry_ring_center_distance1(self):
-        return self._ring_geo_index_col('RING_CENTER_DISTANCE')
+        return self._ring_geo_index_col('MINIMUM_RING_CENTER_DISTANCE',
+                                        'RING_CENTER_DISTANCE')
 
     def field_obs_ring_geometry_ring_center_distance2(self):
-        return self._ring_geo_index_col('RING_CENTER_DISTANCE')
+        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_DISTANCE',
+                                        'RING_CENTER_DISTANCE')
 
     def field_obs_ring_geometry_j2000_longitude1(self):
         return self._ring_geo_index_col('MINIMUM_RING_LONGITUDE')
@@ -93,16 +95,20 @@ class ObsRingGeometry(ObsBase):
         return self._ring_geo_index_col('MAXIMUM_RING_AZIMUTH')
 
     def field_obs_ring_geometry_sub_solar_ring_long1(self):
-        return self._ring_geo_index_col('SUB_SOLAR_RING_LONGITUDE')
+        return self._ring_geo_index_col('MINIMUM_SUB_SOLAR_RING_LONGITUDE',
+                                        'SUB_SOLAR_RING_LONGITUDE')
 
     def field_obs_ring_geometry_sub_solar_ring_long2(self):
-        return self._ring_geo_index_col('SUB_SOLAR_RING_LONGITUDE')
+        return self._ring_geo_index_col('MAXIMUM_SUB_SOLAR_RING_LONGITUDE',
+                                        'SUB_SOLAR_RING_LONGITUDE')
 
     def field_obs_ring_geometry_sub_observer_ring_long1(self):
-        return self._ring_geo_index_col('SUB_OBSERVER_RING_LONGITUDE')
+        return self._ring_geo_index_col('MINIMUM_SUB_OBSERVER_RING_LONGITUDE',
+                                        'SUB_OBSERVER_RING_LONGITUDE')
 
     def field_obs_ring_geometry_sub_observer_ring_long2(self):
-        return self._ring_geo_index_col('SUB_OBSERVER_RING_LONGITUDE')
+        return self._ring_geo_index_col('MAXIMUM_SUB_OBSERVER_RING_LONGITUDE',
+                                        'SUB_OBSERVER_RING_LONGITUDE')
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
         return self._ring_geo_index_col('MINIMUM_SOLAR_RING_ELEVATION')
@@ -147,46 +153,60 @@ class ObsRingGeometry(ObsBase):
         return self._ring_geo_index_col('MAXIMUM_NORTH_BASED_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_ring_center_phase1(self):
-        return self._ring_geo_index_col('RING_CENTER_PHASE_ANGLE')
+        return self._ring_geo_index_col('MINIMUM_RING_CENTER_PHASE_ANGLE',
+                                        'RING_CENTER_PHASE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_phase2(self):
-        return self._ring_geo_index_col('RING_CENTER_PHASE_ANGLE')
+        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_PHASE_ANGLE',
+                                        'RING_CENTER_PHASE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_incidence1(self):
-        return self._ring_geo_index_col('RING_CENTER_INCIDENCE_ANGLE')
+        return self._ring_geo_index_col('MINIMUM_RING_CENTER_INCIDENCE_ANGLE',
+                                        'RING_CENTER_INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_incidence2(self):
-        return self._ring_geo_index_col('RING_CENTER_INCIDENCE_ANGLE')
+        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_INCIDENCE_ANGLE',
+                                        'RING_CENTER_INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_emission1(self):
-        return self._ring_geo_index_col('RING_CENTER_EMISSION_ANGLE')
+        return self._ring_geo_index_col('MINIMUM_RING_CENTER_EMISSION_ANGLE',
+                                        'RING_CENTER_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_ring_center_emission2(self):
-        return self._ring_geo_index_col('RING_CENTER_EMISSION_ANGLE')
+        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_EMISSION_ANGLE',
+                                        'RING_CENTER_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
-        return self._ring_geo_index_col('RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE')
+        return self._ring_geo_index_col('MINIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
+                                        'RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
-        return self._ring_geo_index_col('RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE')
+        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
+                                        'RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_north_based_emission1(self):
-        return self._ring_geo_index_col('RING_CENTER_NORTH_BASED_EMISSION_ANGLE')
+        return self._ring_geo_index_col('MINIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
+                                        'RING_CENTER_NORTH_BASED_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_ring_center_north_based_emission2(self):
-        return self._ring_geo_index_col('RING_CENTER_NORTH_BASED_EMISSION_ANGLE')
+        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
+                                        'RING_CENTER_NORTH_BASED_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return self._ring_geo_index_col('SOLAR_RING_OPENING_ANGLE')
+        return self._ring_geo_index_col('MINIMUM_SOLAR_RING_OPENING_ANGLE',
+                                        'SOLAR_RING_OPENING_ANGLE')
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return self._ring_geo_index_col('SOLAR_RING_OPENING_ANGLE')
+        return self._ring_geo_index_col('MAXIMUM_SOLAR_RING_OPENING_ANGLE',
+                                        'SOLAR_RING_OPENING_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        return self._ring_geo_index_col('OBSERVER_RING_OPENING_ANGLE')
+        return self._ring_geo_index_col('MINIMUM_OBSERVER_RING_OPENING_ANGLE',
+                                        'OBSERVER_RING_OPENING_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        return self._ring_geo_index_col('OBSERVER_RING_OPENING_ANGLE')
+        return self._ring_geo_index_col('MAXIMUM_OBSERVER_RING_OPENING_ANGLE',
+                                        'OBSERVER_RING_OPENING_ANGLE')
 
     def field_obs_ring_geometry_edge_on_radius1(self):
         return self._ring_geo_index_col('MINIMUM_EDGE_ON_RING_RADIUS')
@@ -231,3 +251,33 @@ class ObsRingGeometry(ObsBase):
     def field_obs_ring_geometry_ring_intercept_time2(self):
         # This is not in the ring geometry file but only provided by certain instruments
         return None
+
+
+    ########################
+    ### Field validation ###
+    ########################
+
+    def validate_ring_geo_fields(self, row, metadata):
+        # This runs after all fields have been populated.
+        # Compare min/max gridless fields and make sure they are the same
+        # for a non-temporal camera.
+        if metadata['temporal_camera']:
+            # In this case, the minimum/maximum fields can be different
+            return
+
+        for gridless_column in ('ring_center_distance',
+                                'sub_solar_ring_long',
+                                'sub_observer_ring_long',
+                                'ring_center_phase',
+                                'ring_center_incidence',
+                                'ring_center_emission',
+                                'ring_center_north_based_incidence',
+                                'ring_center_north_based_emission',
+                                'solar_ring_opening_angle',
+                                'observer_ring_opening_angle'):
+            val1 = row[gridless_column+'1']
+            val2 = row[gridless_column+'2']
+            if val1 != val2:
+                self._log_nonrepeating_error(
+                    f'RING GEO fields {gridless_column}1 ({val1}) and '
+                    f'{gridless_column}2 ({val2}) differ')

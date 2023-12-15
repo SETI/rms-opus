@@ -177,6 +177,10 @@ parser.add_argument(
     help='Don\'t warn about missing browse images'
 )
 parser.add_argument(
+    '--import-ignore-geo-mismatch', action='store_true', default=False,
+    help='Don\'t warn about gridless column mismatch in geo files'
+)
+parser.add_argument(
     '--import-dont-use-row-files', action='store_true', default=False,
     help="""Do not use metadata row files to determine whether index and summary
             files should be included in the files table"""

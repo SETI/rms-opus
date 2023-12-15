@@ -631,7 +631,8 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
 
     import_util.log_info(f'OBSERVATIONS: {len(obs_rows)} in {bundle_label_path}')
 
-    metadata = {'phase_name': None}
+    metadata = {'phase_name': None,
+                'temporal_camera': vol_info['temporal_camera']}
 
     # Instantiate the appropriate class that knows how to import this instrument
     instrument_obj = instrument_class(
@@ -1388,6 +1389,12 @@ def import_observation_table(instrument_obj,
                 new_row[field_name] = json.dumps(row_val)
         else:
             new_row[field_name] = row_val[0] # Only a single value
+
+    if not impglobals.ARGUMENTS.import_ignore_geo_mismatch:
+        if table_name == 'obs_ring_geometry':
+            instrument_obj.validate_ring_geo_fields(new_row, metadata)
+        elif table_name.startswith('obs_surface_geometry__'):
+            instrument_obj.validate_surface_geo_fields(new_row, metadata, table_name)
 
     return new_row
 

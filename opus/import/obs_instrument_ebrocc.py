@@ -176,10 +176,12 @@ class ObsInstrumentEBROCC(ObsCommon):
         return self._ring_geo_index_col('MAXIMUM_RING_DISTANCE')
 
     def field_obs_ring_geometry_ring_center_distance1(self):
-        return self._ring_geo_index_col('RING_CENTER_DISTANCE')
+        return self._ring_geo_index_col('MINIMUM_RING_CENTER_DISTANCE',
+                                        'RING_CENTER_DISTANCE')
 
     def field_obs_ring_geometry_ring_center_distance2(self):
-        return self._ring_geo_index_col('RING_CENTER_DISTANCE')
+        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_DISTANCE',
+                                        'RING_CENTER_DISTANCE')
 
     def field_obs_ring_geometry_j2000_longitude1(self):
         return self._ring_geo_index_col('MINIMUM_RING_LONGITUDE')
@@ -206,16 +208,20 @@ class ObsInstrumentEBROCC(ObsCommon):
         return self._ring_geo_index_col('MAXIMUM_RING_AZIMUTH')
 
     def field_obs_ring_geometry_sub_solar_ring_long1(self):
-        return self._ring_geo_index_col('SUB_SOLAR_RING_LONGITUDE')
+        return self._ring_geo_index_col('MINIMUM_SUB_SOLAR_RING_LONGITUDE',
+                                        'SUB_SOLAR_RING_LONGITUDE')
 
     def field_obs_ring_geometry_sub_solar_ring_long2(self):
-        return self._ring_geo_index_col('SUB_SOLAR_RING_LONGITUDE')
+        return self._ring_geo_index_col('MAXIMUM_SUB_SOLAR_RING_LONGITUDE',
+                                        'SUB_SOLAR_RING_LONGITUDE')
 
     def field_obs_ring_geometry_sub_observer_ring_long1(self):
-        return self._ring_geo_index_col('SUB_OBSERVER_RING_LONGITUDE')
+        return self._ring_geo_index_col('MINIMUM_SUB_OBSERVER_RING_LONGITUDE',
+                                        'SUB_OBSERVER_RING_LONGITUDE')
 
     def field_obs_ring_geometry_sub_observer_ring_long2(self):
-        return self._ring_geo_index_col('SUB_OBSERVER_RING_LONGITUDE')
+        return self._ring_geo_index_col('MAXIMUM_SUB_OBSERVER_RING_LONGITUDE',
+                                        'SUB_OBSERVER_RING_LONGITUDE')
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
         # This is only valid for EBROCC 28 Sgr where the star was on the south

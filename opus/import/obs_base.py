@@ -274,19 +274,53 @@ class ObsBase(object):
     def _supp_index_label_col(self, col, idx=None):
         return safe_column(self._metadata['supp_index_label'], col, idx=idx)
 
-    def _ring_geo_index_col(self, col, idx=None):
+    def _ring_geo_index_col(self, col, col2=None, idx=None):
+        # Look up col; if missing try col2 instead. This supports both old and
+        # new ring geometry metadata files, where the old ones have a single
+        # value for gridless columns (e.g. ring_center_distance) while the
+        # new ones have both minimum and maximum fields.
+
         # ring_geo is an optional index file so we allow it to be missing
         if ('ring_geo_row' not in self._metadata or
             self._metadata['ring_geo_row'] is None):
             return None
-        return safe_column(self._metadata['ring_geo_row'], col, idx=idx)
+        if (col not in self._metadata['ring_geo_row'] and
+            (col2 is None or col2 not in self._metadata['ring_geo_row'])):
+            if col2 is None:
+                self._log_nonrepeating_error(
+                    f'Column "{col}" not found in ring_geo')
+            else:
+                self._log_nonrepeating_error(
+                    f'Columns "{col}" or "{col2}" not found in ring_geo')
+            return None
+        ret = safe_column(self._metadata['ring_geo_row'], col, idx=idx)
+        if ret is None and col2 is not None:
+            ret = safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
+        return ret
 
-    def _surface_geo_index_col(self, col, idx=None):
+    def _surface_geo_index_col(self, col, col2=None, idx=None):
+        # Look up col; if missing try col2 instead. This supports both old and
+        # new surface geometry metadata files, where the old ones have a single
+        # value for gridless columns (e.g. center_distance) while the
+        # new ones have both minimum and maximum fields.
+
         # surface_geo is an optional index file so we allow it to be missing
         if ('surface_geo_row' not in self._metadata or
             self._metadata['surface_geo_row'] is None):
             return None
-        return safe_column(self._metadata['surface_geo_row'], col, idx=idx)
+        if (col not in self._metadata['surface_geo_row'] and
+            (col2 is None or col2 not in self._metadata['surface_geo_row'])):
+            if col2 is None:
+                self._log_nonrepeating_error(
+                    f'Column "{col}" not found in surface_geo')
+            else:
+                self._log_nonrepeating_error(
+                    f'Columns "{col}" or "{col2}" not found in surface_geo')
+            return None
+        ret = safe_column(self._metadata['surface_geo_row'], col, idx=idx)
+        if ret is None and col2 is not None:
+            ret = safe_column(self._metadata['surface_geo_row'], col2, idx=idx)
+        return ret
 
     def _col_in_index(self, col):
         return col in self._metadata['index_row']

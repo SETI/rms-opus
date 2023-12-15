@@ -23,6 +23,7 @@ class ObsInstrumentCassiniOcc(ObsMissionCassini):
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
+
     def _target_name(self):
         target_name, target_info = self._get_target_info('S RINGS')
         return [(target_name, target_info[2])]
