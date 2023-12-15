@@ -217,12 +217,12 @@ class ObsSurfaceGeometryTarget(ObsBase):
                                            'CENTER_DISTANCE')
 
     def field_obs_surface_geometry_target_center_phase_angle1(self):
-        ret = self._surface_geo_index_col('MINIMUM_CENTER_PHASE_ANGLE',
-                                          'CENTER_PHASE_ANGLE')
+        return self._surface_geo_index_col('MINIMUM_CENTER_PHASE_ANGLE',
+                                           'CENTER_PHASE_ANGLE')
 
     def field_obs_surface_geometry_target_center_phase_angle2(self):
-        ret = self._surface_geo_index_col('MAXIMUM_CENTER_PHASE_ANGLE',
-                                          'CENTER_PHASE_ANGLE')
+        return self._surface_geo_index_col('MAXIMUM_CENTER_PHASE_ANGLE',
+                                           'CENTER_PHASE_ANGLE')
 
 
     ########################
