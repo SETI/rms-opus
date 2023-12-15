@@ -185,7 +185,7 @@ class ApiTestHelper:
         resp = self._remove_range(resp, start_str, end_str)
         if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
-                fp.write(resp.replace(r'\n', '\n'))
+                fp.write(resp)
             return
         print('Got:')
         print(resp)
