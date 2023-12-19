@@ -1,7 +1,5 @@
 #!/bin/bash
 # Arg 1: Unique ID
-# Arg 2: Config name
-# Arg 3: Holdings root
 
 source ~/opus_runner_secrets
 
@@ -14,7 +12,7 @@ LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
-HOLDINGS_DIR=$3/holdings
+HOLDINGS_DIR=$PDS_DROPBOX_ROOT/holdings
 if [ ! -d "$HOLDINGS_DIR" ]; then
     echo "Directory not found:" $HOLDINGS_DIR
     exit -1

@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# opus_main_test.sh
-#   opus_set_repos.sh - initialize repos and venv
-#   opus_test_one_holdings.sh
-#     opus_setup_environment.sh - set up opus_secrets.py
-#     opus_import_test_database.sh - import test database
-#     opus_run_unittests_coverage.sh - run all tests and coverage check
-
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi
 
@@ -27,7 +20,7 @@ if [[ ! -v PDS_DROPBOX_ROOT ]]; then
     exit -1
 fi
 
-UNIQUE_ID=`uuidgen | sed 's/-/_/g'`
+UNIQUE_ID=`date "+%Y%m%d_%H%M%S_%N"`
 TEST_CAT=opus
 TEST_CAT_DIR=$TEST_ROOT/$TEST_CAT/$UNIQUE_ID
 TEST_LOG_DIR=$TEST_CAT_DIR/test_logs
@@ -68,7 +61,7 @@ if [ $? -ne 0 ]; then exit -1; fi
 
 
 echo "================================================================"
-echo "OPUS INITIALIZATION"
+echo "OPUS REPO INITIALIZATION"
 echo "================================================================"
 echo
 echo "Start:" `date`
@@ -83,15 +76,55 @@ echo
 EXIT_CODE=0
 
 echo "================================================================"
-echo "OPUS CONFIGURATION: $PDS_DROPBOX_ROOT"
+echo "OPUS SETUP ENVIRONMENT"
 echo "================================================================"
 echo
-echo "Test start:" `date`
-./scripts/automated_tests/opus_test_one_holdings.sh $UNIQUE_ID dropbox $PDS_DROPBOX_ROOT
+echo "Start:" `date`
+./scripts/automated_tests/opus_setup_environment.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
-    EXIT_CODE=-1
+    echo "End:  " `date`
+    echo
+    echo "******************************************"
+    echo "*** OPUS TEST ENVIRONMENT SETUP FAILED ***"
+    echo "******************************************"
+    exit -1
 fi
-echo "Test end:  " `date`
+echo "End:  " `date`
 echo
 
-exit $EXIT_CODE
+# Import the test database
+
+echo "================================================================"
+echo "OPUS IMPORT TEST DATABASE"
+echo "================================================================"
+echo
+echo "Start:" `date`
+./scripts/automated_tests/opus_import_test_database.sh $UNIQUE_ID
+if [ $? -ne 0 ]; then
+    echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
+    echo "End:  " `date`
+    exit -1
+fi
+echo "End:  " `date`
+echo
+
+# Run the unit tests and coverage
+
+echo "================================================================"
+echo "OPUS RUN UNIT TESTS"
+echo "================================================================"
+echo
+echo "Start:" `date`
+./scripts/automated_tests/opus_run_unittests_coverage.sh $UNIQUE_ID
+if [ $? -ne 0 ]; then
+    echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
+    echo "End:  " `date`
+    exit -1
+fi
+echo "End:  " `date`
+echo
+
+# Delete the test database
+
+echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
+exit 0
