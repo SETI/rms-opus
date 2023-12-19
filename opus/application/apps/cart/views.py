@@ -22,6 +22,8 @@ import tarfile
 import time
 import zipfile
 
+x = 5
+
 import settings
 
 from django.db import connection, DatabaseError
