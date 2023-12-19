@@ -41,8 +41,8 @@ jobs:
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v3
-        directory: opus/application
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
+          directory: opus/application
           verbose: true
