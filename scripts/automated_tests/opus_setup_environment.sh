@@ -22,6 +22,7 @@ fi
 
 # Create the opus_secrets.py file
 
+CWD=`pwd`
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py
@@ -31,7 +32,7 @@ echo "DB_SCHEMA_NAME = 'opus_test_db_${UNIQUE_ID}'" >> opus_secrets.py
 echo "DB_USER = '${OPUS_DB_USER}'" >> opus_secrets.py
 echo "DB_PASSWORD = '${OPUS_DB_PASSWORD}'" >> opus_secrets.py
 echo "PDS_DATA_DIR = '${HOLDINGS_DIR}'" >> opus_secrets.py
-echo "RMS_OPUS_PATH = '${SRC_DIR}/rms-opus'" >> opus_secrets.py
+echo "RMS_OPUS_PATH = '${CWD}'" >> opus_secrets.py
 echo "RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')" >> opus_secrets.py
 echo "RMS_WEBTOOLS_PATH = '${SRC_DIR}/rms-webtools'" >> opus_secrets.py
 echo "DEBUG = True" >> opus_secrets.py
