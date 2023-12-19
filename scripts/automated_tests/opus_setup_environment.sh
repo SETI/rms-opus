@@ -63,4 +63,8 @@ echo "DICTIONARY_PDSDD_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/pdsdd.full
 echo "DICTIONARY_CONTEXTS_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/contexts.csv')" >> opus_secrets.py
 echo "DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH, 'opus/import/table_schemas')" >> opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
+
+echo "opus_secrets.py:"
+cat opus_secrets.py
+
 exit 0

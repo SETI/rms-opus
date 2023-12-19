@@ -23,6 +23,7 @@ opus_secrets.py
 migrations/
 
 .coverage
+coverage.xml
 htmlcov/
 
 profile.txt

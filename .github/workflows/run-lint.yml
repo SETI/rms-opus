@@ -1,0 +1,36 @@
+name: Run Tests
+run-name: Run Tests triggered by ${{ github.ref_type }} ${{ github.ref_name }} or ${{ github.triggering_actor }}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [ master ]
+  schedule:
+    - cron: "03 00 * * *"
+
+jobs:
+  test:
+    name: Test OPUS Lint
+    runs-on: self-hosted-ubuntu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Run flake8 on import
+        run: |
+          cd opus
+          ./run_flake8_import.sh
+
+      - name: Run flake8 on application
+        run: |
+          cd opus
+          ./run_flake8_application.sh

@@ -61,15 +61,18 @@ if [ $? -ne 0 ]; then exit -1; fi
 
 
 echo "================================================================"
-echo "OPUS REPO INITIALIZATION"
+echo "OPUS INITIALIZE REPOS"
 echo "================================================================"
 echo
 echo "Start:" `date`
+echo
 ./scripts/automated_tests/opus_setup_repos.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    echo
     echo "End:  " `date`
     exit -1
 fi
+echo
 echo "End:  " `date`
 echo
 
@@ -80,8 +83,10 @@ echo "OPUS SETUP ENVIRONMENT"
 echo "================================================================"
 echo
 echo "Start:" `date`
+echo
 ./scripts/automated_tests/opus_setup_environment.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    echo
     echo "End:  " `date`
     echo
     echo "******************************************"
@@ -89,6 +94,7 @@ if [ $? -ne 0 ]; then
     echo "******************************************"
     exit -1
 fi
+echo
 echo "End:  " `date`
 echo
 
@@ -99,32 +105,39 @@ echo "OPUS IMPORT TEST DATABASE"
 echo "================================================================"
 echo
 echo "Start:" `date`
+echo
 ./scripts/automated_tests/opus_import_test_database.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    echo
     echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
     echo "End:  " `date`
     exit -1
 fi
+echo
 echo "End:  " `date`
 echo
 
 # Run the unit tests and coverage
 
 echo "================================================================"
-echo "OPUS RUN UNIT TESTS"
+echo "OPUS RUN UNIT TESTS AND COVERAGE"
 echo "================================================================"
 echo
 echo "Start:" `date`
+echo
 ./scripts/automated_tests/opus_run_unittests_coverage.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    echo
     echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
     echo "End:  " `date`
     exit -1
 fi
+echo
 echo "End:  " `date`
 echo
 
 # Delete the test database
 
 echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
+
 exit 0

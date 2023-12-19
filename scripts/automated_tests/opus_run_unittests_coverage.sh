@@ -16,7 +16,8 @@ DATA_DIR=$TEST_CAT_DIR/data
 cd opus/application
 if [ $? -ne 0 ]; then exit -1; fi
 
-python manage.py test -b
+EXPECTED=100
+./run_coverage.sh
 if [ $? -ne 0 ]; then
     echo
     echo "******************************"
@@ -24,11 +25,8 @@ if [ $? -ne 0 ]; then
     echo "******************************"
     exit -1
 fi
-
-EXPECTED=100
-./run_coverage.sh >& /dev/null
-coverage report >& $TEST_LOG_DIR/dropbox_coverage_report.txt
-grep TOTAL $TEST_LOG_DIR/dropbox_coverage_report.txt | grep "${EXPECTED}%" >& /dev/null
+coverage report >& $TEST_LOG_DIR/coverage_report.txt
+grep TOTAL $TEST_LOG_DIR/coverage_report.txt | grep "${EXPECTED}%" >& /dev/null
 if [ $? -ne 0 ]; then
     echo
     echo "*********************************"
@@ -37,7 +35,8 @@ if [ $? -ne 0 ]; then
     echo
     echo "EXPECTED COVERAGE: ${EXPECTED}%"
     echo
-    cat $TEST_LOG_DIR/dropbox_coverage_report.txt
+    cat $TEST_LOG_DIR/coverage_report.txt
     exit -1
 fi
+
 exit 0

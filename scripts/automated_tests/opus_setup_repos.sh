@@ -16,6 +16,9 @@ LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
+pip3 install --upgrade pip
+if [ $? -ne 0 ]; then exit -1; fi
+
 # Clone the repos
 
 git clone https://github.com/SETI/rms-webtools.git $SRC_DIR/rms-webtools

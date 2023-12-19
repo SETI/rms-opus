@@ -4,15 +4,15 @@ run-name: Run Tests triggered by ${{ github.ref_type }} ${{ github.ref_name }} o
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
   push:
-    branches: [ main ]
+    branches: [ master ]
   schedule:
-    - cron: "21 11 * * 0"
+    - cron: "03 00 * * *"
 
 jobs:
   test:
-    name: Test OPUS
+    name: Test OPUS Import and Application
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -37,8 +37,7 @@ jobs:
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          directory: opus/application
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./opus/application/coverage.xml
           verbose: true
