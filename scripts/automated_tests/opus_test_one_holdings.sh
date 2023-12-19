@@ -17,13 +17,11 @@ DATA_DIR=$TEST_CAT_DIR/data
 
 # Create opus_secrets.py
 
-./scripts/automated_tests/opus_setup_environment.sh $1 $2 $3 >& $TEST_LOG_DIR/$1_test_setup.log
+./scripts/automated_tests/opus_setup_environment.sh $1 $2 $3
 if [ $? -ne 0 ]; then
     echo "******************************************"
     echo "*** OPUS TEST ENVIRONMENT SETUP FAILED ***"
     echo "******************************************"
-    echo
-    cat $TEST_LOG_DIR/$1_test_setup.log
     exit -1
 fi
 

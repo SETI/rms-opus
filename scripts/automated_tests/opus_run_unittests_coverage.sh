@@ -18,13 +18,11 @@ DATA_DIR=$TEST_CAT_DIR/data
 cd opus/application
 if [ $? -ne 0 ]; then exit -1; fi
 
-python manage.py test -b >& $TEST_LOG_DIR/$2_unit_tests.log
+python manage.py test -b
 if [ $? -ne 0 ]; then
     echo "******************************"
     echo "*** OPUS FAILED UNIT TESTS ***"
     echo "******************************"
-    echo
-    cat $TEST_LOG_DIR/$2_unit_tests.log
     exit -1
 fi
 
