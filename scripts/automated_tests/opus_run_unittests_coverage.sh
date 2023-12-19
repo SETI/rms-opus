@@ -15,10 +15,7 @@ LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
-source $SRC_DIR/${TEST_CAT}_venv/bin/activate
-if [ $? -ne 0 ]; then exit -1; fi
-
-cd $SRC_DIR/rms-opus/opus/application
+cd opus/application
 if [ $? -ne 0 ]; then exit -1; fi
 
 python manage.py test -b >& $TEST_LOG_DIR/$2_unit_tests.log

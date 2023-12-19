@@ -4,6 +4,7 @@
 # Arg 3: Holdings dir
 
 source ~/opus_runner_secrets
+if [ $? -ne 0 ]; then exit -1; fi
 
 UNIQUE_ID=$1
 TEST_CAT=opus
@@ -14,10 +15,7 @@ LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
-cd $SRC_DIR/rms-opus/opus/import
-if [ $? -ne 0 ]; then exit -1; fi
-
-source $SRC_DIR/${TEST_CAT}_venv/bin/activate
+cd opus/import
 if [ $? -ne 0 ]; then exit -1; fi
 
 yes YES | ./import_for_tests.sh >& /dev/null
@@ -31,4 +29,5 @@ if [ -s $LOG_DIR/import_logs/ERRORS.log ]; then
     cp $LOG_DIR/import_logs/ERRORS.log $TEST_LOG_DIR/$2_import_errors.log
     exit -1
 fi
+
 exit 0

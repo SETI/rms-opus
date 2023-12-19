@@ -20,22 +20,8 @@ if [ ! -d "$HOLDINGS_DIR" ]; then
     exit -1
 fi
 
-cd $SRC_DIR/rms-opus
-if [ $? -ne 0 ]; then exit -1; fi
-
-# Checkout the correct branch/tag
-
-git checkout master
-if [ $? -ne 0 ]; then exit -1; fi
-#if [ $1 == "admin" ]; then
-#    git checkout pdsadmin
-#    if [ $? -ne 0 ]; then exit -1; fi
-#fi
-
 # Create the opus_secrets.py file
 
-rm -rf opus_secrets.py
-if [ $? -ne 0 ]; then exit -1; fi
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py

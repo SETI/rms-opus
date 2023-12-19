@@ -18,26 +18,13 @@ DATA_DIR=$TEST_CAT_DIR/data
 
 # Clone the repos
 
-cd $SRC_DIR
-if [ $? -ne 0 ]; then exit -1; fi
-
-git clone https://github.com/SETI/rms-opus.git
-if [ $? -ne 0 ]; then exit -1; fi
-git clone https://github.com/SETI/rms-webtools.git
-if [ $? -ne 0 ]; then exit -1; fi
-
-# Make the venv
-
-python3 -m venv ${TEST_CAT}_venv
-if [ $? -ne 0 ]; then exit -1; fi
-
-source ${TEST_CAT}_venv/bin/activate
+git clone https://github.com/SETI/rms-webtools.git $SRC_DIR/rms-webtools
 if [ $? -ne 0 ]; then exit -1; fi
 
 pip3 install wheel
 if [ $? -ne 0 ]; then exit -1; fi
 
-pip3 install -r rms-opus/requirements.txt
+pip3 install -r requirements.txt
 if [ $? -ne 0 ]; then exit -1; fi
 
 exit 0

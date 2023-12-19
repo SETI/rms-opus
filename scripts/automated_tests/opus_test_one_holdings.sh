@@ -41,5 +41,4 @@ if [ $? -ne 0 ]; then exit -1; fi
 
 echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD >& /dev/null
 
-
 exit 0
