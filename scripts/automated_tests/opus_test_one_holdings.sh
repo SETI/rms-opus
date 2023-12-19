@@ -17,7 +17,7 @@ DATA_DIR=$TEST_CAT_DIR/data
 
 # Create opus_secrets.py
 
-./opus_setup_environment.sh $1 $2 $3 >& $TEST_LOG_DIR/$1_test_setup.log
+./scripts/automated_tests/opus_setup_environment.sh $1 $2 $3 >& $TEST_LOG_DIR/$1_test_setup.log
 if [ $? -ne 0 ]; then
     echo "******************************************"
     echo "*** OPUS TEST ENVIRONMENT SETUP FAILED ***"
@@ -29,12 +29,12 @@ fi
 
 # Import the test database
 
-./opus_import_test_database.sh $1 $2 $3
+./scripts/automated_tests/opus_import_test_database.sh $1 $2 $3
 if [ $? -ne 0 ]; then exit -1; fi
 
 # Run the unit tests and coverage
 
-./opus_run_unittests_coverage.sh $1 $2 $3
+./scripts/automated_tests/opus_run_unittests_coverage.sh $1 $2 $3
 if [ $? -ne 0 ]; then exit -1; fi
 
 # Delete the test database

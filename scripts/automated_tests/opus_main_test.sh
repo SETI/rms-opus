@@ -72,7 +72,7 @@ echo "OPUS INITIALIZATION"
 echo "================================================================"
 echo
 echo "Start:" `date`
-./opus_setup_repos.sh $UNIQUE_ID >& $TEST_LOG_DIR/setup.log
+./scripts/automated_tests/opus_setup_repos.sh $UNIQUE_ID >& $TEST_LOG_DIR/setup.log
 if [ $? -ne 0 ]; then
     echo
     echo
@@ -93,7 +93,7 @@ echo "OPUS CONFIGURATION: $PDS_DROPBOX_ROOT"
 echo "================================================================"
 echo
 echo "Test start:" `date`
-./opus_test_one_holdings.sh $UNIQUE_ID dropbox $PDS_DROPBOX_ROOT >& $TEST_LOG_DIR/dropbox.log
+./scripts/automated_tests/opus_test_one_holdings.sh $UNIQUE_ID dropbox $PDS_DROPBOX_ROOT >& $TEST_LOG_DIR/dropbox.log
 if [ $? -ne 0 ]; then
     echo
     cat $TEST_LOG_DIR/dropbox.log
