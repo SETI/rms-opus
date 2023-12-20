@@ -68,6 +68,7 @@ echo "Start:" `date`
 echo
 ./scripts/automated_tests/opus_setup_repos.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    rm -rf $TEST_CAT_DIR
     echo
     echo "End:  " `date`
     exit -1
@@ -86,6 +87,7 @@ echo "Start:" `date`
 echo
 ./scripts/automated_tests/opus_setup_environment.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    rm -rf $TEST_CAT_DIR
     echo
     echo "End:  " `date`
     echo
@@ -108,6 +110,7 @@ echo "Start:" `date`
 echo
 ./scripts/automated_tests/opus_import_test_database.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    rm -rf $TEST_CAT_DIR
     echo
     echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
     echo "End:  " `date`
@@ -127,6 +130,7 @@ echo "Start:" `date`
 echo
 ./scripts/automated_tests/opus_run_unittests_coverage.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    rm -rf $TEST_CAT_DIR
     echo
     echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
     echo "End:  " `date`
@@ -139,5 +143,9 @@ echo
 # Delete the test database
 
 echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
+
+# Delete the temporary directories
+
+rm -rf $TEST_CAT_DIR
 
 exit 0
