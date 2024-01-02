@@ -20,7 +20,11 @@ fi
 
 # Create the opus_secrets.py file
 
-CWD=`pwd`
+CWD=`pwd -W` # So Windows bash will return a directory with C:
+if [ $? -ne 0 ]; then
+    CWD=`pwd`
+fi
+
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py
