@@ -1,5 +1,5 @@
 coverage
-django
+django == 4.*
 django-storages
 djangorestframework
 flake8

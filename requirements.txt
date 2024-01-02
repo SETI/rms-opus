@@ -8,15 +8,15 @@ asgiref==3.7.2
     # via django
 build==1.0.3
     # via pip-tools
-certifi==2023.7.22
+certifi==2023.11.17
     # via requests
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via pip-tools
-coverage==7.3.2
+coverage==7.4.0
     # via -r requirements.in
-django==4.2.7
+django==4.2.9
     # via
     #   -r requirements.in
     #   django-storages
@@ -29,7 +29,7 @@ flake8==6.1.0
     # via -r requirements.in
 hurry-filesize==0.9
     # via -r requirements.in
-idna==3.4
+idna==3.6
     # via requests
 iniconfig==2.0.0
     # via pytest
@@ -37,9 +37,9 @@ mccabe==0.7.0
     # via flake8
 mistune==3.0.2
     # via -r requirements.in
-mysqlclient==2.2.0
+mysqlclient==2.2.1
     # via -r requirements.in
-numpy==1.26.2
+numpy==1.26.3
     # via
     #   -r requirements.in
     #   rms-julian
@@ -50,7 +50,7 @@ packaging==23.2
     #   pytest
 pdfkit==1.0.0
     # via -r requirements.in
-pillow==10.1.0
+pillow==10.2.0
     # via -r requirements.in
 pip-tools==7.3.0
     # via -r requirements.in
@@ -70,7 +70,7 @@ pypng==0.20220715.0
     # via qrcode
 pyproject-hooks==1.0.0
     # via build
-pytest==7.4.3
+pytest==7.4.4
     # via -r requirements.in
 pytz==2023.3.post1
     # via djangorestframework
@@ -78,7 +78,7 @@ pyyaml==6.0.1
     # via -r requirements.in
 qrcode==7.4.2
     # via -r requirements.in
-regex==2023.10.3
+regex==2023.12.25
     # via -r requirements.in
 requests==2.31.0
     # via -r requirements.in
@@ -95,11 +95,11 @@ rms-textkernel==1.0.0
     # via rms-julian
 sqlparse==0.4.4
     # via django
-typing-extensions==4.8.0
+typing-extensions==4.9.0
     # via qrcode
 urllib3==2.1.0
     # via requests
-wheel==0.41.3
+wheel==0.42.0
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
