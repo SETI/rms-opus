@@ -8,6 +8,8 @@
 # param_info form types that invoke mult_ tables
 GROUP_FORM_TYPES = ['GROUP', 'MULTIGROUP']
 
+blah blah
+
 # A list of all tables we populate, in order, for each observation index row.
 # If you change something here, be sure to update do_table_names.py as well.
 TABLES_TO_POPULATE = ['obs_general',
