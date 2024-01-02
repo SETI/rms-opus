@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ self-hosted-ubuntu ]
+        os: [ self-hosted-windows ]
         # python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
         python-version: [ '3.12' ]
       fail-fast: false
@@ -34,6 +34,7 @@ jobs:
       - name: Test with coverage
         run: |
           scripts/automated_tests/opus_main_test.sh
+        shell: bash
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v3
