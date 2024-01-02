@@ -30,8 +30,10 @@ jobs:
           pip3 install flake8
           cd opus
           ./run_flake8_import.sh
+        shell: bash
 
       - name: Run flake8 on application
         run: |
           cd opus
           ./run_flake8_application.sh
+        shell: bash
