@@ -392,5 +392,5 @@ def log_unknown_target_name(target_name):
 def cached_tai_from_iso(s):
     return julian.tai_from_iso(s)
 
-def safe_join(*paths)
+def safe_join(*paths):
     return os.path.join(*paths).replace('\\', '/')
