@@ -23,6 +23,7 @@ from config_targets import *
 import impglobals
 import instruments
 
+
 ################################################################################
 # GENERAL UTILITIES
 ################################################################################
@@ -303,7 +304,7 @@ def read_schema_for_table(table_name, replace=[]):
         table_name = 'obs_surface_geometry_target'
         replace=[('<TARGET>', table_name_for_sfc_target(target_name)),
                  ('<SLUGTARGET>', slug_name_for_sfc_target(target_name))]
-    schema_filename = os.path.join('table_schemas', table_name+'.json')
+    schema_filename = safe_join('table_schemas', table_name+'.json')
     if not os.path.exists(schema_filename):
         return None
     with open(schema_filename, 'r') as fp:
@@ -390,3 +391,6 @@ def log_unknown_target_name(target_name):
 @lru_cache(maxsize=64)
 def cached_tai_from_iso(s):
     return julian.tai_from_iso(s)
+
+def safe_join(*paths)
+    return os.path.join(*paths).replace('\\', '/')

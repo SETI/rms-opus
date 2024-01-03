@@ -26,7 +26,7 @@ def create_import_param_info_table():
     table_names = db.table_names('perm', prefix='obs_')
 
     # read json file for ranges info
-    ranges_filename = os.path.join('table_schemas', 'param_info_ranges.json')
+    ranges_filename = import_util.safe_join('table_schemas', 'param_info_ranges.json')
     with open(ranges_filename, 'r') as fp:
         try:
             # read contents (str) and convert it to a json object (dict)

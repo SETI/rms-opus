@@ -587,8 +587,8 @@ def import_one_bundle(bundle_id):
     index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
     # These are the plain bundle/index directories for bundles that don't have
     # a separate metadata directory
-    index_paths.append(os.path.join(bundle_pdsfile.abspath, 'INDEX'))
-    index_paths.append(os.path.join(bundle_pdsfile.abspath, 'index'))
+    index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'INDEX'))
+    index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'index'))
     found_in_this_dir = False
     for path in index_paths:
         if not os.path.exists(path):
@@ -597,7 +597,7 @@ def import_one_bundle(bundle_id):
         ret = True
         for basename in basenames:
             if basename in primary_index_names:
-                bundle_label_path = os.path.join(path, basename)
+                bundle_label_path = import_util.safe_join(path, basename)
                 import_util.log_debug(f'Using index: {bundle_label_path}')
                 found_in_this_dir = True
                 ret = ret and import_one_index(bundle_id,
@@ -746,7 +746,7 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
                     not basename_upper.endswith('SUPPLEMENTAL_INDEX.LBL') and
                     not basename_upper.endswith('INVENTORY.LBL')):
                     continue
-                assoc_label_path = os.path.join(index_path, basename)
+                assoc_label_path = import_util.safe_join(index_path, basename)
                 if basename_upper.endswith('INVENTORY.LBL'):
                     # The inventory files are in CSV format, but the pdstable
                     # module can't read non-fixed-length records so we fake it up
