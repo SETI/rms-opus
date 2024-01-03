@@ -10,6 +10,8 @@ build==1.0.3
     # via pip-tools
 certifi==2023.11.17
     # via requests
+cffi==1.16.0
+    # via xattr
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
@@ -43,6 +45,7 @@ numpy==1.26.3
     # via
     #   -r requirements.in
     #   rms-julian
+    #   rms-pdslogger
     #   rms-textkernel
 packaging==23.2
     # via
@@ -58,12 +61,15 @@ pluggy==1.3.0
     # via pytest
 pycodestyle==2.11.1
     # via flake8
+pycparser==2.21
+    # via cffi
 pyflakes==3.1.0
     # via flake8
 pyparsing==3.1.1
     # via
     #   -r requirements.in
     #   rms-julian
+    #   rms-pdslogger
     #   rms-pdsparser
     #   rms-textkernel
 pypng==0.20220715.0
@@ -87,12 +93,16 @@ rms-julian==2.0.0
     #   -r requirements.in
     #   rms-pdstable
     #   rms-textkernel
+rms-pdslogger==0.0.5
+    # via -r requirements.in
 rms-pdsparser==0.0.4
     # via rms-pdstable
 rms-pdstable==0.0.5
     # via -r requirements.in
 rms-textkernel==1.0.0
-    # via rms-julian
+    # via
+    #   rms-julian
+    #   rms-pdslogger
 sqlparse==0.4.4
     # via django
 typing-extensions==4.9.0
@@ -101,6 +111,8 @@ urllib3==2.1.0
     # via requests
 wheel==0.42.0
     # via pip-tools
+xattr==1.0.0
+    # via rms-pdslogger
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
