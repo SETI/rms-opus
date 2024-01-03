@@ -8,7 +8,7 @@ on:
   push:
     branches: [ master ]
   schedule:
-    - cron: "03 00 * * *"
+    - cron: "55 09 * * *"  # 1:55am PST, 2:55am PDT
 
 jobs:
   test:
@@ -27,6 +27,7 @@ jobs:
 
       - name: Run flake8 on import
         run: |
+          pip3 install flake8
           cd opus
           ./run_flake8_import.sh
 

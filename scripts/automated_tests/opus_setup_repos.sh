@@ -16,6 +16,14 @@ LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
+echo "Unique ID: $UNIQUE_ID"
+echo "TEST_LOG_DIR: $TEST_LOG_DIR"
+echo "SRC_DIR: $SRC_DIR"
+echo "LOG_DIR: $LOG_DIR"
+echo "DOWNLOAD_DIR: $DOWNLOAD_DIR"
+echo "DATA_DIR: $DATA_DIR"
+echo
+
 pip3 install --upgrade pip
 if [ $? -ne 0 ]; then exit -1; fi
 
