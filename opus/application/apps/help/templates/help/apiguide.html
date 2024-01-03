@@ -16,11 +16,7 @@
                 {% for v in fields %}
                     <tr>
                         <td>{{ v.category }}</td>
-                        <td>{{ v.label }}
-                            {% if v.pretty_units %}
-                                <br/>{{ v.pretty_units }}
-                            {% endif %}
-                        </td>
+                        <td>{{ v.label }}{% if v.pretty_units %}<br/>{{ v.pretty_units }}{% endif %}</td>
                         <td>{{ v.slug }}</td>
                     </tr>
                 {% endfor %}
