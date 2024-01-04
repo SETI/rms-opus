@@ -5,7 +5,6 @@
 ################################################################################
 
 import json
-import os
 
 import impglobals
 import import_util
