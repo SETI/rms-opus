@@ -47,6 +47,8 @@ jobs:
 
       - name: Test with coverage
         run: |
+          env
+          echo
           scripts/automated_tests/opus_main_test.sh
         shell: bash
 
@@ -56,3 +58,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./opus/application/coverage.xml
           verbose: true
+
+      - name: Check coverage level
+        run: |
+          scripts/automated_tests/opus_check_coverage.sh
+        shell: bash

@@ -16,7 +16,6 @@ DATA_DIR=$TEST_CAT_DIR/data
 cd opus/application
 if [ $? -ne 0 ]; then exit -1; fi
 
-EXPECTED=100
 ./run_coverage.sh
 if [ $? -ne 0 ]; then
     echo
@@ -26,17 +25,9 @@ if [ $? -ne 0 ]; then
     exit -1
 fi
 coverage report >& $TEST_LOG_DIR/coverage_report.txt
-grep TOTAL $TEST_LOG_DIR/coverage_report.txt | grep "${EXPECTED}%" >& /dev/null
-if [ $? -ne 0 ]; then
-    echo
-    echo "*********************************"
-    echo "*** OPUS FAILED TEST COVERAGE ***"
-    echo "*********************************"
-    echo
-    echo "EXPECTED COVERAGE: ${EXPECTED}%"
-    echo
-    cat $TEST_LOG_DIR/coverage_report.txt
-    exit -1
-fi
+cp $TEST_LOG_DIR/coverage_report.txt .
+
+# Don't check coverage amount here so we have a chance to upload to codecov first
+# Checking is done later in opus_check_coverage.sh
 
 exit 0
