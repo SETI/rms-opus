@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "HSTI1_1559",
+        "bundleid": "HSTI1_1559",
         "datasetid": "HST-J-WFC3-5-ID11559-V1.2",
         "productid": "IB4V22GXQ",
+        "primarylid": null,
         "productcreationtime": "2018-07-14T14:29:09.000",
         "primaryfilespec": "HSTI1_1559/DATA/VISIT_22/IB4V22GXQ.LBL",
         "opusid": "hst-11559-wfc3-ib4v22gxq",

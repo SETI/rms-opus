@@ -3,7 +3,7 @@ from django.urls import re_path
 
 from help.views import (
     api_about,
-    api_volumes,
+    api_bundles,
     api_faq,
     api_gettingstarted,
     api_splash,
@@ -13,7 +13,7 @@ from help.views import (
 
 urlpatterns = [
     re_path(r'^__help/about.(?P<fmt>html|pdf)$', api_about),
-    re_path(r'^__help/volumes.(?P<fmt>html|pdf)$', api_volumes),
+    re_path(r'^__help/bundles.(?P<fmt>html|pdf)$', api_bundles),
     re_path(r'^__help/faq.(?P<fmt>html|pdf)$', api_faq),
     re_path(r'^__help/gettingstarted.(?P<fmt>html|pdf)$', api_gettingstarted),
     re_path(r'^__help/splash.html$', api_splash),

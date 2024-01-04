@@ -17,9 +17,10 @@
         "declination2": "25.9"
     },
     "PDS Constraints": {
-        "volumeid": "NHPELO_1001",
+        "bundleid": "NHPELO_1001",
         "datasetid": "NH-P-LORRI-2-PLUTO-V3.0",
         "productid": "LOR_0330787458_0X633_ENG",
+        "primarylid": null,
         "productcreationtime": "2017-09-21T00:00:00.000",
         "primaryfilespec": "NHPELO_1001/data/20160714_033078/lor_0330787458_0x633_eng.lbl",
         "opusid": "nh-lorri-lor_0330787458",

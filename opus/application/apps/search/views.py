@@ -468,11 +468,11 @@ def url_to_search_params(request_get, allow_errors=False,
 
     from search.views import *
     from django.http import QueryDict
-    q = QueryDict("planet=Saturn&volumeid=COISS_2&qtype-volumeid=begins&rightasc1=10&order=time1,-RINGGEOringcenterdistance")
+    q = QueryDict("planet=Saturn&bundleid=COISS_2&qtype-bundleid=begins&rightasc1=10&order=time1,-RINGGEOringcenterdistance")
     (selections,extras) = url_to_search_params(q)
     selections
         {'obs_general.planet_id': ['Saturn'],
-         'obs_pds.volume_id': ['COISS_2'],
+         'obs_pds.bundle_id': ['COISS_2'],
          'obs_general.right_asc1': [10.0],
          'obs_general.right_asc2': [None]}
     extras
@@ -480,7 +480,7 @@ def url_to_search_params(request_get, allow_errors=False,
                     'obs_ring_geometry.ring_center_distance',
                     'obs_general.opus_id'],
                    [False, True, False]),
-         'qtypes': {'obs_pds.volume_id': ['begins'],
+         'qtypes': {'obs_pds.bundle_id': ['begins'],
                     'obs_general.right_asc': ['any']},
          'units': {'obs_general.right_asc': ['degrees']}}
     """

@@ -50,7 +50,7 @@ class ObsInstrumentEBROCC(ObsCommon):
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "/DATA/ESO1M/ES1_EPD.LBL"
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.volume + filespec
+        return self.bundle + filespec
 
     def convert_filespec_from_lbl(self, filespec):
         return filespec.replace('.LBL', '.TAB')

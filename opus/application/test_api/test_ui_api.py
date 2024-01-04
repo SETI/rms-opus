@@ -701,58 +701,58 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_lonely_qtype_used_contains(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used contains"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&qtype-volumeid=contains'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'contains'
+        url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=contains'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'contains'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_matches(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used matches"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&qtype-volumeid=matches'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'matches'
+        url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=matches'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'matches'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_excludes(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used excludes"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&qtype-volumeid=excludes'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'excludes'
+        url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=excludes'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'excludes'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_begins(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used begins"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&qtype-volumeid=begins'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'begins'
+        url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=begins'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'begins'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_ends(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used ends"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&qtype-volumeid=ends'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'ends'
+        url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=ends'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'ends'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_string_badval_XXX(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used string badval XXX"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&qtype-volumeid=XXX'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'contains'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-volumeid" has an illegal value; it has been set to the default.')
+        url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=XXX'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'contains'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-bundleid" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_badval_any(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used badval any"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&qtype-volumeid=any'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'contains'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-volumeid" has an illegal value; it has been set to the default.')
+        url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=any'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'contains'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-bundleid" has an illegal value; it has been set to the default.')
 
     ### Lonely unit - these are units without matching searches or widgets
 
@@ -834,10 +834,10 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_lonely_unit_used_any_bad_clause(self):
         "[test_ui_api.py] /__normalizeurl: lonely unit used any bad _2"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&unit-volumeid_2=seconds'
-        new_slugs['widgets'] = 'volumeid'
-        new_slugs['qtype-volumeid'] = 'contains'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-volumeid_2" is a unit for a field that does not allow units; it has been ignored.')
+        url = '/__normalizeurl.json?widgets=bundleid&unit-bundleid_2=seconds'
+        new_slugs['widgets'] = 'bundleid'
+        new_slugs['qtype-bundleid'] = 'contains'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-bundleid_2" is a unit for a field that does not allow units; it has been ignored.')
 
     def test__api_normalizeurl_lonely_unit_used_multi_badval_XXX(self):
         "[test_ui_api.py] /__normalizeurl: lonely unit used multi badval XXX"
@@ -2211,90 +2211,90 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_search_string_good(self):
         "[test_ui_api.py] /__normalizeurl: search string good"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid=COISS'
-        new_slugs['volumeid'] = 'COISS'
-        new_slugs['qtype-volumeid'] = 'contains'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid=COISS'
+        new_slugs['bundleid'] = 'COISS'
+        new_slugs['qtype-bundleid'] = 'contains'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_string_empty(self):
         "[test_ui_api.py] /__normalizeurl: search string empty"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid='
-        new_slugs['volumeid'] = ''
-        new_slugs['qtype-volumeid'] = 'contains'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid='
+        new_slugs['bundleid'] = ''
+        new_slugs['qtype-bundleid'] = 'contains'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_string_bad_1(self):
         "[test_ui_api.py] /__normalizeurl: search string bad 1"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid1=COISS'
-        new_slugs['widgets'] = 'volumeid'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "volumeid1" is unknown; it has been ignored.')
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid1=COISS'
+        new_slugs['widgets'] = 'bundleid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "bundleid1" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_string_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search string bad 2"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid2=COISS'
-        new_slugs['widgets'] = 'volumeid'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "volumeid2" is unknown; it has been ignored.')
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid2=COISS'
+        new_slugs['widgets'] = 'bundleid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "bundleid2" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_string_good_qtype_contains(self):
         "[test_ui_api.py] /__normalizeurl: search string good qtype contains"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid=COISS&qtype-volumeid=contains'
-        new_slugs['volumeid'] = 'COISS'
-        new_slugs['qtype-volumeid'] = 'contains'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid=COISS&qtype-bundleid=contains'
+        new_slugs['bundleid'] = 'COISS'
+        new_slugs['qtype-bundleid'] = 'contains'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_string_good_qtype_matches(self):
         "[test_ui_api.py] /__normalizeurl: search string good qtype matches"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid=COISS&qtype-volumeid=matches'
-        new_slugs['volumeid'] = 'COISS'
-        new_slugs['qtype-volumeid'] = 'matches'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid=COISS&qtype-bundleid=matches'
+        new_slugs['bundleid'] = 'COISS'
+        new_slugs['qtype-bundleid'] = 'matches'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_string_good_qtype_begins(self):
         "[test_ui_api.py] /__normalizeurl: search string good qtype begins"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid=COISS&qtype-volumeid=begins'
-        new_slugs['volumeid'] = 'COISS'
-        new_slugs['qtype-volumeid'] = 'begins'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid=COISS&qtype-bundleid=begins'
+        new_slugs['bundleid'] = 'COISS'
+        new_slugs['qtype-bundleid'] = 'begins'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_string_good_qtype_ends(self):
         "[test_ui_api.py] /__normalizeurl: search string good qtype ends"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid=COISS&qtype-volumeid=ends'
-        new_slugs['volumeid'] = 'COISS'
-        new_slugs['qtype-volumeid'] = 'ends'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid=COISS&qtype-bundleid=ends'
+        new_slugs['bundleid'] = 'COISS'
+        new_slugs['qtype-bundleid'] = 'ends'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_string_good_qtype_excludes(self):
         "[test_ui_api.py] /__normalizeurl: search string good qtype excludes"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid=COISS&qtype-volumeid=excludes'
-        new_slugs['volumeid'] = 'COISS'
-        new_slugs['qtype-volumeid'] = 'excludes'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid=COISS&qtype-bundleid=excludes'
+        new_slugs['bundleid'] = 'COISS'
+        new_slugs['qtype-bundleid'] = 'excludes'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_string_clause(self):
         "[test_ui_api.py] /__normalizeurl: search string clause"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid_03=COISS&volumeid_04=COUVIS&qtype-volumeid_02=ends&qtype-volumeid_04=matches'
-        new_slugs['volumeid_02'] = 'COISS'
-        new_slugs['volumeid_03'] = 'COUVIS'
-        new_slugs['qtype-volumeid_01'] = 'ends'
-        new_slugs['qtype-volumeid_02'] = 'contains'
-        new_slugs['qtype-volumeid_03'] = 'matches'
-        new_slugs['widgets'] = 'volumeid'
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid_03=COISS&bundleid_04=COUVIS&qtype-bundleid_02=ends&qtype-bundleid_04=matches'
+        new_slugs['bundleid_02'] = 'COISS'
+        new_slugs['bundleid_03'] = 'COUVIS'
+        new_slugs['qtype-bundleid_01'] = 'ends'
+        new_slugs['qtype-bundleid_02'] = 'contains'
+        new_slugs['qtype-bundleid_03'] = 'matches'
+        new_slugs['widgets'] = 'bundleid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_single_missing_lines(self):
@@ -2511,11 +2511,11 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_search_string_bad_qtype(self):
         "[test_ui_api.py] /__normalizeurl: search string bad qtype"
         new_slugs = dict(self.default_url_slugs)
-        url = '/__normalizeurl.json?widgets=volumeid&volumeid=COISS&qtype-volumeid=XXX'
-        new_slugs['volumeid'] = 'COISS'
-        new_slugs['qtype-volumeid'] = 'contains'
-        new_slugs['widgets'] = 'volumeid'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "volumeid" has an illegal value; it has been set to the default.')
+        url = '/__normalizeurl.json?widgets=bundleid&bundleid=COISS&qtype-bundleid=XXX'
+        new_slugs['bundleid'] = 'COISS'
+        new_slugs['qtype-bundleid'] = 'contains'
+        new_slugs['widgets'] = 'bundleid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "bundleid" has an illegal value; it has been set to the default.')
 
     # Old slugs and duplicates
 
@@ -2667,8 +2667,8 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     def test__api_normalizeurl_real_1(self):
         "[test_ui_api.py] /__normalizeurl: real 1"
-        url = '/__normalizeurl.json?planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_CO_ISS_1460961026_N'
-        expected = {'new_url': 'mission=Voyager&observationtype=Image&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&unit-time=ymdhms&qtype-volumeid=contains&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,observationtype,volumeid&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'mission': 'Voyager'}, {'observationtype': 'Image'}, {'planet': 'Saturn'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'unit-time': 'ymdhms'}, {'qtype-volumeid': 'contains'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,observationtype,volumeid'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
+        url = '/__normalizeurl.json?planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-bundleid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_CO_ISS_1460961026_N'
+        expected = {'new_url': 'qtype-bundleid=contains&mission=Voyager&observationtype=Image&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&unit-time=ymdhms&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,bundleid,mission,planet,observationtype&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'qtype-bundleid': 'contains'}, {'mission': 'Voyager'}, {'observationtype': 'Image'}, {'planet': 'Saturn'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'unit-time': 'ymdhms'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,bundleid,mission,planet,observationtype'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_2(self):
@@ -2709,8 +2709,8 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     def test__api_normalizeurl_real_8(self):
         "[test_ui_api.py] /__normalizeurl: real 8"
-        url = '/__normalizeurl.json?qtype-RINGGEOringradius=any&qtype-VOYAGERspacecraftclockcount_01=any&VOYAGERspacecraftclockcount1_02=00004:00:001&VOYAGERspacecraftclockcount2_02=00005:00:001&qtype-VOYAGERspacecraftclockcount_02=any&qtype-VOYAGERspacecraftclockcount_03=any&mission=Voyager&qtype-volumeid=contains&wavelength1_01=0.5750&wavelength2_01=0.5850&qtype-wavelength_01=any&wavelength1_02=30.0000&wavelength2_02=300.0000&qtype-wavelength_02=any&wavelength2_03=300.0000&qtype-wavelength_03=any&wavelength1_04=0.7500&wavelength2_04=300.0000&qtype-wavelength_04=any&qtype-wavelength_05=any&qtype-wavelength_06=any&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERspacecraftclockcount,mission,volumeid,RINGGEOringradius,observationduration,wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
-        expected = {"new_url": "mission=Voyager&qtype-RINGGEOringradius=any&unit-RINGGEOringradius=km&qtype-volumeid=contains&qtype-VOYAGERspacecraftclockcount_01=any&VOYAGERspacecraftclockcount1_02=00004:00:001&VOYAGERspacecraftclockcount2_02=00005:00:001&qtype-VOYAGERspacecraftclockcount_02=any&qtype-VOYAGERspacecraftclockcount_03=any&wavelength1_01=0.575&wavelength2_01=0.585&qtype-wavelength_01=any&unit-wavelength_01=microns&wavelength1_02=30&wavelength2_02=300&qtype-wavelength_02=any&unit-wavelength_02=microns&wavelength2_03=300&qtype-wavelength_03=any&unit-wavelength_03=microns&wavelength1_04=0.75&wavelength2_04=300&qtype-wavelength_04=any&unit-wavelength_04=microns&qtype-wavelength_05=any&unit-wavelength_05=microns&qtype-wavelength_06=any&unit-wavelength_06=microns&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERspacecraftclockcount,mission,volumeid,RINGGEOringradius,observationduration,wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"mission": "Voyager"}, {"qtype-RINGGEOringradius": "any"}, {"unit-RINGGEOringradius": "km"}, {"qtype-volumeid": "contains"}, {"qtype-VOYAGERspacecraftclockcount_01": "any"}, {"VOYAGERspacecraftclockcount1_02": "00004:00:001"}, {"VOYAGERspacecraftclockcount2_02": "00005:00:001"}, {"qtype-VOYAGERspacecraftclockcount_02": "any"}, {"qtype-VOYAGERspacecraftclockcount_03": "any"}, {"wavelength1_01": "0.575"}, {"wavelength2_01": "0.585"}, {"qtype-wavelength_01": "any"}, {"unit-wavelength_01": "microns"}, {"wavelength1_02": "30"}, {"wavelength2_02": "300"}, {"qtype-wavelength_02": "any"}, {"unit-wavelength_02": "microns"}, {"wavelength2_03": "300"}, {"qtype-wavelength_03": "any"}, {"unit-wavelength_03": "microns"}, {"wavelength1_04": "0.75"}, {"wavelength2_04": "300"}, {"qtype-wavelength_04": "any"}, {"unit-wavelength_04": "microns"}, {"qtype-wavelength_05": "any"}, {"unit-wavelength_05": "microns"}, {"qtype-wavelength_06": "any"}, {"unit-wavelength_06": "microns"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "VOYAGERspacecraftclockcount,mission,volumeid,RINGGEOringradius,observationduration,wavelength,planet,target"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
+        url = '/__normalizeurl.json?qtype-RINGGEOringradius=any&qtype-VOYAGERspacecraftclockcount_01=any&VOYAGERspacecraftclockcount1_02=00004:00:001&VOYAGERspacecraftclockcount2_02=00005:00:001&qtype-VOYAGERspacecraftclockcount_02=any&qtype-VOYAGERspacecraftclockcount_03=any&mission=Voyager&qtype-bundleid=contains&wavelength1_01=0.5750&wavelength2_01=0.5850&qtype-wavelength_01=any&wavelength1_02=30.0000&wavelength2_02=300.0000&qtype-wavelength_02=any&wavelength2_03=300.0000&qtype-wavelength_03=any&wavelength1_04=0.7500&wavelength2_04=300.0000&qtype-wavelength_04=any&qtype-wavelength_05=any&qtype-wavelength_06=any&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERspacecraftclockcount,mission,bundleid,RINGGEOringradius,observationduration,wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
+        expected = {"new_url": "qtype-bundleid=contains&mission=Voyager&qtype-RINGGEOringradius=any&unit-RINGGEOringradius=km&qtype-VOYAGERspacecraftclockcount_01=any&VOYAGERspacecraftclockcount1_02=00004:00:001&VOYAGERspacecraftclockcount2_02=00005:00:001&qtype-VOYAGERspacecraftclockcount_02=any&qtype-VOYAGERspacecraftclockcount_03=any&wavelength1_01=0.575&wavelength2_01=0.585&qtype-wavelength_01=any&unit-wavelength_01=microns&wavelength1_02=30&wavelength2_02=300&qtype-wavelength_02=any&unit-wavelength_02=microns&wavelength2_03=300&qtype-wavelength_03=any&unit-wavelength_03=microns&wavelength1_04=0.75&wavelength2_04=300&qtype-wavelength_04=any&unit-wavelength_04=microns&qtype-wavelength_05=any&unit-wavelength_05=microns&qtype-wavelength_06=any&unit-wavelength_06=microns&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERspacecraftclockcount,mission,bundleid,RINGGEOringradius,observationduration,wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"qtype-bundleid": "contains"}, {"mission": "Voyager"}, {"qtype-RINGGEOringradius": "any"}, {"unit-RINGGEOringradius": "km"}, {"qtype-VOYAGERspacecraftclockcount_01": "any"}, {"VOYAGERspacecraftclockcount1_02": "00004:00:001"}, {"VOYAGERspacecraftclockcount2_02": "00005:00:001"}, {"qtype-VOYAGERspacecraftclockcount_02": "any"}, {"qtype-VOYAGERspacecraftclockcount_03": "any"}, {"wavelength1_01": "0.575"}, {"wavelength2_01": "0.585"}, {"qtype-wavelength_01": "any"}, {"unit-wavelength_01": "microns"}, {"wavelength1_02": "30"}, {"wavelength2_02": "300"}, {"qtype-wavelength_02": "any"}, {"unit-wavelength_02": "microns"}, {"wavelength2_03": "300"}, {"qtype-wavelength_03": "any"}, {"unit-wavelength_03": "microns"}, {"wavelength1_04": "0.75"}, {"wavelength2_04": "300"}, {"qtype-wavelength_04": "any"}, {"unit-wavelength_04": "microns"}, {"qtype-wavelength_05": "any"}, {"unit-wavelength_05": "microns"}, {"qtype-wavelength_06": "any"}, {"unit-wavelength_06": "microns"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "VOYAGERspacecraftclockcount,mission,bundleid,RINGGEOringradius,observationduration,wavelength,planet,target"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_9(self):

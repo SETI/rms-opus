@@ -20,23 +20,23 @@ from import_util import (cached_tai_from_iso,
 
 
 class ObsBase(object):
-    def __init__(self, volume=None, metadata=None, ignore_errors=False):
+    def __init__(self, bundle=None, metadata=None, ignore_errors=False):
         """Initialize an ObsBase object.
 
-        volume          The PDS3 volume ("COISS_2116")
+        bundle          The PDS3 volume ("COISS_2116") or PDS4 bundle.
         metadata        The collection of metadata available for this observation.
                         This includes rows from the various index as well as additional
                         information. Note that the metadata structure is updated
                         for each observation even though only a single ObsBase instance
-                        is created for each volume. Thus methods have to assume that
-                        the metadata has changed between calls and they can't cache
+                        is created for each bundle/volume. Thus methods have to assume
+                        that the metadata has changed between calls and they can't cache
                         results.
         ignore_errors   True if the user argument --import-ignore-errors was
                         given. This bypasses certain errors (like unknown
                         target name) and fakes data so that the import can
                         complete, even though the answer will be wrong.
         """
-        self._volume         = volume
+        self._bundle         = bundle
         self._metadata       = metadata
         self._ignore_errors  = ignore_errors
 
@@ -71,13 +71,13 @@ class ObsBase(object):
 
     def __str__(self):
         s  = 'class '+type(self).__name__+'\n'
-        s += '  volume = '+str(self._volume)+'\n'
+        s += '  bundle = '+str(self._bundle)+'\n'
         s += '  ignore_errors = '+str(self._ignore_errors)+'\n'
         return s
 
     @property
-    def volume(self):
-        return self._volume
+    def bundle(self):
+        return self._bundle
 
     @property
     def phase_name(self):
@@ -106,18 +106,21 @@ class ObsBase(object):
                                         add_phase_from_row=False,
                                         add_phase_from_inst=False):
         # Given a row from an index file, return the primary_filespec.
-        # This routine is as generic as possible, because within a single volume
+        # This routine is as generic as possible, because within a single bundle/volume
         # the formats of the primary index, supplemental index, and geo index files
         # can be different, so it's not worth overriding this function for each
         # instrument.
-        # This is just a sanity check. Not all indexes include the volume ID, so
+        # This is just a sanity check. Not all indexes include the bundle/volume ID, so
         # we don't rely on getting it from there.
-        volume_id = row.get('VOLUME_ID', None)
-        if volume_id is None:
-            volume_id = row.get('VOLUME_NAME', None) # VG_[5678]xxx
-        if volume_id is not None and volume_id.rstrip('/') != self.volume:
+        bundle_id = row.get('BUNDLE_ID', None)
+        if bundle_id is None:
+            bundle_id = row.get('VOLUME_ID', None)
+        if bundle_id is None:
+            bundle_id = row.get('VOLUME_NAME', None) # VG_[5678]xxx
+        if bundle_id is not None and bundle_id.rstrip('/') != self.bundle:
             self._log_nonrepeating_error('Volume ID in index file inconsistent')
             return None
+
         filespec = row.get('FILE_SPECIFICATION_NAME', None)
         if filespec is None:
             path_name = row.get('PATH_NAME', '').strip('/') # NH
@@ -128,13 +131,15 @@ class ObsBase(object):
         if filespec is None:
             self._log_nonrepeating_error('Index missing FILESPEC field(s)')
             return None
+
         # In the case of GOSSI and COUVIS, the volume name is already prepended
         # to the filespec
         ret = filespec.strip('/')
-        if not ret.startswith(self.volume+'/'):
-            ret = self.volume + '/' + filespec.lstrip('/')
+        if not ret.startswith(self.bundle+'/'):
+            ret = self.bundle + '/' + filespec.lstrip('/')
         if convert_lbl:
             ret = self.convert_filespec_from_lbl(ret)
+
         # This is a really horrid hack required because COVIMS_0xxx has two entries
         # per index row in the geo indexes (IR and VIS), but only one entry in the
         # supplemental index. The only way to know which row is which is to look at
@@ -146,6 +151,7 @@ class ObsBase(object):
                 sfx = components[-1]
                 if sfx in ('ir', 'vis'):
                     ret += '_'+sfx
+
         # Likewise, we have to do the same thing when looking up the row, but in
         # this case we have to get the phase name from this instance.
         if add_phase_from_inst and self.phase_name:

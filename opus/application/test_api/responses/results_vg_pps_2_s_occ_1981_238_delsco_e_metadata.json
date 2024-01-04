@@ -17,9 +17,10 @@
         "declination2": "-22.621706"
     },
     "PDS Constraints": {
-        "volumeid": "VG_2801",
+        "bundleid": "VG_2801",
         "datasetid": "VG2-SR/UR/NR-PPS-2/4-OCC-V1.0",
         "productid": "KM005/PS1P01.TAB",
+        "primarylid": null,
         "productcreationtime": "2003-09-29T16:00:00.000",
         "primaryfilespec": "VG_2801/EASYDATA/KM005/PS1P01.LBL",
         "opusid": "vg-pps-2-s-occ-1981-238-delsco-e",

@@ -17,14 +17,13 @@ import traceback
 import warnings
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
-PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
-sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
+RMS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
+sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
 
 from opus_secrets import * # noqa: E402
 
-sys.path.insert(0, PDS_WEBTOOLS_PATH)
-sys.path.insert(0, PDS_TOOLS_PATH)
-sys.path.insert(0, PDS_OPUS_LIB_PATH)
+sys.path.insert(0, RMS_WEBTOOLS_PATH)
+sys.path.insert(0, RMS_OPUS_LIB_PATH)
 
 IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.dirname(IMPORT_ROOT)
@@ -62,7 +61,7 @@ parser = argparse.ArgumentParser(
 # Database arguments
 parser.add_argument(
     '--read-only', action='store_true', default=False,
-    help='Don\'t modify or create any SQL table'
+    help="Don't modify or create any SQL table"
 )
 parser.add_argument(
     '--override-db-schema', type=str, default=None,
@@ -74,7 +73,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--dont-use-shelves-only', action='store_true', default=False,
-    help='Don\\t use shelve files only instead of looking at actual pdsdata volumes'
+    help='Look at actual pdsdata volumes/bundles instead of using shelve files'
 )
 
 # What to actually do - main import
@@ -135,14 +134,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--delete-import-volumes', action='store_true', default=False,
-    help='Delete the given volumes from the import tables'
+    '--delete-import-bundles', action='store_true', default=False,
+    help='Delete the given bundles from the import tables'
 )
 
 parser.add_argument(
     '--import', dest='do_import', action='store_true', default=False,
-    help="""Perform an import of the specified volumes; implies
-            --delete-import-volumes"""
+    help="""Perform an import of the specified bundles; implies
+            --delete-import-bundles"""
 )
 parser.add_argument(
     '--leave-old-import-tables', action='store_true', default=False,
@@ -192,18 +191,18 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--delete-permanent-import-volumes', action='store_true', default=False,
-    help='Delete the volumes in the import tables from the permanent tables'
+    '--delete-permanent-import-bundles', action='store_true', default=False,
+    help='Delete the bundles in the import tables from the permanent tables'
 )
 parser.add_argument(
-    '--delete-permanent-volumes', action='store_true', default=False,
-    help='Delete the given volumes from the permanent tables'
+    '--delete-permanent-bundles', action='store_true', default=False,
+    help='Delete the given bundles from the permanent tables'
 )
 
 parser.add_argument(
     '--copy-import-to-permanent-tables', action='store_true', default=False,
     help="""Copy all temporary import tables to the permanent tables;
-            implies --delete-permanent-import-volumes
+            implies --delete-permanent-import-bundles
          """
 )
 parser.add_argument(
@@ -266,17 +265,17 @@ parser.add_argument(
     help='Import the dictionary and contexts from scratch'
 )
 
-# Arguments about volume selection
+# Arguments about bundle selection
 parser.add_argument(
-    'volumes', type=str, default=None, nargs='*',
+    'bundles', type=str, default=None, nargs='*',
     metavar='VOL_DESC,VOL_DESC...',
-    help="""Comma-separated list of volume descriptors (COISS_1xxx,COVIMS_0089)
+    help="""Comma-separated list of bundle descriptors (COISS_1xxx,COVIMS_0089)
             to import""")
 
 parser.add_argument(
-    '--exclude-volumes', type=str, default=None,
+    '--exclude-bundles', type=str, default=None,
     metavar='VOL_NAME,VOL_NAME...',
-    help="""Comma-separated list of volume names (COVIMS_0089,COISS_2111)
+    help="""Comma-separated list of bundle names (COVIMS_0089,COISS_2111)
             to exclude from importing""")
 
 # Arguments about logging

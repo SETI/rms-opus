@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "HSTU0_5642",
+        "bundleid": "HSTU0_5642",
         "datasetid": "HST-J-WFPC2-5-ID5642-V1.1",
         "productid": "U2FI0O0BT",
+        "primarylid": null,
         "productcreationtime": "2010-08-19T16:51:03.000",
         "primaryfilespec": "HSTU0_5642/DATA/VISIT_0O/U2FI0O0BT.LBL",
         "opusid": "hst-05642-wfpc2-u2fi0o0bt",

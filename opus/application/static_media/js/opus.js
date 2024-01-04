@@ -1015,9 +1015,9 @@ var opus = {
                 pdfURL = baseURL + "about.pdf";
                 header = "About OPUS";
                 break;
-            case "volumes":
-                url = baseURL + "volumes.html";
-                pdfURL = baseURL + "volumes.pdf";
+            case "bundles":
+                url = baseURL + "bundles.html";
+                pdfURL = baseURL + "bundles.pdf";
                 header = "Volumes Available for Searching with OPUS";
                 break;
             case "faq":

@@ -17,7 +17,7 @@ from opus_support import (get_single_parse_function,
 
 from config_data import *
 from config_targets import *
-import config_volume_info
+import config_bundle_info
 import do_cart
 import do_django
 import impglobals
@@ -28,9 +28,9 @@ import import_util
 # TABLE PREPARATION
 ################################################################################
 
-def _lookup_vol_info(volume_id):
-    for vol_info in config_volume_info.VOLUME_INFO:
-        if re.fullmatch(vol_info[0], volume_id) is not None:
+def _lookup_vol_info(bundle_id):
+    for vol_info in config_bundle_info.BUNDLE_INFO:
+        if re.fullmatch(vol_info[0], bundle_id) is not None:
             return vol_info[1]
     return None
 
@@ -61,15 +61,15 @@ def delete_all_obs_mult_tables(namespace):
             impglobals.DATABASE.drop_table(namespace, table_name)
 
 
-def delete_volume_from_obs_tables(volume_id, namespace):
-    """Delete a single volume from all import or permanent obs tables."""
+def delete_bundle_from_obs_tables(bundle_id, namespace):
+    """Delete a single bundle from all import or permanent obs tables."""
 
-    import_util.log_info(f'Deleting volume "{volume_id}" from {namespace} tables')
+    import_util.log_info(f'Deleting bundle "{bundle_id}" from {namespace} tables')
 
     table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_', 'mult_'])
     table_names = sorted(table_names)
     q = impglobals.DATABASE.quote_identifier
-    where = f'{q("volume_id")}="{volume_id}"'
+    where = f'{q("bundle_id")}="{bundle_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
@@ -85,7 +85,7 @@ def delete_volume_from_obs_tables(volume_id, namespace):
 def find_duplicate_opus_ids():
     """Find opus_ids that exist in both import and permanent tables.
        This can only happen in real life if the same opus_id appears in
-       two different volumes, since normally we delete and entire volume
+       two different bundles, since normally we delete and entire bundle
        before getting here. Sadly this really happens with GOSSI."""
 
     if (not impglobals.DATABASE.table_exists('import', 'obs_general') or
@@ -135,13 +135,13 @@ def delete_duplicate_opus_id_from_perm_tables():
         delete_opus_id_from_obs_tables(opus_id, 'perm')
 
 
-def create_tables_for_import(volume_id, namespace):
+def create_tables_for_import(bundle_id, namespace):
     """Create the import or permanent obs_ tables and all the mult tables they
        reference. This does NOT create the target-specific obs_surface_geometry
        tables because we don't yet know what target names we have."""
 
-    vol_info = _lookup_vol_info(volume_id)
-    instrument_obj = vol_info['instrument_class'](volume=volume_id)
+    vol_info = _lookup_vol_info(bundle_id)
+    instrument_obj = vol_info['instrument_class'](bundle=bundle_id)
     mission_id = instrument_obj.mission_id
     instrument_id = instrument_obj.instrument_id
     mission_name = MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
@@ -196,23 +196,23 @@ def create_tables_for_import(volume_id, namespace):
     return table_schemas, table_names_in_order
 
 
-def copy_volume_from_import_to_permanent(volume_id):
-    """Copy a single volume from all import obs tables to the corresponding
+def copy_bundle_from_import_to_permanent(bundle_id):
+    """Copy a single bundle from all import obs tables to the corresponding
        permanent tables. Create the permanent obs tables if they don't already
        exist. As usual, we have to treat the obs_surface_geometry__<T> tables
        specially."""
 
-    import_util.log_info(f'Copying volume "{volume_id}" from import to permanent')
+    import_util.log_info(f'Copying bundle "{bundle_id}" from import to permanent')
 
     q = impglobals.DATABASE.quote_identifier
 
-    table_schemas, table_names_in_order = create_tables_for_import(volume_id,
+    table_schemas, table_names_in_order = create_tables_for_import(bundle_id,
                                                                    namespace='perm')
     for table_name in table_names_in_order:
         if table_name.startswith('obs_surface_geometry__'):
             continue
         import_util.log_debug(f'Copying table "{table_name}"')
-        where = f'{q("volume_id")}="{volume_id}"'
+        where = f'{q("bundle_id")}="{bundle_id}"'
         impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
                                                          table_name,
                                                          where=where)
@@ -234,7 +234,7 @@ def copy_volume_from_import_to_permanent(volume_id):
                ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))])
             impglobals.DATABASE.create_table('perm', table_name, table_schema)
         import_util.log_debug(f'Copying table "{table_name}"')
-        where = f'{q("volume_id")}="{volume_id}"'
+        where = f'{q("bundle_id")}="{bundle_id}"'
         impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
                                                          table_name,
                                                          where=where)
@@ -276,7 +276,7 @@ def analyze_all_tables(namespace):
 # We cache the contents of mult_ tables we've touched so we don't have to keep
 # reading them from the database.
 # We initialize them to {} here because do_partables needs these to have values
-# and they are normally only set during a volume import.
+# and they are normally only set during a bundle import.
 _MULT_TABLE_CACHE = {}
 _CREATED_IMP_MULT_TABLES = {}
 _MODIFIED_MULT_TABLES = {}
@@ -464,7 +464,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         else:
             disp_order = label
 
-    if type(disp_order) == int or type(disp_order) == float:
+    if isinstance(disp_order, (int, float)):
         disp_order = '%030.9f' % disp_order
     if len(mult_table) == 0:
         next_id = 0
@@ -517,7 +517,7 @@ def dump_import_mult_tables():
 def copy_mult_from_import_to_permanent():
     """Copy ALL mult tables from import to permament. We have to do all tables,
        not just the ones that have changed, because tables might have changed
-       during previous import runs or previous volumes and we don't have a
+       during previous import runs or previous bundles and we don't have a
        record of that."""
 
     table_names = impglobals.DATABASE.table_names('import', prefix='mult_')
@@ -537,10 +537,10 @@ def copy_mult_from_import_to_permanent():
 # TOP-LEVEL IMPORT ROUTINES
 ################################################################################
 
-def import_one_volume(volume_id):
-    """Read the PDS data and perform all import functions for one volume.
+def import_one_bundle(bundle_id):
+    """Read the PDS data and perform all import functions for one bundle.
        The results are left in the import namespace."""
-    impglobals.LOGGER.open(f'Importing {volume_id}',
+    impglobals.LOGGER.open(f'Importing {bundle_id}',
                            limits={'info': impglobals.ARGUMENTS.log_info_limit,
                                    'debug': impglobals.ARGUMENTS.log_debug_limit})
 
@@ -551,16 +551,16 @@ def import_one_volume(volume_id):
     impglobals.ANNOUNCED_IMPORT_WARNINGS = []
     impglobals.ANNOUNCED_IMPORT_ERRORS = []
     impglobals.MAX_TABLE_ID_CACHE = {}
-    impglobals.CURRENT_VOLUME_ID = volume_id
+    impglobals.CURRENT_BUNDLE_ID = bundle_id
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
     impglobals.CURRENT_PRIMARY_FILESPEC = None
 
-    volume_pdsfile = pdsfile.pds3file.Pds3File.from_path(volume_id)
+    bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
 
-    if not volume_pdsfile.is_volume:
-        import_util.log_error(f'{volume_id} is not a volume!')
+    if not bundle_pdsfile.is_volume:
+        import_util.log_error(f'{bundle_id} is not a bundle!')
         impglobals.LOGGER.close()
-        impglobals.CURRENT_VOLUME_ID = None
+        impglobals.CURRENT_BUNDLE_ID = None
         return False
 
 
@@ -568,27 +568,27 @@ def import_one_volume(volume_id):
     ### FIND PRIMARY INDEX FILE(s) ###
     ##################################
 
-    vol_info = _lookup_vol_info(volume_id)
+    vol_info = _lookup_vol_info(bundle_id)
     if vol_info is None:
-        import_util.log_error(f'No VOLUME_INFO entry for {volume_id}!')
+        import_util.log_error(f'No BUNDLE_INFO entry for {bundle_id}!')
         impglobals.LOGGER.close()
-        impglobals.CURRENT_VOLUME_ID = None
+        impglobals.CURRENT_BUNDLE_ID = None
         return False
     if vol_info['instrument_class'] is None:
-        import_util.log_debug(f'Ignoring import of {volume_id}')
+        import_util.log_debug(f'Ignoring import of {bundle_id}')
         impglobals.LOGGER.close()
-        impglobals.CURRENT_VOLUME_ID = None
+        impglobals.CURRENT_BUNDLE_ID = None
         return True
 
     primary_index_names = [
-        x.replace('<VOLUME>', volume_id) for x in vol_info['primary_index']]
+        x.replace('<BUNDLE>', bundle_id) for x in vol_info['primary_index']]
 
     # These are the metadata directories
-    index_paths = volume_pdsfile.associated_abspaths('metadata', must_exist=True)
-    # These are the plain volume/index directories for volumes that don't have
+    index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
+    # These are the plain bundle/index directories for bundles that don't have
     # a separate metadata directory
-    index_paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
-    index_paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
+    index_paths.append(os.path.join(bundle_pdsfile.abspath, 'INDEX'))
+    index_paths.append(os.path.join(bundle_pdsfile.abspath, 'index'))
     found_in_this_dir = False
     for path in index_paths:
         if not os.path.exists(path):
@@ -597,49 +597,49 @@ def import_one_volume(volume_id):
         ret = True
         for basename in basenames:
             if basename in primary_index_names:
-                volume_label_path = os.path.join(path, basename)
-                import_util.log_debug(f'Using index: {volume_label_path}')
+                bundle_label_path = os.path.join(path, basename)
+                import_util.log_debug(f'Using index: {bundle_label_path}')
                 found_in_this_dir = True
-                ret = ret and import_one_index(volume_id,
+                ret = ret and import_one_index(bundle_id,
                                                vol_info,
-                                               volume_pdsfile,
+                                               bundle_pdsfile,
                                                index_paths,
-                                               volume_label_path)
+                                               bundle_label_path)
         if found_in_this_dir:
             impglobals.LOGGER.close()
-            impglobals.CURRENT_VOLUME_ID = None
+            impglobals.CURRENT_BUNDLE_ID = None
             impglobals.CURRENT_INDEX_ROW_NUMBER = None
             impglobals.CURRENT_PRIMARY_FILESPEC = None
             return ret
 
-    import_util.log_error(f'No index label file found: "{volume_id}"')
+    import_util.log_error(f'No index label file found: "{bundle_id}"')
     impglobals.LOGGER.close()
-    impglobals.CURRENT_VOLUME_ID = None
+    impglobals.CURRENT_BUNDLE_ID = None
 
     return False
 
 
-def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
-                     volume_label_path):
+def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
+                     bundle_label_path):
     """Import the observations given a single primary index file."""
     instrument_class = vol_info['instrument_class']
 
-    obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
+    obs_rows, obs_label_dict = import_util.safe_pdstable_read(bundle_label_path)
     if not obs_rows:
-        import_util.log_error(f'Read failed: "{volume_label_path}"')
+        import_util.log_error(f'Read failed: "{bundle_label_path}"')
         return False
 
-    import_util.log_info(f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
+    import_util.log_info(f'OBSERVATIONS: {len(obs_rows)} in {bundle_label_path}')
 
     metadata = {'phase_name': None}
 
     # Instantiate the appropriate class that knows how to import this instrument
     instrument_obj = instrument_class(
-        volume=volume_id,
+        bundle=bundle_id,
         metadata=metadata
     )
 
-    # We need to validate index rows for volumes where there can be more than one
+    # We need to validate index rows for bundles where there can be more than one
     # row in the index file for a single opus_id. We first compute the opus_id for
     # each row (which is a fast operation), looking for duplicates. When we find
     # duplicates, we collect them into a dictionary. Then we go through the duplicates,
@@ -739,7 +739,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                 if basename.find('999') != -1:
                     # These are cumulative geo files
                     continue
-                if not basename.startswith(volume_id):
+                if not basename.startswith(bundle_id):
                     continue
                 basename_upper = basename.upper()
                 if (not basename_upper.endswith('SUMMARY.LBL') and
@@ -748,19 +748,23 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                     continue
                 assoc_label_path = os.path.join(index_path, basename)
                 if basename_upper.endswith('INVENTORY.LBL'):
-                    # The inventory files are in CSV format, but the pdstable.py
+                    # The inventory files are in CSV format, but the pdstable
                     # module can't read non-fixed-length records so we fake it up
                     # ourselves here.
                     table_filename = (assoc_label_path.replace('.LBL', '.CSV')
                                       .replace('.lbl', '.csv'))
                     assoc_rows = []
                     assoc_label_dict = {} # Not used
+                    # Old inventory files use CSV, new inventory files use TAB
+                    if not os.path.exists(table_filename):
+                        table_filename = (table_filename.replace('.csv', '.tab')
+                                          .replace('.CSV', '.TAB'))
                     with open(table_filename, 'r') as table_file:
                         csvreader = csv.reader(table_file)
                         for row in csvreader:
-                            (csv_volume, csv_filespec, csv_ringobsid,
+                            (csv_bundle, csv_filespec, csv_ringobsid,
                              *csv_targets) = row
-                            row_dict = {'VOLUME_ID': csv_volume.strip(),
+                            row_dict = {'BUNDLE_ID': csv_bundle.strip(),
                                         'FILE_SPECIFICATION_NAME':
                                                      csv_filespec.strip(),
                                         'OPUS_ID':
@@ -846,7 +850,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type+'_label'] = assoc_label_dict
 
-    table_schemas, table_names_in_order = create_tables_for_import(volume_id,
+    table_schemas, table_names_in_order = create_tables_for_import(bundle_id,
                                                                    'import')
 
     # It's time to actually compute the values that will go in the database!
@@ -948,12 +952,12 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                     obs_general_row = row
                     opus_id = row['opus_id']
                     if opus_id in used_opus_id_prev_vol:
-                        # Some of the GO_xxxx and COUVIS_xxxx volumes have
-                        # duplicate observations across volumes. In these cases
+                        # Some of the GO_xxxx and COUVIS_xxxx bundles have
+                        # duplicate observations across bundles. In these cases
                         # we have to use the NEW one and delete the old one
                         # from the database itself. Note this will only be
                         # triggered if we have already loaded the previous
-                        # volume into the import tables but not clear them out.
+                        # bundle into the import tables but not clear them out.
                         # In the case where we copied them to the perm tables
                         # and cleared them out, a future check during the copy
                         # process will catch the duplicates.
@@ -1084,7 +1088,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, index_paths,
                                 obs_pds_row['primary_filespec'],
                                 obs_general_row['id'],
                                 obs_general_row['opus_id'],
-                                obs_general_row['volume_id'],
+                                obs_general_row['bundle_id'],
                                 obs_general_row['instrument_id'])
                 table_rows[table_name].extend(rows)
 
@@ -1299,7 +1303,7 @@ def import_observation_table(instrument_obj,
                             column_val = None
                     if column_val is not None and the_val is not None:
                         val_sentinel = table_column.get('val_sentinel', None)
-                        if type(val_sentinel) != list:
+                        if not isinstance(val_sentinel, list):
                             val_sentinel = [val_sentinel]
                         if the_val in val_sentinel:
                             column_val = None
@@ -1411,7 +1415,7 @@ def import_run_field_function(instrument_obj,
         return False, None
     return (True, res)
 
-def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
+def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, bundle_id,
                                   instrument_id):
     rows = []
 
@@ -1497,7 +1501,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                       '_hstfiles.tab' in logical_path):
                     # if an index file has no files in shelves/index
                     import_util.log_nonrepeating_warning(
-                        f'Volume "{volume_id}" is missing row files under '+
+                        f'Volume "{bundle_id}" is missing row files under '+
                         f'shelves/index for {logical_path}')
 
                 # If the pdsfile is expecting the shelf file, check if corresponding
@@ -1525,7 +1529,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                 row = {'id': id,
                        'obs_general_id': obs_general_id,
                        'opus_id': opus_id,
-                       'volume_id': volume_id,
+                       'bundle_id': bundle_id,
                        'instrument_id': instrument_id,
                        'version_number': version_number,
                        'version_name': version_name,
@@ -1574,10 +1578,10 @@ def do_import_steps():
     global _CREATED_IMP_MULT_TABLES
     _CREATED_IMP_MULT_TABLES = set()
 
-    volume_id_list = []
-    for volume_id in import_util.yield_import_volume_ids(
+    bundle_id_list = []
+    for bundle_id in import_util.yield_import_bundle_ids(
                                                     impglobals.ARGUMENTS):
-        volume_id_list.append(volume_id)
+        bundle_id_list.append(bundle_id)
 
     # Delete the old import tables if
     #   --drop-old-import-tables but not
@@ -1618,21 +1622,21 @@ def do_import_steps():
 
             impglobals.LOGGER.close()
 
-    # If --import is given, first delete the volumes from the import tables,
+    # If --import is given, first delete the bundles from the import tables,
     # then do the new import
     if (impglobals.ARGUMENTS.do_import or
-        impglobals.ARGUMENTS.delete_import_volumes):
+        impglobals.ARGUMENTS.delete_import_bundles):
         if not old_imp_tables_dropped:
             import_util.log_warning('Importing on top of previous import tables!')
-            for volume_id in import_util.yield_import_volume_ids(
+            for bundle_id in import_util.yield_import_bundle_ids(
                                                     impglobals.ARGUMENTS):
-                delete_volume_from_obs_tables(volume_id, 'import')
+                delete_bundle_from_obs_tables(bundle_id, 'import')
 
     if impglobals.ARGUMENTS.do_import:
-        for volume_id in volume_id_list:
-            if not import_one_volume(volume_id):
+        for bundle_id in bundle_id_list:
+            if not import_one_bundle(bundle_id):
                 impglobals.LOGGER.log('fatal',
-                        f'Import of volume {volume_id} failed - Aborting')
+                        f'Import of bundle {bundle_id} failed - Aborting')
                 impglobals.IMPORT_HAS_BAD_DATA = True
 
         if (impglobals.IMPORT_HAS_BAD_DATA and
@@ -1641,40 +1645,40 @@ def do_import_steps():
                                   'ERRORs found during import - aborting early')
             return False
 
-    # If --copy-import-to-permanent-tables or --delete-permanent-import-volumes
-    # are given, delete all volumes that exist in the import tables from the
+    # If --copy-import-to-permanent-tables or --delete-permanent-import-bundles
+    # are given, delete all bundles that exist in the import tables from the
     # permanent tables.
-    import_volume_ids = []
+    import_bundle_ids = []
     if ((impglobals.ARGUMENTS.copy_import_to_permanent_tables or
-         impglobals.ARGUMENTS.delete_permanent_import_volumes) and
+         impglobals.ARGUMENTS.delete_permanent_import_bundles) and
         impglobals.DATABASE.table_exists('import', 'obs_general')):
         imp_obs_general_table_name = (
             impglobals.DATABASE.convert_raw_to_namespace('import',
                                                          'obs_general'))
         q = impglobals.DATABASE.quote_identifier
-        import_volume_ids = [x[0] for x in
+        import_bundle_ids = [x[0] for x in
                       impglobals.DATABASE.general_select(
-    f'DISTINCT {q("volume_id")} FROM {q(imp_obs_general_table_name)} ORDER BY {q("volume_id")}')
+    f'DISTINCT {q("bundle_id")} FROM {q(imp_obs_general_table_name)} ORDER BY {q("bundle_id")}')
                      ]
         if not old_perm_tables_dropped:
             # Don't bother if there's nothing there!
             if not impglobals.ARGUMENTS.create_cart:
                 import_util.log_warning(
-                        'Deleting volumes from perm tables but cart table not wiped')
-            for volume_id in import_volume_ids:
-                delete_volume_from_obs_tables(volume_id, 'perm')
+                        'Deleting bundles from perm tables but cart table not wiped')
+            for bundle_id in import_bundle_ids:
+                delete_bundle_from_obs_tables(bundle_id, 'perm')
 
-    # If --delete-permanent-volumes is given, delete the given set of volumes
+    # If --delete-permanent-bundles is given, delete the given set of bundles
     # from the permanent tables.
-    if impglobals.ARGUMENTS.delete_permanent_volumes:
-        for volume_id in volume_id_list:
-            delete_volume_from_obs_tables(volume_id, 'perm')
+    if impglobals.ARGUMENTS.delete_permanent_bundles:
+        for bundle_id in bundle_id_list:
+            delete_bundle_from_obs_tables(bundle_id, 'perm')
 
     # If --copy-import-to-permanent-tables is given, create obs and mult tables
     # as necessary, then copy the import tables to the permanent tables.
     if impglobals.ARGUMENTS.copy_import_to_permanent_tables:
-        for volume_id in import_volume_ids:
-            create_tables_for_import(volume_id, 'perm')
+        for bundle_id in import_bundle_ids:
+            create_tables_for_import(bundle_id, 'perm')
 
         import_util.log_info('Deleting duplicate opus_ids')
         delete_duplicate_opus_id_from_perm_tables()
@@ -1682,8 +1686,8 @@ def do_import_steps():
         import_util.log_info('Copying import mult tables to permanent')
         copy_mult_from_import_to_permanent()
 
-        for volume_id in import_volume_ids:
-            copy_volume_from_import_to_permanent(volume_id)
+        for bundle_id in import_bundle_ids:
+            copy_bundle_from_import_to_permanent(bundle_id)
 
     # If --drop-new-import-tables is given, delete the new import tables
     if impglobals.ARGUMENTS.drop_new_import_tables:

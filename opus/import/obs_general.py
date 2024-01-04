@@ -27,8 +27,8 @@ class ObsGeneral(ObsBase):
     def field_obs_general_opus_id(self):
         return self.opus_id
 
-    def field_obs_general_volume_id(self):
-        return self.volume
+    def field_obs_general_bundle_id(self):
+        return self.bundle
 
     def field_obs_general_instrument_id(self):
         return self._create_mult(self.instrument_id)
@@ -116,11 +116,9 @@ class ObsGeneral(ObsBase):
                 }
             else:
                 browse_data = {'viewables': []}
-                # # XXX
-                # if (volset in VOLSETS_WITH_PREVIEWS and
-                #     not impglobals.ARGUMENTS.import_ignore_missing_images):
-                self._log_nonrepeating_warning(
-                    f'Missing all browse/diagram images for "{self.primary_filespec}"')
+                if not impglobals.ARGUMENTS.import_ignore_missing_images:
+                    self._log_nonrepeating_warning(
+                       f'Missing all browse/diagram images for "{self.primary_filespec}"')
 
         ret = json.dumps(browse_data)
         return ret

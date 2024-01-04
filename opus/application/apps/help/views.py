@@ -5,7 +5,7 @@
 # The API interface for retrieving help documents:
 #
 #    Format: __help/about.(?P<fmt>html|pdf)
-#    Format: __help/volumes.(?P<fmt>html|pdf)
+#    Format: __help/bundles.(?P<fmt>html|pdf)
 #    Format: __help/faq.(?P<fmt>html|pdf)
 #    Format: __help/gettingstarted.(?P<fmt>html|pdf)
 #    Format: __help/splash.html
@@ -25,7 +25,7 @@ import platform
 import qrcode
 import re
 
-import oyaml as yaml # Cool package that preserves key order
+import yaml
 import pdfkit
 
 from django.http import Http404, HttpResponse, HttpRequest
@@ -85,33 +85,33 @@ def api_about(request, fmt):
     return ret
 
 @never_cache
-def api_volumes(request, fmt):
-    """Renders the volumes page.
+def api_bundles(request, fmt):
+    """Renders the bundles page.
 
     This is a PRIVATE API.
 
-    Format: __help/volumes.(?P<fmt>html|pdf)
+    Format: __help/bundles.(?P<fmt>html|pdf)
     """
-    api_code = enter_api_call('api_volumes', request)
+    api_code = enter_api_call('api_bundles', request)
 
     if (not request or request.GET is None or request.META is None
         or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST(f'/__help/volumes.{fmt}'))
+        ret = Http404(HTTP404_NO_REQUEST(f'/__help/bundles.{fmt}'))
         exit_api_call(api_code, ret)
         raise ret
 
-    all_volumes = {}
-    for d in (ObsGeneral.objects.values('instrument_id','volume_id')
-              .order_by('instrument_id','volume_id').distinct()):
+    all_bundles = {}
+    for d in (ObsGeneral.objects.values('instrument_id','bundle_id')
+              .order_by('instrument_id','bundle_id').distinct()):
         instrument_name = (MultObsGeneralInstrumentId.objects.values('label')
                            .filter(id=d['instrument_id']))
-        all_volumes.setdefault(instrument_name[0]['label'],
-                               []).append(d['volume_id'])
-    for k,v in all_volumes.items():
-        all_volumes[k] = ', '.join(all_volumes[k])
+        all_bundles.setdefault(instrument_name[0]['label'],
+                               []).append(d['bundle_id'])
+    for k,v in all_bundles.items():
+        all_bundles[k] = ', '.join(all_bundles[k])
 
-    context = {'all_volumes': all_volumes}
-    ret = _render_html_or_pdf(request, 'help/volumes.html', fmt, 'volumes',
+    context = {'all_bundles': all_bundles}
+    ret = _render_html_or_pdf(request, 'help/bundles.html', fmt, 'bundles',
                               'Volumes Available for Searching with OPUS',
                               context)
     exit_api_call(api_code, ret)

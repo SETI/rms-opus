@@ -46,7 +46,7 @@ class ObsMissionHubble(ObsCommon):
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "DATA/VISIT_05/O43B05C1Q.LBL"
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.volume + '/' + filespec
+        return self.bundle + '/' + filespec
 
 
     ################################
@@ -172,8 +172,8 @@ class ObsMissionHubble(ObsCommon):
     def field_obs_mission_hubble_opus_id(self):
         return self.opus_id
 
-    def field_obs_mission_hubble_volume_id(self):
-        return self.volume
+    def field_obs_mission_hubble_bundle_id(self):
+        return self.bundle
 
     def field_obs_mission_hubble_instrument_id(self):
         return self.instrument_id

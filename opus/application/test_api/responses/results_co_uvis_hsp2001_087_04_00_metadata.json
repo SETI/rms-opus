@@ -17,9 +17,10 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "COUVIS_0002",
+        "bundleid": "COUVIS_0002",
         "datasetid": "CO-J-UVIS-2-SSB-V1.2",
         "productid": "HSP2001_087_04_00",
+        "primarylid": null,
         "productcreationtime": "2012-01-28T00:00:00.000",
         "primaryfilespec": "COUVIS_0002/DATA/D2001_087/HSP2001_087_04_00.LBL",
         "opusid": "co-uvis-hsp2001_087_04_00",

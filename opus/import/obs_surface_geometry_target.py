@@ -22,8 +22,8 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def field_obs_surface_geometry_target_opus_id(self):
         return self.opus_id
 
-    def field_obs_surface_geometry_target_volume_id(self):
-        return self.volume
+    def field_obs_surface_geometry_target_bundle_id(self):
+        return self.bundle
 
     def field_obs_surface_geometry_target_instrument_id(self):
         return self.instrument_id
@@ -165,4 +165,7 @@ class ObsSurfaceGeometryTarget(ObsBase):
         return self._surface_geo_index_col('CENTER_DISTANCE')
 
     def field_obs_surface_geometry_target_center_phase_angle(self):
-        return self._surface_geo_index_col('CENTER_PHASE_ANGLE')
+        ret = self._surface_geo_index_col('CENTER_PHASE_ANGLE')
+        if ret is None:
+            ret = self._surface_geo_index_col('MAXIMUM_CENTER_PHASE_ANGLE')
+        return ret

@@ -75,7 +75,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         # This is because this (and the subsequent creation of opus_id) is used
         # to actually find the matching row in the supplemental index dictionary.
         # Format: GO_0017/J0/OPNAV/C0347569700R.IMG
-        return self.volume + '/' + self._index_col('FILE_SPECIFICATION_NAME')
+        return self.bundle + '/' + self._index_col('FILE_SPECIFICATION_NAME')
 
     def opus_id_from_index_row(self, row):
         # SL9 entries from the main index are ignored because those are in the
@@ -85,6 +85,9 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
             if 'SL9' in row['FILE_SPECIFICATION_NAME']:
                 return None
         return super().opus_id_from_index_row(row)
+
+    def convert_filespec_from_lbl(self, filespec):
+        return filespec.replace('.LBL', '.IMG')
 
 
     ################################
@@ -298,8 +301,8 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     def field_obs_instrument_gossi_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_gossi_volume_id(self):
-        return self.volume
+    def field_obs_instrument_gossi_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_gossi_instrument_id(self):
         return self.instrument_id

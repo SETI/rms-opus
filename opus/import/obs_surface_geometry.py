@@ -23,8 +23,8 @@ class ObsSurfaceGeometry(ObsBase):
     def field_obs_surface_geometry_opus_id(self):
         return self.opus_id
 
-    def field_obs_surface_geometry_volume_id(self):
-        return self.volume
+    def field_obs_surface_geometry_bundle_id(self):
+        return self.bundle
 
     def field_obs_surface_geometry_instrument_id(self):
         return self.instrument_id

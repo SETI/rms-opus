@@ -17,9 +17,10 @@
         "declination2": "21.5003"
     },
     "PDS Constraints": {
-        "volumeid": "GO_0018",
+        "bundleid": "GO_0018",
         "datasetid": "GO-J/JSA-SSI-2-REDR-V1.0",
         "productid": "IMG",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "GO_0018/REDO/C3/JUPITER/C0368977800R.IMG",
         "opusid": "go-ssi-c0368977800",

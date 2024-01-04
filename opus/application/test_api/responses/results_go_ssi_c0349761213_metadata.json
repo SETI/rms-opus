@@ -17,9 +17,10 @@
         "declination2": "-31.7337"
     },
     "PDS Constraints": {
-        "volumeid": "GO_0017",
+        "bundleid": "GO_0017",
         "datasetid": "GO-J/JSA-SSI-2-REDR-V1.0",
         "productid": "IMG",
+        "primarylid": null,
         "productcreationtime": null,
         "primaryfilespec": "GO_0017/G1/GANYMEDE/C0349761213R.IMG",
         "opusid": "go-ssi-c0349761213",

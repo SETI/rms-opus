@@ -367,8 +367,8 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
     def field_obs_instrument_couvis_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_couvis_volume_id(self):
-        return self.volume
+    def field_obs_instrument_couvis_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_couvis_instrument_id(self):
         return self.instrument_id

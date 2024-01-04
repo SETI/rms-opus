@@ -161,8 +161,8 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     def field_obs_instrument_vgiss_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_vgiss_volume_id(self):
-        return self.volume
+    def field_obs_instrument_vgiss_bundle_id(self):
+        return self.bundle
 
     def field_obs_instrument_vgiss_instrument_id(self):
         return self.instrument_id

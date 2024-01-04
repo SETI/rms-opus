@@ -277,14 +277,14 @@ class ObsMissionCassini(ObsCommon):
             count += '.000'
 
         ### VIMS
-        # See pds-opus issue #444
+        # See rms-opus issue #444
         if count.endswith('.971'):
             count = count.replace('.971', '.000')
         if count.endswith('.973'):
             count = count.replace('.973', '.000')
 
         ### UVIS
-        # See pds-opus issue #443
+        # See rms-opus issue #443
         if count.endswith('.324'):
             count = count.replace('.324', '.000')
 
@@ -311,7 +311,7 @@ class ObsMissionCassini(ObsCommon):
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "data/1294561143_1295221348/W1294561143_1.IMG"
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.volume + '/' + filespec
+        return self.bundle + '/' + filespec
 
 
     #############################################
@@ -321,8 +321,8 @@ class ObsMissionCassini(ObsCommon):
     def field_obs_mission_cassini_opus_id(self):
         return self.opus_id
 
-    def field_obs_mission_cassini_volume_id(self):
-        return self.volume
+    def field_obs_mission_cassini_bundle_id(self):
+        return self.bundle
 
     def field_obs_mission_cassini_instrument_id(self):
         return self.instrument_id

@@ -914,7 +914,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
 
     def test__api_cart_addrange_no_reqno(self):
         "[test_cart_api.py] /__cart/addrange: no reqno"
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404,
                                HTTP404_BAD_OR_MISSING_REQNO('/__cart/addrange.json'))
 
@@ -995,7 +995,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1004,7 +1004,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?view=browse&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/addrange.json?view=browse&bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1016,7 +1016,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1028,7 +1028,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?view=browse&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/addrange.json?view=browse&bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1037,10 +1037,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1049,10 +1049,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 22, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1061,10 +1061,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642979_ir,co-vims-v1488647105_vis&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642979_ir,co-vims-v1488647105_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 22, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1076,7 +1076,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1488642557_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1085,7 +1085,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-vims-v1488642557_ir&reqno=456'
@@ -1097,7 +1097,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1109,7 +1109,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1121,7 +1121,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1133,7 +1133,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
+        url = '/__cart/addrange.json?bundleidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         self._run_status_equal(url, 404,
                                HTTP404_SEARCH_PARAMS_INVALID('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
@@ -1145,7 +1145,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1154,7 +1154,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=0'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1163,7 +1163,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=1'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1172,7 +1172,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488646261_ir,co-vims-v1488642557_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488646261_ir,co-vims-v1488642557_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1181,7 +1181,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&instrument=Cassini+VIMS&primaryfilespec=8864&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1488649724_vis,co-vims-v1488647527_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&instrument=Cassini+VIMS&primaryfilespec=8864&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1488649724_vis,co-vims-v1488647527_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1202,7 +1202,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567&download=1'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567&download=1'
         self._run_json_equal_file(url, 'api_cart_addrange_multi_download.json')
 
     def test__api_cart_addrange_one_too_many_0(self):
@@ -1211,7 +1211,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
         if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         else:
@@ -1230,7 +1230,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         self._run_json_equal(url, expected)
 
@@ -1240,10 +1240,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1254,7 +1254,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
 
     def test__api_cart_removerange_no_reqno(self):
         "[test_cart_api.py] /__cart/removerange: no reqno"
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 404,
                                HTTP404_BAD_OR_MISSING_REQNO('/__cart/removerange.json'))
 
@@ -1339,7 +1339,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1351,7 +1351,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=0'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=0'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1363,7 +1363,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1375,10 +1375,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1390,10 +1390,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1402,13 +1402,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1417,13 +1417,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 11, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488644667_vis,co-vims-v1488647105_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 11, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1432,7 +1432,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1444,7 +1444,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1456,7 +1456,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1468,7 +1468,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
+        url = '/__cart/removerange.json?bundleidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         self._run_status_equal(url, 404,
                                HTTP404_SEARCH_PARAMS_INVALID('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
@@ -1480,10 +1480,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1495,10 +1495,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1507,13 +1507,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&order=COVIMSswathlength,-time1,opusid&range=co-vims-v1490784910_001_ir,co-vims-v1490782254_001_vis&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&order=COVIMSswathlength,-time1,opusid&range=co-vims-v1490784910_001_ir,co-vims-v1490782254_001_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 6, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         # Note sort reverses opusid! This leaves two observations behind
         # because _ir and _vis are in a different order for each observation
         # pair
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1490784910_001_ir,co-vims-v1490782254_001_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&order=COVIMSswathlength,-time1,-opusid&range=co-vims-v1490784910_001_ir,co-vims-v1490782254_001_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1522,7 +1522,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 567}
         self._run_json_equal(url, expected)
 
@@ -1543,10 +1543,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567'
         expected = {'error': False, 'recycled_count': 0, 'count': 17, 'reqno': 1234567}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1488642135_ir,co-vims-v1488643823_ir&reqno=12345678&download=1'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488642135_ir,co-vims-v1488643823_ir&reqno=12345678&download=1'
         self._run_json_equal_file(url, 'api_cart_removerange_multi_download.json')
 
     def test__api_cart_removerange_sort_multigroup(self):
@@ -1571,7 +1571,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/addrange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1607,7 +1607,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
@@ -1619,7 +1619,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=0'
@@ -1631,7 +1631,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
@@ -1643,7 +1643,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
@@ -1658,10 +1658,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484507574_vis&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484507574_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 6, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484507574_vis&reqno=456'
+        url = '/__cart/addrange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484507574_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 6, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1674,7 +1674,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
@@ -1694,7 +1694,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        url = '/__cart/removerange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1706,7 +1706,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
+        url = '/__cart/removerange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1718,10 +1718,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/removerange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        url = '/__cart/removerange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
@@ -1736,10 +1736,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        url = '/__cart/removerange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        url = '/__cart/removerange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1748,7 +1748,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis&reqno=456'
@@ -1760,7 +1760,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis&reqno=456&recyclebin=1'
@@ -1772,7 +1772,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456'
@@ -1784,7 +1784,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456&recyclebin=1'
@@ -1797,7 +1797,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         # Default sort = time1,opusid
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         # New sort = rightasc1,opusid - would be 5 obs if using default sort
@@ -1816,7 +1816,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&rightasc1=80.000000&rightasc2=85.000000&range=co-vims-v1486998899_ir,co-vims-v1488653840_vis&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&rightasc1=80.000000&rightasc2=85.000000&range=co-vims-v1486998899_ir,co-vims-v1488653840_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 110, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         # Joins in another obs table AND a mult table
@@ -1835,7 +1835,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&rightasc1=80.000000&rightasc2=85.000000&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&rightasc1=80.000000&rightasc2=85.000000&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         # Joins in another obs table AND a mult table
@@ -1868,7 +1868,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
 
     def test__api_cart_addall_no_reqno(self):
         "[test_cart_api.py] /__cart/addall: no reqno"
-        url = '/__cart/addall.json?volumeid=VGISS_6210'
+        url = '/__cart/addall.json?bundleid=VGISS_6210'
         self._run_status_equal(url, 404,
                                HTTP404_BAD_OR_MISSING_REQNO('/__cart/addall.json'))
 
@@ -1877,7 +1877,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1886,7 +1886,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?view=browse&volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?view=browse&bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1895,10 +1895,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1907,10 +1907,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=VGISS_6210&range=vg-iss-2-s-c4360037,vg-iss-2-s-c4365644&reqno=456'
+        url = '/__cart/addrange.json?bundleid=VGISS_6210&range=vg-iss-2-s-c4360037,vg-iss-2-s-c4365644&reqno=456'
         expected = {'recycled_count': 0, 'count': 597, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1922,7 +1922,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360018&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1931,7 +1931,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeidXX=COVIMS_0006&reqno=456'
+        url = '/__cart/addall.json?bundleidXX=COVIMS_0006&reqno=456'
         self._run_status_equal(url, 404,
                                HTTP404_SEARCH_PARAMS_INVALID('/__cart/addall.json'))
         url = '/__cart/status.json?reqno=456'
@@ -1943,16 +1943,16 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484509868_vis&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484509868_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        url = '/__cart/addall.json?bundleid=COVIMS_0006&reqno=456'
         expected = {'recycled_count': 0, 'count': 3500, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1485893300_vis,co-vims-v1485894711_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1485893300_vis,co-vims-v1485894711_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 3487, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 4393, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1961,7 +1961,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_8201&productid=12&reqno=9878&download=1'
+        url = '/__cart/addall.json?bundleid=VGISS_8201&productid=12&reqno=9878&download=1'
         self._run_json_equal_file(url, 'api_cart_addall_one_download.json')
 
     def test__api_cart_addall_one_too_many_905(self):
@@ -1970,7 +1970,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         else:
@@ -1989,7 +1989,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -1999,10 +1999,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -2015,7 +2015,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360018&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -2029,10 +2029,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        url = '/__cart/addall.json?bundleid=COVIMS_0006&reqno=456'
         expected = {'recycled_count': 0, 'count': 3500, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484506475_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484506475_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 3495, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1484506705_vis,co-vims-v1484507800_ir&reqno=456&recyclebin=0'
@@ -2053,7 +2053,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        url = '/__cart/addall.json?bundleid=COVIMS_0006&reqno=456'
         expected = {'recycled_count': 0, 'count': 3500, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1484509868_ir,co-vims-v1484510890_vis&reqno=456&recyclebin=1'
@@ -2061,7 +2061,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/reset.json?reqno=42&recyclebin=1'
         expected = {'recycled_count': 0, 'count': 3536, 'reqno': 42}
-        url = '/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        url = '/__cart/addall.json?bundleid=COVIMS_0006&reqno=456'
         expected = {'recycled_count': 0, 'count': 3500, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1484509868_ir,co-vims-v1484510890_vis&reqno=456&recyclebin=1'
@@ -2099,10 +2099,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        url = '/__cart/addall.json?bundleid=COVIMS_0006&reqno=456'
         expected = {'recycled_count': 0, 'count': 3500, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484506475_vis&reqno=456'
+        url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484506475_vis&reqno=456'
         expected = {'recycled_count': 0, 'count': 3495, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1484509868_ir,co-vims-v1484510890_vis&reqno=456&recyclebin=1'
@@ -2197,7 +2197,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1488642557_ir,co-vims-v1488642557_ir&reqno=456&recyclebin=1'
@@ -2231,7 +2231,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-vims-v1488642557_ir&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         if settings.TEST_GO_LIVE: # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'error': False, 'reqno': 456}
         else:
@@ -2250,13 +2250,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=vg-iss-2-s-c4360018&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 905, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
+        url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
@@ -2279,7 +2279,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=456'
+        url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=456'
         expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/data.csv?cols=opusid,instrument,planet,target,time1,observationduration,COVIMSchannel,CASSINIspacecraftclockcount1'

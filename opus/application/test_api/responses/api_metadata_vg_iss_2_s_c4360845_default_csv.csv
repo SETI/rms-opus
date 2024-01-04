@@ -2,8 +2,8 @@ General Constraints
 Planet,Intended Target Name(s),Nominal Target Class(es),Mission,Instrument Host Name,Instrument Name,Observation Type,Observation Start Time (YMDhms),Observation Stop Time (YMDhms),Observation Duration (secs),Measurement Quantity,Right Ascension (Min) (degrees),Right Ascension (Max) (degrees),Declination (Min) (degrees),Declination (Max) (degrees)
 Saturn,Saturn,Planet,Voyager,Voyager 2,Voyager ISS,Image,1981-08-12T21:54:21.120,1981-08-12T21:54:24.000,2.88,Reflectivity,197.700321,198.3685,-5.021599,-4.355657
 PDS Constraints
-Volume ID,Data Set ID,Product ID,Product Creation Time (YMDhms),Primary File Spec,OPUS ID,Note
-VGISS_6210,VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0,C4360845_RAW.IMG,2012-05-01T16:00:00.000,VGISS_6210/DATA/C43608XX/C4360845_RAW.LBL,vg-iss-2-s-c4360845,
+Bundle/Volume ID,PDS3 Data Set ID,PDS3 Product ID,Primary Product LID,Product Creation Time (YMDhms),Primary File Spec,OPUS ID,Note
+VGISS_6210,VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0,C4360845_RAW.IMG,,2012-05-01T16:00:00.000,VGISS_6210/DATA/C43608XX/C4360845_RAW.LBL,vg-iss-2-s-c4360845,
 Image Constraints
 Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels,Intensity Levels,Image Type
 2.88,800,800,256,Frame

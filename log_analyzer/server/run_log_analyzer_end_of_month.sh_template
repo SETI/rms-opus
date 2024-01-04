@@ -1,6 +1,6 @@
 #!/bin/bash
 source <VENV>/bin/activate
-cd <DIR>/pds-opus/log_analyzer
+cd <DIR>/rms-opus/log_analyzer
 rm -rf /tmp/log_analyzer_results_temp_eom
 mkdir /tmp/log_analyzer_results_temp_eom
 python log_analyzer.py --cronjob --cronjob-date -1 --html --dns -o "/tmp/log_analyzer_results_temp_eom/%Y/OPUS-log-analysis-%Y-%m.html" "<APACHELOGDIR>/<PREFIX>_access_log-%Y-%m-%d"

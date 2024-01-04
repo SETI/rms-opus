@@ -68,12 +68,12 @@ In addition to the fields corresponding to the metadata available in the UI, eac
 
 - `obs_general_id`: An integer corresponding to the `id` field in the `obs_general` table. This field is used to join multiple tables together so that a single joined row has all of the metadata from all of the relevant tables. This field does not exist in the `obs_general` table itself.
 - `opus_id`: The OPUS ID of the row
-- `volume_id`: The PDS3 Volume ID of the row
+- `bundle_id`: The PDS3 Volume ID of the row
 - `instrument_id`: The PDS3 Instrument ID of the row
 - `id`: An integer that can be used to quickly index a row in the table
 - `timestamp`: A date/time field that records when the row was last updated
 
-With the exception of the `id` field in the `obs_general` table and the `obs_general_id` field in all other `obs_*` tables, these extra fields are not used during OPUS's execution. In fact, the fields `opus_id`, `volume_id`, and `instrument_id` can easily be retrieved simply by joining a table with `obs_general`, which under the concept of "database normalization" is the correct and safest thing to do. Nevertheless, we have this redundant data in each table because it makes the import process easier (e.g., one can readily delete all metadata from a particular instrument without needing to join tables together), and because it helps in manual debugging and/or maintenance.
+With the exception of the `id` field in the `obs_general` table and the `obs_general_id` field in all other `obs_*` tables, these extra fields are not used during OPUS's execution. In fact, the fields `opus_id`, `bundle_id`, and `instrument_id` can easily be retrieved simply by joining a table with `obs_general`, which under the concept of "database normalization" is the correct and safest thing to do. Nevertheless, we have this redundant data in each table because it makes the import process easier (e.g., one can readily delete all metadata from a particular instrument without needing to join tables together), and because it helps in manual debugging and/or maintenance.
 
 Here is an example of the schema for the `obs_general` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
 
@@ -83,7 +83,7 @@ Here is an example of the schema for the `obs_general` table (note this may chan
     +----------------------+--------------+------+-----+-------------------+
     | id                   | int unsigned | NO   | PRI | NULL              |
     | opus_id              | char(50)     | NO   | UNI | NULL              |
-    | volume_id            | char(11)     | NO   | MUL | NULL              |
+    | bundle_id            | char(11)     | NO   | MUL | NULL              |
     | instrument_id        | int unsigned | NO   | MUL | NULL              |
     | mission_id           | int unsigned | NO   | MUL | NULL              |
     | inst_host_id         | int unsigned | NO   | MUL | NULL              |
@@ -117,7 +117,7 @@ Most of these fields should be self-evident. Some numeric fields have `1` and `2
     +-----------------------+--------------+------+-----+-------------------+
     | obs_general_id        | int unsigned | NO   | MUL | NULL              |
     | opus_id               | char(50)     | NO   | MUL | NULL              |
-    | volume_id             | char(11)     | NO   | MUL | NULL              |
+    | bundle_id             | char(11)     | NO   | MUL | NULL              |
     | instrument_id         | char(12)     | NO   | MUL | NULL              |
     | data_set_id           | char(40)     | NO   | MUL | NULL              |
     | product_id            | char(50)     | NO   | MUL | NULL              |
@@ -136,7 +136,7 @@ Here is an example of a mission table:
     +-------------------------+--------------+------+-----+-------------------+
     | obs_general_id          | int unsigned | NO   | MUL | NULL              |
     | opus_id                 | char(50)     | NO   | MUL | NULL              |
-    | volume_id               | char(11)     | NO   | MUL | NULL              |
+    | bundle_id               | char(11)     | NO   | MUL | NULL              |
     | instrument_id           | char(12)     | NO   | MUL | NULL              |
     | obs_name                | char(30)     | NO   | MUL | NULL              |
     | rev_no                  | char(3)      | YES  | MUL | NULL              |
@@ -294,7 +294,7 @@ There are two types of surface geometry tables. The first, called simply `obs_su
     +----------------+--------------+------+-----+-------------------+
     | obs_general_id | int unsigned | NO   | MUL | NULL              |
     | opus_id        | char(50)     | NO   | MUL | NULL              |
-    | volume_id      | char(11)     | NO   | MUL | NULL              |
+    | bundle_id      | char(11)     | NO   | MUL | NULL              |
     | instrument_id  | char(12)     | NO   | MUL | NULL              |
     | target_list    | text         | YES  |     | NULL              |
     | id             | int unsigned | NO   | PRI | NULL              |
@@ -329,7 +329,7 @@ The list of product files for any OPUS ID can be exceedingly long, and each file
     +-----------------+--------------+------+-----+-------------------+
     | obs_general_id  | int unsigned | NO   | MUL | NULL              |
     | opus_id         | char(50)     | NO   | MUL | NULL              |
-    | volume_id       | char(11)     | NO   | MUL | NULL              |
+    | bundle_id       | char(11)     | NO   | MUL | NULL              |
     | instrument_id   | char(12)     | NO   | MUL | NULL              |
     | version_number  | int unsigned | NO   | MUL | NULL              |
     | version_name    | char(16)     | NO   | MUL | NULL              |
