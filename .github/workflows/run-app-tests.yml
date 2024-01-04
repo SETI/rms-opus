@@ -16,10 +16,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ self-hosted-windows ]
-        # python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
-        python-version: [ '3.12' ]
-      fail-fast: false
+        os: [ self-hosted-linux, self-hosted-windows ]
+        python-version: [ '3.8', '3.12' ]
+      fail-fast: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
