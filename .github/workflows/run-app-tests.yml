@@ -25,11 +25,11 @@ jobs:
         # of Python at a time and thus we don't get any
         # parallelism.
         include:
-          - os: self-hosted-ubuntu
+          - os: self-hosted-linux
             python-version: "3.10"
-          - os: self-hosted-ubuntu
+          - os: self-hosted-linux
             python-version: "3.11"
-          - os: self-hosted-ubuntu
+          - os: self-hosted-linux
             python-version: "3.12"
           - os: self-hosted-windows
             python-version: "3.12"
