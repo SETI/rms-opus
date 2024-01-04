@@ -69,6 +69,7 @@ echo "DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH, 'opus/import/tab
 if [ $? -ne 0 ]; then exit -1; fi
 
 echo "opus_secrets.py:"
+echo
 cat opus_secrets.py
 
 exit 0
