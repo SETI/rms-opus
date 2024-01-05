@@ -13,7 +13,7 @@ from search.models import ObsGeneral
 
 import settings
 
-import pdsviewable
+import pdsfile.pdsviewable
 
 import logging
 log = logging.getLogger(__name__)

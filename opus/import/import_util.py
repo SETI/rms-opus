@@ -152,17 +152,10 @@ def yield_import_bundle_ids(arguments):
             sys.exit(-1)
         # Expand the volsets
         new_voldescs = []
-<<<<<<< HEAD
-        for volume_desc in volume_descs:
-            volume_pdsfile = pdsfile.pds3file.Pds3File.from_path(volume_desc)
-            if volume_pdsfile.is_volset_dir:
-                childnames = volume_pdsfile.childnames
-=======
         for bundle_desc in bundle_descs:
-            bundle_pdsfile = pdsfile.PdsFile.from_path(bundle_desc)
+            bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
             if bundle_pdsfile.is_volset_dir:
                 childnames = bundle_pdsfile.childnames
->>>>>>> origin/master
                 # Make sure 2001 is imported first and then 1001 second for each
                 # New Horizon bundle. That way, the primary filespec will be
                 # raw in OPUS (same as pdsfile).

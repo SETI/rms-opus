@@ -29,7 +29,7 @@ if [ $? -ne 0 ]; then exit -1; fi
 
 # Clone the repos
 
-git clone https://github.com/SETI/rms-webtools.git $SRC_DIR/rms-webtools
+git clone https://github.com/SETI/rms-pdsfile.git $SRC_DIR/rms-pdsfile
 if [ $? -ne 0 ]; then exit -1; fi
 
 pip3 install wheel

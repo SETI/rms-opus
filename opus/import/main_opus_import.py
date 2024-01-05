@@ -22,7 +22,7 @@ sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
 
 from opus_secrets import * # noqa: E402
 
-sys.path.insert(0, RMS_WEBTOOLS_PATH)
+sys.path.insert(0, RMS_PDSFILE_PATH)
 sys.path.insert(0, RMS_OPUS_LIB_PATH)
 
 IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
@@ -409,7 +409,8 @@ try: # Top-level exception handling so we always log what's going on
     if not impglobals.ARGUMENTS.dont_use_shelves_only:
         Pds3File.use_shelves_only()
         Pds4File.use_shelves_only()
-    PdsFile.require_shelves(True)
+    Pds3File.require_shelves(True)
+    Pds4File.require_shelves(True)
     if impglobals.ARGUMENTS.override_pds_data_dir:
         Pds3File.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:

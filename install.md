@@ -49,7 +49,7 @@
 6. Clone the other repos that are needed for support
 
         cd <YOUR_PROJECTS_DIRECTORY>
-        git clone https://github.com/SETI/rms-webtools.git
+        git clone https://github.com/SETI/rms-pdsfile.git
 
 7. Create a virtualenv and install the dependencies
 

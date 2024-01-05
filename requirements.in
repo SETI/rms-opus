@@ -1,5 +1,7 @@
+# Generate requirements.txt with:
+# pip-compile --unsafe-package pip --unsafe-package setuptools --unsafe-package xattr -U -r
 coverage
-django
+django == 4.*
 django-storages
 djangorestframework
 flake8
@@ -17,4 +19,6 @@ qrcode
 regex
 requests
 rms-julian
+rms-pdslogger
 rms-pdstable
+rms-translator
