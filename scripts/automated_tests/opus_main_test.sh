@@ -3,19 +3,19 @@
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi
 
-if [[ ! -v OPUS_DB_USER ]]; then
+if [[ -z ${OPUS_DB_USER+x} ]]; then
     echo "OPUS_DB_USER is not set"
     exit -1
 fi
-if [[ ! -v OPUS_DB_PASSWORD ]]; then
+if [[ -z ${OPUS_DB_PASSWORD+x} ]]; then
     echo "OPUS_DB_PASSWORD is not set"
     exit -1
 fi
-if [[ ! -v TEST_ROOT ]]; then
+if [[ -z ${TEST_ROOT+x} ]]; then
     echo "TEST_ROOT is not set"
     exit -1
 fi
-if [[ ! -v PDS_DROPBOX_ROOT ]]; then
+if [[ -z ${PDS_DROPBOX_ROOT+x} ]]; then
     echo "PDS_DROPBOX_ROOT is not set"
     exit -1
 fi
