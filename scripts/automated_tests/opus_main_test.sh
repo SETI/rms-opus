@@ -3,6 +3,7 @@
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi
 
+# Can't use -v because it isn't supported by bash on MacOS
 if [[ -z ${OPUS_DB_USER+x} ]]; then
     echo "OPUS_DB_USER is not set"
     exit -1
@@ -20,7 +21,8 @@ if [[ -z ${PDS_DROPBOX_ROOT+x} ]]; then
     exit -1
 fi
 
-UNIQUE_ID=`date "+%Y%m%d_%H%M%S_%N"`
+# Can't use date because nanoseconds %N isn't supported by bash on MacOS
+UNIQUE_ID=`python3 -c "from datetime import datetime; print(datetime.now().strftime('%y%m%d_%H%M%S_%f'))"`
 TEST_CAT=opus
 TEST_CAT_DIR=$TEST_ROOT/$TEST_CAT/$UNIQUE_ID
 TEST_LOG_DIR=$TEST_CAT_DIR/test_logs
