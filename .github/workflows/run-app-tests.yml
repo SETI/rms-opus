@@ -19,20 +19,25 @@ jobs:
         # Because we can run multiple imports at the same time
         # under Linux, we can do our multi-Python-version test
         # there, and then just run a single version under
-        # Windows to make sure the Windows code still works.
-        # We can't efficiently run multiple Windows tests because
+        # Windows and MacOS to make sure the code still works there.
+        #
+        # Windows: We can't efficiently run multiple Windows tests because
         # a GitHub Windows runner can only run a single version
         # of Python at a time and thus we don't get any
         # parallelism.
+        #
+        # MacOS: Our current self-hosted runner is very slow with little
+        # memory and it would be prohibitive to run many versions. Also
+        # Python 3.8-3.10 does not currently work on MacOS.
         include:
-          # - os: self-hosted-linux
-          #   python-version: "3.10"
-          # - os: self-hosted-linux
-          #   python-version: "3.11"
-          # - os: self-hosted-linux
-          #   python-version: "3.12"
-          # - os: self-hosted-windows
-          #   python-version: "3.12"
+          - os: self-hosted-linux
+            python-version: "3.10"
+          - os: self-hosted-linux
+            python-version: "3.11"
+          - os: self-hosted-linux
+            python-version: "3.12"
+          - os: self-hosted-windows
+            python-version: "3.12"
           - os: self-hosted-macos
             python-version: "3.12"
       fail-fast: true

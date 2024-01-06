@@ -1,4 +1,4 @@
-#!/bin/bash -v -x
+#!/bin/bash
 
 cd opus/application
 

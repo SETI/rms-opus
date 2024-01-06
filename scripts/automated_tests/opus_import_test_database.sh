@@ -1,4 +1,4 @@
-#!/bin/bash -v -x
+#!/bin/bash
 # Arg 1: Unique ID
 
 source ~/opus_runner_secrets
@@ -17,7 +17,6 @@ cd opus/import
 if [ $? -ne 0 ]; then exit -1; fi
 
 echo YES | ./import_for_tests.sh "--log-debug-limit 0 --log-info-limit 0"
-echo "RETURNED FROM IMPORT_FOR_TESTS"
 if [ -s $LOG_DIR/import_logs/ERRORS.log ]; then
     echo "*****************************************"
     echo "*** OPUS IMPORT COMPLETED WITH ERRORS ***"
