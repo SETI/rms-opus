@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x -v
 
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi

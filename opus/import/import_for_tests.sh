@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -v -x
 
 echo "*************************************************************"
 echo "***** About to import TEST PDS DATA into a new database *****"

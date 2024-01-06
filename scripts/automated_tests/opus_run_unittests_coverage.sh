@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -v -x
 # Arg 1: Unique ID
 
 source ~/opus_runner_secrets
