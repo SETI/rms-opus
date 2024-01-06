@@ -1,5 +1,4 @@
 # opus/application/test_api/api_test_helper.py
-from curses import start_color
 import difflib
 from io import BytesIO
 import json

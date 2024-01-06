@@ -325,7 +325,7 @@ def api_api_guide(request, fmt):
             fields.append(field)
 
     template_name = 'help/apiguide.html'
-    if fmt == 'pdf':
+    if fmt == 'pdf':  # pragma: no cover
         template_name = 'help/apiguide_print.html'
 
     context = {'guide': guide,
@@ -339,9 +339,11 @@ def api_api_guide(request, fmt):
 
 def _render_html_or_pdf(request, template, fmt, filename, title, context=None):
     """Render a template as HTML or PDF."""
-    if fmt == 'html':
+    if fmt == 'html':  # pragma: no cover
         ret = render(request, template, context)
-    else:
+    else:  # pragma: no cover
+        # Since we can't render PDF on Windows or Mac, we have to avoid using
+        # this section for code coverage.
         header_template = get_template('ui/header.html')
         header_context = {'STATIC_URL': settings.OPUS_STATIC_ROOT+'/',
                           'allow_fallback': False,
