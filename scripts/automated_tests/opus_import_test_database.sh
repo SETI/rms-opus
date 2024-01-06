@@ -16,7 +16,7 @@ DATA_DIR=$TEST_CAT_DIR/data
 cd opus/import
 if [ $? -ne 0 ]; then exit -1; fi
 
-yes YES | ./import_for_tests.sh "--log-debug-limit 0 --log-info-limit 0"
+echo YES | ./import_for_tests.sh "--log-debug-limit 0 --log-info-limit 0"
 echo "RETURNED FROM IMPORT_FOR_TESTS"
 if [ -s $LOG_DIR/import_logs/ERRORS.log ]; then
     echo "*****************************************"
