@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "*************************************************************"
 echo "***** About to import TEST PDS DATA into a new database *****"
 echo "*************************************************************"
@@ -30,3 +32,7 @@ python main_opus_import.py --cleanup-aux-tables
 python main_opus_import.py --import-dictionary
 (cd ../application; python manage.py migrate)
 python main_opus_import.py --validate-perm
+
+echo "ALL DONE!"
+
+exit 0

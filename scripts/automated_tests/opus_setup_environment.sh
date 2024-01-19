@@ -20,7 +20,11 @@ fi
 
 # Create the opus_secrets.py file
 
-CWD=`pwd`
+CWD=`pwd -W` # So Windows bash will return a directory with C:
+if [ $? -ne 0 ]; then
+    CWD=`pwd`
+fi
+
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py
@@ -57,7 +61,7 @@ echo "OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0." >> opus_secrets.py
 echo "OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0." >> opus_secrets.py
 echo "IMPORT_TABLE_TEMP_PREFIX = 'imp_'" >> opus_secrets.py
 echo "IMPORT_LOGFILE_DIR = '${LOG_DIR}/import_logs'" >> opus_secrets.py
-echo "IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_impot.log')" >> opus_secrets.py
+echo "IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import.log')" >> opus_secrets.py
 echo "IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log')" >> opus_secrets.py
 echo "DICTIONARY_PDSDD_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/pdsdd.full')" >> opus_secrets.py
 echo "DICTIONARY_CONTEXTS_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/contexts.csv')" >> opus_secrets.py
@@ -65,6 +69,7 @@ echo "DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH, 'opus/import/tab
 if [ $? -ne 0 ]; then exit -1; fi
 
 echo "opus_secrets.py:"
+echo
 cat opus_secrets.py
 
 exit 0

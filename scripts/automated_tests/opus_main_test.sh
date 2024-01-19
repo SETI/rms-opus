@@ -3,24 +3,26 @@
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi
 
-if [[ ! -v OPUS_DB_USER ]]; then
+# Can't use -v because it isn't supported by bash on MacOS
+if [[ -z ${OPUS_DB_USER+x} ]]; then
     echo "OPUS_DB_USER is not set"
     exit -1
 fi
-if [[ ! -v OPUS_DB_PASSWORD ]]; then
+if [[ -z ${OPUS_DB_PASSWORD+x} ]]; then
     echo "OPUS_DB_PASSWORD is not set"
     exit -1
 fi
-if [[ ! -v TEST_ROOT ]]; then
+if [[ -z ${TEST_ROOT+x} ]]; then
     echo "TEST_ROOT is not set"
     exit -1
 fi
-if [[ ! -v PDS_DROPBOX_ROOT ]]; then
+if [[ -z ${PDS_DROPBOX_ROOT+x} ]]; then
     echo "PDS_DROPBOX_ROOT is not set"
     exit -1
 fi
 
-UNIQUE_ID=`date "+%Y%m%d_%H%M%S_%N"`
+# Can't use date because nanoseconds %N isn't supported by bash on MacOS
+UNIQUE_ID=`python3 -c "from datetime import datetime; print(datetime.now().strftime('%y%m%d_%H%M%S_%f'))"`
 TEST_CAT=opus
 TEST_CAT_DIR=$TEST_ROOT/$TEST_CAT/$UNIQUE_ID
 TEST_LOG_DIR=$TEST_CAT_DIR/test_logs
