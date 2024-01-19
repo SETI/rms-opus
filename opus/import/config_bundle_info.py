@@ -37,7 +37,7 @@ from obs_instrument_vg28xx_vgrss       import ObsInstrumentVG28xxVGRSS
 # - The second element of each tuple is a dictionary with these keys:
 #   - primary_index: The name of the primary index file. <BUNDLE> will be
 #       substituted with the current bundle/volume ID. This is used to distinguish
-#       between plain index files, profile_index, and other special index files like
+#       between plain index files and other special index files like
 #       raw_image_index for VGISS.
 #   - validate_index_rows: True if we should check the filespec for each row in
 #       the primary index to see if filespec -> opus_id -> filespec is
@@ -97,9 +97,6 @@ BUNDLE_INFO = [
          'instrument_class': ObsInstrumentCOVIMSOcc},
     ),
     (r'EBROCC_0001',
-        # We would like to get rid of this profile_index, but the normal index
-        # has "UNK" for the start/stop times for LICK. Once this is fixed we can
-        # revisit.
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
          'instrument_class': ObsInstrumentEBROCC},
@@ -159,9 +156,6 @@ BUNDLE_INFO = [
          'validate_index_rows': False,
          'instrument_class': ObsInstrumentVGISS},
     ),
-    # We would like to get rid of these profile_indexes, but the supplemental
-    # indexes have errors that were corrected in the profile_index and not
-    # back-propagated.
     (r'VG_2801',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
