@@ -24,7 +24,7 @@ echo "DOWNLOAD_DIR: $DOWNLOAD_DIR"
 echo "DATA_DIR: $DATA_DIR"
 echo
 
-pip3 install --upgrade pip
+python -m pip install --upgrade pip
 if [ $? -ne 0 ]; then exit -1; fi
 
 # Clone the repos
