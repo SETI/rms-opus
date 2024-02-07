@@ -30,7 +30,7 @@ sys.path.insert(0, PROJECT_ROOT)
 
 import pdslogger # noqa: E402
 pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
-from pdsfile import PdsFile, Pds3File, Pds4File
+from pdsfile import Pds3File, Pds4File
 
 from config_data import * # noqa: E402
 import do_cart # noqa: E402
@@ -43,7 +43,6 @@ import do_table_names # noqa: E402
 import do_update_mult_info # noqa: E402
 import do_validate # noqa: E402
 import impglobals # noqa: E402
-import import_util # noqa: E402
 
 import importdb # noqa: E402
 
