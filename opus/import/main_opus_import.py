@@ -16,6 +16,8 @@ import sys
 import traceback
 import warnings
 
+from pdsfile import Pds3File, Pds4File
+
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 RMS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
@@ -30,7 +32,6 @@ sys.path.insert(0, PROJECT_ROOT)
 
 import pdslogger # noqa: E402
 pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
-from pdsfile import Pds3File, Pds4File
 
 from config_data import * # noqa: E402
 import do_cart # noqa: E402
