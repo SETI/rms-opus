@@ -213,7 +213,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                           +'in obs_general', opus_id)
         viewset = None
         if preview_json: # pragma: no cover - import error
-            viewset = pdsviewable.PdsViewSet.from_dict(preview_json)
+            viewset = pdsfile.pdsviewable.PdsViewSet.from_dict(preview_json)
         data = {'opus_id': opus_id}
         for size in sizes:
             viewable = None

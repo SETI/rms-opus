@@ -39,10 +39,6 @@ RMS_OPUS_PATH = '<RMS_OPUS_PATH>'
 # .../rms-opus/lib
 RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')
 
-# The directory where the rms-pdsfile repo lives. This should
-# normally be .../rms-pdsfile
-RMS_PDSFILE_PATH = '<RMS_PDSFILE_PATH>'
-
 
 ############################################
 ### NEEDED FOR THE MAIN OPUS APPLICATION ###
