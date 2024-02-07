@@ -18,7 +18,7 @@ click==8.1.7
     # via pip-tools
 coverage==7.4.0
     # via -r requirements.in
-django==4.2.9
+django==4.2.10
     # via
     #   -r requirements.in
     #   django-storages
@@ -113,8 +113,9 @@ urllib3==2.1.0
     # via requests
 wheel==0.42.0
     # via pip-tools
+xattr==1.1.0
+    # via rms-pdslogger
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
-# xattr
