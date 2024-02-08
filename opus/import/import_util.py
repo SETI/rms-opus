@@ -134,7 +134,7 @@ def yield_import_bundle_ids(arguments):
             if bundle_desc in exclude_list:
                 continue
             try:
-                bundle_pdsfile = pdsfile.PdsFile.from_path(bundle_desc)
+                bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
             except (KeyError, ValueError):
                 any_invalid = True
                 impglobals.LOGGER.log('fatal',
@@ -154,7 +154,7 @@ def yield_import_bundle_ids(arguments):
         # Expand the volsets
         new_voldescs = []
         for bundle_desc in bundle_descs:
-            bundle_pdsfile = pdsfile.PdsFile.from_path(bundle_desc)
+            bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
             if bundle_pdsfile.is_volset_dir:
                 childnames = bundle_pdsfile.childnames
                 # Make sure 2001 is imported first and then 1001 second for each

@@ -39,10 +39,6 @@ RMS_OPUS_PATH = '<RMS_OPUS_PATH>'
 # .../rms-opus/lib
 RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')
 
-# The directory where the rms-webtools repo lives. This should
-# normally be .../rms-webtools
-RMS_WEBTOOLS_PATH = '<RMS_WEBTOOLS_PATH>'
-
 
 ############################################
 ### NEEDED FOR THE MAIN OPUS APPLICATION ###

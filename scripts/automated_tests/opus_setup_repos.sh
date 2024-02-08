@@ -29,13 +29,10 @@ if [ $? -ne 0 ]; then exit -1; fi
 
 # Clone the repos
 
-git clone https://github.com/SETI/rms-webtools.git $SRC_DIR/rms-webtools
+python -m pip install wheel
 if [ $? -ne 0 ]; then exit -1; fi
 
-pip3 install wheel
-if [ $? -ne 0 ]; then exit -1; fi
-
-pip3 install -r requirements.txt
+python -m pip install -r requirements.txt
 if [ $? -ne 0 ]; then exit -1; fi
 
 exit 0
