@@ -31,7 +31,7 @@ jobs:
 
       - name: Run flake8 on import
         run: |
-          pip3 install flake8
+          python -m pip install flake8
           cd opus
           ./run_flake8_import.sh
 

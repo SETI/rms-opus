@@ -58,7 +58,14 @@ jobs:
 
       - name: Test with coverage
         run: |
+          echo
           env
+          echo
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+          python -m pip install -r requirements.txt
+          echo
+          python -m pip freeze
           echo
           scripts/automated_tests/opus_main_test.sh
 
