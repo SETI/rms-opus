@@ -24,15 +24,4 @@ echo "DOWNLOAD_DIR: $DOWNLOAD_DIR"
 echo "DATA_DIR: $DATA_DIR"
 echo
 
-python -m pip install --upgrade pip
-if [ $? -ne 0 ]; then exit -1; fi
-
-# Clone the repos
-
-python -m pip install wheel
-if [ $? -ne 0 ]; then exit -1; fi
-
-python -m pip install -r requirements.txt
-if [ $? -ne 0 ]; then exit -1; fi
-
 exit 0

@@ -1,5 +1,5 @@
 name: Test OPUS
-run-name: Run Import and Application Tests triggered by ${{ github.ref_type }} ${{ github.ref_name }} or ${{ github.triggering_actor }}
+run-name: "Run Import and Application Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
 
 on:
   workflow_dispatch:
@@ -9,6 +9,10 @@ on:
     branches: [ master ]
   schedule:
     - cron: "00 11 * * *"  # 3am PST, 4am PDT
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   test:
@@ -57,7 +61,6 @@ jobs:
           env
           echo
           scripts/automated_tests/opus_main_test.sh
-        shell: bash
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v3
@@ -69,4 +72,3 @@ jobs:
       - name: Check coverage level
         run: |
           scripts/automated_tests/opus_check_coverage.sh
-        shell: bash
