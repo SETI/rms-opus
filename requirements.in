@@ -19,6 +19,7 @@ qrcode
 regex
 requests
 rms-julian
+rms-pdsfile
 rms-pdslogger
 rms-pdstable
 rms-translator

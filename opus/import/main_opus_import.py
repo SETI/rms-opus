@@ -16,6 +16,8 @@ import sys
 import traceback
 import warnings
 
+from pdsfile import Pds3File, Pds4File
+
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 RMS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
@@ -44,7 +46,6 @@ import do_table_names # noqa: E402
 import do_update_mult_info # noqa: E402
 import do_validate # noqa: E402
 import impglobals # noqa: E402
-import import_util # noqa: E402
 
 import importdb # noqa: E402
 

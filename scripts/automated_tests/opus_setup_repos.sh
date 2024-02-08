@@ -24,7 +24,7 @@ echo "DOWNLOAD_DIR: $DOWNLOAD_DIR"
 echo "DATA_DIR: $DATA_DIR"
 echo
 
-pip3 install --upgrade pip
+python -m pip install --upgrade pip
 if [ $? -ne 0 ]; then exit -1; fi
 
 # Clone the repos
@@ -32,10 +32,7 @@ if [ $? -ne 0 ]; then exit -1; fi
 git clone https://github.com/SETI/rms-pdsfile.git $SRC_DIR/rms-pdsfile
 if [ $? -ne 0 ]; then exit -1; fi
 
-pip3 install wheel
-if [ $? -ne 0 ]; then exit -1; fi
-
-pip3 install -r requirements.txt
+python -m pip install -r requirements.txt
 if [ $? -ne 0 ]; then exit -1; fi
 
 exit 0
