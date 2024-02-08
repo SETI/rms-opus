@@ -1,7 +1,7 @@
 ################################################################################
-# obs_instrument_corss_occ.py
+# obs_volume_corss_occ.py
 #
-# Defines the ObsInstrumentCORSSOcc class, which encapsulates fields for
+# Defines the ObsVolumeCORSSOcc class, which encapsulates fields for
 # common and obs_mission_cassini for CORSS_8001 (there is no RSS instrument
 # table).
 ################################################################################
@@ -9,10 +9,10 @@
 import opus_support
 
 from config_data import DSN_NAMES
-from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
+from obs_volume_cassini_occ_helper import ObsVolumeCassiniOccHelper
 
 
-class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
+class ObsVolumeCORSSOcc(ObsVolumeCassiniOccHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -130,7 +130,7 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
 
 
     #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
+    ### OVERRIDE FROM ObsVolumeCassiniHelper ###
     #######################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):

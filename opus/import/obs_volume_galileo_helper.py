@@ -1,5 +1,5 @@
 ################################################################################
-# obs_mission_galileo.py
+# obs_volume_galileo_helper.py
 #
 # Defines the ObsMissionGalileo class, which encapsulates fields in the
 # common and obs_mission_galileo tables.

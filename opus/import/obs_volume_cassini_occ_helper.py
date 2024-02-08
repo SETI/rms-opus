@@ -1,17 +1,17 @@
 ################################################################################
-# obs_instrument_cassini_occ.py
+# obs_volume_cassini_occ_helper.py
 #
-# Defines the ObsInstrumentCassiniOcc class, the parent for the
-# ObsInstrumentCORSSOcc, ObsInstrumentCOUVISOcc, and ObsInstrumentCOVIMSOcc
+# Defines the ObsVolumeCassiniOccHelper class, the parent for the
+# ObsVolumeCORSSOcc, ObsVolumeCOUVISOcc, and ObsVolumeCOVIMSOcc
 # classes, which encapsulate fields in the obs_instrument_corss,
 # obs_instrument_couvis, and obs_instrument_covims tables for the 8xxx
 # occultation volumes
 ################################################################################
 
-from obs_mission_cassini import ObsMissionCassini
+from obs_volume_cassini_helper import ObsVolumeCassiniHelper
 
 
-class ObsInstrumentCassiniOcc(ObsMissionCassini):
+class ObsVolumeCassiniOccHelper(ObsVolumeCassiniHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

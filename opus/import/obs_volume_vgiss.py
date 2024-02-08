@@ -1,12 +1,12 @@
 ################################################################################
-# obs_instrument_vgiss.py
+# obs_volume_vgiss.py
 #
-# Defines the ObsInstrumentVGISS class, which encapsulates fields in the
+# Defines the ObsVolumeVGISS class, which encapsulates fields in the
 # common, obs_mission_voyager, and obs_instrument_vgiss tables for
 # VGISS_[5678]xxx.
 ################################################################################
 
-from obs_mission_voyager import ObsMissionVoyager
+from obs_volume_voyager_helper import ObsVolumeVoyagerHelper
 
 
 # Data from: https://pds-rings.seti.org/voyager/iss/inst_cat_wa1.html#inst_info
@@ -24,7 +24,7 @@ _VGISS_FILTER_WAVELENGTHS = {
 }
 
 
-class ObsInstrumentVGISS(ObsMissionVoyager):
+class ObsVolumeVGISS(ObsVolumeVoyagerHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -166,9 +166,9 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
         return self.field_obs_wavelength_wave_no_res1()
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionVoyager ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeVoyagerHelper ###
+    ############################################
 
     def _mission_phase_name(self):
         return self._index_col('MISSION_PHASE_NAME')

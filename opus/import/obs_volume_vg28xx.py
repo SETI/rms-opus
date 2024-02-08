@@ -1,16 +1,16 @@
 ################################################################################
-# obs_instrument_vg28xx.py
+# obs_volume_vg28xx.py
 #
-# Defines the ObsInstrumentVG28xx class, the parent for the
-# ObsInstrumentVG28xxVGISS, ObsInstrumentVG28xxVGPPS, ObsInstrumentVG28xxVGRSS,
-# and ObsInstrumentVG28xxVGUVS classes, which encapsulate
+# Defines the ObsVolumeVG28xx class, the parent for the
+# ObsVolumeVG28xxVGISS, ObsVolumeVG28xxVGPPS, ObsVolumeVG28xxVGRSS,
+# and ObsVolumeVG28xxVGUVS classes, which encapsulate
 # fields in the common, obs_mission_voyager, and (sometimes)
 # obs_instrument_vgiss tables for the VG_28XX volumes.
 ################################################################################
 
 import julian
 
-from obs_mission_voyager import ObsMissionVoyager
+from obs_volume_voyager_helper import ObsVolumeVoyagerHelper
 
 
 _VG_TARGET_TO_MISSION_PHASE_MAPPING = {
@@ -49,7 +49,7 @@ THRESHOLD_START_TIME_VG_AT_NORTH = julian.tai_from_iso(
 # and VGUVS have in common in the VG_28xx reflection/occultation profile
 # volumes.
 
-class ObsInstrumentVG28xx(ObsMissionVoyager):
+class ObsVolumeVG28xx(ObsVolumeVoyagerHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -192,9 +192,9 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
                                       column='RING_EVENT_STOP_TIME')
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionVoyager ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeVoyagerHelper ###
+    ############################################
 
     def _mission_phase_name(self):
         target_name = self._index_col('TARGET_NAME').upper()

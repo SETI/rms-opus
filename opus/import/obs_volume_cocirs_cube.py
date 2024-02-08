@@ -1,7 +1,7 @@
 ################################################################################
-# obs_instrument_cocirs_cube.py
+# obs_volume_cocirs_cube.py
 #
-# Defines the ObsInstrumentCOCIRSCube class, which encapsulates fields in the
+# Defines the ObsVolumeCOCIRSCube class, which encapsulates fields in the
 # common, obs_mission_cassini, and obs_instrument_cocirs tables for volumes
 # COCIRS_[01]xxx.
 ################################################################################
@@ -10,12 +10,12 @@ import julian
 
 import opus_support
 
-from obs_mission_cassini import ObsMissionCassini
+from obs_volume_cassini_helper import ObsVolumeCassiniHelper
 
 _EQUINOX_DATE = julian.tai_from_iso('2009-08-11T01:40:08.914')
 
 
-class ObsInstrumentCOCIRSCube(ObsMissionCassini):
+class ObsVolumeCOCIRSCube(ObsVolumeCassiniHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -315,7 +315,7 @@ class ObsInstrumentCOCIRSCube(ObsMissionCassini):
 
 
     #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
+    ### OVERRIDE FROM ObsVolumeCassiniHelper ###
     #######################################
 
     # Warning: Both the equi/point/ring index files and the supplemental index files

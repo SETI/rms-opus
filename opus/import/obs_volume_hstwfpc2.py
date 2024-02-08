@@ -1,16 +1,16 @@
 ################################################################################
-# obs_instrument_hstwfpc2.py
+# obs_volume_hstwfpc2.py
 #
-# Defines the ObsInstrumentHSTWFPC2 class, which encapsulates fields in the
+# Defines the ObsVolumeHSTWFPC2 class, which encapsulates fields in the
 # common and obs_mission_hubble tables for the HST WFPC2 instrument for
 # HSTUx_xxxx. Note HST does not have separate tables for each instrument but
 # combines them all together.
 ################################################################################
 
-from obs_mission_hubble import ObsMissionHubble
+from obs_volume_hubble_helper import ObsVolumeHubbleHelper
 
 
-class ObsInstrumentHSTWFPC2(ObsMissionHubble):
+class ObsVolumeHSTWFPC2(ObsVolumeHubbleHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -62,9 +62,9 @@ class ObsInstrumentHSTWFPC2(ObsMissionHubble):
         return self._create_mult('LINEAR')
 
 
-    ######################################
-    ### OVERRIDE FROM ObsMissionHubble ###
-    ######################################
+    ###########################################
+    ### OVERRIDE FROM ObsVolumeHubbleHelper ###
+    ###########################################
 
     def field_obs_mission_hubble_filter_type(self):
         filter1, filter2 = self._decode_filters()

@@ -1,17 +1,17 @@
 ################################################################################
-# obs_instrument_cocirs.py
+# obs_volume_cocirs.py
 #
-# Defines the ObsInstrumentCOCIRS class, which encapsulates fields in the
+# Defines the ObsVolumeCOCIRS class, which encapsulates fields in the
 # common, obs_mission_cassini, and obs_instrument_cocirs tables for volumes
 # COCIRS_[56]xxx.
 ################################################################################
 
 import opus_support
 
-from obs_mission_cassini import ObsMissionCassini
+from obs_volume_cassini_helper import ObsVolumeCassiniHelper
 
 
-class ObsInstrumentCOCIRS(ObsMissionCassini):
+class ObsVolumeCOCIRS(ObsVolumeCassiniHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -129,7 +129,7 @@ class ObsInstrumentCOCIRS(ObsMissionCassini):
 
 
     #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
+    ### OVERRIDE FROM ObsVolumeCassiniHelper ###
     #######################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):

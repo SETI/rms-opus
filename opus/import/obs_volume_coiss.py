@@ -1,14 +1,14 @@
 ################################################################################
-# obs_instrument_coiss.py
+# obs_volume_coiss.py
 #
-# Defines the ObsInstrumentCOISS class, which encapsulates fields in the
+# Defines the ObsVolumeCOISS class, which encapsulates fields in the
 # common, obs_mission_cassini, and obs_instrument_coiss tables for
 # COISS_[12]xxx.
 ################################################################################
 
 import opus_support
 
-from obs_mission_cassini import (ObsMissionCassini,
+from obs_volume_cassini_helper import (ObsVolumeCassiniHelper,
                                  COISS_TARGET_DESC_MAPPING)
 
 
@@ -176,7 +176,7 @@ _COISS_FILTER_WAVELENGTHS = {
 # W/MT3/BL1
 
 
-class ObsInstrumentCOISS(ObsMissionCassini):
+class ObsVolumeCOISS(ObsVolumeCassiniHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -355,7 +355,7 @@ class ObsInstrumentCOISS(ObsMissionCassini):
 
 
     #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
+    ### OVERRIDE FROM ObsVolumeCassiniHelper ###
     #######################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):

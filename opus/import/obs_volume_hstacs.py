@@ -1,16 +1,16 @@
 ################################################################################
-# obs_instrument_hstacs.py
+# obs_volume_hstacs.py
 #
-# Defines the ObsInstrumentHSTACS class, which encapsulates fields in the
+# Defines the ObsVolumeHSTACS class, which encapsulates fields in the
 # common and obs_mission_hubble tables for the HST ACS instrument for
 # HSTJx_xxxx. Note HST does not have separate tables for each instrument but
 # combines them all together.
 ################################################################################
 
-from obs_mission_hubble import ObsMissionHubble
+from obs_volume_hubble_helper import ObsVolumeHubbleHelper
 
 
-class ObsInstrumentHSTACS(ObsMissionHubble):
+class ObsVolumeHSTACS(ObsVolumeHubbleHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -107,9 +107,9 @@ class ObsInstrumentHSTACS(ObsMissionHubble):
         return self._create_mult('NONE')
 
 
-    ######################################
-    ### OVERRIDE FROM ObsMissionHubble ###
-    ######################################
+    ###########################################
+    ### OVERRIDE FROM ObsVolumeHubbleHelper ###
+    ###########################################
 
     def field_obs_mission_hubble_filter_type(self):
         filter1, filter2 = self._decode_filters()

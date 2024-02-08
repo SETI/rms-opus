@@ -1,14 +1,14 @@
 ################################################################################
-# obs_instrument_couvis_covims_occ.py
+# obs_volume_couvis_covims_occ.py
 #
-# Defines the ObsInstrumentUVISVIMSOcc class, which encapsulate fields that are
-# common to the ObsInstrumentCOUVISOcc and ObsInstrumentCOVIMSOcc classes.
+# Defines the ObsVolumeUVISVIMSOcc class, which encapsulate fields that are
+# common to the ObsVolumeCOUVISOcc and ObsVolumeCOVIMSOcc classes.
 ################################################################################
 
-from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
+from obs_volume_cassini_occ_helper import ObsVolumeCassiniOccHelper
 
 
-class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
+class ObsVolumeUVISVIMSOcc(ObsVolumeCassiniOccHelper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -121,7 +121,7 @@ class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
 
 
     #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
+    ### OVERRIDE FROM ObsVolumeCassiniHelper ###
     #######################################
 
     def field_obs_mission_cassini_sequence_id(self):

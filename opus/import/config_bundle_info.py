@@ -7,28 +7,28 @@
 
 # flake8: noqa
 
-from obs_instrument_cocirs             import ObsInstrumentCOCIRS
-from obs_instrument_cocirs_cube        import ObsInstrumentCOCIRSCube
-from obs_instrument_coiss              import ObsInstrumentCOISS
-from obs_instrument_corss_occ          import ObsInstrumentCORSSOcc
-from obs_instrument_couvis             import ObsInstrumentCOUVIS
-from obs_instrument_couvis_occ         import ObsInstrumentCOUVISOcc
-from obs_instrument_covims             import ObsInstrumentCOVIMS
-from obs_instrument_covims_occ         import ObsInstrumentCOVIMSOcc
-from obs_instrument_ebrocc             import ObsInstrumentEBROCC
-from obs_instrument_gossi              import ObsInstrumentGOSSI
-from obs_instrument_hstacs             import ObsInstrumentHSTACS
-from obs_instrument_hstnicmos          import ObsInstrumentHSTNICMOS
-from obs_instrument_hststis            import ObsInstrumentHSTSTIS
-from obs_instrument_hstwfc3            import ObsInstrumentHSTWFC3
-from obs_instrument_hstwfpc2           import ObsInstrumentHSTWFPC2
-from obs_instrument_nhlorri            import ObsInstrumentNHLORRI
-from obs_instrument_nhmvic             import ObsInstrumentNHMVIC
-from obs_instrument_vgiss              import ObsInstrumentVGISS
-from obs_instrument_vg28xx_vgiss       import ObsInstrumentVG28xxVGISS
-from obs_instrument_vg28xx_vgpps_vguvs import (ObsInstrumentVG28xxVGPPS,
-                                               ObsInstrumentVG28xxVGUVS)
-from obs_instrument_vg28xx_vgrss       import ObsInstrumentVG28xxVGRSS
+from obs_volume_cocirs             import ObsVolumeCOCIRS
+from obs_volume_cocirs_cube        import ObsVolumeCOCIRSCube
+from obs_volume_coiss              import ObsVolumeCOISS
+from obs_volume_corss_occ          import ObsVolumeCORSSOcc
+from obs_volume_couvis             import ObsVolumeCOUVIS
+from obs_volume_couvis_occ         import ObsVolumeCOUVISOcc
+from obs_volume_covims             import ObsVolumeCOVIMS
+from obs_volume_covims_occ         import ObsVolumeCOVIMSOcc
+from obs_volume_ebrocc             import ObsVolumeEBROCC
+from obs_volume_gossi              import ObsVolumeGOSSI
+from obs_volume_hstacs             import ObsVolumeHSTACS
+from obs_volume_hstnicmos          import ObsVolumeHSTNICMOS
+from obs_volume_hststis            import ObsVolumeHSTSTIS
+from obs_volume_hstwfc3            import ObsVolumeHSTWFC3
+from obs_volume_hstwfpc2           import ObsVolumeHSTWFPC2
+from obs_volume_nhlorri            import ObsVolumeNHLORRI
+from obs_volume_nhmvic             import ObsVolumeNHMVIC
+from obs_volume_vgiss              import ObsVolumeVGISS
+from obs_volume_vg28xx_vgiss       import ObsVolumeVG28xxVGISS
+from obs_volume_vg28xx_vgpps_vguvs import (ObsVolumeVG28xxVGPPS,
+                                               ObsVolumeVG28xxVGUVS)
+from obs_volume_vg28xx_vgrss       import ObsVolumeVG28xxVGRSS
 
 
 # The BUNDLE_INFO structure is used to determine the details of importing
@@ -59,47 +59,47 @@ BUNDLE_INFO = [
                            '<BUNDLE>_cube_point_index.lbl',
                            '<BUNDLE>_cube_ring_index.lbl'),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentCOCIRSCube},
+         'instrument_class': ObsVolumeCOCIRSCube},
     ),
     (r'COCIRS_[56]\d\d\d',
         {'primary_index': ('OBSINDEX.LBL',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentCOCIRS},
+         'instrument_class': ObsVolumeCOCIRS},
     ),
     (r'COISS_[12]\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentCOISS},
+         'instrument_class': ObsVolumeCOISS},
     ),
     (r'CORSS_8001',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentCORSSOcc},
+         'instrument_class': ObsVolumeCORSSOcc},
     ),
     (r'COUVIS_0\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentCOUVIS},
+         'instrument_class': ObsVolumeCOUVIS},
     ),
     (r'COUVIS_8001',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentCOUVISOcc},
+         'instrument_class': ObsVolumeCOUVISOcc},
     ),
     (r'COVIMS_0\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentCOVIMS},
+         'instrument_class': ObsVolumeCOVIMS},
     ),
     (r'COVIMS_8001',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentCOVIMSOcc},
+         'instrument_class': ObsVolumeCOVIMSOcc},
     ),
     (r'EBROCC_0001',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentEBROCC},
+         'instrument_class': ObsVolumeEBROCC},
     ),
     (r'GO_0001',
         {'primary_index': None,
@@ -109,42 +109,42 @@ BUNDLE_INFO = [
     (r'GO_000[2-9]|GO_001\d|GO_002\d',
         {'primary_index': ('<BUNDLE>_index.lbl', '<BUNDLE>_sl9_index.lbl'),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentGOSSI},
+         'instrument_class': ObsVolumeGOSSI},
     ),
     (r'HSTI\d_\d\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentHSTWFC3},
+         'instrument_class': ObsVolumeHSTWFC3},
     ),
     (r'HSTJ\d_\d\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentHSTACS},
+         'instrument_class': ObsVolumeHSTACS},
     ),
     (r'HSTN\d_\d\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentHSTNICMOS},
+         'instrument_class': ObsVolumeHSTNICMOS},
     ),
     (r'HSTO\d_\d\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentHSTSTIS},
+         'instrument_class': ObsVolumeHSTSTIS},
     ),
     (r'HSTU\d_\d\d\d\d',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentHSTWFPC2},
+         'instrument_class': ObsVolumeHSTWFPC2},
     ),
     (r'NH..LO_1001',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentNHLORRI},
+         'instrument_class': ObsVolumeNHLORRI},
     ),
     (r'NH..MV_1001',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentNHMVIC},
+         'instrument_class': ObsVolumeNHMVIC},
     ),
     (r'NH...._2\d\d\d',  # Ignore these volumes - we only import 1001
         {'primary_index': None,
@@ -154,26 +154,26 @@ BUNDLE_INFO = [
     (r'VGISS_[5678]\d\d\d',
         {'primary_index': ('<BUNDLE>_raw_image_index.lbl',),
          'validate_index_rows': False,
-         'instrument_class': ObsInstrumentVGISS},
+         'instrument_class': ObsVolumeVGISS},
     ),
     (r'VG_2801',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentVG28xxVGPPS},
+         'instrument_class': ObsVolumeVG28xxVGPPS},
     ),
     (r'VG_2802',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentVG28xxVGUVS},
+         'instrument_class': ObsVolumeVG28xxVGUVS},
     ),
     (r'VG_2803',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentVG28xxVGRSS},
+         'instrument_class': ObsVolumeVG28xxVGRSS},
     ),
     (r'VG_2810',
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
-         'instrument_class': ObsInstrumentVG28xxVGISS},
+         'instrument_class': ObsVolumeVG28xxVGISS},
     ),
 ]
