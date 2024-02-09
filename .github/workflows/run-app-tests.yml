@@ -66,7 +66,11 @@ jobs:
           env
           echo
           python -m venv venv
-          source venv/bin/activate
+          if [[ ${{ matrix.os }} == self-hosted-windows ]]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
           python -m pip install --upgrade pip
           python -m pip install wheel
           python -m pip install -r requirements.txt
