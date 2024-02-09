@@ -7,7 +7,6 @@ UNIQUE_ID=$1
 TEST_CAT=opus
 TEST_CAT_DIR=$TEST_ROOT/$TEST_CAT/$UNIQUE_ID
 TEST_LOG_DIR=$TEST_CAT_DIR/test_logs
-SRC_DIR=$TEST_CAT_DIR/src
 LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
@@ -20,6 +19,7 @@ fi
 
 # Create the opus_secrets.py file
 
+echo "Ignore any error about pwd here..."
 CWD=`pwd -W` # So Windows bash will return a directory with C:
 if [ $? -ne 0 ]; then
     CWD=`pwd`

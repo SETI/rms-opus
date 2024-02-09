@@ -26,18 +26,22 @@ UNIQUE_ID=`python3 -c "from datetime import datetime; print(datetime.now().strft
 TEST_CAT=opus
 TEST_CAT_DIR=$TEST_ROOT/$TEST_CAT/$UNIQUE_ID
 TEST_LOG_DIR=$TEST_CAT_DIR/test_logs
-SRC_DIR=$TEST_CAT_DIR/src
 LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
+echo "Unique ID: $UNIQUE_ID"
+echo "TEST_LOG_DIR: $TEST_LOG_DIR"
+echo "LOG_DIR: $LOG_DIR"
+echo "DOWNLOAD_DIR: $DOWNLOAD_DIR"
+echo "DATA_DIR: $DATA_DIR"
+echo
+
 mkdir -p $TEST_LOG_DIR
 if [ $? -ne 0 ]; then exit -1; fi
 
-# Create new src/log/downloads/data directories
+# Create new log/downloads/data directories
 
-mkdir -p $SRC_DIR
-if [ $? -ne 0 ]; then exit -1; fi
 mkdir -p $LOG_DIR
 if [ $? -ne 0 ]; then exit -1; fi
 mkdir -p $DOWNLOAD_DIR
@@ -61,23 +65,6 @@ if [ $? -ne 0 ]; then exit -1; fi
 mkdir -p $DOWNLOAD_DIR/manifest
 if [ $? -ne 0 ]; then exit -1; fi
 
-
-echo "================================================================"
-echo "OPUS INITIALIZE REPOS"
-echo "================================================================"
-echo
-echo "Start:" `date`
-echo
-./scripts/automated_tests/opus_setup_repos.sh $UNIQUE_ID
-if [ $? -ne 0 ]; then
-    rm -rf $TEST_CAT_DIR
-    echo
-    echo "End:  " `date`
-    exit -1
-fi
-echo
-echo "End:  " `date`
-echo
 
 EXIT_CODE=0
 

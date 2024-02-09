@@ -1,5 +1,5 @@
 name: Test OPUS
-run-name: Run Import and Application Tests triggered by ${{ github.ref_type }} ${{ github.ref_name }} or ${{ github.triggering_actor }}
+run-name: "Run Import and Application Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
 
 on:
   workflow_dispatch:
@@ -9,6 +9,10 @@ on:
     branches: [ master ]
   schedule:
     - cron: "00 11 * * *"  # 3am PST, 4am PDT
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   test:
@@ -48,16 +52,32 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Test with coverage
+        # Because self-hosted runners keep a global Python environment that
+        # isn't wiped between runs, the various requirements.txt files will
+        # interfere with each other. As a result, we use a venv for cases
+        # where it matters.
         run: |
+          echo
           env
           echo
+          python -m venv venv
+          if [[ ${{ matrix.os }} == self-hosted-windows ]]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+          python -m pip install -r requirements.txt
+          echo
+          python -m pip freeze
+          echo
           scripts/automated_tests/opus_main_test.sh
-        shell: bash
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v3
@@ -69,4 +89,3 @@ jobs:
       - name: Check coverage level
         run: |
           scripts/automated_tests/opus_check_coverage.sh
-        shell: bash
