@@ -1,5 +1,5 @@
 name: Run Lint
-run-name: Run Lint triggered by ${{ github.ref_type }} ${{ github.ref_name }} or ${{ github.triggering_actor }}
+run-name: "Run Lint: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
 
 on:
   workflow_dispatch:
@@ -10,10 +10,14 @@ on:
   schedule:
     - cron: "55 10 * * *"  # 2:55am PST, 3:55am PDT
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Run Lint
-    runs-on: self-hosted-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,19 +25,18 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.12
 
       - name: Run flake8 on import
         run: |
-          pip3 install flake8
+          python -m pip install --upgrade pip
+          python -m pip install flake8
           cd opus
           ./run_flake8_import.sh
-        shell: bash
 
       - name: Run flake8 on application
         run: |
           cd opus
           ./run_flake8_application.sh
-        shell: bash
