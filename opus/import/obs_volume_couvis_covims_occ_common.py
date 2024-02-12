@@ -1,8 +1,8 @@
 ################################################################################
 # obs_volume_couvis_covims_occ_common.py
 #
-# Defines the ObsVolumeUVISVIMSOccCommon class, which encapsulate fields that are
-# common to the ObsVolumeCOUVIS8xxx and ObsVolumeCOVIMS8xxx classes.
+# Defines the ObsVolumeUVISVIMSOccCommon class, which encapsulate fields that
+# are common to the ObsVolumeCOUVIS8xxx and ObsVolumeCOVIMS8xxx classes.
 ################################################################################
 
 from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
