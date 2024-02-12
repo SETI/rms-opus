@@ -1,7 +1,7 @@
 ################################################################################
-# obs_mission_voyager.py
+# obs_volume_voyager_common.py
 #
-# Defines the ObsMissionVoyager class, which encapsulates fields in the
+# Defines the ObsVolumeVoyagerCommon class, which encapsulates fields in the
 # common and obs_mission_voyager tables.
 ################################################################################
 
@@ -10,7 +10,7 @@ import opus_support
 from obs_common import ObsCommon
 
 
-class ObsMissionVoyager(ObsCommon):
+class ObsVolumeVoyagerCommon(ObsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

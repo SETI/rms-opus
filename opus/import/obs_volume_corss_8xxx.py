@@ -1,7 +1,7 @@
 ################################################################################
-# obs_instrument_corss_occ.py
+# obs_volume_corss_8xxx.py
 #
-# Defines the ObsInstrumentCORSSOcc class, which encapsulates fields for
+# Defines the ObsVolumeCORSS8xxx class, which encapsulates fields for
 # common and obs_mission_cassini for CORSS_8001 (there is no RSS instrument
 # table).
 ################################################################################
@@ -9,10 +9,10 @@
 import opus_support
 
 from config_data import DSN_NAMES
-from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
+from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
 
 
-class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
+class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -129,9 +129,9 @@ class ObsInstrumentCORSSOcc(ObsInstrumentCassiniOcc):
         return self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ############################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         count = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')

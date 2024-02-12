@@ -1,5 +1,5 @@
 ################################################################################
-# obs_instrument_vg28xx_vgpps_vguvs.py
+# obs_volume_vg28xx_vgpps_vguvs.py
 #
 # Defines the ObsInstrumentVG28xxPPS and ObsInstrumentVG28xxUVS classes, which
 # encapsulate fields for the common and obs_mission_voyager tables for VGPPS
@@ -8,11 +8,11 @@
 # except for the instrument_id. Neither has a dedicated instrument table.
 ################################################################################
 
-from obs_instrument_vg28xx import (ObsInstrumentVG28xx,
+from obs_volume_vg28xx import (ObsVolumeVG28xx,
                                    THRESHOLD_START_TIME_VG_AT_NORTH)
 
 
-class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
+class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -257,7 +257,7 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
         return 90. - self.field_obs_ring_geometry_emission1()
 
 
-class ObsInstrumentVG28xxVGPPS(ObsInstrumentVG28xxVGPPSUVS):
+class ObsVolumeVG28xxVGPPS(ObsVolumeVG28xxVGPPSUVS):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -271,7 +271,7 @@ class ObsInstrumentVG28xxVGPPS(ObsInstrumentVG28xxVGPPSUVS):
         return 'VGPPS'
 
 
-class ObsInstrumentVG28xxVGUVS(ObsInstrumentVG28xxVGPPSUVS):
+class ObsVolumeVG28xxVGUVS(ObsVolumeVG28xxVGPPSUVS):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

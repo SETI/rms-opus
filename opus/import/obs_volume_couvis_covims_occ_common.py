@@ -1,14 +1,14 @@
 ################################################################################
-# obs_instrument_couvis_covims_occ.py
+# obs_volume_couvis_covims_occ_common.py
 #
-# Defines the ObsInstrumentUVISVIMSOcc class, which encapsulate fields that are
-# common to the ObsInstrumentCOUVISOcc and ObsInstrumentCOVIMSOcc classes.
+# Defines the ObsVolumeUVISVIMSOccCommon class, which encapsulate fields that are
+# common to the ObsVolumeCOUVIS8xxx and ObsVolumeCOVIMS8xxx classes.
 ################################################################################
 
-from obs_instrument_cassini_occ import ObsInstrumentCassiniOcc
+from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
 
 
-class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
+class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -120,9 +120,9 @@ class ObsInstrumentUVISVIMSOcc(ObsInstrumentCassiniOcc):
         return self._index_col('OBSERVED_RING_ELEVATION')
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ############################################
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._supp_index_col('SEQUENCE_ID')

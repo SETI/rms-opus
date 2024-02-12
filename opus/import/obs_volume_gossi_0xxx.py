@@ -1,7 +1,7 @@
 ################################################################################
-# obs_instrument_gossi.py
+# obs_volume_gossi_0xxx.py
 #
-# Defines the ObsInstrumentGOSSI class, which encapsulates fields in the
+# Defines the ObsVolumeGOSSI0xxx class, which encapsulates fields in the
 # common, obs_mission_galileo, and obs_instrument_gossi tables for GO_0xxx.
 ################################################################################
 
@@ -9,7 +9,7 @@ import numpy as np
 
 import opus_support
 
-from obs_mission_galileo import ObsMissionGalileo
+from obs_volume_galileo_common import ObsVolumeGalileoCommon
 
 
 # GOSSI is 10.16 microRad / pixel and 800x800
@@ -47,7 +47,7 @@ _GOSSI_FILTER_WAVELENGTHS = {
 # looking to see where there is a <field> or MINIMUM/MAXIMUM_<field> in the index.
 # What a mess for only 13 observations...
 
-class ObsInstrumentGOSSI(ObsMissionGalileo):
+class ObsVolumeGOSSI0xxx(ObsVolumeGalileoCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -258,9 +258,9 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return self.field_obs_wavelength_wave_no_res1()
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionGalileo ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeGalileoCommon ###
+    ############################################
 
     def field_obs_mission_galileo_orbit_number(self):
         orbit = self._index_col('ORBIT_NUMBER')

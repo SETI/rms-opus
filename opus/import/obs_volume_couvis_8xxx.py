@@ -1,17 +1,17 @@
 ################################################################################
-# obs_instrument_covims_occ.py
+# obs_volume_couvis_8xxx.py
 #
-# Defines the ObsInstrumentCOVIMSOcc class, which encapsulates fields in the
-# common, obs_mission_cassini, and obs_instrument_covims tables for COVIMS_8001
+# Defines the ObsVolumeCOUVIS8xxx class, which encapsulates fields in the
+# common, obs_mission_cassini, and obs_instrument_couvis tables for COUVIS_8001
 # occultations.
 ################################################################################
 
 import opus_support
 
-from obs_instrument_couvis_covims_occ import ObsInstrumentUVISVIMSOcc
+from obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIMSOccCommon
 
 
-class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
+class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -22,7 +22,7 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
 
     @property
     def instrument_id(self):
-        return 'COVIMS'
+        return 'COUVIS'
 
 
     ###################################
@@ -53,24 +53,20 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
     ################################
 
     def field_obs_profile_temporal_sampling(self):
-        return self._supp_index_col('IR_EXPOSURE') / 1000 # msec -> sec
+        return self._supp_index_col('INTEGRATION_DURATION') / 1000 # msec -> sec
 
     def field_obs_profile_wl_band(self):
-        return self._create_mult('IR')
+        return self._create_mult('UV')
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ############################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
         if sc == 'UNK':
             return None
-        # COVIMS_8001 SCLKs are in some weird units where the number to the right
-        # of the decimal can be > 255, so we just round down
-        if '.' in sc:
-            sc = sc.split('.')[0] + '.000'
         try:
             sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
@@ -82,12 +78,8 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         if sc == 'UNK':
             return None
-        # COVIMS_8001 SCLKs are in some weird units where the number to the right
-        # of the decimal can be > 255, so we just round up
-        if '.' in sc:
-            sc = sc.split('.')[0] + '.000'
         try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)+1 # Round up
+            sc_cvt = opus_support.parse_cassini_sclk(sc)
         except Exception as e:
             self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
@@ -106,50 +98,60 @@ class ObsInstrumentCOVIMSOcc(ObsInstrumentUVISVIMSOcc):
 
 
     ###############################################
-    ### FIELD METHODS FOR obs_instrument_covims ###
+    ### FIELD METHODS FOR obs_instrument_couvis ###
     ###############################################
 
-    def field_obs_instrument_covims_opus_id(self):
+    def field_obs_instrument_couvis_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_covims_bundle_id(self):
+    def field_obs_instrument_couvis_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_covims_instrument_id(self):
+    def field_obs_instrument_couvis_instrument_id(self):
         return self.instrument_id
 
-    def field_obs_instrument_covims_instrument_mode_id(self):
-        return self._create_mult(self._supp_index_col('INSTRUMENT_MODE_ID'))
+    def field_obs_instrument_couvis_observation_type(self):
+        return self._create_mult('NONE')
 
-    def field_obs_instrument_covims_spectral_editing(self):
-        return self._create_mult(self._supp_index_col('SPECTRAL_EDITING'))
+    def field_obs_instrument_couvis_integration_duration(self):
+        return self.field_obs_profile_temporal_sampling()
 
-    def field_obs_instrument_covims_spectral_summing(self):
-        return self._create_mult(self._supp_index_col('SPECTRAL_SUMMING'))
+    def field_obs_instrument_couvis_compression_type(self):
+        comp = self._supp_index_col('COMPRESSION_TYPE')
+        return self._create_mult_keep_case(comp)
 
-    def field_obs_instrument_covims_star_tracking(self):
-        return self._create_mult(self._supp_index_col('STAR_TRACKING'))
-
-    def field_obs_instrument_covims_swath_width(self):
-        return self._supp_index_col('SWATH_WIDTH')
-
-    def field_obs_instrument_covims_swath_length(self):
-        return self._supp_index_col('SWATH_LENGTH')
-
-    def field_obs_instrument_covims_ir_exposure(self):
-        ir_exp = self._supp_index_col('IR_EXPOSURE')
-        if ir_exp is None:
-            return None
-        return ir_exp / 1000.
-
-    def field_obs_instrument_covims_ir_sampling_mode_id(self):
-        return self._create_mult(self._supp_index_col('IR_SAMPLING_MODE_ID'))
-
-    def field_obs_instrument_covims_vis_exposure(self):
-        return None
-
-    def field_obs_instrument_covims_vis_sampling_mode_id(self):
+    def field_obs_instrument_couvis_occultation_port_state(self):
         return self._create_mult('N/A')
 
-    def field_obs_instrument_covims_channel(self):
-        return self._create_mult('IR')
+    def field_obs_instrument_couvis_slit_state(self):
+        return self._create_mult('NULL')
+
+    def field_obs_instrument_couvis_test_pulse_state(self):
+        return self._create_mult(None)
+
+    def field_obs_instrument_couvis_dwell_time(self):
+        return self._create_mult(None)
+
+    def field_obs_instrument_couvis_channel(self):
+        return self._create_mult_keep_case('HSP')
+
+    def field_obs_instrument_couvis_band1(self):
+        return None
+
+    def field_obs_instrument_couvis_band2(self):
+        return None
+
+    def field_obs_instrument_couvis_band_bin(self):
+        return None
+
+    def field_obs_instrument_couvis_line1(self):
+        return None
+
+    def field_obs_instrument_couvis_line2(self):
+        return None
+
+    def field_obs_instrument_couvis_line_bin(self):
+        return None
+
+    def field_obs_instrument_couvis_samples(self):
+        return None

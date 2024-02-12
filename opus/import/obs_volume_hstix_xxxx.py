@@ -1,22 +1,25 @@
 ################################################################################
-# obs_instrument_hstnicmos.py
+# obs_volume_hstix_xxxx.py
 #
-# Defines the ObsInstrumentHSTNICMOS class, which encapsulates fields in the
-# common and obs_mission_hubble tables for the HST NICMOS instrument for
-# HSTNx_xxxx. Note HST does not have separate tables for each instrument but
+# Defines the ObsVolumeHSTIxXxxx class, which encapsulates fields in the
+# common and obs_mission_hubble tables for the HST WFC3 instrument for
+# HSTIx_xxxx. Note HST does not have separate tables for each instrument but
 # combines them all together.
 ################################################################################
 
-from obs_mission_hubble import ObsMissionHubble
+from obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
-class ObsInstrumentHSTNICMOS(ObsMissionHubble):
+class ObsVolumeHSTIxXxxx(ObsVolumeHubbleCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-    def _nicmos_spec_flag(self):
+    def _wfc3_spec_flag(self):
         filter1, filter2 = self._decode_filters()
+        if filter2 is not None:
+            self._log_nonrepeating_error('filter2 not None')
+            return None
         return filter1.startswith('G'), filter1, filter2
 
 
@@ -26,7 +29,7 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
 
     @property
     def instrument_id(self):
-        return 'HSTNICMOS'
+        return 'HSTWFC3'
 
 
     ################################
@@ -34,10 +37,9 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
     ################################
 
     def _observation_type(self):
-        if self._nicmos_spec_flag()[0]:
+        if self._wfc3_spec_flag()[0]:
             return 'SPI'
         return 'IMG'
-
 
     def field_obs_general_observation_type(self):
         return self._create_mult(self._observation_type())
@@ -50,7 +52,7 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
     def field_obs_type_image_levels(self):
         if not self._is_image():
             return None
-        return 65536 # NICMOS Inst Handbook, Sec 7.2.1
+        return 65536 # WFC3 Inst Handbook, Sec 2.2.3
 
 
     ###################################
@@ -58,49 +60,58 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
     ###################################
 
     def field_obs_wavelength_spec_flag(self):
-        if self._nicmos_spec_flag()[0]:
+        if self._wfc3_spec_flag()[0]:
             return self._create_mult('Y')
         return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
-        spec_flag, filter1, filter2 = self._nicmos_spec_flag()
-        if filter2 is not None:
-            self._log_nonrepeating_error('filter2 not None')
-            return None
+        spec_flag, filter1, filter2 = self._wfc3_spec_flag()
         if not spec_flag:
             return None
-        # For NICMOS, the entire detector is used for the spectrum, but we don't
-        # know which direction it goes in, so just be generous and give the maximum
-        # dimension of the image.
+
+        # We can't use WAVELENGTH_RESOLUTION because it's too aggressive.
+        # Instead we use the Resolving Power (lambda / d-lambda) from WFC3 Inst
+        # Handbook Table 8.1
+
+        if filter1 == 'G280':
+            wr = 300. / 70 * .001
+            bw = (450-190) * .001
+        elif filter1 == 'G102':
+            wr = 1000. / 210 * .001
+            bw = (1150-800) * .001
+        elif filter1 == 'G141':
+            wr = 1400. / 130 * .001
+            bw = (1700-1075) * .001
+        else:
+            assert False, filter1
+
+        spec_size = bw // wr
+
         lines = self._index_col('LINES')
         samples = self._index_col('LINE_SAMPLES')
-        if lines is None and samples is None:
-            return None
-        if lines is None:
-            return samples
-        if samples is None:
-            return lines
-        return max(lines, samples)
+        if lines is None or samples is None:
+            return spec_size
+
+        return min(max(lines, samples), spec_size)
 
     def field_obs_wavelength_polarization_type(self):
-        filter_name = self._index_col('FILTER_NAME')
-        if filter_name.find('POL') == -1:
-            return self._create_mult('NONE')
-        return self._create_mult('LINEAR')
+        return self._create_mult('NONE')
 
 
-    ######################################
-    ### OVERRIDE FROM ObsMissionHubble ###
-    ######################################
+    ###########################################
+    ### OVERRIDE FROM ObsVolumeHubbleCommon ###
+    ###########################################
 
     def field_obs_mission_hubble_filter_type(self):
         filter1, filter2 = self._decode_filters()
 
-        # NICMOS doesn't do filter stacking
+        # WFC3 doesn't do filter stacking
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
             return self._create_mult(None)
 
+        if filter1.startswith('FR'):
+            return self._create_mult('FR')
         if filter1.startswith('G'):
             return self._create_mult('SP')
         if filter1.endswith('N'):
@@ -109,17 +120,10 @@ class ObsInstrumentHSTNICMOS(ObsMissionHubble):
             return self._create_mult('M')
         if filter1.endswith('W'):
             return self._create_mult('W')
-
-        if filter1.startswith('POL'):
-            if filter1.endswith('S'):
-                # POLxS is 0.8-1.3, about the same as wide filters
-                return self._create_mult('W')
-            elif filter1.endswith('L'):
-                # POLxL is 1.89-2.1, about the same as medium filters
-                return self._create_mult('M')
-
-        if filter1 == 'BLANK': # Opaque
-            return self._create_mult('OT')
+        if filter1.endswith('LP'):
+            return self._create_mult('LP')
+        if filter1.endswith('X'):
+            return self._create_mult('X')
 
         self._log_nonrepeating_error(f'Unknown filter "{filter1}"')
         return self._create_mult(None)

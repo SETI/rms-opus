@@ -1,7 +1,7 @@
 ################################################################################
-# obs_mission_new_horizons.py
+# obs_volume_new_horizons_common.py
 #
-# Defines the ObsMissionNewHorizons class, which encapsulates fields in the
+# Defines the ObsVolumeNewHorizonsCommon class, which encapsulates fields in the
 # common and obs_mission_new_horizons tables.
 ################################################################################
 
@@ -20,7 +20,7 @@ _MISSION_PHASE_NAMES = {
     'KEM1 ENCOUNTER':                 'KEM1 Encounter',
 }
 
-class ObsMissionNewHorizons(ObsCommon):
+class ObsVolumeNewHorizonsCommon(ObsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
