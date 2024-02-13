@@ -16,7 +16,7 @@ from obs_volume_couvis_8xxx        import ObsVolumeCOUVIS8xxx
 from obs_volume_covims_0xxx        import ObsVolumeCOVIMS0xxx
 from obs_volume_covims_8xxx        import ObsVolumeCOVIMS8xxx
 from obs_volume_ebrocc_xxxx        import ObsVolumeEBROCCxxxx
-from obs_volume_go_0xxx         import ObsVolumeGO0xxx
+from obs_volume_go_0xxx            import ObsVolumeGO0xxx
 from obs_volume_hstjx_xxxx         import ObsVolumeHSTJxxxxx
 from obs_volume_hstnx_xxxx         import ObsVolumeHSTNxxxxx
 from obs_volume_hstox_xxxx         import ObsVolumeHSTOxxxxx
