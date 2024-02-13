@@ -1,7 +1,7 @@
 ################################################################################
-# obs_volume_gossi_0xxx.py
+# obs_volume_go_0xxx.py
 #
-# Defines the ObsVolumeGOSSI0xxx class, which encapsulates fields in the
+# Defines the ObsVolumeGO0xxx class, which encapsulates fields in the
 # common, obs_mission_galileo, and obs_instrument_gossi tables for GO_0xxx.
 ################################################################################
 
@@ -47,7 +47,7 @@ _GOSSI_FILTER_WAVELENGTHS = {
 # looking to see where there is a <field> or MINIMUM/MAXIMUM_<field> in the index.
 # What a mess for only 13 observations...
 
-class ObsVolumeGOSSI0xxx(ObsVolumeGalileoCommon):
+class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

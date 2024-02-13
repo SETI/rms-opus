@@ -1,7 +1,7 @@
 ################################################################################
 # obs_volume_hstux_xxxx.py
 #
-# Defines the ObsVolumeHSTUxXxxx class, which encapsulates fields in the
+# Defines the ObsVolumeHSTUxxxxx class, which encapsulates fields in the
 # common and obs_mission_hubble tables for the HST WFPC2 instrument for
 # HSTUx_xxxx. Note HST does not have separate tables for each instrument but
 # combines them all together.
@@ -10,7 +10,7 @@
 from obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
-class ObsVolumeHSTUxXxxx(ObsVolumeHubbleCommon):
+class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

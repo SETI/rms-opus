@@ -1,7 +1,7 @@
 ################################################################################
 # obs_volume_ebrocc_xxxx.py
 #
-# Defines the ObsVolumeEBROCCXxxx class, which encapsulates fields for
+# Defines the ObsVolumeEBROCCxxxx class, which encapsulates fields for
 # the common tables for EBROCC_0001. This class supports multiple instruments
 # in a single volume.
 ################################################################################
@@ -17,7 +17,7 @@ from obs_common import ObsCommon
 # * Emission angle and north-based emission angle = incidence angle
 # * Observer elevation = 90 - incidence angle
 
-class ObsVolumeEBROCCXxxx(ObsCommon):
+class ObsVolumeEBROCCxxxx(ObsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

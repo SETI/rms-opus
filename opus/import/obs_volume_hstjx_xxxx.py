@@ -1,7 +1,7 @@
 ################################################################################
 # obs_volume_hstjx_xxxx.py
 #
-# Defines the ObsVolumeHSTJxXxxx class, which encapsulates fields in the
+# Defines the ObsVolumeHSTJxxxxx class, which encapsulates fields in the
 # common and obs_mission_hubble tables for the HST ACS instrument for
 # HSTJx_xxxx. Note HST does not have separate tables for each instrument but
 # combines them all together.
@@ -10,7 +10,7 @@
 from obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
-class ObsVolumeHSTJxXxxx(ObsVolumeHubbleCommon):
+class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
