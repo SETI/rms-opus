@@ -4,9 +4,9 @@ run-name: "Run Lint: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   push:
-    branches: [ master ]
+    branches: [ main ]
   schedule:
     - cron: "55 10 * * *"  # 2:55am PST, 3:55am PDT
 
