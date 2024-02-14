@@ -1,7 +1,7 @@
 ################################################################################
-# obs_instrument_couvis.py
+# obs_volume_couvis_0xxx.py
 #
-# Defines the ObsInstrumentCOUVIS class, which encapsulates fields in the
+# Defines the ObsVolumeCOUVIS0xxx class, which encapsulates fields in the
 # common, obs_mission_cassini, and obs_instrument_couvis tables for COUVIS_0xxx.
 ################################################################################
 
@@ -9,10 +9,10 @@ import os
 
 import opus_support
 
-from obs_mission_cassini import ObsMissionCassini
+from obs_volume_cassini_common import ObsVolumeCassiniCommon
 
 
-class ObsInstrumentCOUVIS(ObsMissionCassini):
+class ObsVolumeCOUVIS0xxx(ObsVolumeCassiniCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -330,9 +330,9 @@ class ObsInstrumentCOUVIS(ObsMissionCassini):
         return (band2 - band1 + 1) // band_bin
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ############################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')

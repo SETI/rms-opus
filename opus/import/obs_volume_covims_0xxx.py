@@ -1,17 +1,17 @@
 ################################################################################
-# obs_instrument_covims.py
+# obs_volume_covims_0xxx.py
 #
-# Defines the ObsInstrumentCOVIMS class, which encapsulates fields in the
+# Defines the ObsVolumeCOVIMS0xxx class, which encapsulates fields in the
 # common, obs_mission_cassini, and obs_instrument_covims tables for COVIMS_8xxx
 # occultations.
 ################################################################################
 
 import opus_support
 
-from obs_mission_cassini import ObsMissionCassini
+from obs_volume_cassini_common import ObsVolumeCassiniCommon
 
 
-class ObsInstrumentCOVIMS(ObsMissionCassini):
+class ObsVolumeCOVIMS0xxx(ObsVolumeCassiniCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -232,9 +232,9 @@ class ObsInstrumentCOVIMS(ObsMissionCassini):
         return 96
 
 
-    #######################################
-    ### OVERRIDE FROM ObsMissionCassini ###
-    #######################################
+    ############################################
+    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ############################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = '1/' + self._index_col('SPACECRAFT_CLOCK_START_COUNT')

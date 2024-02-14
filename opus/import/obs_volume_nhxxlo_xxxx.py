@@ -1,15 +1,15 @@
 ################################################################################
-# obs_instrument_nhmvic.py
+# obs_volume_nhxxlo_xxxx.py
 #
-# Defines the ObsInstrumentNHMVIC class, which encapsulates fields in the
-# common, obs_mission_new_horizons, and obs_instrument_nhmvic tables for
-# NHxxMV_xxxx.
+# Defines the ObsVolumeNHxxLOXxxx class, which encapsulates fields in the
+# common, obs_mission_new_horizons, and obs_instrument_nhlorri tables for
+# NHxxLO_xxxx.
 ################################################################################
 
-from obs_mission_new_horizons import ObsMissionNewHorizons
+from obs_volume_new_horizons_common import ObsVolumeNewHorizonsCommon
 
 
-class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
+class ObsVolumeNHxxLOXxxx(ObsVolumeNewHorizonsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -20,7 +20,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
 
     @property
     def instrument_id(self):
-        return 'NHMVIC'
+        return 'NHLORRI'
 
     @property
     def inst_host_id(self):
@@ -55,7 +55,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
     def field_obs_general_observation_duration(self):
         return self._supp_index_col('EXPOSURE_DURATION')
 
-    # We occasionally don't bother to generate ring_geo data for NHMVIC, like during
+    # We occasionally don't bother to generate ring_geo data for NHLORRI, like during
     # cruise, so just use the given RA/DEC from the label if needed. We don't make
     # any effort to figure out the min/max values.
     def field_obs_general_right_asc1(self):
@@ -83,9 +83,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         return self._supp_index_col('DECLINATION')
 
     def field_obs_general_ring_obs_id(self):
-        filename = self._index_col('FILE_NAME')
-        image_num = filename[4:14]
-        camera = filename[:3].upper()
+        image_num = self._index_col('FILE_NAME')[4:14]
         start_time = self._index_col('START_TIME')
         # This is really dumb, but it's what the old OPUS did so we do it for
         # backwards compatability
@@ -93,7 +91,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
             pl_str = 'P'
         else:
             pl_str = 'J'
-        return f'{pl_str}_IMG_NH_MVIC_{image_num}_{camera}'
+        return f'{pl_str}_IMG_NH_LORRI_{image_num}'
 
     def field_obs_general_quantity(self):
         return self._create_mult('REFLECT')
@@ -107,7 +105,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
     ##################################
 
     def field_obs_type_image_image_type_id(self):
-        return self._create_mult('PUSH')
+        return self._create_mult('FRAM')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()
@@ -116,10 +114,10 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         return 4096
 
     def field_obs_type_image_greater_pixel_size(self):
-        return 5024
+        return 1024
 
     def field_obs_type_image_lesser_pixel_size(self):
-        return 128
+        return 1024
 
 
     ###################################
@@ -127,16 +125,16 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
     ###################################
 
     def field_obs_wavelength_wavelength1(self):
-        return 0.4
+        return 0.35
 
     def field_obs_wavelength_wavelength2(self):
-        return 0.975
+        return 0.85
 
     def field_obs_wavelength_wave_res1(self):
-        return 0.575
+        return 0.5
 
     def field_obs_wavelength_wave_res2(self):
-        return 0.575
+        return 0.5
 
     def field_obs_wavelength_wave_no_res1(self):
         wno1 = self.field_obs_wavelength_wave_no1()
@@ -149,19 +147,22 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         return self.field_obs_wavelength_wave_no_res1()
 
 
-    ###############################################
-    ### FIELD METHODS FOR obs_instrument_nhmvic ###
-    ###############################################
+    ################################################
+    ### FIELD METHODS FOR obs_instrument_nhlorri ###
+    ################################################
 
-    def field_obs_instrument_nhmvic_opus_id(self):
+    def field_obs_instrument_nhlorri_opus_id(self):
         return self.opus_id
 
-    def field_obs_instrument_nhmvic_bundle_id(self):
+    def field_obs_instrument_nhlorri_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_nhmvic_instrument_id(self):
+    def field_obs_instrument_nhlorri_instrument_id(self):
         return self.instrument_id
 
-    def field_obs_instrument_nhmvic_instrument_compression_type(self):
+    def field_obs_instrument_nhlorri_instrument_compression_type(self):
         compression_type = self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
         return self._create_mult(compression_type)
+
+    def field_obs_instrument_nhlorri_binning_mode(self):
+        return self._create_mult(self._supp_index_col('BINNING_MODE'))
