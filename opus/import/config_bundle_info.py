@@ -192,7 +192,6 @@ BUNDLE_INFO = [
         {'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
          'temporal_camera': True,
-         'instrument_class': ObsInstrumentVG28xxVGUVS},
          'instrument_class': ObsVolumeVG28xxVGUVS},
     ),
     (r'VG_2803',
