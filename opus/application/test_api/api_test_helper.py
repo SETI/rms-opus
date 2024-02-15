@@ -74,17 +74,6 @@ class ApiTestHelper:
                  .replace(r'\\n', r'\n')
                  .replace(r'\n', '\n'))
 
-    @staticmethod
-    def _clean_string(s):
-        s = str(s)
-        if s.startswith("b'"):
-            s = s[2:-1]
-        return (s.replace(r'\\r', '')
-                 .replace(r'\r', '')
-                 .replace('\r', '')
-                 .replace(r'\\n', r'\n')
-                 .replace(r'\n', '\n'))
-
     def _run_json_equal(self, url, expected, ignore=[]):
         if not isinstance(ignore, (list, tuple)):
             ignore = [ignore]
