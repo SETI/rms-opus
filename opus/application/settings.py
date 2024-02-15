@@ -29,7 +29,6 @@ sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
 from opus_secrets import *
 
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
-sys.path.insert(0, RMS_WEBTOOLS_PATH)
 sys.path.insert(0, RMS_OPUS_LIB_PATH)
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -385,6 +384,6 @@ DOWNLOAD_FORMATS = {
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # We don't want to have these characters in HTML class or ID for customized tooltips.
-INVALID_CLASS_CHAR = '~!@$%^&*()+=,./;:"?><[]\{}|`# '
+INVALID_CLASS_CHAR = r'~!@$%^&*()+=,./;:"?><[]\{}|`# '
 
 PDS_HOLDINGS_DIR = '/holdings'

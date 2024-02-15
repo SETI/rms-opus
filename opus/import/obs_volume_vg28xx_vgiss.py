@@ -1,15 +1,15 @@
 ################################################################################
-# obs_instrument_vg28xx_vgiss.py
+# obs_volume_vg28xx_vgiss.py
 #
 # Defines the ObsInstrumentVG28xxISS class, which encapsulates fields for the
 # common, obs_mission_voyager, and obs_instrument_vgiss tables for VG_2810
 # radial profiles.
 ################################################################################
 
-from obs_instrument_vg28xx import ObsInstrumentVG28xx
+from obs_volume_vg28xx import ObsVolumeVG28xx
 
 
-class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
+class ObsVolumeVG28xxVGISS(ObsVolumeVG28xx):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

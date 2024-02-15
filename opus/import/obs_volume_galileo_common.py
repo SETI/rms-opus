@@ -1,14 +1,14 @@
 ################################################################################
-# obs_mission_galileo.py
+# obs_volume_galileo_common.py
 #
-# Defines the ObsMissionGalileo class, which encapsulates fields in the
+# Defines the ObsVolumeGalileoCommon class, which encapsulates fields in the
 # common and obs_mission_galileo tables.
 ################################################################################
 
 from obs_common import ObsCommon
 
 
-class ObsMissionGalileo(ObsCommon):
+class ObsVolumeGalileoCommon(ObsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

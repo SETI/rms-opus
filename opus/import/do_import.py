@@ -555,7 +555,7 @@ def import_one_bundle(bundle_id):
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
     impglobals.CURRENT_PRIMARY_FILESPEC = None
 
-    bundle_pdsfile = pdsfile.PdsFile.from_path(bundle_id)
+    bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
 
     if not bundle_pdsfile.is_volume:
         import_util.log_error(f'{bundle_id} is not a bundle!')
@@ -587,8 +587,8 @@ def import_one_bundle(bundle_id):
     index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
     # These are the plain bundle/index directories for bundles that don't have
     # a separate metadata directory
-    index_paths.append(os.path.join(bundle_pdsfile.abspath, 'INDEX'))
-    index_paths.append(os.path.join(bundle_pdsfile.abspath, 'index'))
+    index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'INDEX'))
+    index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'index'))
     found_in_this_dir = False
     for path in index_paths:
         if not os.path.exists(path):
@@ -597,7 +597,7 @@ def import_one_bundle(bundle_id):
         ret = True
         for basename in basenames:
             if basename in primary_index_names:
-                bundle_label_path = os.path.join(path, basename)
+                bundle_label_path = import_util.safe_join(path, basename)
                 import_util.log_debug(f'Using index: {bundle_label_path}')
                 found_in_this_dir = True
                 ret = ret and import_one_index(bundle_id,
@@ -669,9 +669,9 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
                 valid_rows[row_no] = False
             good_row = None
             try:
-                deriv_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
+                deriv_filespec = pdsfile.pds3file.Pds3File.from_opus_id(opus_id).abspath
             except ValueError:
-                impglobals.CURRENT_INDEX_ROW_NUMBER = row_no
+                impglobals.CURRENT_INDEX_ROW_NUMBER = row_no+1
                 import_util.log_nonrepeating_warning(
                     f'Unable to convert OPUS ID "{opus_id}" to filespec')
             else:
@@ -688,7 +688,7 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
                                 f'{opus_id}: {good_row} and {row_no}')
                         good_row = row_no
             if good_row is None:
-                impglobals.CURRENT_INDEX_ROW_NUMBER = row_nos[0]
+                impglobals.CURRENT_INDEX_ROW_NUMBER = row_nos[0]+1
                 # This isn't always an error because sometimes we actually do have
                 # an opud_id that can't be properly reverse-mapped, like
                 # vg-pps-2-u-occ-1986-024-betper-lambda-i
@@ -709,6 +709,7 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
             if valid_rows[row_no]:
                 obs_rows.append(row)
             else:
+                impglobals.CURRENT_INDEX_ROW_NUMBER = row_no+1
                 import_util.log_info('Dropping index row '+
                                      instrument_obj.primary_filespec_from_index_row(row))
 
@@ -731,7 +732,7 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
 
     if index_paths:
         for index_path in index_paths:
-            assoc_pdsfile = pdsfile.PdsFile.from_abspath(index_path)
+            assoc_pdsfile = pdsfile.pds3file.Pds3File.from_abspath(index_path)
             try:
                 basenames = assoc_pdsfile.childnames
             except KeyError:
@@ -747,7 +748,7 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
                     not basename_upper.endswith('SUPPLEMENTAL_INDEX.LBL') and
                     not basename_upper.endswith('INVENTORY.LBL')):
                     continue
-                assoc_label_path = os.path.join(index_path, basename)
+                assoc_label_path = import_util.safe_join(index_path, basename)
                 if basename_upper.endswith('INVENTORY.LBL'):
                     # The inventory files are in CSV format, but the pdstable
                     # module can't read non-fixed-length records so we fake it up
@@ -1427,7 +1428,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, bundle_id,
     rows = []
 
     try:
-        pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
+        pdsf = pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
     except ValueError:
         import_util.log_nonrepeating_error(
                                     f'Failed to convert filespec "{filespec}"')

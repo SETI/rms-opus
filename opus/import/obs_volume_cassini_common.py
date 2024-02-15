@@ -1,7 +1,7 @@
 ################################################################################
-# obs_mission_cassini.py
+# obs_volume_cassini_common.py
 #
-# Defines the ObsMissionCassini class, which encapsulates fields in the
+# Defines the ObsVolumeCassiniCommon class, which encapsulates fields in the
 # common and obs_mission_cassini tables.
 ################################################################################
 
@@ -123,7 +123,7 @@ COISS_TARGET_DESC_MAPPING = {
 }
 
 
-class ObsMissionCassini(ObsCommon):
+class ObsVolumeCassiniCommon(ObsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

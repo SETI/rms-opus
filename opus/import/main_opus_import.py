@@ -16,13 +16,14 @@ import sys
 import traceback
 import warnings
 
+from pdsfile import Pds3File, Pds4File
+
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 RMS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
 
 from opus_secrets import * # noqa: E402
 
-sys.path.insert(0, RMS_WEBTOOLS_PATH)
 sys.path.insert(0, RMS_OPUS_LIB_PATH)
 
 IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
@@ -31,7 +32,6 @@ sys.path.insert(0, PROJECT_ROOT)
 
 import pdslogger # noqa: E402
 pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
-import pdsfile # noqa: E402
 
 from config_data import * # noqa: E402
 import do_cart # noqa: E402
@@ -44,7 +44,6 @@ import do_table_names # noqa: E402
 import do_update_mult_info # noqa: E402
 import do_validate # noqa: E402
 import impglobals # noqa: E402
-import import_util # noqa: E402
 
 import importdb # noqa: E402
 
@@ -411,17 +410,20 @@ try: # Top-level exception handling so we always log what's going on
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
     if not impglobals.ARGUMENTS.dont_use_shelves_only:
-        pdsfile.use_shelves_only()
-    pdsfile.require_shelves(True)
+        Pds3File.use_shelves_only()
+        Pds4File.use_shelves_only()
+    Pds3File.require_shelves(True)
+    Pds4File.require_shelves(True)
     if impglobals.ARGUMENTS.override_pds_data_dir:
-        pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
+        Pds3File.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:
-        pdsfile.preload(PDS_DATA_DIR)
+        Pds3File.preload(PDS_DATA_DIR)
 
     # We do this after the preload because we don't want to see all the preload
     # debug messages.
     if not impglobals.ARGUMENTS.no_log_pdsfile:
-        import_util.pdsfile.set_logger(impglobals.LOGGER)
+        Pds3File.set_logger(impglobals.LOGGER)
+        Pds4File.set_logger(impglobals.LOGGER)
 
     try:
         impglobals.DATABASE = importdb.get_db(

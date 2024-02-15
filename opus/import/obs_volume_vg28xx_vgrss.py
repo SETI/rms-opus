@@ -1,15 +1,15 @@
 ################################################################################
-# obs_instrument_vg28xx_vgrss.py
+# obs_volume_vg28xx_vgrss.py
 #
 # Defines the ObsInstrumentVG28xxRSS class, which encapsulates fields for the
 # common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
 ################################################################################
 
 from config_data import DSN_NAMES
-from obs_instrument_vg28xx import ObsInstrumentVG28xx
+from obs_volume_vg28xx import ObsVolumeVG28xx
 
 
-class ObsInstrumentVG28xxVGRSS(ObsInstrumentVG28xx):
+class ObsVolumeVG28xxVGRSS(ObsVolumeVG28xx):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

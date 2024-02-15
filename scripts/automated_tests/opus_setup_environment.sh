@@ -7,7 +7,6 @@ UNIQUE_ID=$1
 TEST_CAT=opus
 TEST_CAT_DIR=$TEST_ROOT/$TEST_CAT/$UNIQUE_ID
 TEST_LOG_DIR=$TEST_CAT_DIR/test_logs
-SRC_DIR=$TEST_CAT_DIR/src
 LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
@@ -20,7 +19,12 @@ fi
 
 # Create the opus_secrets.py file
 
-CWD=`pwd`
+echo "Ignore any error about pwd here..."
+CWD=`pwd -W` # So Windows bash will return a directory with C:
+if [ $? -ne 0 ]; then
+    CWD=`pwd`
+fi
+
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py
@@ -32,7 +36,6 @@ echo "DB_PASSWORD = '${OPUS_DB_PASSWORD}'" >> opus_secrets.py
 echo "PDS_DATA_DIR = '${HOLDINGS_DIR}'" >> opus_secrets.py
 echo "RMS_OPUS_PATH = '${CWD}'" >> opus_secrets.py
 echo "RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')" >> opus_secrets.py
-echo "RMS_WEBTOOLS_PATH = '${SRC_DIR}/rms-webtools'" >> opus_secrets.py
 echo "DEBUG = True" >> opus_secrets.py
 echo "ALLOWED_HOSTS = ('127.0.0.1', 'localhost')" >> opus_secrets.py
 echo "SECRET_KEY = 'fred'" >> opus_secrets.py
@@ -57,7 +60,7 @@ echo "OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0." >> opus_secrets.py
 echo "OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0." >> opus_secrets.py
 echo "IMPORT_TABLE_TEMP_PREFIX = 'imp_'" >> opus_secrets.py
 echo "IMPORT_LOGFILE_DIR = '${LOG_DIR}/import_logs'" >> opus_secrets.py
-echo "IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_impot.log')" >> opus_secrets.py
+echo "IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import.log')" >> opus_secrets.py
 echo "IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log')" >> opus_secrets.py
 echo "DICTIONARY_PDSDD_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/pdsdd.full')" >> opus_secrets.py
 echo "DICTIONARY_CONTEXTS_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/contexts.csv')" >> opus_secrets.py
@@ -65,6 +68,7 @@ echo "DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH, 'opus/import/tab
 if [ $? -ne 0 ]; then exit -1; fi
 
 echo "opus_secrets.py:"
+echo
 cat opus_secrets.py
 
 exit 0

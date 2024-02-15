@@ -1,5 +1,4 @@
 # opus/application/test_api/api_test_helper.py
-from curses import start_color
 import difflib
 from io import BytesIO
 import json
@@ -63,6 +62,17 @@ class ApiTestHelper:
                 continue
             print(f'{tag:7} got[{i1:5d}:{i2:5d}] --> exp[{j1:5d}:{j2:5d}] {got[i1:i2]} '
                   f'--> {expected[j1:j2]}')
+
+    @staticmethod
+    def _clean_string(s):
+        s = str(s)
+        if s.startswith("b'"):
+            s = s[2:-1]
+        return (s.replace(r'\\r', '')
+                 .replace(r'\r', '')
+                 .replace('\r', '')
+                 .replace(r'\\n', r'\n')
+                 .replace(r'\n', '\n'))
 
     @staticmethod
     def _clean_string(s):

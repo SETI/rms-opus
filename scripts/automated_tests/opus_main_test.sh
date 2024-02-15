@@ -3,39 +3,45 @@
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi
 
-if [[ ! -v OPUS_DB_USER ]]; then
+# Can't use -v because it isn't supported by bash on MacOS
+if [[ -z ${OPUS_DB_USER+x} ]]; then
     echo "OPUS_DB_USER is not set"
     exit -1
 fi
-if [[ ! -v OPUS_DB_PASSWORD ]]; then
+if [[ -z ${OPUS_DB_PASSWORD+x} ]]; then
     echo "OPUS_DB_PASSWORD is not set"
     exit -1
 fi
-if [[ ! -v TEST_ROOT ]]; then
+if [[ -z ${TEST_ROOT+x} ]]; then
     echo "TEST_ROOT is not set"
     exit -1
 fi
-if [[ ! -v PDS_DROPBOX_ROOT ]]; then
+if [[ -z ${PDS_DROPBOX_ROOT+x} ]]; then
     echo "PDS_DROPBOX_ROOT is not set"
     exit -1
 fi
 
-UNIQUE_ID=`date "+%Y%m%d_%H%M%S_%N"`
+# Can't use date because nanoseconds %N isn't supported by bash on MacOS
+UNIQUE_ID=`python3 -c "from datetime import datetime; print(datetime.now().strftime('%y%m%d_%H%M%S_%f'))"`
 TEST_CAT=opus
 TEST_CAT_DIR=$TEST_ROOT/$TEST_CAT/$UNIQUE_ID
 TEST_LOG_DIR=$TEST_CAT_DIR/test_logs
-SRC_DIR=$TEST_CAT_DIR/src
 LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
+echo "Unique ID: $UNIQUE_ID"
+echo "TEST_LOG_DIR: $TEST_LOG_DIR"
+echo "LOG_DIR: $LOG_DIR"
+echo "DOWNLOAD_DIR: $DOWNLOAD_DIR"
+echo "DATA_DIR: $DATA_DIR"
+echo
+
 mkdir -p $TEST_LOG_DIR
 if [ $? -ne 0 ]; then exit -1; fi
 
-# Create new src/log/downloads/data directories
+# Create new log/downloads/data directories
 
-mkdir -p $SRC_DIR
-if [ $? -ne 0 ]; then exit -1; fi
 mkdir -p $LOG_DIR
 if [ $? -ne 0 ]; then exit -1; fi
 mkdir -p $DOWNLOAD_DIR
@@ -60,22 +66,6 @@ mkdir -p $DOWNLOAD_DIR/manifest
 if [ $? -ne 0 ]; then exit -1; fi
 
 
-echo "================================================================"
-echo "OPUS INITIALIZE REPOS"
-echo "================================================================"
-echo
-echo "Start:" `date`
-echo
-./scripts/automated_tests/opus_setup_repos.sh $UNIQUE_ID
-if [ $? -ne 0 ]; then
-    echo
-    echo "End:  " `date`
-    exit -1
-fi
-echo
-echo "End:  " `date`
-echo
-
 EXIT_CODE=0
 
 echo "================================================================"
@@ -86,6 +76,7 @@ echo "Start:" `date`
 echo
 ./scripts/automated_tests/opus_setup_environment.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    rm -rf $TEST_CAT_DIR
     echo
     echo "End:  " `date`
     echo
@@ -108,6 +99,7 @@ echo "Start:" `date`
 echo
 ./scripts/automated_tests/opus_import_test_database.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    rm -rf $TEST_CAT_DIR
     echo
     echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
     echo "End:  " `date`
@@ -127,6 +119,7 @@ echo "Start:" `date`
 echo
 ./scripts/automated_tests/opus_run_unittests_coverage.sh $UNIQUE_ID
 if [ $? -ne 0 ]; then
+    rm -rf $TEST_CAT_DIR
     echo
     echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
     echo "End:  " `date`
@@ -139,5 +132,9 @@ echo
 # Delete the test database
 
 echo "DROP DATABASE opus_test_db_$UNIQUE_ID;" | mysql -u $OPUS_DB_USER -p$OPUS_DB_PASSWORD
+
+# Delete the temporary directories
+
+rm -rf $TEST_CAT_DIR
 
 exit 0
