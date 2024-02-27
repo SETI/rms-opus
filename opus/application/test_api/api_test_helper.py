@@ -28,7 +28,7 @@ class ApiTestHelper:
     def _run_status_equal(self, url, expected, err_string=None):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, expected)
+        self.assertEqual(expected, response.status_code)
         if err_string:
             ret_string = response.content.decode()
             ret_string = ret_string.replace('&quot;', '"')
@@ -79,7 +79,7 @@ class ApiTestHelper:
             ignore = [ignore]
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         jdata = json.loads(response.content)
         print('Got:')
         print(jdata)
@@ -89,12 +89,12 @@ class ApiTestHelper:
         self._depth_first_remove(expected, ignore)
         if jdata != expected:
             self._print_clean_diffs(str(jdata), str(expected))
-        self.assertEqual(jdata, expected)
+        self.assertEqual(expected, jdata)
 
     def _run_json_equal_file(self, url, exp_file):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         jdata = json.loads(response.content)
         if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
@@ -108,12 +108,12 @@ class ApiTestHelper:
         print(expected)
         if jdata != expected:
             self._print_clean_diffs(str(jdata), str(expected))
-        self.assertEqual(jdata, expected)
+        self.assertEqual(expected, jdata)
 
     def _run_html_equal(self, url, expected):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         expected = self._clean_string(expected)
         resp = self._clean_string(str(response.content))
         print('Got:')
@@ -122,12 +122,12 @@ class ApiTestHelper:
         print(expected)
         if resp != expected:
             self._print_clean_diffs(resp, expected)
-        self.assertEqual(resp, expected)
+        self.assertEqual(expected, resp)
 
     def _run_html_equal_file(self, url, exp_file):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         if self.UPDATE_FILES:
             content = self._clean_string(response.content.decode())
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
@@ -143,12 +143,12 @@ class ApiTestHelper:
         print(expected)
         if resp != expected:
             self._print_clean_diffs(resp, expected)
-        self.assertEqual(resp, expected)
+        self.assertEqual(expected, resp)
 
     def _run_html_startswith(self, url, expected):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         expected = self._clean_string(expected)
         resp = self._clean_string(str(response.content))
         resp = resp[:len(expected)]
@@ -158,7 +158,7 @@ class ApiTestHelper:
         print(expected)
         if resp != expected:
             self._print_clean_diffs(resp, expected)
-        self.assertEqual(resp, expected)
+        self.assertEqual(expected, resp)
 
     @staticmethod
     def _remove_range(s, start_str, end_str):
@@ -176,7 +176,7 @@ class ApiTestHelper:
     def _run_html_range_file(self, url, exp_file, start_str, end_str):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
             expected = fp.read()
         expected = self._remove_range(expected, start_str, end_str)
@@ -192,12 +192,12 @@ class ApiTestHelper:
         print(expected)
         if resp != expected:
             self._print_clean_diffs(resp, expected)
-        self.assertEqual(resp, expected)
+        self.assertEqual(expected, resp)
 
     def _run_html_contains(self, url, expected):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         expected = self._clean_string(expected)
         resp = self._clean_string(str(response.content))
         resp = resp[:len(expected)]
@@ -212,7 +212,7 @@ class ApiTestHelper:
     def _run_html_not_contains(self, url, expected):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         expected = self._clean_string(expected)
         resp = self._clean_string(str(response.content))
         resp = resp[:len(expected)]
@@ -234,7 +234,7 @@ class ApiTestHelper:
     def _run_csv_equal(self, url, expected):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         expected = self._cleanup_csv(expected)
         resp = self._cleanup_csv(response.content)
         print('Got:')
@@ -243,12 +243,12 @@ class ApiTestHelper:
         print(expected)
         if resp != expected:
             self._print_clean_diffs(resp, expected)
-        self.assertEqual(resp, expected)
+        self.assertEqual(expected, resp)
 
     def _run_csv_equal_file(self, url, exp_file):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         if self.UPDATE_FILES:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
                 fp.write(response.content.decode())
@@ -263,13 +263,13 @@ class ApiTestHelper:
         print(expected)
         if resp != expected:
             self._print_clean_diffs(resp, expected)
-        self.assertEqual(resp, expected)
+        self.assertEqual(expected, resp)
 
     def _run_archive_file_equal(self, url, expected,
                                 response_type='json', fmt='zip'):
         print(url)
         response = self._get_response(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         archive_file_path = None
         if response_type == 'json':
             jdata = json.loads(response.content)

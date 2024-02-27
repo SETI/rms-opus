@@ -278,37 +278,72 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
     def field_obs_surface_geometry_target_emission2(self):
         return self.field_obs_surface_geometry_target_emission1()
 
-    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude(self):
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude(self):
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self):
+        if not self._is_equi_map_projection():
+            return None
+        return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE')
+
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE')
 
-    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude(self):
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self):
+        if not self._is_equi_map_projection():
+            return None
+        return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE')
+
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE')
 
-    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude(self):
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self):
+        if not self._is_equi_map_projection():
+            return None
+        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE')
+
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
 
-    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude(self):
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
+        if not self._is_equi_map_projection():
+            return None
+        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
+
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE')
 
-    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self):
+        if not self._is_equi_map_projection():
+            return None
+        return self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE')
+
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')
 
-    def field_obs_surface_geometry_target_center_distance(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self):
+        if not self._is_equi_map_projection():
+            return None
+        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')
+
+    def field_obs_surface_geometry_target_center_distance1(self):
+        if not self._is_equi_map_projection():
+            return None
+        return self._index_col('CSS:BODY_SPACECRAFT_RANGE_MIDDLE')
+
+    def field_obs_surface_geometry_target_center_distance2(self):
         if not self._is_equi_map_projection():
             return None
         return self._index_col('CSS:BODY_SPACECRAFT_RANGE_MIDDLE')
