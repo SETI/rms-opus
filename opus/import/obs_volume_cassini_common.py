@@ -12,7 +12,7 @@ import opus_support
 from config_targets import (TARGET_NAME_INFO,
                             TARGET_NAME_MAPPING)
 from import_util import cached_tai_from_iso
-from obs_common import ObsCommon
+from obs_common_pds3 import ObsCommonPDS3
 
 
 # These codes show up as the last two characters of the second part of an
@@ -123,7 +123,7 @@ COISS_TARGET_DESC_MAPPING = {
 }
 
 
-class ObsVolumeCassiniCommon(ObsCommon):
+class ObsVolumeCassiniCommon(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

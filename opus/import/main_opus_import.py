@@ -67,8 +67,12 @@ parser.add_argument(
     help='Override the db_schema specified in opus_secrets.py'
 )
 parser.add_argument(
-    '--override-pds-data-dir', type=str, default=None,
-    help='Override the PDS_DATA_DIR specified in opus_secrets.py (.../holdings)'
+    '--override-pds3-data-dir', type=str, default=None,
+    help='Override the PDS3_DATA_DIR specified in opus_secrets.py (.../holdings)'
+)
+parser.add_argument(
+    '--override-pds4-data-dir', type=str, default=None,
+    help='Override the PDS4_DATA_DIR specified in opus_secrets.py (.../pds4-holdings)'
 )
 parser.add_argument(
     '--dont-use-shelves-only', action='store_true', default=False,
@@ -414,10 +418,14 @@ try: # Top-level exception handling so we always log what's going on
         Pds4File.use_shelves_only()
     Pds3File.require_shelves(True)
     Pds4File.require_shelves(True)
-    if impglobals.ARGUMENTS.override_pds_data_dir:
-        Pds3File.preload(impglobals.ARGUMENTS.override_pds_data_dir)
+    if impglobals.ARGUMENTS.override_pds3_data_dir:
+        Pds3File.preload(impglobals.ARGUMENTS.override_pds3_data_dir)
     else:
-        Pds3File.preload(PDS_DATA_DIR)
+        Pds3File.preload(PDS3_DATA_DIR)
+    if impglobals.ARGUMENTS.override_pds4_data_dir:
+        Pds4File.preload(impglobals.ARGUMENTS.override_pds4_data_dir)
+    else:
+        Pds4File.preload(PDS4_DATA_DIR)
 
     # We do this after the preload because we don't want to see all the preload
     # debug messages.

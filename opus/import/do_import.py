@@ -555,19 +555,6 @@ def import_one_bundle(bundle_id):
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
     impglobals.CURRENT_PRIMARY_FILESPEC = None
 
-    bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
-
-    if not bundle_pdsfile.is_volume:
-        import_util.log_error(f'{bundle_id} is not a bundle!')
-        impglobals.LOGGER.close()
-        impglobals.CURRENT_BUNDLE_ID = None
-        return False
-
-
-    ##################################
-    ### FIND PRIMARY INDEX FILE(s) ###
-    ##################################
-
     vol_info = _lookup_vol_info(bundle_id)
     if vol_info is None:
         import_util.log_error(f'No BUNDLE_INFO entry for {bundle_id}!')
@@ -580,15 +567,37 @@ def import_one_bundle(bundle_id):
         impglobals.CURRENT_BUNDLE_ID = None
         return True
 
+    if vol_info['pds_version'] == 3:
+        bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
+    elif vol_info['pds_version'] == 4:
+        bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id)
+    else:
+        import_util.log_error(f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')
+        return False
+
+    if ((vol_info['pds_version'] == 3 and not bundle_pdsfile.is_bundle) or
+        (vol_info['pds_version'] == 4 and not bundle_pdsfile.is_bundleset)):
+        # TODOPDS4
+        import_util.log_error(f'{bundle_id} is not a bundle!')
+        impglobals.LOGGER.close()
+        impglobals.CURRENT_BUNDLE_ID = None
+        return False
+
+
+    ##################################
+    ### FIND PRIMARY INDEX FILE(s) ###
+    ##################################
+
     primary_index_names = [
         x.replace('<BUNDLE>', bundle_id) for x in vol_info['primary_index']]
 
     # These are the metadata directories
     index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
-    # These are the plain bundle/index directories for bundles that don't have
-    # a separate metadata directory
-    index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'INDEX'))
-    index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'index'))
+    if vol_info['pds_version'] == 3:
+        # These are the plain <volume>/index directories for PDS3 volumes that
+        # don't have a separate metadata directory
+        index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'INDEX'))
+        index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'index'))
     found_in_this_dir = False
     for path in index_paths:
         if not os.path.exists(path):
@@ -602,7 +611,6 @@ def import_one_bundle(bundle_id):
                 found_in_this_dir = True
                 ret = ret and import_one_index(bundle_id,
                                                vol_info,
-                                               bundle_pdsfile,
                                                index_paths,
                                                bundle_label_path)
         if found_in_this_dir:
@@ -619,12 +627,13 @@ def import_one_bundle(bundle_id):
     return False
 
 
-def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
-                     bundle_label_path):
+def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
     """Import the observations given a single primary index file."""
     instrument_class = vol_info['instrument_class']
+    pds_version = vol_info['pds_version']
 
-    obs_rows, obs_label_dict = import_util.safe_pdstable_read(bundle_label_path)
+    obs_rows, obs_label_dict = import_util.safe_pdstable_read(bundle_label_path,
+                                                              pds_version)
     if not obs_rows:
         import_util.log_error(f'Read failed: "{bundle_label_path}"')
         return False
@@ -732,7 +741,10 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
 
     if index_paths:
         for index_path in index_paths:
-            assoc_pdsfile = pdsfile.pds3file.Pds3File.from_abspath(index_path)
+            if vol_info['pds_version'] == 3:
+                assoc_pdsfile = pdsfile.pds3file.Pds3File.from_abspath(index_path)
+            else:
+                assoc_pdsfile = pdsfile.pds4file.Pds4File.from_abspath(index_path)
             try:
                 basenames = assoc_pdsfile.childnames
             except KeyError:
@@ -1086,7 +1098,8 @@ def import_one_index(bundle_id, vol_info, bundle_pdsfile, index_paths,
                 if table_name != 'obs_files':
                     # Deal with obs_files only
                     continue
-                rows = get_pdsfile_rows_for_filespec(
+                rows = get_opus_products_rows_for_filespec(
+                                vol_info['pds_version'],
                                 obs_pds_row['primary_filespec'],
                                 obs_general_row['id'],
                                 obs_general_row['opus_id'],
@@ -1418,20 +1431,23 @@ def import_run_field_function(instrument_obj,
         tb = traceback.format_exc()
         class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
-            f'Execution of field function {class_name}::{func_name} failed with '+
+            f'Execution of field function {class_name}::{func_name} failed with '
             f'exception:\n{tb}')
         return False, None
     return (True, res)
 
-def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, bundle_id,
-                                  instrument_id):
+def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
+                                        opus_id, bundle_id, instrument_id):
     rows = []
 
     try:
-        pdsf = pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
+        if pds_version == 3:
+            pdsf = pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
+        else:
+            return []  # TODOPDS4 Pds4File doesn't support opus_products yet
+            pdsf = pdsfile.pds4file.Pds4File.from_filespec(filespec, fix_case=True)
     except ValueError:
-        import_util.log_nonrepeating_error(
-                                    f'Failed to convert filespec "{filespec}"')
+        import_util.log_nonrepeating_error(f'Failed to convert filespec "{filespec}"')
         return
 
     products = pdsf.opus_products()
@@ -1439,8 +1455,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, bundle_id,
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
         if impglobals.ARGUMENTS.import_report_empty_products:
             import_util.log_nonrepeating_warning(
-                      'Empty opus_product key for files: '+
-                      file_list_str)
+                f'Empty opus_product key for files: {file_list_str}')
         del products['']
     # Keep a running list of all products by type, sorted by version
     for product_type in products:
@@ -1568,7 +1583,7 @@ def remove_opus_id_from_tables(table_rows, opus_id):
         while i < len(rows):
             if ('opus_id' in rows[i] and
                 rows[i]['opus_id'] == opus_id):
-                import_util.log_debug(f'Removing "{opus_id}" from unwritten table '+
+                import_util.log_debug(f'Removing "{opus_id}" from unwritten table '
                                       f'"{table_name}"')
                 del rows[i]
                 continue # There might be more than one in obs_surface_geometry
@@ -1587,8 +1602,7 @@ def do_import_steps():
     _CREATED_IMP_MULT_TABLES = set()
 
     bundle_id_list = []
-    for bundle_id in import_util.yield_import_bundle_ids(
-                                                    impglobals.ARGUMENTS):
+    for bundle_id in import_util.yield_import_bundle_ids(impglobals.ARGUMENTS):
         bundle_id_list.append(bundle_id)
 
     # Delete the old import tables if

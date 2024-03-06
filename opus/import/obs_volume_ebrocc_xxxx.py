@@ -6,7 +6,7 @@
 # in a single volume.
 ################################################################################
 
-from obs_common import ObsCommon
+from obs_common_pds3 import ObsCommonPDS3
 
 # XXX NOTE THIS ONLY WORKS FOR 28 SGR RIGHT NOW.
 # On 1989-07-03:
@@ -17,7 +17,7 @@ from obs_common import ObsCommon
 # * Emission angle and north-based emission angle = incidence angle
 # * Observer elevation = 90 - incidence angle
 
-class ObsVolumeEBROCCxxxx(ObsCommon):
+class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

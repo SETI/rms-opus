@@ -141,7 +141,7 @@ def get_pds_products(opus_id_list,
             (opus_id, version_name, category, sort_order, short_name,
              full_name, size, default_checked, path, url, checksum) = row
 
-        # sort_order is the format CASISSxxx where xxx is the original numeric
+        # sort_order is in the format CASISSxxx where xxx is the original numeric
         # sort order
         sort_order = int(sort_order[6:])
         if version_name not in results[opus_id]:
@@ -151,7 +151,7 @@ def get_pds_products(opus_id_list,
             results[opus_id][version_name][product_type] = []
 
         if path:
-            path = settings.PDS_DATA_DIR.rstrip('/') + '/' + path
+            path = settings.PDS3_DATA_DIR.rstrip('/') + '/' + path  # TODOPDS4
         if url:
             url = settings.PRODUCT_HTTP_PATH.rstrip('/') + '/' + url
 

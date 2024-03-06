@@ -10,10 +10,8 @@ import os
 
 import impglobals # It would be nice to have a better way to pass in cmd line args
 
-from obs_base import ObsBase
 
-
-class ObsGeneral(ObsBase):
+class ObsGeneral:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -129,11 +127,7 @@ class ObsGeneral(ObsBase):
     ################################
 
     def _target_name(self):
-        target_name = self._some_index_or_label_col('TARGET_NAME')
-        target_name, target_info = self._get_target_info(target_name)
-        if target_info is None:
-            return None, None
-        return [(target_name, target_info[2])]
+        raise NotImplementedError
 
     def field_obs_general_target_name(self):
         ret = []

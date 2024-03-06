@@ -69,7 +69,6 @@
     {
         "field_name": "data_set_id",
         "field_type": "char40",
-        "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -90,7 +89,6 @@
     {
         "field_name": "product_id",
         "field_type": "char50",
-        "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -111,7 +109,6 @@
     {
         "field_name": "primary_lid",
         "field_type": "char100",
-        "field_notnull": false,
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",

@@ -1,12 +1,12 @@
 ################################################################################
-# obs_common.py
+# obs_common_pds3.py
 #
-# Defines the ObsCommon class, which is a simple class that inherits from all
-# of the classes that are common to all observations.
+# Defines the ObsCommonPDS3 class, which is a simple class that inherits from
+# all of the classes that are common to all observations.
 ################################################################################
 
-from obs_general import ObsGeneral
-from obs_pds import ObsPds
+from obs_general_pds3 import ObsGeneralPDS3
+from obs_pds_pds3 import ObsPdsPDS3
 from obs_type_image import ObsTypeImage
 from obs_wavelength import ObsWavelength
 from obs_profile import ObsProfile
@@ -16,8 +16,8 @@ from obs_surface_geometry_name import ObsSurfaceGeometryName
 from obs_surface_geometry_target import ObsSurfaceGeometryTarget
 
 
-class ObsCommon(ObsGeneral, ObsPds, ObsTypeImage, ObsWavelength, ObsProfile,
-                ObsRingGeometry,
-                ObsSurfaceGeometry, ObsSurfaceGeometryName, ObsSurfaceGeometryTarget):
+class ObsCommonPDS3(ObsGeneralPDS3, ObsPdsPDS3, ObsTypeImage, ObsWavelength,
+                    ObsProfile, ObsRingGeometry, ObsSurfaceGeometry,
+                    ObsSurfaceGeometryName, ObsSurfaceGeometryTarget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
