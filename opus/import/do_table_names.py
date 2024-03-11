@@ -4,7 +4,7 @@
 # Generate and maintain the table_names table.
 ################################################################################
 
-from config_data import *
+import config_data
 import impglobals
 import import_util
 
@@ -125,13 +125,14 @@ def create_import_table_names_table():
         rows.append(entry)
 
     # Then missions
-    for mission_id in sorted(MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
-        table_name = 'obs_mission_'+MISSION_ID_TO_MISSION_TABLE_SFX[
+    for mission_id in sorted(
+        config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
+        table_name = 'obs_mission_'+config_data.MISSION_ID_TO_MISSION_TABLE_SFX[
                                                             mission_id]
         if impglobals.DATABASE.table_exists('perm', table_name):
             entry = {
                 'table_name': table_name,
-                'label':      (MISSION_ID_TO_MISSION_NAME[mission_id] +
+                'label':      (config_data.MISSION_ID_TO_MISSION_NAME[mission_id] +
                                ' Mission Constraints'),
                 'display':    'Y',
                 'disp_order': disp_order
@@ -140,7 +141,7 @@ def create_import_table_names_table():
             rows.append(entry)
 
     # Then instruments
-    for instrument_id in sorted(INSTRUMENT_ID_TO_MISSION_ID.keys()):
+    for instrument_id in sorted(config_data.INSTRUMENT_ID_TO_MISSION_ID.keys()):
         display = 'Y'
         if instrument_id[:3] == 'HST':
             # This is a hack because we don't actually have HST instrument
@@ -150,7 +151,8 @@ def create_import_table_names_table():
         if impglobals.DATABASE.table_exists('perm', table_name):
             entry = {
                 'table_name': table_name,
-                'label':      (INSTRUMENT_ID_TO_INSTRUMENT_NAME[instrument_id]+
+                'label':      (config_data.INSTRUMENT_ID_TO_INSTRUMENT_NAME[
+                                                                        instrument_id]+
                                ' Constraints'),
                 'display':    display,
                 'disp_order': disp_order

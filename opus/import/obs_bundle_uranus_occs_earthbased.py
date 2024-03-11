@@ -6,12 +6,69 @@
 # supports multiple instruments in a single volume.
 ################################################################################
 
+import config_targets
+
 from obs_common_pds4 import ObsCommonPDS4
+
+
+_TELESCOPE_MAPPING = {
+    'caha_123cm': 'caha1m23',
+    'ctio_150cm': 'ctio1m50',
+    'ctio_400cm': 'ctio4m0',
+    'eso_104cm': 'esosil1m04',
+    'eso_220cm': 'esosil2m2',
+    'eso_360cm': 'esosil3m6',
+    'hst_fos': 'HSTFOS',
+    'irtf_320cm': 'irtf3m2',
+    'kao_91cm': 'kao0m91',
+    'lco_100cm': 'lascam1m0',
+    'lco_250cm': 'lascam2m5',
+    'lowell_180cm': 'low1m83',
+    'maunakea_380cm': 'mk3m8',
+    'mcdonald_270cm': 'mcd2m7',
+    'mso_190cm': 'mtstr1m9',
+    'opmt_106cm': 'pic1m06',
+    'opmt_200cm': 'pic2m0',
+    'palomar_508cm': 'pal5m08',
+    'saao_188cm': 'saao1m88',
+    'sso_230cm': 'sso2m3',
+    'sso_390cm': 'sso3m9',
+    'teide_155cm': 'tei1m55',
+}
 
 
 class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
+    def _is_atmos(self):
+        lid = self._index_col('pds:logical_identifier')
+        return 'atmos' in lid
+
+    def _inst_name(self):
+        if self._metadata is None:
+            # This happens during the create_tables phase
+            return None
+        # LID format:
+        # urn:nasa:pds:uranus_occ_u13_sso_390cm:data:2200nm_counts-v-time_atmos_ingress
+        # urn:nasa:pds:uranus_occ_u137_hst_fos:data:540nm_radius_alpha_egress_100m
+        lid = self._index_col('pds:logical_identifier')
+        lid = lid.split(':')
+        main_lid = lid[3]
+        _, _, star, inst1, inst2 = main_lid.split('_')
+        return f'{inst1}_{inst2}'
+
+    def _star_id(self):
+        star_name = self._index_col('rings:star_name')
+        return star_name.upper().replace(' ', '_')
+
+    def _prof_ra_dec_helper(self):
+        star_id = self._star_id()
+        return (config_targets.STAR_RA_DEC[star_id][0]-self._STAR_RA_DEC_SLOP,
+                config_targets.STAR_RA_DEC[star_id][0]+self._STAR_RA_DEC_SLOP,
+                config_targets.STAR_RA_DEC[star_id][1]-self._STAR_RA_DEC_SLOP,
+                config_targets.STAR_RA_DEC[star_id][1]+self._STAR_RA_DEC_SLOP)
 
 
     #############################
@@ -21,27 +78,29 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     # TODOPDS4
     @property
     def instrument_id(self):
-        return 'PAL200CIRC'  # TODOPDS4
+        inst = self._inst_name()
+        if inst is None:
+            return None
+        if inst not in _TELESCOPE_MAPPING:
+            self._log_nonrepeating_error(f'Unknown telescope in LID "{inst}"')
+        return _TELESCOPE_MAPPING[inst]
 
-    # TODOPDS4 Fix for HST
     @property
     def inst_host_id(self):
-        return 'GB'
+        return 'HST' if self._inst_name == 'hst_fos' else 'GB'
 
-    # TODOPDS4 Fix for HST
     @property
     def mission_id(self):
-        return 'GB'
+        return 'HST' if self._inst_name == 'hst_fos' else 'GB'
 
     # TODOPDS4 Figure out what the primary filespec should really be
     @property
     def primary_filespec(self):
-        return self._index_col('filename')
+        return self._index_col('filename') # Probably filepath
 
     # TODOPDS4 This is a hack to make up an OPUS ID until Pds4File works
     def opus_id_from_index_row(self, row):
         filename = row['filename']
-        print(filename)
         if not '_100m.xml' in filename:
             return None
         opus_id = filename.rstrip('_100m.xml')
@@ -69,46 +128,27 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_preview_images(self):
-        return '{}'
+    def field_obs_general_right_asc1(self):
+        return self._prof_ra_dec_helper()[0]
 
-    def field_obs_general_time1(self):
-        return self._time_from_index('pds:start_date_time')
+    def field_obs_general_right_asc2(self):
+        return self._prof_ra_dec_helper()[1]
 
-    def field_obs_general_time2(self):
-        return self._time2_from_index(self.field_obs_general_time1(),
-                                      'pds:stop_date_time')
+    def field_obs_general_declination1(self):
+        return self._prof_ra_dec_helper()[2]
 
-    # def field_obs_general_right_asc1(self):
-    #     return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[0]
-
-    # def field_obs_general_right_asc2(self):
-    #     return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[1]
-
-    # def field_obs_general_declination1(self):
-    #     return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[2]
-
-    # def field_obs_general_declination2(self):
-    #     return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[3]
+    def field_obs_general_declination2(self):
+        return self._prof_ra_dec_helper()[3]
 
     def field_obs_general_planet_id(self):
         return self._create_mult('URA')
 
     def _target_name(self):
-        target_name = 'U RINGS'
-
+        target_name = 'URANUS' if self._is_atmos() else 'U RINGS'
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return None, None
-
         return [(target_name, target_info[2])]
-
-        # target_name = self._index_label_col('TARGET_NAME')
-
-        # if target_name != 'S RINGS':
-        #     self._log_nonrepeating_error(
-        #         f'Ground-based mission targets "{target_name}" instead of "S RINGS"')
-
 
     def field_obs_general_quantity(self):
         return self._create_mult('OPDEPTH')
@@ -121,54 +161,29 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    # def field_obs_wavelength_wavelength1(self):
-    #     return self._supp_index_col('WAVELENGTH')
+    def field_obs_wavelength_wavelength1(self):
+        return self._index_col('rings:minimum_wavelength') / 1000. # nm->microns
 
-    # def field_obs_wavelength_wavelength2(self):
-    #     return self._supp_index_col('WAVELENGTH')
+    def field_obs_wavelength_wavelength2(self):
+        return self._index_col('rings:maximum_wavelength') / 1000. # nm->microns
 
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
 
-    def field_obs_profile_occ_type(self):
-        return self._create_mult('STE')
+    def field_obs_profile_source(self):
+        star_name = self._index_col('rings:star_name')
+        star_name_id = star_name.upper().replace(' ', '_')
+        return self._create_mult(star_name_id, disp_name=star_name)
 
-    def field_obs_profile_occ_dir(self):
-        occ_dir = self._index_col('rings:ring_profile_direction').upper()
-        if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
-            return self._create_mult(occ_dir[0])
-        self._log_nonrepeating_error(
-            f'Unknown rings:ring_profile_direction "{occ_dir}"')
-        return self._create_mult(None)
-
-    def field_obs_profile_body_occ_flag(self):
-        return self._create_mult(
-            self._index_col('rings:planetary_occultation_flag'))
-
-    def field_obs_profile_quality_score(self):
-        return self._create_mult(self._index_col('rings:data_quality_score'))
-
-    # def field_obs_profile_wl_band(self):
-    #     wl = self._supp_index_col('WAVELENGTH') # microns
-    #     if wl > 0.7:
-    #         return self._create_mult('IR')
-    #     if wl > 0.4:
-    #         return self._create_mult('VIS')
-    #     return self._create_mult('UV')
-
-    # def field_obs_profile_source(self):
-    #     target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')
-    #     if target_info is None:
-    #         return self._create_mult(None)
-    #     return self._create_mult(col_val=target_name, disp_name=target_info[2],
-    #                              grouping='Stars')
-
-    # def field_obs_profile_host(self):
-    #     ret = self._supp_index_col('INSTRUMENT_HOST_NAME')
-    #     return self._create_mult_keep_case(col_val=ret,
-    #                                        grouping='Ground-based Telescopes')
+    def field_obs_profile_host(self):
+        inst = self._inst_name()
+        if inst is None:
+            return None
+        if inst not in _TELESCOPE_MAPPING:
+            self._log_nonrepeating_error(f'Unknown telescope in LID "{inst}"')
+        return self._create_mult(_TELESCOPE_MAPPING[inst])
 
 
     #####################################
@@ -193,37 +208,41 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_ring_geometry_projected_radial_resolution2(self):
         return self._index_col('rings:radial_resolution')
 
-    # def field_obs_ring_geometry_range_to_ring_intercept1(self):
-    #     return self._ring_geo_index_col('MINIMUM_RING_DISTANCE')
+    def field_obs_ring_geometry_range_to_ring_intercept1(self):
+        return None
 
-    # def field_obs_ring_geometry_range_to_ring_intercept2(self):
-    #     return self._ring_geo_index_col('MAXIMUM_RING_DISTANCE')
+    def field_obs_ring_geometry_range_to_ring_intercept2(self):
+        return None
 
-    # def field_obs_ring_geometry_ring_center_distance1(self):
-    #     return self._ring_geo_index_col('MINIMUM_RING_CENTER_DISTANCE',
-    #                                     'RING_CENTER_DISTANCE')
+    def field_obs_ring_geometry_ring_center_distance1(self):
+        return None
 
-    # def field_obs_ring_geometry_ring_center_distance2(self):
-    #     return self._ring_geo_index_col('MAXIMUM_RING_CENTER_DISTANCE',
-    #                                     'RING_CENTER_DISTANCE')
+    def field_obs_ring_geometry_ring_center_distance2(self):
+        return None
 
+    # TODOPDS4 I believe this is incorrect; in fact I expect the other ring
+    # occultations volumes are also incorrect. The problem comes from our
+    # definition of J2000 longitude vs longitude based on the ascending node.
+    # We need to review all of our occultation volumes to see which definition
+    # they use, and possible add a new pair of columns to the OPUS database
+    # (which we were going to do anyway for the new ring geometry files).
     def field_obs_ring_geometry_j2000_longitude1(self):
         return self._index_col('rings:minimum_ring_longitude')
 
     def field_obs_ring_geometry_j2000_longitude2(self):
         return self._index_col('rings:maximum_ring_longitude')
 
-    # def field_obs_ring_geometry_solar_hour_angle1(self):
-    #     return self._ring_geo_index_col('MINIMUM_SOLAR_HOUR_ANGLE')
+    def field_obs_ring_geometry_solar_hour_angle1(self):
+        return None
 
-    # def field_obs_ring_geometry_solar_hour_angle2(self):
-    #     return self._ring_geo_index_col('MAXIMUM_SOLAR_HOUR_ANGLE')
+    def field_obs_ring_geometry_solar_hour_angle2(self):
+        return None
 
-    # def field_obs_ring_geometry_longitude_wrt_observer1(self):
-    #     return self._ring_geo_index_col('MINIMUM_RING_LONGITUDE_WRT_OBSERVER')
+    def field_obs_ring_geometry_longitude_wrt_observer1(self):
+        return None
 
-    # def field_obs_ring_geometry_longitude_wrt_observer2(self):
-    #     return self._ring_geo_index_col('MAXIMUM_RING_LONGITUDE_WRT_OBSERVER')
+    def field_obs_ring_geometry_longitude_wrt_observer2(self):
+        return None
 
     def field_obs_ring_geometry_ring_azimuth_wrt_observer1(self):
         return self._index_col('rings:minimum_ring_azimuth')
@@ -231,41 +250,34 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_ring_geometry_ring_azimuth_wrt_observer2(self):
         return self._index_col('rings:maximum_ring_azimuth')
 
-    # def field_obs_ring_geometry_sub_solar_ring_long1(self):
-    #     return self._ring_geo_index_col('MINIMUM_SUB_SOLAR_RING_LONGITUDE',
-    #                                     'SUB_SOLAR_RING_LONGITUDE')
+    def field_obs_ring_geometry_sub_solar_ring_long1(self):
+        return None
 
-    # def field_obs_ring_geometry_sub_solar_ring_long2(self):
-    #     return self._ring_geo_index_col('MAXIMUM_SUB_SOLAR_RING_LONGITUDE',
-    #                                     'SUB_SOLAR_RING_LONGITUDE')
+    def field_obs_ring_geometry_sub_solar_ring_long2(self):
+        return None
 
-    # def field_obs_ring_geometry_sub_observer_ring_long1(self):
-    #     return self._ring_geo_index_col('MINIMUM_SUB_OBSERVER_RING_LONGITUDE',
-    #                                     'SUB_OBSERVER_RING_LONGITUDE')
+    def field_obs_ring_geometry_sub_observer_ring_long1(self):
+        return None
 
-    # def field_obs_ring_geometry_sub_observer_ring_long2(self):
-    #     return self._ring_geo_index_col('MAXIMUM_SUB_OBSERVER_RING_LONGITUDE',
-    #                                     'SUB_OBSERVER_RING_LONGITUDE')
+    def field_obs_ring_geometry_sub_observer_ring_long2(self):
+        return None
 
-    # def field_obs_ring_geometry_solar_ring_elevation1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')-90.
+    # Earth was seeing Uranus' south pole for the entire duration of this data set.
+    # Thus the solar elevation was seeing the northern hemisphere and the
+    # observer elevation was seeing the southern hemisphere.
+    # For Uranus, these values are positive for the southern hemisphere.
 
-    # def field_obs_ring_geometry_solar_ring_elevation2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')-90.
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
+        return self._index_col('rings:light_source_incidence_angle') - 90.
 
-    # def field_obs_ring_geometry_observer_ring_elevation1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
+        return self._index_col('rings:light_source_incidence_angle') - 90.
 
-    # def field_obs_ring_geometry_observer_ring_elevation2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_observer_ring_elevation1(self):
+        return 90. - self._index_col('rings:light_source_incidence_angle')
+
+    def field_obs_ring_geometry_observer_ring_elevation2(self):
+        return 90. - self._index_col('rings:light_source_incidence_angle')
 
     def field_obs_ring_geometry_phase1(self):
         return 180.
@@ -273,37 +285,33 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_ring_geometry_phase2(self):
         return 180.
 
-    # def field_obs_ring_geometry_incidence1(self):
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_incidence1(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_incidence2(self):
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_incidence2(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_emission1(self):
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_emission1(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_emission2(self):
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_emission2(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_north_based_incidence1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    # Earth was seeing Uranus' south pole for the entire duration of this data set.
+    # Thus the star was illuminating the north side of the rings, and the
+    # north-based values are the same as the plain values.
 
-    # def field_obs_ring_geometry_north_based_incidence2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_north_based_incidence1(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_north_based_emission1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_north_based_incidence2(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_north_based_emission2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_north_based_emission1(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
+
+    def field_obs_ring_geometry_north_based_emission2(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
 
     def field_obs_ring_geometry_ring_center_phase1(self):
         return 180.
@@ -311,57 +319,41 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_ring_geometry_ring_center_phase2(self):
         return 180.
 
-    # def field_obs_ring_geometry_ring_center_incidence1(self):
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_incidence1(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_ring_center_incidence2(self):
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_incidence2(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_ring_center_emission1(self):
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_emission1(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_ring_center_emission2(self):
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_emission2(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
+        return self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_ring_center_north_based_emission1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_north_based_emission1(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_ring_center_north_based_emission2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_ring_center_north_based_emission2(self):
+        return 180.-self._index_col('rings:light_source_incidence_angle')
 
-    # def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')-90.
+    def field_obs_ring_geometry_solar_ring_opening_angle1(self):
+        return -self._index_col('rings:observed_ring_elevation')
 
-    # def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return self._supp_index_col('INCIDENCE_ANGLE')-90.
+    def field_obs_ring_geometry_solar_ring_opening_angle2(self):
+        return -self._index_col('rings:observed_ring_elevation')
 
-    # def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_observer_ring_opening_angle1(self):
+        return self._index_col('rings:observed_ring_elevation')
 
-    # def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-    #     # This is only valid for EBROCC 28 Sgr where the star was on the south
-    #     # side of the rings
-    #     return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_observer_ring_opening_angle2(self):
+        return self._index_col('rings:observed_ring_elevation')
 
     def field_obs_ring_geometry_edge_on_radius1(self):
         return None
@@ -404,3 +396,7 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
 
     def field_obs_ring_geometry_ring_intercept_time2(self):
         return self._index_col('rings:ring_event_stop_tdb')
+
+    # TODOPDS4 Note: For atmos this is not really a "ring event time",
+    # it's a "planet event time", but we don't have a field for that.
+    # Should we instead add something under surface geometry?

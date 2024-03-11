@@ -18,9 +18,10 @@ import pdsfile
 import pdsparser
 import pdstable
 
-from opus_secrets import *
-from config_data import *
-from config_targets import *
+import opus_secrets
+
+import config_data
+import config_targets
 import impglobals
 import instruments
 
@@ -311,12 +312,12 @@ def safe_column(row, column_name, idx=None):
 ################################################################################
 
 def table_name_obs_mission(mission_name):
-    assert mission_name in MISSION_ID_TO_MISSION_TABLE_SFX
+    assert mission_name in config_data.MISSION_ID_TO_MISSION_TABLE_SFX
     return ('obs_mission_'+
-            MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower())
+            config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower())
 
 def table_name_obs_instrument(inst_name):
-    assert inst_name in INSTRUMENT_ID_TO_MISSION_ID
+    assert inst_name in config_data.INSTRUMENT_ID_TO_MISSION_ID
     return 'obs_instrument_'+inst_name.lower()
 
 def table_name_mult(table_name, field_name):
@@ -341,21 +342,21 @@ def decode_target_name(target_name):
     return target_name
 
 def table_name_for_sfc_target(target_name):
-    if target_name.upper() in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name.upper()]
+    if target_name.upper() in config_targets.TARGET_NAME_MAPPING:
+        target_name = config_targets.TARGET_NAME_MAPPING[target_name.upper()]
     return encode_target_name(target_name)
 
 # NOTE: whenever we change this function, we will have to change
 # getSurfacegeoTargetSlug in JS code (in utils.js) as well.
 def slug_name_for_sfc_target(target_name):
-    if target_name.upper() in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name.upper()]
+    if target_name.upper() in config_targets.TARGET_NAME_MAPPING:
+        target_name = config_targets.TARGET_NAME_MAPPING[target_name.upper()]
     target_name = target_name.lower()
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
 
 def read_schema_for_table(table_name, replace=[]):
-    table_name = table_name.replace(IMPORT_TABLE_TEMP_PREFIX, '').lower()
+    table_name = table_name.replace(opus_secrets.IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
         assert replace == []
         target_name = table_name.replace('obs_surface_geometry__', '')

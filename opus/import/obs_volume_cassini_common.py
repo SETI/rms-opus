@@ -9,8 +9,7 @@ import re
 
 import opus_support
 
-from config_targets import (TARGET_NAME_INFO,
-                            TARGET_NAME_MAPPING)
+import config_targets
 from import_util import cached_tai_from_iso
 from obs_common_pds3 import ObsCommonPDS3
 
@@ -211,8 +210,8 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
     def _cassini_intended_target_name(self):
         target_name = self._index_col('TARGET_NAME').upper()
         # Note this mapping takes care of the "ATLAS:" case from COUVIS_0053
-        if target_name in TARGET_NAME_MAPPING:
-            target_name = TARGET_NAME_MAPPING[target_name]
+        if target_name in config_targets.TARGET_NAME_MAPPING:
+            target_name = config_targets.TARGET_NAME_MAPPING[target_name]
 
         target_desc = None
         if 'TARGET_DESC' in self._metadata['index_row']:
@@ -220,8 +219,8 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
             target_desc = self._index_col('TARGET_DESC').upper()
             if target_desc in COISS_TARGET_DESC_MAPPING:
                 target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
-            if target_desc in TARGET_NAME_MAPPING:
-                target_desc = TARGET_NAME_MAPPING[target_desc]
+            if target_desc in config_targets.TARGET_NAME_MAPPING:
+                target_desc = config_targets.TARGET_NAME_MAPPING[target_desc]
 
         target_code = None
         obs_name = self._some_index_col('OBSERVATION_ID')
@@ -244,16 +243,16 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
         # 3: TARGET_NAME of SKY and TARGET_CODE of Skeleton, let TARGET_DESC
         # override TARGET_NAME
         if (target_name == 'SKY' and target_code == 'SK' and
-            target_desc is not None and target_desc in TARGET_NAME_INFO):
-            target_name_info = TARGET_NAME_INFO[target_desc]
+            target_desc is not None and target_desc in config_targets.TARGET_NAME_INFO):
+            target_name_info = config_targets.TARGET_NAME_INFO[target_desc]
             return target_desc, target_name_info[2]
 
-        if target_name not in TARGET_NAME_INFO:
+        if target_name not in config_targets.TARGET_NAME_INFO:
             self._announce_unknown_target_name(target_name)
             if self._ignore_errors:
                 return 'None'
             return None, None
-        target_info = TARGET_NAME_INFO[target_name]
+        target_info = config_targets.TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]
 
     def _cassini_mission_phase_name(self):

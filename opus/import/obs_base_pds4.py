@@ -51,5 +51,5 @@ class ObsBasePDS4(ObsBase):
     def _time_from_some_index(self, column='pds:start_date_time'):
         return self._time_from_index(column=column)
 
-    def _time2_from_some_index(self, time1, column='STOP_TIME'):
+    def _time2_from_some_index(self, time1, column='pds:stop_date_time'):
         return self._time2_helper('index_row', time1, column=column)

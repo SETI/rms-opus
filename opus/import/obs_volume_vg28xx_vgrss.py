@@ -5,7 +5,8 @@
 # common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
 ################################################################################
 
-from config_data import DSN_NAMES
+import config_data
+
 from obs_volume_vg28xx import ObsVolumeVG28xx
 
 
@@ -54,7 +55,7 @@ class ObsVolumeVG28xxVGRSS(ObsVolumeVG28xx):
         receiver_host = self._supp_index_col('RECEIVER_HOST_NAME')
         dsn = int(receiver_host[-2:])
 
-        ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
+        ret = f'DSN {dsn} ({config_data.DSN_NAMES[dsn]})'
         return self._create_mult_keep_case(col_val=ret, grouping='DSNs')
 
 

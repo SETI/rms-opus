@@ -12,12 +12,10 @@ import traceback
 
 import pdsfile
 
-from opus_support import (get_single_parse_function,
-                          parse_form_type)
+import opus_support
 
-from config_data import *
-from config_targets import *
 import config_bundle_info
+import config_data
 import do_cart
 import do_django
 import impglobals
@@ -144,13 +142,13 @@ def create_tables_for_import(bundle_id, namespace):
     instrument_obj = vol_info['instrument_class'](bundle=bundle_id)
     mission_id = instrument_obj.mission_id
     instrument_id = instrument_obj.instrument_id
-    mission_name = MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
+    mission_name = config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
 
     mult_table_schema = import_util.read_schema_for_table('mult_template')
 
     table_schemas = {}
     table_names_in_order = []
-    for table_name in TABLES_TO_POPULATE:
+    for table_name in config_data.TABLES_TO_POPULATE:
         if instrument_id is not None:
             table_name = table_name.replace('<INST>', instrument_id.lower())
         table_name = table_name.replace('<MISSION>', mission_name.lower())
@@ -184,7 +182,7 @@ def create_tables_for_import(bundle_id, namespace):
             pi_form_type = table_column.get('pi_form_type', None)
             if pi_form_type is not None and pi_form_type.find(':') != -1:
                 pi_form_type = pi_form_type[:pi_form_type.find(':')]
-            if pi_form_type in GROUP_FORM_TYPES:
+            if pi_form_type in config_data.GROUP_FORM_TYPES:
                 mult_name = import_util.table_name_mult(table_name, field_name)
                 schema = mult_table_schema
                 if (impglobals.DATABASE.create_table(namespace, mult_name, schema) and
@@ -410,8 +408,8 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
         # No disp_order specified, so make one up
         # Update the display_order
         (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(table_column['pi_form_type'])
-        parse_func = get_single_parse_function(form_type_unit_id)
+         form_type_unit_id) = opus_support.parse_form_type(table_column['pi_form_type'])
+        parse_func = opus_support.get_single_parse_function(form_type_unit_id)
 
         # See if all values in the mult table are numeric
         all_numeric = True
@@ -1363,7 +1361,7 @@ def import_observation_table(instrument_obj,
             form_type = table_column.get('pi_form_type', None)
             if form_type is not None and form_type.find(':') != -1:
                 form_type = form_type[:form_type.find(':')]
-            if form_type in GROUP_FORM_TYPES:
+            if form_type in config_data.GROUP_FORM_TYPES:
                 # Handle the case when display value is not set. This stays here because
                 # mult_label gets updated based on column_val after column_val is validated.
                 # (ex: flag)

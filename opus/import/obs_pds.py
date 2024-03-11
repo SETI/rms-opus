@@ -5,13 +5,8 @@
 # obs_pds table.
 ################################################################################
 
-from obs_base import ObsBase
 
-
-class ObsPds(ObsBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+class ObsPds:
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###

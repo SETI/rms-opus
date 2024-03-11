@@ -12,9 +12,6 @@ import impglobals # It would be nice to have a better way to pass in cmd line ar
 
 
 class ObsGeneral:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###

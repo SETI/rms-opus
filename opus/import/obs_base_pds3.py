@@ -11,7 +11,7 @@ from obs_base import ObsBase
 
 
 class ObsBasePDS3(ObsBase):
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 

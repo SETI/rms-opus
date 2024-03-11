@@ -8,7 +8,8 @@
 
 import opus_support
 
-from config_data import DSN_NAMES
+import config_data
+
 from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
 
 
@@ -72,7 +73,7 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
 
     def field_obs_profile_host(self):
         dsn = self._supp_index_col('DSN_STATION_NUMBER')
-        ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
+        ret = f'DSN {dsn} ({config_data.MISSION_ID_TO_MISSION_NAMEDSN_NAMES[dsn]})'
         return self._create_mult_keep_case(col_val=ret, grouping='DSNs')
 
 

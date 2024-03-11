@@ -13,9 +13,8 @@ class ObsGeneralPDS4(ObsGeneral, ObsBasePDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _target_name(self):
-        target_name = self._some_index_or_label_col('TARGET_NAME')
-        target_name, target_info = self._get_target_info(target_name)
-        if target_info is None:
-            return None, None
-        return [(target_name, target_info[2])]
+    def _target_name(self):  # TODOPDS4
+        raise NotImplementedError
+
+    def field_obs_general_preview_images(self):  # TODOPDS4
+        return '{}'

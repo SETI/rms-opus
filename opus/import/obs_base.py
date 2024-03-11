@@ -6,17 +6,9 @@
 ################################################################################
 
 import json
-import pdsfile
 
-from config_targets import (TARGET_NAME_INFO,
-                            TARGET_NAME_MAPPING,
-                            PLANET_GROUP_MAPPING)
-from import_util import (cached_tai_from_iso,
-                         log_nonrepeating_error,
-                         log_warning,
-                         log_nonrepeating_warning,
-                         log_unknown_target_name,
-                         safe_column)
+import config_targets
+import import_util
 
 
 class ObsBase:
@@ -207,19 +199,19 @@ class ObsBase:
     ###############################
 
     def _index_col(self, col, idx=None):
-        return safe_column(self._metadata['index_row'], col, idx=idx)
+        return import_util.safe_column(self._metadata['index_row'], col, idx=idx)
 
     def _has_supp_index(self):
         return 'supp_index_row' in self._metadata
 
     def _supp_index_col(self, col, idx=None):
-        return safe_column(self._metadata['supp_index_row'], col, idx=idx)
+        return import_util.safe_column(self._metadata['supp_index_row'], col, idx=idx)
 
     def _index_label_col(self, col, idx=None):
-        return safe_column(self._metadata['index_label'], col, idx=idx)
+        return import_util.safe_column(self._metadata['index_label'], col, idx=idx)
 
     def _supp_index_label_col(self, col, idx=None):
-        return safe_column(self._metadata['supp_index_label'], col, idx=idx)
+        return import_util.safe_column(self._metadata['supp_index_label'], col, idx=idx)
 
     def _ring_geo_index_col(self, col, col2=None, idx=None):
         # Look up col; if missing try col2 instead. This supports both old and
@@ -240,9 +232,9 @@ class ObsBase:
                 self._log_nonrepeating_error(
                     f'Columns "{col}" or "{col2}" not found in ring_geo')
             return None
-        ret = safe_column(self._metadata['ring_geo_row'], col, idx=idx)
+        ret = import_util.safe_column(self._metadata['ring_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
-            ret = safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
+            ret = import_util.safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
         return ret
 
     def _surface_geo_index_col(self, col, col2=None, idx=None):
@@ -264,9 +256,9 @@ class ObsBase:
                 self._log_nonrepeating_error(
                     f'Columns "{col}" or "{col2}" not found in surface_geo')
             return None
-        ret = safe_column(self._metadata['surface_geo_row'], col, idx=idx)
+        ret = import_util.safe_column(self._metadata['surface_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
-            ret = safe_column(self._metadata['surface_geo_row'], col2, idx=idx)
+            ret = import_util.safe_column(self._metadata['surface_geo_row'], col2, idx=idx)
         return ret
 
     def _col_in_index(self, col):
@@ -303,7 +295,7 @@ class ObsBase:
             self._log_nonrepeating_error(
                 f'Column "{col}" not found in supp_index or index')
             return None
-        return safe_column(self._metadata[index], col, idx=idx)
+        return import_util.safe_column(self._metadata[index], col, idx=idx)
 
     def _some_index_or_label_col(self, col, idx=None):
         index = self._col_in_some_index_or_label(col)
@@ -311,7 +303,7 @@ class ObsBase:
             self._log_nonrepeating_error(
                 f'Column "{col}" not found in supp_index or index or their labels')
             return None
-        return safe_column(self._metadata[index], col, idx=idx)
+        return import_util.safe_column(self._metadata[index], col, idx=idx)
 
 
     ### Utility functions useful for subclasses ###
@@ -323,24 +315,24 @@ class ObsBase:
         if target_name is None:
             return None, None
         target_name = target_name.upper()
-        if target_name in TARGET_NAME_MAPPING:
-            target_name = TARGET_NAME_MAPPING[target_name]
-        if target_name not in TARGET_NAME_INFO:
+        if target_name in config_targets.TARGET_NAME_MAPPING:
+            target_name = config_targets.TARGET_NAME_MAPPING[target_name]
+        if target_name not in config_targets.TARGET_NAME_INFO:
             self._log_unknown_target_name(target_name)
             if self._ignore_errors:
                 return 'OTHER'
             return None, None
-        return target_name, TARGET_NAME_INFO[target_name]
+        return target_name, config_targets.TARGET_NAME_INFO[target_name]
 
     def _get_planet_group_info(self, target_name):
         # Return the planet group info for a passed in target_name
-        if target_name not in TARGET_NAME_INFO:
+        if target_name not in config_targets.TARGET_NAME_INFO:
             planet_id = 'OTHER'
         else:
-            planet_id = TARGET_NAME_INFO[target_name][0]
+            planet_id = config_targets.TARGET_NAME_INFO[target_name][0]
             if planet_id is None:
                 planet_id = 'OTHER'
-        return PLANET_GROUP_MAPPING[planet_id]
+        return config_targets.PLANET_GROUP_MAPPING[planet_id]
 
     def _create_mult(self, col_val, disp_name=None, disp='Y', disp_order=None,
                      grouping=None, group_disp_order=None, tooltip=None, aliases=None):
@@ -374,12 +366,12 @@ class ObsBase:
     def _time_helper(self, index, column):
         # Read and convert a time, which can exist in various indexes or
         # columns.
-        the_time = safe_column(self._metadata[index], column)
+        the_time = import_util.safe_column(self._metadata[index], column)
         if the_time is None:
             return None
 
         try:
-            time_sec = cached_tai_from_iso(the_time)
+            time_sec = import_util.cached_tai_from_iso(the_time)
         except Exception as e:
             self._log_nonrepeating_error(f'Bad {column} format "{the_time}": {e}')
             return None
@@ -391,12 +383,12 @@ class ObsBase:
         # columns. Compare it to the starting time to make sure they're in the proper
         # order.
         index_row = self._metadata[index]
-        stop_time = safe_column(index_row, column)
+        stop_time = import_util.safe_column(index_row, column)
         if stop_time is None:
             return None
 
         try:
-            stop_time_sec = cached_tai_from_iso(stop_time)
+            stop_time_sec = import_util.cached_tai_from_iso(stop_time)
         except Exception as e:
             self._log_nonrepeating_error(f'Bad {column} format "{stop_time}": {e}')
             return None
@@ -413,13 +405,13 @@ class ObsBase:
     ### Error logging ###
 
     def _log_unknown_target_name(self, target_name):
-        log_unknown_target_name(target_name)
+        import_util.log_unknown_target_name(target_name)
 
     def _log_warning(self, *args, **kwargs):
-        log_warning(*args, **kwargs)
+        import_util.log_warning(*args, **kwargs)
 
     def _log_nonrepeating_warning(self, *args, **kwargs):
-        log_nonrepeating_warning(*args, **kwargs)
+        import_util.log_nonrepeating_warning(*args, **kwargs)
 
     def _log_nonrepeating_error(self, *args, **kwargs):
-        log_nonrepeating_error(*args, **kwargs)
+        import_util.log_nonrepeating_error(*args, **kwargs)

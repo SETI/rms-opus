@@ -9,7 +9,7 @@
 ################################################################################
 
 from obs_volume_vg28xx import (ObsVolumeVG28xx,
-                                   THRESHOLD_START_TIME_VG_AT_NORTH)
+                               THRESHOLD_START_TIME_VG_AT_NORTH)
 
 
 class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):

@@ -200,6 +200,8 @@ above list. We map them, and the other telescopes in that volume, as follows.
 | McDonald 2.7-meter    | `mcd2m7` |
 | Palomar 200-inch Cass | `pal5m08` |
 
+The `uranus_occs_earthbased` bundle refers to the telescope `caha.1m23` but this is
+not a valid telescope name. We map it to be the same as `caha-calar_alto.1m23`.
 
 ## Instrument Names and Observation Details (non-Occultation)
 
@@ -275,16 +277,19 @@ OPUS IDs for atmosphere occultations follow the format:
 - `<direction>` is the direction of the occultation: `i` for ingress, `e` for `egress`, or `b` for both.
 
 For ground-based telescopes, the particular detector is often not specified or
-well-defined. For example, for the PDS4 Uranus occultations, all telescopes are
+well-defined. For example, for the `uranus_occs_earthbased` bundle, many telescopes are
 marked as using a "Generic InSb High Speed Photometer". We simply have to do the best we can to figure out an instrument name and provide an appropriate abbreviation for the OPUS ID, or use a generic instrument abbreviation like `insb` when that is not possible.
 
 Example OPUS IDs for various instruments:
+
+TODOPDS4 Add PDS4 examples here
 
 | Instrument      | OPUS ID |
 |-----------------|---------|
 | Cassini RSS     | `co-rss-occ-2008-027-rev057c-s43-i` |
 | Cassini UVIS    | `co-uvis-occ-2008-026-gamlup-i` |
 | Cassini VIMS    | `co-vims-occ-2007-163-alpori-i` |
+| HST FOS         | `hst-fos-occ-XXXX-XXX-XXXXXX-i` |
 | Voyager RSS     | `vg-rss-1-s-occ-1980-318-s63-e` |
 | Voyager UVS     | `vg-uvs-1-s-occ-1980-317-iother-e` |
 | Voyager UVS     | `vg-uvs-2-u-occ-1986-024-sigsgr-epsilon-i` |

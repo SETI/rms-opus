@@ -44,7 +44,6 @@ import do_table_names # noqa: E402
 import do_update_mult_info # noqa: E402
 import do_validate # noqa: E402
 import impglobals # noqa: E402
-
 import importdb # noqa: E402
 
 
