@@ -87,7 +87,6 @@
             [ 176, "las_campanas.swope_1m0"             , "Las Campanas Henrietta Swope 1.0m" , "1760", "Y", "Ground-based", "010"],
             [ 500, "lick.nickel"                        , "Lick Anna L Nickel 1m"             , "1810", "Y", "Ground-based", "010"],
             [ 187, "lowell.perkins_warner1m83"          , "Lowell Perkins 1.83m"              , "1870", "Y", "Ground-based", "010"],
-            [ 202, "maunakea.ukirt_3m8"                 , "UKIRT 3.8m"                        , "2020", "Y", "Ground-based", "010"],
             [ 204, "mcdonald.harlanjsmith_2m7"          , "McDonald Harlan J Smith 2.7m"      , "2040", "Y", "Ground-based", "010"],
             [ 215, "mount_stromlo.1m9"                  , "Mount Stromlo 1.9m"                , "2150", "Y", "Ground-based", "010"],
             [ 226, "palomar.hale_5m08"                  , "Palomar Hale 5.08m"                , "2260", "Y", "Ground-based", "010"],
@@ -96,7 +95,8 @@
             [ 232, "saao.radcliffe_1m88"                , "SAAO Radcliffe 1.88m"              , "2320", "Y", "Ground-based", "010"],
             [ 233, "siding_spring.aat_3m9"              , "SSO AAT 3.9m"                      , "2330", "Y", "Ground-based", "010"],
             [ 234, "siding_spring.anu_2m3"              , "SSO ANU 2.3m"                      , "2340", "Y", "Ground-based", "010"],
-            [ 244, "teide.carlossanchez_1m55"           , "Teide Carlos Sanchez 1.55m"        , "2440", "Y", "Ground-based", "010"]
+            [ 244, "teide.carlossanchez_1m55"           , "Teide Carlos Sanchez 1.55m"        , "2350", "Y", "Ground-based", "010"],
+            [ 202, "maunakea.ukirt_3m8"                 , "UKIRT 3.8m"                        , "2360", "Y", "Ground-based", "010"]
         ]
     },
     {

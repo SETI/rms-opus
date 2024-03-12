@@ -136,19 +136,3 @@ INSTRUMENT_ID_TO_INSTRUMENT_NAME = {
     'MCD27MIIRAR': 'McDonald Observatory 2.7-Meter INSB IR Array',
     'PAL200CIRC':  'Palomar Observatory 200-Inch Cassegrain IR Camera'
 }
-
-DSN_NAMES = {
-    14: 'Goldstone 14m',
-    15: 'Goldstone 34m',
-    24: 'Goldstone 34m',
-    25: 'Goldstone 34m',
-    26: 'Goldstone 34m',
-    34: 'Canberra 34m',
-    35: 'Canberra 34m',
-    36: 'Canberra 34m',
-    43: 'Canberra 70m',
-    54: 'Madrid 34m',
-    55: 'Madrid 34m',
-    63: 'Madrid 70m',
-    65: 'Madrid 34m'
-}

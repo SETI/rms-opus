@@ -10,15 +10,7 @@ from obs_volume_vg28xx import ObsVolumeVG28xx
 
 # TODOPDS4 Verify that these are correct
 _DSN_NUM_TO_PDS4_INST = {
-    14: 'goldstone.dss14_70m',
-    15: 'goldstone.dss15_34m',
-    24: 'goldstone.dss24_34m',
-    25: 'goldstone.dss25_34m',
-    26: 'goldstone.dss26_34m',
-    34: 'canberra.dss34_34m',
     43: 'canberra.dss43_70m',
-    54: 'madrid.dss54_34m',
-    55: 'madrid.dss55_34m',
     63: 'madrid.dss63_70m'
 }
 
@@ -67,7 +59,7 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     def field_obs_profile_host(self):
         receiver_host = self._supp_index_col('RECEIVER_HOST_NAME')
         dsn = int(receiver_host[-2:])
-        return self._create_mult(_DSN_NUM_TO_PDS4_INST[dsn], grouping='DSNs')
+        return self._create_mult(_DSN_NUM_TO_PDS4_INST[dsn], grouping='DSS')
 
 
     #####################################
