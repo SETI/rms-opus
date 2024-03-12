@@ -6,35 +6,52 @@
 # supports multiple instruments in a single volume.
 ################################################################################
 
+"""
+PDS4TODO Temporary comment
+
+To create the index files:
+
+for i in `(cd /data/pds4-holdings/bundles/uranus_occs_earthbased; ls -d *_u[0-9]*)`
+do
+mkdir -p /data/pds4-holdings/metadata/uranus_occs_earthbased/$i
+python pds4_create_xml_index.py /data/pds4-holdings/bundles/uranus_occs_earthbased "${i}/data/rings/*_100m.xml" --extra-file-info filename filepath --sort-by filepath --output-file /data/pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_rings_index.csv
+python pds4_create_xml_index.py /data/pds4-holdings/bundles/uranus_occs_earthbased "${i}/data/global/*_100m.xml" --extra-file-info filename filepath --sort-by filepath --output-file /data/pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_global_index.csv
+python pds4_create_xml_index.py /data/pds4-holdings/bundles/uranus_occs_earthbased "${i}/data/atmosphere/*_atmos_*.xml" --extra-file-info filename filepath --sort-by filepath --output-file /data/pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_atmos_index.csv
+done
+"""
+
+
+# TODOPDS4 We should be able to get rid of this mapping once
+# Observing_System_Component is available in the index file.
+_LID_TO_INST = {
+    'caha_123cm': 'caha-calar_alto.1m23',
+    'ctio_150cm': 'ctio-cerro_tololo.smarts_1m50',
+    'ctio_400cm': 'ctio-cerro_tololo.victorblanco_4m0',
+    'eso_104cm': 'eso-la_silla.1m04',
+    'eso_220cm': 'eso-la_silla.2m2',
+    'eso_360cm': 'eso-la_silla.3m6',
+    'hst_fos': 'hst.fos',
+    'irtf_320cm': 'irtf-maunakea.3m2',
+    'kao_91cm': 'kuiper-airborne.0m91',
+    'lco_100cm': 'las_campanas.swope_1m0',
+    'lco_250cm': 'las_campanas.ireneedupont_2m5',
+    'lowell_180cm': 'lowell.perkins_warner1m83',
+    'maunakea_380cm': 'maunakea.ukirt_3m8',
+    'mcdonald_270cm': 'mcdonald.harlanjsmith_2m7',
+    'mso_190cm': 'mount_stromlo.1m9',
+    'opmt_106cm': 'pic_du_midi.1m06',
+    'opmt_200cm': 'pic_du_midi.bernardlyot_2m0',
+    'palomar_508cm': 'palomar.hale_5m08',
+    'saao_188cm': 'saao.radcliffe_1m88',
+    'sso_230cm': 'siding_spring.anu_2m3',
+    'sso_390cm': 'siding_spring.aat_3m9',
+    'teide_155cm': 'teide.carlossanchez_1m55',
+}
+
+
 import config_targets
 
 from obs_common_pds4 import ObsCommonPDS4
-
-
-_TELESCOPE_MAPPING = {
-    'caha_123cm': 'caha1m23',
-    'ctio_150cm': 'ctio1m50',
-    'ctio_400cm': 'ctio4m0',
-    'eso_104cm': 'esosil1m04',
-    'eso_220cm': 'esosil2m2',
-    'eso_360cm': 'esosil3m6',
-    'hst_fos': 'HSTFOS',
-    'irtf_320cm': 'irtf3m2',
-    'kao_91cm': 'kao0m91',
-    'lco_100cm': 'lascam1m0',
-    'lco_250cm': 'lascam2m5',
-    'lowell_180cm': 'low1m83',
-    'maunakea_380cm': 'mk3m8',
-    'mcdonald_270cm': 'mcd2m7',
-    'mso_190cm': 'mtstr1m9',
-    'opmt_106cm': 'pic1m06',
-    'opmt_200cm': 'pic2m0',
-    'palomar_508cm': 'pal5m08',
-    'saao_188cm': 'saao1m88',
-    'sso_230cm': 'sso2m3',
-    'sso_390cm': 'sso3m9',
-    'teide_155cm': 'tei1m55',
-}
 
 
 class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
@@ -57,7 +74,7 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
         lid = lid.split(':')
         main_lid = lid[3]
         _, _, star, inst1, inst2 = main_lid.split('_')
-        return f'{inst1}_{inst2}'
+        return _LID_TO_INST[f'{inst1}_{inst2}']
 
     def _star_id(self):
         star_name = self._index_col('rings:star_name')
@@ -78,12 +95,7 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     # TODOPDS4
     @property
     def instrument_id(self):
-        inst = self._inst_name()
-        if inst is None:
-            return None
-        if inst not in _TELESCOPE_MAPPING:
-            self._log_nonrepeating_error(f'Unknown telescope in LID "{inst}"')
-        return _TELESCOPE_MAPPING[inst]
+        return self._inst_name()
 
     @property
     def inst_host_id(self):
@@ -93,35 +105,16 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def mission_id(self):
         return 'HST' if self._inst_name == 'hst_fos' else 'GB'
 
-    # TODOPDS4 Figure out what the primary filespec should really be
     @property
     def primary_filespec(self):
-        return self._index_col('filename') # Probably filepath
+        return self._index_col('filepath')
 
     # TODOPDS4 This is a hack to make up an OPUS ID until Pds4File works
     def opus_id_from_index_row(self, row):
         filename = row['filename']
-        if not '_100m.xml' in filename:
+        if '_100m.xml' not in filename and 'atmos' not in filename:
             return None
-        opus_id = filename.rstrip('_100m.xml')
-        return opus_id
-
-    # TODOPDS4 Should not be needed once Pds4File supports opus_id
-    @property
-    def opus_id(self):
-        filespec = self.primary_filespec
-        if filespec == self._opus_id_last_filespec:
-            # Creating the OPUS ID can be expensive so we cache it here because
-            # it is used for every obs_ table.
-            return self._opus_id_cached
-        opus_id = filespec.rstrip('_100m.xml')
-        if not opus_id:
-            self._log_nonrepeating_error(
-                        f'Unable to create OPUS_ID using filespec {filespec}')
-            return None
-        self._opus_id_last_filespec = filespec
-        self._opus_id_cached = opus_id
-        return opus_id
+        return super().opus_id_from_index_row(row)
 
 
     ################################
@@ -175,15 +168,11 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_profile_source(self):
         star_name = self._index_col('rings:star_name')
         star_name_id = star_name.upper().replace(' ', '_')
-        return self._create_mult(star_name_id, disp_name=star_name)
+        return self._create_mult(star_name_id, disp_name=star_name,
+                                 grouping='Stars')
 
     def field_obs_profile_host(self):
-        inst = self._inst_name()
-        if inst is None:
-            return None
-        if inst not in _TELESCOPE_MAPPING:
-            self._log_nonrepeating_error(f'Unknown telescope in LID "{inst}"')
-        return self._create_mult(_TELESCOPE_MAPPING[inst])
+        return self._create_mult(self._inst_name())
 
 
     #####################################
@@ -200,13 +189,13 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
         return self._index_col('rings:radial_resolution')
 
     def field_obs_ring_geometry_resolution2(self):
-        return self._index_col('rings:radial_resolution')
+        return self.field_obs_ring_geometry_resolution1()
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('rings:radial_resolution')
 
     def field_obs_ring_geometry_projected_radial_resolution2(self):
-        return self._index_col('rings:radial_resolution')
+        return self.field_obs_ring_geometry_projected_radial_resolution1()
 
     def field_obs_ring_geometry_range_to_ring_intercept1(self):
         return None
@@ -268,16 +257,22 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     # For Uranus, these values are positive for the southern hemisphere.
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        return self._index_col('rings:light_source_incidence_angle') - 90.
+        inc = self._index_col('rings:light_source_incidence_angle')
+        if inc is not None:
+            inc = inc - 90.
+        return inc
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return self._index_col('rings:light_source_incidence_angle') - 90.
+        return self.field_obs_ring_geometry_solar_ring_elevation1()
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):
-        return 90. - self._index_col('rings:light_source_incidence_angle')
+        inc = self._index_col('rings:light_source_incidence_angle')
+        if inc is not None:
+            inc = 90. - inc
+        return inc
 
     def field_obs_ring_geometry_observer_ring_elevation2(self):
-        return 90. - self._index_col('rings:light_source_incidence_angle')
+        return self.field_obs_ring_geometry_observer_ring_elevation1()
 
     def field_obs_ring_geometry_phase1(self):
         return 180.
@@ -289,29 +284,32 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
         return self._index_col('rings:light_source_incidence_angle')
 
     def field_obs_ring_geometry_incidence2(self):
-        return self._index_col('rings:light_source_incidence_angle')
+        return self.field_obs_ring_geometry_incidence1()
 
     def field_obs_ring_geometry_emission1(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
+        em = self._index_col('rings:light_source_incidence_angle')
+        if em is not None:
+            em = 180. - em
+        return em
 
     def field_obs_ring_geometry_emission2(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
+        return self.field_obs_ring_geometry_emission1()
 
     # Earth was seeing Uranus' south pole for the entire duration of this data set.
     # Thus the star was illuminating the north side of the rings, and the
     # north-based values are the same as the plain values.
 
     def field_obs_ring_geometry_north_based_incidence1(self):
-        return self._index_col('rings:light_source_incidence_angle')
+        return self.field_obs_ring_geometry_incidence1()
 
     def field_obs_ring_geometry_north_based_incidence2(self):
-        return self._index_col('rings:light_source_incidence_angle')
+        return self.field_obs_ring_geometry_incidence2()
 
     def field_obs_ring_geometry_north_based_emission1(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
+        return self.field_obs_ring_geometry_emission1()
 
     def field_obs_ring_geometry_north_based_emission2(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
+        return self.field_obs_ring_geometry_emission2()
 
     def field_obs_ring_geometry_ring_center_phase1(self):
         return 180.
@@ -319,41 +317,20 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_ring_geometry_ring_center_phase2(self):
         return 180.
 
-    def field_obs_ring_geometry_ring_center_incidence1(self):
-        return self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_ring_center_incidence2(self):
-        return self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_ring_center_emission1(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_ring_center_emission2(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
-        return self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
-        return self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_ring_center_north_based_emission1(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_ring_center_north_based_emission2(self):
-        return 180.-self._index_col('rings:light_source_incidence_angle')
-
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return -self._index_col('rings:observed_ring_elevation')
+        oa = self._index_col('rings:observed_ring_elevation')
+        if oa is not None:
+            oa = -oa
+        return oa
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return -self._index_col('rings:observed_ring_elevation')
+        return self.field_obs_ring_geometry_solar_ring_opening_angle1()
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
         return self._index_col('rings:observed_ring_elevation')
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        return self._index_col('rings:observed_ring_elevation')
+        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
 
     def field_obs_ring_geometry_edge_on_radius1(self):
         return None

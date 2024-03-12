@@ -170,21 +170,16 @@ def yield_import_bundle_ids(arguments):
                 bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
             except (KeyError, ValueError):
                 bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_desc)
-                # For PDS4 BUNDLESETs, we add the entire bundleset.  TODOPDS4
-                new_bundledescs.append(bundle_desc)
+            if bundle_pdsfile.is_bundleset_dir:
+                childnames = bundle_pdsfile.childnames
+                # Make sure 2001 is imported first and then 1001 second for each
+                # New Horizon bundle. That way, the primary filespec will be
+                # raw in OPUS (same as pdsfile).
+                if bundle_pdsfile.bundleset.startswith("NH"):
+                    childnames.reverse()
+                new_bundledescs += childnames
             else:
-                # For PDS3 VOLSETs, we add each of the volumes one at a time to
-                # the import list
-                if bundle_pdsfile.is_bundleset_dir:
-                    childnames = bundle_pdsfile.childnames
-                    # Make sure 2001 is imported first and then 1001 second for each
-                    # New Horizon bundle. That way, the primary filespec will be
-                    # raw in OPUS (same as pdsfile).
-                    if bundle_pdsfile.bundleset.startswith("NH"):
-                        childnames.reverse()
-                    new_bundledescs += childnames
-                else:
-                    new_bundledescs.append(bundle_desc)
+                new_bundledescs.append(bundle_desc)
 
         # Now actually return the bundle_ids
         for bundle_id in new_bundledescs:

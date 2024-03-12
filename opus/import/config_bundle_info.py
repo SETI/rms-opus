@@ -7,28 +7,28 @@
 
 # flake8: noqa
 
-from obs_volume_cocirs_56xxx       import ObsVolumeCOCIRS56xxx
-from obs_volume_cocirs_01xxx       import ObsVolumeCOCIRS01xxx
-from obs_volume_coiss_12xxx        import ObsVolumeCOISS12xxx
-from obs_volume_corss_8xxx         import ObsVolumeCORSS8xxx
-from obs_volume_couvis_0xxx        import ObsVolumeCOUVIS0xxx
-from obs_volume_couvis_8xxx        import ObsVolumeCOUVIS8xxx
-from obs_volume_covims_0xxx        import ObsVolumeCOVIMS0xxx
-from obs_volume_covims_8xxx        import ObsVolumeCOVIMS8xxx
-from obs_volume_ebrocc_xxxx        import ObsVolumeEBROCCxxxx
-from obs_volume_go_0xxx            import ObsVolumeGO0xxx
-from obs_volume_hstjx_xxxx         import ObsVolumeHSTJxxxxx
-from obs_volume_hstnx_xxxx         import ObsVolumeHSTNxxxxx
-from obs_volume_hstox_xxxx         import ObsVolumeHSTOxxxxx
-from obs_volume_hstix_xxxx         import ObsVolumeHSTIxxxxx
-from obs_volume_hstux_xxxx         import ObsVolumeHSTUxxxxx
-from obs_volume_nhxxlo_xxxx        import ObsVolumeNHxxLOXxxx
-from obs_volume_nhxxmv_xxxx        import ObsVolumeNHxxMVXxxx
-from obs_volume_vgiss_5678xxx      import ObsVolumeVGISS5678xxx
-from obs_volume_vg28xx_vgiss       import ObsVolumeVG28xxVGISS
-from obs_volume_vg28xx_vgpps_vguvs import (ObsVolumeVG28xxVGPPS,
-                                           ObsVolumeVG28xxVGUVS)
-from obs_volume_vg28xx_vgrss       import ObsVolumeVG28xxVGRSS
+from obs_volume_cocirs_56xxx  import ObsVolumeCOCIRS56xxx
+from obs_volume_cocirs_01xxx  import ObsVolumeCOCIRS01xxx
+from obs_volume_coiss_12xxx   import ObsVolumeCOISS12xxx
+from obs_volume_corss_8xxx    import ObsVolumeCORSS8xxx
+from obs_volume_couvis_0xxx   import ObsVolumeCOUVIS0xxx
+from obs_volume_couvis_8xxx   import ObsVolumeCOUVIS8xxx
+from obs_volume_covims_0xxx   import ObsVolumeCOVIMS0xxx
+from obs_volume_covims_8xxx   import ObsVolumeCOVIMS8xxx
+from obs_volume_ebrocc_xxxx   import ObsVolumeEBROCCxxxx
+from obs_volume_go_0xxx       import ObsVolumeGO0xxx
+from obs_volume_hstjx_xxxx    import ObsVolumeHSTJxxxxx
+from obs_volume_hstnx_xxxx    import ObsVolumeHSTNxxxxx
+from obs_volume_hstox_xxxx    import ObsVolumeHSTOxxxxx
+from obs_volume_hstix_xxxx    import ObsVolumeHSTIxxxxx
+from obs_volume_hstux_xxxx    import ObsVolumeHSTUxxxxx
+from obs_volume_nhxxlo_xxxx   import ObsVolumeNHxxLOXxxx
+from obs_volume_nhxxmv_xxxx   import ObsVolumeNHxxMVXxxx
+from obs_volume_vgiss_5678xxx import ObsVolumeVGISS5678xxx
+from obs_volume_vg2801_vg2802 import (ObsVolumeVG2801VGPPS,
+                                      ObsVolumeVG2802VGUVS)
+from obs_volume_vg2803        import ObsVolumeVG2803VGRSS
+from obs_volume_vg2810        import ObsVolumeVG2810VGISS
 
 from obs_bundle_uranus_occs_earthbased import ObsBundleUranusOccsEarthbased
 
@@ -216,40 +216,49 @@ BUNDLE_INFO = [
          'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
          'temporal_camera': True,
-         'instrument_class': ObsVolumeVG28xxVGPPS},
+         'instrument_class': ObsVolumeVG2801VGPPS},
     ),
     (r'VG_2802',
         {'pds_version': 3,
          'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
          'temporal_camera': True,
-         'instrument_class': ObsVolumeVG28xxVGUVS},
+         'instrument_class': ObsVolumeVG2802VGUVS},
     ),
     (r'VG_2803',
         {'pds_version': 3,
          'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
          'temporal_camera': True,
-         'instrument_class': ObsVolumeVG28xxVGRSS},
+         'instrument_class': ObsVolumeVG2803VGRSS},
     ),
     (r'VG_2810',
         {'pds_version': 3,
          'primary_index': ('<BUNDLE>_index.lbl',),
          'validate_index_rows': True,
          'temporal_camera': True,
-         'instrument_class': ObsVolumeVG28xxVGISS},
+         'instrument_class': ObsVolumeVG2810VGISS},
     ),
 
     ####################
     ### PDS4 BUNDLES ###
     ####################
 
-    (r'uranus_occs_earthbased',
+    (r'uranus_occ_u.*',
         {'pds_version': 4,
-         'primary_index': ('uranus_rings_occultations_index.csv',
-                           'uranus_global_occultations_index.csv'),
+         'primary_index': ('<BUNDLE>_rings_index.csv',
+                           '<BUNDLE>_global_index.csv',
+                           '<BUNDLE>_atmos_index.csv'),
          'validate_index_rows': True,
          'temporal_camera': True,
          'instrument_class': ObsBundleUranusOccsEarthbased},
+    ),
+    # These bundles are part of uranus_occs_earthbased but should not be imported
+    (r'checksums_uranus_occs_earthbased|uranus_occ_support',
+        {'pds_version': 4,
+         'primary_index': None,
+         'validate_index_rows': False,
+         'temporal_camera': True,
+         'instrument_class': None},
     ),
 ]

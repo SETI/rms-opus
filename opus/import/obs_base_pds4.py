@@ -23,7 +23,7 @@ class ObsBasePDS4(ObsBase):
     def primary_filespec_from_index_row(self, row,
                                         convert_lbl=False,
                                         add_phase_from_inst=False):
-        return row['filename']
+        return row['filepath']
 
 
     ###############################
@@ -31,13 +31,7 @@ class ObsBasePDS4(ObsBase):
     ###############################
 
     def _pdsfile_from_filespec(self, filespec):
-        # Create a PdsFile object from a primary filespec.
-        # The PDS3 filespec is often the .LBL file, but from_filespec doesn't
-        # handle .LBL files because ViewMaster needs to distinguish between
-        # .LBL and whatever the data file extension is. So we do the conversion
-        # here.
-        filespec = self.convert_filespec_from_lbl(filespec)
-        return pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
+        return pdsfile.pds4file.Pds4File.from_filespec(filespec, fix_case=True)
 
 
     # Helpers for time fields

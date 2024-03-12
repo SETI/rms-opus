@@ -64,7 +64,7 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
                                  grouping='Stars')
 
     def field_obs_profile_host(self):
-        return self._create_mult('Cassini')
+        return self._create_mult('cassini')
 
 
     #####################################

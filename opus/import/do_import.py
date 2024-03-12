@@ -398,7 +398,7 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
 
     if 'mult_options' in table_column:
         import_util.log_nonrepeating_error(
-            f'Attempting to add value "{val}" to preprogrammed mult table '+
+            f'Unable to add value "{val}" to preprogrammed mult table '+
             f'"{mult_table_name}"')
         return 0
 
@@ -573,9 +573,7 @@ def import_one_bundle(bundle_id):
         import_util.log_error(f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')
         return False
 
-    if ((vol_info['pds_version'] == 3 and not bundle_pdsfile.is_bundle) or
-        (vol_info['pds_version'] == 4 and not bundle_pdsfile.is_bundleset)):
-        # TODOPDS4
+    if not bundle_pdsfile.is_bundle:
         import_util.log_error(f'{bundle_id} is not a bundle!')
         impglobals.LOGGER.close()
         impglobals.CURRENT_BUNDLE_ID = None
@@ -785,7 +783,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                             assoc_rows.append(row_dict)
                 else:
                     (assoc_rows,
-                     assoc_label_dict) = import_util.safe_pdstable_read(assoc_label_path)
+                     assoc_label_dict) = import_util.safe_pdstable_read(assoc_label_path,
+                                                                        pds_version)
 
                 if not assoc_rows:
                     # No need to report an error here because safe_pdstable_read
@@ -1365,6 +1364,13 @@ def import_observation_table(instrument_obj,
                 # Handle the case when display value is not set. This stays here because
                 # mult_label gets updated based on column_val after column_val is validated.
                 # (ex: flag)
+                mult_label = None
+                if mult_label_list is None:
+                    import_util.log_nonrepeating_error(
+                        f'Fatal error processing column "{field_name}" in '
+                        f'table "{table_name}" - bad data type returned for mult'
+                    )
+                    return None
                 mult_label = mult_label_list[column_val_num]
                 if mult_label is None:
                     if column_val is None:

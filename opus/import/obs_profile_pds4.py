@@ -67,7 +67,6 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
             return self._create_mult('VI')
         self._log_nonrepeating_error(f'Unknown pds:wavelength_range "{wl_range}"')
         return None
-        return self._create_mult('UV')
 
     # def field_obs_profile_source(self):
     #     target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')

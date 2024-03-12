@@ -1,9 +1,3 @@
-            # [  18,   "ESO1MAPPH",         "ESO 1-m ApPhot", "190", "Y", "Ground-based", "010"],
-            # [  19,  "ESO22MAPPH",       "ESO 2.2-m ApPhot", "200", "Y", "Ground-based", "010"],
-            # [  20,    "IRTFURAC",         "NASA IRTF URAC", "210", "Y", "Ground-based", "010"],
-            # [  21,  "LICK1MCCDC",           "Lick 1-m CCD", "220", "Y", "Ground-based", "010"],
-            # [  22, "MCD27MIIRAR",    "McDonald 2.7-m INSB", "230", "Y", "Ground-based", "010"],
-            # [  23,  "PAL200CIRC", "Palomar 200-in Cass IR", "240", "Y", "Ground-based", "010"],
 ################################################################################
 # obs_volume_ebrocc_xxxx.py
 #
@@ -13,6 +7,19 @@
 ################################################################################
 
 from obs_common_pds3 import ObsCommonPDS3
+
+
+_EBROCC_INST_TO_PDS4_INST = {
+    'ESO1MAPPH': 'eso-la_silla.1m04',
+    'ESO22MAPPH': 'eso-la_silla.2m2',
+    'IRTFURAC': 'irtf-maunakea.3m2',
+    # TODOPDS4 "lick1m" is not a valid context product and will need to be
+    # add to the PDS4 database at some point, especially when EBROCC gets
+    # ported to PDS4 some day. For now we just fake it.
+    'LICK1MCCDC': 'lick.nickel',
+    'MCD27MIIRAR': 'mcdonald.harlanjsmith_2m7',
+    'PAL200CIRC': 'palomar.hale_5m08'
+}
 
 
 # The EBROCC_0001 volume only uses 28 SGR as a source, and all observations
@@ -38,8 +45,9 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         if self._metadata is None:
             # This happens during the create_tables phase
             return None
-        return (self._supp_index_col('INSTRUMENT_HOST_ID') +
+        inst = (self._supp_index_col('INSTRUMENT_HOST_ID') +
                 self._supp_index_col('INSTRUMENT_ID'))
+        return _EBROCC_INST_TO_PDS4_INST[inst]
 
     @property
     def inst_host_id(self):
@@ -149,9 +157,7 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
                                  grouping='Stars')
 
     def field_obs_profile_host(self):
-        ret = self._supp_index_col('INSTRUMENT_HOST_NAME')
-        return self._create_mult_keep_case(col_val=ret,
-                                           grouping='Ground-based Telescopes')
+        return self._create_mult(self.instrument_id)
 
 
     #####################################
@@ -168,13 +174,13 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return self._supp_index_col('RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_resolution2(self):
-        return self._supp_index_col('RADIAL_RESOLUTION')
+        return self.field_obs_ring_geometry_resolution1()
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._supp_index_col('RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_projected_radial_resolution2(self):
-        return self._supp_index_col('RADIAL_RESOLUTION')
+        return self.field_obs_ring_geometry_projected_radial_resolution1()
 
     def field_obs_ring_geometry_range_to_ring_intercept1(self):
         return None
@@ -228,13 +234,13 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return self._supp_index_col('INCIDENCE_ANGLE')-90.
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')-90.
+        return self.field_obs_ring_geometry_solar_ring_elevation1()
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):
         return 90.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_elevation2(self):
-        return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_observer_ring_elevation1()
 
     def field_obs_ring_geometry_phase1(self):
         return 180.
@@ -246,67 +252,37 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_incidence2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_incidence1()
 
     def field_obs_ring_geometry_emission1(self):
         return 180.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_emission2(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_emission1()
 
     def field_obs_ring_geometry_north_based_incidence1(self):
         return 180.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_north_based_incidence2(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_incidence1()
 
     def field_obs_ring_geometry_north_based_emission1(self):
         return self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_north_based_emission2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_phase1(self):
-        return 180.
-
-    def field_obs_ring_geometry_ring_center_phase2(self):
-        return 180.
-
-    def field_obs_ring_geometry_ring_center_incidence1(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_incidence2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_emission1(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_emission2(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_north_based_emission1(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_ring_center_north_based_emission2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_emission1()
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
         return self._supp_index_col('INCIDENCE_ANGLE')-90.
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')-90.
+        return self.field_obs_ring_geometry_solar_ring_opening_angle1()
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
         return 90.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
 
     def field_obs_ring_geometry_edge_on_radius1(self):
         return None

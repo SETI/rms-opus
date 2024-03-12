@@ -1,7 +1,7 @@
 ################################################################################
-# obs_volume_vg28xx_vgrss.py
+# obs_volume_vg2803_vgrss.py
 #
-# Defines the ObsInstrumentVG28xxRSS class, which encapsulates fields for the
+# Defines the ObsVolumeVG2803RSS class, which encapsulates fields for the
 # common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
 ################################################################################
 
@@ -10,7 +10,22 @@ import config_data
 from obs_volume_vg28xx import ObsVolumeVG28xx
 
 
-class ObsVolumeVG28xxVGRSS(ObsVolumeVG28xx):
+# TODOPDS4 Verify that these are correct
+_DSN_NUM_TO_PDS4_INST = {
+    14: 'goldstone.dss14_70m',
+    15: 'goldstone.dss15_34m',
+    24: 'goldstone.dss24_34m',
+    25: 'goldstone.dss25_34m',
+    26: 'goldstone.dss26_34m',
+    34: 'canberra.dss34_34m',
+    43: 'canberra.dss43_70m',
+    54: 'madrid.dss54_34m',
+    55: 'madrid.dss55_34m',
+    63: 'madrid.dss63_70m'
+}
+
+
+class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -54,9 +69,7 @@ class ObsVolumeVG28xxVGRSS(ObsVolumeVG28xx):
     def field_obs_profile_host(self):
         receiver_host = self._supp_index_col('RECEIVER_HOST_NAME')
         dsn = int(receiver_host[-2:])
-
-        ret = f'DSN {dsn} ({config_data.DSN_NAMES[dsn]})'
-        return self._create_mult_keep_case(col_val=ret, grouping='DSNs')
+        return self._create_mult(_DSN_NUM_TO_PDS4_INST[dsn], grouping='DSNs')
 
 
     #####################################
