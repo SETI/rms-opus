@@ -83,6 +83,9 @@ if __name__ == "__main__":
         # 'vg-rss-2-u-occ-1986-024-s43-four-i',
         # 'vg-uvs-2-n-occ-1989-236-sigsgr-i',
         # 'vg-iss-2-s-prof'
+        # 'kao0m91-vis-occ-1977-069-u0-ringpl-i',
+        # 'kao0m91-vis-occ-1977-069-u0-uranus-e',
+        # 'kao0m91-vis-occ-1977-069-u0-eta-e'
     ]
 
     session = requests.Session()

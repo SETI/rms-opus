@@ -1239,3 +1239,48 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] vg-iss-2-s-prof images"
         url = "/api/images.json?opusid=vg-iss-2-s-prof"
         self._run_json_equal_file(url, "results_vg_iss_2_s_prof_images.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_ringpl_i_metadata(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-ringpl-i metadata"
+        url = "/api/metadata/kao0m91-vis-occ-1977-069-u0-ringpl-i.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_ringpl_i_metadata.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_ringpl_i_files(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-ringpl-i files"
+        url = "/api/files/kao0m91-vis-occ-1977-069-u0-ringpl-i.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_ringpl_i_files.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_ringpl_i_images(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-ringpl-i images"
+        url = "/api/images.json?opusid=kao0m91-vis-occ-1977-069-u0-ringpl-i"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_ringpl_i_images.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_uranus_e_metadata(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-uranus-e metadata"
+        url = "/api/metadata/kao0m91-vis-occ-1977-069-u0-uranus-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_uranus_e_metadata.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_uranus_e_files(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-uranus-e files"
+        url = "/api/files/kao0m91-vis-occ-1977-069-u0-uranus-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_uranus_e_files.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_uranus_e_images(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-uranus-e images"
+        url = "/api/images.json?opusid=kao0m91-vis-occ-1977-069-u0-uranus-e"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_uranus_e_images.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_eta_e_metadata(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-eta-e metadata"
+        url = "/api/metadata/kao0m91-vis-occ-1977-069-u0-eta-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_eta_e_metadata.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_eta_e_files(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-eta-e files"
+        url = "/api/files/kao0m91-vis-occ-1977-069-u0-eta-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_eta_e_files.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_eta_e_images(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-eta-e images"
+        url = "/api/images.json?opusid=kao0m91-vis-occ-1977-069-u0-eta-e"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_eta_e_images.json")
