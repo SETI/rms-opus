@@ -8,8 +8,6 @@
 
 import opus_support
 
-import config_data
-
 from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
 
 
