@@ -20,6 +20,10 @@ python pds4_create_xml_index.py /data/pds4-holdings/bundles/uranus_occs_earthbas
 done
 """
 
+import config_targets
+
+from obs_common_pds4 import ObsCommonPDS4
+
 
 # TODOPDS4 We should be able to get rid of this mapping once
 # Observing_System_Component is available in the index file.
@@ -47,11 +51,6 @@ _LID_TO_INST = {
     'sso_390cm': 'siding_spring.aat_3m9',
     'teide_155cm': 'teide.carlossanchez_1m55',
 }
-
-
-import config_targets
-
-from obs_common_pds4 import ObsCommonPDS4
 
 
 class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):

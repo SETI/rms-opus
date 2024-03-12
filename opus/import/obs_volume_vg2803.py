@@ -5,8 +5,6 @@
 # common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
 ################################################################################
 
-import config_data
-
 from obs_volume_vg28xx import ObsVolumeVG28xx
 
 

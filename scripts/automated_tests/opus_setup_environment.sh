@@ -25,6 +25,11 @@ if [ $? -ne 0 ]; then
     CWD=`pwd`
 fi
 
+git clone https://github.com/SETI/rms-pdsfile
+git checkout 12_convert_opus_id
+pip uninstall rms-pdsfile
+pip install -e ./rms-pdsfile
+
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py
@@ -33,7 +38,8 @@ echo "DB_DATABASE_NAME = ''" >> opus_secrets.py
 echo "DB_SCHEMA_NAME = 'opus_test_db_${UNIQUE_ID}'" >> opus_secrets.py
 echo "DB_USER = '${OPUS_DB_USER}'" >> opus_secrets.py
 echo "DB_PASSWORD = '${OPUS_DB_PASSWORD}'" >> opus_secrets.py
-echo "PDS_DATA_DIR = '${HOLDINGS_DIR}'" >> opus_secrets.py
+echo "PDS3_DATA_DIR = '${HOLDINGS_DIR}'" >> opus_secrets.py
+echo "PDS4_DATA_DIR = '${HOLDINGS_DIR}'" >> opus_secrets.py
 echo "RMS_OPUS_PATH = '${CWD}'" >> opus_secrets.py
 echo "RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')" >> opus_secrets.py
 echo "DEBUG = True" >> opus_secrets.py
