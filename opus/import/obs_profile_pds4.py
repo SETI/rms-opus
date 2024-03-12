@@ -51,7 +51,7 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
         return self._create_mult(self._index_col('rings:data_quality_score'))
 
     def field_obs_profile_temporal_sampling(self):
-        return None  # TODOPDS4
+        return None
 
     def field_obs_profile_optical_depth1(self):
         return self._index_col('rings:lowest_detectable_opacity')
@@ -59,7 +59,7 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
     def field_obs_profile_optical_depth2(self):
         return self._index_col('rings:highest_detectable_opacity')
 
-    def field_obs_profile_wl_band(self):  # TODOPDS4
+    def field_obs_profile_wl_band(self):
         wl_range = self._index_col('pds:wavelength_range')
         if wl_range.upper() == 'INFRARED':
             return self._create_mult('IR')
@@ -67,15 +67,3 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
             return self._create_mult('VI')
         self._log_nonrepeating_error(f'Unknown pds:wavelength_range "{wl_range}"')
         return None
-
-    # def field_obs_profile_source(self):
-    #     target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')
-    #     if target_info is None:
-    #         return self._create_mult(None)
-    #     return self._create_mult(col_val=target_name, disp_name=target_info[2],
-    #                              grouping='Stars')
-
-    # def field_obs_profile_host(self):
-    #     ret = self._supp_index_col('INSTRUMENT_HOST_NAME')
-    #     return self._create_mult_keep_case(col_val=ret,
-    #                                        grouping='Ground-based Telescopes')

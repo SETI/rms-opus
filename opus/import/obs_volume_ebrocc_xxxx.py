@@ -14,8 +14,8 @@ _EBROCC_INST_TO_PDS4_INST = {
     'ESO22MAPPH': 'eso-la_silla.2m2',
     'IRTFURAC': 'irtf-maunakea.3m2',
     # TODOPDS4 "lick1m" is not a valid context product and will need to be
-    # add to the PDS4 database at some point, especially when EBROCC gets
-    # ported to PDS4 some day. For now we just fake it.
+    # added to the PDS4 context products at some point, especially when EBROCC
+    # gets ported to PDS4 some day. For now we just fake it.
     'LICK1MCCDC': 'lick.nickel',
     'MCD27MIIRAR': 'mcdonald.harlanjsmith_2m7',
     'PAL200CIRC': 'palomar.hale_5m08'

@@ -92,7 +92,6 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-    # TODOPDS4
     @property
     def instrument_id(self):
         return self._inst_name()
@@ -108,13 +107,6 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     @property
     def primary_filespec(self):
         return self._index_col('filepath')
-
-    # TODOPDS4 This is a hack to make up an OPUS ID until Pds4File works
-    def opus_id_from_index_row(self, row):
-        filename = row['filename']
-        if '_100m.xml' not in filename and 'atmos' not in filename:
-            return None
-        return super().opus_id_from_index_row(row)
 
 
     ################################
@@ -178,6 +170,9 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
+
+    # Note - A lot of the ring-specific fields are missing from atmos labels so
+    # they will just turn out to be None.
 
     def field_obs_ring_geometry_ring_radius1(self):
         return self._index_col('rings:minimum_ring_radius')
@@ -397,7 +392,3 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
 
     def field_obs_ring_geometry_ring_intercept_time2(self):
         return self._index_col('rings:ring_event_stop_tdb')
-
-    # TODOPDS4 Note: For atmos this is not really a "ring event time",
-    # it's a "planet event time", but we don't have a field for that.
-    # Should we instead add something under surface geometry?

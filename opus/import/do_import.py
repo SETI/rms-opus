@@ -1448,7 +1448,6 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
         if pds_version == 3:
             pdsf = pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
         else:
-            return []  # TODOPDS4 Pds4File doesn't support opus_products yet
             pdsf = pdsfile.pds4file.Pds4File.from_filespec(filespec, fix_case=True)
     except ValueError:
         import_util.log_nonrepeating_error(f'Failed to convert filespec "{filespec}"')

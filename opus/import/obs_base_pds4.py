@@ -19,7 +19,6 @@ class ObsBasePDS4(ObsBase):
     ### Public access methods ###
     #############################
 
-    # TODOPDS4 Figure out what the primary filespec should really be
     def primary_filespec_from_index_row(self, row,
                                         convert_lbl=False,
                                         add_phase_from_inst=False):

@@ -12,9 +12,3 @@ from obs_general import ObsGeneral
 class ObsGeneralPDS4(ObsGeneral, ObsBasePDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def _target_name(self):  # TODOPDS4
-        raise NotImplementedError
-
-    def field_obs_general_preview_images(self):  # TODOPDS4
-        return '{}'

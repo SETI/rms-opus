@@ -208,6 +208,8 @@ def safe_pdstable_read(filename, pds_version):
     # TODOPDS4 For now, PDS4 index files do not have labels. They are just
     # CSV files. So we read the CSV file and determine the column names from
     # the single header line. We then infer the datatypes from the column data.
+    # Eventually we will want to change this to use an official PDS4 label/table
+    # reader module.
 
     with open(filename) as csvfile:
         reader = csv.DictReader(csvfile)

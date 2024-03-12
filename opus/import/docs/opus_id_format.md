@@ -282,14 +282,12 @@ marked as using a "Generic InSb High Speed Photometer". We simply have to do the
 
 Example OPUS IDs for various instruments:
 
-TODOPDS4 Add PDS4 examples here
-
 | Instrument      | OPUS ID |
 |-----------------|---------|
 | Cassini RSS     | `co-rss-occ-2008-027-rev057c-s43-i` |
 | Cassini UVIS    | `co-uvis-occ-2008-026-gamlup-i` |
 | Cassini VIMS    | `co-vims-occ-2007-163-alpori-i` |
-| HST FOS         | `hst-fos-occ-XXXX-XXX-XXXXXX-i` |
+| HST FOS         | `hst-fos-occ-1996-076-u137-delta-e` |
 | Voyager RSS     | `vg-rss-1-s-occ-1980-318-s63-e` |
 | Voyager UVS     | `vg-uvs-1-s-occ-1980-317-iother-e` |
 | Voyager UVS     | `vg-uvs-2-u-occ-1986-024-sigsgr-epsilon-i` |
@@ -297,5 +295,5 @@ TODOPDS4 Add PDS4 examples here
 | Voyager PPS     | `vg-pps-2-s-occ-1981-238-delsco-e` |
 | Voyager PPS     | `vg-pps-2-u-occ-1986-024-betper-four-i` |
 | Lick CCD Camera | `lick1m-ccdc-occ-1989-184-28sgr-i` |
-| Palomar 5.08m   | `pal5m08-insb-occ-2002-210-u0201-alpha-i` |
-| Palomar 5.08m   | `pal5m08-insb-occ-2002-210-u0201-uranus-i` |
+| Palomar 5.08m   | `pal5m08-insb-occ-1982-155-u16-ringpl-i` |
+| Palomar 5.08m   | `pal5m08-insb-occ-1982-155-u16-uranus-i` |
