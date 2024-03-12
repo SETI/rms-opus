@@ -56,7 +56,7 @@
         "occdepth2": null,
         "occwlband": "S",
         "occsource": "Voyager 2",
-        "occreceiverhost": "DSN 43 (Canberra 70m)",
+        "occreceiverhost": "DSS 43 (Canberra 70m)",
         "RINGGEOringradius1": "42543",
         "RINGGEOringradius2": "42562",
         "RINGGEOsolarringopeningangle1": "-81.5",

@@ -56,7 +56,7 @@
         "occdepth2": "0.31486525",
         "occwlband": "X",
         "occsource": "Cassini",
-        "occreceiverhost": "DSN 34 (Canberra 34m)",
+        "occreceiverhost": "DSS 34 (Canberra 34m)",
         "RINGGEOringradius1": "72000.25",
         "RINGGEOringradius2": "144999.75",
         "RINGGEOsolarringopeningangle1": "-1.887",
