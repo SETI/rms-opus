@@ -312,10 +312,34 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
         return self.field_obs_ring_geometry_emission2()
 
     def field_obs_ring_geometry_ring_center_phase1(self):
-        return 180.
+        return self.field_obs_ring_geometry_phase1()
 
     def field_obs_ring_geometry_ring_center_phase2(self):
-        return 180.
+        return self.field_obs_ring_geometry_phase2()
+
+    def field_obs_ring_geometry_ring_center_incidence1(self):
+        return self.field_obs_ring_geometry_incidence1()
+
+    def field_obs_ring_geometry_ring_center_incidence2(self):
+        return self.field_obs_ring_geometry_incidence2()
+
+    def field_obs_ring_geometry_ring_center_emission1(self):
+        return self.field_obs_ring_geometry_emission1()
+
+    def field_obs_ring_geometry_ring_center_emission2(self):
+        return self.field_obs_ring_geometry_emission2()
+
+    def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
+        return self.field_obs_ring_geometry_north_based_incidence1()
+
+    def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
+        return self.field_obs_ring_geometry_north_based_incidence2()
+
+    def field_obs_ring_geometry_ring_center_north_based_emission1(self):
+        return self.field_obs_ring_geometry_north_based_emission1()
+
+    def field_obs_ring_geometry_ring_center_north_based_emission2(self):
+        return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
         oa = self._index_col('rings:observed_ring_elevation')

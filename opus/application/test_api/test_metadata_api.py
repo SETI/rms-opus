@@ -305,7 +305,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_mults(self):
         "[test_metadata_api.py] /api/meta/meta/mults: mission no search"
         url = '/api/meta/mults/mission.json'
-        expected = {'field_id': 'mission', 'mults': {'Cassini': 18081, 'Galileo': 1156, 'Hubble': 1526, 'New Horizons': 7136, 'Voyager': 1778, 'Ground-based': 12}}
+        expected = {'field_id': 'mission', 'mults': {'Cassini': 18081, 'Galileo': 1156, 'Hubble': 1526, 'New Horizons': 7136, 'Voyager': 1778, 'Ground-based': 784}}
         self._run_json_equal(url, expected)
 
     # Unrelated constraints
@@ -486,7 +486,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_times(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times"
         url = '/api/meta/range/endpoints/timesec1.json'
-        expected = {'min': '1980-11-12T15:49:21.040', 'max': '2017-09-08T21:39:23.148', 'nulls': 0, 'units': 'ymdhms'}
+        expected = {'min': '1977-03-10T20:05:40.009', 'max': '2017-09-08T21:39:23.148', 'nulls': 0, 'units': 'ymdhms'}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COISS(self):
