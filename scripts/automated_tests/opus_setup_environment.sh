@@ -26,8 +26,8 @@ if [ $? -ne 0 ]; then
 fi
 
 git clone https://github.com/SETI/rms-pdsfile
-git checkout 12_convert_opus_id
-pip uninstall rms-pdsfile
+(cd rms-pdsfile; git checkout 12_convert_opus_id)
+pip uninstall -y rms-pdsfile
 pip install -e ./rms-pdsfile
 
 echo "import os" > opus_secrets.py
