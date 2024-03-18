@@ -5,11 +5,11 @@
         "targetclass": "Ring",
         "mission": "Ground-based",
         "insthost": "Ground-based",
-        "instrument": "McDonald Harlan J Smith 2.7m",
+        "instrument": "ESO La Silla 1m",
         "observationtype": "Occultation Profile",
-        "time1": "1989-07-03T05:57:24.720",
-        "time2": "1989-07-03T06:48:58.880",
-        "observationduration": "3094.16",
+        "time1": "1989-07-03T08:36:25.070",
+        "time2": "1989-07-03T09:30:13.070",
+        "observationduration": "3228",
         "quantity": "Optical Depth",
         "rightasc1": "281.585879",
         "rightasc2": "281.585879",
@@ -18,12 +18,12 @@
     },
     "PDS Constraints": {
         "bundleid": "EBROCC_0001",
-        "datasetid": "MCD27M-SR-IIRAR-4-OCC-V1.0",
-        "productid": "MCD_INGRESS",
+        "datasetid": "ESO1M-SR-APPH-4-OCC-V1.0",
+        "productid": "ES1_EGRESS",
         "primarylid": null,
-        "productcreationtime": "2003-07-08T23:29:36.000",
-        "primaryfilespec": "EBROCC_0001/DATA/MCD27M/MCD_IPD.LBL",
-        "opusid": "mcd27m-iirar-occ-1989-184-28sgr-i",
+        "productcreationtime": "2003-07-08T23:06:45.000",
+        "primaryfilespec": "EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL",
+        "opusid": "esosil1m04-apph-occ-1989-184-28sgr-e",
         "note": null
     },
     "Image Constraints": {
@@ -34,12 +34,12 @@
         "imagetype": null
     },
     "Wavelength Constraints": {
-        "wavelength1": "2.1",
-        "wavelength2": "2.1",
+        "wavelength1": "3.4",
+        "wavelength2": "3.4",
         "waveres1": null,
         "waveres2": null,
-        "waveno1": "4761.9047619",
-        "waveno2": "4761.9047619",
+        "waveno1": "2941.1764706",
+        "waveno2": "2941.1764706",
         "wavenores1": null,
         "wavenores2": null,
         "specflag": "No",
@@ -48,7 +48,7 @@
     },
     "Occultation/Reflectance Profiles Constraints": {
         "occtype": "Stellar",
-        "occdir": "Ingress",
+        "occdir": "Egress",
         "bodyoccflag": "No",
         "occtimesampling": null,
         "occdataquality": "Unassigned",
@@ -56,7 +56,7 @@
         "occdepth2": null,
         "occwlband": "IR",
         "occsource": "28 Sgr",
-        "occreceiverhost": "McDonald Harlan J Smith 2.7m",
+        "occreceiverhost": "ESO La Silla 1m",
         "RINGGEOringradius1": "73004.5",
         "RINGGEOringradius2": "141994.5",
         "RINGGEOsolarringopeningangle1": "-25.373",
@@ -130,7 +130,7 @@
         "RINGGEOedgeonradialresolution2": null,
         "RINGGEOedgeonaltitude1": null,
         "RINGGEOedgeonaltitude2": null,
-        "RINGGEOringintercepttime1": "1989-07-03T04:42:22.860",
-        "RINGGEOringintercepttime2": "1989-07-03T05:33:57.120"
+        "RINGGEOringintercepttime1": "1989-07-03T07:21:23.460",
+        "RINGGEOringintercepttime2": "1989-07-03T08:15:11.530"
     }
 }

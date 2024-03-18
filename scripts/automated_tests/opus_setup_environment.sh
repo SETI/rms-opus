@@ -30,6 +30,7 @@ if [ $? -ne 0 ]; then
     CWD=`pwd`
 fi
 
+# Enable these commands to override the default PdsFile with a particular branch
 git clone https://github.com/SETI/rms-pdsfile
 (cd rms-pdsfile; git checkout 12_convert_opus_id)
 pip uninstall -y rms-pdsfile

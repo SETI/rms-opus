@@ -501,27 +501,27 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "ebro_profile",
+        "pi_dict_name": "ebro_occ_profile",
         "definition": "Text files (*.TAB) that tabulate an occultation profile. Associated labels (*.LBL) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "ebro_geom",
+        "pi_dict_name": "ebro_occ_geom",
         "definition": "Text files (*.TAB) that tabulate geometry information for an occultation profile. Associated labels (*.LBL) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "ebro_preview",
+        "pi_dict_name": "ebro_occ_preview",
         "definition": "Document files (*.PDF and *.PS) that contain plots of an occultation profile. Associated labels (*.LBL) describe the contents of the document files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "ebro_diagram",
+        "pi_dict_name": "ebro_occ_diagram",
         "definition": "Document files (*.PDF and *.PS) that contain plots of the observation geometry of an occultation profile. Associated labels (*.LBL) describe the contents of the document files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "ebro_source",
+        "pi_dict_name": "ebro_occ_source",
         "definition": "Data files (*.OUT and *.DAT) that contain the source data used to create an occultation profile. Associated labels (*.LBL) describe the contents of the data files."
     },
     {

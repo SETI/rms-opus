@@ -66,6 +66,10 @@ class ObsGeneral:
             self._log_nonrepeating_warning(
                 f'ViewSet threw ValueError for "{filespec}": {e}')
             viewset = None
+        except IOError as e:
+            self._log_nonrepeating_warning(
+                f'ViewSet threw IOError for "{filespec}": {e}')
+            viewset = None
 
         if viewset:
             browse_data = viewset.to_dict()

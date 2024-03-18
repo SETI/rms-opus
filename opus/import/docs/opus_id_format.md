@@ -120,6 +120,7 @@ Ground-based telescopes use an abbreviation of the site name and the telescope s
 | `las_cumbres.1m0_telescopes`          | `lascum1m0` |
 | `las_cumbres.2m0_telescopes`          | `lascum2m0` |
 | `leura.0m25`                          | `leu0m25` |
+| `lick.nickel` (not in PDS4)           | `lick1m` |
 | `lick.shane3m05`                      | `lick3m05` |
 | `lowell.21in0`                        | `low21in` |
 | `lowell.discovery_4m3`                | `llow4m3` |

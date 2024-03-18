@@ -407,35 +407,35 @@
     },
     {
         "category": "Earth-based Occultations",
-        "product_type": "ebro_profile",
+        "product_type": "ebro_occ_profile",
         "description": "Occultation Profile",
         "version_number": 999999,
         "version_name": "Current"
     },
     {
         "category": "Earth-based Occultations",
-        "product_type": "ebro_geom",
+        "product_type": "ebro_occ_geom",
         "description": "Geometry Table",
         "version_number": 999999,
         "version_name": "Current"
     },
     {
         "category": "Earth-based Occultations",
-        "product_type": "ebro_preview",
+        "product_type": "ebro_occ_preview",
         "description": "Preview Plot",
         "version_number": 999999,
         "version_name": "Current"
     },
     {
         "category": "Earth-based Occultations",
-        "product_type": "ebro_diagram",
+        "product_type": "ebro_occ_diagram",
         "description": "Geometry Diagram",
         "version_number": 999999,
         "version_name": "Current"
     },
     {
         "category": "Earth-based Occultations",
-        "product_type": "ebro_source",
+        "product_type": "ebro_occ_source",
         "description": "Source Data",
         "version_number": 999999,
         "version_name": "Current"
@@ -1352,6 +1352,13 @@
     },
     {
         "category": "metadata",
+        "product_type": "cube_index",
+        "description": "Cube Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "metadata",
         "product_type": "rms_index",
         "description": "RMS Node Augmented Index",
         "version_number": 999999,
@@ -1368,20 +1375,6 @@
         "category": "metadata",
         "product_type": "raw_image_index",
         "description": "Raw Image Index",
-        "version_number": 999999,
-        "version_name": "Current"
-    },
-    {
-        "category": "metadata",
-        "product_type": "cube_index",
-        "description": "Cube Index",
-        "version_number": 999999,
-        "version_name": "Current"
-    },
-    {
-        "category": "metadata",
-        "product_type": "profile_index",
-        "description": "Profile Index",
         "version_number": 999999,
         "version_name": "Current"
     },

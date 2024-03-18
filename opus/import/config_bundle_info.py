@@ -248,7 +248,7 @@ BUNDLE_INFO = [
         {'pds_version': 4,
          'primary_index': ('<BUNDLE>_rings_index.csv',
                            '<BUNDLE>_global_index.csv',
-                           '<BUNDLE>_atmos_index.csv'),
+                           '<BUNDLE>_atmosphere_index.csv'),
          'validate_index_rows': True,
          'temporal_camera': True,
          'instrument_class': ObsBundleUranusOccsEarthbased},

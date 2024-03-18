@@ -616,7 +616,9 @@ def import_one_bundle(bundle_id):
             impglobals.CURRENT_PRIMARY_FILESPEC = None
             return ret
 
-    import_util.log_error(f'No index label file found: "{bundle_id}"')
+    import_util.log_error(f'No index label file found: "{bundle_id}" - searched in:')
+    for path in index_paths:
+        import_util.log_error(f'    {path}')
     impglobals.LOGGER.close()
     impglobals.CURRENT_BUNDLE_ID = None
 
@@ -1222,6 +1224,9 @@ def import_observation_table(instrument_obj,
                         group_disp_order_list = [x['group_disp_order'] for x in ret]
                     else:
                         column_val_list = ret
+                else:
+                    # Error will already be logged by import_run_field_function
+                    column_val_list = [None]
 
             elif data_source == 'LONGITUDE_FIELD':
                 column_val_list = [instrument_obj.compute_longitude_field()]
@@ -1419,7 +1424,7 @@ def import_observation_table(instrument_obj,
 def import_run_field_function(instrument_obj,
                               table_name, table_schema, metadata,
                               field_name):
-    "Call the Python function used to populate a single field in a table."
+    """Call the Python function used to populate a single field in a table."""
     if table_name.startswith('obs_surface_geometry__'):
         table_name = 'obs_surface_geometry_target'
     func_name = 'field_'+table_name+'_'+field_name
