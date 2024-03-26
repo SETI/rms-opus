@@ -812,6 +812,118 @@
         "version_name": "Current"
     },
     {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_ring_0100",
+        "description": "Occultation Ring Profile (100 m)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_ring_0500",
+        "description": "Occultation Ring Profile (500 m)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_ring_1000",
+        "description": "Occultation Ring Profile (1 km)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_ring_time",
+        "description": "Occultation Ring Time Series",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_ring_sqw_model",
+        "description": "Occultation Ring Model",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_atmos",
+        "description": "Occultation Atmosphere Time Series",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_global_0100",
+        "description": "Occultation Ring-Plane Profile (100 m)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_global_0500",
+        "description": "Occultation Ring-Plane Profile (500 m)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_global_1000",
+        "description": "Occultation Ring-Plane Profile (1 km)",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_global_time",
+        "description": "Occultation Ring-Plane Time Series",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_global_ring_fit",
+        "description": "Global Ring Orbital Fit",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_orig_index",
+        "description": "Original Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_quality_rating",
+        "description": "Quality Ratings",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_documentation",
+        "description": "Documentation",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_software",
+        "description": "Software",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Uranus Earth-based Occultations",
+        "product_type": "ebur_occ_kernels",
+        "description": "SPICE Kernels",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
         "category": "Voyager ISS",
         "product_type": "vgiss_raw",
         "description": "Raw Image",

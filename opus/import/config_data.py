@@ -110,7 +110,9 @@ INSTRUMENT_ID_TO_MISSION_ID = {
     'VGUVS':     'VG',
 }
 
-# Mapping from instrument abbrev to instrument name
+# Mapping from instrument id to instrument name.
+# This only includes the keys from the INSTRUMENT_ID_TO_MISSION_ID table;
+# these are the instruments that have their own obs_ table.
 INSTRUMENT_ID_TO_INSTRUMENT_NAME = {
     'COCIRS':      'Cassini CIRS',
     'COISS':       'Cassini ISS',
@@ -128,11 +130,4 @@ INSTRUMENT_ID_TO_INSTRUMENT_NAME = {
     'VGPPS':       'Voyager PPS',
     'VGRSS':       'Voyager RSS',
     'VGUVS':       'Voyager UVS',
-    # Ground-based
-    'ESO1MAPPH':   'ESO 1-Meter Aperture Photometer',
-    'ESO22MAPPH':  'ESO 2.2-Meter Aperture Photometer',
-    'IRTFURAC':    'NASA IRTF URAC',
-    'LICK1MCCDC':  'Lick 1-Meter CCD Camera',
-    'MCD27MIIRAR': 'McDonald Observatory 2.7-Meter INSB IR Array',
-    'PAL200CIRC':  'Palomar Observatory 200-Inch Cassegrain IR Camera'
 }

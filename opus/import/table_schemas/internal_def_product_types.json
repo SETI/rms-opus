@@ -913,5 +913,90 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss_documentation",
         "definition": "RMS-curated document collection for Voyager ISS observations."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_ring_0100",
+        "definition": "Text files (*.tab) that tabulate an occultation profile for a specific ring with 100m resolution. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_ring_0500",
+        "definition": "Text files (*.tab) that tabulate an occultation profile for a specific ring with 500 m resolution. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_ring_1000",
+        "definition": "Text files (*.tab) that tabulate an occultation profile for a specific ring with 1 km resolution. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_ring_time",
+        "definition": "Text files (*.tab) that tabulate an occultation ring profile as a time series. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_ring_sqw_model",
+        "definition": "Files that describe the diffraction square well model used to create the occultation profile."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_atmos",
+        "definition": "Text files (*.tab) that tabulate an occultation atmosphere profile as a time series. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_global_0100",
+        "definition": "Text files (*.tab) that tabulate an occultation profile for the entire ring plane with 100 m resolution. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_global_0500",
+        "definition": "Text files (*.tab) that tabulate an occultation profile for the entire ring plane with 500 m resolution. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_global_1000",
+        "definition": "Text files (*.tab) that tabulate an occultation profile for the entire ring plane with 1 km resolution. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_global_time",
+        "definition": "Text files (*.tab) that tabulate an occultation profile for the entire ring plane as a time series. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_global_ring_fit",
+        "definition": "Text files (*.tab and *.csv) that describe the global orbit fit of the rings and the process used to derive it. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_orig_index",
+        "definition": "A text file (uranus_occultations_index.tab) supplied by the bundle authors that tabulates metadata fields for every ring occultation in the bundle. An associated label (uranus_occultations_index.tab) describes the contents of the text file."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_rings_definitions",
+        "definition": "A text file (rings-dictionary-attribute-definitions.txt) that describes each XML attribute in the Rings Dictionary used in the bundle. An associated label (rings-dictionary-attribute-definitions.xml) describes the contents of the text file."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_quality_rating",
+        "definition": "A text file (uranus_ringocc_bundles_quality_rating.csv) that tabulates the quality of the profiles for each ring and occultation. An associated label (uranus_ringocc_bundles_quality_rating.xml) describes the contents of the text file."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_documentation",
+        "definition": "The bundle user guide (earth_based_uranus_stellar_occultation_user_guide.pdf). An associated label (earth_based_uranus_stellar_occultation_user_guide.xml) describes the contents of the PDF file."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_software",
+        "definition": "Sample IDL and Python programs."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "ebur_occ_kernels",
+        "definition": "SPICE kernels defining the Uranus equatorial and ring reference frames and the Kuiper Airborne Observatory track on March 10, 1977."
     }
 ]
