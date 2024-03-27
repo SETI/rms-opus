@@ -137,9 +137,9 @@
                                         {{ product_info.product_type }}
                                     </div>
                                 </div>
-                                <div class="op-options-obs col text-right">{{ product_info.product_count|intcomma }}</div>
-                                <div class="op-options-files col text-right">{{ product_info.download_count|intcomma }}</div>
-                                <div class="op-options-size col text-right">{{ product_info.download_size_pretty }}</div>
+                                <div class="op-options-obs col text-end">{{ product_info.product_count|intcomma }}</div>
+                                <div class="op-options-files col text-end">{{ product_info.download_count|intcomma }}</div>
+                                <div class="op-options-size col text-end">{{ product_info.download_size_pretty }}</div>
                             </div>
                         {% endfor %}
                     {% endfor %}
