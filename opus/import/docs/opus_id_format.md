@@ -120,6 +120,7 @@ Ground-based telescopes use an abbreviation of the site name and the telescope s
 | `las_cumbres.1m0_telescopes`          | `lascum1m0` |
 | `las_cumbres.2m0_telescopes`          | `lascum2m0` |
 | `leura.0m25`                          | `leu0m25` |
+| `lick.nickel` (not in PDS4)           | `lick1m` |
 | `lick.shane3m05`                      | `lick3m05` |
 | `lowell.21in0`                        | `low21in` |
 | `lowell.discovery_4m3`                | `llow4m3` |
@@ -200,6 +201,8 @@ above list. We map them, and the other telescopes in that volume, as follows.
 | McDonald 2.7-meter    | `mcd2m7` |
 | Palomar 200-inch Cass | `pal5m08` |
 
+The `uranus_occs_earthbased` bundle refers to the telescope `caha.1m23` but this is
+not a valid telescope name. We map it to be the same as `caha-calar_alto.1m23`.
 
 ## Instrument Names and Observation Details (non-Occultation)
 
@@ -275,7 +278,7 @@ OPUS IDs for atmosphere occultations follow the format:
 - `<direction>` is the direction of the occultation: `i` for ingress, `e` for `egress`, or `b` for both.
 
 For ground-based telescopes, the particular detector is often not specified or
-well-defined. For example, for the PDS4 Uranus occultations, all telescopes are
+well-defined. For example, for the `uranus_occs_earthbased` bundle, many telescopes are
 marked as using a "Generic InSb High Speed Photometer". We simply have to do the best we can to figure out an instrument name and provide an appropriate abbreviation for the OPUS ID, or use a generic instrument abbreviation like `insb` when that is not possible.
 
 Example OPUS IDs for various instruments:
@@ -285,6 +288,7 @@ Example OPUS IDs for various instruments:
 | Cassini RSS     | `co-rss-occ-2008-027-rev057c-s43-i` |
 | Cassini UVIS    | `co-uvis-occ-2008-026-gamlup-i` |
 | Cassini VIMS    | `co-vims-occ-2007-163-alpori-i` |
+| HST FOS         | `hst-fos-occ-1996-076-u137-delta-e` |
 | Voyager RSS     | `vg-rss-1-s-occ-1980-318-s63-e` |
 | Voyager UVS     | `vg-uvs-1-s-occ-1980-317-iother-e` |
 | Voyager UVS     | `vg-uvs-2-u-occ-1986-024-sigsgr-epsilon-i` |
@@ -292,5 +296,5 @@ Example OPUS IDs for various instruments:
 | Voyager PPS     | `vg-pps-2-s-occ-1981-238-delsco-e` |
 | Voyager PPS     | `vg-pps-2-u-occ-1986-024-betper-four-i` |
 | Lick CCD Camera | `lick1m-ccdc-occ-1989-184-28sgr-i` |
-| Palomar 5.08m   | `pal5m08-insb-occ-2002-210-u0201-alpha-i` |
-| Palomar 5.08m   | `pal5m08-insb-occ-2002-210-u0201-uranus-i` |
+| Palomar 5.08m   | `pal5m08-insb-occ-1982-155-u16-ringpl-i` |
+| Palomar 5.08m   | `pal5m08-insb-occ-1982-155-u16-uranus-i` |

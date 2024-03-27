@@ -2,8 +2,8 @@
 # obs_volume_vg28xx.py
 #
 # Defines the ObsVolumeVG28xx class, the parent for the
-# ObsVolumeVG28xxVGISS, ObsVolumeVG28xxVGPPS, ObsVolumeVG28xxVGRSS,
-# and ObsVolumeVG28xxVGUVS classes, which encapsulate
+# ObsVolumeVG2810VGISS, ObsVolumeVG2801VGPPS, ObsVolumeVG2803VGRSS,
+# and ObsVolumeVG2802VGUVS classes, which encapsulate
 # fields in the common, obs_mission_voyager, and (sometimes)
 # obs_instrument_vgiss tables for the VG_28XX volumes.
 ################################################################################

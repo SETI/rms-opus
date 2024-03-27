@@ -112,7 +112,7 @@ def api_bundles(request, fmt):
 
     context = {'all_bundles': all_bundles}
     ret = _render_html_or_pdf(request, 'help/bundles.html', fmt, 'bundles',
-                              'Volumes Available for Searching with OPUS',
+                              'Bundles/Volumes Available for Searching with OPUS',
                               context)
     exit_api_call(api_code, ret)
     return ret

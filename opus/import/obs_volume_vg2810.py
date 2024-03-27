@@ -1,7 +1,7 @@
 ################################################################################
-# obs_volume_vg28xx_vgiss.py
+# obs_volume_vg2810_vgiss.py
 #
-# Defines the ObsInstrumentVG28xxISS class, which encapsulates fields for the
+# Defines the ObsVolumeVG28xxISS class, which encapsulates fields for the
 # common, obs_mission_voyager, and obs_instrument_vgiss tables for VG_2810
 # radial profiles.
 ################################################################################
@@ -9,7 +9,7 @@
 from obs_volume_vg28xx import ObsVolumeVG28xx
 
 
-class ObsVolumeVG28xxVGISS(ObsVolumeVG28xx):
+class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -68,7 +68,7 @@ class ObsVolumeVG28xxVGISS(ObsVolumeVG28xx):
         return self._create_mult(None)
 
     def field_obs_profile_host(self):
-        return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME'))
+        return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME').lower())
 
 
     #####################################

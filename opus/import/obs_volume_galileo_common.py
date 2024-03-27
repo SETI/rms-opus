@@ -5,10 +5,10 @@
 # common and obs_mission_galileo tables.
 ################################################################################
 
-from obs_common import ObsCommon
+from obs_common_pds3 import ObsCommonPDS3
 
 
-class ObsVolumeGalileoCommon(ObsCommon):
+class ObsVolumeGalileoCommon(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

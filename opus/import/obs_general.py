@@ -10,13 +10,8 @@ import os
 
 import impglobals # It would be nice to have a better way to pass in cmd line args
 
-from obs_base import ObsBase
 
-
-class ObsGeneral(ObsBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+class ObsGeneral:
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -70,6 +65,10 @@ class ObsGeneral(ObsBase):
         except ValueError as e:
             self._log_nonrepeating_warning(
                 f'ViewSet threw ValueError for "{filespec}": {e}')
+            viewset = None
+        except IOError as e:
+            self._log_nonrepeating_warning(
+                f'ViewSet threw IOError for "{filespec}": {e}')
             viewset = None
 
         if viewset:
@@ -129,11 +128,7 @@ class ObsGeneral(ObsBase):
     ################################
 
     def _target_name(self):
-        target_name = self._some_index_or_label_col('TARGET_NAME')
-        target_name, target_info = self._get_target_info(target_name)
-        if target_info is None:
-            return None, None
-        return [(target_name, target_info[2])]
+        raise NotImplementedError
 
     def field_obs_general_target_name(self):
         ret = []

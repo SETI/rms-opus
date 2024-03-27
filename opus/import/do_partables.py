@@ -4,7 +4,7 @@
 # Generate and maintain the partables table.
 ################################################################################
 
-from config_data import *
+import config_data
 from do_import import mult_table_lookup_id
 import impglobals
 import import_util
@@ -38,7 +38,7 @@ def create_import_partables_table():
     rows = []
 
     mission_id_column = _lookup_table_column(obs_general_schema, 'mission_id')
-    for mission_id in sorted(MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
+    for mission_id in sorted(config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
         mission_id_val = mult_table_lookup_id('obs_general', 'mission_id',
                                               mission_id_column, mission_id)
         entry = {
@@ -50,7 +50,7 @@ def create_import_partables_table():
         rows.append(entry)
 
     instrument_id_column = _lookup_table_column(obs_general_schema, 'instrument_id')
-    for instrument_id in sorted(INSTRUMENT_ID_TO_MISSION_ID.keys()):
+    for instrument_id in sorted(config_data.INSTRUMENT_ID_TO_MISSION_ID.keys()):
         instrument_id_val = mult_table_lookup_id('obs_general', 'instrument_id',
                                                  instrument_id_column, instrument_id)
         partable = import_util.table_name_obs_instrument(instrument_id)
@@ -67,7 +67,7 @@ def create_import_partables_table():
         rows.append(entry)
 
     inst_host_id_column = _lookup_table_column(obs_general_schema, 'inst_host_id')
-    for inst_host_id in sorted(INST_HOST_ID_TO_MISSION_ID.keys()):
+    for inst_host_id in sorted(config_data.INST_HOST_ID_TO_MISSION_ID.keys()):
         inst_host_id_val = mult_table_lookup_id('obs_general', 'inst_host_id',
                                                 inst_host_id_column, inst_host_id)
         entry = {
@@ -75,8 +75,8 @@ def create_import_partables_table():
             'trigger_col': 'inst_host_id',
             'trigger_val': str(inst_host_id_val),
             'partable':    ('obs_mission_'+
-                            MISSION_ID_TO_MISSION_TABLE_SFX[
-                                INST_HOST_ID_TO_MISSION_ID[
+                            config_data.MISSION_ID_TO_MISSION_TABLE_SFX[
+                                config_data.INST_HOST_ID_TO_MISSION_ID[
                                     inst_host_id]])
         }
         rows.append(entry)
