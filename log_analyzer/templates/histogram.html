@@ -80,16 +80,16 @@
                     {% for key in row.key %}
                         <td colspan="{{ key_column_span }}">{{ key }}</td>
                     {% endfor %}
-                    <td class="text-right">{{ "{:,d}".format(row.manifest_count) }}</td>
-                    <td class="text-right">{{ "{:,d}".format(row.opus_id_count) }}</td>
-                    <td class="text-right">{{ "{:,d}".format(row.file_path_count) }}</td>
-                    <td class="text-right">{{ "{:,.2f}".format(row.file_path_bytes / 1000000.0) }}</td>
+                    <td class="text-end">{{ "{:,d}".format(row.manifest_count) }}</td>
+                    <td class="text-end">{{ "{:,d}".format(row.opus_id_count) }}</td>
+                    <td class="text-end">{{ "{:,d}".format(row.file_path_count) }}</td>
+                    <td class="text-end">{{ "{:,.2f}".format(row.file_path_bytes / 1000000.0) }}</td>
                 </tr>
             {% endfor %}
             <tr>
                 <th colspan="{{ key_columns + 2 }}">Total</th>
-                <td class="text-right">{{ "{:,d}".format(table.total.file_path_count) }}</td>
-                <td class="text-right">{{ "{:,.2f}".format(table.total.file_path_bytes / 1000000.0) }}</td>
+                <td class="text-end">{{ "{:,d}".format(table.total.file_path_count) }}</td>
+                <td class="text-end">{{ "{:,.2f}".format(table.total.file_path_bytes / 1000000.0) }}</td>
             </tr>
         </tbody>
     {% endfor %}
@@ -183,4 +183,3 @@ $(function() {
 
 </script>
 {% endwith %}
-
