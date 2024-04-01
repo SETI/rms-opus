@@ -1,5 +1,5 @@
 ################################################################################
-# impglobals.py
+# import_util.py
 #
 # General utilities used by the import process.
 ################################################################################
@@ -15,6 +15,7 @@ import traceback
 
 import julian
 import pdsfile
+import pdslogger
 import pdsparser
 import pdstable
 
@@ -398,6 +399,49 @@ def find_max_table_id(table_name):
 ################################################################################
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################
+
+class NoDupLogger(pdslogger.PdsLogger):
+    """Wrapper around PdsLogger that only logs each message one time.
+
+    This is used for logging of PdsFile warnings that we don't want to see
+    over and over."""
+
+    _LOGGED_DEBUG = []
+    _LOGGED_WARN = []
+    _LOGGED_ERROR = []
+    _LOGGED_FATAL = []
+
+    def __init__(self, logger):
+        self._logger = logger
+
+    def debug(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_DEBUG:
+            return
+        self._LOGGED_DEBUG.append(key)
+        self._logger.debug(msg, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_WARN:
+            return
+        self._LOGGED_WARN.append(key)
+        self._logger.warn(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_ERROR:
+            return
+        self._LOGGED_ERROR.append(key)
+        self._logger.error(msg, *args, **kwargs)
+
+    def fatal(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_FATAL:
+            return
+        self._LOGGED_FATAL.append(key)
+        self._logger.fatal(msg, *args, **kwargs)
+
 
 def _format_bundle_line():
     ret = ''

@@ -45,6 +45,7 @@ import do_update_mult_info # noqa: E402
 import do_validate # noqa: E402
 import impglobals # noqa: E402
 import importdb # noqa: E402
+import import_util
 
 
 ################################################################################
@@ -429,8 +430,8 @@ try: # Top-level exception handling so we always log what's going on
     # We do this after the preload because we don't want to see all the preload
     # debug messages.
     if not impglobals.ARGUMENTS.no_log_pdsfile:
-        Pds3File.set_logger(impglobals.LOGGER)
-        Pds4File.set_logger(impglobals.LOGGER)
+        Pds3File.set_logger(import_util.NoDupLogger(impglobals.LOGGER))
+        Pds4File.set_logger(import_util.NoDupLogger(impglobals.LOGGER))
 
     try:
         impglobals.DATABASE = importdb.get_db(

@@ -675,13 +675,17 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
             for row_no in row_nos:
                 valid_rows[row_no] = False
             good_row = None
+            deriv_filespec = None
             try:
                 deriv_filespec = pdsfile.pds3file.Pds3File.from_opus_id(opus_id).abspath
             except ValueError:
-                impglobals.CURRENT_INDEX_ROW_NUMBER = row_no+1
-                import_util.log_nonrepeating_warning(
-                    f'Unable to convert OPUS ID "{opus_id}" to filespec')
-            else:
+                try:
+                    deriv_filespec = pdsfile.pds4file.Pds4File.from_opus_id(opus_id).abspath
+                except ValueError:
+                    impglobals.CURRENT_INDEX_ROW_NUMBER = row_no+1
+                    import_util.log_nonrepeating_warning(
+                        f'Unable to convert OPUS ID "{opus_id}" to filespec')
+            if deriv_filespec is not None:
                 for row_no in row_nos:
                     orig_filespec = instrument_obj.primary_filespec_from_index_row(
                                             obs_rows[row_no], convert_lbl=True)
