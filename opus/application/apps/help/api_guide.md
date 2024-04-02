@@ -2108,9 +2108,9 @@ Examples:
 }
 %ENDCODE%
 
-* Retrieve information about the `SURFACEGEOrhea_centerphaseangle` field in JSON format.
+* Retrieve information about the `SURFACEGEOrhea_centerphaseangle1` field in JSON format.
 
-    %EXTLINK%%HOST%/opus/api/fields/SURFACEGEOrhea_centerphaseangle.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields/SURFACEGEOrhea_centerphaseangle1.json%ENDEXTLINK%
 
     Return value:
 
@@ -2118,13 +2118,13 @@ Examples:
 {
   "data": {
     "Rhea Surface Geometry Constraints": {
-      "SURFACEGEOrhea_centerphaseangle": {
-        "field_id": "SURFACEGEOrhea_centerphaseangle",
+      "SURFACEGEOrhea_centerphaseangle1": {
+        "field_id": "SURFACEGEOrhea_centerphaseangle1",
         "category": "Rhea Surface Geometry Constraints",
         "type": "range_float",
-        "label": "Phase Angle at Body Center",
+        "label": "Phase Angle at Body Center (Min)",
         "search_label": "Phase Angle at Body Center",
-        "full_label": "Phase Angle at Body Center [Rhea]",
+        "full_label": "Phase Angle at Body Center (Min) [Rhea]",
         "full_search_label": "Phase Angle at Body Center [Rhea]",
         "default_units": "degrees",
         "available_units": [
@@ -2132,8 +2132,8 @@ Examples:
           "hourangle",
           "radians"
         ],
-        "old_slug": "SURFACEGEOrheacenterphaseangle",
-        "slug": "SURFACEGEOrhea_centerphaseangle",
+        "old_slug": "SURFACEGEOrhea_centerphaseangle",
+        "slug": "SURFACEGEOrhea_centerphaseangle1",
         "linked": false
       }
     }
