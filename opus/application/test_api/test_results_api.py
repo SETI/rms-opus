@@ -90,12 +90,12 @@ class ApiResultsTests(TestCase, ApiTestHelper):
 
     def test__api_dataimages_corss_cols_units(self):
         "[test_results_api.py] /__api/dataimages: corss search & cols & units"
-        url = '/__api/dataimages.json?instrument=Cassini+RSS&occdir=Ingress&cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&startobs=5&limit=40&reqno=12'
+        url = '/__api/dataimages.json?instrument=Cassini+RSS&occdir=Ingress&cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOincidence1&order=RINGGEOringradius1,-RINGGEOincidence1,opusid&startobs=5&limit=40&reqno=12'
         self._run_json_equal_file(url, 'api_dataimages_corss_cols_units.json')
 
     def test__api_dataimages_corss_cols_units_page(self):
         "[test_results_api.py] /__api/dataimages: corss search & cols & units"
-        url = '/__api/dataimages.json?instrument=Cassini+RSS&cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&page=1&limit=40&reqno=12'
+        url = '/__api/dataimages.json?instrument=Cassini+RSS&cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOincidence1&order=RINGGEOringradius1,-RINGGEOincidence1,opusid&page=1&limit=40&reqno=12'
         self._run_json_equal_file(url, 'api_dataimages_corss_cols_units_page.json')
 
     def test__api_dataimages_corss_cols_units_cart(self):
@@ -106,7 +106,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?instrument=Cassini+RSS&reqno=456'
         expected = {'recycled_count': 0, 'count': 204, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&limit=40&reqno=12&view=cart'
+        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOincidence1&order=RINGGEOringradius1,-RINGGEOincidence1,opusid&limit=40&reqno=12&view=cart'
         self._run_json_equal_file(url, 'api_dataimages_corss_cols_units_cart.json')
 
     def test__api_dataimages_corss_cols_units_cart_recycle(self):
@@ -120,7 +120,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-rss-occ-2005-123-rev007-s43-i&reqno=456&recyclebin=1'
         expected = {'recycled_count': 1, 'count': 203, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&limit=4000&reqno=12&view=cart'
+        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOincidence1&order=RINGGEOringradius1,-RINGGEOincidence1,opusid&limit=4000&reqno=12&view=cart'
         self._run_json_equal_file(url, 'api_dataimages_corss_cols_units_cart_recycle.json')
 
     def test__api_dataimages_corss_startobs_cart(self):
@@ -131,7 +131,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?instrument=Cassini+RSS&reqno=456'
         expected = {'recycled_count': 0, 'count': 204, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&cart_startobs=10&limit=40&reqno=12&view=cart'
+        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOincidence1&order=RINGGEOringradius1,-RINGGEOincidence1,opusid&cart_startobs=10&limit=40&reqno=12&view=cart'
         self._run_json_equal_file(url, 'api_dataimages_corss_startobs_cart.json')
 
     def test__api_dataimages_corss_page_cart(self):
@@ -142,7 +142,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?instrument=Cassini+RSS&reqno=456'
         expected = {'recycled_count': 0, 'count': 204, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOsolarringelevation1&order=RINGGEOringradius1,-RINGGEOsolarringelevation1,opusid&page=3&limit=40&reqno=12&view=cart'
+        url = '/__api/dataimages.json?cols=opusid,instrument,target,time1:ydhms,observationduration:milliseconds,RINGGEOringradius1:saturnradii,RINGGEOringradius2:saturnradii,RINGGEOincidence1&order=RINGGEOringradius1,-RINGGEOincidence1,opusid&page=3&limit=40&reqno=12&view=cart'
         self._run_json_equal_file(url, 'api_dataimages_corss_page_cart.json')
 
     # fake

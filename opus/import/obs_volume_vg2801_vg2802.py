@@ -134,19 +134,11 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
     # Source SIGMA SGR is at north, observer Voyager is at south. Target: N ring.
     # Source BETA PER is at north, observer Voyager is at south. Target: U ring.
 
-    # Ring elevation to Sun, same to opening angle except, it's positive if
-    # source is at north side of Jupiter, Saturn, and Neptune, and south side of
-    # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
-    # and north side of Uranus.
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        if self._is_voyager_at_north_except_uranus():
-            return self.field_obs_ring_geometry_incidence1() - 90.
-        return 90. - self.field_obs_ring_geometry_incidence2()
+        return None
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        if self._is_voyager_at_north_except_uranus():
-            return self.field_obs_ring_geometry_incidence2() - 90.
-        return 90. - self.field_obs_ring_geometry_incidence1()
+        return None
 
     # Ring elevation to observer, same to opening angle except, it's positive if
     # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -226,20 +218,11 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
             return 180. - self.field_obs_ring_geometry_emission1()
         return self.field_obs_ring_geometry_emission2()
 
-    # Opening angle to Sun: the angle between the ring surface to the direction
-    # where incoming photons from the source. Positive if source is at the north
-    # side of the ring, negative if it's at the south side. In this case, source
-    # is at the north side, so it's 90 - inc. For reference, if source is at the
-    # south side, then oa is - (90 - inc).
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        if self._is_voyager_at_north():
-            return self.field_obs_ring_geometry_incidence1() - 90.
-        return 90. - self.field_obs_ring_geometry_incidence2()
+        return None
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        if self._is_voyager_at_north():
-            return self.field_obs_ring_geometry_incidence2() - 90.
-        return 90. - self.field_obs_ring_geometry_incidence1()
+        return None
 
     # Opening angle to observer: the angle between the ring surface to the direction
     # where outgoing photons to the observer. Positive if observer is at the north

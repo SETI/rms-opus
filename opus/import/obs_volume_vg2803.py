@@ -77,19 +77,11 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     # angle is more than 90, it means the observer is at the south side of the
     # ring. Otherwise, the observer is at the north side of the ring.
 
-    # Ring elevation to Sun, same to opening angle except, it's positive if
-    # source is at north side of Jupiter, Saturn, and Neptune, and south side of
-    # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
-    # and north side of Uranus.
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        if self._is_voyager_at_uranus():
-            return 90. - self.field_obs_ring_geometry_incidence2()
-        return self.field_obs_ring_geometry_incidence1() - 90.
+        return None
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        if self._is_voyager_at_uranus():
-            return 90. - self.field_obs_ring_geometry_incidence1()
-        return self.field_obs_ring_geometry_incidence2() - 90.
+        return None
 
     # Ring elevation to observer, same to opening angle except, it's positive if
     # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -159,16 +151,11 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     def field_obs_ring_geometry_north_based_emission2(self):
         return 180. - self.field_obs_ring_geometry_emission1()
 
-    # Opening angle to Sun: the angle between the ring surface to the direction
-    # where incoming photons from the source. Positive if source is at the north
-    # side of the ring, negative if it's at the south side. In this case, source
-    # is at the north side, so it's 90 - inc. For reference, if source is at the
-    # south side, then oa is - (90 - inc).
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return self.field_obs_ring_geometry_incidence1() - 90.
+        return None
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return self.field_obs_ring_geometry_incidence2() - 90.
+        return None
 
     # Opening angle to observer: the angle between the ring surface to the direction
     # where outgoing photons to the observer. Positive if observer is at the north

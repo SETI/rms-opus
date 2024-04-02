@@ -94,10 +94,10 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
     #####################################
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        return -self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+        return None
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return -self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+        return None
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):
         return self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
@@ -130,10 +130,10 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
         return 90. - self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return -self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+        return None
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return -self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+        return None
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
         return self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')

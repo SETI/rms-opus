@@ -252,13 +252,10 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     # For Uranus, these values are positive for the southern hemisphere.
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        inc = self._index_col('rings:light_source_incidence_angle')
-        if inc is not None:
-            inc = inc - 90.
-        return inc
+        return None
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return self.field_obs_ring_geometry_solar_ring_elevation1()
+        return None
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):
         inc = self._index_col('rings:light_source_incidence_angle')
@@ -337,13 +334,10 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
         return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        oa = self._index_col('rings:observed_ring_elevation')
-        if oa is not None:
-            oa = -oa
-        return oa
+        None
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return self.field_obs_ring_geometry_solar_ring_opening_angle1()
+        None
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
         return self._index_col('rings:observed_ring_elevation')

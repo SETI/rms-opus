@@ -11,8 +11,8 @@ Wavelength Constraints
 Wavelength (Min) (microns),Wavelength (Max) (microns),Wavelength Resolution (Min) (microns/pixel),Wavelength Resolution (Max) (microns/pixel),Wavenumber (Min) (cm^-1),Wavenumber (Max) (cm^-1),Wavenumber Resolution (Min) (cm^-1/pixel),Wavenumber Resolution (Max) (cm^-1/pixel),Spectral Information Flag,Spectrum Size,Polarization Type
 0.35,0.45,0.1,0.1,22222.2222222,28571.4285714,6349.206349206,6349.206349206,No,N/A,None
 Occultation/Reflectance Profiles Constraints
-Occultation or Profile Type,Occultation Direction,Body Occultation Flag,Temporal Sampling Interval (secs),Data Quality Score,Detectable Optical Depth (Min),Detectable Optical Depth (Max),Wavelength Band,Signal Source Name,Receiver Host Name,Observed Ring Radius (Min) [Ring] (km),Observed Ring Radius (Max) [Ring] (km),Ring Center Opening Angle to Sun (Min) [Ring] (degrees),Ring Center Opening Angle to Sun (Max) [Ring] (degrees),Ring Center Opening Angle to Observer (Min) [Ring] (degrees),Ring Center Opening Angle to Observer (Max) [Ring] (degrees)
-N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,60366.558,561518.661,7.871,7.871,10.753,10.753
+Occultation or Profile Type,Occultation Direction,Body Occultation Flag,Temporal Sampling Interval (secs),Data Quality Score,Detectable Optical Depth (Min),Detectable Optical Depth (Max),Wavelength Band,Signal Source Name,Receiver Host Name,Observed Ring Radius (Min) [Ring] (km),Observed Ring Radius (Max) [Ring] (km),Observed Incidence Angle (Min) [Ring] (degrees),Observed Incidence Angle (Max) [Ring] (degrees),Ring Center Opening Angle to Observer (Min) [Ring] (degrees),Ring Center Opening Angle to Observer (Max) [Ring] (degrees)
+N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,60366.558,561518.661,82.128,82.132,10.753,10.753
 Surface Geometry Constraints
 Multiple Target List
 "Saturn,Tethys"
