@@ -54,7 +54,7 @@ packaging==23.2
     #   pytest
 pdfkit==1.0.0
     # via -r requirements.in
-pillow==10.2.0
+pillow==10.3.0
     # via -r requirements.in
 pip-tools==7.3.0
     # via -r requirements.in
@@ -118,8 +118,9 @@ urllib3==2.2.0
     # via requests
 wheel==0.42.0
     # via pip-tools
+xattr==1.1.0
+    # via rms-pdslogger
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
-# xattr
