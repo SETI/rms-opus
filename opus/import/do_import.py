@@ -1580,6 +1580,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                        'size': size,
                        'width': width,
                        'height': height,
+                       'pds_version': pds_version,
                        'default_checked': default_checked,
                        }
                 rows.append(row)

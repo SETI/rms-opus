@@ -345,6 +345,7 @@ The list of product files for any OPUS ID can be exceedingly long, and each file
     | size            | int unsigned | NO   |     | NULL              |
     | width           | int unsigned | YES  |     | NULL              |
     | height          | int unsigned | YES  |     | NULL              |
+    | pds_version     | int unsigned | NO   |     | NULL              |
     | id              | int unsigned | NO   | PRI | NULL              |
     | timestamp       | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +-----------------+--------------+------+-----+-------------------+

@@ -138,6 +138,12 @@
         "field_default": null
     },
     {
+        "field_name": "pds_version",
+        "field_type": "uint4",
+        "field_key": false,
+        "field_notnull": true
+    },
+    {
         "field_name": "id",
         "field_type": "uint4",
         "field_key": "primary",

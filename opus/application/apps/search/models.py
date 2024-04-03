@@ -1532,6 +1532,7 @@ class ObsFiles(models.Model):
     size = models.PositiveIntegerField()
     width = models.PositiveIntegerField(blank=True, null=True)
     height = models.PositiveIntegerField(blank=True, null=True)
+    pds_version = models.PositiveIntegerField()
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
