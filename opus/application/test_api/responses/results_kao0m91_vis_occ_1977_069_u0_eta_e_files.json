@@ -34,22 +34,6 @@
                 "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/ring_models/u0_kao_91cm_734nm_fitted_ring_event_times.xml",
                 "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/ring_models/u0_kao_91cm_734nm_fitted_ring_event_times.tab"
             ],
-            "ebur_occ_global_0100": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_100m.xml",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_100m.tab"
-            ],
-            "ebur_occ_global_0500": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_500m.xml",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_500m.tab"
-            ],
-            "ebur_occ_global_1000": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_1000m.xml",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_1000m.tab"
-            ],
-            "ebur_occ_global_time": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_counts-v-time_occult.xml",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_counts-v-time_occult.tab"
-            ],
             "ebur_occ_global_ring_fit": [
                 "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/data/uranus_occultation_ring_fit_rfrench_input_stars_20201201.csv",
                 "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/data/uranus_occultation_ring_fit_rfrench_input_observatories_20201201.tab",
@@ -134,22 +118,6 @@
                     "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/ring_models/u0_kao_91cm_734nm_predicted_ring_event_times.pdf",
                     "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/ring_models/u0_kao_91cm_734nm_fitted_ring_event_times.xml",
                     "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/ring_models/u0_kao_91cm_734nm_fitted_ring_event_times.tab"
-                ],
-                "ebur_occ_global_0100": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_100m.xml",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_100m.tab"
-                ],
-                "ebur_occ_global_0500": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_500m.xml",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_500m.tab"
-                ],
-                "ebur_occ_global_1000": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_1000m.xml",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_egress_1000m.tab"
-                ],
-                "ebur_occ_global_time": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_counts-v-time_occult.xml",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_counts-v-time_occult.tab"
                 ],
                 "ebur_occ_global_ring_fit": [
                     "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/data/uranus_occultation_ring_fit_rfrench_input_stars_20201201.csv",
