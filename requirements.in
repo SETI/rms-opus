@@ -6,6 +6,8 @@ django-storages
 djangorestframework
 flake8
 hurry.filesize
+jinja2
+markupsafe
 mistune
 mysqlclient
 numpy >= 1.26
