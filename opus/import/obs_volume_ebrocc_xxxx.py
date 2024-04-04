@@ -171,10 +171,10 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return self._supp_index_col('MAXIMUM_RING_RADIUS')
 
     def field_obs_ring_geometry_resolution1(self):
-        return self._supp_index_col('RADIAL_RESOLUTION')
+        return None
 
     def field_obs_ring_geometry_resolution2(self):
-        return self.field_obs_ring_geometry_resolution1()
+        return None
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._supp_index_col('RADIAL_RESOLUTION')

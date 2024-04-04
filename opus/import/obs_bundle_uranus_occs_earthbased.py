@@ -181,10 +181,10 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
         return self._index_col('rings:maximum_ring_radius')
 
     def field_obs_ring_geometry_resolution1(self):
-        return self._index_col('rings:radial_resolution')
+        return None
 
     def field_obs_ring_geometry_resolution2(self):
-        return self.field_obs_ring_geometry_resolution1()
+        return None
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('rings:radial_resolution')

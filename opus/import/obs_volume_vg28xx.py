@@ -143,10 +143,10 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
         return self._supp_index_col('MAXIMUM_RING_RADIUS')
 
     def field_obs_ring_geometry_resolution1(self):
-        return self._supp_index_col('MINIMUM_RADIAL_RESOLUTION')
+        return None
 
     def field_obs_ring_geometry_resolution2(self):
-        return self._supp_index_col('MAXIMUM_RADIAL_RESOLUTION')
+        return None
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._supp_index_col('MINIMUM_RADIAL_RESOLUTION')

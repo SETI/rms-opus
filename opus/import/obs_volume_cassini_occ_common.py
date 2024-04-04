@@ -82,10 +82,10 @@ class ObsVolumeCassiniOccCommon(ObsVolumeCassiniCommon):
         return self._index_col('MAXIMUM_RING_RADIUS')
 
     def field_obs_ring_geometry_resolution1(self):
-        return self._index_col('RADIAL_RESOLUTION')
+        return None
 
     def field_obs_ring_geometry_resolution2(self):
-        return self._index_col('RADIAL_RESOLUTION')
+        return None
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('RADIAL_RESOLUTION')
