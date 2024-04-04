@@ -5,6 +5,7 @@ import csv
 import itertools
 import os
 import re
+from pathlib import Path, PosixPath
 from typing import NamedTuple, Sequence, Callable, Tuple, List, Dict, Any, Optional
 
 
@@ -34,10 +35,9 @@ class ManifestEntry(NamedTuple):
 
     @property
     def volume_set(self) -> str:
-        match = re.match(r'/\w+/(\w+)[/$]', self.file_path)
-        assert match
-        return match.group(1)
-
+        path = PosixPath(self.file_path)
+        assert path.is_absolute()
+        return path.parts[2]  #   ["/" "volume" volumename, .....]
 
 class Manifest(NamedTuple):
     file_name: str
