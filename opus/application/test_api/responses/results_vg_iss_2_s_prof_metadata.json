@@ -59,8 +59,8 @@
         "occreceiverhost": "Voyager 2",
         "RINGGEOringradius1": "74000",
         "RINGGEOringradius2": "138700",
-        "RINGGEOincidence1": "81.95",
-        "RINGGEOincidence2": "81.95",
+        "RINGGEOsolarringopeningangle1": "8.05",
+        "RINGGEOsolarringopeningangle2": "8.05",
         "RINGGEOobserverringopeningangle1": "22.92",
         "RINGGEOobserverringopeningangle2": "23.78"
     },

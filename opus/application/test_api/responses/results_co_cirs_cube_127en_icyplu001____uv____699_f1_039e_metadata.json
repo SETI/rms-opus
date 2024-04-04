@@ -59,8 +59,8 @@
         "occreceiverhost": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
-        "RINGGEOincidence1": null,
-        "RINGGEOincidence2": null,
+        "RINGGEOsolarringopeningangle1": null,
+        "RINGGEOsolarringopeningangle2": null,
         "RINGGEOobserverringopeningangle1": null,
         "RINGGEOobserverringopeningangle2": null
     },

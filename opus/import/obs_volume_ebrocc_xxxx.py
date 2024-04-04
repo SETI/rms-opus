@@ -231,10 +231,10 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return None
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        return None
+        return self._supp_index_col('INCIDENCE_ANGLE')-90.
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return None
+        return self.field_obs_ring_geometry_solar_ring_elevation1()
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):
         return 90.-self._supp_index_col('INCIDENCE_ANGLE')
@@ -303,10 +303,10 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return None
+        return self._supp_index_col('INCIDENCE_ANGLE')-90.
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return None
+        return self.field_obs_ring_geometry_solar_ring_opening_angle1()
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
         return 90.-self._supp_index_col('INCIDENCE_ANGLE')

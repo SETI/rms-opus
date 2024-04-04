@@ -345,14 +345,14 @@
     },
     {
         "pi_category_name": "obs_profile",
-        "pi_referred_slug": "RINGGEOincidence1",
+        "pi_referred_slug": "RINGGEOsolarringopeningangle1",
         "pi_disp_order": 1010,
         "pi_display": 1,
         "pi_display_results": 1
     },
     {
         "pi_category_name": "obs_profile",
-        "pi_referred_slug": "RINGGEOincidence2",
+        "pi_referred_slug": "RINGGEOsolarringopeningangle2",
         "pi_disp_order": 1011,
         "pi_display": 0,
         "pi_display_results": 1
