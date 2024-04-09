@@ -180,71 +180,37 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_ring_geometry_ring_radius2(self):
         return self._index_col('rings:maximum_ring_radius')
 
-    def field_obs_ring_geometry_resolution1(self):
-        return None
-
-    def field_obs_ring_geometry_resolution2(self):
-        return None
-
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('rings:radial_resolution')
 
     def field_obs_ring_geometry_projected_radial_resolution2(self):
         return self.field_obs_ring_geometry_projected_radial_resolution1()
 
-    def field_obs_ring_geometry_range_to_ring_intercept1(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_ring_intercept2(self):
-        return None
-
-    def field_obs_ring_geometry_ring_center_distance1(self):
-        return None
-
-    def field_obs_ring_geometry_ring_center_distance2(self):
-        return None
-
-    # TODOPDS4 I believe this is incorrect; in fact I expect the other ring
-    # occultations volumes are also incorrect. The problem comes from our
-    # definition of J2000 longitude vs longitude based on the ascending node.
-    # We need to review all of our occultation volumes to see which definition
-    # they use, and possible add a new pair of columns to the OPUS database
-    # (which we were going to do anyway for the new ring geometry files).
     def field_obs_ring_geometry_j2000_longitude1(self):
-        return self._index_col('rings:minimum_ring_longitude')
+        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
+            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+            return 0
+        return self._ascending_to_j2000(
+            self.field_obs_ring_geometry_ascending_longitude1())
 
     def field_obs_ring_geometry_j2000_longitude2(self):
+        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
+            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+            return 360
+        return self._ascending_to_j2000(
+            self.field_obs_ring_geometry_ascending_longitude2())
+
+    def field_obs_ring_geometry_ascending_longitude1(self):
+        return self._index_col('rings:minimum_ring_longitude')
+
+    def field_obs_ring_geometry_ascending_longitude2(self):
         return self._index_col('rings:maximum_ring_longitude')
-
-    def field_obs_ring_geometry_solar_hour_angle1(self):
-        return None
-
-    def field_obs_ring_geometry_solar_hour_angle2(self):
-        return None
-
-    def field_obs_ring_geometry_longitude_wrt_observer1(self):
-        return None
-
-    def field_obs_ring_geometry_longitude_wrt_observer2(self):
-        return None
 
     def field_obs_ring_geometry_ring_azimuth_wrt_observer1(self):
         return self._index_col('rings:minimum_ring_azimuth')
 
     def field_obs_ring_geometry_ring_azimuth_wrt_observer2(self):
         return self._index_col('rings:maximum_ring_azimuth')
-
-    def field_obs_ring_geometry_sub_solar_ring_long1(self):
-        return None
-
-    def field_obs_ring_geometry_sub_solar_ring_long2(self):
-        return None
-
-    def field_obs_ring_geometry_sub_observer_ring_long1(self):
-        return None
-
-    def field_obs_ring_geometry_sub_observer_ring_long2(self):
-        return None
 
     # Earth was seeing Uranus' south pole for the entire duration of this data set.
     # Thus the solar elevation was seeing the northern hemisphere and the
@@ -350,42 +316,6 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()
-
-    def field_obs_ring_geometry_edge_on_radius1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radius2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_altitude1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_altitude2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radial_resolution1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radial_resolution2(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_edge_on_point1(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_edge_on_point2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_j2000_longitude1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_j2000_longitude2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_solar_hour_angle1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_solar_hour_angle2(self):
-        return None
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
         return self._index_col('rings:ring_event_start_tdb')

@@ -61,7 +61,7 @@
     {
         "field_name": "instrument_id",
         "field_type": "char60",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true,
         "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."

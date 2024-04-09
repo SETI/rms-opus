@@ -469,7 +469,8 @@ try: # Top-level exception handling so we always log what's going on
 
         impglobals.LOGGER.close()
 
-    do_import.do_import_steps()
+    if not do_import.do_import_steps():
+        sys.exit(-1)
 
     # This MUST be done after the permanent tables are created, since they
     # are used to determine what goes into the param_info table.

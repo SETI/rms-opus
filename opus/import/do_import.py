@@ -1674,6 +1674,8 @@ def do_import_steps():
                 impglobals.LOGGER.log('fatal',
                         f'Import of bundle {bundle_id} failed - Aborting')
                 impglobals.IMPORT_HAS_BAD_DATA = True
+                if not impglobals.ARGUMENTS.import_ignore_errors:
+                    break
 
         if (impglobals.IMPORT_HAS_BAD_DATA and
             not impglobals.ARGUMENTS.import_ignore_errors):
@@ -1734,3 +1736,5 @@ def do_import_steps():
     if impglobals.ARGUMENTS.analyze_permanent_tables:
         import_util.log_info('Analyzing all permanent tables')
         analyze_all_tables('perm')
+
+    return True

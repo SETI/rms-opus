@@ -170,65 +170,11 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
     def field_obs_ring_geometry_ring_radius2(self):
         return self._supp_index_col('MAXIMUM_RING_RADIUS')
 
-    def field_obs_ring_geometry_resolution1(self):
-        return None
-
-    def field_obs_ring_geometry_resolution2(self):
-        return None
-
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._supp_index_col('RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_projected_radial_resolution2(self):
         return self.field_obs_ring_geometry_projected_radial_resolution1()
-
-    def field_obs_ring_geometry_range_to_ring_intercept1(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_ring_intercept2(self):
-        return None
-
-    def field_obs_ring_geometry_ring_center_distance1(self):
-        return None
-
-    def field_obs_ring_geometry_ring_center_distance2(self):
-        return None
-
-    def field_obs_ring_geometry_j2000_longitude1(self):
-        return None
-
-    def field_obs_ring_geometry_j2000_longitude2(self):
-        return None
-
-    def field_obs_ring_geometry_solar_hour_angle1(self):
-        return None
-
-    def field_obs_ring_geometry_solar_hour_angle2(self):
-        return None
-
-    def field_obs_ring_geometry_longitude_wrt_observer1(self):
-        return None
-
-    def field_obs_ring_geometry_longitude_wrt_observer2(self):
-        return None
-
-    def field_obs_ring_geometry_ring_azimuth_wrt_observer1(self):
-        return None
-
-    def field_obs_ring_geometry_ring_azimuth_wrt_observer2(self):
-        return None
-
-    def field_obs_ring_geometry_sub_solar_ring_long1(self):
-        return None
-
-    def field_obs_ring_geometry_sub_solar_ring_long2(self):
-        return None
-
-    def field_obs_ring_geometry_sub_observer_ring_long1(self):
-        return None
-
-    def field_obs_ring_geometry_sub_observer_ring_long2(self):
-        return None
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
         return self._supp_index_col('INCIDENCE_ANGLE')-90.
@@ -313,42 +259,6 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()
-
-    def field_obs_ring_geometry_edge_on_radius1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radius2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_altitude1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_altitude2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radial_resolution1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radial_resolution2(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_edge_on_point1(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_edge_on_point2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_j2000_longitude1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_j2000_longitude2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_solar_hour_angle1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_solar_hour_angle2(self):
-        return None
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
         return self._time_from_index(column='RING_EVENT_START')
