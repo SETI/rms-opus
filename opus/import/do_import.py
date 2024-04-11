@@ -398,7 +398,7 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
 
     if 'mult_options' in table_column:
         import_util.log_nonrepeating_error(
-            f'Unable to add value "{val}" to preprogrammed mult table '+
+            f'Unable to add value "{val}" to preprogrammed mult table '
             f'"{mult_table_name}"')
         return 0
 

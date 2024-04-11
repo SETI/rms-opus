@@ -159,7 +159,7 @@ def yield_import_bundle_ids(arguments):
                 if not bundle_pdsfile.exists:
                     any_invalid = True
                     impglobals.LOGGER.log('fatal',
-                            f'Bundle descriptor not found: {bundle_desc}')
+                        f'Bundle descriptor not found: {bundle_desc}')
 
         if any_invalid:
             sys.exit(-1)
