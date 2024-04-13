@@ -656,25 +656,25 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/files/vg-iss-2-s-c4360353.json"
         self._run_json_equal_file(url, "results_vg_iss_2_s_c4360353_files.json")
 
-    def test__results_contents_mcd27m_iirar_occ_1989_184_28sgr_i_metadata(self):
-        "[test_results_contents.py] mcd27m-iirar-occ-1989-184-28sgr-i metadata"
-        url = "/api/metadata_v2/mcd27m-iirar-occ-1989-184-28sgr-i.json"
-        self._run_json_equal_file(url, "results_mcd27m_iirar_occ_1989_184_28sgr_i_metadata.json")
+    def test__results_contents_mcd2m7_iirar_occ_1989_184_28sgr_i_metadata(self):
+        "[test_results_contents.py] mcd2m7-iirar-occ-1989-184-28sgr-i metadata"
+        url = "/api/metadata_v2/mcd2m7-iirar-occ-1989-184-28sgr-i.json"
+        self._run_json_equal_file(url, "results_mcd2m7_iirar_occ_1989_184_28sgr_i_metadata.json")
 
-    def test__results_contents_mcd27m_iirar_occ_1989_184_28sgr_i_files(self):
-        "[test_results_contents.py] mcd27m-iirar-occ-1989-184-28sgr-i files"
-        url = "/api/files/mcd27m-iirar-occ-1989-184-28sgr-i.json"
-        self._run_json_equal_file(url, "results_mcd27m_iirar_occ_1989_184_28sgr_i_files.json")
+    def test__results_contents_mcd2m7_iirar_occ_1989_184_28sgr_i_files(self):
+        "[test_results_contents.py] mcd2m7-iirar-occ-1989-184-28sgr-i files"
+        url = "/api/files/mcd2m7-iirar-occ-1989-184-28sgr-i.json"
+        self._run_json_equal_file(url, "results_mcd2m7_iirar_occ_1989_184_28sgr_i_files.json")
 
-    def test__results_contents_eso1m_apph_occ_1989_184_28sgr_e_metadata(self):
-        "[test_results_contents.py] eso1m-apph-occ-1989-184-28sgr-e metadata"
-        url = "/api/metadata_v2/eso1m-apph-occ-1989-184-28sgr-e.json"
-        self._run_json_equal_file(url, "results_eso1m_apph_occ_1989_184_28sgr_e_metadata.json")
+    def test__results_contents_esosil1m04_apph_occ_1989_184_28sgr_e_metadata(self):
+        "[test_results_contents.py] esosil1m04-apph-occ-1989-184-28sgr-e metadata"
+        url = "/api/metadata_v2/esosil1m04-apph-occ-1989-184-28sgr-e.json"
+        self._run_json_equal_file(url, "results_esosil1m04_apph_occ_1989_184_28sgr_e_metadata.json")
 
-    def test__results_contents_eso1m_apph_occ_1989_184_28sgr_e_files(self):
-        "[test_results_contents.py] eso1m-apph-occ-1989-184-28sgr-e files"
-        url = "/api/files/eso1m-apph-occ-1989-184-28sgr-e.json"
-        self._run_json_equal_file(url, "results_eso1m_apph_occ_1989_184_28sgr_e_files.json")
+    def test__results_contents_esosil1m04_apph_occ_1989_184_28sgr_e_files(self):
+        "[test_results_contents.py] esosil1m04-apph-occ-1989-184-28sgr-e files"
+        url = "/api/files/esosil1m04-apph-occ-1989-184-28sgr-e.json"
+        self._run_json_equal_file(url, "results_esosil1m04_apph_occ_1989_184_28sgr_e_files.json")
 
     def test__results_contents_lick1m_ccdc_occ_1989_184_28sgr_i_metadata(self):
         "[test_results_contents.py] lick1m-ccdc-occ-1989-184-28sgr-i metadata"
@@ -1149,15 +1149,15 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/images.json?opusid=vg-iss-2-s-c4360353"
         self._run_json_equal_file(url, "results_vg_iss_2_s_c4360353_images.json")
 
-    def test__results_contents_mcd27m_iirar_occ_1989_184_28sgr_i_images(self):
-        "[test_results_contents.py] mcd27m-iirar-occ-1989-184-28sgr-i images"
-        url = "/api/images.json?opusid=mcd27m-iirar-occ-1989-184-28sgr-i"
-        self._run_json_equal_file(url, "results_mcd27m_iirar_occ_1989_184_28sgr_i_images.json")
+    def test__results_contents_mcd2m7_iirar_occ_1989_184_28sgr_i_images(self):
+        "[test_results_contents.py] mcd2m7-iirar-occ-1989-184-28sgr-i images"
+        url = "/api/images.json?opusid=mcd2m7-iirar-occ-1989-184-28sgr-i"
+        self._run_json_equal_file(url, "results_mcd2m7_iirar_occ_1989_184_28sgr_i_images.json")
 
-    def test__results_contents_eso1m_apph_occ_1989_184_28sgr_e_images(self):
-        "[test_results_contents.py] eso1m-apph-occ-1989-184-28sgr-e images"
-        url = "/api/images.json?opusid=eso1m-apph-occ-1989-184-28sgr-e"
-        self._run_json_equal_file(url, "results_eso1m_apph_occ_1989_184_28sgr_e_images.json")
+    def test__results_contents_esosil1m04_apph_occ_1989_184_28sgr_e_images(self):
+        "[test_results_contents.py] esosil1m04-apph-occ-1989-184-28sgr-e images"
+        url = "/api/images.json?opusid=esosil1m04-apph-occ-1989-184-28sgr-e"
+        self._run_json_equal_file(url, "results_esosil1m04_apph_occ_1989_184_28sgr_e_images.json")
 
     def test__results_contents_lick1m_ccdc_occ_1989_184_28sgr_i_images(self):
         "[test_results_contents.py] lick1m-ccdc-occ-1989-184-28sgr-i images"
@@ -1239,3 +1239,48 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] vg-iss-2-s-prof images"
         url = "/api/images.json?opusid=vg-iss-2-s-prof"
         self._run_json_equal_file(url, "results_vg_iss_2_s_prof_images.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_ringpl_i_metadata(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-ringpl-i metadata"
+        url = "/api/metadata/kao0m91-vis-occ-1977-069-u0-ringpl-i.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_ringpl_i_metadata.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_ringpl_i_files(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-ringpl-i files"
+        url = "/api/files/kao0m91-vis-occ-1977-069-u0-ringpl-i.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_ringpl_i_files.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_ringpl_i_images(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-ringpl-i images"
+        url = "/api/images.json?opusid=kao0m91-vis-occ-1977-069-u0-ringpl-i"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_ringpl_i_images.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_uranus_e_metadata(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-uranus-e metadata"
+        url = "/api/metadata/kao0m91-vis-occ-1977-069-u0-uranus-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_uranus_e_metadata.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_uranus_e_files(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-uranus-e files"
+        url = "/api/files/kao0m91-vis-occ-1977-069-u0-uranus-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_uranus_e_files.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_uranus_e_images(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-uranus-e images"
+        url = "/api/images.json?opusid=kao0m91-vis-occ-1977-069-u0-uranus-e"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_uranus_e_images.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_eta_e_metadata(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-eta-e metadata"
+        url = "/api/metadata/kao0m91-vis-occ-1977-069-u0-eta-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_eta_e_metadata.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_eta_e_files(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-eta-e files"
+        url = "/api/files/kao0m91-vis-occ-1977-069-u0-eta-e.json"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_eta_e_files.json")
+
+    def test__results_contents_kao0m91_vis_occ_1977_069_u0_eta_e_images(self):
+        "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-eta-e images"
+        url = "/api/images.json?opusid=kao0m91-vis-occ-1977-069-u0-eta-e"
+        self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_eta_e_images.json")

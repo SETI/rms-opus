@@ -2,7 +2,7 @@
     "page_no": 1,
     "limit": 100000000,
     "count": 479,
-    "available": 29689,
+    "available": 479,
     "order": "target,-observationduration,time1,opusid",
     "labels": [
         "OPUS ID",

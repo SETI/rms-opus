@@ -11,9 +11,14 @@ LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
-HOLDINGS_DIR=$PDS_DROPBOX_ROOT/holdings
-if [ ! -d "$HOLDINGS_DIR" ]; then
-    echo "Directory not found:" $HOLDINGS_DIR
+PDS3_HOLDINGS_DIR=$PDS_DROPBOX_ROOT/holdings
+PDS4_HOLDINGS_DIR=$PDS_DROPBOX_ROOT/pds4-holdings
+if [ ! -d "$PDS3_HOLDINGS_DIR" ]; then
+    echo "Directory not found:" $PDS3_HOLDINGS_DIR
+    exit -1
+fi
+if [ ! -d "$PDS4_HOLDINGS_DIR" ]; then
+    echo "Directory not found:" $PDS4_HOLDINGS_DIR
     exit -1
 fi
 
@@ -25,6 +30,12 @@ if [ $? -ne 0 ]; then
     CWD=`pwd`
 fi
 
+# Enable these commands to override the default PdsFile with a particular branch
+# git clone https://github.com/SETI/rms-pdsfile
+# (cd rms-pdsfile; git checkout 12_convert_opus_id)
+# pip uninstall -y rms-pdsfile
+# pip install -e ./rms-pdsfile
+
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py
@@ -33,7 +44,8 @@ echo "DB_DATABASE_NAME = ''" >> opus_secrets.py
 echo "DB_SCHEMA_NAME = 'opus_test_db_${UNIQUE_ID}'" >> opus_secrets.py
 echo "DB_USER = '${OPUS_DB_USER}'" >> opus_secrets.py
 echo "DB_PASSWORD = '${OPUS_DB_PASSWORD}'" >> opus_secrets.py
-echo "PDS_DATA_DIR = '${HOLDINGS_DIR}'" >> opus_secrets.py
+echo "PDS3_DATA_DIR = '${PDS3_HOLDINGS_DIR}'" >> opus_secrets.py
+echo "PDS4_DATA_DIR = '${PDS4_HOLDINGS_DIR}'" >> opus_secrets.py
 echo "RMS_OPUS_PATH = '${CWD}'" >> opus_secrets.py
 echo "RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')" >> opus_secrets.py
 echo "DEBUG = True" >> opus_secrets.py

@@ -9,7 +9,7 @@
 import opus_support
 
 from obs_volume_cassini_common import (ObsVolumeCassiniCommon,
-                                 COISS_TARGET_DESC_MAPPING)
+                                       COISS_TARGET_DESC_MAPPING)
 
 
 # Wavelength information for combinations of filters

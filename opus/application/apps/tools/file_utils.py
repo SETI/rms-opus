@@ -71,7 +71,7 @@ def get_pds_products(opus_id_list,
     sql += q('obs_files')+'.'+q('short_name')+', '
     sql += q('obs_files')+'.'+q('full_name')+', '
     sql += q('obs_files')+'.'+q('size')+', '
-    sql += q('obs_files')+'.'+q('default_checked')
+    sql += q('obs_files')+'.'+q('pds_version')
     if loc_type == 'path' or loc_type == 'raw':
         sql += ', '+q('obs_files')+'.'+q('logical_path')
     if loc_type == 'url' or loc_type == 'raw':
@@ -133,15 +133,15 @@ def get_pds_products(opus_id_list,
         url = None
         if loc_type == 'path':
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, size, default_checked, path) = row
+             full_name, size, pds_version, path) = row
         elif loc_type == 'url':
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, size, default_checked, url) = row
+             full_name, size, pds_version, url) = row
         else:
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, size, default_checked, path, url, checksum) = row
+             full_name, size, pds_version, path, url, checksum) = row
 
-        # sort_order is the format CASISSxxx where xxx is the original numeric
+        # sort_order is in the format CASISSxxx where xxx is the original numeric
         # sort order
         sort_order = int(sort_order[6:])
         if version_name not in results[opus_id]:
@@ -151,7 +151,10 @@ def get_pds_products(opus_id_list,
             results[opus_id][version_name][product_type] = []
 
         if path:
-            path = settings.PDS_DATA_DIR.rstrip('/') + '/' + path
+            if pds_version == 3:
+                path = settings.PDS3_DATA_DIR.rstrip('/') + '/' + path
+            else:
+                path = settings.PDS4_DATA_DIR.rstrip('/') + '/' + path
         if url:
             url = settings.PRODUCT_HTTP_PATH.rstrip('/') + '/' + url
 
@@ -167,7 +170,8 @@ def get_pds_products(opus_id_list,
                    'version_name': version_name,
                    'full_name': full_name,
                    'short_name': short_name,
-                   'size': size}
+                   'size': size,
+                   'pds_version': pds_version}
         if res not in results[opus_id][version_name][product_type]:
             results[opus_id][version_name][product_type].append(res)
 

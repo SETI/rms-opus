@@ -6,10 +6,11 @@
 
 import json
 
+import opus_support
+
 import impglobals
 import import_util
-from opus_support import (is_valid_unit_id,
-                          parse_form_type)
+
 
 def create_import_param_info_table():
     db = impglobals.DATABASE
@@ -51,8 +52,8 @@ def create_import_param_info_table():
             field_name = column.get('field_name', None)
             form_type_str = column.get('pi_form_type', None)
             (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(form_type_str)
-            if form_type_unit_id and not is_valid_unit_id(form_type_unit_id):
+             form_type_unit_id) = opus_support.parse_form_type(form_type_str)
+            if form_type_unit_id and not opus_support.is_valid_unit_id(form_type_unit_id):
                 logger.log('error',
                            f'"{form_type_unit_id}" '
                            +f'in "{category_name}/{field_name}" is not '

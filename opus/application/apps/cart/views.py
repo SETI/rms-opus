@@ -704,7 +704,15 @@ def api_create_download(request, opus_id=None, fmt=None):
                 for file_data in files_version[product_type]:
                     path = file_data['path']
                     pretty_name = path.split('/')[-1]
-                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+len(settings.PDS_HOLDINGS_DIR):]
+                    pds_version = file_data['pds_version']
+                    if pds_version == 3:
+                        logical_path = path[
+                            path.index(settings.PDS3_HOLDINGS_DIR)+
+                            len(settings.PDS3_HOLDINGS_DIR):]
+                    else:
+                        logical_path = path[
+                            path.index(settings.PDS4_HOLDINGS_DIR)+
+                            len(settings.PDS4_HOLDINGS_DIR):]
                     if pretty_name not in files_info:
                         files_info[pretty_name] = [logical_path]
                     elif logical_path not in files_info[pretty_name]:
@@ -726,7 +734,15 @@ def api_create_download(request, opus_id=None, fmt=None):
                     checksum = file_data['checksum']
                     size = file_data['size']
                     pretty_name = path.split('/')[-1]
-                    logical_path = path[path.index(settings.PDS_HOLDINGS_DIR)+len(settings.PDS_HOLDINGS_DIR):]
+                    pds_version = file_data['pds_version']
+                    if pds_version == 3:
+                        logical_path = path[
+                            path.index(settings.PDS3_HOLDINGS_DIR)+
+                            len(settings.PDS3_HOLDINGS_DIR):]
+                    else:
+                        logical_path = path[
+                            path.index(settings.PDS4_HOLDINGS_DIR)+
+                            len(settings.PDS4_HOLDINGS_DIR):]
                     mdigest = (f'{f_opus_id},{category},{product_type},'
                               +f'{product_abbrev},{version_name},{logical_path},'
                               +f'{checksum},{size}')

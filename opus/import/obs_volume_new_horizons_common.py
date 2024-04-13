@@ -7,7 +7,7 @@
 
 import opus_support
 
-from obs_common import ObsCommon
+from obs_common_pds3 import ObsCommonPDS3
 
 
 _MISSION_PHASE_NAMES = {
@@ -20,7 +20,7 @@ _MISSION_PHASE_NAMES = {
     'KEM1 ENCOUNTER':                 'KEM1 Encounter',
 }
 
-class ObsVolumeNewHorizonsCommon(ObsCommon):
+class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

@@ -12,6 +12,37 @@ class ObsRingGeometry(ObsBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def _ascending_node_offset(self, planet):
+        if planet == 'JUP':
+            return -1.942979
+        if planet == 'SAT':
+            return -130.589560
+        if planet == 'URA':
+            return -167.311270
+        if planet == 'NEP':
+            return 16.853049
+        if planet == 'PLU':
+            return -223.030000
+        return None
+
+    def _j2000_to_ascending(self, long):
+        if long is None:
+            return None
+        planet = self.field_obs_general_planet_id()['col_val']
+        offset = self._ascending_node_offset(planet)
+        if offset is None:
+            return None
+        return (long + offset) % 360.
+
+    def _ascending_to_j2000(self, long):
+        if long is None:
+            return None
+        planet = self.field_obs_general_planet_id()['col_val']
+        offset = self._ascending_node_offset(planet)
+        if offset is None:
+            return None
+        return (long - offset) % 360.
+
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -76,6 +107,23 @@ class ObsRingGeometry(ObsBase):
     def field_obs_ring_geometry_j2000_longitude2(self):
         return self._ring_geo_index_col('MAXIMUM_RING_LONGITUDE')
 
+    # Ascending node-based longitude (here and below) is not available in the current
+    # ring_summary tables, so we compute it here. This is possible because the
+    # difference between the First Point of Aries and the Ascending Node is essentially
+    # constant over the lifetime of our observations. However, if the original range is
+    # 0-360, we make the new range also 0-360, because nothing else would make sense.
+    def field_obs_ring_geometry_ascending_longitude1(self):
+        if (self.field_obs_ring_geometry_j2000_longitude1() == 0 and
+            self.field_obs_ring_geometry_j2000_longitude2() == 360):
+            return 0
+        return self._j2000_to_ascending(self.field_obs_ring_geometry_j2000_longitude1())
+
+    def field_obs_ring_geometry_ascending_longitude2(self):
+        if (self.field_obs_ring_geometry_j2000_longitude1() == 0 and
+            self.field_obs_ring_geometry_j2000_longitude2() == 360):
+            return 360
+        return self._j2000_to_ascending(self.field_obs_ring_geometry_j2000_longitude2())
+
     def field_obs_ring_geometry_solar_hour_angle1(self):
         return self._ring_geo_index_col('MINIMUM_SOLAR_HOUR_ANGLE')
 
@@ -94,21 +142,49 @@ class ObsRingGeometry(ObsBase):
     def field_obs_ring_geometry_ring_azimuth_wrt_observer2(self):
         return self._ring_geo_index_col('MAXIMUM_RING_AZIMUTH')
 
-    def field_obs_ring_geometry_sub_solar_ring_long1(self):
+    def field_obs_ring_geometry_sub_solar_ring_j2000_long1(self):
         return self._ring_geo_index_col('MINIMUM_SUB_SOLAR_RING_LONGITUDE',
                                         'SUB_SOLAR_RING_LONGITUDE')
 
-    def field_obs_ring_geometry_sub_solar_ring_long2(self):
+    def field_obs_ring_geometry_sub_solar_ring_j2000_long2(self):
         return self._ring_geo_index_col('MAXIMUM_SUB_SOLAR_RING_LONGITUDE',
                                         'SUB_SOLAR_RING_LONGITUDE')
 
-    def field_obs_ring_geometry_sub_observer_ring_long1(self):
+    def field_obs_ring_geometry_sub_solar_ring_ascending_long1(self):
+        if (self.field_obs_ring_geometry_sub_solar_ring_j2000_long1() == 0 and
+            self.field_obs_ring_geometry_sub_solar_ring_j2000_long2() == 360):
+            return 0
+        return self._j2000_to_ascending(
+            self.field_obs_ring_geometry_sub_solar_ring_j2000_long1())
+
+    def field_obs_ring_geometry_sub_solar_ring_ascending_long2(self):
+        if (self.field_obs_ring_geometry_sub_solar_ring_j2000_long1() == 0 and
+            self.field_obs_ring_geometry_sub_solar_ring_j2000_long2() == 360):
+            return 360
+        return self._j2000_to_ascending(
+            self.field_obs_ring_geometry_sub_solar_ring_j2000_long2())
+
+    def field_obs_ring_geometry_sub_observer_ring_j2000_long1(self):
         return self._ring_geo_index_col('MINIMUM_SUB_OBSERVER_RING_LONGITUDE',
                                         'SUB_OBSERVER_RING_LONGITUDE')
 
-    def field_obs_ring_geometry_sub_observer_ring_long2(self):
+    def field_obs_ring_geometry_sub_observer_ring_j2000_long2(self):
         return self._ring_geo_index_col('MAXIMUM_SUB_OBSERVER_RING_LONGITUDE',
                                         'SUB_OBSERVER_RING_LONGITUDE')
+
+    def field_obs_ring_geometry_sub_observer_ring_ascending_long1(self):
+        if (self.field_obs_ring_geometry_sub_observer_ring_j2000_long1() == 0 and
+            self.field_obs_ring_geometry_sub_observer_ring_j2000_long2() == 360):
+            return 0
+        return self._j2000_to_ascending(
+            self.field_obs_ring_geometry_sub_observer_ring_j2000_long1())
+
+    def field_obs_ring_geometry_sub_observer_ring_ascending_long2(self):
+        if (self.field_obs_ring_geometry_sub_observer_ring_j2000_long1() == 0 and
+            self.field_obs_ring_geometry_sub_observer_ring_j2000_long2() == 360):
+            return 360
+        return self._j2000_to_ascending(
+            self.field_obs_ring_geometry_sub_observer_ring_j2000_long2())
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
         return self._ring_geo_index_col('MINIMUM_SOLAR_RING_ELEVATION')
@@ -238,6 +314,20 @@ class ObsRingGeometry(ObsBase):
     def field_obs_ring_geometry_edge_on_j2000_longitude2(self):
         return self._ring_geo_index_col('MAXIMUM_EDGE_ON_RING_LONGITUDE')
 
+    def field_obs_ring_geometry_edge_on_ascending_longitude1(self):
+        if (self.field_obs_ring_geometry_edge_on_j2000_longitude1() == 0 and
+            self.field_obs_ring_geometry_edge_on_j2000_longitude2() == 360):
+            return 0
+        return self._j2000_to_ascending(
+            self.field_obs_ring_geometry_edge_on_j2000_longitude1())
+
+    def field_obs_ring_geometry_edge_on_ascending_longitude2(self):
+        if (self.field_obs_ring_geometry_edge_on_j2000_longitude1() == 0 and
+            self.field_obs_ring_geometry_edge_on_j2000_longitude2() == 360):
+            return 360
+        return self._j2000_to_ascending(
+            self.field_obs_ring_geometry_edge_on_j2000_longitude2())
+
     def field_obs_ring_geometry_edge_on_solar_hour_angle1(self):
         return self._ring_geo_index_col('MINIMUM_EDGE_ON_SOLAR_HOUR_ANGLE')
 
@@ -266,8 +356,10 @@ class ObsRingGeometry(ObsBase):
             return
 
         for gridless_column in ('ring_center_distance',
-                                'sub_solar_ring_long',
-                                'sub_observer_ring_long',
+                                'sub_solar_ring_j2000_long',
+                                'sub_solar_ring_ascending_long',
+                                'sub_observer_ring_j2000_long',
+                                'sub_observer_ring_ascending_long',
                                 'ring_center_phase',
                                 'ring_center_incidence',
                                 'ring_center_emission',

@@ -44,8 +44,8 @@ import do_table_names # noqa: E402
 import do_update_mult_info # noqa: E402
 import do_validate # noqa: E402
 import impglobals # noqa: E402
-
 import importdb # noqa: E402
+import import_util # noqa: E402
 
 
 ################################################################################
@@ -67,8 +67,12 @@ parser.add_argument(
     help='Override the db_schema specified in opus_secrets.py'
 )
 parser.add_argument(
-    '--override-pds-data-dir', type=str, default=None,
-    help='Override the PDS_DATA_DIR specified in opus_secrets.py (.../holdings)'
+    '--override-pds3-data-dir', type=str, default=None,
+    help='Override the PDS3_DATA_DIR specified in opus_secrets.py (.../holdings)'
+)
+parser.add_argument(
+    '--override-pds4-data-dir', type=str, default=None,
+    help='Override the PDS4_DATA_DIR specified in opus_secrets.py (.../pds4-holdings)'
 )
 parser.add_argument(
     '--dont-use-shelves-only', action='store_true', default=False,
@@ -411,19 +415,23 @@ try: # Top-level exception handling so we always log what's going on
 
     if not impglobals.ARGUMENTS.dont_use_shelves_only:
         Pds3File.use_shelves_only()
-        Pds4File.use_shelves_only()
+        # Pds4File.use_shelves_only()    # TODOPDS4
     Pds3File.require_shelves(True)
-    Pds4File.require_shelves(True)
-    if impglobals.ARGUMENTS.override_pds_data_dir:
-        Pds3File.preload(impglobals.ARGUMENTS.override_pds_data_dir)
+    # Pds4File.require_shelves(True)   # TODOPDS4
+    if impglobals.ARGUMENTS.override_pds3_data_dir:
+        Pds3File.preload(impglobals.ARGUMENTS.override_pds3_data_dir)
     else:
-        Pds3File.preload(PDS_DATA_DIR)
+        Pds3File.preload(PDS3_DATA_DIR)
+    if impglobals.ARGUMENTS.override_pds4_data_dir:
+        Pds4File.preload(impglobals.ARGUMENTS.override_pds4_data_dir)
+    else:
+        Pds4File.preload(PDS4_DATA_DIR)
 
     # We do this after the preload because we don't want to see all the preload
     # debug messages.
     if not impglobals.ARGUMENTS.no_log_pdsfile:
-        Pds3File.set_logger(impglobals.LOGGER)
-        Pds4File.set_logger(impglobals.LOGGER)
+        Pds3File.set_logger(import_util.NoDupLogger(impglobals.LOGGER))
+        Pds4File.set_logger(import_util.NoDupLogger(impglobals.LOGGER))
 
     try:
         impglobals.DATABASE = importdb.get_db(
@@ -461,7 +469,8 @@ try: # Top-level exception handling so we always log what's going on
 
         impglobals.LOGGER.close()
 
-    do_import.do_import_steps()
+    if not do_import.do_import_steps():
+        sys.exit(-1)
 
     # This MUST be done after the permanent tables are created, since they
     # are used to determine what goes into the param_info table.

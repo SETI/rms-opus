@@ -679,8 +679,14 @@ def api_init_detail_page(request, **kwargs):
             file_list = products[version][product_type]
             product_info = {}
             # Create the URL to look up a particular OPUS_ID in a given
-            # metadata summary file in ViewMaster
-            if product_type[3].find('Index') != -1:
+            # metadata summary file in ViewMaster.
+            # Right now this only works with PDS3 since ViewMaster doesn't
+            # support PDS4 at all. We detect whether the current dataset is
+            # PDS4 by looking for a file with the extension '.xml', which
+            # is definitely a hack. The restriction will need to be removed
+            # when it does. TODOPDS4
+            if (product_type[3].find('Index') != -1 and
+                not any(x.endswith('.xml') for x in file_list)): # TODOPDS4
                 tab_url = None
                 for fn in file_list: # pragma: no cover -
                     # We always have a tab in our current data

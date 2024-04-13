@@ -1,9 +1,10 @@
 ################################################################################
-# impglobals.py
+# import_util.py
 #
 # General utilities used by the import process.
 ################################################################################
 
+import csv
 from functools import lru_cache
 import json
 import numpy as np
@@ -14,12 +15,14 @@ import traceback
 
 import julian
 import pdsfile
+import pdslogger
 import pdsparser
 import pdstable
 
-from opus_secrets import *
-from config_data import *
-from config_targets import *
+import opus_secrets
+
+import config_data
+import config_targets
 import impglobals
 import instruments
 
@@ -63,6 +66,7 @@ def yield_import_bundle_ids(arguments):
                     bundle_descs.append('COUVIS_8xxx')
                     bundle_descs.append('COVIMS_8xxx')
                     bundle_descs.append('VG_28xx')
+                    bundle_descs.append('uranus_occs_earthbased')
                 elif desc.upper() == 'CASSINI':
                     bundle_descs.append('COISS_1xxx')
                     bundle_descs.append('COISS_2xxx')
@@ -133,40 +137,53 @@ def yield_import_bundle_ids(arguments):
         for bundle_desc in bundle_descs:
             if bundle_desc in exclude_list:
                 continue
+            good_bundle = False
+            # Try it as PDS3 and then PDS4
             try:
                 bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
+                good_bundle = True
             except (KeyError, ValueError):
-                any_invalid = True
-                impglobals.LOGGER.log('fatal',
-                           f'Bad bundle descriptor {bundle_desc}')
-            else:
-                if (not bundle_pdsfile.is_volume_dir and
-                    not bundle_pdsfile.is_volset_dir):
+                try:
+                    bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_desc)
+                    good_bundle = True
+                except (KeyError, ValueError):
                     any_invalid = True
                     impglobals.LOGGER.log('fatal',
-                     f'Volume descriptor not a bundle or volset: {bundle_desc}')
+                            f'Bad bundle descriptor {bundle_desc}')
+            if good_bundle:
+                if (not bundle_pdsfile.is_bundle_dir and
+                    not bundle_pdsfile.is_bundleset_dir):
+                    any_invalid = True
+                    impglobals.LOGGER.log('fatal',
+                        f'Bundle descriptor not a bundle or bundleset: {bundle_desc}')
                 if not bundle_pdsfile.exists:
                     any_invalid = True
                     impglobals.LOGGER.log('fatal',
-                               f'Volume descriptor not found: {bundle_desc}')
+                        f'Bundle descriptor not found: {bundle_desc}')
+
         if any_invalid:
             sys.exit(-1)
-        # Expand the volsets
-        new_voldescs = []
+
+        # Expand the bundlesets
+        new_bundledescs = []
         for bundle_desc in bundle_descs:
-            bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
-            if bundle_pdsfile.is_volset_dir:
+            try:
+                bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
+            except (KeyError, ValueError):
+                bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_desc)
+            if bundle_pdsfile.is_bundleset_dir:
                 childnames = bundle_pdsfile.childnames
                 # Make sure 2001 is imported first and then 1001 second for each
                 # New Horizon bundle. That way, the primary filespec will be
                 # raw in OPUS (same as pdsfile).
-                if bundle_pdsfile.volset.startswith("NH"):
+                if bundle_pdsfile.bundleset.startswith("NH"):
                     childnames.reverse()
-                new_voldescs += childnames
+                new_bundledescs += childnames
             else:
-                new_voldescs.append(bundle_desc)
+                new_bundledescs.append(bundle_desc)
+
         # Now actually return the bundle_ids
-        for bundle_id in new_voldescs:
+        for bundle_id in new_bundledescs:
             if bundle_id in exclude_list:
                 impglobals.LOGGER.log('info',
                            f'Excluding bundle: {bundle_id}')
@@ -185,7 +202,47 @@ def log_accumulated_warnings(title):
         return True
     return False
 
-def safe_pdstable_read(filename):
+def safe_pdstable_read(filename, pds_version):
+    if pds_version == 3:
+        return safe_pdstable_read_pds3(filename)
+
+    # TODOPDS4 For now, PDS4 index files do not have labels. They are just
+    # CSV files. So we read the CSV file and determine the column names from
+    # the single header line. We then infer the datatypes from the column data.
+    # Eventually we will want to change this to use an official PDS4 label/table
+    # reader module.
+
+    with open(filename) as csvfile:
+        reader = csv.DictReader(csvfile)
+        rows = list(reader)
+
+    if len(rows) == 0:
+        return rows
+
+    # Infer data types from the data in each column
+    for col_name in rows[0].keys():
+        col_data = [row[col_name] for row in rows]
+        # First check if they are all integers
+        try:
+            _ = [int(x) for x in col_data]
+        except ValueError: # Something parsed badly
+            # Now check if they are all floats
+            try:
+                _ = [float(x) for x in col_data]
+            except ValueError: # Something parsed badly
+                # Not ints or floats, just leave them as strings
+                pass
+            else: # All floats
+                for row in rows:
+                    row[col_name] = float(row[col_name])
+
+        else: # All integers
+            for row in rows:
+                row[col_name] = int(row[col_name])
+
+    return rows, None  # TODOPDS4 There is no label for now
+
+def safe_pdstable_read_pds3(filename):
     preprocess_label_func = None
     preprocess_table_func = None
     # for (set_search, set_preprocess_label,
@@ -253,12 +310,12 @@ def safe_column(row, column_name, idx=None):
 ################################################################################
 
 def table_name_obs_mission(mission_name):
-    assert mission_name in MISSION_ID_TO_MISSION_TABLE_SFX
+    assert mission_name in config_data.MISSION_ID_TO_MISSION_TABLE_SFX
     return ('obs_mission_'+
-            MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower())
+            config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower())
 
 def table_name_obs_instrument(inst_name):
-    assert inst_name in INSTRUMENT_ID_TO_MISSION_ID
+    assert inst_name in config_data.INSTRUMENT_ID_TO_MISSION_ID
     return 'obs_instrument_'+inst_name.lower()
 
 def table_name_mult(table_name, field_name):
@@ -283,21 +340,21 @@ def decode_target_name(target_name):
     return target_name
 
 def table_name_for_sfc_target(target_name):
-    if target_name.upper() in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name.upper()]
+    if target_name.upper() in config_targets.TARGET_NAME_MAPPING:
+        target_name = config_targets.TARGET_NAME_MAPPING[target_name.upper()]
     return encode_target_name(target_name)
 
 # NOTE: whenever we change this function, we will have to change
 # getSurfacegeoTargetSlug in JS code (in utils.js) as well.
 def slug_name_for_sfc_target(target_name):
-    if target_name.upper() in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name.upper()]
+    if target_name.upper() in config_targets.TARGET_NAME_MAPPING:
+        target_name = config_targets.TARGET_NAME_MAPPING[target_name.upper()]
     target_name = target_name.lower()
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
 
 def read_schema_for_table(table_name, replace=[]):
-    table_name = table_name.replace(IMPORT_TABLE_TEMP_PREFIX, '').lower()
+    table_name = table_name.replace(opus_secrets.IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
         assert replace == []
         target_name = table_name.replace('obs_surface_geometry__', '')
@@ -343,7 +400,50 @@ def find_max_table_id(table_name):
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################
 
-def _format_vol_line():
+class NoDupLogger(pdslogger.PdsLogger):
+    """Wrapper around PdsLogger that only logs each message one time.
+
+    This is used for logging of PdsFile warnings that we don't want to see
+    over and over."""
+
+    _LOGGED_DEBUG = []
+    _LOGGED_WARN = []
+    _LOGGED_ERROR = []
+    _LOGGED_FATAL = []
+
+    def __init__(self, logger):
+        self._logger = logger
+
+    def debug(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_DEBUG:
+            return
+        self._LOGGED_DEBUG.append(key)
+        self._logger.debug(msg, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_WARN:
+            return
+        self._LOGGED_WARN.append(key)
+        self._logger.warn(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_ERROR:
+            return
+        self._LOGGED_ERROR.append(key)
+        self._logger.error(msg, *args, **kwargs)
+
+    def fatal(self, msg, *args, **kwargs):
+        key = (msg, args, kwargs)
+        if key in self._LOGGED_FATAL:
+            return
+        self._LOGGED_FATAL.append(key)
+        self._logger.fatal(msg, *args, **kwargs)
+
+
+def _format_bundle_line():
     ret = ''
     if impglobals.CURRENT_BUNDLE_ID is not None:
         ret = impglobals.CURRENT_BUNDLE_ID
@@ -356,17 +456,17 @@ def _format_vol_line():
     return ret
 
 def log_error(msg, *args):
-    impglobals.LOGGER.log('error', _format_vol_line()+msg, *args)
+    impglobals.LOGGER.log('error', _format_bundle_line()+msg, *args)
     impglobals.IMPORT_HAS_BAD_DATA = True
 
 def log_warning(msg, *args):
-    impglobals.LOGGER.log('warning', _format_vol_line()+msg, *args)
+    impglobals.LOGGER.log('warning', _format_bundle_line()+msg, *args)
 
 def log_info(msg, *args):
-    impglobals.LOGGER.log('info', _format_vol_line()+msg, *args)
+    impglobals.LOGGER.log('info', _format_bundle_line()+msg, *args)
 
 def log_debug(msg, *args):
-    impglobals.LOGGER.log('debug', _format_vol_line()+msg, *args)
+    impglobals.LOGGER.log('debug', _format_bundle_line()+msg, *args)
 
 def log_nonrepeating_error(msg):
     if msg not in impglobals.LOGGED_IMPORT_ERRORS:

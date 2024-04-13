@@ -81,12 +81,6 @@ class ObsVolumeCassiniOccCommon(ObsVolumeCassiniCommon):
     def field_obs_ring_geometry_ring_radius2(self):
         return self._index_col('MAXIMUM_RING_RADIUS')
 
-    def field_obs_ring_geometry_resolution1(self):
-        return self._index_col('RADIAL_RESOLUTION')
-
-    def field_obs_ring_geometry_resolution2(self):
-        return self._index_col('RADIAL_RESOLUTION')
-
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('RADIAL_RESOLUTION')
 
@@ -94,9 +88,23 @@ class ObsVolumeCassiniOccCommon(ObsVolumeCassiniCommon):
         return self._index_col('RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_j2000_longitude1(self):
-        return self._index_col('MINIMUM_RING_LONGITUDE')
+        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
+            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+            return 0
+        return self._ascending_to_j2000(
+            self.field_obs_ring_geometry_ascending_longitude1())
 
     def field_obs_ring_geometry_j2000_longitude2(self):
+        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
+            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+            return 360
+        return self._ascending_to_j2000(
+            self.field_obs_ring_geometry_ascending_longitude2())
+
+    def field_obs_ring_geometry_ascending_longitude1(self):
+        return self._index_col('MINIMUM_RING_LONGITUDE')
+
+    def field_obs_ring_geometry_ascending_longitude2(self):
         return self._index_col('MAXIMUM_RING_LONGITUDE')
 
     def field_obs_ring_geometry_ring_azimuth_wrt_observer1(self):

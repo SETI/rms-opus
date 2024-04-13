@@ -6,10 +6,24 @@
 # in a single volume.
 ################################################################################
 
-from obs_common import ObsCommon
+from obs_common_pds3 import ObsCommonPDS3
 
-# XXX NOTE THIS ONLY WORKS FOR 28 SGR RIGHT NOW.
-# On 1989-07-03:
+
+_EBROCC_INST_TO_PDS4_INST = {
+    'ESO1MAPPH': 'eso-la_silla.1m04',
+    'ESO22MAPPH': 'eso-la_silla.2m2',
+    'IRTFURAC': 'irtf-maunakea.3m2',
+    # TODOPDS4 "lick1m" is not a valid context product and will need to be
+    # added to the PDS4 context products at some point, especially when EBROCC
+    # gets ported to PDS4 some day. For now we just fake it.
+    'LICK1MCCDC': 'lick.nickel',
+    'MCD27MIIRAR': 'mcdonald.harlanjsmith_2m7',
+    'PAL200CIRC': 'palomar.hale_5m08'
+}
+
+
+# The EBROCC_0001 volume only uses 28 SGR as a source, and all observations
+# were taken on 1989-07-03. On this date:
 # * 28 Sgr incidence angle was 64.627 on the south side
 # * North-based incidence angle was 180-64.627 = 115.373
 # * The north side of the rings were illuminated by the Sun
@@ -17,7 +31,7 @@ from obs_common import ObsCommon
 # * Emission angle and north-based emission angle = incidence angle
 # * Observer elevation = 90 - incidence angle
 
-class ObsVolumeEBROCCxxxx(ObsCommon):
+class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -31,8 +45,9 @@ class ObsVolumeEBROCCxxxx(ObsCommon):
         if self._metadata is None:
             # This happens during the create_tables phase
             return None
-        return (self._supp_index_col('INSTRUMENT_HOST_ID') +
+        inst = (self._supp_index_col('INSTRUMENT_HOST_ID') +
                 self._supp_index_col('INSTRUMENT_ID'))
+        return _EBROCC_INST_TO_PDS4_INST[inst]
 
     @property
     def inst_host_id(self):
@@ -142,9 +157,7 @@ class ObsVolumeEBROCCxxxx(ObsCommon):
                                  grouping='Stars')
 
     def field_obs_profile_host(self):
-        ret = self._supp_index_col('INSTRUMENT_HOST_NAME')
-        return self._create_mult_keep_case(col_val=ret,
-                                           grouping='Ground-based Telescopes')
+        return self._create_mult(self.instrument_id)
 
 
     #####################################
@@ -157,91 +170,23 @@ class ObsVolumeEBROCCxxxx(ObsCommon):
     def field_obs_ring_geometry_ring_radius2(self):
         return self._supp_index_col('MAXIMUM_RING_RADIUS')
 
-    def field_obs_ring_geometry_resolution1(self):
-        return self._supp_index_col('RADIAL_RESOLUTION')
-
-    def field_obs_ring_geometry_resolution2(self):
-        return self._supp_index_col('RADIAL_RESOLUTION')
-
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._supp_index_col('RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_projected_radial_resolution2(self):
-        return self._supp_index_col('RADIAL_RESOLUTION')
-
-    def field_obs_ring_geometry_range_to_ring_intercept1(self):
-        return self._ring_geo_index_col('MINIMUM_RING_DISTANCE')
-
-    def field_obs_ring_geometry_range_to_ring_intercept2(self):
-        return self._ring_geo_index_col('MAXIMUM_RING_DISTANCE')
-
-    def field_obs_ring_geometry_ring_center_distance1(self):
-        return self._ring_geo_index_col('MINIMUM_RING_CENTER_DISTANCE',
-                                        'RING_CENTER_DISTANCE')
-
-    def field_obs_ring_geometry_ring_center_distance2(self):
-        return self._ring_geo_index_col('MAXIMUM_RING_CENTER_DISTANCE',
-                                        'RING_CENTER_DISTANCE')
-
-    def field_obs_ring_geometry_j2000_longitude1(self):
-        return self._ring_geo_index_col('MINIMUM_RING_LONGITUDE')
-
-    def field_obs_ring_geometry_j2000_longitude2(self):
-        return self._ring_geo_index_col('MAXIMUM_RING_LONGITUDE')
-
-    def field_obs_ring_geometry_solar_hour_angle1(self):
-        return self._ring_geo_index_col('MINIMUM_SOLAR_HOUR_ANGLE')
-
-    def field_obs_ring_geometry_solar_hour_angle2(self):
-        return self._ring_geo_index_col('MAXIMUM_SOLAR_HOUR_ANGLE')
-
-    def field_obs_ring_geometry_longitude_wrt_observer1(self):
-        return self._ring_geo_index_col('MINIMUM_RING_LONGITUDE_WRT_OBSERVER')
-
-    def field_obs_ring_geometry_longitude_wrt_observer2(self):
-        return self._ring_geo_index_col('MAXIMUM_RING_LONGITUDE_WRT_OBSERVER')
-
-    def field_obs_ring_geometry_ring_azimuth_wrt_observer1(self):
-        return self._ring_geo_index_col('MINIMUM_RING_AZIMUTH')
-
-    def field_obs_ring_geometry_ring_azimuth_wrt_observer2(self):
-        return self._ring_geo_index_col('MAXIMUM_RING_AZIMUTH')
-
-    def field_obs_ring_geometry_sub_solar_ring_long1(self):
-        return self._ring_geo_index_col('MINIMUM_SUB_SOLAR_RING_LONGITUDE',
-                                        'SUB_SOLAR_RING_LONGITUDE')
-
-    def field_obs_ring_geometry_sub_solar_ring_long2(self):
-        return self._ring_geo_index_col('MAXIMUM_SUB_SOLAR_RING_LONGITUDE',
-                                        'SUB_SOLAR_RING_LONGITUDE')
-
-    def field_obs_ring_geometry_sub_observer_ring_long1(self):
-        return self._ring_geo_index_col('MINIMUM_SUB_OBSERVER_RING_LONGITUDE',
-                                        'SUB_OBSERVER_RING_LONGITUDE')
-
-    def field_obs_ring_geometry_sub_observer_ring_long2(self):
-        return self._ring_geo_index_col('MAXIMUM_SUB_OBSERVER_RING_LONGITUDE',
-                                        'SUB_OBSERVER_RING_LONGITUDE')
+        return self.field_obs_ring_geometry_projected_radial_resolution1()
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
         return self._supp_index_col('INCIDENCE_ANGLE')-90.
 
     def field_obs_ring_geometry_solar_ring_elevation2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return self._supp_index_col('INCIDENCE_ANGLE')-90.
+        return self.field_obs_ring_geometry_solar_ring_elevation1()
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
         return 90.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_elevation2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_observer_ring_elevation1()
 
     def field_obs_ring_geometry_phase1(self):
         return 180.
@@ -253,127 +198,67 @@ class ObsVolumeEBROCCxxxx(ObsCommon):
         return self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_incidence2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_incidence1()
 
     def field_obs_ring_geometry_emission1(self):
         return 180.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_emission2(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_emission1()
 
     def field_obs_ring_geometry_north_based_incidence1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
         return 180.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_north_based_incidence2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_incidence1()
 
     def field_obs_ring_geometry_north_based_emission1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
         return self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_north_based_emission2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_emission1()
 
     def field_obs_ring_geometry_ring_center_phase1(self):
-        return 180.
+        return self.field_obs_ring_geometry_phase1()
 
     def field_obs_ring_geometry_ring_center_phase2(self):
-        return 180.
+        return self.field_obs_ring_geometry_phase2()
 
     def field_obs_ring_geometry_ring_center_incidence1(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_incidence1()
 
     def field_obs_ring_geometry_ring_center_incidence2(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_incidence2()
 
     def field_obs_ring_geometry_ring_center_emission1(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_emission1()
 
     def field_obs_ring_geometry_ring_center_emission2(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_emission2()
 
     def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_incidence1()
 
     def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_incidence2()
 
     def field_obs_ring_geometry_ring_center_north_based_emission1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_emission1()
 
     def field_obs_ring_geometry_ring_center_north_based_emission2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return self._supp_index_col('INCIDENCE_ANGLE')
+        return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
         return self._supp_index_col('INCIDENCE_ANGLE')-90.
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return self._supp_index_col('INCIDENCE_ANGLE')-90.
+        return self.field_obs_ring_geometry_solar_ring_opening_angle1()
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
         return 90.-self._supp_index_col('INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        # This is only valid for EBROCC 28 Sgr where the star was on the south
-        # side of the rings
-        return 90.-self._supp_index_col('INCIDENCE_ANGLE')
-
-    def field_obs_ring_geometry_edge_on_radius1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radius2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_altitude1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_altitude2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radial_resolution1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_radial_resolution2(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_edge_on_point1(self):
-        return None
-
-    def field_obs_ring_geometry_range_to_edge_on_point2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_j2000_longitude1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_j2000_longitude2(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_solar_hour_angle1(self):
-        return None
-
-    def field_obs_ring_geometry_edge_on_solar_hour_angle2(self):
-        return None
+        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
         return self._time_from_index(column='RING_EVENT_START')

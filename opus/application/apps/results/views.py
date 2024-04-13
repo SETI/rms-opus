@@ -338,6 +338,8 @@ def api_get_data(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
+    session_id = get_session_id(request)
+
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
@@ -347,18 +349,23 @@ def api_get_data(request, fmt):
         raise ret
 
     (page_no, start_obs, limit,
-     page, order, aux, error) = get_search_results_chunk(
-                                                     request,
-                                                     cols=cols,
-                                                     return_opusids=True,
-                                                     api_code=api_code)
+     page, order, aux, error) = get_search_results_chunk(request,
+                                                         cols=cols,
+                                                         return_opusids=True,
+                                                         api_code=api_code)
     if error is not None:
         return get_search_results_chunk_error_handler(error, api_code)
 
-    result_count, _, err = get_result_count_helper(request, api_code)
-    if err is not None: # pragma: no cover - database error
-        exit_api_call(api_code, err)
-        return err
+    if request.GET.get('view', 'browse') == 'cart':
+        # This part of the API isn't documented for the public but is used in
+        # our tests
+        cart_count, recycled_count = get_cart_count(session_id)
+        result_count = cart_count + recycled_count
+    else:
+        result_count, _, err = get_result_count_helper(request, api_code)
+        if err is not None: # pragma: no cover - database error
+            exit_api_call(api_code, err)
+            return err
 
     data = {}
     if page_no is not None:

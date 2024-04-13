@@ -6,20 +6,12 @@
 ################################################################################
 
 import json
-import pdsfile
 
-from config_targets import (TARGET_NAME_INFO,
-                            TARGET_NAME_MAPPING,
-                            PLANET_GROUP_MAPPING)
-from import_util import (cached_tai_from_iso,
-                         log_nonrepeating_error,
-                         log_warning,
-                         log_nonrepeating_warning,
-                         log_unknown_target_name,
-                         safe_column)
+import config_targets
+import import_util
 
 
-class ObsBase(object):
+class ObsBase:
     def __init__(self, bundle=None, metadata=None, ignore_errors=False):
         """Initialize an ObsBase object.
 
@@ -100,63 +92,10 @@ class ObsBase(object):
         self._opus_id_cached = opus_id
         return opus_id
 
-    # Warning: This doesn't work for COCIRS. That's OK for now because there is
-    # no supplemental metadata for those volumes.
     def primary_filespec_from_index_row(self, row, convert_lbl=False,
                                         add_phase_from_row=False,
                                         add_phase_from_inst=False):
-        # Given a row from an index file, return the primary_filespec.
-        # This routine is as generic as possible, because within a single bundle/volume
-        # the formats of the primary index, supplemental index, and geo index files
-        # can be different, so it's not worth overriding this function for each
-        # instrument.
-        # This is just a sanity check. Not all indexes include the bundle/volume ID, so
-        # we don't rely on getting it from there.
-        bundle_id = row.get('BUNDLE_ID', None)
-        if bundle_id is None:
-            bundle_id = row.get('VOLUME_ID', None)
-        if bundle_id is None:
-            bundle_id = row.get('VOLUME_NAME', None) # VG_[5678]xxx
-        if bundle_id is not None and bundle_id.rstrip('/') != self.bundle:
-            self._log_nonrepeating_error('Volume ID in index file inconsistent')
-            return None
-
-        filespec = row.get('FILE_SPECIFICATION_NAME', None)
-        if filespec is None:
-            path_name = row.get('PATH_NAME', '').strip('/') # NH
-            filename = row.get('FILE_NAME', '').strip('/') # NH and COUVIS_0xxx
-            if path_name != '':
-                path_name = path_name + '/'
-            filespec = path_name + filename
-        if filespec is None:
-            self._log_nonrepeating_error('Index missing FILESPEC field(s)')
-            return None
-
-        # In the case of GOSSI and COUVIS, the volume name is already prepended
-        # to the filespec
-        ret = filespec.strip('/')
-        if not ret.startswith(self.bundle+'/'):
-            ret = self.bundle + '/' + filespec.lstrip('/')
-        if convert_lbl:
-            ret = self.convert_filespec_from_lbl(ret)
-
-        # This is a really horrid hack required because COVIMS_0xxx has two entries
-        # per index row in the geo indexes (IR and VIS), but only one entry in the
-        # supplemental index. The only way to know which row is which is to look at
-        # the OPUS_ID field in the geo index.
-        if add_phase_from_row:
-            opus_id = row.get('OPUS_ID', None)
-            if opus_id is not None:
-                components = opus_id.split('_')
-                sfx = components[-1]
-                if sfx in ('ir', 'vis'):
-                    ret += '_'+sfx
-
-        # Likewise, we have to do the same thing when looking up the row, but in
-        # this case we have to get the phase name from this instance.
-        if add_phase_from_inst and self.phase_name:
-            ret += '_'+self.phase_name.lower()
-        return ret
+        raise NotImplementedError
 
     def opus_id_from_index_row(self, row):
         # This is a helper function used to take a row from the supplemental_index
@@ -260,19 +199,19 @@ class ObsBase(object):
     ###############################
 
     def _index_col(self, col, idx=None):
-        return safe_column(self._metadata['index_row'], col, idx=idx)
+        return import_util.safe_column(self._metadata['index_row'], col, idx=idx)
 
     def _has_supp_index(self):
         return 'supp_index_row' in self._metadata
 
     def _supp_index_col(self, col, idx=None):
-        return safe_column(self._metadata['supp_index_row'], col, idx=idx)
+        return import_util.safe_column(self._metadata['supp_index_row'], col, idx=idx)
 
     def _index_label_col(self, col, idx=None):
-        return safe_column(self._metadata['index_label'], col, idx=idx)
+        return import_util.safe_column(self._metadata['index_label'], col, idx=idx)
 
     def _supp_index_label_col(self, col, idx=None):
-        return safe_column(self._metadata['supp_index_label'], col, idx=idx)
+        return import_util.safe_column(self._metadata['supp_index_label'], col, idx=idx)
 
     def _ring_geo_index_col(self, col, col2=None, idx=None):
         # Look up col; if missing try col2 instead. This supports both old and
@@ -293,9 +232,9 @@ class ObsBase(object):
                 self._log_nonrepeating_error(
                     f'Columns "{col}" or "{col2}" not found in ring_geo')
             return None
-        ret = safe_column(self._metadata['ring_geo_row'], col, idx=idx)
+        ret = import_util.safe_column(self._metadata['ring_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
-            ret = safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
+            ret = import_util.safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
         return ret
 
     def _surface_geo_index_col(self, col, col2=None, idx=None):
@@ -317,9 +256,9 @@ class ObsBase(object):
                 self._log_nonrepeating_error(
                     f'Columns "{col}" or "{col2}" not found in surface_geo')
             return None
-        ret = safe_column(self._metadata['surface_geo_row'], col, idx=idx)
+        ret = import_util.safe_column(self._metadata['surface_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
-            ret = safe_column(self._metadata['surface_geo_row'], col2, idx=idx)
+            ret = import_util.safe_column(self._metadata['surface_geo_row'], col2, idx=idx)
         return ret
 
     def _col_in_index(self, col):
@@ -356,7 +295,7 @@ class ObsBase(object):
             self._log_nonrepeating_error(
                 f'Column "{col}" not found in supp_index or index')
             return None
-        return safe_column(self._metadata[index], col, idx=idx)
+        return import_util.safe_column(self._metadata[index], col, idx=idx)
 
     def _some_index_or_label_col(self, col, idx=None):
         index = self._col_in_some_index_or_label(col)
@@ -364,7 +303,7 @@ class ObsBase(object):
             self._log_nonrepeating_error(
                 f'Column "{col}" not found in supp_index or index or their labels')
             return None
-        return safe_column(self._metadata[index], col, idx=idx)
+        return import_util.safe_column(self._metadata[index], col, idx=idx)
 
 
     ### Utility functions useful for subclasses ###
@@ -376,24 +315,24 @@ class ObsBase(object):
         if target_name is None:
             return None, None
         target_name = target_name.upper()
-        if target_name in TARGET_NAME_MAPPING:
-            target_name = TARGET_NAME_MAPPING[target_name]
-        if target_name not in TARGET_NAME_INFO:
+        if target_name in config_targets.TARGET_NAME_MAPPING:
+            target_name = config_targets.TARGET_NAME_MAPPING[target_name]
+        if target_name not in config_targets.TARGET_NAME_INFO:
             self._log_unknown_target_name(target_name)
             if self._ignore_errors:
                 return 'OTHER'
             return None, None
-        return target_name, TARGET_NAME_INFO[target_name]
+        return target_name, config_targets.TARGET_NAME_INFO[target_name]
 
     def _get_planet_group_info(self, target_name):
         # Return the planet group info for a passed in target_name
-        if target_name not in TARGET_NAME_INFO:
+        if target_name not in config_targets.TARGET_NAME_INFO:
             planet_id = 'OTHER'
         else:
-            planet_id = TARGET_NAME_INFO[target_name][0]
+            planet_id = config_targets.TARGET_NAME_INFO[target_name][0]
             if planet_id is None:
                 planet_id = 'OTHER'
-        return PLANET_GROUP_MAPPING[planet_id]
+        return config_targets.PLANET_GROUP_MAPPING[planet_id]
 
     def _create_mult(self, col_val, disp_name=None, disp='Y', disp_order=None,
                      grouping=None, group_disp_order=None, tooltip=None, aliases=None):
@@ -421,27 +360,18 @@ class ObsBase(object):
                                  group_disp_order=group_disp_order,
                                  tooltip=tooltip, aliases=aliases)
 
-    def _pdsfile_from_filespec(self, filespec):
-        # Create a PdsFile object from a primary filespec.
-        # The PDS3 filespec is often the .LBL file, but from_filespec doesn't
-        # handle .LBL files because ViewMaster needs to distinguish between
-        # .LBL and whatever the data file extension is. So we do the conversion
-        # here.
-        filespec = self.convert_filespec_from_lbl(filespec)
-        return pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
-
 
     # Helpers for time fields
 
     def _time_helper(self, index, column):
         # Read and convert a time, which can exist in various indexes or
         # columns.
-        the_time = safe_column(self._metadata[index], column)
+        the_time = import_util.safe_column(self._metadata[index], column)
         if the_time is None:
             return None
 
         try:
-            time_sec = cached_tai_from_iso(the_time)
+            time_sec = import_util.cached_tai_from_iso(the_time)
         except Exception as e:
             self._log_nonrepeating_error(f'Bad {column} format "{the_time}": {e}')
             return None
@@ -453,12 +383,12 @@ class ObsBase(object):
         # columns. Compare it to the starting time to make sure they're in the proper
         # order.
         index_row = self._metadata[index]
-        stop_time = safe_column(index_row, column)
+        stop_time = import_util.safe_column(index_row, column)
         if stop_time is None:
             return None
 
         try:
-            stop_time_sec = cached_tai_from_iso(stop_time)
+            stop_time_sec = import_util.cached_tai_from_iso(stop_time)
         except Exception as e:
             self._log_nonrepeating_error(f'Bad {column} format "{stop_time}": {e}')
             return None
@@ -471,45 +401,17 @@ class ObsBase(object):
 
         return stop_time_sec
 
-    def _time_from_index(self, column='START_TIME'):
-        return self._time_helper('index_row', column)
-
-    def _time_from_supp_index(self, column='START_TIME'):
-        return self._time_helper('supp_index_row', column)
-
-    def _time2_from_index(self, start_time_sec, column='STOP_TIME'):
-        return self._time2_helper('index_row', start_time_sec, column)
-
-    def _time2_from_supp_index(self, start_time_sec, column='STOP_TIME'):
-        return self._time2_helper('supp_index_row', start_time_sec, column)
-
-    def _time_from_some_index(self, column='START_TIME'):
-        index = self._col_in_some_index(column)
-        if index is None:
-            self._log_nonrepeating_error(
-                f'Column "{column}" not found in supp_index or index')
-            return None
-        return self._time_helper(index, column=column)
-
-    def _time2_from_some_index(self, time1, column='STOP_TIME'):
-        index = self._col_in_some_index_or_label(column)
-        if index is None:
-            self._log_nonrepeating_error(
-                f'Column "{column}" not found in supp_index or index')
-            return None
-        return self._time2_helper(index, time1, column=column)
-
 
     ### Error logging ###
 
     def _log_unknown_target_name(self, target_name):
-        log_unknown_target_name(target_name)
+        import_util.log_unknown_target_name(target_name)
 
     def _log_warning(self, *args, **kwargs):
-        log_warning(*args, **kwargs)
+        import_util.log_warning(*args, **kwargs)
 
     def _log_nonrepeating_warning(self, *args, **kwargs):
-        log_nonrepeating_warning(*args, **kwargs)
+        import_util.log_nonrepeating_warning(*args, **kwargs)
 
     def _log_nonrepeating_error(self, *args, **kwargs):
-        log_nonrepeating_error(*args, **kwargs)
+        import_util.log_nonrepeating_error(*args, **kwargs)

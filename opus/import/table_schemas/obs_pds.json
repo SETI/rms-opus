@@ -60,8 +60,8 @@
     },
     {
         "field_name": "instrument_id",
-        "field_type": "char12",
-        "field_key": true,
+        "field_type": "char60",
+        "field_key": false,
         "field_notnull": true,
         "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
@@ -69,7 +69,6 @@
     {
         "field_name": "data_set_id",
         "field_type": "char40",
-        "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -90,7 +89,6 @@
     {
         "field_name": "product_id",
         "field_type": "char50",
-        "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -111,7 +109,6 @@
     {
         "field_name": "primary_lid",
         "field_type": "char100",
-        "field_notnull": false,
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",

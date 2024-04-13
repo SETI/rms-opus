@@ -64,8 +64,8 @@ if __name__ == "__main__":
         # 'nh-mvic-mc1_0005261846',
         # 'nh-mvic-mp1_0012448104',
         # 'vg-iss-2-s-c4360353',
-        # 'mcd27m-iirar-occ-1989-184-28sgr-i',
-        # 'eso1m-apph-occ-1989-184-28sgr-e',
+        # 'mcd2m7-iirar-occ-1989-184-28sgr-i',
+        # 'esosil1m04-apph-occ-1989-184-28sgr-e',
         # 'lick1m-ccdc-occ-1989-184-28sgr-i',
         # 'co-rss-occ-2005-123-rev007-k26-i',
         # 'co-rss-occ-2008-217-rev079c-s63-i',
@@ -83,6 +83,9 @@ if __name__ == "__main__":
         # 'vg-rss-2-u-occ-1986-024-s43-four-i',
         # 'vg-uvs-2-n-occ-1989-236-sigsgr-i',
         # 'vg-iss-2-s-prof'
+        # 'kao0m91-vis-occ-1977-069-u0-ringpl-i',
+        # 'kao0m91-vis-occ-1977-069-u0-uranus-e',
+        # 'kao0m91-vis-occ-1977-069-u0-eta-e'
     ]
 
     session = requests.Session()

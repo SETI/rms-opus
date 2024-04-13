@@ -2933,6 +2933,39 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
+    # A PDS4 bundle
+    def test__api_cart_download_pds4_uranus_occs_earthbased_tgz(self):
+        "[test_cart_api.py] /__cart/download.json: PDS4 multiple opus ids with duplicated files & hierarchical & fmt=tgz"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=kao0m91-vis-occ-1977-069-u0-ringpl-i&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=kao0m91-vis-occ-1977-069-u0-epsilon-i&reqno=456'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=kao0m91-vis-occ-1977-069-u0-delta-i&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=kao0m91-vis-occ-1977-069-u0-uranus-i&reqno=456'
+        expected = {'recycled_count': 0, 'count': 4, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=ebur_occ_ring_0100,ebur_occ_global_1000,ebur_occ_atmos,rms_index&hierarchical=1&fmt=tgz'
+        expected = ['bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_delta_ingress_100m.xml',
+                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_delta_ingress_100m.tab',
+                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_epsilon_ingress_100m.xml',
+                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_epsilon_ingress_100m.tab',
+                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_ingress_1000m.xml',
+                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_ingress_1000m.tab',
+                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_ingress.xml',
+                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_ingress.tab',
+                    'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_rings_index.csv',
+                    'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_global_index.csv',
+                    'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_atmosphere_index.csv',
+                    'data.csv', 'manifest.csv', 'urls.txt']
+        self._run_archive_file_equal(url, expected, fmt='tgz')
+
     def test__api_cart_download_multiple_tar_urlonly(self):
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tar & urlonly"
         url = '/__cart/reset.json?reqno=42'

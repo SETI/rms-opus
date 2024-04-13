@@ -386,4 +386,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # We don't want to have these characters in HTML class or ID for customized tooltips.
 INVALID_CLASS_CHAR = r'~!@$%^&*()+=,./;:"?><[]\{}|`# '
 
-PDS_HOLDINGS_DIR = '/holdings'
+PDS3_HOLDINGS_DIR = '/holdings'
+PDS4_HOLDINGS_DIR = '/pds4-holdings'

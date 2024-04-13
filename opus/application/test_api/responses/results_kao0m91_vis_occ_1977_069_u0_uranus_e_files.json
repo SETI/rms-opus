@@ -1,0 +1,96 @@
+{
+    "data": {
+        "kao0m91-vis-occ-1977-069-u0-uranus-e": {
+            "ebur_occ_atmos": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.tab"
+            ],
+            "ebur_occ_orig_index": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_occultations_index.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_occultations_index.tab"
+            ],
+            "ebur_occ_quality_rating": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_ringocc_bundles_quality_rating.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_ringocc_bundles_quality_rating.csv"
+            ],
+            "ebur_occ_documentation": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/earth-based-uranus-stellar-occultation-user-guide.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/earth-based-uranus-stellar-occultation-user-guide.pdf"
+            ],
+            "ebur_occ_software": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/ring_longitude_example.py",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/ring_longitude_example.pro",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example_python.pdf",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example_IDL.pdf",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example.py",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example.pro",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example2.py",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example2.pro",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example1.py",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example1.pro",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/create_uranus_ringframes_french_et_al_1988_v1.pro",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/UranusPoleExample2.py",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/UranusPoleExample1.py"
+            ],
+            "ebur_occ_kernels": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/spk/urkao_v1.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/spk/urkao_v1.bsp",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_rfrench20201201_v1.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_rfrench20201201_v1.tf",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_french_et_al_1988_v1.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_french_et_al_1988_v1.tf"
+            ],
+            "rms_index": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_atmosphere_index.csv"
+            ]
+        }
+    },
+    "versions": {
+        "kao0m91-vis-occ-1977-069-u0-uranus-e": {
+            "Current": {
+                "ebur_occ_atmos": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.tab"
+                ],
+                "ebur_occ_orig_index": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_occultations_index.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_occultations_index.tab"
+                ],
+                "ebur_occ_quality_rating": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_ringocc_bundles_quality_rating.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/supplemental_docs/uranus_ringocc_bundles_quality_rating.csv"
+                ],
+                "ebur_occ_documentation": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/earth-based-uranus-stellar-occultation-user-guide.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/earth-based-uranus-stellar-occultation-user-guide.pdf"
+                ],
+                "ebur_occ_software": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/ring_longitude_example.py",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/ring_longitude_example.pro",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example_python.pdf",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example_IDL.pdf",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example.py",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/plot_epsilon_ring_example.pro",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example2.py",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example2.pro",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example1.py",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/occgeom_example1.pro",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/create_uranus_ringframes_french_et_al_1988_v1.pro",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/UranusPoleExample2.py",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/document/user_guide/UranusPoleExample1.py"
+                ],
+                "ebur_occ_kernels": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/spk/urkao_v1.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/spk/urkao_v1.bsp",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_rfrench20201201_v1.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_rfrench20201201_v1.tf",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_french_et_al_1988_v1.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/uranus_occs_earthbased/uranus_occ_support/spice_kernels/fk/uranus_ringframes_french_et_al_1988_v1.tf"
+                ],
+                "rms_index": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_atmosphere_index.csv"
+                ]
+            }
+        }
+    }
+}

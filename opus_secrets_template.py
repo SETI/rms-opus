@@ -28,9 +28,13 @@ DB_SCHEMA_NAME = '<SCHEMA_NAME>'
 DB_USER = '<DB_USER>'
 DB_PASSWORD = '<DB_PASSWORD>'
 
-# The root directory of all PDS holdings. Under this directory should be
+# The root directory of all PDS3 holdings. Under this directory should be
 # volumes, calibrated, metadata, previews, and diagrams.
-PDS_DATA_DIR = '<HOLDING_DIR>'
+PDS3_DATA_DIR = '<HOLDING_DIR>'
+
+# The root directory of all PDS4 holdings. Under this directory should be
+# bundles, metadata, previews, and diagrams.
+PDS4_DATA_DIR = '<HOLDING_DIR>'
 
 # The directory where rms-opus lives.
 RMS_OPUS_PATH = '<RMS_OPUS_PATH>'

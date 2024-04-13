@@ -1,25 +1,25 @@
 {
     "data": {
-        "eso1m-apph-occ-1989-184-28sgr-e": {
-            "ebro_profile": [
+        "esosil1m04-apph-occ-1989-184-28sgr-e": {
+            "ebro_occ_profile": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL"
             ],
-            "ebro_geom": [
+            "ebro_occ_geom": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.LBL"
             ],
-            "ebro_preview": [
+            "ebro_occ_preview": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PS",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PDF",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL"
             ],
-            "ebro_diagram": [
+            "ebro_occ_diagram": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PS",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PDF",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL"
             ],
-            "ebro_source": [
+            "ebro_occ_source": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.DAT",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.OUT",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.LBL",
@@ -28,10 +28,6 @@
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.lbl"
-            ],
-            "profile_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_profile_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_profile_index.lbl"
             ],
             "supplemental_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.tab",
@@ -60,27 +56,27 @@
         }
     },
     "versions": {
-        "eso1m-apph-occ-1989-184-28sgr-e": {
+        "esosil1m04-apph-occ-1989-184-28sgr-e": {
             "Current": {
-                "ebro_profile": [
+                "ebro_occ_profile": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL"
                 ],
-                "ebro_geom": [
+                "ebro_occ_geom": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.LBL"
                 ],
-                "ebro_preview": [
+                "ebro_occ_preview": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PS",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PDF",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL"
                 ],
-                "ebro_diagram": [
+                "ebro_occ_diagram": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PS",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PDF",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL"
                 ],
-                "ebro_source": [
+                "ebro_occ_source": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.DAT",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.OUT",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.LBL",
@@ -89,10 +85,6 @@
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.lbl"
-                ],
-                "profile_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_profile_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_profile_index.lbl"
                 ],
                 "supplemental_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.tab",

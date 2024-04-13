@@ -2,8 +2,8 @@
 # obs_volume_vg28xx.py
 #
 # Defines the ObsVolumeVG28xx class, the parent for the
-# ObsVolumeVG28xxVGISS, ObsVolumeVG28xxVGPPS, ObsVolumeVG28xxVGRSS,
-# and ObsVolumeVG28xxVGUVS classes, which encapsulate
+# ObsVolumeVG2810VGISS, ObsVolumeVG2801VGPPS, ObsVolumeVG2803VGRSS,
+# and ObsVolumeVG2802VGUVS classes, which encapsulate
 # fields in the common, obs_mission_voyager, and (sometimes)
 # obs_instrument_vgiss tables for the VG_28XX volumes.
 ################################################################################
@@ -141,12 +141,6 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
 
     def field_obs_ring_geometry_ring_radius2(self):
         return self._supp_index_col('MAXIMUM_RING_RADIUS')
-
-    def field_obs_ring_geometry_resolution1(self):
-        return self._supp_index_col('MINIMUM_RADIAL_RESOLUTION')
-
-    def field_obs_ring_geometry_resolution2(self):
-        return self._supp_index_col('MAXIMUM_RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._supp_index_col('MINIMUM_RADIAL_RESOLUTION')
