@@ -116,7 +116,7 @@ rms-textkernel==1.0.1
     #   rms-pdslogger
 rms-translator==0.0.1
     # via -r requirements.in
-sqlparse==0.4.4
+sqlparse==0.5.0
     # via django
 typing-extensions==4.11.0
     # via qrcode
@@ -124,8 +124,9 @@ urllib3==2.2.1
     # via requests
 wheel==0.43.0
     # via pip-tools
+xattr==1.1.0
+    # via rms-pdslogger
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
-# xattr
