@@ -47,7 +47,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "rms_index",
-        "definition": "Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
+        "definition": "Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl or *.xml), if available, describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
