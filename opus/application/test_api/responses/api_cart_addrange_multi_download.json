@@ -66,7 +66,7 @@
             "Current": [
                 {
                     "slug_name": "rms_index",
-                    "tooltip": "Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.",
+                    "tooltip": "Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl or *.xml), if available, describe the contents of the text files.",
                     "product_type": "RMS Node Augmented Index",
                     "product_count": 17,
                     "download_count": 2,

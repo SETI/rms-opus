@@ -42,6 +42,18 @@
             ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/pds4-holdings/metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_atmosphere_index.csv"
+            ],
+            "diagram_thumb": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_thumb.png"
+            ],
+            "diagram_small": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_small.png"
+            ],
+            "diagram_medium": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_med.png"
+            ],
+            "diagram_full": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_full.png"
             ]
         }
     },
@@ -89,6 +101,18 @@
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/pds4-holdings/metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_atmosphere_index.csv"
+                ],
+                "diagram_thumb": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_thumb.png"
+                ],
+                "diagram_small": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_small.png"
+                ],
+                "diagram_medium": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_med.png"
+                ],
+                "diagram_full": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_diagram_full.png"
                 ]
             }
         }
