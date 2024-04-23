@@ -4,7 +4,7 @@ then
     echo 'Usage: import_all.sh <production_database_name> "-u<username> -p<password> -h <hostname>" <other_params>'
     exit 1
 fi
-if [[ ! `hostname` =~ "tools" && ! `hostname` =~ "ringmaster" ]];
+if [[ ! `hostname` =~ "tools" && ! `hostname` =~ "ringlet" ]];
 then
     echo "Please only run this script on tools.pds-rings.seti.org"
     exit 1
