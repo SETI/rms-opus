@@ -101,7 +101,7 @@ rms-julian==2.0.1
     #   -r requirements.in
     #   rms-pdstable
     #   rms-textkernel
-rms-pdsfile==0.0.4
+rms-pdsfile==0.0.5
     # via -r requirements.in
 rms-pdslogger==0.0.5
     # via -r requirements.in
