@@ -254,7 +254,7 @@ BUNDLE_INFO = [
          'instrument_class': ObsBundleUranusOccsEarthbased},
     ),
     # These bundles are part of uranus_occs_earthbased but should not be imported
-    (r'checksums_uranus_occs_earthbased|uranus_occ_support',
+    (r'checksums_uranus_occs_earthbased|uranus_occ_support|superseded',
         {'pds_version': 4,
          'primary_index': None,
          'validate_index_rows': False,
