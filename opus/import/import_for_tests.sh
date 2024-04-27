@@ -43,7 +43,7 @@ python main_opus_import.py --do-all-import VG_28xx $1
 if [ $? -ne 0 ]; then exit -1; fi
 python main_opus_import.py --do-all-import COCIRS_0406,COCIRS_1003 $1
 if [ $? -ne 0 ]; then exit -1; fi
-python main_opus_import.py --do-all-import uranus_occs_earthbased $1
+python main_opus_import.py --do-all-import uranus_occ_u0_kao_91cm $1
 if [ $? -ne 0 ]; then exit -1; fi
 python main_opus_import.py --cleanup-aux-tables
 if [ $? -ne 0 ]; then exit -1; fi
