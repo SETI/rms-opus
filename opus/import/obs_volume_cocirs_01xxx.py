@@ -26,9 +26,6 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
     def _is_ring_map_projection(self):
         return self._get_cube_map_projection() == 'r'
 
-    def _is_equi_map_projection(self):
-        return self._get_cube_map_projection() == 'e'
-
     # Equinox: 2009-08-11T01:40:08.914
     # Before this time, south side of the ring is lit.
     # After this time, north side of the ring is lit.

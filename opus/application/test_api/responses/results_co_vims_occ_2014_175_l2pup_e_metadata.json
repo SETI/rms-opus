@@ -144,7 +144,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "VIMS_205RI_L2PUPOCC002_PRIME",
         "CASSINIactivityname": "L2PUPOCC",
-        "CASSINImissionphasename": "Extended-Extended Mission",
+        "CASSINImissionphasename": "Solstice Mission",
         "CASSINItargetcode": "RI (Rings - general)",
         "CASSINItargetname": null,
         "CASSINIrevnoint": "205",
