@@ -100,8 +100,8 @@ _CASSINI_PHASE_NAME_MAPPING = (
     # The descent actually happened on Jan 14
     ('Huygens Descent',           cached_tai_from_iso('2004-360T13:30:10.410'), cached_tai_from_iso('2005-015T18:28:29.451')), # '2005-001T14:28:54.449'),
     ('Tour',                      cached_tai_from_iso('2005-015T18:28:29.451'), cached_tai_from_iso('2008-183T21:04:08.998')), # '2008-183T09:17:06.323'),
-    ('Extended Mission',          cached_tai_from_iso('2008-183T21:04:08.998'), cached_tai_from_iso('2010-285T05:22:24.745')), # '2010-283T14:14:20.741'),
-    ('Extended-Extended Mission', cached_tai_from_iso('2010-285T05:22:24.745'), cached_tai_from_iso('2020-001T00:00:00.000'))
+    ('Equinox Mission',           cached_tai_from_iso('2008-183T21:04:08.998'), cached_tai_from_iso('2010-285T05:22:24.745')), # '2010-283T14:14:20.741'),
+    ('Solstice Mission',          cached_tai_from_iso('2010-285T05:22:24.745'), cached_tai_from_iso('2020-001T00:00:00.000'))
 )
 
 # These mappings are for the TARGET_DESC field to clean them up
@@ -255,7 +255,17 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
         target_info = config_targets.TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]
 
-    def _cassini_mission_phase_name(self):
+    def _cassini_normalize_mission_phase_name(self, phase):
+        # These mission phase names are interchangeable, so we standardize on
+        # one version
+        phase = phase.upper().replace('_', ' ')
+        if phase == 'EXTENDED MISSION':
+            phase = 'EQUINOX MISSION'
+        elif phase == 'EXTENDED-EXTENDED MISSION':
+            phase = 'SOLSTICE MISSION'
+        return phase
+
+    def _cassini_mission_phase_name_from_time(self):
         # This is used for COUVIS and COVIMS because they don't include the
         # MISSION_PHASE_NAME in the label files. We deduce it from the observation
         # time based on what we found in COISS.

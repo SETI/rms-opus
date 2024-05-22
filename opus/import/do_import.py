@@ -840,7 +840,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                             # be more than one entry per observation, since
                             # there is one for each target. We create a
                             # dictionary keyed by opus_id containing a
-                            # dictionary keyed by target nameso we can collect
+                            # dictionary keyed by target name so we can collect
                             # all the target entries in one place.
                             key2 = row.get('TARGET_NAME', None)
                             if key2 is None:

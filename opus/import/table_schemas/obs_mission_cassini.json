@@ -357,8 +357,26 @@
         "pi_slug": "CASSINImissionphasename",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "comments": "Definition is from COISS label"
-    },
+        "comments": "Definition is from COISS label",
+        "mult_options": [
+            [   0, "SCIENCE CRUISE",           "Science Cruise",           "000", "Y", null, null],
+            [   1, "EARTH-JUPITER CRUISE",     "Earth-Jupiter Cruise",     "010", "Y", null, null],
+            [   2, "JUPITER ENCOUNTER",        "Jupiter Encounter",        "020", "Y", null, null],
+            [   3, "CRUISE SCIENCE",           "Cruise Science",           "030", "Y", null, null],
+            [   4, "SPACE SCIENCE",            "Space Science",            "040", "Y", null, null],
+            [   5, "APPROACH SCIENCE",         "Approach Science",         "050", "Y", null, null],
+            [   6, "PHOEBE ENCOUNTER",         "Phoebe Encounter",         "060", "Y", null, null],
+            [   7, "TOUR PRE-HUYGENS",         "Tour Pre-Huygens",         "070", "Y", null, null],
+            [   8, "SATURN ORBIT INSERTION",   "Saturn Orbit Insertion",   "080", "Y", null, null],
+            [   9, "TITAN A ENCOUNTER",        "Titan A Encounter",        "090", "Y", null, null],
+            [  10, "TITAN B ENCOUNTER",        "Titan B Encounter",        "100", "Y", null, null],
+            [  11, "HUYGENS PROBE SEPARATION", "Huygens Probe Separation", "110", "Y", null, null],
+            [  12, "HUYGENS DESCENT",          "Huygens Descent",          "120", "Y", null, null],
+            [  13, "TOUR",                     "Tour",                     "130", "Y", null, null],
+            [  14, "EQUINOX MISSION",          "Equinox Mission",          "140", "Y", null, null],
+            [  15, "SOLSTICE MISSION",         "Solstice Mission",         "150", "Y", null, null]
+        ]
+  },
     {
         "field_name": "sequence_id",
         "field_type": "char4",

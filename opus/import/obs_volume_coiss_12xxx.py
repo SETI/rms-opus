@@ -406,9 +406,10 @@ class ObsVolumeCOISS12xxx(ObsVolumeCassiniCommon):
 
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._index_col('MISSION_PHASE_NAME')
-        if mp.upper() == 'NULL':
+        mp = self._cassini_normalize_mission_phase_name(mp)
+        if mp == 'NULL':
             return self._create_mult(None)
-        return self._create_mult(mp.replace('_', ' '))
+        return self._create_mult(mp)
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._index_col('SEQUENCE_ID')
