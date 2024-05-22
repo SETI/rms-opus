@@ -55,11 +55,11 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         if self._is_ring_map_projection():
             if self._index_col('PRIMARY_BODY_NAME') != 'SATURN':
                 import_util.log_nonrepeating_error(
-                    f'Ring observation but PRIMARY_BODY_NAME != "SATURN"')
+                    'Ring observation but PRIMARY_BODY_NAME != "SATURN"')
                 return ()
             if self._index_col('TARGET_NAME') != 'S_RINGS':
                 import_util.log_nonrepeating_error(
-                    f'Ring observation but TARGET_NAME != "S_RINGS"')
+                    'Ring observation but TARGET_NAME != "S_RINGS"')
                 return ()
             return ('SATURN',)
         return (self._index_col('TARGET_NAME'), )
