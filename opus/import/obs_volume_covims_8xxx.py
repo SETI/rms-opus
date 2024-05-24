@@ -102,7 +102,7 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._create_mult(self._cassini_mission_phase_name())
+        return self._create_mult(self._cassini_mission_phase_name_from_time())
 
 
     ###############################################

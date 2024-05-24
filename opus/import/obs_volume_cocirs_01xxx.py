@@ -10,6 +10,7 @@ import julian
 
 import opus_support
 
+import import_util
 from obs_volume_cassini_common import ObsVolumeCassiniCommon
 
 _EQUINOX_DATE = julian.tai_from_iso('2009-08-11T01:40:08.914')
@@ -25,14 +26,11 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
     def _is_ring_map_projection(self):
         return self._get_cube_map_projection() == 'r'
 
-    def _is_equi_map_projection(self):
-        return self._get_cube_map_projection() == 'e'
-
     # Equinox: 2009-08-11T01:40:08.914
-    # Before this time, north side of the ring is lit.
-    # After this time, south side of the ring is lit.
+    # Before this time, south side of the ring is lit.
+    # After this time, north side of the ring is lit.
     def _is_ring_north_side_lit(self):
-        return self.field_obs_general_time1() < _EQUINOX_DATE
+        return self.field_obs_general_time1() > _EQUINOX_DATE
 
     # Use north based emission angle to determine if observer is at the north of the
     # ring.
@@ -54,8 +52,16 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         # files, we can give a list of targets this observation supports here.
         # This instrument's surface geo field methods will then be called on
         # each target.
-        if not self._is_equi_map_projection():
-            return None
+        if self._is_ring_map_projection():
+            if self._index_col('PRIMARY_BODY_NAME') != 'SATURN':
+                import_util.log_nonrepeating_error(
+                    'Ring observation but PRIMARY_BODY_NAME != "SATURN"')
+                return ()
+            if self._index_col('TARGET_NAME') != 'S_RINGS':
+                import_util.log_nonrepeating_error(
+                    'Ring observation but TARGET_NAME != "S_RINGS"')
+                return ()
+            return ('SATURN',)
         return (self._index_col('TARGET_NAME'), )
 
     def convert_filespec_from_lbl(self, filespec):
@@ -153,25 +159,69 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         return self._index_col('CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
 
     def field_obs_ring_geometry_ring_radius2(self):
+        return self.field_obs_ring_geometry_ring_radius1()
+
+    def field_obs_ring_geometry_projected_radial_resolution1(self):
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
+        return self._index_col('CSS:RADIAL_SCALE')
+
+    def field_obs_ring_geometry_projected_radial_resolution2(self):
+        return self.field_obs_ring_geometry_projected_radial_resolution1()
+
+    def field_obs_ring_geometry_ring_center_distance1(self):
+        if not self._is_ring_map_projection():
+            return None
+        return self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE')
+
+    def field_obs_ring_geometry_ring_center_distance2(self):
+        return self.field_obs_ring_geometry_ring_center_distance1()
 
     def field_obs_ring_geometry_j2000_longitude1(self):
-        if not self._is_ring_map_projection():
-            return None
-        return self._index_col('CSS:PRIMARY_SUB_SOLAR_LONGITUDE_BEGINNING')
+        # Since there's only one longitude, not a range, we don't have to
+        # worry about the 0-360 problem.
+        return self._ascending_to_j2000(
+            self.field_obs_ring_geometry_ascending_longitude1())
 
     def field_obs_ring_geometry_j2000_longitude2(self):
+        return self.field_obs_ring_geometry_j2000_longitude1()
+
+    def field_obs_ring_geometry_ascending_longitude1(self):
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:PRIMARY_SUB_SOLAR_LONGITUDE_END')
+        # Longitude is degrees EAST from the ascending node! Why?
+        return (self._index_col('CSS:MEAN_RING_BORESIGHT_LONGITUDE_ZPD') + 180.) % 360.
+
+    def field_obs_ring_geometry_ascending_longitude2(self):
+        return self.field_obs_ring_geometry_ascending_longitude1()
+
+    def field_obs_ring_geometry_solar_hour_angle1(self):
+        if not self._is_ring_map_projection():
+            return None
+        return self._index_col('CSS:MEAN_RING_BORESIGHT_LOCAL_TIME') * 15.
+
+    def field_obs_ring_geometry_solar_hour_angle2(self):
+        return self.field_obs_ring_geometry_solar_hour_angle1()
+
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
+        if not self._is_ring_map_projection():
+            return None
+        # Positive north, negative south
+        inc = self.field_obs_ring_geometry_north_based_incidence1()
+        return 90. - inc
+
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
+        return self.field_obs_ring_geometry_solar_ring_elevation1()
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):
-        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
+        if not self._is_ring_map_projection():
+            return None
+        # Positive north, negative south
+        ea = self.field_obs_ring_geometry_north_based_emission1()
+        return 90. - ea
 
     def field_obs_ring_geometry_observer_ring_elevation2(self):
-        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
+        return self.field_obs_ring_geometry_observer_ring_elevation1()
 
     def field_obs_ring_geometry_phase1(self):
         if not self._is_ring_map_projection():
@@ -179,21 +229,20 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         return self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
 
     def field_obs_ring_geometry_phase2(self):
+        return self.field_obs_ring_geometry_phase1()
+
+    def field_obs_ring_geometry_incidence1(self):
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
+        inc = self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_ZENITH')
+        if self._is_ring_north_side_lit():
+            return inc
+        return 180. - inc
+
+    def field_obs_ring_geometry_incidence2(self):
+        return self.field_obs_ring_geometry_incidence1()
 
     def field_obs_ring_geometry_emission1(self):
-        if not self._is_ring_map_projection():
-            return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
-
-    def field_obs_ring_geometry_emission2(self):
-        if not self._is_ring_map_projection():
-            return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
-
-    def field_obs_ring_geometry_north_based_emission1(self):
         if not self._is_ring_map_projection():
             return None
         ea = self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
@@ -201,37 +250,30 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
             return ea
         return 180. - ea
 
+    def field_obs_ring_geometry_emission2(self):
+        return self.field_obs_ring_geometry_emission1()
+
+    def field_obs_ring_geometry_north_based_incidence1(self):
+        if not self._is_ring_map_projection():
+            return None
+        # This field really is north-based in the index file
+        return self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_ZENITH')
+
+    def field_obs_ring_geometry_north_based_incidence2(self):
+        return self.field_obs_ring_geometry_north_based_incidence1()
+
+    def field_obs_ring_geometry_north_based_emission1(self):
+        # This field really is north-based in the index file
+        if not self._is_ring_map_projection():
+            return None
+        return self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
+
     def field_obs_ring_geometry_north_based_emission2(self):
         return self.field_obs_ring_geometry_north_based_emission1()
 
-    def field_obs_ring_geometry_ring_center_phase1(self):
-        return self.field_obs_ring_geometry_phase1()
-
-    def field_obs_ring_geometry_ring_center_phase2(self):
-        return self.field_obs_ring_geometry_phase2()
-
-    def field_obs_ring_geometry_ring_center_emission1(self):
-        return self.field_obs_ring_geometry_emission1()
-
-    def field_obs_ring_geometry_ring_center_emission2(self):
-        return self.field_obs_ring_geometry_emission2()
-
-    def field_obs_ring_geometry_ring_center_north_based_emission1(self):
-        return self.field_obs_ring_geometry_north_based_emission1()
-
-    def field_obs_ring_geometry_ring_center_north_based_emission2(self):
-        return self.field_obs_ring_geometry_north_based_emission2()
-
-    def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        if not self._is_ring_map_projection():
-            return None
-        ea = self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
-        if self._is_cassini_at_north():
-            return abs(90. - ea)
-        return -abs(90. - ea)
-
-    def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
+    # Because both observer and solar opening angles are body-centered, and we
+    # don't have body-centered incidence or emission angle, we can't provide
+    # them
 
 
     ##############################################
@@ -239,7 +281,7 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
     ##############################################
 
     def field_obs_surface_geometry_target_planetocentric_latitude1(self):
-        if not self._is_equi_map_projection():
+        if self._is_ring_map_projection():
             return None
         return self._index_col('CSS:MEAN_BORESIGHT_LATITUDE_ZPD_PC')
 
@@ -247,7 +289,7 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         return self.field_obs_surface_geometry_target_planetocentric_latitude1()
 
     def field_obs_surface_geometry_target_planetographic_latitude1(self):
-        if not self._is_equi_map_projection():
+        if self._is_ring_map_projection():
             return None
         return self._index_col('CSS:MEAN_BORESIGHT_LATITUDE_ZPD')
 
@@ -255,7 +297,7 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         return self.field_obs_surface_geometry_target_planetographic_latitude1()
 
     def field_obs_surface_geometry_target_iau_west_longitude1(self):
-        if not self._is_equi_map_projection():
+        if self._is_ring_map_projection():
             return None
         return self._index_col('CSS:MEAN_BORESIGHT_LONGITUDE_ZPD')
 
@@ -263,7 +305,7 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         return self.field_obs_surface_geometry_target_iau_west_longitude1()
 
     def field_obs_surface_geometry_target_phase1(self):
-        if not self._is_equi_map_projection():
+        if self._is_ring_map_projection():
             return None
         return self._index_col('CSS:MEAN_BODY_PHASE_ANGLE')
 
@@ -271,7 +313,7 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         return self.field_obs_surface_geometry_target_phase1()
 
     def field_obs_surface_geometry_target_emission1(self):
-        if not self._is_equi_map_projection():
+        if self._is_ring_map_projection():
             return None
         return self._index_col('CSS:MEAN_EMISSION_ANGLE_FOV_AVERAGE')
 
@@ -279,74 +321,60 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         return self.field_obs_surface_geometry_target_emission1()
 
     def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self):
-        if not self._is_equi_map_projection():
+        if self._is_ring_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE')
 
     def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self):
-        if not self._is_equi_map_projection():
-            return None
-        return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE')
+        return self.field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1()
 
     def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self):
-        if not self._is_equi_map_projection():
-            return None
+        if self._is_ring_map_projection():
+            return self._index_col('PRIMARY_SUB_SOLAR_LATITUDE_MIDDLE')
         return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE')
 
     def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self):
-        if not self._is_equi_map_projection():
-            return None
-        return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE')
+        return self.field_obs_surface_geometry_target_sub_solar_planetographic_latitude1()
 
     def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self):
-        if not self._is_equi_map_projection():
+        if self._is_ring_map_projection():
             return None
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE')
 
     def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self):
-        if not self._is_equi_map_projection():
-            return None
-        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE')
+        return self.field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1()
 
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self):
-        if not self._is_equi_map_projection():
-            return None
+        if self._is_ring_map_projection():
+            return self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
 
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
-        if not self._is_equi_map_projection():
-            return None
-        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
+        return self.field_obs_surface_geometry_target_sub_observer_planetographic_latitude1()
 
     def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self):
-        if not self._is_equi_map_projection():
-            return None
+        if self._is_ring_map_projection():
+            return self._index_col('CSS:PRIMARY_SUB_SOLAR_LONGITUDE_MIDDLE')
         return self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE')
 
     def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self):
-        if not self._is_equi_map_projection():
-            return None
-        return self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE')
+        return self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude1()
 
     def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self):
-        if not self._is_equi_map_projection():
-            return None
+        if self._is_ring_map_projection():
+            return self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')
         return self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')
 
     def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self):
-        if not self._is_equi_map_projection():
-            return None
-        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')
+        return self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude1()
 
     def field_obs_surface_geometry_target_center_distance1(self):
-        if not self._is_equi_map_projection():
-            return None
+        if self._is_ring_map_projection():
+            return self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE')
         return self._index_col('CSS:BODY_SPACECRAFT_RANGE_MIDDLE')
 
     def field_obs_surface_geometry_target_center_distance2(self):
-        if not self._is_equi_map_projection():
-            return None
-        return self._index_col('CSS:BODY_SPACECRAFT_RANGE_MIDDLE')
+        return self.field_obs_surface_geometry_target_center_distance1()
 
 
     ############################################
@@ -387,7 +415,6 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
         except Exception as e:
             self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
             return None
-        return sc_cvt
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
@@ -400,9 +427,10 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
 
     def field_obs_mission_cassini_mission_phase_name(self):
         mp = self._supp_index_col('MISSION_PHASE_NAME')
-        if mp.upper() == 'NULL':
+        mp = self._cassini_normalize_mission_phase_name(mp)
+        if mp == 'NULL':
             return self._create_mult(None)
-        return self._create_mult(mp.replace('_', ' '))
+        return self._create_mult(mp)
 
 
     ###############################################
