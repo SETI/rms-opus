@@ -194,7 +194,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "CIRS_128RI_LRLEMP001_ISS",
         "CASSINIactivityname": "LRLEMP",
-        "CASSINImissionphasename": "Equinox Mission",
+        "CASSINImissionphasename": "Equinox Mission (XM)",
         "CASSINItargetcode": "RI (Rings - general)",
         "CASSINItargetname": "S_Rings",
         "CASSINIrevnoint": "128",

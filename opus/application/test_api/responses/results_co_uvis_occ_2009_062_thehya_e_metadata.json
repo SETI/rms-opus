@@ -144,7 +144,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "UVIS_104ST_URTHEHYA001_PRIME",
         "CASSINIactivityname": "URTHEHYA",
-        "CASSINImissionphasename": "Equinox Mission",
+        "CASSINImissionphasename": "Equinox Mission (XM)",
         "CASSINItargetcode": "ST (Star)",
         "CASSINItargetname": null,
         "CASSINIrevnoint": "104",
