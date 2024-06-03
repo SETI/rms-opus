@@ -373,8 +373,8 @@
             [  11, "HUYGENS PROBE SEPARATION", "Huygens Probe Separation", "110", "Y", null, null],
             [  12, "HUYGENS DESCENT",          "Huygens Descent",          "120", "Y", null, null],
             [  13, "TOUR",                     "Tour",                     "130", "Y", null, null],
-            [  14, "EQUINOX MISSION",          "Equinox Mission",          "140", "Y", null, null],
-            [  15, "SOLSTICE MISSION",         "Solstice Mission",         "150", "Y", null, null]
+            [  14, "EQUINOX MISSION (XM)",     "Equinox Mission (XM)",     "140", "Y", null, null],
+            [  15, "SOLSTICE MISSION (XXM)",   "Solstice Mission (XXM)",   "150", "Y", null, null]
         ]
   },
     {
