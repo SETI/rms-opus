@@ -263,6 +263,8 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
             phase = 'EQUINOX MISSION (XM)'
         elif phase in ('EXTENDED-EXTENDED MISSION', 'SOLSTICE MISSION'):
             phase = 'SOLSTICE MISSION (XXM)'
+        if phase == 'NULL':
+            phase = self._cassini_mission_phase_name_from_time()
         return phase
 
     def _cassini_mission_phase_name_from_time(self):
