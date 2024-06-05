@@ -220,10 +220,16 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return 256
 
     def field_obs_type_image_greater_pixel_size(self):
-        return 800
+        cutoff = self._supp_index_col('CUT_OUT_WINDOW')
+        if cutoff is None or cutoff[2] is None or cutoff[3] is None:
+            return 800
+        return max(cutoff[2], cutoff[3])
 
     def field_obs_type_image_lesser_pixel_size(self):
-        return 800
+        cutoff = self._supp_index_col('CUT_OUT_WINDOW')
+        if cutoff is None or cutoff[2] is None or cutoff[3] is None:
+            return 800
+        return min(cutoff[2], cutoff[3])
 
 
     ###################################
@@ -269,10 +275,8 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return self._create_mult(str(orbit))
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
-        if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
-            sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
-        else:
-            sc = self._index_col('MINIMUM_SPACECRAFT_CLOCK_START_COUNT')
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
+        sc = sc[:11].replace(':', '.') # XXX
         try:
             sc_cvt = opus_support.parse_galileo_sclk(sc)
         except Exception as e:
@@ -281,11 +285,8 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return sc_cvt
 
     def field_obs_mission_galileo_spacecraft_clock_count2(self):
-        if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
-            # There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
-            return self.field_obs_mission_galileo_spacecraft_clock_count1()
-        # This is the maximum start count, which is the best we can do
-        sc = self._index_col('MAXIMUM_SPACECRAFT_CLOCK_START_COUNT') # SL9
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
+        sc = sc[:11].replace(':', '.') # XXX
         try:
             sc_cvt = opus_support.parse_galileo_sclk(sc)
         except Exception as e:
