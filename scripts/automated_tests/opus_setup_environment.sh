@@ -51,6 +51,7 @@ echo "RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')" >> opus_secrets.py
 echo "DEBUG = True" >> opus_secrets.py
 echo "ALLOWED_HOSTS = ('127.0.0.1', 'localhost')" >> opus_secrets.py
 echo "SECRET_KEY = 'fred'" >> opus_secrets.py
+echo "STATIC_ROOT = '${CWD}/opus/application/static_media'" >> opus_secrets.py
 echo "OPUS_STATIC_ROOT = '${CWD}/opus/application/static_media'" >> opus_secrets.py
 echo "CACHE_SERVER_PREFIX = 'staging_test'" >> opus_secrets.py
 echo "TAR_FILE_PATH = '${DOWNLOAD_DIR}/tar/'" >> opus_secrets.py
