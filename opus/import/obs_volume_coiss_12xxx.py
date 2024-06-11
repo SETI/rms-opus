@@ -216,15 +216,15 @@ class ObsVolumeCOISS12xxx(ObsVolumeCassiniCommon):
         return self._index_col('RIGHT_ASCENSION')
 
     def field_obs_general_declination1(self):
-        ra = self._ring_geo_index_col('MINIMUM_DECLINATION')
-        if ra is not None:
-            return ra
+        dec = self._ring_geo_index_col('MINIMUM_DECLINATION')
+        if dec is not None:
+            return dec
         return self._index_col('DECLINATION')
 
     def field_obs_general_declination2(self):
-        ra = self._ring_geo_index_col('MAXIMUM_DECLINATION')
-        if ra is not None:
-            return ra
+        dec = self._ring_geo_index_col('MAXIMUM_DECLINATION')
+        if dec is not None:
+            return dec
         return self._index_col('DECLINATION')
 
     def field_obs_general_ring_obs_id(self):

@@ -109,18 +109,30 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return ra1, ra2
 
     def field_obs_general_right_asc1(self):
+        ra = self._ring_geo_index_col('MINIMUM_RIGHT_ASCENSION')
+        if ra is not None:
+            return ra
         return self._gossi_ra_helper()[0]
 
     def field_obs_general_right_asc2(self):
+        ra = self._ring_geo_index_col('MAXIMUM_RIGHT_ASCENSION')
+        if ra is not None:
+            return ra
         return self._gossi_ra_helper()[1]
 
     def field_obs_general_declination1(self):
+        dec = self._ring_geo_index_col('MINIMUM_DECLINATION')
+        if dec is not None:
+            return dec
         dec = self._index_col('DECLINATION')
         if dec is None:
             return None
         return dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
     def field_obs_general_declination2(self):
+        dec = self._ring_geo_index_col('MAXIMUM_DECLINATION')
+        if dec is not None:
+            return dec
         dec = self._index_col('DECLINATION')
         if dec is None:
             return None
@@ -139,6 +151,8 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             return self._create_mult('OTH')
         return self._create_mult('JUP')
 
+    # XXX IMAGE_TIME is the mid-time! Joe needs to put this in the supplemental
+    # index XXX
     # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
     # We assume it means stop time like it does for Voyager, and because Mark
     # has done some ring analysis with this assumption and it seemed to work OK.
@@ -200,7 +214,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return s
 
     def field_obs_pds_product_creation_time(self):
-        return None
+        return self._col_in_index('PRODUCT_CREATION_TIME')
 
 
     ##################################
