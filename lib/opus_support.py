@@ -22,76 +22,89 @@ DEG_RAD = np.degrees(1)
 
 # We limit the available times because julian doesn't support parsing dates
 # outside of this range
-MIN_TIME = -31556908800 # 1000-01-01T00:00:00
-MAX_TIME =  31556995236 # 2999-12-31T23:59:59
+MIN_TIME = -31556908800  # 1000-01-01T00:00:00
+MAX_TIME =  31556995236  # 2999-12-31T23:59:59
 
 ################################################################################
 # General routines for handling a spacecraft clock where:
-#   - there are exactly two fields
+#   - there are two or more fields
 #   - the clock partition is always one
 ################################################################################
 
-def _parse_two_field_sclk(sclk, ndigits, sep, modval, scname):
-    """Convert a two-field clock string to a numeric value.
+def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
+    """Convert a multi-field clock string to a numeric value.
 
     Input:
         sclk        the spacecraft clock string.
         ndigits     the maximum number of digits in the leading field.
         sep         the character that separates the fields, typically a colon
                     or a period.
-        modval      the modulus value of the second field.
+        modvals     For a 2-field sclk, the modulus value of the second field.
+                    For a general sclk, a list containing the modulus value of
+                    each field from 2 onward.
         scname      name of the spacecraft, used for error messages.
     """
+    if not isinstance(modvals, (list, tuple)):
+        modvals = [modvals]
+
     # Check the partition number before ignoring it
     parts = sclk.split('/')
     if len(parts) > 2:
-        raise ValueError('Invalid %s clock format, ' % scname +
-                         'extraneous slash: ' + sclk)
+        raise ValueError(f'Invalid {scname} clock format, extraneous slash: {sclk}')
 
     if len(parts) == 2:
         if parts[0].strip() != '1':
-            raise ValueError('%s partition number must be one: ' % scname +
-                             sclk)
+            raise ValueError(f'{scname} partition number must be one: {sclk}')
 
         sclk = parts[1]
 
     # Interpret the fields
+    nfields = len(modvals)+1  # this is how many fields we want
     parts = sclk.split(sep)
-    # if len(parts) == 1:
-    #     raise ValueError('Invalid %s clock format, ' % scname +
-    #                      'no field separator: ' + sclk)
 
-    if len(parts) > 2:
-        raise ValueError('More than two %s clock fields: ' % scname + sclk)
+    if len(parts) > nfields:
+        raise ValueError(f'More than {nfields} {scname} clock fields: {sclk}')
 
-    if len(parts) != 1:
-        # The second field must have the required number of digits
-        ndigits2 = len(str(modval - 1))
+    # The final part can be empty so we just delete it in that case
+    # and then will add it back in with zeroes later
+    if len(parts) > 1 and parts[-1] == '':
+        parts[-1]
 
-        while len(parts[1]) < ndigits2:
-            parts[1] = parts[1] + '0'
+    # Append fields to make the proper number
+    while len(parts) < nfields:
+        parts.append('')
 
-    # Make sure both fields are integers
+    # Append zeroes to make each field the proper length
+    for idx in range(1, len(parts)):
+        modval_len = len(str(modvals[idx-1]-1))
+        if len(parts[idx]) > modval_len:
+            raise ValueError(f'{scname} clock field {idx+1} "{parts[idx]}" has too many '
+                             f'digits: {sclk}')
+        parts[idx] = parts[idx] + '0' * (modval_len - len(parts[idx]))
+
+    # Make sure all fields are integers
     ints = []
-    try:
-        for part in parts:
+    for part in parts:
+        try:
             ints.append(int(part))
-    except ValueError:
-        raise ValueError('%s clock fields must be integers: ' % scname + sclk)
+        except ValueError:
+            raise ValueError(f'{scname} clock fields must be integers: {sclk}')
 
-    # Append fields to make two
-    if len(ints) == 1:
-        ints.append(0)
+    # Check fields for valid ranges and add them up
+    if ints[0] < 0 or len(parts[0]) > ndigits:
+        raise ValueError(f'{scname} clock leading field has too many digits: {sclk}')
 
-    # Check fields for valid ranges
-    if (ints[0] < 0 or len(parts[0]) > ndigits or
-        ints[1] < 0 or ints[1] >= modval):
-        raise ValueError('%s clock trailing field out of range ' % scname +
-                         '0-%d: ' % (modval-1) + sclk)
+    result = 0
+    for idx in range(nfields-1, 0, -1):
+        modval = modvals[idx-1]
+        if not 0 <= ints[idx] < modval:
+            raise ValueError(f'{scname} clock field {idx+1} out of range '
+                            f'0-{modval-1:d}: {sclk}')
+        result = (result + ints[idx]) / float(modval)
 
-    return ints[0] + ints[1]/float(modval)
+    return result + ints[0]
 
-def _format_two_field_sclk(value, ndigits, sep, modval, scname):
+def _format_two_field_sclk(value, ndigits, sep, modvals, scname):
     """Convert a number into a valid spacecraft clock string.
 
     Input:
@@ -100,24 +113,44 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
                     will be used for padding
         sep         the character that separates the fields, typically a colon
                     or a period.
-        modval      the modulus value of the second field.
+        modvals     For a 2-field sclk, the modulus value of the second field.
+                    For a general sclk, a list containing the modulus value of
+                    each field from 2 onward.
         scname      name of the spacecraft, used for error messages.
     """
+    if not isinstance(modvals, (list, tuple)):
+        modvals = [modvals]
+
     # Extract fields
-    hours = int(value)
-    value -= hours
-    value *= modval
+    ret_vals = [int(value)]
+    value -= ret_vals[0]
 
-    # Round off minutes
-    minutes = int(value + 0.5)
-    if minutes >= modval:
-        minutes -= modval
-        hours += 1
+    fmts = [f'%0{ndigits}d']
 
-    # Format
-    ndigits2 = len(str(modval - 1))
-    fmt = '%0' + str(ndigits) + 'd' + sep + '%0' + str(ndigits2) + 'd'
-    return fmt % (hours, minutes)
+    for idx, modval in enumerate(modvals):
+        fmts.append(f'%0{len(str(modval-1))}d')
+        value *= modval
+        if idx != len(modvals)-1:
+            # Don't round up intermediate fields
+            field_val = int(value)
+        else:
+            # Round up the final field
+            field_val = int(value + 0.5)
+        ret_vals.append(field_val)
+        value -= field_val
+
+    # If rounding up the final field made it too large, then propagate a carry
+    # to earlier fields
+    for idx in range(len(ret_vals)-1, 0, -1):
+        modval = modvals[idx-1]
+        if ret_vals[idx] < modval:
+            break
+        ret_vals[idx] -= modval
+        ret_vals[idx-1] += 1
+
+    fmt = sep.join(fmts)
+    print(fmt, ret_vals)
+    return fmt % tuple(ret_vals)
 
 
 ################################################################################
@@ -126,22 +159,29 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
 ################################################################################
 # Conversion routines for the Galileo spacecraft clock.
 #
-# The clock has two fields separated by a period. The first field has eight
-# digits with leading zeros if necessary. The second is a two-digit number
-# 0-90. The partition is always 1.
+# There are conflicting formats. The PDS3 labels have the format
+#   xxxxxxxx.mm
+# while the SPICE kernel supports
+#   xxxxxxxx:mm:n:o
+# The first field has eight digits with leading zeros if necessary.
+# The second is a two-digit number 0-90.
+# The third is a one-digit number 0-9.
+# The fourth is a one-digit number 0-7.
+# The partition is always 1.
 #
-# According to the SCLK kernel for Galileo, there are additional subfields.
-# However, the first two are all we need for the Galilieo images currently in
-# our archive.
+# We use the second option for formatting Galileo clocks for display.
+# We support both formats for parsing by converting any "." into ":" before
+# parsing, and allowing any missing fields to be set to zero.
 ################################################################################
 
 def parse_galileo_sclk(sclk, **kwargs):
     """Convert a Galileo clock string to a numeric value."""
-    return _parse_two_field_sclk(sclk, 8, '.', 91, 'Galileo')
+    sclk = sclk.replace('.', ':')
+    return _parse_multi_field_sclk(sclk, 8, ':', (91, 10, 8), 'Galileo')
 
 def format_galileo_sclk(value, **kwargs):
     """Convert a number into a valid Galileo clock string."""
-    return _format_two_field_sclk(value, 8, '.', 91, 'Galileo')
+    return _format_two_field_sclk(value, 8, ':', (91, 10, 8), 'Galileo')
 
 class GalileoTest(unittest.TestCase):
     def test_parse_extra_slash(self):
@@ -152,19 +192,17 @@ class GalileoTest(unittest.TestCase):
     def test_parse_bad_partition(self):
         """Galileo parse: Partition number other than 1"""
         with self.assertRaises(ValueError):
-            parse_galileo_sclk('2/03464059.00')
+            parse_galileo_sclk('2/03464059:00')
         with self.assertRaises(ValueError):
             parse_galileo_sclk('0/03464059.00')
         with self.assertRaises(ValueError):
-            parse_galileo_sclk('1.0/03464059.00')
+            parse_galileo_sclk('1.0/03464059:00')
         with self.assertRaises(ValueError):
             parse_galileo_sclk('-1/03464059.00')
         with self.assertRaises(ValueError):
-            parse_galileo_sclk('a/03464059.00')
+            parse_galileo_sclk('a/03464059:00')
         with self.assertRaises(ValueError):
             parse_galileo_sclk('/03464059.00')
-        with self.assertRaises(ValueError):
-            parse_galileo_sclk('1/03464059.00.00')
 
     def test_parse_bad_value(self):
         """Galileo parse: Bad sclk value"""
@@ -191,6 +229,25 @@ class GalileoTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_galileo_sclk('1/-34640590.00')
 
+    def test_parse_bad_fields(self):
+        """Galileo parse: Bad fields"""
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:000')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:00:91')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:00:-2')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:00:00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:00:0:00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:00:0:8')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:00:0:a')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('01234567:00:0:0:0')
+
     def test_parse_good_sclk(self):
         """Galileo parse: Good sclk format"""
         self.assertEqual(parse_galileo_sclk('1'), 1)
@@ -198,19 +255,30 @@ class GalileoTest(unittest.TestCase):
         self.assertEqual(parse_galileo_sclk('1.0'), 1)
         self.assertEqual(parse_galileo_sclk('1.00'), 1)
         self.assertEqual(parse_galileo_sclk('1/03464059.00'), 3464059)
-        self.assertAlmostEqual(parse_galileo_sclk('1/03464059.90'), 3464059.989010989)
-        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.90'), 3464059.989010989)
-        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.9'), 3464059.989010989)
-        self.assertAlmostEqual(parse_galileo_sclk('03464059.90'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059:00:0:3'), 3464059.000412087)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059:00:3:0'), 3464059.003296703)
+        self.assertAlmostEqual(parse_galileo_sclk('1/03464059:90'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('1/3464059:90'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('1/3464059:9'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059:90'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059:90:0:0'), 3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059:90:4'), 3464059.9934065933)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059:90:4:5'), 3464059.9940934065)
 
     def test_format_good_sclk(self):
         """Galileo format: Good value"""
-        self.assertEqual(format_galileo_sclk(0), '00000000.00')
-        self.assertEqual(format_galileo_sclk(1234), '00001234.00')
-        self.assertEqual(format_galileo_sclk(12345678), '12345678.00')
-        self.assertEqual(format_galileo_sclk(1234.989010989), '00001234.90')
-        self.assertEqual(format_galileo_sclk(99999999.989010989), '99999999.90')
-        self.assertEqual(format_galileo_sclk(99999999.995010989), '100000000.00')
+        self.assertEqual(format_galileo_sclk(0), '00000000:00:0:0')
+        self.assertEqual(format_galileo_sclk(1234), '00001234:00:0:0')
+        self.assertEqual(format_galileo_sclk(12345678), '12345678:00:0:0')
+        self.assertEqual(format_galileo_sclk(3464059.000412087), '03464059:00:0:3')
+        self.assertEqual(format_galileo_sclk(3464059.003296703), '03464059:00:3:0')
+        self.assertEqual(format_galileo_sclk(1234.989010989), '00001234:90:0:0')
+        self.assertEqual(format_galileo_sclk(99999999.989010989), '99999999:90:0:0')
+        self.assertEqual(format_galileo_sclk(99999999.9940934065), '99999999:90:4:5')
+        # test round up
+        self.assertEqual(format_galileo_sclk(99999999.995467033), '99999999:90:5:7')
+        self.assertEqual(format_galileo_sclk(99999999.99554945), '99999999:90:6:0')
+        self.assertEqual(format_galileo_sclk(99999999.99995), '100000000:00:0:0')
 
 
 ################################################################################
@@ -234,19 +302,18 @@ def parse_new_horizons_sclk(sclk, **kwargs):
     parts = sclk.partition('/')
     if parts[1]:        # a slash if present, otherwise an empty string
         if parts[0] not in ('1', '3'):
-            raise ValueError('New Horizons partition number must be 1 or 3: ' +
-                             sclk)
+            raise ValueError(f'New Horizons partition number must be 1 or 3: {sclk}')
         sclk = parts[2]
 
     # Convert to numeric value
-    value = _parse_two_field_sclk(sclk, 10, ':', 50000, 'New Horizons')
+    value = _parse_multi_field_sclk(sclk, 10, ':', 50000, 'New Horizons')
 
     # Validate the partition number if any
     if parts[1]:
         if ((parts[0] == '3' and value < 150000000.) or
             (parts[0] == '1' and value > 150000000.)):
-                raise ValueError('New Horizons partition number is invalid: ' +
-                                 original_sclk)
+            raise ValueError('New Horizons partition number is invalid: '
+                                f'{original_sclk}')
 
     return value
 
@@ -344,7 +411,7 @@ class NewHorizonsTest(unittest.TestCase):
 
 def parse_cassini_sclk(sclk, **kwargs):
     """Convert a Cassini clock string to a numeric value."""
-    return _parse_two_field_sclk(sclk, 10, '.', 256, 'Cassini')
+    return _parse_multi_field_sclk(sclk, 10, '.', 256, 'Cassini')
 
 def format_cassini_sclk(value, **kwargs):
     """Convert a number into a valid Cassini clock string."""
@@ -443,7 +510,7 @@ def parse_cassini_orbit(orbit, **kwargs):
             return intval
         if intval == 0:
             return -1
-        raise ValueError('Invalid Cassini orbit %s' % orbit)
+        raise ValueError(f'Invalid Cassini orbit {orbit}')
     except ValueError:
         pass
 
@@ -451,7 +518,7 @@ def parse_cassini_orbit(orbit, **kwargs):
     try:
         return CASSINI_ORBIT_NUMBER[orbit]
     except KeyError:
-        raise ValueError('Invalid Cassini orbit %s' % orbit)
+        raise ValueError(f'Invalid Cassini orbit {orbit}')
 
 def format_cassini_orbit(value, **kwargs):
     """Convert an internal number for a Cassini orbit to its displayed value."""
@@ -461,7 +528,7 @@ def format_cassini_orbit(value, **kwargs):
     try:
         return CASSINI_ORBIT_NAME[value]
     except KeyError:
-        raise ValueError('Invalid Cassini orbit %s' % str(value))
+        raise ValueError(f'Invalid Cassini orbit {value}')
 
 class CassiniOrbitTest(unittest.TestCase):
     def test_parse_bad_orbit(self):
@@ -542,28 +609,28 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
     explicitly stated partition number must be compatible with the associated
     planetary flyby.
     """
-    assert planet in (None, 5, 6, 7, 8), 'Invalid planet value: ' + str(planet)
+    assert planet in (None, 5, 6, 7, 8), f'Invalid planet value: {planet}'
 
     # Check the partition number before ignoring it
     parts = sclk.split('/')
     if len(parts) > 2:
-        raise ValueError('Invalid FDS format, extraneous "/": ' + sclk)
+        raise ValueError(f'Invalid FDS format, extraneous "/": {sclk}')
 
     if len(parts) == 2:
         try:
             partition = int(parts[0])
         except ValueError:
-            raise ValueError('Partition number is not an integer: ' + sclk)
+            raise ValueError(f'Partition number is not an integer: {sclk}')
 
         if planet is None:
             if partition not in VOYAGER_PLANET_PARTITIONS.values():
-                raise ValueError('Partition number out of range 2-4: ' + sclk)
+                raise ValueError(f'Partition number out of range 2-4: {sclk}')
         else:
             required_partition = VOYAGER_PLANET_PARTITIONS[planet]
             if partition != required_partition:
                 name = VOYAGER_PLANET_NAMES[planet]
-                raise ValueError('Partition number for %s flyby ' % name +
-                                 'must be %d: ' % required_partition + sclk)
+                raise ValueError(f'Partition number for {name} flyby '
+                                 f'must be {required_partition:d}: {sclk}')
 
         sclk = parts[1]
 
@@ -576,7 +643,7 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
         parts = [sclk]
 
     if len(parts) > 3:
-        raise ValueError('More than three fields in Voyager clock: ' + sclk)
+        raise ValueError(f'More than three fields in Voyager clock: {sclk}')
 
     # Make sure field are integers
     ints = []
@@ -584,7 +651,7 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
         for part in parts:
             ints.append(int(part))
     except ValueError:
-        raise ValueError('Voyager clock fields must be integers: ' + sclk)
+        raise ValueError(f'Voyager clock fields must be integers: {sclk}')
 
     # If we have just a single six- or seven-digit number, maybe the separator
     # was omitted. This is how Voyager image names are handled.
@@ -599,19 +666,19 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
 
     # Check fields for valid ranges
     if ints[0] > 65535 or ints[0] < 0:
-        raise ValueError('Voyager clock "hours" out of range 0-65535: ' + sclk)
+        raise ValueError(f'Voyager clock "hours" out of range 0-65535: {sclk}')
     if ints[1] > 59 or ints[1] < 0:
-        raise ValueError('Voyager clock "minutes" out of range 0-59: ' + sclk)
+        raise ValueError(f'Voyager clock "minutes" out of range 0-59: {sclk}')
     if ints[2] > 800 or ints[2] < 1:
-        raise ValueError('Voyager clock "seconds" out of range 1-800: ' + sclk)
+        raise ValueError(f'Voyager clock "seconds" out of range 1-800: {sclk}')
 
     # Return in units of FDS hours
     return ints[0] + (ints[1] + (ints[2]-1) / 800.) / 60.
 
 def format_voyager_sclk(value, sep=':', fields=3, **kwargs):
     """Convert a number in units of FDS hours to valid Voyager clock string."""
-    assert sep in (':', '.'), 'Separator must be ":" or ".": ' + str(sep)
-    assert fields in (2,3), 'Fields must be 2 or 3: ' + str(fields)
+    assert sep in (':', '.'), f'Separator must be ":" or ".": {sep}'
+    assert fields in (2,3), f'Fields must be 2 or 3: {fields}'
 
     saved_value = value
 
@@ -647,14 +714,13 @@ def format_voyager_sclk(value, sep=':', fields=3, **kwargs):
 
     # Check range
     if hours > 65535:
-        raise ValueError('Voyager clock "hours" cannot exceed 65535: ' +
-                         str(saved_value))
+        raise ValueError(f'Voyager clock "hours" cannot exceed 65535: {saved_value}')
 
     # Format
     if fields == 3:
-        sclk = '%05d%s%02d%s%03d' % (hours, sep, minutes, sep, seconds)
+        sclk = f'{hours:05d}{sep}{minutes:02d}{sep}{seconds:03d}'
     else:
-        sclk = '%05d%s%02d' % (hours, sep, minutes)
+        sclk = f'{hours:05d}{sep}{minutes:02d}'
 
     return sclk
 
@@ -784,7 +850,7 @@ def parse_time(iso, unit=None, **kwargs):
         pass
     else:
         if not math.isfinite(et):
-            raise ValueError('Invalid time syntax: '+iso)
+            raise ValueError(f'Invalid time syntax: {iso}')
         if unit == 'et':
             return julian.tai_from_tdb(et)
         if unit == 'jd':
@@ -798,7 +864,7 @@ def parse_time(iso, unit=None, **kwargs):
     try:
         (day, sec, time_type) = julian.day_sec_from_string(iso, timesys=True)
     except:
-        raise ValueError('Invalid time syntax: '+iso)
+        raise ValueError(f'Invalid time syntax: {iso}')
     if time_type not in ('UTC', 'TDB'):
         raise ValueError(f'Invalid time system {time_type} when parsing {iso}')
     ret = julian.tai_from_day(day) + sec
