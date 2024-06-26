@@ -104,7 +104,7 @@ def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
 
     return result + ints[0]
 
-def _format_two_field_sclk(value, ndigits, sep, modvals, scname):
+def _format_multi_field_sclk(value, ndigits, sep, modvals, scname):
     """Convert a number into a valid spacecraft clock string.
 
     Input:
@@ -149,7 +149,6 @@ def _format_two_field_sclk(value, ndigits, sep, modvals, scname):
         ret_vals[idx-1] += 1
 
     fmt = sep.join(fmts)
-    print(fmt, ret_vals)
     return fmt % tuple(ret_vals)
 
 
@@ -164,7 +163,7 @@ def _format_two_field_sclk(value, ndigits, sep, modvals, scname):
 # while the SPICE kernel supports
 #   xxxxxxxx:mm:n:o
 # The first field has eight digits with leading zeros if necessary.
-# The second is a two-digit number 0-90.
+# The second is a two-digit number 00-90.
 # The third is a one-digit number 0-9.
 # The fourth is a one-digit number 0-7.
 # The partition is always 1.
@@ -181,7 +180,7 @@ def parse_galileo_sclk(sclk, **kwargs):
 
 def format_galileo_sclk(value, **kwargs):
     """Convert a number into a valid Galileo clock string."""
-    return _format_two_field_sclk(value, 8, ':', (91, 10, 8), 'Galileo')
+    return _format_multi_field_sclk(value, 8, ':', (91, 10, 8), 'Galileo')
 
 class GalileoTest(unittest.TestCase):
     def test_parse_extra_slash(self):
@@ -319,7 +318,7 @@ def parse_new_horizons_sclk(sclk, **kwargs):
 
 def format_new_horizons_sclk(value, **kwargs):
     """Convert a number into a valid New Horizons clock string."""
-    return _format_two_field_sclk(value, 10, ':', 50000, 'New Horizons')
+    return _format_multi_field_sclk(value, 10, ':', 50000, 'New Horizons')
 
 class NewHorizonsTest(unittest.TestCase):
     def test_parse_extra_slash(self):
@@ -415,7 +414,7 @@ def parse_cassini_sclk(sclk, **kwargs):
 
 def format_cassini_sclk(value, **kwargs):
     """Convert a number into a valid Cassini clock string."""
-    return _format_two_field_sclk(value, 10, '.', 256, 'Cassini')
+    return _format_multi_field_sclk(value, 10, '.', 256, 'Cassini')
 
 class CassiniTest(unittest.TestCase):
     def test_parse_extra_slash(self):
