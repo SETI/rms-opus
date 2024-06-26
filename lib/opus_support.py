@@ -644,6 +644,13 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
     if len(parts) > 3:
         raise ValueError(f'More than three fields in Voyager clock: {sclk}')
 
+
+    # Append zeroes to make each field the proper length
+    if len(parts) > 1 and len(parts[1]) < 2:
+        parts[1] = parts[1] + '0' * (2 - len(parts[1]))
+    if len(parts) > 2 and len(parts[2]) < 3:
+        parts[2] = parts[2] + '0' * (3 - len(parts[2]))
+
     # Make sure field are integers
     ints = []
     try:
@@ -787,22 +794,27 @@ class VoyagerTest(unittest.TestCase):
 
     def test_parse_good_partition(self):
         """Voyager parse: Good partition/planet"""
-        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:1'), 0)
-        self.assertAlmostEqual(parse_voyager_sclk('3/0:0:1'), 0)
-        self.assertAlmostEqual(parse_voyager_sclk('4/0:0:1'), 0)
-        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:1', planet=5), 0)
-        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:1', planet=6), 0)
-        self.assertAlmostEqual(parse_voyager_sclk('3/0:0:1', planet=7), 0)
-        self.assertAlmostEqual(parse_voyager_sclk('4/0:0:1', planet=8), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:001'), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('3/0:0:001'), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('4/0:0:001'), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:001', planet=5), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:001', planet=6), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('3/0:0:001', planet=7), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('4/0:0:001', planet=8), 0)
 
     def test_parse_good_sclk(self):
         """Voyager parse: Good sclk"""
         self.assertEqual(parse_voyager_sclk('0'), 0)
         self.assertEqual(parse_voyager_sclk('0:0'), 0)
-        self.assertEqual(parse_voyager_sclk('0:0:1'), 0)
+        self.assertEqual(parse_voyager_sclk('0:0:001'), 0)
         self.assertEqual(parse_voyager_sclk('0:0:401'), .5/60.)
-        self.assertEqual(parse_voyager_sclk('0:1:1'), 1/60.)
-        self.assertEqual(parse_voyager_sclk('1:0:1'), 1)
+        self.assertEqual(parse_voyager_sclk('0:0:400'), 399/800/60.)
+        self.assertEqual(parse_voyager_sclk('0:0:40'), 399/800/60.)
+        self.assertEqual(parse_voyager_sclk('0:0:4'), 399/800/60.)
+        self.assertEqual(parse_voyager_sclk('0:1:1'), 10/60.+99/800/60.)
+        self.assertEqual(parse_voyager_sclk('0:1:001'), 10/60.)
+        self.assertEqual(parse_voyager_sclk('1:0:1'), 1+99/800/60.)
+        self.assertEqual(parse_voyager_sclk('1:0:001'), 1)
         self.assertEqual(parse_voyager_sclk('1000:00:001'), 1000)
         self.assertEqual(parse_voyager_sclk('1000.00.001'), 1000)
         self.assertEqual(parse_voyager_sclk('100000'), 1000)
