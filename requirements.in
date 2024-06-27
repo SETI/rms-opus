@@ -16,6 +16,7 @@ pillow >= 10.1
 pip-tools
 pyparsing
 pytest
+pytz
 pyyaml >= 6.0.1
 qrcode
 regex
