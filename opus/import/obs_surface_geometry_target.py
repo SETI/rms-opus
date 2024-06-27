@@ -32,37 +32,37 @@ class ObsSurfaceGeometryTarget(ObsBase):
         long = self.field_obs_surface_geometry_target_iau_west_longitude2()
         if long is None:
             return None
-        return 360. - long
+        return (360. - long) % 360
 
     def field_obs_surface_geometry_target_iau_east_longitude2(self):
         long = self.field_obs_surface_geometry_target_iau_west_longitude1()
         if long is None:
             return None
-        return 360. - long
+        return (360. - long) % 360
 
     def field_obs_surface_geometry_target_sub_solar_iau_east_longitude1(self):
         long = self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude2()
         if long is None:
             return None
-        return 360. - long
+        return (360. - long) % 360
 
     def field_obs_surface_geometry_target_sub_solar_iau_east_longitude2(self):
         long = self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude1()
         if long is None:
             return None
-        return 360. - long
+        return (360. - long) % 360
 
     def field_obs_surface_geometry_target_sub_observer_iau_east_longitude1(self):
         long = self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude2()
         if long is None:
             return None
-        return 360. - long
+        return (360. - long) % 360
 
     def field_obs_surface_geometry_target_sub_observer_iau_east_longitude2(self):
         long = self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude1()
         if long is None:
             return None
-        return 360. - long
+        return (360. - long) % 360
 
     def field_obs_surface_geometry_target_observer_east_longitude1(self):
         long = self.field_obs_surface_geometry_target_observer_west_longitude2()
@@ -248,7 +248,9 @@ class ObsSurfaceGeometryTarget(ObsBase):
                                 'center_phase_angle'):
             val1 = row[gridless_column+'1']
             val2 = row[gridless_column+'2']
-            if val1 != val2:
+            if (val1 != val2 and
+                not (val1 == 0 and val2 == 360 and
+                     gridless_column.endswith('_longitude'))):
                 target = table_name.replace('obs_surface_geometry__', '').upper()
                 self._log_nonrepeating_error(
                     f'SURFACE GEO {target} fields {gridless_column}1 ({val1}) and '
