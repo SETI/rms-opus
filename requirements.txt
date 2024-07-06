@@ -8,7 +8,7 @@ asgiref==3.8.1
     # via django
 build==1.2.1
     # via pip-tools
-certifi==2024.6.2
+certifi==2024.7.4
     # via requests
 cffi==1.16.0
     # via xattr
@@ -125,8 +125,9 @@ urllib3==2.2.2
     # via requests
 wheel==0.43.0
     # via pip-tools
+xattr==1.1.0
+    # via rms-pdslogger
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
-# xattr
