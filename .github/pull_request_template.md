@@ -1,5 +1,6 @@
 - Fixes #XXX
-- Were any Django, import pipeline, or table_schema files modified? Y/N
+- Is a new database import required? Y/N
+- Were test and deploy scripts reviewed for necessary changes? Y/NA
 - Were any JavaScript or CSS files modified? Y/N
   - If YES:
     - JSHINT run on all affected files: Y/NA
