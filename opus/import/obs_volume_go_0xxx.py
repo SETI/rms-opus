@@ -151,34 +151,20 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             return self._create_mult('OTH')
         return self._create_mult('JUP')
 
-    # XXX IMAGE_TIME is the mid-time! Joe needs to put this in the supplemental
-    # index XXX
-    # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
-    # We assume it means stop time like it does for Voyager, and because Mark
-    # has done some ring analysis with this assumption and it seemed to work OK.
-    # So we compute start time by taking IMAGE_TIME and subtracting exposure.
-    # If we don't have exposure, we just set them equal so we can still search
-    # cleanly.
-    # For SL9, we have a min/max for IMAGE_TIME, but play the same game.
+    # Normal volumes have START_TIME and STOP_TIME
+    # SL9 has MINIMUM_IMAGE_TIME and MAXIMUM_IMAGE_TIME
     def field_obs_general_time1(self):
-        if self._col_in_index('IMAGE_TIME'):
-            time2 = self.field_obs_general_time2()
-        else:
-            time2 = self._time_from_index(column='MINIMUM_IMAGE_TIME')
-        if time2 is None:
-            return None
-        exposure = self._index_col('EXPOSURE_DURATION')
-        if exposure is None:
-            self._log_nonrepeating_warning(f'Null exposure time for {self.opus_id}')
-            exposure = 0
-        return time2 - exposure/1000
+        time1 = self._time_from_index(column='MINIMUM_IMAGE_TIME')
+        if time1 is None:
+            time1 = self._time_from_supp_index(column='START_TIME')
+        return time1
 
     def field_obs_general_time2(self):
-        if self._col_in_index('IMAGE_TIME'):
-            if self._index_col('IMAGE_TIME') == 'UNK':
-                return None
-            return self._time2_from_index(None, column='IMAGE_TIME')
-        return self._time2_from_index(None, column='MAXIMUM_IMAGE_TIME')
+        time1 = self.field_obs_general_time1()
+        time2 = self._time2_from_index(time1, column='MAXIMUM_IMAGE_TIME')
+        if time2 is None:
+            time2 = self._time2_from_supp_index(time1, column='STOP_TIME')
+        return time2
 
     def field_obs_general_observation_duration(self):
         time1 = self.field_obs_general_time1()
@@ -212,9 +198,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         s = s[idx+1:].replace(']', '').replace('.IMG', '')
 
         return s
-
-    def field_obs_pds_product_creation_time(self):
-        return self._col_in_index('PRODUCT_CREATION_TIME')
 
 
     ##################################
@@ -290,7 +273,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
-        sc = sc[:11].replace(':', '.') # XXX
         try:
             sc_cvt = opus_support.parse_galileo_sclk(sc)
         except Exception as e:
@@ -300,7 +282,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
 
     def field_obs_mission_galileo_spacecraft_clock_count2(self):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
-        sc = sc[:11].replace(':', '.') # XXX
         try:
             sc_cvt = opus_support.parse_galileo_sclk(sc)
         except Exception as e:

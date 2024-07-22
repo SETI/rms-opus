@@ -16,6 +16,26 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.lbl"
             ],
+            "supplemental_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl"
+            ],
+            "inventory": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl"
+            ],
+            "planet_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.lbl"
+            ],
+            "moon_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_moon_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_moon_summary.lbl"
+            ],
+            "ring_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
+            ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/J0/OPNAV/C0347769100R_thumb.jpg"
             ],
@@ -47,6 +67,26 @@
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.lbl"
+                ],
+                "supplemental_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl"
+                ],
+                "inventory": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl"
+                ],
+                "planet_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.lbl"
+                ],
+                "moon_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_moon_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_moon_summary.lbl"
+                ],
+                "ring_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/J0/OPNAV/C0347769100R_thumb.jpg"
