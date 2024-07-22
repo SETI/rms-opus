@@ -38,6 +38,9 @@ class ObsSurfaceGeometryTarget(ObsBase):
         long = self.field_obs_surface_geometry_target_iau_west_longitude1()
         if long is None:
             return None
+        if (long == 0 and
+            self.field_obs_surface_geometry_target_iau_west_longitude2() == 360):
+            return 360
         return (360. - long) % 360
 
     def field_obs_surface_geometry_target_sub_solar_iau_east_longitude1(self):
@@ -50,6 +53,9 @@ class ObsSurfaceGeometryTarget(ObsBase):
         long = self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude1()
         if long is None:
             return None
+        if (long == 0 and
+            self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude2() == 360):
+            return 360
         return (360. - long) % 360
 
     def field_obs_surface_geometry_target_sub_observer_iau_east_longitude1(self):
@@ -62,6 +68,9 @@ class ObsSurfaceGeometryTarget(ObsBase):
         long = self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude1()
         if long is None:
             return None
+        if (long == 0 and
+            self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude2() == 360):
+            return 360
         return (360. - long) % 360
 
     def field_obs_surface_geometry_target_observer_east_longitude1(self):
