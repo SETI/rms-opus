@@ -576,7 +576,7 @@ var o_browse = {
         });
 
         // make sure slider won't scroll with keyboard
-        $(".op-slider-pointer").unbind("keydown")
+        $(".op-slider-pointer").unbind("keydown");
 
         $(document).on("keydown click", function(e) {
             // Whenever we click or hit up/down arrows, page up and page down keys, we
@@ -585,7 +585,7 @@ var o_browse = {
             if (e.type === "click" ||
                 (e.which || e.keyCode) == 38 || (e.which || e.keyCode) == 40 ||
                 (e.which || e.keyCode) == 33 || (e.which || e.keyCode) == 34) {
-                o_browse.hoverAndFocusOnPS()
+                o_browse.hoverAndFocusOnPS();
             }
 
             // don't close the mini-menu on the ctrl key in case the user
@@ -672,8 +672,8 @@ var o_browse = {
         let tab = opus.getViewTab(view);
         let contentsView = o_browse.getScrollContainerClass(view);
 
-        $(`${tab} ${contentsView}`).mouseover()
-        $(`${tab} ${contentsView} .ps__thumb-y`).focus()
+        $(`${tab} ${contentsView}`).mouseover();
+        $(`${tab} ${contentsView} .ps__thumb-y`).focus();
     },
 
     onGalleryOrRowClick: function(obj, e) {
