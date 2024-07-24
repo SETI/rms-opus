@@ -7,6 +7,7 @@
 
 import json
 import os
+import traceback
 
 import impglobals # It would be nice to have a better way to pass in cmd line args
 
@@ -62,13 +63,15 @@ class ObsGeneral:
 
         try:
             viewset = pdsf.viewset
-        except ValueError as e:
+        except ValueError:
+            tb = traceback.format_exc()
             self._log_nonrepeating_warning(
-                f'ViewSet threw ValueError for "{filespec}": {e}')
+                f'ViewSet threw ValueError for "{filespec}":\n{tb}')
             viewset = None
-        except IOError as e:
+        except IOError:
+            tb = traceback.format_exc()
             self._log_nonrepeating_warning(
-                f'ViewSet threw IOError for "{filespec}": {e}')
+                f'ViewSet threw IOError for "{filespec}":\n{tb}')
             viewset = None
 
         if viewset:

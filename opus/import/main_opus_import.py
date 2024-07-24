@@ -413,11 +413,17 @@ try: # Top-level exception handling so we always log what's going on
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-    if not impglobals.ARGUMENTS.dont_use_shelves_only:
-        Pds3File.use_shelves_only()
-        # Pds4File.use_shelves_only()    # TODOPDS4
-    Pds3File.require_shelves(True)
-    # Pds4File.require_shelves(True)   # TODOPDS4
+    if impglobals.ARGUMENTS.dont_use_shelves_only:
+        Pds3File.use_shelves_only(False)
+        Pds3File.require_shelves(False)
+        # Pds4File.use_shelves_only(False)    # TODOPDS4
+        # Pds3File.require_shelves(False)
+    else:
+        Pds3File.use_shelves_only(True)
+        Pds3File.require_shelves(True)
+        # Pds4File.use_shelves_only(True)    # TODOPDS4
+        # Pds3File.require_shelves(True)
+
     if impglobals.ARGUMENTS.override_pds3_data_dir:
         Pds3File.preload(impglobals.ARGUMENTS.override_pds3_data_dir)
     else:
