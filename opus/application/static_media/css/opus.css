@@ -270,6 +270,11 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     background-color: transparent !important;
 }
 
+/* remove the highlight border of ps when it's focus */
+.op-gallery-contents .ps__thumb-y:focus {
+    outline: none;
+}
+
 .op-metadata-detail-edit {
     margin-bottom: 0.5em;
     white-space: nowrap;

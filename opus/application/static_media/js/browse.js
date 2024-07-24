@@ -575,7 +575,19 @@ var o_browse = {
             }
         });
 
+        // make sure slider won't scroll with keyboard
+        $(".op-slider-pointer").unbind("keydown")
+
         $(document).on("keydown click", function(e) {
+            // Whenever we click or hit up/down arrows, page up and page down keys, we
+            // want to make sure the ps container is hovered and ps is focused so the the
+            // keydown event will be properly handled by ps.
+            if (e.type === "click" ||
+                (e.which || e.keyCode) == 38 || (e.which || e.keyCode) == 40 ||
+                (e.which || e.keyCode) == 33 || (e.which || e.keyCode) == 34) {
+                o_browse.hoverAndFocusOnPS()
+            }
+
             // don't close the mini-menu on the ctrl key in case the user
             // is trying to open a new window for detail
            if (!(e.ctrlKey || e.metaKey)) {
@@ -648,6 +660,21 @@ var o_browse = {
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    // Hover to ps container and focus on ps, this is the key step to make sure ps listen
+    // to the keydown (up/down arrows, page up, page down, and etc) event. By default, if
+    // the cursor moves out of the ps container or the ps is not focused, ps won't handle
+    // any keydown event (perfect-scrollbar.js line 629-631). Note: Without this function,
+    // we can just comment out the code at line 629-631 in perfect-scrollbar.js to get the
+    // same behavior.
+    hoverAndFocusOnPS: function() {
+        let view = opus.prefs.view;
+        let tab = opus.getViewTab(view);
+        let contentsView = o_browse.getScrollContainerClass(view);
+
+        $(`${tab} ${contentsView}`).mouseover()
+        $(`${tab} ${contentsView} .ps__thumb-y`).focus()
+    },
 
     onGalleryOrRowClick: function(obj, e) {
         // make sure selected slide show modal thumb is unhighlighted, as clicking on this closes
@@ -1692,8 +1719,11 @@ var o_browse = {
         let suppressScrollY = false;
 
         if (o_browse.isGalleryView()) {
-            $(".op-data-table-view", tab).hide();
-            $(`${tab} .op-gallery-view`).fadeIn("done", function() {o_browse.fading = false;});
+            $(`${tab} .op-data-table-view`).hide();
+            $(`${tab} .op-gallery-view`).fadeIn("done", function() {
+                o_browse.fading = false;
+                o_browse.hoverAndFocusOnPS();
+            });
 
             browseViewSelector.html("<i class='far fa-list-alt'></i>&nbsp;View Table");
             browseViewSelector.data("view", "data");
@@ -1704,7 +1734,10 @@ var o_browse = {
             suppressScrollY = false;
         } else {
             $(`${tab} .op-gallery-view`).hide();
-            $(`${tab} .op-data-table-view`).fadeIn("done", function() {o_browse.fading = false;});
+            $(`${tab} .op-data-table-view`).fadeIn("done", function() {
+                o_browse.fading = false;
+                o_browse.hoverAndFocusOnPS();
+            });
 
             browseViewSelector.html("<i class='far fa-images'></i>&nbsp;View Gallery");
             browseViewSelector.data("view", "gallery");
@@ -2407,11 +2440,13 @@ var o_browse = {
                         }
                         o_browse.setScrollbarPosition(startObs, startObs, view);
                         o_browse.hidePageLoaderSpinner();
+                        o_browse.hoverAndFocusOnPS();
                         return;
                     }
                 }
             } else {
                 o_browse.hidePageLoaderSpinner();
+                o_browse.hoverAndFocusOnPS();
                 return;
             }
         }
@@ -2465,6 +2500,8 @@ var o_browse = {
                 $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
             }
             o_browse.hidePageLoaderSpinner();
+            // Make sure we don't need an extra keydown to select ps
+            o_browse.hoverAndFocusOnPS();
         });
     },
 
