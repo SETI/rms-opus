@@ -861,18 +861,6 @@ var opus = {
             $("#op-reset-opus-modal").modal("show");
         });
 
-        // Make sure up/down and left/right arrow keys won't jump between different
-        // op nav tabs when one of them is clicked by focusing out the nav tab
-        // $(".op-tab .nav-link").on("keydown click", function(e) {
-        //     if (e.type === "click" ||
-        //         (e.which || e.keyCode) == 38 || (e.which || e.keyCode) == 40 ||
-        //         (e.which || e.keyCode) == 37 || (e.which || e.keyCode) == 39) {
-        //             // e.target.blur();
-        //
-        //     }
-        // });
-
-
         $(document).on("keydown click", function(e) {
             if ((e.which || e.keyCode) == 27) {
                 // ESC key - close modals and help panel
