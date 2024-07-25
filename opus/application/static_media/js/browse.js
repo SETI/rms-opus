@@ -582,9 +582,9 @@ var o_browse = {
             // Whenever we click or hit up/down arrows, page up and page down keys, we
             // want to make sure the ps container is hovered and ps is focused so the the
             // keydown event will be properly handled by ps.
-            if (e.type === "click" ||
+            if (opus.prefs.view === "browse" && (e.type === "click" ||
                 (e.which || e.keyCode) == 38 || (e.which || e.keyCode) == 40 ||
-                (e.which || e.keyCode) == 33 || (e.which || e.keyCode) == 34) {
+                (e.which || e.keyCode) == 33 || (e.which || e.keyCode) == 34)) {
                 o_browse.hoverAndFocusOnPS();
             }
 
@@ -2440,13 +2440,13 @@ var o_browse = {
                         }
                         o_browse.setScrollbarPosition(startObs, startObs, view);
                         o_browse.hidePageLoaderSpinner();
-                        o_browse.hoverAndFocusOnPS();
+                        // o_browse.hoverAndFocusOnPS();
                         return;
                     }
                 }
             } else {
                 o_browse.hidePageLoaderSpinner();
-                o_browse.hoverAndFocusOnPS();
+                // o_browse.hoverAndFocusOnPS();
                 return;
             }
         }
