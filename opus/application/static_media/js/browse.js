@@ -2440,13 +2440,11 @@ var o_browse = {
                         }
                         o_browse.setScrollbarPosition(startObs, startObs, view);
                         o_browse.hidePageLoaderSpinner();
-                        // o_browse.hoverAndFocusOnPS();
                         return;
                     }
                 }
             } else {
                 o_browse.hidePageLoaderSpinner();
-                // o_browse.hoverAndFocusOnPS();
                 return;
             }
         }
