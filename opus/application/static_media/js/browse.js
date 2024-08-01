@@ -896,7 +896,6 @@ var o_browse = {
 
         let numObservations = $(selector).length;
         if (numObservations > 0) {
-            console.log('ARE we here????')
             // When we update the slider, the following steps are run:
             // 1. Get the current startObs (top left item in gallery view in current page)
             //    and top obsNum (top item in table view and one of top row items in gallery
@@ -914,8 +913,6 @@ var o_browse = {
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             o_browse.setSliderParameters(obsNum, currentScrollObsNum, scrollbarOffset.galleryOffset,
                                          scrollbarOffset.tableOffset);
-            console.log(obsNum)
-            // o_browse.setScrollbarPosition(obsNum, currentScrollObsNum, view)
         }
 
         let currentSliderValue = $(`${tab} .op-observation-slider`).slider("option", "value");
