@@ -896,6 +896,7 @@ var o_browse = {
 
         let numObservations = $(selector).length;
         if (numObservations > 0) {
+            console.log('ARE we here????')
             // When we update the slider, the following steps are run:
             // 1. Get the current startObs (top left item in gallery view in current page)
             //    and top obsNum (top item in table view and one of top row items in gallery
@@ -913,6 +914,8 @@ var o_browse = {
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             o_browse.setSliderParameters(obsNum, currentScrollObsNum, scrollbarOffset.galleryOffset,
                                          scrollbarOffset.tableOffset);
+            console.log(obsNum)
+            // o_browse.setScrollbarPosition(obsNum, currentScrollObsNum, view)
         }
 
         let currentSliderValue = $(`${tab} .op-observation-slider`).slider("option", "value");
@@ -1726,11 +1729,21 @@ var o_browse = {
             $(`${tab} .op-gallery-view`).fadeIn("done", function() {
                 o_browse.fading = false;
                 o_browse.hoverAndFocusOnPS();
-                // sync up scrollbar position
+                // sync up scrollbar position after the gallery view is shown
                 if (galleryInfiniteScroll) {
                     let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
                     let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
                     o_browse.setScrollbarPosition(startObs, scrollbarObs);
+
+                    // In the table view, if we scroll the scrollbar for couple obs (less than a row of obs) and then
+                    // switch to the gallery view, the gallery view scrollbar position won't change, but we need to
+                    // manually set the slider back to the first obs of the row.
+                    if (startObs) {
+                        let viewNamespace = opus.getViewNamespace();
+                        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
+                        startObs = Math.max((o_utils.floor((startObs - 1)/galleryBoundingRect.x) * galleryBoundingRect.x + 1), 1)
+                        $(`${tab} .op-observation-number`).html(o_utils.addCommas(startObs));
+                    }
                 }
             });
 
@@ -1746,10 +1759,12 @@ var o_browse = {
             $(`${tab} .op-data-table-view`).fadeIn("done", function() {
                 o_browse.fading = false;
                 o_browse.hoverAndFocusOnPS();
-                // sync up scrollbar position
+                // sync up scrollbar position after the table view is shown
                 if (tableInfiniteScroll) {
                     let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
-                    let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
+                    // Make sure when switching from the gallery view to the table view, scrollbar position in
+                    // the table view is always at the first obs of the first row in the gallery view
+                    // before switching
                     o_browse.setScrollbarPosition(startObs, startObs);
                 }
             });
