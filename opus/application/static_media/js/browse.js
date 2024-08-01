@@ -1759,9 +1759,15 @@ var o_browse = {
                 // sync up scrollbar position after the table view is shown
                 if (tableInfiniteScroll) {
                     let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
+
                     // Make sure when switching from the gallery view to the table view, scrollbar position in
                     // the table view is always at the first obs of the first row in the gallery view
                     // before switching
+                    if (startObs) {
+                        let viewNamespace = opus.getViewNamespace();
+                        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
+                        startObs = Math.max((o_utils.floor((startObs - 1)/galleryBoundingRect.x) * galleryBoundingRect.x + 1), 1)
+                    }
                     o_browse.setScrollbarPosition(startObs, startObs);
                 }
             });
