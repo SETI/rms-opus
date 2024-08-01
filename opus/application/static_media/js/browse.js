@@ -136,8 +136,11 @@ var o_browse = {
 
             o_hash.updateURLFromCurrentHash();
             o_browse.updateBrowseNav();
-            // reset scroll position
-            window.scrollTo(0, 0); // restore previous scroll position
+            // Make sure trFloor is properly set for calculations
+            let viewNamespace = opus.getViewNamespace()
+            if (viewNamespace.galleryBoundingRect.trFloor===Infinity) {
+                viewNamespace.galleryBoundingRect = o_browse.countGalleryImages()
+            }
 
             // Do the fake API call to write in the Apache log files that
             // we changed views so log_analyzer has something to go on
@@ -770,7 +773,7 @@ var o_browse = {
     setScrollbarPosition: function(galleryObsNum, tableObsNum, view, offset=0) {
         let tab = opus.getViewTab(view);
         let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${galleryObsNum}"]`);
-        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${tableObsNum}']`);
+        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${tableObsNum}'] td`);
 
         // Make sure obsNum is rendered before setting scrollbar position
         if (galleryTarget.length && tableTarget.length) {
@@ -1075,8 +1078,8 @@ var o_browse = {
         // Note: in table view, if there are more than one row, we divide by the 2nd table tr's
         // height because in some corner cases, the first table tr's height will be 1px larger
         // than rest of tr, and this will mess up the calculation.
-        let tableRowHeight = ($(`${tab} tbody tr`).length === 1 ? $(`${tab} tbody tr`).outerHeight() :
-                              $(`${tab} tbody tr`).eq(1).outerHeight());
+        let tableRowHeight = ($(`${tab} tbody tr`).length === 1 ? $(`${tab} tbody tr td`).outerHeight() :
+                              $(`${tab} tbody tr td`).eq(1).outerHeight());
 
         let obsNumDiff = (o_browse.isGalleryView() ?
                           o_utils.floor((topBoxBoundary - firstCachedObsTop +
@@ -1220,7 +1223,7 @@ var o_browse = {
          */
         let tab = opus.getViewTab();
         let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${obsNum}"]`);
-        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${currentScrollObsNum}']`);
+        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${currentScrollObsNum}'] td`);
         let galleryOffset = 0;
         let tableOffset = 0;
         if (galleryTarget.length && tableTarget.length) {
@@ -1723,6 +1726,12 @@ var o_browse = {
             $(`${tab} .op-gallery-view`).fadeIn("done", function() {
                 o_browse.fading = false;
                 o_browse.hoverAndFocusOnPS();
+                // sync up scrollbar position
+                if (galleryInfiniteScroll) {
+                    let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
+                    let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
+                    o_browse.setScrollbarPosition(startObs, scrollbarObs);
+                }
             });
 
             browseViewSelector.html("<i class='far fa-list-alt'></i>&nbsp;View Table");
@@ -1737,6 +1746,12 @@ var o_browse = {
             $(`${tab} .op-data-table-view`).fadeIn("done", function() {
                 o_browse.fading = false;
                 o_browse.hoverAndFocusOnPS();
+                // sync up scrollbar position
+                if (tableInfiniteScroll) {
+                    let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
+                    let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
+                    o_browse.setScrollbarPosition(startObs, startObs);
+                }
             });
 
             browseViewSelector.html("<i class='far fa-images'></i>&nbsp;View Gallery");
@@ -1748,13 +1763,6 @@ var o_browse = {
             suppressScrollY = true;
         }
         opus.getViewNamespace().galleryScrollbar.settings.suppressScrollY = suppressScrollY;
-
-        // sync up scrollbar position
-        if (galleryInfiniteScroll && tableInfiniteScroll) {
-            let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
-            let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
-            o_browse.setScrollbarPosition(startObs, scrollbarObs);
-        }
     },
 
     updateStartobsInUrl: function(view, url, startObs) {
@@ -2573,7 +2581,7 @@ var o_browse = {
 
         if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
             trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
-                                         $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+                                         $(`${tab} .op-data-table tbody tr[data-obs] td`).outerHeight());
         }
         opus.getViewNamespace(view).galleryBoundingRect.trFloor = trCountFloor;
         return trCountFloor;
@@ -2591,8 +2599,8 @@ var o_browse = {
             // height because in Firefox & Safari, the first table tr's height will be 1px larger
             // than rest of tr, and this will mess up the calculation.
             let tableRowHeight = ($(`${tab} .op-data-table tbody tr[data-obs]`).length === 1 ?
-                                  $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight() :
-                                  $(`${tab} .op-data-table tbody tr[data-obs]`).eq(1).outerHeight());
+                                  $(`${tab} .op-data-table tbody tr[data-obs] td`).outerHeight() :
+                                  $(`${tab} .op-data-table tbody tr[data-obs] td`).eq(1).outerHeight());
             trCountFloor = o_utils.floor((height-$(`${tab} .op-data-table th`).outerHeight()) / tableRowHeight);
         }
 
