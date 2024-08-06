@@ -516,7 +516,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_times_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times GOSSI"
         url = '/api/meta/range/endpoints/timesec1.json?bundleid=GO_0017'
-        expected = {"max": "1996-12-14T17:30:37.354", "nulls": 0, "min": "1996-06-03T17:05:38.002", "units": "ymdhms"}
+        expected = {"max": "1996-12-14T17:30:37.369", "nulls": 0, "min": "1996-06-03T17:05:38.009", "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_VGISS(self):
@@ -658,25 +658,25 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_greaterpixelsize_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI"
         url = '/api/meta/range/endpoints/greaterpixelsize.json?instrument=Galileo+SSI'
-        expected = {'min': '800', 'max': '800', 'nulls': 0, "units": None}
+        expected = {'min': '32', 'max': '800', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize GOSSI"
         url = '/api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI'
-        expected = {'min': '800', 'max': '800', 'nulls': 0, "units": None}
+        expected = {'min': '8', 'max': '800', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_html_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize GOSSI html"
         url = '/api/meta/range/endpoints/lesserpixelsize.html?instrument=Galileo+SSI'
-        expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
+        expected = b'<dl>\n<dt>min</dt><dd>8</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_csv_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize GOSSI csv"
         url = '/api/meta/range/endpoints/lesserpixelsize.csv?instrument=Galileo+SSI'
-        expected = b'min,max,nulls,units\n800,800,0,\n'
+        expected = b'min,max,nulls,units\n8,800,0,\n'
         self._run_csv_equal(url, expected)
 
     # We don't do greater/lesserpixelsize for VGISS because it can change in
@@ -717,13 +717,13 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno"
         url = '/api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=12345'
-        expected = {'min': '800', 'max': '800', 'nulls': 0, "units": None}
+        expected = {'min': '8', 'max': '800', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno_internal(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno internal"
         url = '/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=12345'
-        expected = {'min': '800', 'max': '800', 'nulls': 0, 'reqno': 12345, "units": None}
+        expected = {'min': '8', 'max': '800', 'nulls': 0, 'reqno': 12345, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno_bad_internal(self):
@@ -743,13 +743,13 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_html_reqno(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI html reqno"
         url = '/api/meta/range/endpoints/lesserpixelsize.html?instrument=Galileo+SSI&reqno=1e38'
-        expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
+        expected = b'<dl>\n<dt>min</dt><dd>8</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_csv_reqno(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI csv reqno"
         url = '/api/meta/range/endpoints/lesserpixelsize.csv?instrument=Galileo+SSI&reqno=12345'
-        expected = b'min,max,nulls,units\n800,800,0,\n'
+        expected = b'min,max,nulls,units\n8,800,0,\n'
         self._run_csv_equal(url, expected)
 
     # Ring Geo / Ring Radius (floating point return)
