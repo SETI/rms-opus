@@ -174,7 +174,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             if exposure is None:
                 return None
             return exposure/1000
-        return max(time2 - time1, 0)
+        return max(round(time2 - time1, 5), 0)
 
     def field_obs_general_quantity(self):
         return self._create_mult('REFLECT')

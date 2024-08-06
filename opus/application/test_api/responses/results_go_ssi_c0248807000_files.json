@@ -26,6 +26,18 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_supplemental_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_supplemental_index.lbl"
             ],
+            "inventory": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.lbl"
+            ],
+            "planet_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.lbl"
+            ],
+            "ring_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.lbl"
+            ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/SL9/C0248807000R_thumb.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/SL9/C0248807000G_thumb.jpg"
@@ -71,6 +83,18 @@
                 "supplemental_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_supplemental_index.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_supplemental_index.lbl"
+                ],
+                "inventory": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.lbl"
+                ],
+                "planet_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.lbl"
+                ],
+                "ring_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.lbl"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/SL9/C0248807000R_thumb.jpg",
