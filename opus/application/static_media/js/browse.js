@@ -138,7 +138,7 @@ var o_browse = {
             o_browse.updateBrowseNav();
             // Make sure trFloor is properly set for calculations
             let viewNamespace = opus.getViewNamespace()
-            if (viewNamespace.galleryBoundingRect.trFloor===Infinity) {
+            if (viewNamespace.galleryBoundingRect.trFloor === Infinity) {
                 viewNamespace.galleryBoundingRect = o_browse.countGalleryImages()
             }
 
