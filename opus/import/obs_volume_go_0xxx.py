@@ -151,8 +151,13 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             return self._create_mult('OTH')
         return self._create_mult('JUP')
 
-    # Normal volumes have START_TIME and STOP_TIME
-    # SL9 has MINIMUM_IMAGE_TIME and MAXIMUM_IMAGE_TIME
+    # Normal volumes have START_TIME and STOP_TIME in the supplemental index.
+    # These are computed from the original IMAGE_TIME in the primary index,
+    # which is the midtime, by adding and subtracting half the exposure
+    # duration.
+    # SL9 has MINIMUM_IMAGE_TIME and MAXIMUM_IMAGE_TIME already computed for
+    # the range of images included in each observation. Those image times
+    # are probably the midtime, which is slightly incorrect in this case.
     def field_obs_general_time1(self):
         time1 = self._time_from_index(column='MINIMUM_IMAGE_TIME')
         if time1 is None:
