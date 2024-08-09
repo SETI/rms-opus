@@ -194,7 +194,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "CIRS_127IC_DSCAL10066_SP",
         "CASSINIactivityname": "DSCAL10",
-        "CASSINImissionphasename": "Equinox Mission",
+        "CASSINImissionphasename": "Equinox Mission (XM)",
         "CASSINItargetcode": "IC (Instrument calibration)",
         "CASSINItargetname": "Saturn",
         "CASSINIrevnoint": "127",

@@ -144,7 +144,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "UVIS_100ST_URGAMCAS001_PRIME",
         "CASSINIactivityname": "URGAMCAS",
-        "CASSINImissionphasename": "Equinox Mission",
+        "CASSINImissionphasename": "Equinox Mission (XM)",
         "CASSINItargetcode": "ST (Star)",
         "CASSINItargetname": null,
         "CASSINIrevnoint": "100",

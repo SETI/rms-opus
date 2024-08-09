@@ -194,7 +194,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "CIRS_127EN_ICYPLU001_UVIS",
         "CASSINIactivityname": "ICYPLU",
-        "CASSINImissionphasename": "Equinox Mission",
+        "CASSINImissionphasename": "Equinox Mission (XM)",
         "CASSINItargetcode": "EN (Enceladus)",
         "CASSINItargetname": "Saturn",
         "CASSINIrevnoint": "127",
