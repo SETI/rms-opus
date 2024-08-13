@@ -102,7 +102,7 @@ var o_browse = {
             if (event.type === "ps-scroll-up" || (event.type === "wheel" && event.originalEvent.deltaY < 0)) {
                 if (opus.prefs[startObsLabel] > 1) {
                     let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-                    let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum
+                    let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
                     let viewNamespace = opus.getViewNamespace();
                     let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
@@ -112,7 +112,7 @@ var o_browse = {
                     // we won't preload another page ahead. This will make sure we don't
                     // have an extra page loaded unecessarily and move the scrollbar to
                     // unwanted places when switching between the gallery/table views.
-                    obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
+                    let obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
                     if (firstObs !== undefined && firstObs !== 1 &&
                         $(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold &&
                         firstObs > (startObs - obsNumDiff) && startObs > obsNumDiff) {
@@ -150,9 +150,9 @@ var o_browse = {
             o_hash.updateURLFromCurrentHash();
             o_browse.updateBrowseNav();
             // Make sure trFloor is properly set for calculations
-            let viewNamespace = opus.getViewNamespace()
+            let viewNamespace = opus.getViewNamespace();
             if (viewNamespace.galleryBoundingRect.trFloor === Infinity) {
-                viewNamespace.galleryBoundingRect = o_browse.countGalleryImages()
+                viewNamespace.galleryBoundingRect = o_browse.countGalleryImages();
             }
 
             // Do the fake API call to write in the Apache log files that
@@ -1265,7 +1265,7 @@ var o_browse = {
         let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
         let viewNamespace = opus.getViewNamespace();
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
-        obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
+        let obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
         // For Safari, if the scrollbar location is set by the code (instead
         // of manual scrolling), .scrollTop will return 0. So we add another
         // condition check that if there is a page ahead of startobs loaded,
@@ -1282,7 +1282,7 @@ var o_browse = {
         // set the scrollbar location
         if (firstObs !== undefined && firstObs !== 1 &&
             $(`${tab} ${contentsView}`).scrollTop() === 0 && firstObs !== startObs) {
-            o_browse.setScrollbarPosition(startObs, scrollbarObs)
+            o_browse.setScrollbarPosition(startObs, scrollbarObs);
         }
 
         o_browse.updateSliderHandle(view, false, false, true);
@@ -1749,7 +1749,6 @@ var o_browse = {
     updateBrowseNav: function() {
         o_browse.fading = true;
         let tab = opus.getViewTab();
-        let contentsView = o_browse.getScrollContainerClass();
 
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-data-table-view`).data("infiniteScroll");
@@ -1757,7 +1756,6 @@ var o_browse = {
         let browseViewSelector = $(`${tab} .op-browse-view`);
 
         let suppressScrollY = false;
-        let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
 
         if (o_browse.isGalleryView()) {
             $(`${tab} .op-data-table-view`).hide();
@@ -1798,13 +1796,14 @@ var o_browse = {
             }
             let viewNamespace = opus.getViewNamespace();
             let galleryBoundingRect = viewNamespace.galleryBoundingRect;
-            startObs = Math.max((o_utils.floor((startObs - 1)/galleryBoundingRect.x) * galleryBoundingRect.x + 1), 1)
+            startObs = Math.max((o_utils.floor((startObs - 1)/galleryBoundingRect.x) *
+                                galleryBoundingRect.x + 1), 1);
             o_browse.setScrollbarPosition(startObs, startObs);
             if (startObs) {
                 $(`${tab} .op-observation-number`).html(o_utils.addCommas(startObs));
             }
-            viewNamespace.galleryScrollbar.update()
-            viewNamespace.tableScrollbar.update()
+            viewNamespace.galleryScrollbar.update();
+            viewNamespace.tableScrollbar.update();
         }
     },
 
