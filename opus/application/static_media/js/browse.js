@@ -599,8 +599,8 @@ var o_browse = {
             // want to make sure the ps container is hovered and ps is focused so the the
             // keydown event will be properly handled by ps.
             if (opus.prefs.view === "browse" && (e.type === "click" ||
-                (e.which || e.keyCode) == 38 || (e.which || e.keyCode) == 40 ||
-                (e.which || e.keyCode) == 33 || (e.which || e.keyCode) == 34)) {
+                e.code === "ArrowUp" || e.code === "ArrowDown" ||
+                e.code === "PageUp" || e.code === "PageDown")) {
                 o_browse.hoverAndFocusOnPS();
             }
 
@@ -611,12 +611,12 @@ var o_browse = {
             }
 
             if (o_utils.ignoreArrowKeys &&
-                ((e.which || e.keyCode) == 37 || (e.which || e.keyCode) == 39)) {
+                (e.code === "ArrowLeft" || e.code === "ArrowRight")) {
                 e.preventDefault();
                 return;
             }
 
-            if ((e.which || e.keyCode) == 27) { // esc - close modals
+            if (e.cdoe === "Escape") { // esc - close modals
                 o_browse.hideMetadataDetailModal();
                 $("#op-select-metadata").modal('hide');
                 // reset range select
@@ -635,29 +635,29 @@ var o_browse = {
                     let offset = 0;
                     let obsNum = $("#op-metadata-detail-view-content .op-obs-direction a").data("obs");
                     // the || is for cross-browser support; firefox does not support keyCode
-                    switch (e.which || e.keyCode) {
-                        case 32:  // spacebar
+                    switch (e.code) {
+                        case "Space":  // spacebar
                             if (opus.metadataDetailOpusId !== "" && opus.metadataDetailOpusId !== undefined) {
                                 o_browse.undoRangeSelect();
                                 o_cart.toggleInCart(opus.metadataDetailOpusId);
                             }
                             break;
-                        case 37:  // prev
+                        case "ArrowLeft":  // prev
                             obsNum--;
                             o_browse.moveToNextMetadataSlide(obsNum, "prev");
                             break;
-                        case 39:  // next
+                        case "ArrowRight":  // next
                             obsNum++;
                             o_browse.moveToNextMetadataSlide(obsNum, "next");
                             break;
-                        case 38:  // up
+                        case "ArrowUp":  // up
                             // decrement the current obsNum by 1 if table view such that up and left behave the same for the table view,
                             // otherwise by number of observations per row
                             offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
                             obsNum -= offset;
                             o_browse.moveToNextMetadataSlide(obsNum, "prev");
                             break;
-                        case 40:  // down
+                        case "ArrowDown":  // down
                             // increment the current obsNum by 1 if table view such that down and right behave the same for the table view,
                             // otherwise by number of observations per row
                             offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);

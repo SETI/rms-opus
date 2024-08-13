@@ -869,7 +869,7 @@ var opus = {
         });
 
         $(document).on("keydown click", function(e) {
-            if ((e.which || e.keyCode) == 27) {
+            if (e.code === "Escape") {
                 // ESC key - close modals and help panel
                 // Don't close "#op-browser-version-msg-modal" and "#op-browser-size-msg-modal"
                 $.each($(".op-confirm-modal"), function(idx, confirmModal) {
