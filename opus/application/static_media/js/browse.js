@@ -115,7 +115,7 @@ var o_browse = {
                     obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
                     if (firstObs !== undefined && firstObs !== 1 &&
                         $(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold &&
-                        firstObs > (startObs - obsNumDiff)) {
+                        firstObs > (startObs - obsNumDiff) && startObs > obsNumDiff) {
                         $(`${tab} ${contentsView}`).infiniteScroll({
                             "loadPrevPage": true,
                         });
@@ -1261,7 +1261,8 @@ var o_browse = {
 
 
         let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-        let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum
+        let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
+        let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
         let viewNamespace = opus.getViewNamespace();
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
         obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
@@ -1271,14 +1272,17 @@ var o_browse = {
         // we won't preload another page ahead. This will make sure we don't
         // have an extra page loaded unecessarily and move the scrollbar to
         // unwanted places.
-        if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold &&
-            firstObs > (startObs - obsNumDiff)) {
+        if (firstObs !== undefined && firstObs !== 1 &&
+            $(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold &&
+            firstObs > (startObs - obsNumDiff) && startObs > obsNumDiff) {
             $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
         }
 
-        // For Safari where .scrollTop returns 0, properly set the scrollbar location
-        if ($(`${tab} ${contentsView}`).scrollTop() === 0 && firstObs !== startObs) {
-            o_browse.setScrollbarPosition(startObs, startObs)
+        // For Safari where .scrollTop returns 0 and we are not at the first obs, properly
+        // set the scrollbar location
+        if (firstObs !== undefined && firstObs !== 1 &&
+            $(`${tab} ${contentsView}`).scrollTop() === 0 && firstObs !== startObs) {
+            o_browse.setScrollbarPosition(startObs, scrollbarObs)
         }
 
         o_browse.updateSliderHandle(view, false, false, true);
@@ -1757,7 +1761,7 @@ var o_browse = {
 
         if (o_browse.isGalleryView()) {
             $(`${tab} .op-data-table-view`).hide();
-            $(`${tab} .op-gallery-view`).fadeIn("start", function() {
+            $(`${tab} .op-gallery-view`).fadeIn("done", function() {
                 o_browse.fading = false;
                 o_browse.hoverAndFocusOnPS();
             });
@@ -1789,11 +1793,18 @@ var o_browse = {
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = galleryInfiniteScroll.options.sliderObsNum;
+            if (!startObs) {
+                return;
+            }
             let viewNamespace = opus.getViewNamespace();
             let galleryBoundingRect = viewNamespace.galleryBoundingRect;
             startObs = Math.max((o_utils.floor((startObs - 1)/galleryBoundingRect.x) * galleryBoundingRect.x + 1), 1)
             o_browse.setScrollbarPosition(startObs, startObs);
-            o_browse.setSliderParameters(startObs, startObs, 0, 0);
+            if (startObs) {
+                $(`${tab} .op-observation-number`).html(o_utils.addCommas(startObs));
+            }
+            viewNamespace.galleryScrollbar.update()
+            viewNamespace.tableScrollbar.update()
         }
     },
 
