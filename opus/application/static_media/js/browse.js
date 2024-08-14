@@ -601,7 +601,13 @@ var o_browse = {
             if (opus.prefs.view === "browse" && (e.type === "click" ||
                 e.code === "ArrowUp" || e.code === "ArrowDown" ||
                 e.code === "PageUp" || e.code === "PageDown")) {
-                o_browse.hoverAndFocusOnPS();
+                let helpPanelPs = document.querySelector("#op-help-panel .ps__thumb-y");
+                // when the ps in help panel shows up, we want to make sure keydown can
+                // control that ps, so we don't hover & focus to the gallery/table views
+                // ps if there is a help panel ps on the screen
+                if (!helpPanelPs || !helpPanelPs.checkVisibility()) {
+                    o_browse.hoverAndFocusOnPS();
+                }
             }
 
             // don't close the mini-menu on the ctrl key in case the user

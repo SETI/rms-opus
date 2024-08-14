@@ -822,13 +822,6 @@ var opus = {
             return false;
         });
 
-        // Make sure up/down & page up/down can scroll the help panel. If we don't do this
-        // here, it will propagate to the gallery/table views and scroll the observation
-        // views.
-        $("#op-help-panel").on("keydown", function(e) {
-            e.stopPropagation();
-        })
-
         // Behavior for help submenu
         $("#op-help .dropdown-submenu .dropdown-item").on("click", function(e) {
             e.stopPropagation();
@@ -1138,11 +1131,6 @@ var opus = {
                     let pdfURL = $(".op-open-help-pdf").data("action");
                     window.open(pdfURL, "_blank");
                 });
-
-                // focus on the help panel so that up/down & page up/down keys will scroll
-                // the help panel
-                $("#op-help-panel").mouseover();
-                $("#op-help-panel .ps__thumb-y").focus();
             }
         });
     },
