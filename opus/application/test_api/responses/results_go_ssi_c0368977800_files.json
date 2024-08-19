@@ -31,8 +31,8 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl"
             ],
             "inventory": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.csv",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl"
             ],
@@ -99,8 +99,8 @@
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl"
                 ],
                 "inventory": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.csv",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl"
                 ],
