@@ -36,6 +36,10 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
             ],
+            "sky_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl"
+            ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/J0/OPNAV/C0347769100R_thumb.jpg"
             ],
@@ -87,6 +91,10 @@
                 "ring_geometry": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
+                ],
+                "sky_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/J0/OPNAV/C0347769100R_thumb.jpg"

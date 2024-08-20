@@ -24,6 +24,18 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.lbl"
             ],
+            "planet_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.lbl"
+            ],
+            "ring_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.lbl"
+            ],
+            "sky_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_sky_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_sky_summary.lbl"
+            ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/IDA/C0202540045R_thumb.jpg"
             ],
@@ -63,6 +75,18 @@
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_inventory.lbl"
+                ],
+                "planet_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_jupiter_summary.lbl"
+                ],
+                "ring_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_ring_summary.lbl"
+                ],
+                "sky_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_sky_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0016/GO_0016_sky_summary.lbl"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0016/IDA/C0202540045R_thumb.jpg"

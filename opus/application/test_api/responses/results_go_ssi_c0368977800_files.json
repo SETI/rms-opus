@@ -48,6 +48,12 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
             ],
+            "sky_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl"
+            ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_thumb.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_thumb.jpg"
@@ -115,6 +121,12 @@
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
+                ],
+                "sky_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_thumb.jpg",

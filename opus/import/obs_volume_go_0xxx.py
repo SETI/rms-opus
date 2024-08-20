@@ -109,19 +109,19 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return ra1, ra2
 
     def field_obs_general_right_asc1(self):
-        ra = self._ring_geo_index_col('MINIMUM_RIGHT_ASCENSION')
+        ra = self._sky_geo_index_col('MINIMUM_RIGHT_ASCENSION')
         if ra is not None:
             return ra
         return self._gossi_ra_helper()[0]
 
     def field_obs_general_right_asc2(self):
-        ra = self._ring_geo_index_col('MAXIMUM_RIGHT_ASCENSION')
+        ra = self._sky_geo_index_col('MAXIMUM_RIGHT_ASCENSION')
         if ra is not None:
             return ra
         return self._gossi_ra_helper()[1]
 
     def field_obs_general_declination1(self):
-        dec = self._ring_geo_index_col('MINIMUM_DECLINATION')
+        dec = self._sky_geo_index_col('MINIMUM_DECLINATION')
         if dec is not None:
             return dec
         dec = self._index_col('DECLINATION')
@@ -130,7 +130,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
     def field_obs_general_declination2(self):
-        dec = self._ring_geo_index_col('MAXIMUM_DECLINATION')
+        dec = self._sky_geo_index_col('MAXIMUM_DECLINATION')
         if dec is not None:
             return dec
         dec = self._index_col('DECLINATION')

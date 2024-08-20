@@ -164,6 +164,10 @@ parser.add_argument(
     help='Report observations that should have ring_geo data but don\'t'
 )
 parser.add_argument(
+    '--import-report-missing-sky-geo', action='store_true', default=False,
+    help='Report observations that should have sky_geo data but don\'t'
+)
+parser.add_argument(
     '--import-report-inventory-mismatch', action='store_true', default=False,
     help='Report mismatches between inventory and surface geometry tables'
 )
