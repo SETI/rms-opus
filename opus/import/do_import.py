@@ -796,7 +796,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                      assoc_label_dict) = import_util.safe_pdstable_read(assoc_label_path,
                                                                         pds_version)
 
-                if not assoc_rows:
+                if assoc_rows is None:
                     # No need to report an error here because safe_pdstable_read
                     # will have already done so
                     return False
