@@ -11,8 +11,8 @@
             ],
             "hst_documentation": [
                 "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/FITS-Standard-4.0.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Instrument-Handbook-20.0.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Data-Handbook-9.0.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Instrument-Handbook-23.0.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Data-Handbook-13.0.pdf"
             ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/HSTJx_xxxx/HSTJ1_1085/HSTJ1_1085_index.tab",
@@ -49,8 +49,8 @@
                 ],
                 "hst_documentation": [
                     "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/FITS-Standard-4.0.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Instrument-Handbook-20.0.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Data-Handbook-9.0.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Instrument-Handbook-23.0.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTJx_xxxx/ACS-Data-Handbook-13.0.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/HSTJx_xxxx/HSTJ1_1085/HSTJ1_1085_index.tab",

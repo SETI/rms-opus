@@ -109,9 +109,9 @@
                     "tooltip": "RMS-curated document collection for Cassini CIRS observations.",
                     "product_type": "Documentation",
                     "product_count": 1,
-                    "download_count": 4,
-                    "download_size": 41581153,
-                    "download_size_pretty": "39M",
+                    "download_count": 6,
+                    "download_size": 44076668,
+                    "download_size_pretty": "42M",
                     "default_checked": 0,
                     "product_type_with_version": "cocirs_documentation@Current"
                 }
