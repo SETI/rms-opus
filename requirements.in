@@ -22,7 +22,7 @@ qrcode
 regex
 requests
 rms-julian
-rms-pdsfile
+rms-pdsfile >= 0.0.10
 rms-pdslogger
 rms-pdstable
 rms-translator
