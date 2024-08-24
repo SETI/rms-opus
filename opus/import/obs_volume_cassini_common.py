@@ -250,7 +250,7 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
         if target_name not in config_targets.TARGET_NAME_INFO:
             self._announce_unknown_target_name(target_name)
             if self._ignore_errors:
-                return 'None'
+                return 'None', None
             return None, None
         target_info = config_targets.TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]

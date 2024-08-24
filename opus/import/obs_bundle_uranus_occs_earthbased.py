@@ -132,7 +132,7 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
         target_name = 'URANUS' if self._is_atmos() else 'U RINGS'
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
-            return None, None
+            return [(None, None)]
         return [(target_name, target_info[2])]
 
     def field_obs_general_quantity(self):

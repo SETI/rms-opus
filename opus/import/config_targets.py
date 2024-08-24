@@ -519,9 +519,6 @@ TARGET_NAME_INFO = {
     '2011 HJ103':           (None,  'OTHER',      '2011 HJ103'),
     '2011 HK103':           (None,  'OTHER',      '2011 HK103'),
     '2011 HZ102':           (None,  'OTHER',      '2011 HZ102'),
-    '2011 JW31':            (None,  'OTHER',      '2011 JW31'),
-    '2011 JY31':            (None,  'OTHER',      '2011 JY31'),
-    '2011 JA32':            (None,  'OTHER',      '2011 JA32'),
     '2012 HE85':            (None,  'OTHER',      '2012 HE85'),
     '2014 OE394':           (None,  'OTHER',      '2014 OE394'),
     '2014 OJ394':           (None,  'OTHER',      '2014 OJ394'),
@@ -536,6 +533,7 @@ TARGET_NAME_INFO = {
     'CHARIKLO':             (None,  'OTHER',      'Chariklo'),
     'CHIRON':               (None,  'OTHER',      'Chiron'), # Actually it's a CENTAUR!
     'ERIS':                 (None,  'OTHER',      'Eris'),
+    '136199 ERIS':          (None,  'OTHER',      'Eris'),
     'HAUMEA':               (None,  'OTHER',      'Haumea'),
     'HUYA':                 (None,  'OTHER',      'Huya'),
     'IXION':                (None,  'OTHER',      'Ixion'),
@@ -559,6 +557,7 @@ TARGET_NAME_INFO = {
     '2001 FL185':           (None,  'OTHER',      '2001 FL185'),
     '2001 KP77':            (None,  'OTHER',      '2001 KP77'),
     '2002 GZ31':            (None,  'OTHER',      '2002 GZ31'),
+    '2002 JF56':            (None,  'OTHER',      '2002 JF56'),
     '2002 MS4':             (None,  'OTHER',      '2002 MS4'),
     '2002 UX25':            (None,  'OTHER',      '2002 UX25'),
     '2002 VV130':           (None,  'OTHER',      '2002 VV130'),
@@ -569,9 +568,18 @@ TARGET_NAME_INFO = {
     '2005 SE278':           (None,  'OTHER',      '2005 SE278'),
     '2005 SF278':           (None,  'OTHER',      '2005 SF278'),
     '2010 JJ124':           (None,  'OTHER',      '2010 JJ124'),
+    '2011 JW31':            (None,  'OTHER',      '2011 JW31'),
     '2011 JX31':            (None,  'OTHER',      '2011 JX31'),
+    '2011 JY31':            (None,  'OTHER',      '2011 JY31'),
+    '2011 JA32':            (None,  'OTHER',      '2011 JA32'),
     '2014 MU69':            (None,  'OTHER',      '2014 MU69'),
     '2014 PN70':            (None,  'OTHER',      '2014 PN70'),
+    '2018 MG13':            (None,  'OTHER',      '2018 MG13'),
+    '2020 KH42':            (None,  'OTHER',      '2020 KH42'),
+    '2020 KO11':            (None,  'OTHER',      '2020 KO11'),
+    '2020 KP11':            (None,  'OTHER',      '2020 KP11'),
+    '2020 KR11':            (None,  'OTHER',      '2020 KR11'),
+    '2020 KT11':            (None,  'OTHER',      '2020 KT11'),
 
     # Other rings
     'CHARIKLO RING':        (None,  'RING',       'Chariklo Ring'),
@@ -592,6 +600,7 @@ TARGET_NAME_INFO = {
     'FLATFIELD':            (None,  'OTHER',      'Flatfield'),
     'ACQ-ECLPSE':           (None,  'OTHER',      'Acq-Eclpse'),
     'SYSTEM':               (None,  'OTHER',      'System'),
+    'VOYAGER 1':            (None,  'OTHER',      'Voyager 1'),
 
     # Stars
     'STAR':                 (None,  'OTHER',      'Star'),
