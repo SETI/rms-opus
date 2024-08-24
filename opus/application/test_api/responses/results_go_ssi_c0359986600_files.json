@@ -8,8 +8,14 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
             ],
             "gossi_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR2.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/I24-Anomaly.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/G28-Anomaly.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR_OCR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/BadData.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
             ],
             "rms_index": [
@@ -64,8 +70,14 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
                 ],
                 "gossi_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR2.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/I24-Anomaly.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/G28-Anomaly.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR_OCR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/BadData.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
                 ],
                 "rms_index": [
