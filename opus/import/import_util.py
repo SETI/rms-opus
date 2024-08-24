@@ -143,13 +143,20 @@ def yield_import_bundle_ids(arguments):
                 bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_desc)
                 good_bundle = True
             except (KeyError, ValueError):
+                tb_pds3 = traceback.format_exc()
                 try:
                     bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_desc)
                     good_bundle = True
                 except (KeyError, ValueError):
                     any_invalid = True
-                    impglobals.LOGGER.log('fatal',
-                            f'Bad bundle descriptor {bundle_desc}')
+                    msg = f'Bad bundle descriptor {bundle_desc}'
+                    if not impglobals.ARGUMENTS.log_suppress_traceback:
+                        msg += ':\n\n'
+                        msg += ('*' * 80) + '\nPDS3:\n\n'
+                        msg += tb_pds3
+                        msg += '\n' + ('*' * 80) + '\nPDS4:\n\n'
+                        msg += traceback.format_exc()
+                    impglobals.LOGGER.log('fatal', msg)
             if good_bundle:
                 if (not bundle_pdsfile.is_bundle_dir and
                     not bundle_pdsfile.is_bundleset_dir):

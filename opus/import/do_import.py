@@ -737,6 +737,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
     #   <vol>_ring_summary.lbl
     #   <vol>_moon_summary.lbl
     #   <vol>_<planet>_summary.lbl
+    #   <vol>_body_summary.lbl
+    #   <vol>_sky_summary.lbl
     #   <vol>_supplemental_index.lbl
     # All of these files are cross-indexed with the primary index file based on
     # the primary filespec.
@@ -771,34 +773,38 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                                       .replace('.lbl', '.csv'))
                     assoc_rows = []
                     assoc_label_dict = {} # Not used
-                    # Old inventory files use CSV, new inventory files use TAB
-                    if not os.path.exists(table_filename):
-                        table_filename = (table_filename.replace('.csv', '.tab')
-                                          .replace('.CSV', '.TAB'))
                     with open(table_filename, 'r') as table_file:
                         csvreader = csv.reader(table_file)
                         for row in csvreader:
-                            (csv_bundle, csv_filespec, csv_ringobsid,
-                             *csv_targets) = row
+                            if len(row) > 2 and row[2].count('-') > 1:
+                                # Old format with OPUS ID column
+                                (csv_bundle, csv_filespec, csv_ringobsid,
+                                 *csv_targets) = row
+                            else:
+                                # New format without OPUS ID column
+                                csv_ringobsid = None
+                                (csv_bundle, csv_filespec, *csv_targets) = row
                             row_dict = {'BUNDLE_ID': csv_bundle.strip(),
-                                        'FILE_SPECIFICATION_NAME':
-                                                     csv_filespec.strip(),
-                                        'OPUS_ID':
-                                                     csv_ringobsid.strip(),
+                                        'FILE_SPECIFICATION_NAME': csv_filespec.strip(),
                                         'TARGET_LIST': csv_targets}
+                            if csv_ringobsid:
+                                row_dict['OPUS_ID'] = csv_ringobsid.strip()
+
                             assoc_rows.append(row_dict)
                 else:
                     (assoc_rows,
                      assoc_label_dict) = import_util.safe_pdstable_read(assoc_label_path,
                                                                         pds_version)
 
-                if not assoc_rows:
+                if assoc_rows is None:
                     # No need to report an error here because safe_pdstable_read
                     # will have already done so
                     return False
 
                 if 'RING_SUMMARY' in basename_upper:
                     assoc_type = 'ring_geo'
+                elif 'SKY_SUMMARY' in basename_upper:
+                    assoc_type = 'sky_geo'
                 elif 'SUPPLEMENTAL_INDEX' in basename_upper:
                     assoc_type = 'supp_index'
                 elif 'INVENTORY' in basename_upper:
@@ -812,9 +818,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 import_util.log_info(
                         f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
                 assoc_dict = metadata.get(assoc_type, {})
-                if (assoc_type == 'ring_geo' or
-                    assoc_type == 'surface_geo' or
-                    assoc_type == 'inventory'):
+                if assoc_type in ('ring_geo', 'surface_geo', 'sky_geo', 'inventory'):
                     for row in assoc_rows:
                         # We use add_phase_from_row=True here because in COVIMS_0xxx
                         # there are both _IR and _VIS versions of each geo row and we
@@ -828,9 +832,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                             continue
                         key = key.upper()
 
-                        if (assoc_type == 'ring_geo' or
-                            assoc_type == 'inventory'):
-                            # RING_GEO and INVENTORY are easy - there is at most
+                        if assoc_type in ('ring_geo', 'sky_geo', 'inventory'):
+                            # RING_GEO, SKY_GEO, and INVENTORY are easy - there is at most
                             # a single entry per observation, so we just create
                             # a dictionary keyed by opus_id.
                             assoc_dict[key] = row
@@ -941,7 +944,14 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 if (ring_geo is None and
                     impglobals.ARGUMENTS.import_report_missing_ring_geo):
                     import_util.log_warning(
-                        'RING GEO metadata missing for "{primary_filespec_phase}"')
+                        f'RING GEO metadata missing for "{primary_filespec_phase}"')
+            if 'sky_geo' in metadata:
+                sky_geo = metadata['sky_geo'].get(primary_filespec_phase, None)
+                metadata['sky_geo_row'] = sky_geo
+                if (sky_geo is None and
+                    impglobals.ARGUMENTS.import_report_missing_sky_geo):
+                    import_util.log_warning(
+                        f'SKY GEO metadata missing for "{primary_filespec_phase}"')
             if 'surface_geo' in metadata:
                 body_geo = metadata['surface_geo'].get(primary_filespec_phase)
                 metadata['surface_geo_row'] = body_geo

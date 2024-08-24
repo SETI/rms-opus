@@ -1526,6 +1526,13 @@
         "version_name": "Current"
     },
     {
+        "category": "metadata",
+        "product_type": "sky_geometry",
+        "description": "Sky Geometry Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
         "category": "browse",
         "product_type": "browse_thumb",
         "description": "Browse Image (thumbnail)",

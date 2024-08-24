@@ -22,8 +22,8 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GXQ.LBL"
             ],
             "hst_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Instrument-Handbook-13.0.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Data-Handbook-4.0.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Instrument-Handbook-16.0.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Data-Handbook-5.0.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/FITS-Standard-4.0.pdf"
             ],
             "rms_index": [
@@ -72,8 +72,8 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GXQ.LBL"
                 ],
                 "hst_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Instrument-Handbook-13.0.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Data-Handbook-4.0.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Instrument-Handbook-16.0.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/WFC3-Data-Handbook-5.0.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/HSTIx_xxxx/FITS-Standard-4.0.pdf"
                 ],
                 "rms_index": [

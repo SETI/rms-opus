@@ -220,8 +220,7 @@ class ObsBase:
         # new ones have both minimum and maximum fields.
 
         # ring_geo is an optional index file so we allow it to be missing
-        if ('ring_geo_row' not in self._metadata or
-            self._metadata['ring_geo_row'] is None):
+        if 'ring_geo_row' not in self._metadata or self._metadata['ring_geo_row'] is None:
             return None
         if (col not in self._metadata['ring_geo_row'] and
             (col2 is None or col2 not in self._metadata['ring_geo_row'])):
@@ -236,6 +235,11 @@ class ObsBase:
         if ret is None and col2 is not None:
             ret = import_util.safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
         return ret
+
+    def _sky_geo_index_col(self, col, idx=None):
+        if 'sky_geo_row' not in self._metadata or self._metadata['sky_geo_row'] is None:
+            return None
+        return import_util.safe_column(self._metadata['sky_geo_row'], col, idx=idx)
 
     def _surface_geo_index_col(self, col, col2=None, idx=None):
         # Look up col; if missing try col2 instead. This supports both old and

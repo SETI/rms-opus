@@ -369,7 +369,8 @@ class ObsRingGeometry(ObsBase):
                                 'observer_ring_opening_angle'):
             val1 = row[gridless_column+'1']
             val2 = row[gridless_column+'2']
-            if val1 != val2:
+            if (val1 != val2 and
+                not (val1 == 0 and val2 == 360 and gridless_column.endswith('_long'))):
                 self._log_nonrepeating_error(
                     f'RING GEO fields {gridless_column}1 ({val1}) and '
                     f'{gridless_column}2 ({val2}) differ')

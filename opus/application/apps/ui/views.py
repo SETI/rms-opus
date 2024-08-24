@@ -1695,10 +1695,10 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             # XXX This really shouldn't be here!!
             menu_data[table_name]['menu_help'] = None
             if table_name == 'obs_surface_geometry':
-                menu_data[table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Use Surface Geometry Target Selector to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
+                menu_data[table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Use Surface Geometry Target Selector to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, Galileo SSI, New Horizons LORRI, and Voyager ISS."
 
             if table_name == 'obs_ring_geometry':
-                menu_data[table_name]['menu_help'] = "Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
+                menu_data[table_name]['menu_help'] = "Supported instruments: Cassini ISS, UVIS, and VIMS, Galileo SSI, New Horizons LORRI, and Voyager ISS."
 
             if table_name == 'obs_instrument_cocirs':
                 menu_data[table_name]['menu_help'] = "Cassini CIRS data is only available through June 30, 2010"

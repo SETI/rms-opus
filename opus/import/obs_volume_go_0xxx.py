@@ -109,18 +109,30 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return ra1, ra2
 
     def field_obs_general_right_asc1(self):
+        ra = self._sky_geo_index_col('MINIMUM_RIGHT_ASCENSION')
+        if ra is not None:
+            return ra
         return self._gossi_ra_helper()[0]
 
     def field_obs_general_right_asc2(self):
+        ra = self._sky_geo_index_col('MAXIMUM_RIGHT_ASCENSION')
+        if ra is not None:
+            return ra
         return self._gossi_ra_helper()[1]
 
     def field_obs_general_declination1(self):
+        dec = self._sky_geo_index_col('MINIMUM_DECLINATION')
+        if dec is not None:
+            return dec
         dec = self._index_col('DECLINATION')
         if dec is None:
             return None
         return dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
     def field_obs_general_declination2(self):
+        dec = self._sky_geo_index_col('MAXIMUM_DECLINATION')
+        if dec is not None:
+            return dec
         dec = self._index_col('DECLINATION')
         if dec is None:
             return None
@@ -139,32 +151,25 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             return self._create_mult('OTH')
         return self._create_mult('JUP')
 
-    # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
-    # We assume it means stop time like it does for Voyager, and because Mark
-    # has done some ring analysis with this assumption and it seemed to work OK.
-    # So we compute start time by taking IMAGE_TIME and subtracting exposure.
-    # If we don't have exposure, we just set them equal so we can still search
-    # cleanly.
-    # For SL9, we have a min/max for IMAGE_TIME, but play the same game.
+    # Normal volumes have START_TIME and STOP_TIME in the supplemental index.
+    # These are computed from the original IMAGE_TIME in the primary index,
+    # which is the midtime, by adding and subtracting half the exposure
+    # duration.
+    # SL9 has MINIMUM_IMAGE_TIME and MAXIMUM_IMAGE_TIME already computed for
+    # the range of images included in each observation. Those image times
+    # are probably the midtime, which is slightly incorrect in this case.
     def field_obs_general_time1(self):
-        if self._col_in_index('IMAGE_TIME'):
-            time2 = self.field_obs_general_time2()
-        else:
-            time2 = self._time_from_index(column='MINIMUM_IMAGE_TIME')
-        if time2 is None:
-            return None
-        exposure = self._index_col('EXPOSURE_DURATION')
-        if exposure is None:
-            self._log_nonrepeating_warning(f'Null exposure time for {self.opus_id}')
-            exposure = 0
-        return time2 - exposure/1000
+        time1 = self._time_from_index(column='MINIMUM_IMAGE_TIME')
+        if time1 is None:
+            time1 = self._time_from_supp_index(column='START_TIME')
+        return time1
 
     def field_obs_general_time2(self):
-        if self._col_in_index('IMAGE_TIME'):
-            if self._index_col('IMAGE_TIME') == 'UNK':
-                return None
-            return self._time2_from_index(None, column='IMAGE_TIME')
-        return self._time2_from_index(None, column='MAXIMUM_IMAGE_TIME')
+        time1 = self.field_obs_general_time1()
+        time2 = self._time2_from_index(time1, column='MAXIMUM_IMAGE_TIME')
+        if time2 is None:
+            time2 = self._time2_from_supp_index(time1, column='STOP_TIME')
+        return time2
 
     def field_obs_general_observation_duration(self):
         time1 = self.field_obs_general_time1()
@@ -174,7 +179,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             if exposure is None:
                 return None
             return exposure/1000
-        return max(time2 - time1, 0)
+        return max(round(time2 - time1, 5), 0)
 
     def field_obs_general_quantity(self):
         return self._create_mult('REFLECT')
@@ -199,9 +204,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
 
         return s
 
-    def field_obs_pds_product_creation_time(self):
-        return None
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -220,10 +222,16 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return 256
 
     def field_obs_type_image_greater_pixel_size(self):
-        return 800
+        cutoff = self._supp_index_col('CUT_OUT_WINDOW')
+        if cutoff is None or cutoff[2] is None or cutoff[3] is None:
+            return 800
+        return max(cutoff[2], cutoff[3])
 
     def field_obs_type_image_lesser_pixel_size(self):
-        return 800
+        cutoff = self._supp_index_col('CUT_OUT_WINDOW')
+        if cutoff is None or cutoff[2] is None or cutoff[3] is None:
+            return 800
+        return min(cutoff[2], cutoff[3])
 
 
     ###################################
@@ -269,10 +277,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return self._create_mult(str(orbit))
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
-        if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
-            sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
-        else:
-            sc = self._index_col('MINIMUM_SPACECRAFT_CLOCK_START_COUNT')
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
         try:
             sc_cvt = opus_support.parse_galileo_sclk(sc)
         except Exception as e:
@@ -281,11 +286,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return sc_cvt
 
     def field_obs_mission_galileo_spacecraft_clock_count2(self):
-        if self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
-            # There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
-            return self.field_obs_mission_galileo_spacecraft_clock_count1()
-        # This is the maximum start count, which is the best we can do
-        sc = self._index_col('MAXIMUM_SPACECRAFT_CLOCK_START_COUNT') # SL9
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         try:
             sc_cvt = opus_support.parse_galileo_sclk(sc)
         except Exception as e:
