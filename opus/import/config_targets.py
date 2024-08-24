@@ -82,6 +82,7 @@ TARGET_NAME_MAPPING = {
     # These are found in NH
     '136472 MAKEMAKE':              'MAKEMAKE',
     '136108 HAUMEA':                'HAUMEA',
+    '136199 ERIS':                  'ERIS',
     '10199 CHARIKLO':               'CHARIKLO',
     '15810 ARAWN':                  'ARAWN',
     '50000 QUAOAR':                 'QUAOAR',
@@ -533,7 +534,6 @@ TARGET_NAME_INFO = {
     'CHARIKLO':             (None,  'OTHER',      'Chariklo'),
     'CHIRON':               (None,  'OTHER',      'Chiron'), # Actually it's a CENTAUR!
     'ERIS':                 (None,  'OTHER',      'Eris'),
-    '136199 ERIS':          (None,  'OTHER',      'Eris'),
     'HAUMEA':               (None,  'OTHER',      'Haumea'),
     'HUYA':                 (None,  'OTHER',      'Huya'),
     'IXION':                (None,  'OTHER',      'Ixion'),
