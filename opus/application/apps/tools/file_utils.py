@@ -212,11 +212,11 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
         else:
             try:
                 preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
-            except ObjectDoesNotExist: # pragma: no cover - import error
+            except ObjectDoesNotExist:  # pragma: no cover - import error
                 log.error('get_pds_preview_images: Failed to find opus_id "%s" '
                           +'in obs_general', opus_id)
         viewset = None
-        if preview_json: # pragma: no cover - import error
+        if preview_json:  # pragma: no cover - import error
             viewset = pdsfile.pdsviewable.PdsViewSet.from_dict(preview_json)
         data = {'opus_id': opus_id}
         for size in sizes:
@@ -230,9 +230,9 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                     viewable = viewset.medium
                 elif size == 'full':
                     viewable = viewset.full_size
-                else: # pragma: no cover - error catchall
+                else:  # pragma: no cover - error catchall
                     log.error('Unknown image size "%s"', size)
-            if not preview_json or not viewset: # pragma: no cover
+            if not preview_json or not viewset:  # pragma: no cover
                 # log.error('No preview image size "%s" found for '
                 #           +'opus_id "%s"', size, opus_id)
                 if ignore_missing:
@@ -244,7 +244,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                 height = 0
             else:
                 url = settings.PRODUCT_HTTP_PATH.strip('/') + viewable.url
-                if 'googleapis' in url:
+                if 'googleapis' in url:  # pragma: no cover
                     url = url.replace('/holdings', '/pds3-holdings')
                 alt_text = viewable.alt
                 byte_size = viewable.bytes
@@ -269,7 +269,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
 
     selected_browse_products = browse_products[opus_id].get(version_name, [])
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
-    if len(selected_browse_products) == 0: # pragma: no cover - thumbnails not available
+    if len(selected_browse_products) == 0:  # pragma: no cover - thumbnails not available
         return [(settings.THUMBNAIL_NOT_FOUND, settings.THUMBNAIL_NOT_FOUND)]
     res = []
     # One opus id could have multiple previews, for example:
@@ -281,7 +281,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
         for browse_url in selected_browse_products[p]:
             if '_med.' in browse_url:
                 basename, _, _ = browse_url.partition('_med.')
-                if basename in disp_prod_dict: # pragma: no cover -
+                if basename in disp_prod_dict:  # pragma: no cover -
                     # The order of browse products is usually medium,full
                     # so this never gets triggered, since it would require
                     # the full image to come first.
@@ -289,7 +289,7 @@ def get_displayed_browse_products(opus_id, version_name='Current'):
                     continue
             else: # '_full.' in browse_url
                 basename, _, _ = browse_url.partition('_full.')
-                if basename in disp_prod_dict: # pragma: no cover - see above
+                if basename in disp_prod_dict:  # pragma: no cover - see above
                     res.append((disp_prod_dict[basename], browse_url))
                     continue
             disp_prod_dict[basename] = browse_url

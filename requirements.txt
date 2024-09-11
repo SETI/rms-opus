@@ -6,11 +6,11 @@
 #
 asgiref==3.8.1
     # via django
-build==1.2.1
+build==1.2.2
     # via pip-tools
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
-cffi==1.17.0
+cffi==1.17.1
     # via xattr
 charset-normalizer==3.3.2
     # via requests
@@ -18,7 +18,7 @@ click==8.1.7
     # via pip-tools
 coverage==7.6.1
     # via -r requirements.in
-django==4.2.15
+django==4.2.16
     # via
     #   -r requirements.in
     #   django-storages
@@ -47,7 +47,7 @@ mistune==3.0.2
     # via -r requirements.in
 mysqlclient==2.2.4
     # via -r requirements.in
-numpy==2.1.0
+numpy==2.1.1
     # via
     #   -r requirements.in
     #   rms-julian
@@ -74,7 +74,7 @@ pycparser==2.22
     # via cffi
 pyflakes==3.2.0
     # via flake8
-pyparsing==3.1.2
+pyparsing==3.1.4
     # via
     #   -r requirements.in
     #   rms-julian
@@ -88,17 +88,17 @@ pyproject-hooks==1.1.0
     # via
     #   build
     #   pip-tools
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   -r requirements.in
     #   rms-pdsfile
-pytz==2024.1
+pytz==2024.2
     # via -r requirements.in
 pyyaml==6.0.2
     # via -r requirements.in
 qrcode==7.4.2
     # via -r requirements.in
-regex==2024.7.24
+regex==2024.9.11
     # via -r requirements.in
 requests==2.32.3
     # via -r requirements.in
@@ -107,7 +107,7 @@ rms-julian==2.0.3
     #   -r requirements.in
     #   rms-pdstable
     #   rms-textkernel
-rms-pdsfile==0.0.10
+rms-pdsfile==0.0.11
     # via -r requirements.in
 rms-pdslogger==0.0.7
     # via

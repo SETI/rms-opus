@@ -31,10 +31,10 @@ if [ $? -ne 0 ]; then
 fi
 
 # Enable these commands to override the default PdsFile with a particular branch
-git clone https://github.com/SETI/rms-pdsfile
-(cd rms-pdsfile; git checkout rf_240826_vg_previews)
-pip uninstall -y rms-pdsfile
-pip install -e ./rms-pdsfile
+# git clone https://github.com/SETI/rms-pdsfile
+# (cd rms-pdsfile; git checkout rf_240826_vg_previews)
+# pip uninstall -y rms-pdsfile
+# pip install -e ./rms-pdsfile
 
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
