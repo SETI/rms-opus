@@ -17,16 +17,21 @@ echo
 
 # Start with volumes that require duplicate ID checks to make them run faster
 
-echo "** IMPORT GALILEO **"
-echo
-echo "Start time:" `date`
-echo
-python main_opus_import.py --import-check-duplicate-id --do-all-import GALILEO > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    cat ${OPUS_LOG_DIR}/ERRORS.log
-    exit -1
-fi
-echo
+for VOLUME in \
+  GALILEO \
+  NEWHORIZONS
+do
+    echo "** IMPORT ${VOLUME} **"
+    echo
+    echo "Start time:" `date`
+    echo
+    python main_opus_import.py --import-check-duplicate-id --do-all-import ${VOLUME} > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        cat ${OPUS_LOG_DIR}/ERRORS.log
+        exit -1
+    fi
+    echo
+done
 
 # Other normal volumes, more or less in reverse order of time to import
 
@@ -37,7 +42,6 @@ for VOLUME in \
   COVIMS_8xxx \
   CORSS_8xxx \
   VOYAGER \
-  NEWHORIZONS \
   HST \
   COCIRS \
   COISS \
