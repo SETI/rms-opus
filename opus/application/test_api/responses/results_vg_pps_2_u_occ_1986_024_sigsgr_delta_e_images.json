@@ -7,6 +7,26 @@
     "data": [
         {
             "opus_id": "vg-pps-2-u-occ-1986-024-sigsgr-delta-e",
+            "thumb_url": "https://opus.pds-rings.seti.org/holdings/diagrams/VG_28xx/VG_2801/PU1xxxDE_diagram_thumb.png",
+            "thumb_alt_text": "PU1xxxDE_diagram_thumb.png",
+            "thumb_size_bytes": 14462,
+            "thumb_width": 100,
+            "thumb_height": 100,
+            "small_url": "https://opus.pds-rings.seti.org/holdings/diagrams/VG_28xx/VG_2801/PU1xxxDE_diagram_small.png",
+            "small_alt_text": "PU1xxxDE_diagram_small.png",
+            "small_size_bytes": 44333,
+            "small_width": 250,
+            "small_height": 249,
+            "med_url": "https://opus.pds-rings.seti.org/holdings/diagrams/VG_28xx/VG_2801/PU1xxxDE_diagram_med.png",
+            "med_alt_text": "PU1xxxDE_diagram_med.png",
+            "med_size_bytes": 108988,
+            "med_width": 500,
+            "med_height": 500,
+            "full_url": "https://opus.pds-rings.seti.org/holdings/diagrams/VG_28xx/VG_2801/PU1xxxDE_diagram_full.png",
+            "full_alt_text": "PU1xxxDE_diagram_full.png",
+            "full_size_bytes": 690484,
+            "full_width": 1500,
+            "full_height": 1500,
             "ring_obs_id": null
         }
     ]

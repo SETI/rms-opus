@@ -81,6 +81,7 @@ jobs:
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v4
+        if: matrix.os == 'self-hosted-linux' && matrix.python-version == '3.12'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./opus/application/coverage.xml
