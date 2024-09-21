@@ -243,7 +243,7 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
                 width = 0
                 height = 0
             else:
-                url = settings.PRODUCT_HTTP_PATH.strip('/') + viewable.url
+                url = settings.PREVIEWS_HTTP_PATH.strip('/') + viewable.url
                 if 'googleapis' in url:  # pragma: no cover
                     url = url.replace('/holdings', '/pds3-holdings')
                 alt_text = viewable.alt

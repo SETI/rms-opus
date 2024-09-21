@@ -55,7 +55,7 @@ DEBUG = True
 # The list of hosts or IP addresses that Django is permitted to serve
 ALLOWED_HOSTS = ('127.0.0.1',
                  'localhost',
-                 <ADDITIONAL_ALLOWED_HOSTS>)
+                 '<ADDITIONAL_ALLOWED_HOSTS>')
 
 # These settings are useful to include on a production server
 # ADMINS = (<email list>)
@@ -96,6 +96,9 @@ PUBLIC_OPUS_URL = 'https://opus.pds-rings.seti.org/'
 
 # The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://opus.pds-rings.seti.org/'
+
+# The root URL used to retrieve previews and diagrams from a web server
+PREVIEWS_HTTP_PATH = 'https://storage.googleapis.com/rms-node-previews/'
 
 # The root URL used to retrieve product files from viewmaster
 VIEWMASTER_ROOT_PATH = 'https://pds-rings.seti.org/'

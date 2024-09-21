@@ -58,6 +58,7 @@ echo "MANIFEST_FILE_PATH = '${DOWNLOAD_DIR}/manifest/'" >> opus_secrets.py
 echo "TAR_FILE_URL_PATH = 'https://bad-host.org/'" >> opus_secrets.py
 echo "PUBLIC_OPUS_URL = 'https://opus.pds-rings.seti.org/'" >> opus_secrets.py
 echo "PRODUCT_HTTP_PATH = 'https://opus.pds-rings.seti.org/'" >> opus_secrets.py
+echo "PREVIEWS_HTTP_PATH = 'https://storage.googleapis.com/rms-node-previews/'" >> opus_secrets.py
 echo "VIEWMASTER_ROOT_PATH = 'https://pds-rings.seti.org/'" >> opus_secrets.py
 echo "OPUS_LOGFILE_DIR = '${LOG_DIR}/opus_logs'" >> opus_secrets.py
 echo "OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')" >> opus_secrets.py

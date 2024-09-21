@@ -53,12 +53,14 @@ if [[ $HOSTNAME =~ ^staging.*$ ]]; then
     echo "DEBUG = True" >> opus_secrets.py
     echo "PUBLIC_OPUS_URL = 'http://staging.pds.seti.org/'" >> opus_secrets.py
     echo "PRODUCT_HTTP_PATH = 'http://staging.pds.seti.org/'" >> opus_secrets.py
+    echo "PREVIEWS_HTTP_PATH = 'http://staging.pds.seti.org/'" >> opus_secrets.py
     echo "VIEWMASTER_ROOT_PATH = 'http://staging.pds.seti.org/'" >> opus_secrets.py
     echo "TAR_FILE_URL_PATH = 'http://staging.pds.seti.org/downloads/'" >> opus_secrets.py
 else
     echo "DEBUG = False" >> opus_secrets.py
     echo "PUBLIC_OPUS_URL = 'https://opus.pds-rings.seti.org/'" >> opus_secrets.py
     echo "PRODUCT_HTTP_PATH = 'https://opus.pds-rings.seti.org/'" >> opus_secrets.py
+    echo "PREVIEWS_HTTP_PATH = 'https://storage.googleapis.com/rms-node-previews/'" >> opus_secrets.py
     echo "VIEWMASTER_ROOT_PATH = 'https://pds-rings.seti.org/'" >> opus_secrets.py
     echo "TAR_FILE_URL_PATH = 'https://opus.pds-rings.seti.org/downloads/'" >> opus_secrets.py
 fi
