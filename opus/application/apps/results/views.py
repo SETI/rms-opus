@@ -833,12 +833,12 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
             img = None
             if 'url' in image: # pragma: no cover - always present
                 url = image['url']
-                if 'previews/' in url:
-                    path, img = url.split('previews/')
-                    path += 'previews/'
-                elif 'browse/' in url:
-                    path, img = url.split('browse/')
-                    path += 'browse/'
+                if '/previews/' in url:
+                    path, img = url.split('/previews/')
+                    path += '/previews/'
+                elif '/browse/' in url:
+                    path, img = url.split('/browse/')
+                    path += '/browse/'
             else: # pragma: no cover
                 image['url'] = ''
             image['path'] = path
