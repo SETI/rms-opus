@@ -3,10 +3,10 @@
 "https://opus.pds-rings.seti.org/#/planet=Mars",354,Planet Mars
 "https://opus.pds-rings.seti.org/#/planet=Jupiter",183980,Planet Jupiter
 "https://opus.pds-rings.seti.org/#/planet=Saturn",1377615,Planet Saturn
-"https://opus.pds-rings.seti.org/#/planet=Uranus",9925,Planet Uranus
+"https://opus.pds-rings.seti.org/#/planet=Uranus",10697,Planet Uranus
 "https://opus.pds-rings.seti.org/#/planet=Neptune",11637,Planet Neptune
 "https://opus.pds-rings.seti.org/#/planet=Pluto",11410,Planet Pluto
-"https://opus.pds-rings.seti.org/#/planet=Other",29601,Planet Other
+"https://opus.pds-rings.seti.org/#/planet=Other",30445,Planet Other
 
 "https://opus.pds-rings.seti.org/#/target=Jupiter",89973,Target Jupiter
 "https://opus.pds-rings.seti.org/#/target=Saturn",412035,Target Saturn
@@ -14,29 +14,29 @@
 "https://opus.pds-rings.seti.org/#/target=Titan",197325,Target Titan
 "https://opus.pds-rings.seti.org/#/target=Jupiter",89973,Target Jupiter
 
-"https://opus.pds-rings.seti.org/#/targetclass=Planet",533026,Target Class Planet
+"https://opus.pds-rings.seti.org/#/targetclass=Planet",533069,Target Class Planet
 "https://opus.pds-rings.seti.org/#/targetclass=Regular+Satellite",380717,Target Class Regular Satellite
 "https://opus.pds-rings.seti.org/#/targetclass=Irregular+Satellite",50886,Target Class Irregular Satellite
-"https://opus.pds-rings.seti.org/#/targetclass=Ring",319452,Target Class Ring
+"https://opus.pds-rings.seti.org/#/targetclass=Ring",320181,Target Class Ring
 "https://opus.pds-rings.seti.org/#/targetclass=Sky",147308,Target Class Sky
 "https://opus.pds-rings.seti.org/#/targetclass=Calibration",5280,Target Class Calibration
-"https://opus.pds-rings.seti.org/#/targetclass=Other",187863,Target Class Other
+"https://opus.pds-rings.seti.org/#/targetclass=Other",188707,Target Class Other
 
 "https://opus.pds-rings.seti.org/#/mission=Cassini",1489680,Mission Cassini
 "https://opus.pds-rings.seti.org/#/mission=Galileo",14470,Mission Galileo
 "https://opus.pds-rings.seti.org/#/mission=Hubble",21751,Mission Hubble
-"https://opus.pds-rings.seti.org/#/mission=New+Horizons",21887,Mission New Horizons
+"https://opus.pds-rings.seti.org/#/mission=New+Horizons",22731,Mission New Horizons
 "https://opus.pds-rings.seti.org/#/mission=Voyager",76732,Mission Voyager
-"https://opus.pds-rings.seti.org/#/mission=Ground-based",12,Mission Ground-based
+"https://opus.pds-rings.seti.org/#/mission=Ground-based",784,Mission Ground-based
 
 "https://opus.pds-rings.seti.org/#/insthost=Cassini",1489680,Instrument Host Cassini
 "https://opus.pds-rings.seti.org/#/insthost=Galileo",14470,Instrument Host Galileo
 "https://opus.pds-rings.seti.org/#/insthost=Hubble",21751,Instrument Host Hubble
-"https://opus.pds-rings.seti.org/#/insthost=New+Horizons",21887,Instrument Host New Horizons
+"https://opus.pds-rings.seti.org/#/insthost=New+Horizons",22731,Instrument Host New Horizons
 "https://opus.pds-rings.seti.org/#/insthost=Voyager+1",34579,Instrument Host Voyager 1
 "https://opus.pds-rings.seti.org/#/insthost=voyager+2",42153,Instrument Host Voyager 2
 "https://opus.pds-rings.seti.org/#/insthost=Voyager+1,Voyager+2",76732,Instrument Host Voyager 1+2
-"https://opus.pds-rings.seti.org/#/insthost=Ground-based",12,Instrument Host Ground-based
+"https://opus.pds-rings.seti.org/#/insthost=Ground-based",784,Instrument Host Ground-based
 
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+CIRS",102671,Instrument Cassini CIRS
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS",443177,Instrument Cassini ISS
@@ -53,27 +53,43 @@
 "https://opus.pds-rings.seti.org/#/instrument=Hubble+STIS",1814,Instrument Hubble STIS
 "https://opus.pds-rings.seti.org/#/instrument=Hubble+WFC3",4828,Instrument Hubble WFC3
 "https://opus.pds-rings.seti.org/#/instrument=Hubble+WFPC2",5617,Instrument Hubble WFPC2
-"https://opus.pds-rings.seti.org/#/instrument=New+Horizons+LORRI",19990,Instrument New Horizons LORRI
-"https://opus.pds-rings.seti.org/#/instrument=New+Horizons+MVIC",1897,Instrument New Horizons MVIC
-"https://opus.pds-rings.seti.org/#/instrument=ESO+1-m+ApPhot",2,Instrument ESO 1 m ApPhot
-"https://opus.pds-rings.seti.org/#/instrument=ESO+2.2-m+ApPhot",2,Instrument ESO 2.2 m ApPhot
-"https://opus.pds-rings.seti.org/#/instrument=Lick+1-m+CCD",2,Instrument Lick 1 m CCD
-"https://opus.pds-rings.seti.org/#/instrument=McDonald+2.7-m+INSB",2,Instrument McDonald 2.7 m INSB
-"https://opus.pds-rings.seti.org/#/instrument=NASA+IRTF+URAC",2,Instrument NASA IRTF URAC
-"https://opus.pds-rings.seti.org/#/instrument=Palomar+200-in+Cass+IR",2,Instrument Palomar Observatory 200-in Hale Telescope
+"https://opus.pds-rings.seti.org/#/instrument=New+Horizons+LORRI",20795,Instrument New Horizons LORRI
+"https://opus.pds-rings.seti.org/#/instrument=New+Horizons+MVIC",1936,Instrument New Horizons MVIC
+"https://opus.pds-rings.seti.org/#/instrument=Caha+Calar+Alto+1.23m",12,Caha Calar Alto 1.23m
+"https://opus.pds-rings.seti.org/#/instrument=Cerro+Tololo+SMARTS+1.5m",20,Cerro Tololo SMARTS 1.5m
+"https://opus.pds-rings.seti.org/#/instrument=Cerro+Tololo+Victor+Blanco+4m",123,Cerro Tololo Victor Blanco 4m
+"https://opus.pds-rings.seti.org/#/instrument=ESO+La+Silla+1m",17,ESO La Silla 1m
+"https://opus.pds-rings.seti.org/#/instrument=ESO+La+Silla+2.2m",17,ESO La Silla 2.2m
+"https://opus.pds-rings.seti.org/#/instrument=ESO+La+Silla+3.6m",20,ESO La Silla 3.6m
+"https://opus.pds-rings.seti.org/#/instrument=IRTF+3.2m",179, IRTF 3.2m
+"https://opus.pds-rings.seti.org/#/instrument=Kuiper+Airborne+Observatory+0.91m",22,Kuiper Airborne Observatory 0.91m
+"https://opus.pds-rings.seti.org/#/instrument=Las+Campanas+Irenee+Dupont+2.5m",72,Las Campanas Irenee Dupont 2.5m
+"https://opus.pds-rings.seti.org/#/instrument=Las+Campanas+Henrietta+Swope+1.0m",14,Las Campanas Henrietta Swope 1.0m
+"https://opus.pds-rings.seti.org/#/instrument=Lick+Anna+L+Nickel+1m",2,Lick Anna L Nickel 1m
+"https://opus.pds-rings.seti.org/#/instrument=Lowell+Perkins+1.83m",9,Lowell Perkins 1.83m
+"https://opus.pds-rings.seti.org/#/instrument=McDonald+Harlan+J+Smith+2.7m",32,McDonald Harlan J Smith 2.7m
+"https://opus.pds-rings.seti.org/#/instrument=Mount+Stromlo+1.9m",22,Mount Stromlo 1.9m
+"https://opus.pds-rings.seti.org/#/instrument=Palomar+Hale+5.08m",76,Palomar Hale 5.08m
+"https://opus.pds-rings.seti.org/#/instrument=Pic+du+Midi+1.06m",6,Pic du Midi 1.06m
+"https://opus.pds-rings.seti.org/#/instrument=Pic+du+Midi+Bernard+Lyot+2.0m",13,Pic du Midi Bernard Lyot 2.0m
+"https://opus.pds-rings.seti.org/#/instrument=SAAO+Radcliffe+1.88m",45,SAAO Radcliffe 1.88m
+"https://opus.pds-rings.seti.org/#/instrument=SSO+AAT+3.9m",27,SSO AAT 3.9m
+"https://opus.pds-rings.seti.org/#/instrument=SSO+ANU+2.3m",3,SSO ANU 2.3m
+"https://opus.pds-rings.seti.org/#/instrument=Teide+Carlos+Sanchez+1.55m",29,Teide Carlos Sanchez 1.55m
+"https://opus.pds-rings.seti.org/#/instrument=UKIRT+3.8m",9,UKIRT 3.8m
 
-"https://opus.pds-rings.seti.org/#/observationtype=Image",576510,Observation Type Image
+"https://opus.pds-rings.seti.org/#/observationtype=Image",577354,Observation Type Image
 "https://opus.pds-rings.seti.org/#/observationtype=Spectrum",1153,Observation Type Spectrum
 "https://opus.pds-rings.seti.org/#/observationtype=Spectral+Image",274,Observation Type Spectral Image
 "https://opus.pds-rings.seti.org/#/observationtype=Spectral+Cube",962113,Observation Type Spectral Cube
 "https://opus.pds-rings.seti.org/#/observationtype=Time+Series",58711,Observation Type Time Series
 "https://opus.pds-rings.seti.org/#/observationtype=Spectral+Time+Series",24950,Observation Type Spectral Time Series
-"https://opus.pds-rings.seti.org/#/observationtype=Occultation+Profile",819,Observation Type Occultation Profile
+"https://opus.pds-rings.seti.org/#/observationtype=Occultation+Profile",1591,Observation Type Occultation Profile
 "https://opus.pds-rings.seti.org/#/observationtype=Reflectance+Profile",2,Observation Type Reflectance Profile
 
-"https://opus.pds-rings.seti.org/#/quantity=Reflectivity",1266318,Measurement Quantity Reflectivity
+"https://opus.pds-rings.seti.org/#/quantity=Reflectivity",1267162,Measurement Quantity Reflectivity
 "https://opus.pds-rings.seti.org/#/quantity=Thermal+Emission",102671,Measurement Quantity Thermal Emission
-"https://opus.pds-rings.seti.org/#/quantity=Optical+Depth",21676,Measurement Quantity Optical Depth
+"https://opus.pds-rings.seti.org/#/quantity=Optical+Depth",22448,Measurement Quantity Optical Depth
 "https://opus.pds-rings.seti.org/#/quantity=Emission",233867,Measurement Quantity Emission
 
 "https://opus.pds-rings.seti.org/#/target=ENCELADUS&instrument=Cassini+ISS&RINGGEOphase1=160&RINGGEOphase2=",=1489,COISS images of Enceladus at high phase angle
@@ -97,7 +113,7 @@
 
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS&CASSINIobsname=007RI_LPHRLFMOV",=249,Daphnis discovery movie
 
-"https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS&surfacegeometrytargetname=SATURN&SURFACEGEOsaturnsubobserverplanetographiclatitude1=50&SURFACEGEOsaturnsubobserverplanetographiclatitude2=&SURFACEGEOsaturncenterresolution1=5&SURFACEGEOsaturncenterresolution2=10&target=SATURN",=302,"Images of the polar hexagon."
+"https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS&surfacegeometrytargetname=SATURN&SURFACEGEOsaturn_subobserverplanetographiclatitude1=50&SURFACEGEOsaturn_subobserverplanetographiclatitude2=&SURFACEGEOsaturn_centerresolution1=5&SURFACEGEOsaturn_centerresolution2=10&target=SATURN",=302,"Images of the polar hexagon."
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS&CASSINIobsname=RDCOLSCNM",=285,"This was Jeff’s search. Results from revs 204, 206, 209, and 210. Name could be used again, adding more results."
 "https://opus.pds-rings.seti.org/#/planet=Pluto&mission=Voyager",=0,Voyager mission with Pluto as target
 "https://opus.pds-rings.seti.org/#/planet=Jupiter&RINGGEOringradius1=75000&RINGGEOringradius2=138000&RINGGEOphase1=20&RINGGEOphase2=150&rightasc1=10&rightasc2=270&declination1=-15&declination2=15&targetclass=Ring",120,
@@ -121,13 +137,13 @@
 "https://opus.pds-rings.seti.org/#/target=Venus&mission=Cassini&instrument=Cassini+VIMS&wavelength1=0.4&wavelength2=0.8",=123,"Venus with cassini UVIS, wavelength constrained"
 "https://opus.pds-rings.seti.org/#/target=Venus&mission=Cassini&instrument=Cassini+ISS&wavelength1=0.70&wavelength2=0.75",=4,"Venus with cassini ISS, wavelength constrained"
 
-"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=JUPITER",57622,Surface Geo Jupiter
+"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=JUPITER",61403,Surface Geo Jupiter
 "https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN",1260353,Surfae Geo Saturn
-"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN&planet=Saturn",1258493,Surface Geo Saturn with Intended Target Saturn
+"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN&planet=Saturn",1291235,Surface Geo Saturn with Intended Target Saturn
 "https://opus.pds-rings.seti.org/#/planet=Jupiter&target=Jupiter+Rings&rightasc1=5&rightasc2=120&declination1=10&declination2=25&RINGGEOphase1=135&RINGGEOphase2=140",122,
 "https://opus.pds-rings.seti.org/#/target=S/2004+S+13",13,
 "https://opus.pds-rings.seti.org/#/target=S/2004+S+12",145,
-"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=S/2004+S+12&SURFACEGEOs2004s12subobserverplanetographiclatitude1=4.5&SURFACEGEOs2004s12subobserverplanetographiclatitude2=6&SURFACEGEOs2004s12subsolarplanetographiclatitude1=9.46&SURFACEGEOs2004s12subsolarplanetographiclatitude2=10&SURFACEGEOs2004s12centerphaseangle1=28&SURFACEGEOs2004s12centerphaseangle2=28.05",79,
+"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=S/2004+S+12&SURFACEGEOs2004s12_subobserverplanetographiclatitude1=4.5&SURFACEGEOs2004s12_subobserverplanetographiclatitude2=6&SURFACEGEOs2004s12_subsolarplanetographiclatitude1=9.46&SURFACEGEOs2004s12_subsolarplanetographiclatitude2=10&SURFACEGEOs2004s12_centerphaseangle1=28&SURFACEGEOs2004s12_centerphaseangle2=28.05",79,
 
 "https://opus.pds-rings.seti.org/#/bundleid=__",=0,
 "https://opus.pds-rings.seti.org/#/bundleid=%",=0,

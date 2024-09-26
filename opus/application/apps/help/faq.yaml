@@ -240,7 +240,7 @@ Using Search:
             <b>Surface Geometry Constraints</b> you can limit your search to
             only observations containing the given body in the field of view.
             However, this feature is only available for Cassini ISS, UVIS, and
-            VIMS, New Horizons LORRI, and Voyager ISS.
+            VIMS, Galileo SSI, New Horizons LORRI, and Voyager ISS.
     -
         Q: >
             How do I search for observations that contain two particular bodies
@@ -248,8 +248,8 @@ Using Search:
         A: >
             There are four ways that you can accomplish this goal. Note that
             methods 1 through 3 only work for instruments that support surface
-            geometry (currently Cassini ISS, UVIS, and VIMS, New Horizons LORRI,
-            and Voyager ISS).
+            geometry (currently Cassini ISS, UVIS, and VIMS, Galileo SSI, New
+            Horizons LORRI, and Voyager ISS).
 
 
             <h4>Method 1</h4>
