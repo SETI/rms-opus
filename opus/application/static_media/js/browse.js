@@ -622,7 +622,7 @@ var o_browse = {
                 return;
             }
 
-            if (e.cdoe === "Escape") { // esc - close modals
+            if (e.code === "Escape") { // esc - close modals
                 o_browse.hideMetadataDetailModal();
                 $("#op-select-metadata").modal('hide');
                 // reset range select
