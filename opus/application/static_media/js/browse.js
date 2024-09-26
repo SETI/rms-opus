@@ -598,10 +598,10 @@ var o_browse = {
             // Whenever we click or hit up/down arrows, page up and page down keys, we
             // want to make sure the ps container is hovered and ps is focused so the the
             // keydown event will be properly handled by ps.
+            let helpPanelPs = document.querySelector("#op-help-panel .ps__thumb-y");
             if (opus.prefs.view === "browse" && (e.type === "click" ||
                 e.code === "ArrowUp" || e.code === "ArrowDown" ||
                 e.code === "PageUp" || e.code === "PageDown")) {
-                let helpPanelPs = document.querySelector("#op-help-panel .ps__thumb-y");
                 // when the ps in help panel shows up, we want to make sure keydown can
                 // control that ps, so we don't hover & focus to the gallery/table views
                 // ps if there is a help panel ps on the screen
@@ -629,7 +629,10 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
 
-            if ($("#op-metadata-detail-view").hasClass("show")) {
+            // Make sure when the help panel is open while slide show is also open, arrow
+            // keys are controlling the help panel.
+            if ($("#op-metadata-detail-view").hasClass("show") &&
+                (!helpPanelPs || !helpPanelPs.checkVisibility())) {
                 if (o_browse.pageLoaderSpinnerTimer === null) {
                     /*  Catch the right/left arrow and spacebar while in the modal
                         Up: 38
