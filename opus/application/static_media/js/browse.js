@@ -599,9 +599,9 @@ var o_browse = {
             // want to make sure the ps container is hovered and ps is focused so the the
             // keydown event will be properly handled by ps.
             let helpPanelPs = document.querySelector("#op-help-panel .ps__thumb-y");
-            if (opus.prefs.view === "browse" && (e.type === "click" ||
-                e.code === "ArrowUp" || e.code === "ArrowDown" ||
-                e.code === "PageUp" || e.code === "PageDown")) {
+            if ((opus.prefs.view === "browse" || opus.prefs.view === "cart") &&
+                (e.type === "click" || e.code === "ArrowUp" || e.code === "ArrowDown" ||
+                 e.code === "PageUp" || e.code === "PageDown")) {
                 // when the ps in help panel shows up, we want to make sure keydown can
                 // control that ps, so we don't hover & focus to the gallery/table views
                 // ps if there is a help panel ps on the screen
@@ -612,7 +612,7 @@ var o_browse = {
 
             // don't close the mini-menu on the ctrl key in case the user
             // is trying to open a new window for detail
-           if (!(e.ctrlKey || e.metaKey)) {
+            if (!(e.ctrlKey || e.metaKey)) {
                 o_browse.hideMenus();
             }
 
