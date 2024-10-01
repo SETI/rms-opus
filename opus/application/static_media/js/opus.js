@@ -790,7 +790,7 @@ var opus = {
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
-        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item", function() {
+        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item", function(e) {
             if ($(this).hasClass("external-link") || $(this).children().hasClass("op-show-msg")) {
                 // this is a link to an external site or a link to open up a message modal
                 return true;
@@ -802,6 +802,9 @@ var opus = {
                 return true;  // they clicked the brand icon, take them to its link
             }
 
+            // Focus out of the nav bar so that up/down and left/right arrow keys won't
+            // jump between different tabs
+            e.target.blur();
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
             return opus.changeTab(tab);
@@ -859,7 +862,7 @@ var opus = {
         });
 
         $(document).on("keydown click", function(e) {
-            if ((e.which || e.keyCode) == 27) {
+            if (e.code === "Escape") {
                 // ESC key - close modals and help panel
                 // Don't close "#op-browser-version-msg-modal" and "#op-browser-size-msg-modal"
                 $.each($(".op-confirm-modal"), function(idx, confirmModal) {

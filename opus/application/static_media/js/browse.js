@@ -102,7 +102,20 @@ var o_browse = {
             if (event.type === "ps-scroll-up" || (event.type === "wheel" && event.originalEvent.deltaY < 0)) {
                 if (opus.prefs[startObsLabel] > 1) {
                     let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-                    if (firstObs !== undefined && firstObs !== 1 && $(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
+                    let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
+                    let viewNamespace = opus.getViewNamespace();
+                    let galleryBoundingRect = viewNamespace.galleryBoundingRect;
+
+                    // For Safari, if the scrollbar location is set by the code (instead
+                    // of manual scrolling), .scrollTop will return 0. So we add another
+                    // condition check that if there is a page ahead of startobs loaded,
+                    // we won't preload another page ahead. This will make sure we don't
+                    // have an extra page loaded unecessarily and move the scrollbar to
+                    // unwanted places when switching between the gallery/table views.
+                    let obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
+                    if (firstObs !== undefined && firstObs !== 1 &&
+                        $(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold &&
+                        firstObs > (startObs - obsNumDiff) && startObs > obsNumDiff) {
                         $(`${tab} ${contentsView}`).infiniteScroll({
                             "loadPrevPage": true,
                         });
@@ -136,8 +149,11 @@ var o_browse = {
 
             o_hash.updateURLFromCurrentHash();
             o_browse.updateBrowseNav();
-            // reset scroll position
-            window.scrollTo(0, 0); // restore previous scroll position
+            // Make sure trFloor is properly set for calculations
+            let viewNamespace = opus.getViewNamespace();
+            if (viewNamespace.galleryBoundingRect.trFloor === Infinity) {
+                viewNamespace.galleryBoundingRect = o_browse.countGalleryImages();
+            }
 
             // Do the fake API call to write in the Apache log files that
             // we changed views so log_analyzer has something to go on
@@ -575,27 +591,48 @@ var o_browse = {
             }
         });
 
+        // make sure slider won't scroll with keyboard
+        $(".op-slider-pointer").unbind("keydown");
+
         $(document).on("keydown click", function(e) {
+            // Whenever we click or hit up/down arrows, page up and page down keys, we
+            // want to make sure the ps container is hovered and ps is focused so the the
+            // keydown event will be properly handled by ps.
+            let helpPanelPs = document.querySelector("#op-help-panel .ps__thumb-y");
+            if ((opus.prefs.view === "browse" || opus.prefs.view === "cart") &&
+                (e.type === "click" || e.code === "ArrowUp" || e.code === "ArrowDown" ||
+                 e.code === "PageUp" || e.code === "PageDown")) {
+                // when the ps in help panel shows up, we want to make sure keydown can
+                // control that ps, so we don't hover & focus to the gallery/table views
+                // ps if there is a help panel ps on the screen
+                if (!helpPanelPs || !helpPanelPs.checkVisibility()) {
+                    o_browse.hoverAndFocusOnPS();
+                }
+            }
+
             // don't close the mini-menu on the ctrl key in case the user
             // is trying to open a new window for detail
-           if (!(e.ctrlKey || e.metaKey)) {
+            if (!(e.ctrlKey || e.metaKey)) {
                 o_browse.hideMenus();
             }
 
             if (o_utils.ignoreArrowKeys &&
-                ((e.which || e.keyCode) == 37 || (e.which || e.keyCode) == 39)) {
+                (e.code === "ArrowLeft" || e.code === "ArrowRight")) {
                 e.preventDefault();
                 return;
             }
 
-            if ((e.which || e.keyCode) == 27) { // esc - close modals
+            if (e.code === "Escape") { // esc - close modals
                 o_browse.hideMetadataDetailModal();
                 $("#op-select-metadata").modal('hide');
                 // reset range select
                 o_browse.undoRangeSelect();
             }
 
-            if ($("#op-metadata-detail-view").hasClass("show")) {
+            // Make sure when the help panel is open while slide show is also open, arrow
+            // keys are controlling the help panel.
+            if ($("#op-metadata-detail-view").hasClass("show") &&
+                (!helpPanelPs || !helpPanelPs.checkVisibility())) {
                 if (o_browse.pageLoaderSpinnerTimer === null) {
                     /*  Catch the right/left arrow and spacebar while in the modal
                         Up: 38
@@ -607,29 +644,29 @@ var o_browse = {
                     let offset = 0;
                     let obsNum = $("#op-metadata-detail-view-content .op-obs-direction a").data("obs");
                     // the || is for cross-browser support; firefox does not support keyCode
-                    switch (e.which || e.keyCode) {
-                        case 32:  // spacebar
+                    switch (e.code) {
+                        case "Space":  // spacebar
                             if (opus.metadataDetailOpusId !== "" && opus.metadataDetailOpusId !== undefined) {
                                 o_browse.undoRangeSelect();
                                 o_cart.toggleInCart(opus.metadataDetailOpusId);
                             }
                             break;
-                        case 37:  // prev
+                        case "ArrowLeft":  // prev
                             obsNum--;
                             o_browse.moveToNextMetadataSlide(obsNum, "prev");
                             break;
-                        case 39:  // next
+                        case "ArrowRight":  // next
                             obsNum++;
                             o_browse.moveToNextMetadataSlide(obsNum, "next");
                             break;
-                        case 38:  // up
+                        case "ArrowUp":  // up
                             // decrement the current obsNum by 1 if table view such that up and left behave the same for the table view,
                             // otherwise by number of observations per row
                             offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
                             obsNum -= offset;
                             o_browse.moveToNextMetadataSlide(obsNum, "prev");
                             break;
-                        case 40:  // down
+                        case "ArrowDown":  // down
                             // increment the current obsNum by 1 if table view such that down and right behave the same for the table view,
                             // otherwise by number of observations per row
                             offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
@@ -648,6 +685,21 @@ var o_browse = {
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    // Hover to ps container and focus on ps, this is the key step to make sure ps listen
+    // to the keydown (up/down arrows, page up, page down, and etc) event. By default, if
+    // the cursor moves out of the ps container or the ps is not focused, ps won't handle
+    // any keydown event (perfect-scrollbar.js line 629-631). Note: Without this function,
+    // we can just comment out the code at line 629-631 in perfect-scrollbar.js to get the
+    // same behavior.
+    hoverAndFocusOnPS: function() {
+        let view = opus.prefs.view;
+        let tab = opus.getViewTab(view);
+        let contentsView = o_browse.getScrollContainerClass(view);
+
+        $(`${tab} ${contentsView}`).mouseover();
+        $(`${tab} ${contentsView} .ps__thumb-y`).focus();
+    },
 
     onGalleryOrRowClick: function(obj, e) {
         // make sure selected slide show modal thumb is unhighlighted, as clicking on this closes
@@ -743,7 +795,7 @@ var o_browse = {
     setScrollbarPosition: function(galleryObsNum, tableObsNum, view, offset=0) {
         let tab = opus.getViewTab(view);
         let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${galleryObsNum}"]`);
-        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${tableObsNum}']`);
+        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${tableObsNum}'] td`);
 
         // Make sure obsNum is rendered before setting scrollbar position
         if (galleryTarget.length && tableTarget.length) {
@@ -1048,8 +1100,8 @@ var o_browse = {
         // Note: in table view, if there are more than one row, we divide by the 2nd table tr's
         // height because in some corner cases, the first table tr's height will be 1px larger
         // than rest of tr, and this will mess up the calculation.
-        let tableRowHeight = ($(`${tab} tbody tr`).length === 1 ? $(`${tab} tbody tr`).outerHeight() :
-                              $(`${tab} tbody tr`).eq(1).outerHeight());
+        let tableRowHeight = ($(`${tab} tbody tr`).length === 1 ? $(`${tab} tbody tr td`).outerHeight() :
+                              $(`${tab} tbody tr td`).eq(1).outerHeight());
 
         let obsNumDiff = (o_browse.isGalleryView() ?
                           o_utils.floor((topBoxBoundary - firstCachedObsTop +
@@ -1193,7 +1245,7 @@ var o_browse = {
          */
         let tab = opus.getViewTab();
         let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${obsNum}"]`);
-        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${currentScrollObsNum}']`);
+        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${currentScrollObsNum}'] td`);
         let galleryOffset = 0;
         let tableOffset = 0;
         if (galleryTarget.length && tableTarget.length) {
@@ -1215,9 +1267,33 @@ var o_browse = {
         let tab = opus.getViewTab();
         let view = opus.prefs.view;
         let contentsView = o_browse.getScrollContainerClass();
-        if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
+
+
+        let firstObs = $(`${tab} [data-obs]`).first().data("obs");
+        let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
+        let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
+        let viewNamespace = opus.getViewNamespace();
+        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
+        let obsNumDiff = galleryBoundingRect.x * galleryBoundingRect.yCeil;
+        // For Safari, if the scrollbar location is set by the code (instead
+        // of manual scrolling), .scrollTop will return 0. So we add another
+        // condition check that if there is a page ahead of startobs loaded,
+        // we won't preload another page ahead. This will make sure we don't
+        // have an extra page loaded unecessarily and move the scrollbar to
+        // unwanted places.
+        if (firstObs !== undefined && firstObs !== 1 &&
+            $(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold &&
+            firstObs > (startObs - obsNumDiff) && startObs > obsNumDiff) {
             $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
         }
+
+        // For Safari where .scrollTop returns 0 and we are not at the first obs, properly
+        // set the scrollbar location
+        if (firstObs !== undefined && firstObs !== 1 &&
+            $(`${tab} ${contentsView}`).scrollTop() === 0 && firstObs !== startObs) {
+            o_browse.setScrollbarPosition(startObs, scrollbarObs);
+        }
+
         o_browse.updateSliderHandle(view, false, false, true);
         return false;
     },
@@ -1682,7 +1758,6 @@ var o_browse = {
     updateBrowseNav: function() {
         o_browse.fading = true;
         let tab = opus.getViewTab();
-        let contentsView = o_browse.getScrollContainerClass();
 
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-data-table-view`).data("infiniteScroll");
@@ -1692,8 +1767,11 @@ var o_browse = {
         let suppressScrollY = false;
 
         if (o_browse.isGalleryView()) {
-            $(".op-data-table-view", tab).hide();
-            $(`${tab} .op-gallery-view`).fadeIn("done", function() {o_browse.fading = false;});
+            $(`${tab} .op-data-table-view`).hide();
+            $(`${tab} .op-gallery-view`).fadeIn("done", function() {
+                o_browse.fading = false;
+                o_browse.hoverAndFocusOnPS();
+            });
 
             browseViewSelector.html("<i class='far fa-list-alt'></i>&nbsp;View Table");
             browseViewSelector.data("view", "data");
@@ -1704,7 +1782,10 @@ var o_browse = {
             suppressScrollY = false;
         } else {
             $(`${tab} .op-gallery-view`).hide();
-            $(`${tab} .op-data-table-view`).fadeIn("done", function() {o_browse.fading = false;});
+            $(`${tab} .op-data-table-view`).fadeIn("done", function() {
+                o_browse.fading = false;
+                o_browse.hoverAndFocusOnPS();
+            });
 
             browseViewSelector.html("<i class='far fa-images'></i>&nbsp;View Gallery");
             browseViewSelector.data("view", "gallery");
@@ -1718,9 +1799,20 @@ var o_browse = {
 
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
-            let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
-            let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
-            o_browse.setScrollbarPosition(startObs, scrollbarObs);
+            let startObs = galleryInfiniteScroll.options.sliderObsNum;
+            if (!startObs) {
+                return;
+            }
+            let viewNamespace = opus.getViewNamespace();
+            let galleryBoundingRect = viewNamespace.galleryBoundingRect;
+            startObs = Math.max((o_utils.floor((startObs - 1)/galleryBoundingRect.x) *
+                                galleryBoundingRect.x + 1), 1);
+            o_browse.setScrollbarPosition(startObs, startObs);
+            if (startObs) {
+                $(`${tab} .op-observation-number`).html(o_utils.addCommas(startObs));
+            }
+            viewNamespace.galleryScrollbar.update();
+            viewNamespace.tableScrollbar.update();
         }
     },
 
@@ -2465,6 +2557,8 @@ var o_browse = {
                 $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
             }
             o_browse.hidePageLoaderSpinner();
+            // Make sure we don't need an extra keydown to select ps
+            o_browse.hoverAndFocusOnPS();
         });
     },
 
@@ -2538,7 +2632,7 @@ var o_browse = {
 
         if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
             trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
-                                         $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+                                         $(`${tab} .op-data-table tbody tr[data-obs] td`).outerHeight());
         }
         opus.getViewNamespace(view).galleryBoundingRect.trFloor = trCountFloor;
         return trCountFloor;
@@ -2556,8 +2650,8 @@ var o_browse = {
             // height because in Firefox & Safari, the first table tr's height will be 1px larger
             // than rest of tr, and this will mess up the calculation.
             let tableRowHeight = ($(`${tab} .op-data-table tbody tr[data-obs]`).length === 1 ?
-                                  $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight() :
-                                  $(`${tab} .op-data-table tbody tr[data-obs]`).eq(1).outerHeight());
+                                  $(`${tab} .op-data-table tbody tr[data-obs] td`).outerHeight() :
+                                  $(`${tab} .op-data-table tbody tr[data-obs] td`).eq(1).outerHeight());
             trCountFloor = o_utils.floor((height-$(`${tab} .op-data-table th`).outerHeight()) / tableRowHeight);
         }
 
