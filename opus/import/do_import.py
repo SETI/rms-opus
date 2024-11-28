@@ -1529,8 +1529,12 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                 # For an index file, we check to see if this observation is
                 # present. If not, we don't include the index file in the
                 # results.
+                # TODO: for PDS4, find_selected_row_key will raise an OSError complaining
+                # about missing pickle files in _indexshelf-metadata, so for now we will
+                # assume the selection is always in the index file and create a row for
+                # it in db. Will fix this when pickle files in indexshelf is ready.
                 if (not impglobals.ARGUMENTS.import_dont_use_row_files and
-                    file.is_index):
+                    file.is_index and pds_version == 3):
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
                     try:
