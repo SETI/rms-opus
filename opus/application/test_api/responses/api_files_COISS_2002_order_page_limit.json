@@ -26,37 +26,37 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530096_1.IMG.png"
             ],
             "coiss_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
             ],
             "inventory": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
             ],
             "planet_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
             ],
             "moon_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
             ],
             "ring_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530096_1_thumb.jpg"
@@ -92,37 +92,37 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530079_1.IMG.png"
             ],
             "coiss_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
             ],
             "inventory": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
             ],
             "planet_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
             ],
             "moon_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
             ],
             "ring_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530079_1_thumb.jpg"
@@ -158,37 +158,37 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530062_1.IMG.png"
             ],
             "coiss_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
             ],
             "inventory": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
             ],
             "planet_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
             ],
             "moon_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
             ],
             "ring_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530062_1_thumb.jpg"
@@ -224,37 +224,37 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530022_1.IMG.png"
             ],
             "coiss_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
             ],
             "inventory": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
             ],
             "planet_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
             ],
             "moon_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
             ],
             "ring_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530022_1_thumb.jpg"
@@ -290,37 +290,37 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463529988_1.IMG.png"
             ],
             "coiss_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
             ],
             "inventory": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
             ],
             "planet_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
             ],
             "moon_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
             ],
             "ring_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463529988_1_thumb.jpg"
@@ -359,37 +359,37 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530096_1.IMG.png"
                 ],
                 "coiss_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
                 ],
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
                 ],
                 "planet_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
                 ],
                 "moon_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
                 ],
                 "ring_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530096_1_thumb.jpg"
@@ -439,37 +439,37 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530079_1.IMG.png"
                 ],
                 "coiss_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
                 ],
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
                 ],
                 "planet_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
                 ],
                 "moon_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
                 ],
                 "ring_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530079_1_thumb.jpg"
@@ -519,37 +519,37 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530062_1.IMG.png"
                 ],
                 "coiss_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
                 ],
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
                 ],
                 "planet_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
                 ],
                 "moon_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
                 ],
                 "ring_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530062_1_thumb.jpg"
@@ -599,37 +599,37 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463530022_1.IMG.png"
                 ],
                 "coiss_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
                 ],
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
                 ],
                 "planet_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
                 ],
                 "moon_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
                 ],
                 "ring_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463530022_1_thumb.jpg"
@@ -679,37 +679,37 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2002/extras/full/1463518302_1463530164/N1463529988_1.IMG.png"
                 ],
                 "coiss_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab"
                 ],
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl"
                 ],
                 "planet_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab"
                 ],
                 "moon_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab"
                 ],
                 "ring_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463518302_1463530164/N1463529988_1_thumb.jpg"
