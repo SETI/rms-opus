@@ -6,57 +6,57 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/APODSPEC/SPEC0408010657_FP3.LBL"
             ],
             "cocirs_geo": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_601.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.LBL",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.LBL",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.LBL",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_601.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_601.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEODATA.FMT"
             ],
             "cocirs_ispm": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408010657_FP3.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPMDATA.FMT"
             ],
             "cocirs_poi": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408010657_FP3.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POIDATA.FMT"
             ],
             "cocirs_rin": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RIN0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RIN0408010657_FP3.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RIN0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RINDATA.FMT"
             ],
             "cocirs_tar": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TAR0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TAR0408010657_FP3.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TAR0408010657_FP3.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TARDATA.FMT"
             ],
             "cocirs_browse_target": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.PNG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.PNG"
             ],
             "cocirs_browse_saturn": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.PNG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.PNG"
             ],
             "cocirs_browse_rings": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.PNG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.PNG"
             ],
             "cocirs_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Tutorial.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Flasar-etal-2004-SSR.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/FOV-Overview.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Cassini-CIRS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/CIRS-Diagram-Interpretation-Guide.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/CIRS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/CIRS-Diagram-Interpretation-Guide.txt"
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Cassini-CIRS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/FOV-Overview.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Flasar-etal-2004-SSR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Tutorial.txt"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3_thumb.jpg"
@@ -71,20 +71,20 @@
                 "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3_full.jpg"
             ],
             "diagram_thumb": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_thumb.jpg"
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_thumb.jpg"
             ],
             "diagram_small": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_small.jpg"
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_small.jpg"
             ],
             "diagram_medium": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_med.jpg"
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_med.jpg"
             ],
             "diagram_full": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_full.jpg"
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_full.jpg"
             ]
         }
     },
@@ -96,57 +96,57 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/APODSPEC/SPEC0408010657_FP3.LBL"
                 ],
                 "cocirs_geo": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_601.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.LBL",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.LBL",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.LBL",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_601.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_601.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_610.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_615.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_616.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408010657_699.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEODATA.FMT"
                 ],
                 "cocirs_ispm": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408010657_FP3.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPMDATA.FMT"
                 ],
                 "cocirs_poi": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408010657_FP3.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POIDATA.FMT"
                 ],
                 "cocirs_rin": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RIN0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RIN0408010657_FP3.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RIN0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/RINDATA/RINDATA.FMT"
                 ],
                 "cocirs_tar": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TAR0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TAR0408010657_FP3.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TAR0408010657_FP3.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/TARDATA/TARDATA.FMT"
                 ],
                 "cocirs_browse_target": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.PNG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3.PNG"
                 ],
                 "cocirs_browse_saturn": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.PNG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3.PNG"
                 ],
                 "cocirs_browse_rings": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.PNG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3.PNG"
                 ],
                 "cocirs_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Tutorial.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Flasar-etal-2004-SSR.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/FOV-Overview.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Cassini-CIRS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/CIRS-Diagram-Interpretation-Guide.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/CIRS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/CIRS-Diagram-Interpretation-Guide.txt"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Cassini-CIRS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/FOV-Overview.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Flasar-etal-2004-SSR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_5xxx/Tutorial.txt"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3_thumb.jpg"
@@ -161,20 +161,20 @@
                     "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010657_FP3_full.jpg"
                 ],
                 "diagram_thumb": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_thumb.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_thumb.jpg"
                 ],
                 "diagram_small": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_small.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_small.jpg"
                 ],
                 "diagram_medium": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_med.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_med.jpg"
                 ],
                 "diagram_full": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_full.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/SATURN/POI0408010657_FP3_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/S_RINGS/RIN0408010657_FP3_full.jpg"
                 ]
             }
         }
