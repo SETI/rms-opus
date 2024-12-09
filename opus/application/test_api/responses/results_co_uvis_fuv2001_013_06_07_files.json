@@ -10,20 +10,20 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_0xxx/COUVIS_0002/CALIB/VERSION_3/D2001_013/FUV2001_013_06_07_CAL_3.LBL"
             ],
             "couvis_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.docx",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_0xxx/COUVIS_0002/DATA/D2001_013/FUV2001_013_06_07_thumb.png"
@@ -51,20 +51,20 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_0xxx/COUVIS_0002/CALIB/VERSION_3/D2001_013/FUV2001_013_06_07_CAL_3.LBL"
                 ],
                 "couvis_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.docx",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Archive-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_0xxx/UVIS-Users-Guide.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_0xxx/COUVIS_0002/COUVIS_0002_supplemental_index.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_0xxx/COUVIS_0002/DATA/D2001_013/FUV2001_013_06_07_thumb.png"

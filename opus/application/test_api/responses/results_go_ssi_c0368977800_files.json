@@ -2,21 +2,21 @@
     "data": {
         "go-ssi-c0368977800": {
             "gossi_raw": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.IMG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RLINEPRX.FMT",
-                "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RTLMTAB.FMT"
+                "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RTLMTAB.FMT",
+                "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.IMG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.LBL"
             ],
             "gossi_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR2.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/I24-Anomaly.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/G28-Anomaly.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR_OCR.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/BadData.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR_OCR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/G28-Anomaly.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/I24-Anomaly.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR2.txt"
             ],
             "gossi_raw_alternate": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R.IMG",
@@ -25,56 +25,56 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_index.lbl",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_supplemental_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_supplemental_index.lbl",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_supplemental_index.tab"
             ],
             "inventory": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.csv",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.lbl",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.csv",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.lbl"
             ],
             "planet_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_jupiter_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_jupiter_summary.lbl",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_jupiter_summary.tab"
             ],
             "ring_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.lbl",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.tab"
             ],
             "sky_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.lbl",
-                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.tab"
             ],
             "browse_thumb": [
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_thumb.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_thumb.jpg"
             ],
             "browse_small": [
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_small.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_small.jpg"
             ],
             "browse_medium": [
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_med.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_med.jpg"
             ],
             "browse_full": [
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_full.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_full.jpg"
             ]
         }
     },
@@ -82,21 +82,21 @@
         "go-ssi-c0368977800": {
             "Current": {
                 "gossi_raw": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.IMG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RLINEPRX.FMT",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RTLMTAB.FMT"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/LABEL/RTLMTAB.FMT",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R.LBL"
                 ],
                 "gossi_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR2.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/I24-Anomaly.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/G28-Anomaly.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR_OCR.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/BadData.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Archive-SIS.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Belton-etal-1992-SSR_OCR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/G28-Anomaly.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/I24-Anomaly.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR-File-Format.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/GO_0xxx/VICAR2.txt"
                 ],
                 "gossi_raw_alternate": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R.IMG",
@@ -105,56 +105,56 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_index.lbl",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_supplemental_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_supplemental_index.lbl",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_supplemental_index.tab"
                 ],
                 "inventory": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.csv",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.lbl",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_inventory.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.csv",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_inventory.lbl"
                 ],
                 "planet_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_jupiter_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_jupiter_summary.lbl",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_jupiter_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_jupiter_summary.tab"
                 ],
                 "ring_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.lbl",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_ring_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_ring_summary.tab"
                 ],
                 "sky_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.lbl",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0017/GO_0017_sky_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/GO_0xxx/GO_0018/GO_0018_sky_summary.tab"
                 ],
                 "browse_thumb": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_thumb.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_thumb.jpg"
                 ],
                 "browse_small": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_small.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_small.jpg"
                 ],
                 "browse_medium": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_med.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_med.jpg"
                 ],
                 "browse_full": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_full.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368977800R_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0018/REDO/C3/JUPITER/C0368977800R_full.jpg"
                 ]
             }
         }

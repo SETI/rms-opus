@@ -6,33 +6,33 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
             ],
             "hst_tiff": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.TIF",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.TIF"
             ],
             "hst_raw": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.JPG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.JPG"
             ],
             "hst_calib": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_CAL.JPG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_CAL.JPG"
             ],
             "hst_ima": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_IMA.JPG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_IMA.JPG"
             ],
             "hst_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/NICMOS-Instrument-Handbook-11.0.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/FITS-Standard-4.0.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/NICMOS-Data-Handbook-8.0.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/FITS-Standard-4.0.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/NICMOS-Instrument-Handbook-11.0.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.tab"
             ],
             "hstfiles_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_thumb.jpg"
@@ -56,33 +56,33 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
                 ],
                 "hst_tiff": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.TIF",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.TIF"
                 ],
                 "hst_raw": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_RAW.JPG"
                 ],
                 "hst_calib": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_CAL.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_CAL.JPG"
                 ],
                 "hst_ima": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_IMA.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_IMA.JPG"
                 ],
                 "hst_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/NICMOS-Instrument-Handbook-11.0.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/FITS-Standard-4.0.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/NICMOS-Data-Handbook-8.0.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/FITS-Standard-4.0.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTNx_xxxx/NICMOS-Instrument-Handbook-11.0.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_index.tab"
                 ],
                 "hstfiles_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTNx_xxxx/HSTN0_7181/HSTN0_7181_hstfiles.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/HSTNx_xxxx/HSTN0_7181/DATA/VISIT_01/N4UC01B0Q_thumb.jpg"
