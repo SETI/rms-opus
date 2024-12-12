@@ -36,6 +36,7 @@ git clone https://github.com/SETI/rms-pdsfile
 pip uninstall -y rms-pdsfile
 pip install -e ./rms-pdsfile
 
+
 echo "import os" > opus_secrets.py
 if [ $? -ne 0 ]; then exit -1; fi
 echo "DB_BRAND = 'MySql'" >> opus_secrets.py
