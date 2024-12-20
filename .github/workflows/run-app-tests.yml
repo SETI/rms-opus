@@ -40,12 +40,10 @@ jobs:
             python-version: "3.11"
           - os: self-hosted-linux
             python-version: "3.12"
-          - os: self-hosted-linux
-            python-version: "3.13"
           - os: self-hosted-windows
-            python-version: "3.13"
+            python-version: "3.12"
           - os: self-hosted-macos
-            python-version: "3.13"
+            python-version: "3.12"
       fail-fast: true
     steps:
       - name: Checkout
@@ -83,7 +81,7 @@ jobs:
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v5
-        if: matrix.os == 'self-hosted-linux' && matrix.python-version == '3.13'
+        if: matrix.os == 'self-hosted-linux' && matrix.python-version == '3.12'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./opus/application/coverage.xml
