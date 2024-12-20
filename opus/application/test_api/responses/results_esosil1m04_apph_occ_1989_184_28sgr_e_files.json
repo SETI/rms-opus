@@ -2,56 +2,56 @@
     "data": {
         "esosil1m04-apph-occ-1989-184-28sgr-e": {
             "ebro_occ_profile": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB"
             ],
             "ebro_occ_geom": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.TAB"
             ],
             "ebro_occ_preview": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PS",
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PDF",
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PS"
             ],
             "ebro_occ_diagram": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PS",
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PDF",
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PS"
             ],
             "ebro_occ_source": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.DAT",
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.OUT",
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.LBL",
-                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.DAT",
+                "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.LBL"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.tab"
             ],
             "browse_thumb": [
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_thumb.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_thumb.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_thumb.jpg"
             ],
             "browse_small": [
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_small.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_small.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_small.jpg"
             ],
             "browse_medium": [
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_med.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_med.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_med.jpg"
             ],
             "browse_full": [
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_full.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_full.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_full.jpg"
             ]
         }
     },
@@ -59,56 +59,56 @@
         "esosil1m04-apph-occ-1989-184-28sgr-e": {
             "Current": {
                 "ebro_occ_profile": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB"
                 ],
                 "ebro_occ_geom": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.TAB"
                 ],
                 "ebro_occ_preview": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PS",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PDF",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PS"
                 ],
                 "ebro_occ_diagram": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PS",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PDF",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PS"
                 ],
                 "ebro_occ_source": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.DAT",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.OUT",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.LBL",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.DAT",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.LBL"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.tab"
                 ],
                 "browse_thumb": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_thumb.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_thumb.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_thumb.jpg"
                 ],
                 "browse_small": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_small.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_small.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_small.jpg"
                 ],
                 "browse_medium": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_med.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_med.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_med.jpg"
                 ],
                 "browse_full": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_full.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_full.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_full.jpg"
                 ]
             }
         }

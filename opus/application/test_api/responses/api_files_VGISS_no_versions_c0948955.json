@@ -18,14 +18,14 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMED.LBL"
             ],
             "vgiss_resloc": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.DAT",
-                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB"
             ],
             "vgiss_geoma": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.DAT",
-                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.TAB"
             ],
             "vgiss_raw_browse": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/BROWSE/C09489XX/C0948955_RAW.JPG",
@@ -44,42 +44,42 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/BROWSE/C09489XX/C0948955_GEOMED.LBL"
             ],
             "vgiss_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/VICAR-File-Format.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/User-Tutorial.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR-OCR.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Saturn-Image-Anomalies.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Jupiter-Image-Anomalies.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/CDROM-Info.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Image-Processing.txt",
-                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/CDROM-Info.txt"
+                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Jupiter-Image-Anomalies.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Saturn-Image-Anomalies.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR-OCR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/User-Tutorial.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/VICAR-File-Format.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.tab"
             ],
             "raw_image_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.tab"
             ],
             "inventory": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.csv",
                 "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.lbl"
             ],
             "planet_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.tab"
             ],
             "moon_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.tab"
             ],
             "ring_geometry": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_thumb.jpg"
@@ -115,14 +115,14 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMED.LBL"
                 ],
                 "vgiss_resloc": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.DAT",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB"
                 ],
                 "vgiss_geoma": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.DAT",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.TAB"
                 ],
                 "vgiss_raw_browse": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/BROWSE/C09489XX/C0948955_RAW.JPG",
@@ -141,42 +141,42 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/BROWSE/C09489XX/C0948955_GEOMED.LBL"
                 ],
                 "vgiss_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/VICAR-File-Format.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/User-Tutorial.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR-OCR.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Saturn-Image-Anomalies.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Jupiter-Image-Anomalies.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/CDROM-Info.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Image-Processing.txt",
-                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/CDROM-Info.txt"
+                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Jupiter-Image-Anomalies.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Saturn-Image-Anomalies.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR-OCR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/Smith-etal-1977-SSR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/User-Tutorial.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/VGISS_5xxx/VICAR-File-Format.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_index.tab"
                 ],
                 "raw_image_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_raw_image_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.tab"
                 ],
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.csv",
                     "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.lbl"
                 ],
                 "planet_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_neptune_summary.tab"
                 ],
                 "moon_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_moon_summary.tab"
                 ],
                 "ring_geometry": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_ring_summary.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_thumb.jpg"

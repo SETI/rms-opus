@@ -6,37 +6,37 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
             ],
             "hst_tiff": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF"
             ],
             "hst_raw": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG"
             ],
             "hst_calib": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG"
             ],
             "hst_1d_spectrum": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG"
             ],
             "hst_2d_spectrum": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG",
-                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG"
             ],
             "hst_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Instrument-Handbook-23.0.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/FITS-Standard-4.0.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Data-Handbook-7.0.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/FITS-Standard-4.0.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Instrument-Handbook-23.0.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.tab"
             ],
             "hstfiles_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_thumb.jpg"
@@ -60,37 +60,37 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
                 ],
                 "hst_tiff": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF"
                 ],
                 "hst_raw": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG"
                 ],
                 "hst_calib": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG"
                 ],
                 "hst_1d_spectrum": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG"
                 ],
                 "hst_2d_spectrum": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG"
                 ],
                 "hst_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Instrument-Handbook-23.0.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/FITS-Standard-4.0.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Data-Handbook-7.0.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/FITS-Standard-4.0.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/HSTOx_xxxx/STIS-Instrument-Handbook-23.0.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_index.tab"
                 ],
                 "hstfiles_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTOx_xxxx/HSTO0_7316/HSTO0_7316_hstfiles.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/HSTOx_xxxx/HSTO0_7316/DATA/VISIT_02/O57H02010_thumb.jpg"
@@ -111,24 +111,24 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
                 ],
                 "hst_tiff": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF"
                 ],
                 "hst_raw": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG"
                 ],
                 "hst_calib": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG"
                 ],
                 "hst_1d_spectrum": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG"
                 ],
                 "hst_2d_spectrum": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.1/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG"
                 ]
             },
             "1.0": {
@@ -137,24 +137,24 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
                 ],
                 "hst_tiff": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.TIF"
                 ],
                 "hst_raw": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_RAW.JPG"
                 ],
                 "hst_calib": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_FLT.JPG"
                 ],
                 "hst_1d_spectrum": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_X1D.JPG"
                 ],
                 "hst_2d_spectrum": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTOx_xxxx_v1.0/HSTO0_7316/DATA/VISIT_02/O57H02010_X2D.JPG"
                 ]
             }
         }

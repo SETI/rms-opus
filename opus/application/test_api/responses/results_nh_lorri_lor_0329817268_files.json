@@ -10,27 +10,27 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci.lbl"
             ],
             "nh_lorri_calib_browse": [
-                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_full.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_full.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_thumb.jpg"
             ],
             "nh_lorri_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Weaver-etal-2008-SSR.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/NH-Boresight-FOVs.png",
-                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Morgan-etal-2005-SPIE.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-responsivity-plot.png",
-                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-True-Exposure-Times.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Cheng-etal-2007-SSR.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/FITS-Standard-4.0.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Cheng-etal-2007-SSR.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-True-Exposure-Times.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-responsivity-plot.png",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Morgan-etal-2005-SPIE.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/NH-Boresight-FOVs.png",
+                "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Weaver-etal-2008-SSR.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.tab"
             ],
             "inventory": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_inventory.csv",
@@ -62,27 +62,27 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci.lbl"
                 ],
                 "nh_lorri_calib_browse": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_full.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_full.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_thumb.jpg"
                 ],
                 "nh_lorri_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Weaver-etal-2008-SSR.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/NH-Boresight-FOVs.png",
-                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Morgan-etal-2005-SPIE.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-responsivity-plot.png",
-                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-True-Exposure-Times.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Cheng-etal-2007-SSR.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/FITS-Standard-4.0.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Cheng-etal-2007-SSR.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-True-Exposure-Times.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/LORRI-responsivity-plot.png",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Morgan-etal-2005-SPIE.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/NH-Boresight-FOVs.png",
+                    "https://opus.pds-rings.seti.org/holdings/documents/NHxxLO_xxxx/Weaver-etal-2008-SSR.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_supplemental_index.tab"
                 ],
                 "inventory": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_inventory.csv",

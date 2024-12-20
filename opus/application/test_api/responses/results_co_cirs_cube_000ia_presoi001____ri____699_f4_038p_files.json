@@ -2,32 +2,32 @@
     "data": {
         "co-cirs-cube-000ia_presoi001____ri____699_f4_038p": {
             "cocirs_cube": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz"
             ],
             "cocirs_extra": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
             ],
             "cocirs_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Volume-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Spectral-Cube-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Flasar-etal-2004-SSR.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/FOV-Overview.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Data-Product-SIS.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Chan-etal-2015.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Cassini-CIRS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Calibration-Equations.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Interference.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Interference.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Calibration-Equations.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Cassini-CIRS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Chan-etal-2015.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/FOV-Overview.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Flasar-etal-2004-SSR.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Spectral-Cube-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Volume-SIS.pdf"
             ],
             "cube_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_thumb.jpg"
@@ -47,32 +47,32 @@
         "co-cirs-cube-000ia_presoi001____ri____699_f4_038p": {
             "Current": {
                 "cocirs_cube": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz"
                 ],
                 "cocirs_extra": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
                 ],
                 "cocirs_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Volume-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Spectral-Cube-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Flasar-etal-2004-SSR.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/FOV-Overview.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Data-Product-SIS.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Chan-etal-2015.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Cassini-CIRS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Calibration-Equations.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Interference.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/CIRS-Interference.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Calibration-Equations.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Cassini-CIRS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Chan-etal-2015.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/FOV-Overview.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Flasar-etal-2004-SSR.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Spectral-Cube-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COCIRS_0xxx/Volume-SIS.pdf"
                 ],
                 "cube_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_thumb.jpg"
@@ -89,8 +89,8 @@
             },
             "3": {
                 "cocirs_cube": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz"
                 ],
                 "cocirs_extra": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG",

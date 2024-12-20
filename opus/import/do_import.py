@@ -1505,9 +1505,16 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
 
         skip_current_product_type = False
 
+        # rows for current product type
+        # Since the opus products output is sorted in alphebatical order, for the opus
+        # type of index files, we will visit label file first before visiting the index
+        # file. In the case like this, we don't want to include the lable file in the row
+        # when the current index product type is skip.
+        current_rows = []
         for sublist in list_of_sublists:
             if (not impglobals.ARGUMENTS.import_dont_use_row_files and
                 skip_current_product_type):
+                current_rows = []
                 break
             for file_num, file in enumerate(sublist):
                 version_number = sublist[0].version_rank
@@ -1522,8 +1529,12 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                 # For an index file, we check to see if this observation is
                 # present. If not, we don't include the index file in the
                 # results.
+                # TODO: for PDS4, find_selected_row_key will raise an OSError complaining
+                # about missing pickle files in _indexshelf-metadata, so for now we will
+                # assume the selection is always in the index file and create a row for
+                # it in db. Will fix this when pickle files in indexshelf is ready.
                 if (not impglobals.ARGUMENTS.import_dont_use_row_files and
-                    file.is_index):
+                    file.is_index and pds_version == 3):
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
                     try:
@@ -1593,10 +1604,15 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                        'pds_version': pds_version,
                        'default_checked': default_checked,
                        }
-                rows.append(row)
+                current_rows.append(row)
                 if size == 0:
                     import_util.log_nonrepeating_warning(
                         f'File has zero size: {opus_id} {logical_path}')
+
+            if skip_current_product_type:
+                current_rows = []
+
+        rows += current_rows
 
     return rows
 

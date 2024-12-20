@@ -2,33 +2,33 @@
     "data": {
         "co-uvis-occ-2005-175-126tau-i": {
             "couvis_occ_01": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB"
             ],
             "couvis_occ_10": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB"
             ],
             "couvis_occ_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.docx",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Cassini-UVIS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume8-Rev246-to-Rev288.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume7-Rev202-to-Rev245.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume6-Rev124-to-Rev194.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume5-Rev092-to-Rev117.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume4-Rev060-to-Rev090.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume3-Rev040-to-Rev058.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume1-Rev00A-to-Rev030.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume2-Rev031-to-Rev039.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume1-Rev00A-to-Rev030.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume3-Rev040-to-Rev058.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume4-Rev060-to-Rev090.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume5-Rev092-to-Rev117.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume6-Rev124-to-Rev194.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume7-Rev202-to-Rev245.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume8-Rev246-to-Rev288.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Cassini-UVIS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab"
             ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_thumb.jpg"
@@ -60,33 +60,33 @@
         "co-uvis-occ-2005-175-126tau-i": {
             "Current": {
                 "couvis_occ_01": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB"
                 ],
                 "couvis_occ_10": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB"
                 ],
                 "couvis_occ_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.docx",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Cassini-UVIS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume8-Rev246-to-Rev288.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume7-Rev202-to-Rev245.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume6-Rev124-to-Rev194.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume5-Rev092-to-Rev117.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume4-Rev060-to-Rev090.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume3-Rev040-to-Rev058.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume1-Rev00A-to-Rev030.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume2-Rev031-to-Rev039.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume1-Rev00A-to-Rev030.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume3-Rev040-to-Rev058.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume4-Rev060-to-Rev090.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume5-Rev092-to-Rev117.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume6-Rev124-to-Rev194.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume7-Rev202-to-Rev245.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Atlas-Volume8-Rev246-to-Rev288.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/Cassini-UVIS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COUVIS_8xxx/UVIS-Users-Guide.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_thumb.jpg"
@@ -115,22 +115,22 @@
             },
             "2.1": {
                 "couvis_occ_01": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB"
                 ],
                 "couvis_occ_10": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB"
                 ]
             },
             "2.0": {
                 "couvis_occ_01": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB"
                 ],
                 "couvis_occ_10": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_175_126TAU_I_TAU10KM.TAB"
                 ]
             }
         }

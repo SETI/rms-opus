@@ -2,84 +2,84 @@
     "data": {
         "co-rss-occ-2008-217-rev079c-s63-i": {
             "corss_occ_best_res": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.TAB"
             ],
             "corss_occ_10km_res": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.TAB"
             ],
             "corss_occ_dlp": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.TAB"
             ],
             "corss_occ_cal": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.TAB"
             ],
             "corss_occ_geo": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.TAB",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.TAB"
             ],
             "corss_occ_doc": [
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.pdf",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.pdf",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.pdf",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary.pdf",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry.pdf",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.LBL",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.LBL",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary.LBL",
-                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry.LBL"
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary.pdf",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.pdf",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.pdf",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.pdf"
             ],
             "corss_occ_documentation": [
-                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf"
             ],
             "rms_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.tab"
             ],
             "supplemental_index": [
-                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.tab",
-                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.lbl"
+                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.tab"
             ],
             "browse_thumb": [
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_thumb.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_thumb.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_thumb.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_thumb.jpg"
             ],
             "browse_small": [
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_small.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_small.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_small.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_small.jpg"
             ],
             "browse_medium": [
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_med.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_med.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_med.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_med.jpg"
             ],
             "browse_full": [
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_full.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_full.jpg",
-                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_full.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_full.jpg"
             ]
         }
     },
@@ -87,84 +87,84 @@
         "co-rss-occ-2008-217-rev079c-s63-i": {
             "Current": {
                 "corss_occ_best_res": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_01KM.TAB"
                 ],
                 "corss_occ_10km_res": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_10KM.TAB"
                 ],
                 "corss_occ_dlp": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_DLP_500M.TAB"
                 ],
                 "corss_occ_cal": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_CAL.TAB"
                 ],
                 "corss_occ_geo": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.TAB",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO.TAB"
                 ],
                 "corss_occ_doc": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.LBL",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.LBL",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary.LBL",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry.LBL"
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table.pdf"
                 ],
                 "corss_occ_documentation": [
-                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf"
                 ],
                 "rms_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.tab"
                 ],
                 "supplemental_index": [
-                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.tab",
-                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.lbl"
+                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.tab"
                 ],
                 "browse_thumb": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_thumb.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_thumb.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_thumb.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_thumb.jpg"
                 ],
                 "browse_small": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_small.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_small.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_small.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_small.jpg"
                 ],
                 "browse_medium": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_med.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_med.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_med.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_med.jpg"
                 ],
                 "browse_full": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_full.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_GEO_full.jpg",
-                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/browse/Rev079_OccTrack_Geometry_full.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/RSS_2008_217_S63_I_TAU_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079CI/Rev079CI_RSS_2008_217_S63_I/Rev079CI_RSS_2008_217_S63_I_Summary_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_DSN_Elevation_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Figure_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/CORSS_8xxx/CORSS_8001/data/Rev079/Rev079_TimeLine_Table_full.jpg"
                 ]
             }
         }
