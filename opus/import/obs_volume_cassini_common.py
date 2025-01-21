@@ -82,7 +82,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
 # each other and often are inconsistent with the official definition. Moreover,
 # the official definition is multi-valued for many dates. This list is
 # single-valued for every observation date but fully consistent with the
-# official definition found in the MISSION.CAT file. 
+# official definition found in the MISSION.CAT file.
 _CASSINI_PHASE_NAME_MAPPING = (
     # Short encounters that interrupt longer ones; these take priority so
     # are listed first
