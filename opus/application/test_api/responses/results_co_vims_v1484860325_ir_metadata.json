@@ -194,7 +194,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "VIMS_00CSA_REGAURORA001_PRIME",
         "CASSINIactivityname": "REGAURORA",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": "SA (Saturn)",
         "CASSINItargetname": "Saturn",
         "CASSINIrevnoint": "00C",

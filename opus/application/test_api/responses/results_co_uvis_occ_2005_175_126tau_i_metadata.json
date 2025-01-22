@@ -144,7 +144,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "UVIS_010ST_UR26TAU001_PRIME",
         "CASSINIactivityname": "UR26TAU",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": "ST (Star)",
         "CASSINItargetname": null,
         "CASSINIrevnoint": "010",

@@ -194,7 +194,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "VIMS_00CSU_SOLARPORT001_PRIME",
         "CASSINIactivityname": "SOLARPORT",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": "SU (Sun)",
         "CASSINItargetname": "Sun",
         "CASSINIrevnoint": "00C",

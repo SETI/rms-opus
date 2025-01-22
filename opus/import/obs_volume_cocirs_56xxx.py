@@ -169,8 +169,7 @@ class ObsVolumeCOCIRS56xxx(ObsVolumeCassiniCommon):
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        mp = self._index_col('MISSION_PHASE_NAME')
-        mp = self._cassini_normalize_mission_phase_name(mp)
+        mp = self._cassini_normalize_mission_phase_name()
         return self._create_mult(mp)
 
 

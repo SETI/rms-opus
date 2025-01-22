@@ -194,7 +194,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "VIMS_00CST_RCASCAL001_PRIME",
         "CASSINIactivityname": "RCASCAL",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": "ST (Star)",
         "CASSINItargetname": "Sky",
         "CASSINIrevnoint": "00C",

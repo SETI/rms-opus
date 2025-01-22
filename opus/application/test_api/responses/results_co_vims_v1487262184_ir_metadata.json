@@ -244,7 +244,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "VIMS_003EN_enceladus003",
         "CASSINIactivityname": null,
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": null,
         "CASSINItargetname": "Enceladus",
         "CASSINIrevnoint": null,

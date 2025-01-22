@@ -194,7 +194,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "CIRS_000PH_FP3DAYMAP001_PRIME",
         "CASSINIactivityname": "FP3DAYMAP",
-        "CASSINImissionphasename": "Tour Pre-Huygens",
+        "CASSINImissionphasename": "Phoebe Encounter",
         "CASSINItargetcode": "PH (Phoebe)",
         "CASSINItargetname": "Phoebe",
         "CASSINIrevnoint": "000",

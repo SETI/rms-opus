@@ -259,22 +259,7 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
         target_info = config_targets.TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]
 
-    def _cassini_normalize_mission_phase_name(self, phase):
-        # These mission phase names are interchangeable, so we standardize on
-        # one version
-        phase = phase.upper().replace('_', ' ')
-        if phase in ('EXTENDED MISSION', 'EQUINOX MISSION'):
-            phase = 'EQUINOX MISSION (XM)'
-        elif phase in ('EXTENDED-EXTENDED MISSION', 'SOLSTICE MISSION'):
-            phase = 'SOLSTICE MISSION (XXM)'
-        if phase == 'NULL':
-            phase = self._cassini_mission_phase_name_from_time()
-        return phase
-
-    def _cassini_mission_phase_name_from_time(self):
-        # This is used for COUVIS and COVIMS because they don't include the
-        # MISSION_PHASE_NAME in the label files. We deduce it from the observation
-        # time based on what we found in COISS.
+    def _cassini_normalize_mission_phase_name(self):
         time1 = self.field_obs_general_time1()
         for phase, start_time, stop_time in _CASSINI_PHASE_NAME_MAPPING:
             start_time_sec = start_time

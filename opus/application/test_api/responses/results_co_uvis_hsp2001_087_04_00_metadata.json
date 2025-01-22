@@ -144,7 +144,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "UNK",
         "CASSINIactivityname": null,
-        "CASSINImissionphasename": "Cruise Science",
+        "CASSINImissionphasename": "Outer Cruise",
         "CASSINItargetcode": null,
         "CASSINItargetname": "Star",
         "CASSINIrevnoint": null,

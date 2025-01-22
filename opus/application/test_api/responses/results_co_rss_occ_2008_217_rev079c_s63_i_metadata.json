@@ -144,7 +144,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "RSS_079RI_OCC002_PRIME",
         "CASSINIactivityname": "OCC",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Equinox Mission (XM)",
         "CASSINItargetcode": "RI (Rings - general)",
         "CASSINItargetname": null,
         "CASSINIrevnoint": "079",

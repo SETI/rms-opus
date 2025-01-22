@@ -265,7 +265,7 @@ class ObsVolumeCOVIMS0xxx(ObsVolumeCassiniCommon):
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self):
-        return self._create_mult(self._cassini_mission_phase_name_from_time())
+        return self._create_mult(self._cassini_normalize_mission_phase_name())
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._index_col('SEQ_ID')
