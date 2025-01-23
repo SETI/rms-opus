@@ -244,7 +244,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "VIMS_005RH_RHEA006",
         "CASSINIactivityname": "RHEA",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": "RH (Rhea)",
         "CASSINItargetname": "Rhea",
         "CASSINIrevnoint": "005",

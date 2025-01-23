@@ -76,32 +76,36 @@ _CASSINI_TARGET_CODE_MAPPING = {
     'UP': 'UP (Upstream of the wake)'
 }
 
-# These date ranges are used to deduce the MISSION_PHASE_NAME for COUVIS and
-# COVIMS because those instruments don't include it in their metadata. These
-# were derived from COISS and adjusted so that there is complete date range
-# coverage. When there was a gap, the earlier phase was extended to the
-# beginning of the later one, for lack of anything better to do.
+# These date ranges are used to deduce the MISSION_PHASE_NAME for all Cassini
+# data, regardless of whether it is specified in their metadata. This is because
+# different instruments specify the mission phases in ways that diverge from
+# each other and often are inconsistent with the official definition. Moreover,
+# the official definition is multi-valued for many dates. This list is
+# single-valued for every observation date but fully consistent with the
+# official definition found in the MISSION.CAT file.
 _CASSINI_PHASE_NAME_MAPPING = (
     # Short encounters that interrupt longer ones; these take priority so
     # are listed first
-    ('Phoebe Encounter',          cached_tai_from_iso('2004-163T04:30:06.353'), cached_tai_from_iso('2004-163T20:52:47.180')),
-    ('Saturn Orbit Insertion',    cached_tai_from_iso('2004-183T03:11:40.288'), cached_tai_from_iso('2004-183T05:15:46.245')),
-    ('Titan A Encounter',         cached_tai_from_iso('2004-300T00:30:21.455'), cached_tai_from_iso('2004-300T21:15:32.979')),
-    ('Titan B Encounter',         cached_tai_from_iso('2004-348T00:18:13.469'), cached_tai_from_iso('2004-348T22:03:45.065')),
+    ('Venus 1 Encounter',         cached_tai_from_iso('1998-116T00:00:00.000'), cached_tai_from_iso('1998-117T00:00:00.000')),
+    ('Venus 2 Encounter',         cached_tai_from_iso('1999-175T00:00:00.000'), cached_tai_from_iso('1999-176T00:00:00.000')),
+    ('Earth Encounter',           cached_tai_from_iso('1999-230T00:00:00.000'), cached_tai_from_iso('1999-231T00:00:00.000')),
+    ('Jupiter Encounter',         cached_tai_from_iso('2000-365T00:00:00.000'), cached_tai_from_iso('2000-366T00:00:00.000')),
+    ('Phoebe Encounter',          cached_tai_from_iso('2004-163T00:00:00.000'), cached_tai_from_iso('2004-164T00:00:00.000')),
+    ('Saturn Orbit Insertion',    cached_tai_from_iso('2004-183T00:00:00.000'), cached_tai_from_iso('2004-184T00:00:00.000')),
+    ('Titan A Encounter',         cached_tai_from_iso('2004-300T00:00:00.000'), cached_tai_from_iso('2004-301T00:00:00.000')),
+    ('Titan B Encounter',         cached_tai_from_iso('2004-348T00:00:00.000'), cached_tai_from_iso('2004-349T00:00:00.000')),
     # Full length encounters that completely cover the mission timeline
-    ('Science Cruise',            cached_tai_from_iso('1997-001T00:00:00.000'), cached_tai_from_iso('2000-262T00:32:38.930')), # '2000-209T02:40:23.416'
-    ('Earth-Jupiter Cruise',      cached_tai_from_iso('2000-262T00:32:38.930'), cached_tai_from_iso('2001-014T23:02:09.804')), # '2001-013T22:47:48.047'
-    ('Jupiter Encounter',         cached_tai_from_iso('2001-014T23:02:09.804'), cached_tai_from_iso('2001-071T12:28:05.413')), # '2001-071T00:58:38.838'
-    ('Cruise Science',            cached_tai_from_iso('2001-071T12:28:05.413'), cached_tai_from_iso('2003-138T02:16:18.383')), # '2003-115T07:45:08.222'
-    ('Space Science',             cached_tai_from_iso('2003-138T02:16:18.383'), cached_tai_from_iso('2004-037T02:07:06.418')), # '2003-359T10:29:18.711'
-    ('Approach Science',          cached_tai_from_iso('2004-037T02:07:06.418'), cached_tai_from_iso('2004-164T02:33:41.000')), # '2004-162T14:47:05.854'
-    ('Tour Pre-Huygens',          cached_tai_from_iso('2004-164T02:33:41.000'), cached_tai_from_iso('2004-359T12:53:08.998')), # '2004-358T13:47:22.548'),
-    ('Huygens Probe Separation',  cached_tai_from_iso('2004-359T12:53:08.998'), cached_tai_from_iso('2004-360T13:30:10.410')), # '2004-359T13:47:22.981'),
-    # The descent actually happened on Jan 14
-    ('Huygens Descent',           cached_tai_from_iso('2004-360T13:30:10.410'), cached_tai_from_iso('2005-015T18:28:29.451')), # '2005-001T14:28:54.449'),
-    ('Tour',                      cached_tai_from_iso('2005-015T18:28:29.451'), cached_tai_from_iso('2008-183T21:04:08.998')), # '2008-183T09:17:06.323'),
-    ('Equinox Mission (XM)',      cached_tai_from_iso('2008-183T21:04:08.998'), cached_tai_from_iso('2010-285T05:22:24.745')), # '2010-283T14:14:20.741'),
-    ('Solstice Mission (XXM)',    cached_tai_from_iso('2010-285T05:22:24.745'), cached_tai_from_iso('2020-001T00:00:00.000'))
+    ('Interplanetary Cruise',     cached_tai_from_iso('1997-001T00:00:00.000'), cached_tai_from_iso('1999-312T00:00:00.000')),
+    ('Outer Cruise',              cached_tai_from_iso('1999-312T00:00:00.000'), cached_tai_from_iso('2002-189T00:00:00.000')),
+    ('Science Cruise',            cached_tai_from_iso('2002-189T00:00:00.000'), cached_tai_from_iso('2004-012T00:00:00.000')),
+    ('Approach Science',          cached_tai_from_iso('2004-012T00:00:00.000'), cached_tai_from_iso('2004-163T00:00:00.000')),
+    ('Tour Pre-Huygens',          cached_tai_from_iso('2004-163T00:00:00.000'), cached_tai_from_iso('2004-359T00:00:00.000')),
+    ('Huygens Probe Separation',  cached_tai_from_iso('2004-359T00:00:00.000'), cached_tai_from_iso('2004-360T00:00:00.000')),
+    ('Huygens Descent',           cached_tai_from_iso('2004-360T00:00:00.000'), cached_tai_from_iso('2005-014T00:00:00.000')),
+    ('Titan C Huygens',           cached_tai_from_iso('2005-014T00:00:00.000'), cached_tai_from_iso('2005-015T00:00:00.000')),
+    ('Tour (Prime Mission)',      cached_tai_from_iso('2005-015T00:00:00.000'), cached_tai_from_iso('2008-183T00:00:00.000')),
+    ('Equinox Mission (XM)',      cached_tai_from_iso('2008-183T00:00:00.000'), cached_tai_from_iso('2010-273T00:00:00.000')),
+    ('Solstice Mission (XXM)',    cached_tai_from_iso('2010-273T00:00:00.000'), cached_tai_from_iso('2020-001T00:00:00.000')),
 )
 
 # These mappings are for the TARGET_DESC field to clean them up
@@ -255,22 +259,7 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
         target_info = config_targets.TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]
 
-    def _cassini_normalize_mission_phase_name(self, phase):
-        # These mission phase names are interchangeable, so we standardize on
-        # one version
-        phase = phase.upper().replace('_', ' ')
-        if phase in ('EXTENDED MISSION', 'EQUINOX MISSION'):
-            phase = 'EQUINOX MISSION (XM)'
-        elif phase in ('EXTENDED-EXTENDED MISSION', 'SOLSTICE MISSION'):
-            phase = 'SOLSTICE MISSION (XXM)'
-        if phase == 'NULL':
-            phase = self._cassini_mission_phase_name_from_time()
-        return phase
-
-    def _cassini_mission_phase_name_from_time(self):
-        # This is used for COUVIS and COVIMS because they don't include the
-        # MISSION_PHASE_NAME in the label files. We deduce it from the observation
-        # time based on what we found in COISS.
+    def _cassini_normalize_mission_phase_name(self):
         time1 = self.field_obs_general_time1()
         for phase, start_time, stop_time in _CASSINI_PHASE_NAME_MAPPING:
             start_time_sec = start_time

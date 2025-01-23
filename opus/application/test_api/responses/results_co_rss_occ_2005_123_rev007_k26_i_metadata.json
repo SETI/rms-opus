@@ -144,7 +144,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "RSS_007RI_OCC003_PRIME",
         "CASSINIactivityname": "OCC",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": "RI (Rings - general)",
         "CASSINItargetname": null,
         "CASSINIrevnoint": "007",

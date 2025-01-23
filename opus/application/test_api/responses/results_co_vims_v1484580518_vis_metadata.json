@@ -244,7 +244,7 @@
     "Cassini Mission Constraints": {
         "CASSINIobsname": "VIMS_00CMI_MIMAS008_PRIME",
         "CASSINIactivityname": "MIMAS",
-        "CASSINImissionphasename": "Tour",
+        "CASSINImissionphasename": "Tour (Prime Mission)",
         "CASSINItargetcode": "MI (Mimas)",
         "CASSINItargetname": "Mimas",
         "CASSINIrevnoint": "00C",
