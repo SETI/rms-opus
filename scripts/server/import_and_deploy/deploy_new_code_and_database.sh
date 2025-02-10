@@ -31,7 +31,7 @@ export OPUS_SRC_DIR=${OPUS_DIR}/src
 export OPUS_DIR_NAME=rms-opus_${OPUS_DB_NAME}
 
 mkdir -p ${OPUS_LOG_DIR}/opus_logs
-if [ -f ${OPUS_LOG_DIR}/opus_logs/opus_log.txt]; then
+if [ -f ${OPUS_LOG_DIR}/opus_logs/opus_log.txt ]; then
     sudo chmod ug+w ${OPUS_LOG_DIR}/opus_logs/opus_log.txt
 fi
 mkdir -p ${OPUS_SRC_DIR}
