@@ -213,7 +213,7 @@ class ObsBase:
     def _supp_index_label_col(self, col, idx=None):
         return import_util.safe_column(self._metadata['supp_index_label'], col, idx=idx)
 
-    def _ring_geo_index_col(self, col, col2=None, idx=None):
+    def _ring_geo_index_col(self, col, col2=None, idx=None, log_missing=True):
         # Look up col; if missing try col2 instead. This supports both old and
         # new ring geometry metadata files, where the old ones have a single
         # value for gridless columns (e.g. ring_center_distance) while the
@@ -224,12 +224,13 @@ class ObsBase:
             return None
         if (col not in self._metadata['ring_geo_row'] and
             (col2 is None or col2 not in self._metadata['ring_geo_row'])):
-            if col2 is None:
-                self._log_nonrepeating_error(
-                    f'Column "{col}" not found in ring_geo')
-            else:
-                self._log_nonrepeating_error(
-                    f'Columns "{col}" or "{col2}" not found in ring_geo')
+            if log_missing:
+                if col2 is None:
+                    self._log_nonrepeating_error(
+                        f'Column "{col}" not found in ring_geo')
+                else:
+                    self._log_nonrepeating_error(
+                        f'Columns "{col}" or "{col2}" not found in ring_geo')
             return None
         ret = import_util.safe_column(self._metadata['ring_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
