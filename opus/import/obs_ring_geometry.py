@@ -86,7 +86,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MINIMUM_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_j2000_longitude1() == 0 and
@@ -98,7 +98,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MAXIMUM_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_j2000_longitude1() == 0 and
@@ -110,7 +110,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MINIMUM_SUB_SOLAR_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_sub_solar_ring_j2000_long1() == 0 and
@@ -123,7 +123,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MAXIMUM_SUB_SOLAR_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_sub_solar_ring_j2000_long1() == 0 and
@@ -136,7 +136,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MINIMUM_SUB_OBSERVER_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_sub_observer_ring_j2000_long1() == 0 and
@@ -149,7 +149,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MAXIMUM_SUB_OBSERVER_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_sub_observer_ring_j2000_long1() == 0 and
@@ -352,7 +352,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MINIMUM_EDGE_ON_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_edge_on_j2000_longitude1() == 0 and
@@ -365,7 +365,7 @@ class ObsRingGeometry(ObsBase):
         # New ring_geo files have this column, old files have to be be computed from
         # J2000
         long = self._ring_geo_index_col('MAXIMUM_EDGE_ON_RING_LONGITUDE_WRT_NODE',
-                                        log_missing=False)
+                                        missing_ok=True)
         if long is not None:
             return long
         if (self.field_obs_ring_geometry_edge_on_j2000_longitude1() == 0 and
