@@ -280,24 +280,24 @@ class ObsSurfaceGeometryTarget(ObsBase):
         return self._surface_geo_index_col('MAXIMUM_RADIUS_IN_PIXELS', missing_ok=True)
 
     def field_obs_surface_geometry_target_center_x_coordinate1(self):
-        return self._ring_geo_index_col('MINIMUM_CENTER_X_COORDINATE', missing_ok=True)
+        return self._surface_geo_index_col('MINIMUM_CENTER_X_COORDINATE', missing_ok=True)
 
     def field_obs_surface_geometry_target_center_x_coordinate2(self):
-        return self._ring_geo_index_col('MAXIMUM_CENTER_X_COORDINATE', missing_ok=True)
+        return self._surface_geo_index_col('MAXIMUM_CENTER_X_COORDINATE', missing_ok=True)
 
     def field_obs_surface_geometry_target_center_y_coordinate1(self):
-        return self._ring_geo_index_col('MINIMUM_CENTER_Y_COORDINATE', missing_ok=True)
+        return self._surface_geo_index_col('MINIMUM_CENTER_Y_COORDINATE', missing_ok=True)
 
     def field_obs_surface_geometry_target_center_y_coordinate2(self):
-        return self._ring_geo_index_col('MAXIMUM_CENTER_Y_COORDINATE', missing_ok=True)
+        return self._surface_geo_index_col('MAXIMUM_CENTER_Y_COORDINATE', missing_ok=True)
 
     # Timing
 
     def field_obs_surface_geometry_target_surface_intercept_time1(self):
-        return self._ring_geo_index_col('MINIMUM_SURFACE_INTERCEPT_TIME', missing_ok=True)
+        return self._surface_geo_index_col('MINIMUM_SURFACE_INTERCEPT_TIME', missing_ok=True)
 
     def field_obs_surface_geometry_target_surface_intercept_time2(self):
-        return self._ring_geo_index_col('MAXIMUM_SURFACE_INTERCEPT_TIME', missing_ok=True)
+        return self._surface_geo_index_col('MAXIMUM_SURFACE_INTERCEPT_TIME', missing_ok=True)
 
 
     ########################
@@ -320,7 +320,11 @@ class ObsSurfaceGeometryTarget(ObsBase):
                                 'sub_observer_iau_west_longitude',
                                 'center_resolution',
                                 'center_distance',
-                                'center_phase_angle'):
+                                'center_phase_angle',
+                                'north_pole_position_angle',
+                                'radius_pixels',
+                                'center_x_coordinate',
+                                'center_y_coordinate'):
             val1 = row[gridless_column+'1']
             val2 = row[gridless_column+'2']
             if (val1 != val2 and
