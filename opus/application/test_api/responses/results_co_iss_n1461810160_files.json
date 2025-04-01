@@ -31,6 +31,7 @@
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Owen-2003-ISS-Distortion-Model.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
             ],
             "rms_index": [
@@ -96,6 +97,7 @@
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Owen-2003-ISS-Distortion-Model.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
                 ],
                 "rms_index": [
