@@ -21,6 +21,7 @@
                 "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Archive-SIS.txt",
                 "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Cassini-VIMS-Final-Report.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/VIMS-IR-Pixel-Timing.pdf",
                 "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/VIMS-Preview-Interpretation-Guide.pdf"
             ],
             "rms_index": [
@@ -84,6 +85,7 @@
                     "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Archive-SIS.txt",
                     "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Cassini-VIMS-Final-Report.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/VIMS-IR-Pixel-Timing.pdf",
                     "https://opus.pds-rings.seti.org/holdings/documents/COVIMS_0xxx/VIMS-Preview-Interpretation-Guide.pdf"
                 ],
                 "rms_index": [

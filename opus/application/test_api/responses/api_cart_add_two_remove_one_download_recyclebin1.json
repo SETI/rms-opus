@@ -65,9 +65,9 @@
                     "tooltip": "RMS-curated document collection for Cassini ISS observations.",
                     "product_type": "Documentation",
                     "product_count": 1,
-                    "download_count": 11,
-                    "download_size": 23558547,
-                    "download_size_pretty": "22M",
+                    "download_count": 12,
+                    "download_size": 29348213,
+                    "download_size_pretty": "27M",
                     "default_checked": 0,
                     "product_type_with_version": "coiss_documentation@Current"
                 }

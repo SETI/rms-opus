@@ -385,8 +385,7 @@ impglobals.LOGGER.add_handler(handler)
 impglobals.PYTHON_WARNING_LIST = []
 
 def _new_warning_handler(message, category, filename, lineno, file, line):
-    global PYTHON_WARNING_LIST
-    PYTHON_WARNING_LIST.append(str(message))
+    impglobals.PYTHON_WARNING_LIST.append(str(message))
 
 warnings.showwarning = _new_warning_handler
 
