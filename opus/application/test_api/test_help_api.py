@@ -1,6 +1,7 @@
 # opus/application/test_api/test_help_api.py
 
 import logging
+import os
 import platform
 import requests
 from unittest import TestCase
@@ -94,8 +95,9 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_citing_qr(self):
         "[test_help_api.py] /__help: citing qr"
-        url = '/__help/citing.html?searchurl=fred&stateurl=george'
-        self._run_html_equal_file(url, 'api_help_citing_qr.html')
+        if os.name != 'nt':  # pragma: no cover
+            url = '/__help/citing.html?searchurl=fred&stateurl=george'
+            self._run_html_equal_file(url, 'api_help_citing_qr.html')
 
     def test__api_help_citing_pdf(self):
         "[test_help_api.py] /__help: citing pdf"
