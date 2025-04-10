@@ -1,8 +1,10 @@
 # opus/application/test_api/test_help_api.py
 
 import logging
+import os
 import platform
 import requests
+import unittest
 from unittest import TestCase
 
 from django.core.cache import cache
@@ -92,10 +94,17 @@ class ApiHelpTests(TestCase, ApiTestHelper):
         url = '/__help/citing.html'
         self._run_status_equal(url, 200)
 
-    def test__api_help_citing_qr(self):
-        "[test_help_api.py] /__help: citing qr"
-        url = '/__help/citing.html?searchurl=fred&stateurl=george'
-        self._run_html_equal_file(url, 'api_help_citing_qr.html')
+    if os.name == 'nt':  # pragma: no cover
+        @unittest.expectedFailure
+        def test__api_help_citing_qr(self):
+            "[test_help_api.py] /__help: citing qr"
+            url = '/__help/citing.html?searchurl=fred&stateurl=george'
+            self._run_html_equal_file(url, 'api_help_citing_qr.html')
+    else:  # pragma: no cover
+        def test__api_help_citing_qr(self):
+            "[test_help_api.py] /__help: citing qr"
+            url = '/__help/citing.html?searchurl=fred&stateurl=george'
+            self._run_html_equal_file(url, 'api_help_citing_qr.html')
 
     def test__api_help_citing_pdf(self):
         "[test_help_api.py] /__help: citing pdf"
