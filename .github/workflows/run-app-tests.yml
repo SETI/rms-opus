@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
   push:
-    branches: [ main ]
+    branches: [ test-fy ]
   schedule:
     - cron: "00 11 * * *"  # 3am PST, 4am PDT
 
