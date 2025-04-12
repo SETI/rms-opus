@@ -94,17 +94,10 @@ class ApiHelpTests(TestCase, ApiTestHelper):
         url = '/__help/citing.html'
         self._run_status_equal(url, 200)
 
-    if os.name == 'nt':  # pragma: no cover
-        @unittest.expectedFailure
-        def test__api_help_citing_qr(self):
-            "[test_help_api.py] /__help: citing qr"
-            url = '/__help/citing.html?searchurl=fred&stateurl=george'
-            self._run_html_equal_file(url, 'api_help_citing_qr.html')
-    else:  # pragma: no cover
-        def test__api_help_citing_qr(self):
-            "[test_help_api.py] /__help: citing qr"
-            url = '/__help/citing.html?searchurl=fred&stateurl=george'
-            self._run_html_equal_file(url, 'api_help_citing_qr.html')
+    def test__api_help_citing_qr(self):
+        "[test_help_api.py] /__help: citing qr"
+        url = '/__help/citing.html?searchurl=fred&stateurl=george'
+        self._run_html_equal_file(url, 'api_help_citing_qr.html', embedded_dynamic_image=True)
 
     def test__api_help_citing_pdf(self):
         "[test_help_api.py] /__help: citing pdf"

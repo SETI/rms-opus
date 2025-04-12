@@ -1,4 +1,5 @@
 # opus/application/test_api/api_test_helper.py
+import base64
 import difflib
 from io import BytesIO
 import json
@@ -6,7 +7,9 @@ import os
 import re
 import tarfile
 import zipfile
+from PIL import Image
 
+import numpy as np
 import settings
 
 _RESPONSES_FILE_ROOT = 'test_api/responses/'
@@ -124,7 +127,7 @@ class ApiTestHelper:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
 
-    def _run_html_equal_file(self, url, exp_file):
+    def _run_html_equal_file(self, url, exp_file, embedded_dynamic_image=False):
         print(url)
         response = self._get_response(url)
         self.assertEqual(200, response.status_code)
@@ -137,6 +140,12 @@ class ApiTestHelper:
             expected = fp.read()
         expected = self._clean_string(expected)
         resp = self._clean_string(str(response.content))
+        if embedded_dynamic_image:
+            # extract the dynamic images and replace with generic tests.
+            expected, expected_images = self._extract_images(expected)
+            resp, resp_images = self._extract_images(resp)
+        else:
+            expected_images = resp_images = []
         print('Got:')
         print(resp)
         print('Expected:')
@@ -144,6 +153,34 @@ class ApiTestHelper:
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
+        # There should be the same number of images, and they should decode identically.
+        self.assertEqual(len(expected), len(resp))
+        for image1, image2 in zip(expected_images, resp_images):
+            self._check_same_image(image1, image2)
+
+    def _extract_images(self, data):
+        """Replaces the embedded images with XXX. Returns the modified data, and
+        also the bytes of the image"""
+        images = []
+        def extract_image(match):
+            images.append(base64.b64decode(match.group(2).encode()))
+            return f'<img class="{match.group(1)}" src="XXX" {match.group(3)}>'
+
+        result = re.sub('<img class="([\w-]*)" src="data:image/png;charset=utf-8;base64,([^"]*)" ([^>]*)>',
+                         extract_image, data)
+        return result, images
+
+    def _check_same_image(self, image1, image2):
+        """Verifies that two byte strings represent the same image."""
+        if image1 == image2:
+            # Short cut if both byte strings are the same.
+            return
+        image1 = Image.open(BytesIO(image1)).convert('RGB')
+        image2 = Image.open(BytesIO(image2)).convert('RGB')
+        # Images must have the same size, and the same RGB bytes.
+        self.assertEqual(image1.size, image2.size)
+        array1, array2 = np.asarray(image1), np.asarray(image2)
+        self.assertTrue(np.array_equal(array1, array2))
 
     def _run_html_startswith(self, url, expected):
         print(url)
