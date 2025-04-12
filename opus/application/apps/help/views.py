@@ -251,8 +251,6 @@ def api_citing_opus(request, fmt):
     return ret
 
 
-
-
 @never_cache
 def api_api_guide(request, fmt):
     """Renders the API guide.
