@@ -217,42 +217,25 @@ def api_citing_opus(request, fmt):
     opus_search_url = request.GET.get('searchurl', None)
     opus_state_url = request.GET.get('stateurl', None)
 
-    qr = qrcode.QRCode(
-        box_size=5,
-        border=4,
-    )
-    qr.add_data(settings.PUBLIC_OPUS_URL)
-    qr.make(fit=True)
-    basic_opus_qr = qr.make_image(fill_color='black', back_color='white')
-    buffered = BytesIO()
-    basic_opus_qr.save(buffered, format='PNG')
-    basic_opus_qr_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+    def url_to_png_string(url):
+        qr = qrcode.QRCode(box_size=5, border=4)
+        qr.add_data(url)
+        qr.make(fit=True)
+        url_qr = qr.make_image(fill_color='black', back_color='white')
+        buffered = BytesIO()
+        url_qr.save(buffered, format='PNG')
+        url_qr_string = base64.b64encode(buffered.getvalue()).decode('ascii', 'strict')
+        return url_qr_string
+
+    basic_opus_qr_str = url_to_png_string(settings.PUBLIC_OPUS_URL)
 
     opus_search_qr_str = None
     if opus_search_url is not None:
-        qr = qrcode.QRCode(
-            box_size=5,
-            border=4,
-        )
-        qr.add_data(opus_search_url)
-        qr.make(fit=True)
-        opus_search_qr = qr.make_image(fill_color='black', back_color='white')
-        buffered = BytesIO()
-        opus_search_qr.save(buffered, format='PNG')
-        opus_search_qr_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+        opus_search_qr_str = url_to_png_string(opus_search_url)
 
     opus_state_qr_str = None
     if opus_state_url is not None:
-        qr = qrcode.QRCode(
-            box_size=5,
-            border=4,
-        )
-        qr.add_data(opus_state_url)
-        qr.make(fit=True)
-        opus_state_qr = qr.make_image(fill_color='black', back_color='white')
-        buffered = BytesIO()
-        opus_state_qr.save(buffered, format='PNG')
-        opus_state_qr_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+        opus_state_qr_str = url_to_png_string(opus_state_url)
 
     context = {'basic_opus_url': settings.PUBLIC_OPUS_URL,
                'basic_opus_qr': basic_opus_qr_str,
@@ -266,6 +249,9 @@ def api_citing_opus(request, fmt):
 
     exit_api_call(api_code, ret)
     return ret
+
+
+
 
 @never_cache
 def api_api_guide(request, fmt):
