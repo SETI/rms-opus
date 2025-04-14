@@ -142,8 +142,8 @@ class ApiTestHelper:
         resp = self._clean_string(str(response.content))
         if embedded_dynamic_image:
             # extract the dynamic images and replace with generic tests.
-            expected, expected_images = self._extract_images(expected)
-            resp, resp_images = self._extract_images(resp)
+            expected, expected_images = self.__extract_images(expected)
+            resp, resp_images = self.__extract_images(resp)
         else:
             expected_images = resp_images = []
         print('Got:')
@@ -156,31 +156,7 @@ class ApiTestHelper:
         # There should be the same number of images, and they should decode identically.
         self.assertEqual(len(expected), len(resp))
         for image1, image2 in zip(expected_images, resp_images):
-            self._check_same_image(image1, image2)
-
-    def _extract_images(self, data):
-        """Replaces the embedded images with XXX. Returns the modified data, and
-        also the bytes of the image"""
-        images = []
-        def extract_image(match):
-            images.append(base64.b64decode(match.group(2).encode()))
-            return f'<img class="{match.group(1)}" src="XXX" {match.group(3)}>'
-
-        result = re.sub('<img class="([\w-]*)" src="data:image/png;charset=utf-8;base64,([^"]*)" ([^>]*)>',
-                         extract_image, data)
-        return result, images
-
-    def _check_same_image(self, image1, image2):
-        """Verifies that two byte strings represent the same image."""
-        if image1 == image2:
-            # Short cut if both byte strings are the same.
-            return
-        image1 = Image.open(BytesIO(image1)).convert('RGB')
-        image2 = Image.open(BytesIO(image2)).convert('RGB')
-        # Images must have the same size, and the same RGB bytes.
-        self.assertEqual(image1.size, image2.size)
-        array1, array2 = np.asarray(image1), np.asarray(image2)
-        self.assertTrue(np.array_equal(array1, array2))
+            self.__assert_images_identical(image1, image2)
 
     def _run_html_startswith(self, url, expected):
         print(url)
@@ -344,3 +320,34 @@ class ApiTestHelper:
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertListEqual(resp, expected)
+
+    def __extract_images(self, data):
+        """ Replaces the embedded images with in the data XXX.
+          Returns the modified data, and a tuple of the bytes of the image(s)"""
+        images = []
+
+        def pull_out_image(match):
+            images.append(base64.b64decode(match.group(2).encode()))
+            # Return substitute value
+            return f'<img class="{match.group(1)}" src="XXX" {match.group(3)}>'
+
+        result = re.sub(
+            '<img class="([\w-]*)" src="data:image/png;charset=utf-8;base64,([^"]*)" ([^>]*)>',
+            pull_out_image, data)
+        return result, images
+
+    def __assert_images_identical(self, image1, image2):
+        """Verifies that two byte strings represent the same image."""
+        if image1 == image2:
+            # Shortcut. If both byte strings are the same, they must be identical images.
+            return
+        image1 = Image.open(BytesIO(image1)).convert('RGB')
+        image2 = Image.open(BytesIO(image2)).convert('RGB')
+        # Images must have the same size, and the same RGB bytes.
+        self.assertEqual(image1.size, image2.size)
+        array1, array2 = np.asarray(image1), np.asarray(image2)
+        self.assertTrue(np.array_equal(array1, array2))
+
+
+
+
