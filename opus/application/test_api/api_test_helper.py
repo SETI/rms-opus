@@ -7,9 +7,8 @@ import os
 import re
 import tarfile
 import zipfile
-from PIL import Image
+from PIL import Image, ImageChops
 
-import numpy as np
 import settings
 
 _RESPONSES_FILE_ROOT = 'test_api/responses/'
@@ -343,11 +342,9 @@ class ApiTestHelper:
             return
         image1 = Image.open(BytesIO(image1)).convert('RGB')
         image2 = Image.open(BytesIO(image2)).convert('RGB')
-        # Images must have the same size, and the same RGB bytes.
-        self.assertEqual(image1.size, image2.size)
-        array1, array2 = np.asarray(image1), np.asarray(image2)
-        self.assertTrue(np.array_equal(array1, array2))
+        # Must be the same size
+        self.assertEqual(image1.size, image2.size, "Image size mismatch")
 
-
-
-
+        # getbbox returns the bounds of the non-zero elements. None if all are zero.
+        difference = ImageChops.difference(image1, image2)
+        self.assertIsNone(difference.getbbox(), "Images differ")
