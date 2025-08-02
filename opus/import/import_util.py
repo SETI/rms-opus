@@ -31,6 +31,31 @@ import instruments
 # GENERAL UTILITIES
 ################################################################################
 
+# This is necessary because NHK2LO needs to come after NHKELO. See issue #1392.
+# We go ahead and arrange the other volumes in chronological order as well.
+# Also this allows us to only import the 1xxx volumes. The 2xxx volumes are
+# calibrated data that show up as a download product and are not really separate
+# volumes.
+_NHXXLO_BUNDLES = [
+    'NHLALO_1001',
+    'NHJULO_1001',
+    'NHPCLO_1001',
+    'NHPELO_1001',
+    'NHKCLO_1001',
+    'NHKELO_1001',
+    'NHK2LO_1001',
+]
+
+# Might as well do the same for NHxxMV.
+_NHXXMV_BUNDLES = [
+    'NHLAMV_1001',
+    'NHJUMV_1001',
+    'NHPCMV_1001',
+    'NHPEMV_1001',
+    'NHKCMV_1001',
+    'NHKEMV_1001',
+]
+
 def yield_import_bundle_ids(arguments):
     bundle_descs = []
     exclude_list = []
@@ -59,8 +84,8 @@ def yield_import_bundle_ids(arguments):
                     bundle_descs.append('HSTNx_xxxx')
                     bundle_descs.append('HSTOx_xxxx')
                     bundle_descs.append('HSTUx_xxxx')
-                    bundle_descs.append('NHxxLO_xxxx')
-                    bundle_descs.append('NHxxMV_xxxx')
+                    bundle_descs.extend(_NHXXLO_BUNDLES)
+                    bundle_descs.extend(_NHXXMV_BUNDLES)
                     bundle_descs.append('EBROCC_xxxx')
                     bundle_descs.append('CORSS_8xxx')
                     bundle_descs.append('COUVIS_8xxx')
@@ -122,12 +147,12 @@ def yield_import_bundle_ids(arguments):
                     bundle_descs.append('HSTOx_xxxx')
                     bundle_descs.append('HSTUx_xxxx')
                 elif desc.upper() == 'NH' or desc.upper() == 'NEWHORIZONS':
-                    bundle_descs.append('NHxxLO_xxxx')
-                    bundle_descs.append('NHxxMV_xxxx')
+                    bundle_descs.extend(_NHXXLO_BUNDLES)
+                    bundle_descs.extend(_NHXXMV_BUNDLES)
                 elif desc.upper() == 'NHLORRI':
-                    bundle_descs.append('NHxxLO_xxxx')
+                    bundle_descs.extend(_NHXXLO_BUNDLES)
                 elif desc.upper() == 'NHMVIC':
-                    bundle_descs.append('NHxxMV_xxxx')
+                    bundle_descs.extend(_NHXXMV_BUNDLES)
                 elif desc.upper() == 'EBROCC':
                     bundle_descs.append('EBROCC_xxxx')
                 else:

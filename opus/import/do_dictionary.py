@@ -48,13 +48,15 @@ def create_import_definitions_table():
         logger.log('error', f'Failed to read {pds_file}: {e.strerror}')
         bad_db = True
     else:
-        for item in range(len(label)):
-            term = str(label[item]['NAME']).rstrip('\r\n')
+        for item_name in label.keys():
+            if item_name == 'objects' or label[item_name] is None:
+                continue
+            term = str(label[item_name]['NAME']).rstrip('\r\n')
             try:
-                definition = ' '.join(str(label[item]['DESCRIPTION']).split())
+                definition = ' '.join(str(label[item_name]['DESCRIPTION']).split())
             except KeyError:
                 logger.log('warning',
-                           f'No description for item {item}: "{term}"')
+                           f'No description for item {item_name}: "{term}"')
                 continue
             new_row = {
                 'term': term,

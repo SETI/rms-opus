@@ -27,11 +27,11 @@
         "note": null
     },
     "Image Constraints": {
-        "duration": "0.72",
-        "greaterpixelsize": "800",
-        "lesserpixelsize": "800",
-        "levels": "256",
-        "imagetype": "Frame"
+        "duration": null,
+        "greaterpixelsize": null,
+        "lesserpixelsize": null,
+        "levels": null,
+        "imagetype": null
     },
     "Wavelength Constraints": {
         "wavelength1": "0.28",
@@ -148,16 +148,16 @@
         "VOYAGERert": null
     },
     "Voyager ISS Constraints": {
-        "VGISScamera": "Narrow Angle",
+        "VGISScamera": null,
         "VGISSfilter": "Clear",
         "VGISSfilternumber": "0",
-        "VGISSshuttermode": "NAONLY",
-        "VGISSeditmode": "1:1",
-        "VGISSgainmode": "Low",
-        "VGISSscanmode": "1:1",
+        "VGISSshuttermode": null,
+        "VGISSeditmode": null,
+        "VGISSgainmode": null,
+        "VGISSscanmode": null,
         "VGISSimageid": "N/A",
-        "VGISSusablelines": "800",
-        "VGISSusablesamples": "800",
-        "duration": "0.72"
+        "VGISSusablelines": null,
+        "VGISSusablesamples": null,
+        "duration": null
     }
 }

@@ -34,26 +34,6 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
         return self._create_mult('REF')
 
 
-    ##################################
-    ### OVERRIDE FROM ObsTypeImage ###
-    ##################################
-
-    def field_obs_type_image_image_type_id(self):
-        return self._create_mult('FRAM')
-
-    def field_obs_type_image_duration(self):
-        return 0.72
-
-    def field_obs_type_image_levels(self):
-        return 256
-
-    def field_obs_type_image_greater_pixel_size(self):
-        return 800
-
-    def field_obs_type_image_lesser_pixel_size(self):
-        return 800
-
-
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
@@ -171,16 +151,16 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
         return 'N/A'
 
     def field_obs_instrument_vgiss_scan_mode(self):
-        return self._create_mult('1:1')
+        return self._create_mult(None)
 
     def field_obs_instrument_vgiss_shutter_mode(self):
-        return self._create_mult('NAONLY')
+        return self._create_mult(None)
 
     def field_obs_instrument_vgiss_gain_mode(self):
-        return self._create_mult('LOW')
+        return self._create_mult(None)
 
     def field_obs_instrument_vgiss_edit_mode(self):
-        return self._create_mult('1:1')
+        return self._create_mult(None)
 
     def field_obs_instrument_vgiss_filter_name(self):
         return self._create_mult('CLEAR')
@@ -190,10 +170,10 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
 
     def field_obs_instrument_vgiss_camera(self):
         # Narrow angle camera
-        return self._create_mult('N')
+        return self._create_mult(None)
 
     def field_obs_instrument_vgiss_usable_lines(self):
-        return 800
+        return None
 
     def field_obs_instrument_vgiss_usable_samples(self):
-        return 800
+        return None
