@@ -5,7 +5,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = KM
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
      The a_axis_radius element provides the value of the semimajor axis of
      the ellipsoid that defines the approximate shape of a target body.  'A'
      is usually in the equitorial plane."
@@ -18,7 +18,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
        The Abstract_Desc contains an abstract for the product or
        DATA_SET_INFORMATION object in which it appears. It provides
        a string that may be used to provide an abstract for the
@@ -31,7 +31,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = TEXT
   DESCRIPTION = "
-      
+
      The abstract_text element provides a free-form,
      unlimited-length character string that gives a brief
      summary of a labeled document, differing from DESCRIPTION
@@ -46,10 +46,10 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
      The ACCUMULATION_COUNT element identifies the number of measurement
      (accumulation) intervals contributing to a final value.
-      
+
      Note: For Mars Pathfinder, this was the number of measurement intervals
      contributing to the Alpha Proton X-ray Spectrometer data."
 END_OBJECT = ELEMENT_DEFINITION
@@ -60,7 +60,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = TEXT
   DESCRIPTION = "
-      
+
      The address_text data element provides an unlimited-length,
      formatted mailing address for an individual or institution."
 END_OBJECT = ELEMENT_DEFINITION
@@ -71,7 +71,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The AIRMASS element defines the astronomical ratio 'airmass', which is
      the number of times the quantity of air seen along the line of sight is
      greater than the quantity of air in the zenith direction. That is, it
@@ -90,7 +90,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = TEXT
   DESCRIPTION = "
-      
+
      The algorithm_desc element describes the data
      processing function performed by an algorithm and the data
      types to which the algorithm is applicable."
@@ -103,7 +103,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = NONE
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
      The algorithm_name element provides (where applicable) the
      formal name which identifies an algorithm.
      Example value:  RUNGE-KUTTA."
@@ -116,7 +116,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = NONE
   MAXIMUM_LENGTH = 4
   DESCRIPTION = "
-      
+
      The algorithm_version_id element identifies
      (where applicable) the version of an algorithm."
 END_OBJECT = ELEMENT_DEFINITION
@@ -128,7 +128,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
      The alias_name element provides an alternative term or
      identifier for a data element or object.
      Note:  In the PDS, values for alias_name are accepted as
@@ -142,7 +142,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = KM
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_along_track_footprint_size element provides the
      value of along-track dimension of the Venus surface area
      whose mean radius, RMS slope, and reflectivity are reported
@@ -158,7 +158,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_coarse_resolution element provides the value of
      the altimeter coarse time resolution factor taken from the
      radar burst header in which the raw_rad_antenna_power was
@@ -192,7 +192,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The ALT_FLAG_GROUP element identifies the following flag
      fields.
      AR_FIT=0x0001
@@ -257,7 +257,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = DEG
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_footprint_latitude (VBF85) element provides the
      value of the crust-fixed latitude of the center of the
      altimeter footprint, in the range of -90 (South Pole) to 90
@@ -270,7 +270,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = DEG
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_footprint_longitude (VBF85) element provides the
      value of the crust-fixed longitude of the center of the
      altimeter footprint, in the range of 0 - 360 easterly
@@ -284,7 +284,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The footprints element provides the value of the number of
      Standard Format Data Units  in a specific orbit's altimetry
      data file."
@@ -296,7 +296,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_gain_factor elements provide the values of the
      altimeter gain factor taken from the radar burst header.
      alt_gain_factor[0] pertains to the measurement of
@@ -310,7 +310,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_partials_group of the alt_footprint_longitude,
      alt_footprint_latitude, and the derived_planetary_radius
      with respect to the alt_spacecraft_position_vector and
@@ -326,7 +326,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_skip_factor elements provide the values of the
      altimeter skip factor taken from the radar burst header.
      alt_skip_factor[0] pertains to the measurement of
@@ -340,7 +340,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = KM
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_spacecraft_position_vector element provides the
      value of the spacecraft position at
      altimetry_footprint_tdb_time, relative to the Venus center
@@ -354,7 +354,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = 'KM/S'
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The alt_spacecraft_velocity_vector element provides the
      spacecraft velocity at altimetry_footprint_tdb_time,
      relative to the Venus center of mass, expressed in inertial
@@ -368,7 +368,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
       The alternate_telephone_number data element provides an
      alternate telephone number for an individual or node.
      (Includes the area code.)"
@@ -380,7 +380,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
       The altimetry_footprint_tdb_time element provides the
      value of the ephemeris time at which the spacecraft passed
      directly over the center of the footprint. As each
@@ -397,7 +397,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = -273.13
   MAXIMUM_LENGTH = NULL
   DESCRIPTION = "
-      
+
      The AMBIENT_TEMPERATURE element provides a measurement of the temperature
      of the ambient environment around an instrument.  Measured in either Kelvin
      or degrees celsius.  Note: For MPF, this was the temperature of the APXS
@@ -411,10 +411,10 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = RAD
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
      The ANGULAR_DISTANCE element provides the value of an angle, in
      radians, subtended by a displacement at the point of interest.
-      
+
      Note: For MER, it is the ANGULAR_DISTANCE required for the grind
      wheel to revolve before the scan portion, or the grind portion, of
      the command completes (seek does not involve rotation). This angle is
@@ -427,7 +427,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = 'N/A'
   STANDARD_VALUE_TYPE = SUGGESTED
   DESCRIPTION = "
-      
+
      The ANGULAR_DISTANCE_NAME element is an array that provides
      the formal names identifying each value in ANGULAR_DISTANCE."
   STANDARD_VALUE_SET = {
@@ -442,10 +442,10 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = 'RAD/S'
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
      The ANGULAR_VELOCITY element provides the angular velocity of an
      instrument component.
-      
+
      Note: For MER, this is the angular velocity for the revolve axis."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -838,7 +838,7 @@ OBJECT = ELEMENT_DEFINITION
      The APXS_COMMUNICATION_ERROR_COUNT element provides the number
      of communication errors recorded by an instrument host when
      trying to query the Alpha Proton X-ray Spectrometer.
-      
+
      Note: For Mars Pathfinder, the APXS_COMMUNICATION_ERROR_COUNT
      was returned in the Rover telemetry."
 END_OBJECT = ELEMENT_DEFINITION
@@ -855,7 +855,7 @@ OBJECT = ELEMENT_DEFINITION
      The APXS_MECHANISM_ANGLE provides an angular measurement of the position
      of the deployment mechanism on which the alpha proton x-ray spectrometer
      is mounted. It is measured in degrees.
-      
+
      Note: For Mars Pathfinder, this value was measured at STOP_TIME.  It was
      derived from the raw data value returned in the APXS Results as part of
      the spectrum data.  The value was derived by subtracting 112.64 from the
@@ -883,7 +883,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 33
   DESCRIPTION = "
-      
+
      The ARCHIVE_STATUS element indicates the stage to which a data set has
      progressed in the archiving process, from 'IN QUEUE' through 'ARCHIVED'.
      It can also take on the values 'SUPERSEDED' or 'SAFED', which indicate
@@ -893,62 +893,62 @@ OBJECT = ELEMENT_DEFINITION
      'ACCUMULATING' would be used, for example, when the archive is being
      delivered incrementally, as from a mission that lasts many months or years.
      See below for standard values and their definitions.
-      
+
      The ARCHIVE_STATUS_NOTE element is available to describe the archive status
      in more detail.
-      
+
      STANDARD VALUES
-      
+
      IN QUEUE - Received at the curation node but no action has been taken by
      the curation node. Use with caution.
-      
+
      PRE PEER REVIEW - Being prepared for peer review under the direction of the
      curation node. Use with caution
-      
+
      IN PEER REVIEW - Under peer review at the curation node but evaluation is
      not complete. Use with caution
-      
+
      IN LIEN RESOLUTION - Peer review completed. Liens are in the process of
      being resolved.  Use with caution.
-      
+
      LOCALLY ARCHIVED - Passed peer review with all liens resolved. Considered
      archived by the curation node but awaiting completion of the standard
      archiving process. Possible TBD items include the arrival of thearchive
      volume at NSSDC and ingestion of catalog information into the Data Set
      Catalog.
-      
+
      ARCHIVED - Passed peer review with all liens resolved. Available through
      the Data Set Catalog and at NSSDC.
-      
+
      IN QUEUE - ACCUMULATING - Some parts of the data set are IN QUEUE, but
      other parts have not yet been delivered to PDS.  Use with caution.
-      
+
      PRE PEER REVIEW - ACCUMULATING - Some parts of the data set are in
      PRE PEER REVIEW, but other parts are IN QUEUE and/or have not yet been
      delivered to PDS. Use with caution.
-      
+
      IN PEER REVIEW - ACCUMULATING - Some parts of the data set are IN PEER
      REVIEW, but other parts are in earlier stages of the archiving process
      and/or have not yet been delivered to PDS.  Use with caution.
-      
+
      IN LIEN RESOLUTION - ACCUMULATING - Some parts of the data set are IN LIEN
      RESOLUTION, but other parts are in earlier stages of the archiving process
      and/or have not yet been delivered to PDS.  Use with caution.
-      
+
      LOCALLY ARCHIVED - ACCUMULATING - Some parts of the data set are LOCALLY
      ARCHIVED, but other parts are in earlier stages of the archiving process
      and/or have not yet been delivered to PDS.  Use with caution.
-      
+
      ARCHIVED - ACCUMULATING - Some parts of the data set are ARCHIVED,
      but other parts are in earlier stages of the archiving process and/or
      have not yet been delivered to PDS.  Use with caution.
-      
+
      SUPERSEDED - This data set has been replaced by a newer version, implying
      that the data set is not to be used unless the requester has specific
      reasons. When a data set has been superseded the Engineering Node, will
      notify NSSDC that their databases need to be updated to advise users of
      the new status and the location of the replacement data set.
-      
+
      SAFED - The data set has been received by the PDS with no evaluation.
      Data will not be formally archived."
   STANDARD_VALUE_SET = {
@@ -975,7 +975,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The archive_status_date element provides the date that the archive
      status will in the future or has in the past changed."
 END_OBJECT = ELEMENT_DEFINITION
@@ -1030,7 +1030,7 @@ OBJECT = ELEMENT_DEFINITION
      positions. The associated ARCTICULATION_DEV_POSITION_NAME names each
      moving device, and ARTICULATION_DEV_POSITION_ID provides a textual
      identifier that maps to the position indices.
-      
+
      For MER, this is used to contain the state of all the instrument
      filter actuators (pancam filter wheels and MI dust cover). Note that
      this is the state of all such actuators on the rover. In order to get
@@ -1192,7 +1192,7 @@ OBJECT = ELEMENT_DEFINITION
      identification of an articulation device. An articulation device is
      anything that can move independently of the spacecraft to which it
      is attached, (e.g., mast heads, wheel bogies, arms, etc.).
-      
+
      Note: For MER, the associated ARTICULATION_DEVICE_NAME element
      provides the full name of the articulated device."
   STANDARD_VALUE_SET = {
@@ -1841,7 +1841,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = 1
   MAXIMUM = 512
   DESCRIPTION = "
-      
+
      The band_bin_band_number element of a SPECTRAL_QUBE provides a
      sequence of numbers corresponding to each band in the image qube. The
      band number is equivalent to the instrument band number."
@@ -1853,14 +1853,14 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
      The band_bin_base element of a SPECTRAL_QUBE contains a sequence of
      real values corresponding to each band listed in the
      band_bin_band_number element.  The band_bin_base value is added to the
      scaled data (see band_bin_multiplier) to reproduce the true data.
-      
+
      'true_value' =  base + (multiplier * stored_value)
-      
+
      Note:  Base and multiplier correspond directly to the PDS
      standard data elements OFFSET and SCALING_FACTOR."
 END_OBJECT = ELEMENT_DEFINITION
@@ -1901,7 +1901,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 1
   DESCRIPTION = "
-      
+
      The band_bin_filter_number element of a SPECTRAL_QUBE
      provides a sequence of numbers corresponding to each band listed in
      the band_bin_band_number element.  Each number describes the physical
@@ -1929,16 +1929,16 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
      The band_bin_multiplier element of a SPECTRAL_QUBE contains a sequence
      of real values corresponding to each band listed in the
      band_bin_band_number element.  The stored data value is multiplied by
      the band_bin_multiplier to produce a scaled data value; this scaled
      data value is then added to the band_bin_base value to reproduce the
      true data value.
-      
+
      'true_value' =  base + (multiplier * stored_value)
-      
+
      Note:  Base and multiplier correspond directly to the PDS
      standard data elements OFFSET and SCALING_FACTOR."
 END_OBJECT = ELEMENT_DEFINITION
@@ -2021,7 +2021,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 0
   MAXIMUM_LENGTH = 50
   DESCRIPTION = "
-      
+
      BAND_NAME is the name given to a single band in a multi-band image
      or image qube. If the band is a spectral band, BAND_NAME refers to
      the associated spectral range; for example, RED, GREEN, BLUE,
@@ -2187,7 +2187,7 @@ OBJECT = ELEMENT_DEFINITION
      The BAND_NUMBER element is used to specify a numerical
      name used to identify a specific spectral band of an
      multi-spectral imaging instrument.
-      
+
      Note:  The value will be 1-5 for THEMIS VIS images or
      1-10 for THEMIS IR images.  Band numbers are defined
      in the THEMIS Standard Data Product SIS, Table 1."
@@ -2570,7 +2570,7 @@ OBJECT = ELEMENT_DEFINITION
            intended to be the primary browse product for an associated data
            product, or is a secondary browse product, for cases when there are
            multiple browse products per data product.
-      
+
            A value of PRIMARY indicates that the browse product is the main
            browse product for a given data product. A value of OVERVIEW indicates
            that a browse product is associated with, or constructed from, several
@@ -2582,7 +2582,7 @@ OBJECT = ELEMENT_DEFINITION
            review); rationale for the selection could be documented in the
            label DESCRIPTION of the browse product. SECONDARY browse
            products cannot exist without a PRIMARY product.
-      
+
            The keyword is an optional keyword that can be included in the label
            for a browse product along with the keyword SOURCE_PRODUCT_ID to
            identify the data product. The value of BROWSE_USAGE_TYPE along with
@@ -2606,7 +2606,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The BUFFER_MODE_ID element identifies the buffer storage mode used by an
      instrument.
-      
+
      Note: For MARS EXPRESS the data from the Super Resolution Channel (SRC) are
      in 14-bit. A small buffer connected to this channel can store 4 images in
      14-bit (BUFFER_14) or 8 images converted to 8-bit (BUFFER_8), which are
@@ -2626,7 +2626,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The build_date element provides the date associated with the
      completion of the manufacture of an instrument. This date
      should reflect the level of technology used in the
@@ -2694,7 +2694,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The CAMERA_LOCATION_ID element indicates where
      the camera was during data acquisition.
-      
+
      Used in MER calibration data to denote the
      location of the camera on the mounted bracket."
 END_OBJECT = ELEMENT_DEFINITION
@@ -2730,12 +2730,12 @@ OBJECT = ELEMENT_DEFINITION
      indicated.
      Note: This element bears a simple relationship to the value of
            TWIST_ANGLE:
-      
+
            When TWIST_ANGLE_TYPE = DEFAULT,
            CELESTIAL_NORTH_CLOCK_ANGLE = (180 - TWIST_ANGLE) mod 360;
            when TWIST_ANGLE_TYPE = GALILEO,
            CELESTIAL_NORTH_CLOCK_ANGLE = (270 - TWIST_ANGLE) mod 360.
-      
+
      Note: For images pointed near either pole, the value varies
            significantly across the image; in these cases, the element
            is very sensitive to the accuracy of the pointing information."
@@ -3138,7 +3138,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The change_date data element provides the date on which
      a record or object was altered.
      Note:  In the PDS, the change_date element indicates the
@@ -3474,27 +3474,27 @@ OBJECT = ELEMENT_DEFINITION
           reference, which in turn follows established practice for
           scientific journals that cite electronic publications
           (e.g., AGU Reference citation format).
-      
+
           The CITATION_DESC must contain sufficient information to locate
           the product or data set in the PDS archives.  For example,
           the CITATION_DESC in a DATA_SET_INFORMATION object must contain
           the DATA_SET_ID; it will also likely contain VOLUME_ID information
           for the archive volumes, an author list, a release date, and so
           on as appropriate.
-      
+
           Note that if CITATION_DESC is used within any product label within
           a data set, all product labels within that data set must also have
           a CITATION_DESC, even if they are only filled with 'N/A'.
-      
+
            DATA_SET Example:
-      
+
              CITATION_DESC = 'Levin, G.V., P.A. Strat, E.A. Guinness, P.G.
              Valko, J.H. King, and D.R. Williams, VL1/VL2 MARS LCS EXPERIMENT
              DATA RECORD V1.0, VL1/VL2-M-LCS-2-EDR-V1.0, NASA Planetary
              Data System, 2000.'
-      
+
            Data Product Example:
-      
+
              CITATION_DESC = 'Cunningham, C., MINOR PLANET INDEX TO SCIENTIFIC
              PAPERS, EAR-A-5-DDR-BIBLIOGRAPHY-V1.0:REFS-REFS-199409, NASA
              Planetary Data System, 1994.'"
@@ -3786,7 +3786,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The comment_date element indicates the date when a user's
      comment information is inserted into the data base."
 END_OBJECT = ELEMENT_DEFINITION
@@ -3940,7 +3940,7 @@ OBJECT = ELEMENT_DEFINITION
      The CONTACT_SENSOR_STATE element is an array of identifiers for the state
      of an instrument or an instrument host's contact sensors at a specified
      time.
-      
+
      Note: For MER, the values corresponding to APXS DOOR SWITCH (array position
      7 only) are OPEN or CLOSED.  Other array position values are CONTACT or NO
      CONTACT"
@@ -4032,7 +4032,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The CONVERTER_CURRENT_COUNT element provides the current
      of a power supply converter, measured in raw counts.
-      
+
      Note: For Mars Pathfinder, this referred specifically to
      the current of the APXS 9 volt converter at the end of the
      spectrum measurement."
@@ -4048,7 +4048,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The CONVERTER_VOLTAGE_COUNT element provides the voltage
      of a power supply converter, measured in raw counts.
-      
+
      Note: For Mars Pathfinder, this referred specifically to
      the current of the APXS 9 volt converter at the end of the
      spectrum measurement."
@@ -4144,7 +4144,7 @@ OBJECT = ELEMENT_DEFINITION
      operations.  When in a COORDINATE_SYSTEM_STATE group, this keyword
      identifies which instance of the coordinate frame, named by
      COORDINATE_SYSTEM_NAME, is being defined by the group.
-      
+
      NOTE: For MER, the indices are based on the ROVER_MOTION_COUNTER.  This
      counter is incremented each time the rover moves (or may potentially have
      moved, e.g., due to arm motion). The full counter may have up to 5 values
@@ -4185,11 +4185,11 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
      The coordinate_system_name element provides the full name
      of the coordinate system to which the state vectors are referenced.
      PDS has currently defined body-fixed rotating coordinate systems.
-      
+
      The Planetocentric system has an origin at the center of mass of the body.
      The planetocentric latitude is the angle between the equatorial plane
      and a vector connecting the point of interest and the origin of the
@@ -4198,7 +4198,7 @@ OBJECT = ELEMENT_DEFINITION
      angular momentum vector, i.e., pointing toward the hemisphere north of
      the solar system invariant plane.  Longitudes increase toward the east,
      making the Planetocentric system right-handed.
-      
+
      The Planetographic system has an origin at the center of mass of the body.
      The planetographic latitude is the angle between the equatorial plane
      and a vector through the point of interest, where the vector is normal
@@ -4652,7 +4652,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      This date is used for storing the creation date of a table or query on
      the data base."
 END_OBJECT = ELEMENT_DEFINITION
@@ -4829,7 +4829,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The DARK_CURRENT_CORRECTION_TYPE element specifies the type of dark current
      correction applied to an image for purposes of radiometric calibration.
-      
+
      Note: For Mars Pathfinder, the valid values were: PRIME = vertical for the
      front rover cameras, horizontal for the back camera; BOTH = both horizontal
      and vertical."
@@ -8106,7 +8106,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MAXIMUM_LENGTH = 8
   DESCRIPTION = "
-      
+
      The DATA_SET_LOCAL_ID element provides a short (of order 3
      characters) acronym used as the local ID of a data set
      (Example value: IGLC). It may also appear as the first
@@ -8121,7 +8121,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The data_set_name element provides the full name given to a
      data set or a data product.  The data_set_name typically
      identifies the instrument that acquired the data, the target
@@ -11248,12 +11248,12 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The data_set_release_date element provides the date when
      a data set is released by the data producer for archive
      or publication.  In many systems this represents the end of
      a proprietary or validation period.
-      
+
      Note:  In AMMOS, the data_set_release_date element is used to
      identify the date at which a product may be released to the
      general public from proprietary access.  AMMOS-related
@@ -11360,7 +11360,7 @@ OBJECT = ELEMENT_DEFINITION
      mathematical properties of a value being stored.  When DATA_TYPE is used
      within a FIELD object definition, its value applies only when the field
      is populated.
-      
+
      Note:  In the PDS, users may find a bit-level description of each data
      type in the Standards Reference document."
   STANDARD_VALUE_SET = {
@@ -11460,13 +11460,13 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The callamp can be run at various duty cycles between 0.0% and 100.0% by
      using only every other pulse of the callamp frequency to trigger the callamp.
-      
+
        DAWN_CALLAMP_DUTY = CALLAMP_FREQUENCY / Value * 100%
-      
+
      Example:
        Value = 1.0 : DAWN_CALLAMP_DUTY = 100 %
        Value = 2.5 : DAWN_CALLAMP_DUTY = 40 %
-      
+
      This calculation is done internally in the camera, the user commands
      the requensted duty cycle in percentage."
 END_OBJECT = ELEMENT_DEFINITION
@@ -11497,9 +11497,9 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The callamp frequency is determined by the internal 24 MHz clock
      and an integer divisor.
-      
+
        CALLAMP_FREQUENCY = 24 MHz / Value
-      
+
      The standard callamp frequency is 100 kHz (24MHz / 240)."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -11512,7 +11512,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 99999999
   DESCRIPTION = "
      Callamp strobe time is measured in microseconds after callamp switch on.
-      
+
        callamp switch off time =
          START_TIME + DAWN_CALLAMP_DELAY_TIME + DAWN_CALLAMP_STROBE_TIME"
 END_OBJECT = ELEMENT_DEFINITION
@@ -11537,19 +11537,19 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      This keyword describes the priority of the acquired image and thus
      how it was handled on board.
-      
+
        Op-Nav = The image is processed with highest priority and streamed
          into VR10 of the s/c.
-      
+
        Science 1 = The image is processed with high priority and streamed
          into VR8 of the s/c.
-      
+
        Science 2 = The image is processed with mid priority and streamed
          into VR8 of the s/c.
-      
+
        Science 3 = The image is processed with low priority and streamed
          into VR8 of the s/c.
-      
+
        Science 4 = The image is processed with least priority and streamed
          into VR8 of the s/c."
   STANDARD_VALUE_SET = {
@@ -11627,11 +11627,11 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
        FILTER_NUMBER =
          (((64 + 4 + encoderOnClearFilter - FILTER_ENCODER) / 8) MOD 8) + 1
-      
+
      encoderOnClearFilter is a hardware-dependent constant
      filterEncoder is the current readout of the encoder
      filterNumber return a value in the range [1..8].
-      
+
      All the operation are integer operations. MOD represents modulo,
      and / is integer division. The subtraction is negative (F1 - Fx)
      because the encoder value decreases with increasing filter number."
@@ -11694,7 +11694,7 @@ OBJECT = ELEMENT_DEFINITION
      Determines whether the Fail-Safe Actuator is enabled. For safety reasons,
      the FSA requires two switches to be active at the same time in order
      to be active. One of them alone will have no effect.
-      
+
        OFF = The Fail-Safe Actuator for the Front Door is disabled.
        ON = The Fail-Safe Actuator is enabled. FSA_SHOOT_FLAG can be
          switched ON now."
@@ -11771,9 +11771,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_12 = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: 50 mA
      Lower limit yellow: 60 mA
      Upper limit yellow: 100 mA
@@ -11796,9 +11796,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_16 = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: 20 mA
      Lower limit yellow: 30 mA
      Upper limit yellow: 60 mA
@@ -11821,9 +11821,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_28 = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: 200 mA
      Lower limit yellow: 250 mA
      Upper limit yellow: 1200 mA
@@ -11846,9 +11846,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_2_5 = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: 250 mA
      Lower limit yellow: 300 mA
      Upper limit yellow: 900 mA
@@ -11871,9 +11871,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_3_3 = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: 100 mA
      Lower limit yellow: 170 mA
      Upper limit yellow: 850 mA
@@ -11896,9 +11896,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_2_5 = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: 100 mA
      Lower limit yellow: 250 mA
      Upper limit yellow: 350 mA
@@ -11921,9 +11921,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_5_ANALOG = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: 75 mA
      Lower limit yellow: 100 mA
      Upper limit yellow: 1150 mA
@@ -11946,9 +11946,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_M5 = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: -200 mA
      Lower limit yellow: -120 mA
      Upper limit yellow: -60 mA
@@ -11971,9 +11971,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        I_M5_ANALOG = DN * Gain + Offset + Sensor Offset [mA]
-      
+
      Lower limit red: -100 mA
      Lower limit yellow: -60 mA
      Upper limit yellow: -20 mA
@@ -11989,7 +11989,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM_LENGTH = 9
   DESCRIPTION = "
      The mode of image acquisition.
-      
+
        NORMAL = Image acquired with Front Door open.
        DARK = Image acquired with Front Door closed and Callamp off.
        FLATFIELD = Image acquired with Front Door closed and Callamp on.
@@ -12059,7 +12059,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      Indicates if the motors for the mechanisms are powered. This switch and flag
      are independent of the MCU power flag.
-      
+
        OFF = Both motors (Front Door and Filterwheel) are unpowered.
        ON = Both motors are powered. Either to hold their position or to move
          to another position."
@@ -12086,7 +12086,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      An analog value showing the hardware ID of the PCU. The actual value can
      jitter around the nominal values:
-      
+
        3.00 = PCU ID of FC1 (FS1)
        2.00 = PCU ID of FC2 (FM2)"
 END_OBJECT = ELEMENT_DEFINITION
@@ -12143,7 +12143,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      Baffle temperature measured by FC's thermistor TLB
-      
+
      Name: TBF
      Location: Baffle
      H/K Sensor: Baffle Thermistor
@@ -12152,10 +12152,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -129.5
      Sensor Offset FC1: -2.1
      Sensor Offset FC2: -3.1
-      
+
        T_BAFFLE = DN * Gain + Offset + Sensor Offset + 273.150 [deg C]
        T_BAFFLE = DN * Gain + Offset + Sensor Offset [Kelvin]
-      
+
      Lower limit red: -55.0 deg C
      Lower limit yellow: -50.0 deg C
      Upper limit yellow: +40.0 deg C
@@ -12173,7 +12173,7 @@ OBJECT = ELEMENT_DEFINITION
      The temperature that the instrument (detector) operated at while a
      measurement was made. The temperature is measured by the FC's sensor and
      calibrated in Kelvin. The value is the same as for DETECTOR_TEMPERATURE.
-      
+
      Name: HK-Tccd
      Location: DPU
      H/K Sensor: FEE CCD Thermistor
@@ -12182,12 +12182,12 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -273
      Sensor Offset FC1: -5.240
      Sensor Offset FC2: -3.960
-      
+
        T_CCD = DN * Gain + Offset + Sensor Offset [deg C]
        T_CCD = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      The CCD is passively cooled, the CCD-heaters are for non-operation mode only.
-      
+
      Lower limit red: -95.0 deg C
      Lower limit yellow: -75.0 deg C
      Upper limit yellow: +35.0 deg C
@@ -12203,7 +12203,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      Front door motor temperature, measured by FC's thermistor TCM
-      
+
      Name: TCM
      Location: Front Door
      H/K Sensor: FD Motor Thermistor
@@ -12212,10 +12212,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -129.5
      Sensor Offset FC1: -2.1
      Sensor Offset FC2: -1.1
-      
+
        T_COVER_MOTOR = DN * Gain + Offset + Sensor Offset [deg C]
        T_COVER_MOTOR = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -55.0 deg C
      Lower limit yellow: -50.0 deg C
      Upper limit yellow: +50.0 deg C
@@ -12231,7 +12231,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      PCU Board temperature, measured by FC's thermistor HK-Tpcu3
-      
+
      Name: HK-Tpcu3
      Location: PCU
      H/K Sensor: PCU Board Thermistor 1
@@ -12241,12 +12241,12 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -273
      Sensor Offset FC1: -3.210
      Sensor Offset FC2: -3.210
-      
+
        T_CSC = DN * Gain + Offset + Sensor Offset [deg C]
        T_CSC = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      The CCD is passively cooled, the CCD-heaters are for non-operation mode only.
-      
+
      Lower limit red: -40.0 deg C
      Lower limit yellow: -35.0 deg C
      Upper limit yellow: +70.0 deg C
@@ -12262,7 +12262,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      OPCU DC-converter-board temperature, measured by FC's thermistor HK-Tpcu1
-      
+
      Name: HK-Tpcu1
      Location: PCU
      H/K Sensor: PCU Converter Board Thermistor
@@ -12271,10 +12271,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -273
      Sensor Offset FC1: -1.980
      Sensor Offset FC2: -1.980
-      
+
        T_DCDC = DN * Gain + Offset + Sensor Offset [deg C]
        T_DCDC = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -40.0 deg C
      Lower limit yellow: -35.0 deg C
      Upper limit yellow: +70.0 deg C
@@ -12290,7 +12290,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      DPU Board temperature, measured by FC's thermistor HK-Tdpu
-      
+
      Name: HK-Tdpu
      Location: DPU
      H/K Sensor: DPU Board Thermistor
@@ -12299,10 +12299,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -273
      Sensor Offset FC1: -7.960
      Sensor Offset FC2: -3.960
-      
+
        T_DPU = DN * Gain + Offset + Sensor Offset [deg C]
        T_DPU = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -40.0 deg C
      Lower limit yellow: -35.0 deg C
      Upper limit yellow: +80.0 deg C
@@ -12318,7 +12318,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      PCU Board temperature, measured by FC's thermistor HK-Tpcu2
-      
+
      Name: HK-Tpcu2
      Location: PCU
      H/K Sensor: PCU Board Thermistor 1
@@ -12328,10 +12328,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -273
      Sensor Offset FC1: -2.580
      Sensor Offset FC2: -2.580
-      
+
        T_F12 = DN * Gain + Offset + Sensor Offset [deg C]
        T_F12 = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -40.0 deg C
      Lower limit yellow: -35.0 deg C
      Upper limit yellow: +70.0 deg C
@@ -12347,7 +12347,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      Filter motor temperature, measured by FC's thermistor TFM
-      
+
      Name: TFM
      Location: Filter Wheel
      H/K Sensor: Filter Motor Thermistor
@@ -12356,10 +12356,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -129.5
      Sensor Offset FC1: -3.1
      Sensor Offset FC2: -2.1
-      
+
        T_FILTER_MOTOR = DN * Gain + Offset + Sensor Offset [deg C]
        T_FILTER_MOTOR = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -55.0 deg C
      Lower limit yellow: -50.0 deg C
      Upper limit yellow: +50.0 deg C
@@ -12375,7 +12375,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      Lens barrel temperature, measured by FC's thermistor TLB.
-      
+
      Name: TLB
      Location: Lens Barrel
      H/K Sensor: Lens Barrel Thermistor
@@ -12384,10 +12384,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -129.5
      Sensor Offset FC1: -1.1
      Sensor Offset FC2: -1.1
-      
+
        T_LENS_BARREL = DN * Gain + Offset + Sensor Offset [deg C]
        T_LENS_BARREL = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -55.0 deg C
      Lower limit yellow: -50.0 deg C
      Upper limit yellow: +40.0 deg C
@@ -12403,7 +12403,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      Radiator temperature, measured by FC's thermistor TRD.
-      
+
      Name: TRD
      Location: Radiator
      H/K Sensor: Radiator Thermistor
@@ -12412,15 +12412,15 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -129.5
      Sensor Offset FC1: -1.1
      Sensor Offset FC2: -1.1
-      
+
        T_RAD_MOTOR = DN * Gain + Offset + Sensor Offset [deg C]
        T_RAD_MOTOR = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -115.0 deg C
      Lower limit yellow: -95.0 deg C
      Upper limit yellow: +35.0 deg C
      Upper limit red: +40.0 deg C
-      
+
      Note: This is not a motor temperature!"
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -12433,7 +12433,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM = 999.999
   DESCRIPTION = "
      Camera head structure temperature, measured by FC's thermistor TCS.
-      
+
      Name: TCS
      Location: Camera Head
      H/K Sensor: CH Structure Thermistor
@@ -12442,10 +12442,10 @@ OBJECT = ELEMENT_DEFINITION
      Offset: -129.5
      Sensor Offset FC1: -3.1
      Sensor Offset FC2: -4.1
-      
+
        T_STRUCTURE = DN * Gain + Offset + Sensor Offset [deg C]
        T_STRUCTURE = DN * Gain + Offset + Sensor Offset + 273.150 [Kelvin]
-      
+
      Lower limit red: -55.0 deg C
      Lower limit yellow: -50.0 deg C
      Upper limit yellow: +40.0 deg C
@@ -12515,9 +12515,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_12 = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: 11.0 V
      Lower limit yellow: 11.7 V
      Upper limit yellow: 12.5 V
@@ -12540,9 +12540,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_16 = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: 14.7 V
      Lower limit yellow: 15.2 V
      Upper limit yellow: 16.5 V
@@ -12565,9 +12565,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_28 = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: 20.0 V
      Lower limit yellow: 21.5 V
      Upper limit yellow: 35.5 V
@@ -12590,9 +12590,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_2_5 = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: 2.1 V
      Lower limit yellow: 2.3 V
      Upper limit yellow: 2.8 V
@@ -12615,9 +12615,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_3_3 = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: 3.0 V
      Lower limit yellow: 3.2 V
      Upper limit yellow: 3.7 V
@@ -12640,9 +12640,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_5 = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: 4.5 V
      Lower limit yellow: 4.7 V
      Upper limit yellow: 5.5 V
@@ -12665,9 +12665,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_5_ANALOG = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: 4.5 V
      Lower limit yellow: 4.7 V
      Upper limit yellow: 5.5 V
@@ -12690,9 +12690,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_M5 = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: -5.8 V
      Lower limit yellow: -5.5 V
      Upper limit yellow: -4.7 V
@@ -12715,9 +12715,9 @@ OBJECT = ELEMENT_DEFINITION
      Offset: 0
      Sensor Offset FC1: 0
      Sensor Offset FC2: 0
-      
+
        V_M5_ANALOG = DN * Gain + Offset + Sensor Offset [V]
-      
+
      Lower limit red: -5.8 V
      Lower limit yellow: -5.5 V
      Upper limit yellow: -4.7 V
@@ -12816,30 +12816,30 @@ OBJECT = ELEMENT_DEFINITION
        point in question.  (For points south of the celestial equator,
        negative values are used.)  DECLINATION is used in conjunction with
        the RIGHT_ASCENSION keyword to specify a point on the sky.
-      
+
        To accurately specify a point on the sky, the following additional
        keywords are needed:
-      
+
           COORDINATE_SYSTEM_ID - Specifies the reference system as B1950 or
           J2000.
-      
+
           EQUINOX_EPOCH - Specifies the epoch of equinox in decimal years.
-      
+
        For a complete discussion of right ascension, declination, epoch, and
        reference systems, see [SEIDELMANN1992]:
-      
+
           Seidelmann, P.K., Ed., 'Explanatory Supplement to the Astronomical
           Almanac', University Science Books, Sausalito, California, 1992.
-      
+
        To relate the specified values of right ascension and declination to
        an image, the following keyword is needed:
-      
+
           RA_DEC_REF_PIXEL - A two-valued keyword to specify the reference
           pixel to which the RIGHT_ASCENSION and DECLINATION apply.
-      
+
        An additional useful keyword for specifying the relation of
        declination and right_ascension to an image is:
-      
+
           PIXEL_ANGULAR_SCALE - the angular scale of the image in arcseconds
           per pixel."
 END_OBJECT = ELEMENT_DEFINITION
@@ -12925,7 +12925,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           Specifies how to interpret the pixel values in a derived image RDR
           (or colloquially, the type of the derived image itself).
-      
+
      Values are defined as:
        IMAGE - Standard image, where pixels represent intensity.
                Note that this implies nothing about radiometric,
@@ -13951,18 +13951,18 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The following definitions describe easternmost longitude for the
      body-fixed, rotating coordinate systems:
-      
+
      For Planetocentric coordinates and for Planetographic coordinates in
      which longitude increases toward the east, the easternmost (rightmost)
      longitude of a spatial area (e.g.,a map, mosaic, bin,feature or region)
      is the maximum numercial value of longitude unless it crosses the
      Prime Meridian.
-      
+
      For Planetographic coordinates in which longitude increases toward the
      west, the easternmost (rightmost) longitude of a spatial area (e.g., a
      map,mosaic, bin, feature or region) is the minimum numerical value
      of longitude unless it crosses the Prime Meridian.
-      
+
      For the Earth, Moon and Sun, PDS also supports the traditional use of
      the range (-180,180) in which case the easternmost (rightmost) longitude
      is the maximum numerical value of longitude unless it crosses 180."
@@ -14203,14 +14203,14 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The EMECL_SC_QUATERNION element defines a normalized quaternion of rotation
      of the form:
-      
+
        Q = (cos(T/2), sin(T/2)*u[1], sin(T/2*u[2]), sin(T/2)*u[3])
-      
+
      where  T  is the angle of rotation from the Earth Mean Ecliptic J2000
                coordinate system centered on the spacecraft to the nominal
                spacecraft pointing direction; and
             u  is the unit vector in the spacecraft pointing direction.
-      
+
      A quaternion is a normalized four-component parameterization of a direction
      cosine matrix given in terms of Euler-symmetric parameters.  There are
      always four, and only four components to a quaternion.  One of the
@@ -14415,13 +14415,13 @@ OBJECT = ELEMENT_DEFINITION
        The EQUINOX_EPOCH keyword specifies the epoch of equinox in
        decimal years for the right ascension and declination, as
        given in the associated RIGHT_ASCENSION and DECLINATION keywords.
-      
+
        Use the COORDINATE_SYSTEM_ID keyword to specify the reference system
        (B1950 or J2000).
-      
+
        For a complete discussion of right ascension, declination, epoch, and
        reference system, see [SEIDELMANN1992]:
-      
+
           Seidelmann, P.K., Ed., 'Explanatory Supplement to the Astronomical
           Almanac', University Science Books, Sausalito, California, 1992."
 END_OBJECT = ELEMENT_DEFINITION
@@ -14692,7 +14692,7 @@ OBJECT = ELEMENT_DEFINITION
      (such as a camera shutter). This is a raw value taken directly from
      telemetry, as opposed to EXPOSURE_DURATION, which has been converted to
      engineering units.
-      
+
      For MER, one count is equivalent to 5.1 ms."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -14821,7 +14821,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The facility_name element identifies a department,
      laboratory, or subsystem that exists within an institution."
   STANDARD_VALUE_SET = {
@@ -14974,9 +14974,9 @@ OBJECT = ELEMENT_DEFINITION
      value list would be very large and could change frequently as new
      features are discovered, so the user of this keyword is refered to the
      USGS web site that maintains the IAU list:
-      
+
      http://planetarynames.wr.usgs.gov/index.html
-      
+
      Select the 'Alphabetical list of names' to find the approved names and
      the feature location."
   STANDARD_VALUE_SET = {
@@ -14996,7 +14996,7 @@ OBJECT = ELEMENT_DEFINITION
      A standard value list would be very large, and could change frequently
      as new features and types are discovered, so the user of this keyword
      is refered to the USGS web site that maintains the IAU list:
-      
+
      http://planetarynames.wr.usgs.gov/append5.html"
   STANDARD_VALUE_SET = {
      "TBD_(IAU_GAZETTER)"}
@@ -15013,7 +15013,7 @@ OBJECT = ELEMENT_DEFINITION
      The FEATURE_TYPE_desc element provides the IAU standard definition for
      a particular FEATURE_TYPE.  The definitions may be found at the following
      web link:
-      
+
      http://planetarynames.wr.usgs.gov/append5.html"
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -15064,7 +15064,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 40
   DESCRIPTION = "
-      
+
      The file_name element provides the location independent name of a file.
      It excludes node or volume location, directory path names, and version
      specification.  To promote portability across multiple platforms, PDS
@@ -15103,7 +15103,7 @@ OBJECT = ELEMENT_DEFINITION
      and are separated by the forward slash (/) character.  Each directory
      is limited to 8 characters chosen from the set {A-Z, 0-9,_}.  The path
      is followed by a valid file name.  See also:  file_name.
-      
+
      Example values:
      TG15NXXX/TG15N1XX/TG15N12X/TG15N120.DAT
           EDR/C100611/E1006110.00A"
@@ -15131,19 +15131,19 @@ OBJECT = ELEMENT_DEFINITION
      results in a possibility that the file contains corrupted data. When this
      happens, the FILE_STATE label keyword is set to 'DIRTY' and most ISIS
      applications normally refuse to process this potentially corrupted data.
-      
+
      ISIS includes a keyword called FILE_STATE in every ISIS cube (qube), table,
      and Instrument Spectral Library (ISL) data file. This keyword will be set
      to either CLEAN or DIRTY. Each time the cube is opened this keyword will be
      checked. If the FILE_STATE is equal to CLEAN, then the program will
      continue on normally. However, if the FILE_STATE is DIRTY, then the
      application will halt with the appropriate error message.
-      
+
      When a FILE_STATE becomes DIRTY, it indicates that something has gone wrong
      in a previously run application. ISIS will always set the FILE_STATE to
      DIRTY when the file is being opened for writing. If the application crashes
      and does not close the cube properly the FILE_STATE will remain DIRTY.
-      
+
      However, this does not always mean the file is corrupt. To help restore a
      file from DIRTY to CLEAN, ISIS has an application called 'cleanlab'.
      'cleanlab' will modify the FILE_STATE keyword in the label to a CLEAN
@@ -15491,7 +15491,7 @@ OBJECT = ELEMENT_DEFINITION
      spacecraft orientation.  It is co-linear with the surface fixed
      coordinate system, but the origin of the observation may not be
      coincident with the origin of the surface fixed frame.
-      
+
      Note that the FIXED_INSTRUMENT_AZIMUTH describes the pointing
      direction of the instrument rather than the angular coordinates of
      the target of the observation.  If there has been any significant
@@ -15499,7 +15499,7 @@ OBJECT = ELEMENT_DEFINITION
      the origin of the coordinate frame in which this value is measured),
      this data element can not be used to uniquely describe the vector to
      a viewed object.  See also FIXED_INSTRUMENT_ELEVATION.
-      
+
      This keyword replaces the older SURFACE_BASED_INST_AZIMUTH element,
      which should no longer be used."
 END_OBJECT = ELEMENT_DEFINITION
@@ -15524,7 +15524,7 @@ OBJECT = ELEMENT_DEFINITION
      with the surface fixed coordinate system, but the origin of the
      observation may not be co- incident with the origin of the surface
      fixed frame.
-      
+
      Note that the FIXED_INSTRUMENT_ELEVATION describes the pointing
      direction of the instrument rather than the angular coordinates of
      the target of the observation.  If there has been any change over
@@ -15536,7 +15536,7 @@ OBJECT = ELEMENT_DEFINITION
      position of an object; however, given realistic non-flat surfaces,
      observations from another point of origin are required to determine
      an object's distance.
-      
+
      This keyword replaces the older SURFACE_BASED_INST_ELEVATION element
      which should no longer be used."
 END_OBJECT = ELEMENT_DEFINITION
@@ -15568,7 +15568,7 @@ OBJECT = ELEMENT_DEFINITION
      coefficients/parameters used in the algorithm to remove the flat field
      signature. The FLAT_FIELD_CORRECTION_FLAG will indicate if the signature
      was removed.
-      
+
      Note: The algorithm used by MER is the following: new(x,y) = orig(x,y) *
      ff(x,y) where ff(x,y) = 1 + c*((x-a)2 + (y-b)2) + d*((x-a)2 + (y-b)2)2 +
      e*((x-a)2 + (y-b)2)3"
@@ -15617,7 +15617,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The flight_software_version_id element identifies the version of the
           instrument flight software used to acquire the image.
-      
+
           Note: For MSL, Active Flight Software version at Data Product creation.
           The Flight Software version is an opaque token - there is no arithmetic
           value associated with the token. The version is defined as the time
@@ -15850,7 +15850,7 @@ OBJECT = ELEMENT_DEFINITION
      ratio of the data. The FRAME_PARAMETER element shall always be accompanied
      by the FRAME_PARAMETER_DESC element.  A typical usage is (use quotes
      instead of apostrophies in the example below):
-      
+
      FRAME_PARAMETER = (1.2 <MSEC>, 677 <MSEC>)
      FRAME_PARAMETER_DESC
        = ('INTERNAL REPETITION TIME', 'EXTERNAL REPETITION TIME')"
@@ -15873,7 +15873,7 @@ OBJECT = ELEMENT_DEFINITION
      exposure duration and number of frames must both be known in order to
      compute the signal-to-noise ratio of the data. A typical usage is (use
      quotes instead of apostrophes in the example below):
-      
+
      FRAME_PARAMETER = (1.2 <MSEC>, 677 <MSEC>)
      FRAME_PARAMETER_DESC
        = ('INTERNAL REPETITION TIME', 'EXTERNAL REPETITION TIME')"
@@ -16018,7 +16018,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
      The GAIN_NUMBER indicates the gain value used in the analog to digital
      conversion.  The gain value is a multiplicative factor used in the
      analog to digital conversion."
@@ -16046,7 +16046,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
      The general_classification_type data element serves to
      allow data systems to group data objects or elements
      according to common characteristics.  Its purpose is akin
@@ -16310,7 +16310,7 @@ OBJECT = ELEMENT_DEFINITION
      the group of keywords.  In the case of multiple instances of the group
      (i.e., the group names are the same), it MUST serve to make the groups
      unique.
-      
+
      Note: MER, in some instances, uses the GROUP_ID to identify how the group
      of commanded keywords were generated (e.g., 'GROUND COMMANDED',
      'NAV COMMANDED' or 'SAPP COMMANDED')."
@@ -16611,7 +16611,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The IMAGE_DURATION element provides the measurement of time required
      to collect all the frames of all the bands in an image.
-      
+
      For Odyssey THEMIS, the time between successive frames is stored in
      the INTERFRAME_DELAY keyword.  When set at 1 second, a 3-frame, 1-band
      image would have an IMAGE_DURATION of (3 frames)*(1sec/frame)= 3
@@ -16646,7 +16646,7 @@ OBJECT = ELEMENT_DEFINITION
      two digits indicated the version of the command sequence, and the
      right four digits identified the image within a single imaging
      sequence.
-      
+
      If the image_id was even and non-zero, it was a left frame image.
      If the image_id was one greater than the left frame image_id (and
      therefore odd), it was the right frame of a stereo image. Note
@@ -16880,7 +16880,7 @@ OBJECT = ELEMENT_DEFINITION
      direction in which an instrument or instrument mounting platform is
      moving. The keyword may be used to describe movement before, after,
      or during an observation.
-      
+
      Note: For the M98 mission, this refers to the motion the azimuth
      camera motor went through to get to the position from which it
      acquired an image (i.e., the motion prior to image acquisition).
@@ -17134,10 +17134,10 @@ OBJECT = ELEMENT_DEFINITION
      compression of data.
      Note: The inst_cmprs_name element provides the full name of an
      inst_cmprs_mode.
-      
+
      Note: For MPF, the modes were assigned to the corresponding
      inst_cmprs_names as follows:
-      
+
      1 JPEG DISCRETE COSINE TRANSFORM (DCT); HUFFMAN/QUALITY
      2 JPEG DISCRETE COSINE TRANSFORM (DCT); HUFFMAN/RATIO
      3 JPEG DISCRETE COSINE TRANSFORM (DCT); ARITHMETIC/QUALITY
@@ -17204,7 +17204,7 @@ OBJECT = ELEMENT_DEFINITION
      The inst_cmprs_quality element is a JPEG specific variable which
      identifies the resultant or targeted image quality index for on-board
      data compression.
-      
+
      Note: For MPF, if an odd IMP inst_cmprs_mode was used for
      on-board compression, the inst_cmprs_quality indicated the
      desired image quality index. If an odd inst_cmprs_mode was
@@ -17522,7 +17522,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The institution_name element identifies a university,
      research center, or NASA center."
   STANDARD_VALUE_SET = {
@@ -17654,7 +17654,7 @@ OBJECT = ELEMENT_DEFINITION
      CAHV camera model A vector direction, or any of a number of other things.
      As such, for multimission use this value should be used mostly as an
      approximation, e.g. identifying scenes which might contain a given object.
-      
+
      The interpretation for MER is TBD."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -17847,7 +17847,7 @@ OBJECT = ELEMENT_DEFINITION
      As such, for multimission use this value should be used mostly as an
      approximation, (e.g., identifying scenes which might contain a given
      object).
-      
+
      The interpretation for MER is TBD."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -17912,7 +17912,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 11
   DESCRIPTION = "
-      
+
      The instrument_host_id element provides a unique identifier
      for the host where an instrument is located.  This host can be either a
      spacecraft or an earth base (e.g., and observatory or laboratory on the
@@ -18140,7 +18140,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 120
   DESCRIPTION = "
-      
+
      The instrument_host_name element provides the full name of
      the host on which an instrument is based.  This host can be
      either a spacecraft or an earth base.  Thus, the
@@ -18395,7 +18395,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 12
   DESCRIPTION = "
-      
+
      The instrument_id element provides an
      abbreviated name or acronym which identifies an instrument.
      Note:  The instrument_id is not a unique identifier
@@ -18971,7 +18971,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
      The instrument_mode_id element provides an
      instrument-dependent designation of operating mode.  This
      may be simply a number, letter or code, or a word such as
@@ -19155,7 +19155,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The instrument_name element provides the full name of an
      instrument.
      Note: that the associated instrument_id element
@@ -19826,7 +19826,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The INSTRUMENT_TEMPERATURE element provides the temperature, in degrees
      Celsius, of an instrument or some part of an instrument.
-      
+
      This keyword may be used in conjunction with
      INSTRUMENT_TEMPERATURE_POINT to more fully describe either single or
      multiple temperatures at various locations within a single instrument. If
@@ -19972,7 +19972,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
      The instrument_type element identifies the type of an
      instrument.
      Example values:  POLARIMETER, RADIOMETER, REFLECTANCE
@@ -20171,7 +20171,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The INSTRUMENT_VOLTAGE element provides the voltage, in volts, of
           an instrument or some part of an instrument.
-      
+
           This keyword may be used in conjunction with INSTRUMENT_VOLTAGE_POINT
           to more fully describe either single or multiple voltages at various
           locations within a single instrument. If there is more than one
@@ -20502,10 +20502,10 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 8
   DESCRIPTION = "
-      
+
      The isis_structure_version_id provides the version of ISIS software
      with which a PDS SPECTRAL_QUBE's physical structure is compatible.
-      
+
      Note that in order to work with ISIS software, an ISIS compliant label
      must also be provided with the data object.  See the chapter
      'SPECTRAL_QUBE' in Appendix A of the PDS Standards Reference, for more
@@ -20535,9 +20535,9 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The item_bytes data element represents the size in bytes of an item
      within a data object such as a column.
-      
+
      Notes:
-      
+
        (1) In the PDS, the term item_bytes is distinguished from the term
            bytes because both elements may appear in a single data object
            definition (e.g., a label) and refer to different parts of the
@@ -20569,7 +20569,7 @@ OBJECT = ELEMENT_DEFINITION
      The items element defines the number of identical parts into which a
      single object, such as a column or field, has been divided. See also:
      repetitions.
-      
+
      Note:  In the PDS, the data element ITEMS is used for subdivision of a
      single object, such as a column or a field.  REPETITIONS is used for
      multiple occurrences of objects, such as in a container.  For a fuller
@@ -20687,7 +20687,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 18
   DESCRIPTION = "
-      
+
      The kernel_type data element identifies the specific
      kernel of ancillary data produced within the SPICE system."
   STANDARD_VALUE_SET = {
@@ -20910,7 +20910,7 @@ OBJECT = ELEMENT_DEFINITION
      coordinate system.  Positive in the hemisphere north of the equator
      (i.e., hemisphere to the north of the solar system invariant plane) and
      negative in the southern hemisphere.
-      
+
      For a Planetographic, body-fixed, rotating coordinate system, latitude
      is defined as:  The angle between the equatorial plane and a vector
      through the point of interest that is normal to a biaxial ellipsoid
@@ -20931,7 +20931,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The launch_date element identifies the date of launch of a
      spacecraft or a spacecraft_carrying vehicle.
      Formation rule:  YYYY-MM-DD"
@@ -21219,7 +21219,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 6
   DESCRIPTION = "
-      
+
      The line_display_direction element is the preferred orientation of
      lines within an image for viewing on a display device.  The default
      value is down, meaning lines are viewed top to bottom on the display.
@@ -21450,10 +21450,10 @@ OBJECT = ELEMENT_DEFINITION
      mean motion of the FMS and the rotation rate of a planet. The mean
      solar day is also called a 'sol'.  Mean solar hours, minutes, and
      seconds are defined in the same way as the true solar units.
-      
+
      The acceptable range of values for local_mean_solar_time is '00:00:00.000'
      to '23:59:59.999'.
-      
+
      See also LOCAL_TRUE_SOLAR_TIME.  (Definition adapted from
      [VAUGHAN1995].)"
 END_OBJECT = ELEMENT_DEFINITION
@@ -21559,14 +21559,14 @@ OBJECT = ELEMENT_DEFINITION
      and the vector from the coordinate system origin to the point of
      interest, projected into the equatorial plane.  This is a right-handed
      coordinate system.
-      
+
      For a Planetographic, body-fixed, rotating coordinate system, longitude
      is defined as:  The angle between the prime meridian and the vector
      from the coordinate system origin to the point of interest, projected
      into the equatorial plane.  Planetographic longitudes are defined to
      increase with time for a distant observer.  Thus, they increase to the
      west for prograde rotators, and to the east for retrograde rotators.
-      
+
      For the Earth, Moon and Sun, PDS also supports the traditional use
      of the range (-180,180)
      Note:  Longitudes are measured in the direction of rotation for all
@@ -21593,7 +21593,7 @@ OBJECT = ELEMENT_DEFINITION
      spacecraft looks to the right, the illumination will come from the right in
      the image file. The direction of illumination is critical to interpretation
      of features in the image.
-      
+
      Mosaicked products may contain various combinations of source imagery.
      For example, they may combine only left-looking observations
      (LOOK_DIRECTION = 'LEFT'), only right-looking observations
@@ -21869,7 +21869,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
          The CALIBRATION_SOFTWARE_VER_ID element indicates the version
          of calibration software used to generate a data product."
 END_OBJECT = ELEMENT_DEFINITION
@@ -22611,7 +22611,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
          The DLRE_GEOM_VERSION_ID element gives the version of Diviner
          geometry and averaging software used to generate a Diviner GDR
          product. Example value: 1.0."
@@ -22668,7 +22668,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
           The LRO:DLRE_ORIENTATION element gives an unordered set of all
           orientations recorded from activity flags in a DLRE RDR data
           product."
@@ -23106,7 +23106,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
          The DREB_FLIGHT_SOFTWARE_VER_ID element indicates the version
          of Diviner Remote Electronics Box flight software used to acquire
          the telemetry data for a data product."
@@ -23167,7 +23167,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
          The LOLA_DEM_VERS element gives the version of the LOLA digital elevation
          model that was used to locate Diviner footprints for the generation of a
          Diviner GDR product. Example value: 1.0."
@@ -23181,7 +23181,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = 0
   MAXIMUM = 359
   DESCRIPTION = "
-      
+
        The lro:look_azimuth_angle element is the East-West look azimuth
        discrimination angle. This is the angle between the projection of North
        into the tangent plane of a sphere at the image center point and the
@@ -23237,7 +23237,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = FORMATION
   DESCRIPTION = "
-      
+
           Each inner vector (row) of the RANGE_COEFFICIENT_SET element contains a
           time and a set of 4 polynomial coefficients used for resampling slant
           range (in meters) to approximate ground range (in meters) at that time.
@@ -23258,7 +23258,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MAXIMUM = 450
   DESCRIPTION = "
-      
+
           The true resolution of the radar image in the range (across track)
           direction, evaluated at the center of the image for the transmit,
           receive, and processing parameters used for the sequence."
@@ -23831,11 +23831,11 @@ OBJECT = ELEMENT_DEFINITION
      The maximum instrument_temperature element provides the maximum
      temperature, in degrees Celcius, of an instrument or some part
      of an instrument.
-      
+
      NOTE:  for MEX, the INSTRUMENT_TEMPERATURE,MAXIMUM_INSTRUMENT_TEMPERATURE,
      and INSTRUMENT_POINT shall always go together and describe the actual
      temperatures of a part of the instrument and its maximum.  For example,
-      
+
              INSTRUMENT_TEMPERATURE         = (10.2, 11.2)
              MAXIMUM_INSTRUMENT_TEMPERATURE = (N/A, 22.2)
              INSTRUMENT_POINT               = (SPECTROMETER, FOCAL_PLANE)"
@@ -24128,11 +24128,11 @@ OBJECT = ELEMENT_DEFINITION
         produce two messages having the same message digest, or to produce
         any message having a given prespecified target message digest. The
         MD5 algorithm is intended for digital signature applications.
-      
+
         The MD5 algorithm is designed to be quite fast on 32-bit machines. In
         addition, the MD5 algorithm does not require any large substitution
         tables; the algorithm can be coded quite compactly.
-      
+
         Most standard MD5 checksum calculators return a 32 character
         hexadecimal value containing lower case letters. In order to
         accomodate this existing standard, the PDS requires that the value
@@ -24140,10 +24140,10 @@ OBJECT = ELEMENT_DEFINITION
         letters (a-f) and numbers (0-9). In order to comply with other standards
         relating to the use of lowercase letters in strings, the value must be
         quoted using double quotes.
-      
-      
+
+
         Example:  MD5_CHECKSUM = '0ff0a5dd0f3ea4e104b0eae98c87f36c'
-      
+
         The MD5 algorithm is an extension of the MD4 message-digest algorithm
         1,2]. MD5 is slightly slower than MD4, but is more 'conservative' in
         design. MD5 was designed because it was felt that MD4 was perhaps
@@ -24155,28 +24155,28 @@ OBJECT = ELEMENT_DEFINITION
         suggestions made by various reviewers, and contains additional
         optimizations. The MD5 algorithm has been placed in the public domain
         for review and possible adoption as a standard.
-      
+
         For OSI-based applications, MD5's object identifier is
-      
+
         md5 OBJECT IDENTIFIER ::=
           iso(1) member-body(2) US(840) rsadsi(113549) digestAlgorithm(2) 5}
-      
+
         In the X.509 type AlgorithmIdentifier [3], the parameters for MD5
         should have type NULL.
-      
+
         The MD5 algorithm was described by its inventor, Ron Rivest of
         RSA Data Security, Inc., in an Internet Request For Comments
         document, RFC1321 (document available from the PDS).
-      
+
         References
         ==========
         [1] Rivest, R., The MD4 Message Digest Algorithm, RFC 1320, MIT and
             RSA Data Security, Inc., April 1992.
-      
+
         [2] Rivest, R., The MD4 message digest algorithm, in A.J.  Menezes
             and S.A. Vanstone, editors, Advances in Cryptology - CRYPTO '90
             Proceedings, pages 303-311, Springer-Verlag, 1991.
-      
+
         [3] CCITT Recommendation X.509 (1988), The Directory -
             Authentication Framework."
 END_OBJECT = ELEMENT_DEFINITION
@@ -24187,10 +24187,10 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
      The mean element provides the average of the DN values in
      the image array.
-      
+
      Note: For the Mars Pathfinder IMP camera, this was the average of
      only those pixels within the valid DN range of 0 to 4095."
 END_OBJECT = ELEMENT_DEFINITION
@@ -24475,7 +24475,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The background brightness used for MDIS automatic exposure time
      calculation.
-      
+
      In a test image that it analyzed to determine an exposure time using
      automatic exposure, DPU hardware generates a histogram of the image.
      The histogram is analyzed by the software to determine if the image is
@@ -24483,7 +24483,7 @@ OBJECT = ELEMENT_DEFINITION
      by analyzing the histogram of raw DN values in different brightness bins.
      The background or dark current level (MESS:AEX_BACB) is taken into account
      and is assumed to be a constant value.
-      
+
      A threshold of number of pixels (MESS:AEX_STHR) is allowed to exceed a
      target brightness  (MESS:AEX_TGTB).  Starting with the maximum value,
      the number of pixels exceeding the target is counted, and the
@@ -24504,7 +24504,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The maximum allowable exposure time from an MDIS automatic exposure time
      calculation.
-      
+
      In a test image that it analyzed to determine an exposure time using
      automatic exposure, DPU hardware generates a histogram of the image.
      The histogram is analyzed by the software to determine if the image is
@@ -24512,7 +24512,7 @@ OBJECT = ELEMENT_DEFINITION
      by analyzing the histogram of raw DN values in different brightness bins.
      The background or dark current level (MESS:AEX_BACB) is taken into account
      and is assumed to be a constant value.
-      
+
      A threshold of number of pixels (MESS:AEX_STHR) is allowed to exceed a
      target brightness  (MESS:AEX_TGTB).  Starting with the maximum value,
      the number of pixels exceeding the target is counted, and the
@@ -24533,7 +24533,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The minimum allowable exposure time from an MDIS automatic exposure time
      calculation.
-      
+
      In a test image that it analyzed to determine an exposure time using
      automatic exposure, DPU hardware generates a histogram of the image.
      The histogram is analyzed by the software to determine if the image is
@@ -24541,7 +24541,7 @@ OBJECT = ELEMENT_DEFINITION
      by analyzing the histogram of raw DN values in different brightness bins.
      The background or dark current level (MESS:AEX_BACB) is taken into account
      and is assumed to be a constant value.
-      
+
      A threshold of number of pixels (MESS:AEX_STHR) is allowed to exceed a
      target brightness  (MESS:AEX_TGTB).  Starting with the maximum value,
      the number of pixels exceeding the target is counted, and the
@@ -24562,7 +24562,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The bin in a DPU histogram of image brightness used for MDIS automatic
      exposure time calculation.
-      
+
      In a test image that it analyzed to determine an exposure time using
      automatic exposure, DPU hardware generates a histogram of the image.
      The histogram is analyzed by the software to determine if the image is
@@ -24570,7 +24570,7 @@ OBJECT = ELEMENT_DEFINITION
      by analyzing the histogram of raw DN values in different brightness bins.
      The background or dark current level (MESS:AEX_BACB) is taken into account
      and is assumed to be a constant value.
-      
+
      A threshold of number of pixels (MESS:AEX_STHR) is allowed to exceed a
      target brightness  (MESS:AEX_TGTB).  Starting with the maximum value,
      the number of pixels exceeding the target is counted, and the
@@ -24591,7 +24591,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The number of pixels allowed to exceed target brightness during an MDIS
      automatic exposure time calculation.
-      
+
      In a test image that it analyzed to determine an exposure time using
      automatic exposure, DPU hardware generates a histogram of the image.
      The histogram is analyzed by the software to determine if the image is
@@ -24599,7 +24599,7 @@ OBJECT = ELEMENT_DEFINITION
      by analyzing the histogram of raw DN values in different brightness bins.
      The background or dark current level (MESS:AEX_BACB) is taken into account
      and is assumed to be a constant value.
-      
+
      A threshold of number of pixels (MESS:AEX_STHR) is allowed to exceed a
      target brightness  (MESS:AEX_TGTB).  Starting with the maximum value,
      the number of pixels exceeding the target is counted, and the
@@ -24619,7 +24619,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM_LENGTH = 4
   DESCRIPTION = "
      The target brightness used for MDIS automatic exposure time calculation.
-      
+
      In a test image that it analyzed to determine an exposure time using
      automatic exposure, DPU hardware generates a histogram of the image.
      The histogram is analyzed by the software to determine if the image is
@@ -24627,7 +24627,7 @@ OBJECT = ELEMENT_DEFINITION
      by analyzing the histogram of raw DN values in different brightness bins.
      The background or dark current level (MESS:AEX_BACB) is taken into account
      and is assumed to be a constant value.
-      
+
      A threshold of number of pixels (MESS:AEX_STHR) is allowed to exceed a
      target brightness  (MESS:AEX_TGTB).  Starting with the maximum value,
      the number of pixels exceeding the target is counted, and the
@@ -24662,29 +24662,29 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      Attitude quality flag for the spacecraft attitude quaternion in the
      header of an MDIS image:
-      
+
      7 = Attitude Knowledge OK (At least 1 Star Tracker is available and at
          least 50% of gyro data is valid)
-      
+
      6 = Attitude Knowledge OK (No Star Tracker is available but at least
          50% of gyro data is valid)
-      
+
      5 = Attitude Knowledge OK (No Star Tracker is and between 10% and 50%
          of gyro data is valid -OR- At least 1 Star Tracker is valid and
          between 0% and 50% of gyro data valid)
-      
+
      4 = not a legal option
-      
+
      3 = Attitude Knowledge BAD (At least 1 Star Tracker is available and
          at least 50% of gyro data is valid)
-      
+
      2 = Attitude Knowledge BAD (No Star Tracker is available but at least
          50% of gyro data is valid)
-      
+
      1 = Attitude Knowledge BAD (No Star Tracker is available and between 10%
          and 50% of gyro data is valid -OR- At least 1 Star Tracker is valid
          and between 0% and 50% of gryo data is valid)
-      
+
      0 = Attitude Knowledge BAD (No Star Tracker data fewer than 10% of gyro
          data valid)."
   STANDARD_VALUE_SET = {
@@ -24766,11 +24766,11 @@ OBJECT = ELEMENT_DEFINITION
      The temperature of the focal plane array in raw counts at observation
      time.  The conversion formula to degrees Celsius depends on the camera
      performing the observation:
-      
+
      For WAC: Temperature = -263.2584 + Raw * 0.5022
-      
+
      For NAC: Temperature = -268.8441 + Raw * 0.5130
-      
+
      Where Raw is the raw counts in telemetry (MESS:CAM_T1)."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -24790,23 +24790,23 @@ OBJECT = ELEMENT_DEFINITION
      once converted to units of degrees Celsius, or the raw value of telescope
      temperature (NAC), OPTICS_TEMPERATURE once converted to units of degrees
      Celsius, depending on which camera is in use.
-      
+
      For the WAC, this is temperature of the filter wheel. Thus,
      FILTER_TEMPERATURE is 'N/A' if the NAC was used for the observation because
      the telemetry point will be a measurement of the NAC telescope temperature.
      For the WAC the conversion from raw counts to degrees Celsius is:
-      
+
      T = -292.7603 + Raw * 0.5553
-      
+
      where Raw is the raw counts in MESS:CAM_T2.
-      
+
      For the NAC, this is temperature of the NAC telescope. Thus
      OPTICS_TEMPERATURE is 'N/A' if the WAC was used for observation because the
      telemetry point will be a measurement of the WAC filter wheel temperature.
      For the NAC the conversion from raw counts to degrees Celsius is:
-      
+
      T = -269.7180 + Raw * 0.4861
-      
+
      where Raw is the raw counts in telemetry (MESS:CAM_T2)."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -24822,11 +24822,11 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      MDIS CCD temperature in raw counts. The conversion formula to degrees
      Celsius depends on the camera performing the observation:
-      
+
      For WAC: Temperature = -318.4553 + Raw * 0.2718
-      
+
      For NAC: Temperature = -323.3669 + Raw * 0.2737
-      
+
      Where Raw is the raw counts in telemetry
      (MESS:CCD_TEMP)."
 END_OBJECT = ELEMENT_DEFINITION
@@ -24862,49 +24862,49 @@ OBJECT = ELEMENT_DEFINITION
      The compression is implemented using one of eight lookup tables, which are
      optimized to the lower WAC CCD read noise and higher NAC read noise, light
      levels, and bias level (nominal or after inflight drift):
-      
+
      0 = Lo-noise hi-bias SNR proportional.  Case: Either NAC or WAC, for
      nominal bias (all DNs greater than 12-bit 230).  Formulation: Maps
      12-bit DNs between bias and saturation into 8 bits, proportional to SNR.
      Information loss is spread evenly over dynamic range.  Usage: Typical
      imaging with varied brightness.
-      
+
      1 = Lo-noise hi-bias DN-weighted SNR proportional. Case: Low-noise (WAC)
      CCD, bias nominal (all DNs greater than 12-bit 230). Formulation: Maps 12
      bits between bias and saturation into 8 bits proportional to sliding scale.
      Information is preferentially retained at the low DN end. Usage: Faint
      objects. Saturates at a DN of 3000.
-      
+
      2 = Hi-noise hi-bias DN-weighted SNR proportional. Case: High-noise (NAC)
      CCD, bias nominal (all DNs greater than 12-bit 230). Formulation: Maps 12
      bits between bias and saturation into 8 bits proportional to sliding
      scale.  Information is preferentially retained at the low DN end.
      Usage: B/W, mostly low brightness.
-      
+
      3 = Lo-noise med-bias SNR proportional. Case: Either CCD, assuming bias
      has dropped tens DN (all DNs greater than 12-bit 180).  Formulation:
      Maps 12-bit DNs between bias and saturation into 8 bits, proportional to
      SNR. Information loss is spread over dynamic range. Usage:
      Typical imaging, varied brightness.
-      
+
      4 = Lo-noise med-bias DN-weighted SNR proportional. Case: Lo-noise (WAC)
      CCD, assuming bias has dropped tens DN (all DNs greater than 12-bit 180).
      Formulation: Maps 12 bits between bias and saturation into 8 bits
      proportional to sliding scale. Information retained at low DN end.
      Usage: Faint objects.  Saturates at a DN of 3000.
-      
+
      5 = Hi-noise med-bias DN-weighted SNR proportional. Case: High-noise (NAC)
      CCD, assuming bias has dropped tens DN (all DNs greater than 12-bit 180).
      Formulation: Maps 12 bits between bias and saturation into 8 bits
      proportional to sliding scale. Information is retained preferentially at
      the low end of the DN range. Usage: B/W, mostly low brightness.
-      
+
      6 = Zero-bias SNR proportional. Case: Contingency; assuming bias
      decreased to near 0 from the nominal 230 12-bit DNs.
      Formulation: Maps 12-bit DNs between bias and saturation into 8 bits,
      proportional to SNR. Information loss is spread over the dynamic range.
      Usage: Typical imaging, varied brightness.
-      
+
      7 = Linear. Case: either CCD, bias or read noise. Formulation: Maps 12-bit
      DNs between the bias level and saturation linearly into 8-bit space.
      Usage: High brightness mapping; information loss greatest at low DNs,
@@ -25044,7 +25044,7 @@ OBJECT = ELEMENT_DEFINITION
      The goal position, in raw counts of the position resolver on the MDIS
      filter wheel. For each commanded filter number, the instrument software
      will try to place the filter wheel at the following positions:
-      
+
      FILTER_NUMBER MESS:FW_GOAL
      1             17376
      2             11976
@@ -25058,7 +25058,7 @@ OBJECT = ELEMENT_DEFINITION
      10            33796
      11            28252
      12            22852
-      
+
      Actual position attained is reported in MESS:FW_POS."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -25075,7 +25075,7 @@ OBJECT = ELEMENT_DEFINITION
      The actual position, in raw counts of the position resolver on the MDIS
      filter wheel. For each commanded filter number, the instrument software
      will try to place the filter wheel at the following positions:
-      
+
      FILTER_NUMBER MESS:FW_GOAL
      1             17376
      2             11976
@@ -25089,7 +25089,7 @@ OBJECT = ELEMENT_DEFINITION
      10            33796
      11            28252
      12            22852
-      
+
      Commanded position is reported in MESS:FW_GOAL. There is a tolerance
      of 240 resolver counts around MESS:FW_GOAL for MESS:FW_POS to
      indicate that the filter wheel is correctly positioned."
@@ -25124,7 +25124,7 @@ OBJECT = ELEMENT_DEFINITION
      It is used by the flight software to compute MESS:FW_POS. For each
      commanded filter number, the instrument software will try to place
      the filter wheel at the following positions:
-      
+
      FILTER_NUMBER MESS:FW_GOAL
      1             17376
      2             11976
@@ -25138,7 +25138,7 @@ OBJECT = ELEMENT_DEFINITION
      10            33796
      11            28252
      12            22852
-      
+
      Commanded position is reported in MESS:FW_GOAL. There is a tolerance
      of 240 resolver counts around MESS:FW_GOAL for MESS:FW_POS to
      indicate that the filter wheel is correctly positioned."
@@ -25454,7 +25454,7 @@ OBJECT = ELEMENT_DEFINITION
   MAXIMUM_LENGTH = 1
   DESCRIPTION = "
      Pivot control state of MDIS.
-      
+
      A resolver provides a position reading of the pivot platform. The
      resolver only covers 45 degrees of motion; the resolver read-out values
      repeat eight times over the entire 360 degrees that an unconstrained
@@ -25462,17 +25462,17 @@ OBJECT = ELEMENT_DEFINITION
      eight octants the platform is located before the resolver reading is
      meaningful.  The software combines the octant with the resolver reading
      to form a position that covers the entire 360 degrees.
-      
+
      To determine the octant the DPU software must be commanded to 'home'
      the platform.  To home the pivot platform, the software drives the
      motor open loop backwards into the hard stop at -185 degrees.  Then
      the software drives the motor forward, open loop, prepositioning it to
      -179 degrees.  Until homing is completed, the pivot platform is
      considered 'lost' and all other pivot commands will remain pending.
-      
+
      This status item describes that state of the pivot in determining this
      position knowledge.
-      
+
        0 = Lost
        1 = Searching
        2 = Found
@@ -26023,7 +26023,7 @@ OBJECT = ELEMENT_DEFINITION
      The MID_JULIAN_DATE_VALUE provides the full Julian date
      (i.e., including date fraction) of the mid-point of an observation
      or event.  Julian dates are expressed as real numbers.
-      
+
      Note that this keyword should contain the full Julian date,
      not the modified Julian date."
 END_OBJECT = ELEMENT_DEFINITION
@@ -26483,7 +26483,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The missing_constant element supplies the value used to indicate that
      no data were available.
-      
+
      Note: The MISSING_CONSTANT element should appear only within an
      explicit object definition -- i.e. anywhere between an 'OBJECT ='
      and an 'END_OBJECT'. MISSING_CONSTANT assumes the data type of its
@@ -26499,7 +26499,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The MISSING_FRAMES element is the total number of frames that are missing
      from a file.
-      
+
      Note: For MARS EXPRESS, a frame, which is also called a 'row', is eight
      lines of data. Each line, in turn, is composed of a sync marker followed by
      a group of blocks (GOB). This refers to the Data Compression Electronics
@@ -26570,7 +26570,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The mission_alias_name element provides an official name of
      a mission  used during the initial design, implementation,
      or prelaunch phases. Example values: mission_name:MAGELLAN,
@@ -26673,7 +26673,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The mission_name element identifies a major planetary
      mission or project.
      A given planetary mission may be associated with one or
@@ -27109,7 +27109,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The mission_start_date element provides the date of the
      beginning of a mission in UTC system format."
 END_OBJECT = ELEMENT_DEFINITION
@@ -27121,7 +27121,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The mission_stop_date element provides the date of the end
      of a mission in UTC system format."
 END_OBJECT = ELEMENT_DEFINITION
@@ -27474,7 +27474,7 @@ OBJECT = ELEMENT_DEFINITION
      hour, and local seconds are one sixtieth of a local minute.  Format is
      hh:mm:ss.  Based on the IAU standard for the Martian prime meridian.  See
      [DAVIESETAL1994] for more details.
-      
+
      Note: This keyword was used for the Mars Pathfinder mission and has been
      superseded by the LOCAL_TRUE_SOLAR_TIME element; it should no longer be
      used."
@@ -27494,7 +27494,7 @@ OBJECT = ELEMENT_DEFINITION
      designation of the type of measurement made, and ### is a 3-numeral
      designation of the instrument command macro that was executed to acquire
      the data. Macro numbers are in the range 0-255.
-      
+
      For EDRs, BI is measurement of detector bias, DF is a measurement of
      background including dark current and thermal background, LP is
      measurement of a focal plane lamp, SP is measurement of the internal
@@ -27504,7 +27504,7 @@ OBJECT = ELEMENT_DEFINITION
      through test pattern 7. UN indicates that the EDR contains data in
      which housekeeping does not match the commanded instrument
      configuration.
-      
+
      For an RDR, RA indicates that the file contains values in units of
      radiance (W m^-2 nm^-1 sr^-1). IF indicates that the file contains
      values in units of I/F, or radiance divided by solar flux scaled for
@@ -27513,7 +27513,7 @@ OBJECT = ELEMENT_DEFINITION
      angle and for atmospheric and thermal effects.  SU indicates that the
      files contains summary parameters, unitless values derived from Lambert
      albedo.
-      
+
      For an RDR or a DDR, DE indicates that the files contains derived values
      related to observation geometry or independently characterized
      properties of the scene."
@@ -27732,9 +27732,9 @@ OBJECT = ELEMENT_DEFINITION
      CCD used in the observation. The ordering for the values is RED0,
      RED1, RED2, RED3, RED4, RED5, RED6, RED7, RED8, RED9, IR10, IR11,
      BG12, and BG13.
-      
+
      Values are as follows:
-      
+
      ON = the CCD was actively acquiring data during the observation.
      OFF = the CCD was turned off during the observation."
   STANDARD_VALUE_SET = {
@@ -29281,15 +29281,15 @@ OBJECT = ELEMENT_DEFINITION
      The MRO:PHOTOCLIN_CORRECTION_FLAG element describes the way in which
      topographic slopes were calculated as inputs to a thermal correction
      that has been performed on a calibrated CRISM data product.
-      
+
      This keyword has validity only in the case where the value of the
      keyword MRO:THERMAL_CORRECTION_MODE is PHYSICAL_MODEL;ADR_TE.
-      
+
      If MRO:PHOTOCLIN_CORRECTION_FLAG is OFF, then slopes used to
      calculate temperature come from the companion DDR. If it is ON,
      then the slopes are calculated using photoclinometry of CRISM
      data.
-      
+
      More details can be found at MRO:THERMAL_CORRECTION_MODE and in
      the CRISM Data Products SIS."
   STANDARD_VALUE_SET = {
@@ -29408,7 +29408,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = 0
   MAXIMUM = 1000000
   DESCRIPTION = "
-      
+
      The MRO:RADARGRAM_RETURN_INTERVAL element gives the round trip time of
      an electromagnetic pulse from the center of Mars to the first sample of
      each echo in the data product. This time delay is expressed in terms of
@@ -29817,15 +29817,15 @@ OBJECT = ELEMENT_DEFINITION
      flag for each CCD used in the observation. The ordering for the
      values is RED0, RED1, RED2, RED3, RED4, RED5, RED6, RED7, RED8,
      RED9, IR10, IR11, BG12, and BG13.
-      
+
      Values are as follows:
-      
+
      NOMINAL = the standard calibration processing was used for the
      CCD image.
-      
+
      CUBENORM = the calibration processing used a columnar gain correction
      based on columnar statistics of the image.
-      
+
      NULL = the CCD was not operating or was missing for this observation."
   STANDARD_VALUE_SET = {
      "CUBENORM",
@@ -30076,7 +30076,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = -90
   MAXIMUM = 90
   DESCRIPTION = "
-      
+
      The MRO:STOP_SUB_SPACECRAFT_LATITUDE element gives the
      planetocentric latitude at the sub spacecraft point at the end of
      an MRO orbital swath."
@@ -30144,7 +30144,7 @@ OBJECT = ELEMENT_DEFINITION
      temperature for the correction was derived from a low spatial
      resolution climatic model contained in an Ancillary Data Record (ADR)
      with the string CL in the file name.
-      
+
      EMPIRICAL_MODEL_FROM_SPECTRUM;ALG_M indicates that temperature for
      the correction was estimated empirically from measured CRISM
      I_OVER_F at long wavelengths. PHYSICAL_MODEL;ADR_TE indicates that
@@ -30152,13 +30152,13 @@ OBJECT = ELEMENT_DEFINITION
      information on surface physical properties from a companion DDR,
      and a model of thermal emission contained in an ADR with the string
      CL in the file name.
-      
+
      There are two variants of the case where this keyword equals
      PHYSICAL_MODEL;ADR_TE. If the keyword MRO:PHOTOCLIN_CORRECTION_FLAG
      is OFF, then slopes used to calculate temperature come from the
      companion DDR. If the keyword MRO:PHOTOCLIN_CORRECTION_FLAG is ON,
      then the slopes are calculated using photoclinometry of CRISM data.
-      
+
      More details can be found in the CRISM Data Products SIS."
   STANDARD_VALUE_SET = {
      "CLIMATOLOGY;ADR_CL",
@@ -30616,15 +30616,15 @@ OBJECT = ELEMENT_DEFINITION
           that is done on top of ordinary radiometric correction. Its intent is
           to reduce visual seams at the expense of radiometric accuracy.  Types
           may be added over time but currently they consist of:
-      
+
           a) NONE - No correction made.
-      
+
           b) LINEAR - Each input image gets a single additive and a single
              multiplicative factor, which are applied to every pixel in the image
              as follows: (new_image        = image * mult + add). These factors are
              defined via the IMAGE_RADIANCE_FACTOR and IMAGE_RADIANCE_OFFSETE
              keywords.
-      
+
           c) MIXED - Multiple types of correction were applied to different input
              images. This should be avoided but is included as a placeholder."
   STANDARD_VALUE_SET = {
@@ -30695,7 +30695,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:CAMERA_ROTATION_AXIS_VECTOR element specifies the axis around
           which the camera rotates.
-      
+
           For the Cylindrical-Perspective projection, this is the axis around
           which one rotates the camera model in azimuth, before (optionally)
           correcting for rover tilt using MSL:PROJECTION_Z_AXIS_VECTOR. It
@@ -30723,7 +30723,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = 0
   DESCRIPTION = "
           Tags for data content of fields in CCAM_ANNOTATION_VALUE.
-      
+
           NOTE: SPACECRAFT_CLOCK is sclk value of data point,
           NUMBER is the point number in the observation
           X_PIXELS is the horixontal pixel location in the image
@@ -30753,7 +30753,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
          The MSL:CCAM_TIME_BETWEEN_SHOTS element provides the inverse
          of the laser shot repetition rate in hertz (1/shot frequency)"
 END_OBJECT = ELEMENT_DEFINITION
@@ -30781,11 +30781,11 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:COMMUNICATION_SESSION_ID element specifies the Active
           Communication Session ID at time of MPDU (Metadata Protocol Data Unit)
           creation.
-      
+
           For context, the MPDU is the first PDU (Protocol Data Unit) produced
           for a data product, and contains general and MSL specific metadata. It
           is wholly contained in a single packet.
-      
+
           See also MSL:EXPECTED_TRANSMISSION_PATH."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -30804,10 +30804,10 @@ OBJECT = ELEMENT_DEFINITION
           The first entry in the array contains the configuration for the 2 most
           significant bits, while the last entry contains the configuration for
           the 2 least significant bits.
-      
+
           For MSL, the instrument/tools that are useful in a reachability map are
           DRILL, DRT, MAHLI, APXS, PORTIONER and SCOOP.
-      
+
           For MSL, the 8 configuration values are interpreted as follows:
           a)  ARM_SO_EU_WU - Shoulder out, Elbow up, Wrist up.
           b)  ARM_SO_EU_WD - Shoulder out, Elbow up, Wrist down.
@@ -30817,7 +30817,7 @@ OBJECT = ELEMENT_DEFINITION
           f)  ARM_SI_EU_WD - Shoulder in, Elbow up, Wrist down.
           g)  ARM_SI_ED_WU - Shoulder in, Elbow down, Wrist up.
           h)  ARM_SI_ED_WD - Shoulder in, Elbow down, Wrist down.
-      
+
           See also INSTRUMENT_BAND_ID."
   STANDARD_VALUE_SET = {
      "ARM_SI_ED_WD",
@@ -30874,7 +30874,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = 'N/A'
   STANDARD_VALUE_TYPE = TEXT
   DESCRIPTION = "
-      
+
           The MSL:DARK_CURRENT_FILE_DESC element specifies a description of the
           corresponding dark current files listed in DARK_CURRENT_FILE_NAME."
   STANDARD_VALUE_SET = {
@@ -30892,7 +30892,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
           The MSL:DARK_SPECTRA_MODE element specifies, for ChemCam on MSL, the
           mode used for pre-LIBS and/or post-LIBS dark spectra."
   STANDARD_VALUE_SET = {
@@ -30926,7 +30926,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
      The MSL:ERROR_MODEL_DESC element specifies a textual description of an
      error estimate method (or a pointer to a file containing the description).
      This is not intended to be a brief summary, but rather a detailed
@@ -30942,7 +30942,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The MSL:ERROR_MODEL_NAME element specifies the method or algorithm used to
      create the error estimate.  For MSL, the error estimation algorithm (XYZ and
      Range) are new, and will be continuously modified well past landing.
@@ -30974,7 +30974,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The MSL:ERROR_MODEL_PARMS_NAME element specifies the name assigned by the
      error model for each parameter in MSL:ERROR_MODEL_PARMS.  For example, for
      the MSL model 'MIPL_CONST_DISPARITY_PROJECTED_V1', the value would be
@@ -30988,11 +30988,11 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM = 1648
   DESCRIPTION = "
-      
+
           The msl:expected_packets specifies the total number of telemetry packets
           which constitute a complete data product, i.e., a data product without
           missing data.
-      
+
           For MSL, telemetry data processing does not track 'packets', but instead
           data product 'parts'."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31004,11 +31004,11 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
           The msl:expected_transmission_path specifies the planned transmission
           paths (routes) for the Data Product.  Routing control at time of MPDU
           (Metadata PDU) generation.
-      
+
           See also MSL:COMMUNICATION_SESSION_ID."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -31019,10 +31019,10 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM = 1648
   DESCRIPTION = "
-      
+
           The msl:experiment_id specifies a number that uniquely identifies the
           experiment that produced the data product.
-      
+
           For MSL SAM, the EXPERIMENT_ID is the SAM Experiment Id, found within the
           'SamExperimentId' DPO."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31050,7 +31050,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
          The MSL:FILTER_POSITION_COUNT element indicates the position of the
          optical filter wheel in motor counts.  Optical filters are 294 motor
          counts apart.  This keyword is only applicable to the Mastcam
@@ -31107,7 +31107,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
          The MSL:FOCUS_POSITION_COUNT element indicates the position of the focus
          motor in motor steps. This value is only applicable to Mastcam and the
          MAHLI instruments."
@@ -31120,7 +31120,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
          The MSL:FRAME_RATE element specifies the calculated frame rate, for
          video products, in frames per second."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31146,7 +31146,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
          The MSL:GOP_LENGTH element provides an array of JPEG sizes in bytes, for
          each image in a GOP, starting with MSL:GOP_FRAME_INDEX 0.
          See note under MSL:GOP_TOTAL_FRAMES for GOP description."
@@ -31159,7 +31159,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
          The MSL:GOP_OFFSET element provides an array of values of byte lengths
          for JPEG images that are stored sequentially in DAT files, starting with
          MSL:GOP_FRAME_INDEX 0.
@@ -31197,7 +31197,7 @@ OBJECT = ELEMENT_DEFINITION
      The MSL:HORIZON_MASK_ELEVATION specifies the elevation (in degrees) used as
      a cutoff to remove the horizon and sky in a mask product.  If the keyword
      is not present, no horizon mask was used.
-      
+
      For MSL, this is in degrees as measured in the Local Level (or
      equivalently, Site) frame."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31225,20 +31225,20 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
      The MSL:IMAGE_ACQUIRE_MODE element describes the mode of image
      acquisition.  Valid values are defined as:
-      
+
      a)  NONE  - No image acquired
      b)  SERNO - No image acquired, camera serial number returned only
      c)  IMAGE - The image was acquired
-      
+
      For MSL, there are two acquisition modes pertaining to camera data:
      IMAGE and SERNO.
-      
+
      The normal mode (IMAGE) acquires and transmits the image according to
      all the command parameter settings.
-      
+
      The 'SERNO' case is a mode of acquisition that does just enough to get
      the camera's hardware serial number.  Normally, such a mode should
      result in a data product with a header only and no image.  However, the
@@ -31263,7 +31263,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 4
   MAXIMUM_LENGTH = 5
   DESCRIPTION = "
-      
+
      The MSL:IMAGE_BLENDING_FLAG element indicates
          whether intra-stack image blending has been performed during the focus
          merge operation.  FALSE means images were merged without blending."
@@ -31289,7 +31289,7 @@ OBJECT = ELEMENT_DEFINITION
           receives the same correction. The order of images is as defined in the
           input list file (generally delivered along with the mosaic) or
           INPUT_PRODUCT_ID.  Applies to RDRs only, not EDRs.
-      
+
           NOTE:  This correction is applied after radiometric correction, if any,
           performed on the inputs."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31311,7 +31311,7 @@ OBJECT = ELEMENT_DEFINITION
           same correction.  Input values of 0 are not adjusted.  The order of
           images is as defined in the input list file (generally delivered along
           with the mosaic) or INPUT_PRODUCT_ID.  Applies to RDRs only, not EDRs.
-      
+
           NOTE:  This correction is applied after radiometric correction, if
           any, performed on the inputs."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31344,7 +31344,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The MSL:INFINITY_CONSTANT element supplies the
           numerical value used to represent a value of 'infinity'.
-      
+
           Note: MSL:INFINITY_CONSTANT is for use alongside focus related keywords
           such as MSL:MINIMUM_FOCUS_DISTANCE, MSL:MAXIMUM_FOCUS_DISTANCE, and
           MSL:BEST_FOCUS_DISTANCE."
@@ -31360,7 +31360,7 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:INPUT_PRODUCT_ID element specifies the product(s) directly used
           as input to create this product.  It may contain either the PRODUCT_ID
           or the filename of the input products.
-      
+
           For MSL, this RDR-only keyword specifies the PRODUCT_ID's of the inputs
           most directly used to create this product, which may themselves be
           RDR's.  For example, a linearized XYZ image would list the left and
@@ -31388,7 +31388,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:INSTRUMENT_COORD_FRAME_ID element specifies, along with
           INSTRUMENT_COORD_FRAME_INDEX, the name of the coordinate frame in which
           the pointing for this instrument is expressed.  The values of
@@ -31504,7 +31504,7 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:INSTRUMENT_FOCUS_DISTANCE element specifies the distance to the
           target to use for focusing the instrument.   See also
           INSTRUMENT_FOCUS_MODE.
-      
+
           For MSL ChemCam, specifies the distance to target for 'MANUAL' focus,
           or the seed for 'BASELINE' focus."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31517,10 +31517,10 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 4
   MAXIMUM_LENGTH = 5
   DESCRIPTION = "
-      
+
           The MSL:INSTRUMENT_FOCUS_INIT_FLAG element specifies whether the
           instrument focus mechanism should be (or was) initialized before use.
-      
+
           For MSL ChemCam, 'TRUE' brings the focus stage to the limit switch to
           initialize its position."
   STANDARD_VALUE_SET = {
@@ -31536,13 +31536,13 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
           The MSL:INSTRUMENT_FOCUS_MODE element specifies how an instrument was
           focused.  The values and their interpretation are mission-specific.
-      
+
           For MSL ChemCam, it is the commanded mode of focus during RMI
           observation.
-      
+
           Valid values for ChemCam are defined as:
            a)  'NO_FOCUS' - Doesn't move focus (others mark CCAM
                 unsafe).
@@ -31566,7 +31566,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:INSTRUMENT_FOCUS_POSITION_CNT element specifies the position in
           motor counts of the focus motor on a camera.
-      
+
           For MSL Chemcam and MMM, when in a request group, this specifies the
           initial focus position used by the autofocus algorithm.  When in
           INSTRUMENT_STATE, it specifies the actual focus position used for the
@@ -31603,7 +31603,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:INSTRUMENT_TEMPERATURE_STATUS element specifies, for ChemCam on
           MSL, the status of temperature read from Thermal module.
-      
+
           Note that INSTRUMENT_TEMPERATURE_NAME specifies the name associated
           with each value for this keyword."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31626,7 +31626,7 @@ OBJECT = ELEMENT_DEFINITION
           non-interpolated models end in .cahv* .  OTHER means the onboard
           software used a customized method (not specified at the time of this
           writing) other than the above.
-      
+
           Absence of this keyword should be interpreted as NONE.  As this keyword
           was added during the surface mission, it may be absent in data from
           earlier sols."
@@ -31659,7 +31659,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:INVERSE_LUT_FILE_NAME element specifies the name of the
           inverse-lookup-table file used in generating the RDR.
-      
+
           NOTE: This keyword only applies if SAMPLE_BIT_MODE_ID in
           INSTRUMENT_STATE starts with 'LUT', i.e. if an inverse lookup table
           file was used. The various shift cases are algorithmically generated;
@@ -31690,7 +31690,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 2
   MAXIMUM_LENGTH = 3
   DESCRIPTION = "
-      
+
           The MSL:LASER_MODE element specifies, for ChemCam on MSL, whether to
           fire or not fire the laser."
   STANDARD_VALUE_SET = {
@@ -31706,7 +31706,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 2
   MAXIMUM_LENGTH = 3
   DESCRIPTION = "
-      
+
          The MSL:LED_STATE_FLAG element specifies, for the MAHLI, the state of
          the LED. LEDs states may be either ON or OFF. This keyword is not
          applicable for Mastcam and MARDI instruments."
@@ -31723,7 +31723,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 2
   MAXIMUM_LENGTH = 4
   DESCRIPTION = "
-      
+
          The MSL:LED_STATE_NAME element specifies, for the MAHLI,the name of the
          LED state. There are three LED groups: two visible light groups and one
          UV group."
@@ -31741,11 +31741,11 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
           The MSL:LINEARIZATION_MODE element specifies the way in which an image
           has been linearized (see GEOMETRY_PROJECTION_TYPE).  It can contain one
           or two values.
-      
+
           The first value specifies what kind of stereo partner was used to
           linearize the image (the process requires two camera models).  A value
           of 'NOMINAL' means that it was linearized using the nominal stereo
@@ -31756,7 +31756,7 @@ OBJECT = ELEMENT_DEFINITION
           the actual partner used will be in STEREO_PRODUCT_ID.  A value of NONE,
           means that linearization has not been performed.  If the value is not
           present and linearization is on, 'NOMINAL' should be assumed.
-      
+
           The second value specifies how the linearized camera model's field of
           view (FOV) was constructed (corresponding to the 'cahv_fov' parameter in
           MIPL software; see [reference]).  'MIN' indicates the FOV is the
@@ -31785,7 +31785,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
           The MSL:LOCAL_MEAN_SOLAR_START_TIME element specifies the local mean
           solar [TBS]."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31798,7 +31798,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
           The MSL:LOCAL_MEAN_SOLAR_STOP_TIME element specifies the local mean
           solar [TBS]."
 END_OBJECT = ELEMENT_DEFINITION
@@ -31816,13 +31816,13 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:LOCAL_MEAN_SOLAR_TIME element specifies the local mean solar
           time, or LMST, on a given sol. It is one of two types of solar time used
           to express the time of day at a point on the surface of a planetary body.
-      
+
           The desire to work with solar days, hours, minutes, and seconds of
           uniform length led to the concept of the fictitious mean Sun or FMS.
           The FMS is defined as a point that moves on the celestial equator of a
           planetary body at a constant rate that represents the average mean
           motion of the Sun over a planetary year.
-      
+
           Local mean solar time is defined, by analogy with local true solar time
           (LTST), as the difference between the areocentric right ascensions of
           a point on the surface and of the FMS. The difference between LTST and
@@ -31831,7 +31831,7 @@ OBJECT = ELEMENT_DEFINITION
           of a planet. The mean solar day is also called a 'sol'. Mean solar
           hours, minutes, and seconds are defined in the same way as the true
           solar units.
-      
+
           For MSL, the valid value is embedded with a Sol value that can be
           different than the Sol (See PLANET_DAY_NUMBER) associated with LTST
           (LOCAL_TRUE_SOLAR_TIME). The time portion of the valid value is
@@ -31853,11 +31853,11 @@ OBJECT = ELEMENT_DEFINITION
          landing vehicle set down) for local true solar time (LTST).  Days
          are measured in rotations of the planet in question from midnight
          to midnight.
-      
+
          For MSL, the reference day is '0', as Landing day is Sol 0.  If
          before Landing day, then value will be less than or equal to '0'
          and can be negative.
-      
+
          See also LOCAL_TRUE_SOLAR_TIME and PLANET_DAY_NUMBER."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -31885,7 +31885,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:MAXIMUM_ELEVATION element specifies the elevation (as defined
           by the coordinate system) of the first line of the image.
-      
+
           Applies to MIPL projections Cylindrical, Perspective and
           Cylindrical-Perspective."
 END_OBJECT = ELEMENT_DEFINITION
@@ -32020,7 +32020,7 @@ OBJECT = ELEMENT_DEFINITION
           keyword names, values and types (if any) will be provided in
           SOFTWARE_KEYWORD_NAME, SOFTWARE_KEYWORD_TYPE, and SOFTWARE_KEYWORD_VALUE
           and are required for each software keyword supplied.
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group,
           where 'xxx' is the task name. There may be multiple groups to
           accommodate multiple software tasks."
@@ -32040,7 +32040,7 @@ OBJECT = ELEMENT_DEFINITION
           SOFTWARE_PARAMETER_NAME, SOFTWARE_PARAMETER_TYPE, and
           SOFTWARE_PARAMETER_VALUE and are required for each software keyword
           supplied.
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group,
           where 'xxx' is the task name.  There may be multiple groups to
           accommodate multiple software tasks."
@@ -32068,7 +32068,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:POINTING_CORRECTION_FILE_NAME element specifies the name of the
           file containing pointing correction parameters for each input file of a
           mosaic.  The file is in XML format, and is often called a 'nav' file
@@ -32082,7 +32082,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:POINTING_MODEL_NAME element defines which of several 'pointing
           models' were used to transform the camera model based on updated
           pointing information.  These updates are typically derived from mosaic
@@ -32093,7 +32093,7 @@ OBJECT = ELEMENT_DEFINITION
           default pointing based on telemetry.  The special value 'NONE' shall be
           interpreted the same as if the keyword is absent (i.e. the default
           pointing model should be used).
-      
+
           New model names can be created at any time; the models themselves
           should be described in [some PDS file like camera models are described]."
   STANDARD_VALUE_SET = {
@@ -32178,7 +32178,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
           The MSL:PRODUCT_TAG element specifies the Data Product Tag.
-      
+
           NOTE:  For MSL, use of this tag is defined separately for Individual
           product types. It is anticipated that this tag may be used to associate
           multiple products for later processing; it may also be used to indicate
@@ -32193,7 +32193,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:PROJECTION_AXIS_OFFSET element specifies an offset from a
           projection axis in a map projection.
-      
+
           For the Cylindrical-Perspective projection, this is the radius of a
           circle which represents the rotation around the projection origin of
           the synthetic camera used to calculate each column."
@@ -32207,7 +32207,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:PROJECTION_X_AXIS_VECTOR element specifies a unit vector
           defining the X-axis for a given projection.
-      
+
           For Orthographic, Orthorectified, and Vertical projections, this vector
           defines how the * axis in the mosaic is oriented in space.  The X and Y
           axis vectors together define the rotation of the projection plane
@@ -32222,7 +32222,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:PROJECTION_Y_AXIS_VECTOR element specifies a unit vector
           defining the Y-axis for a given projection.
-      
+
           For Orthographic, Orthorectified, and Vertical projections, this vector
           defines how the * axis in the mosaic is oriented in space.  The X and Y
           axis vectors together define the rotation of the projection plane
@@ -32237,12 +32237,12 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:PROJECTION_Z_AXIS_VECTOR element specifies a unit vector
           defining the Z axis for a given projection.
-      
+
           For Orthographic, Orthorectified, and Vertical projections, this vector
           defines the projection axis for the mosaic.  All points along a line
           parallel to this axis are projected to the same spot in the projection
           plane.
-      
+
           For the Cylindrical-Perspective projections, this defines the new axis
           of the circle around which the synthetic camera orbits (i.e. the normal
           to the circle), after the cameras have been rotated to correct for
@@ -32258,7 +32258,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The RADIANCE_OFFSET element provides the constant value by which a stored
           radiance value is shifted or displaced.
-      
+
           Note: Expressed as an equation:
           true_radiance_value   = radiance_offset +
           radiance_scaling_factor * stored_radiance_value. Use of this element is
@@ -32285,7 +32285,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = M
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
           The MSL:RANGE_ORIGIN_VECTOR element specifies the 3-D space from which
           Range values are measured in a Range RDR.  This will normally be the
           same as the C point of the camera.  It is expressed in the coordinate
@@ -32317,7 +32317,7 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:REFERENCE_PIXEL_IMAGE_ID element specifies the value of IMAGE_ID
           or PRODUCT_ID for the reference pixel EDR that was used to remove bias
           in generating the RDR.
-      
+
           NOTE:  If the model rather than a reference pixel EDR was used to remove
           the bias then this keyword in not included in the PDS label."
 END_OBJECT = ELEMENT_DEFINITION
@@ -32422,7 +32422,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 255
   DESCRIPTION = "
-      
+
      The msl:sample_name element specifies a named
          target of an observation by an MSL instrument. The names are
          controlled by the MSL Project."
@@ -32464,7 +32464,7 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:SOFTWARE_KEYWORD_NAME element specifies the value of all keyword
           names used as input to the primary generating software named in
           SOFTWARE_MODULE_NAME.
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group, where
           'xxx' is the task name.  There may be multiple groups to accommodate
           multiple software tasks."
@@ -32477,15 +32477,15 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOFTWARE_KEYWORD_TYPE element specifies the value of a keyword
           type used as input to the primary generating software named in
           SOFTWARE_MODULE_NAME.
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group,
           where 'xxx' is the task name.  There may be multiple groups to
           accommodate multiple software tasks.  Use of this keyword is optional.
-      
+
           NOTE:  The value of this keyword will be relevant to SOFTWARE_LANGUAGE."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -32496,13 +32496,13 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOFTWARE_KEYWORD_VALUE element specifies the value of a keyword
           value used as input to the primary generating software named in
           SOFTWARE_MODULE_NAME.  Array values can be nested.
-      
+
           Example: 'SOFTWARE_KEYWORD_VALUE = (value 1, (value2A, value2b), value3)'
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group, where
           'xxx' is the task name.  There may be multiple groups to accommodate
           multiple software tasks."
@@ -32515,7 +32515,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOFTWARE_LANGUAGE element specifies the programming language
           that the primary RDR generating software is written in (eg: IDL)."
 END_OBJECT = ELEMENT_DEFINITION
@@ -32527,12 +32527,12 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOFTWARE_MODULE_NAME element specifies the name of the primary
           software module used to generate this product.  This is the module to
           which the PDS label entries SOFTWARE_PARAMETER_* and  SOFTWARE_KEYWORD_*
           apply.
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group, where
           'xxx' is the task name.  There may be multiple groups to accommodate
           multiple software tasks."
@@ -32562,11 +32562,11 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOFTWARE_PARAMETER_NAME element specifies the value of a
           parameter name used as input to the primary generating software named
           in SOFTWARE_MODULE_NAME.
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group,
           where 'xxx' is the task name.  There may be multiple groups to
           accommodate multiple software tasks."
@@ -32579,15 +32579,15 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOFTWARE_PARAMETER_TYPE element specifies the value of a
           parameter type used as input to the primary generating software named
           in SOFTWARE_MODULE_NAME.
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group,
           where 'xxx' is the task name.  There may be multiple groups to
           accommodate multiple software tasks.  Use of this keyword is optional.
-      
+
           NOTE:  The value of this keyword will be relevant to SOFTWARE_LANGUAGE."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -32598,14 +32598,14 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOFTWARE_PARAMETER_VALUE element specifies the value of a
           parameter value used as input to the primary generating software named
           in SOFTWARE_MODULE_NAME.    Array values can be nested.
-      
+
           Example:
           'SOFTWARE_PARAMETER_VALUE        = (value 1, (value2A, value2b),value3)'
-      
+
           For MSL, this keyword may be placed in a  xxx_HISTORY_PARMS group,
           where 'xxx' is the task name.  There may be multiple groups to
           accommodate multiple software tasks."
@@ -32618,34 +32618,34 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SOLUTION_ID element specifies the unique identifier for the
           solution set to which the values in the group belong.
-      
+
           For certain kinds of information (such as pointing correction and rover
           localization), more than one valid set of values may exist
           simultaneously.  Each of these sets is called a 'solution' to the
           unknown actual value.  The SOLUTION_ID is used to identify which
           solution is being expressed by the containing group.
-      
+
           It is recommended that projects adopt a specific naming convention for
           MSL:SOLUTION_ID.  The convention will assist the user in identifying a
           specific instance of values used.  Components making up the naming
           convention for SOLUTION_ID include one or more or the following:
           date/time, group id, institution, program, purpose, request ID, user,
           and version.  New components may be added as needed.
-      
+
           NOTES: The value of SOLUTION_ID must not be reused for
                  new solutions - it must be globally unique.
-      
+
                  A single solution can cross many data sets (e.g. for a
                  mosaic).  Therefore, you may see an SOLUTION_ID
                  with the same value appearing in many different data
                  sets.
-      
+
           When in a COORDINATE_SYSTEM_STATE group, this keyword identifies the
           solution ID of the coordinate system being defined by that group.
-      
+
           The special name 'telemetry' is used for values telemetered from the
           rover."
   STANDARD_VALUE_SET = {
@@ -32758,7 +32758,7 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:SPECIAL_NAME element specifies, how the coordinate defined as
           (MSL:SPECIAL_LINE, MSL:SPECIAL_SAMPLE) is to be interpreted; i.e. why
           that coordinate is special.
-      
+
           For ChemCam on MSL, it identifies the LIBS laser hot spot in a
           particular RMI image. The text string used is the location of the LIBS
           laser spot in the RMI image described by the camera model."
@@ -32924,7 +32924,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:STEREO_PRODUCT_ID element specifies the PRODUCT_ID for the
           stereo partner used to linearize the image when LINEARIZATION_MODE is
          'ACTUAL'.  This keyword may be absent if the mode is not 'ACTUAL'."
@@ -32975,7 +32975,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:STRIPING_COUNT element specifies the number of stripes (N) used
           during dark current mitigation within image acquisition.
-      
+
           Image 'striping' is comprised of reading out the image in N different
           parts ('stripes') using hardware windowing mode, (where N is a commanded
           number from 0 to 1024), using N separate exposures (with identical
@@ -32995,7 +32995,7 @@ OBJECT = ELEMENT_DEFINITION
           The MSL:STRIPING_OVERLAP_ROWS element specifies the number of rows (M)
           of striping overlap used during dark current mitigation within image
           acquisition.
-      
+
           Image 'striping' is comprised of reading out the image in N different
           parts ('stripes') using hardware windowing mode, (where N is a commanded
           number from 0 to 1024), using N separate exposures (with identical
@@ -33012,7 +33012,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:SURFACE_MODEL_FILE_NAME element specifies the name of an XYZ,
           Z-component or other RDR used as a digital elevation model onto which
           the data were projected."
@@ -33038,7 +33038,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:TELEMETRY_SOURCE_CHECKSUM element specifies the checksum for the
           source product from which this product was derived.
-      
+
           For MSL, it is the sum of each (unsigned) byte in the data areas of all
           Data Product Objects (DPOs).  It does not include the DPO headers."
 END_OBJECT = ELEMENT_DEFINITION
@@ -33050,13 +33050,13 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:TELEMETRY_SOURCE_HOST_NAME element specifies the name of  the
           host venue that provides the telemetry source used in creation of this
           data set.
-      
+
           For MSL, example is 'mslmstbgds1'.
-      
+
           See also TELEMETRY_SOURCE_NAME."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -33074,7 +33074,7 @@ OBJECT = ELEMENT_DEFINITION
           from which this product was derived.  This differs from
           SPACECRAFT_CLOCK_START_COUNT, which is the time the instrument acquired
           the data.
-      
+
           For MSL, it refers to the creation time (DVT) of the onboard DPO and
           comes from the secondary packet header.  Note that this is the SCLK
           used by Data Management operationally to identify data products."
@@ -33087,10 +33087,10 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
           The MSL:TELEMETRY_SOURCE_SIZE element specifies the length in bytes of
           the source product from which this product was derived.
-      
+
           For MSL, it is the length of the user portion of the Data Product
           Object (DPO)."
 END_OBJECT = ELEMENT_DEFINITION
@@ -33141,10 +33141,10 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = 0
   MAXIMUM = 1023
   DESCRIPTION = "
-      
+
           The MSL:VALID_MAXIMUM_PIXEL element specifies the maximum pixel DN value
           that is considered valid for some use.
-      
+
           For MSL Chemcam, specifies the threshold for pixels used by the
           autoexposure algorithm."
 END_OBJECT = ELEMENT_DEFINITION
@@ -33159,7 +33159,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
           The MSL:VALID_MINIMUM_PIXEL element specifies the minimum pixel DN value
           that is considered valid for some use.
-      
+
           For MSL Chemcam, specifies the threshold for pixels used by the
           autoexposure algorithm."
 END_OBJECT = ELEMENT_DEFINITION
@@ -33171,7 +33171,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
           The MSL:VIRTUAL_CHANNEL_ID element identifies the RCE string generating
           the Transfer Frame, and to indicate the type of data flowing in the
           telemetry virtual channel.  RCE String A is indicated by all Virtual
@@ -33188,11 +33188,11 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MINIMUM_LENGTH = 1
   DESCRIPTION = "
-      
+
           The MSL:ZERO_EXPOSURE_IMAGE_ID element specifies the value of
           PRODUCT_ID for the zero-exposure EDR that is subtracted during RDR
           generation to account for shutter smear and masked-region dark current.
-      
+
           NOTE:  This keyword is only placed in the PDS label if a
                  zero-exposure image EDR product was used during
                  on-ground calibration.  It is not set when on-board
@@ -33258,17 +33258,17 @@ OBJECT = ELEMENT_DEFINITION
        The name data element indicates a literal value representing
        the common term used to identify an element or object.  See
        also: 'id'.
-      
+
        Note:  In the PDS data dictionary, if the name identifier is
        prepended with a namespace identifier (e.g., CASSINI:TARGET_NAME),
        then the name identifier is restricted to 61 characters where the
        name identifier and the namespace identifiers are each restricted
        to 30 characters and are separated by a colon (for a total maximum
        length of 61 characters).
-      
+
        The name identifier and its component parts must conform to PDS
        nomenclature standards.
-      
+
        If the name identifier is used without a namespace identifier
        (e.g., TARGET_NAME), then the name identifer is restricted to 30
        characters, and must conform to PDS nomenclature standards."
@@ -33337,7 +33337,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = PIXEL
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
           Used in New Horizons (NH) mission instrument observations labels as
           an approximate line location in an image of the center of a target.
           This is only an estimate of the location and may be off by a large
@@ -33353,7 +33353,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 255
   DESCRIPTION = "
-      
+
           Used in New Horizons (NH) mission instrument observations labels as
           an identifier of the primary target of a boresighted, imaging
           instrument (ALICE, LEISA, LORRI, MVIC).  See also
@@ -33366,7 +33366,7 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = PIXEL
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
           Used in New Horizons (NH) mission instrument observations labels as
           an approximate sample location in an image of the center of a target.
           This is only an estimate of the location and may be off by a large
@@ -33382,7 +33382,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 255
   DESCRIPTION = "
-      
+
           Used in New Horizons (NH) mission instrument observations labels as a
           brief, free-form, prose description of the observation sequence and/or
           targets and/or anything else the science team thought useful to
@@ -33396,31 +33396,31 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = TEXT
   MAXIMUM_LENGTH = 255
   DESCRIPTION = "
-      
+
           Used in New Horizons (NH) mission instrument observation labels
           to identify SEQUENCE IDentifier of sequence that generated
           the observation.
-      
+
           E.g.
-      
+
              JEMV_COLOR_01
              15174:PEAL_CLOSEST_APPROACH_01
-      
+
           This NH-specific keyword is used because PDS standard keyword
           SEQUENCE_ID maximum allowed lenght is too short for some of
           the NH values.
-      
+
           Loose formation rules, which varied throughout the mission, are
           described here:
-      
+
           May have prefix of 5-digit Load ID and colon, YYDOY:, indicating
           nominal day of load on which sequence was uploaded,  where
-      
+
             YY = (Year A.D.) - 2000
             DOY = Day Of Year,
-      
+
             e.g. 15185 => 2015-JUL-04
-      
+
           Typically next are 2 uppercase letters for mission phase or subphase:
           e.g.
             CO - COmmissioning (also sometimes LA for LAunch)
@@ -33428,11 +33428,11 @@ OBJECT = ELEMENT_DEFINITION
             A1 - Annual checkout 1 (also A2-A8; during Pluto Cruise)
             PE - Pluto Encounter
             etc.
-      
+
           Typically next are 2 uppercase letters for main instrument of
           sequence (N.B. may not be instrument of observation in label):
           ALice; LEisa; LOrri; MVic; PEpssi; SDc; SWap.
-      
+
           After that is an arbitrary sequence of 7-bit ASCII characters."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -33899,7 +33899,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM = -180
   MAXIMUM = 360
   DESCRIPTION = "
-      
+
      One of the three angles defining the oblique coordinate system used in the
      OBLIQUE CYLINDRICAL projection.  This is the ordinary longitude in degrees
      of the pole (Z axis) of the oblique system."
@@ -34043,9 +34043,9 @@ OBJECT = ELEMENT_DEFINITION
      The OBSERVATION_INCLINATION element provides the value of the angle
      of inclination of an observation with respect to specific planes of
      a non-standard coordinate system.
-      
+
      Note for IRAS:
-      
+
      The IRAS satellite has a natural but non-standard coordinate system
      defined by SOLAR_ELONGATION and OBSERVATION_INCLINATION.  SOLAR_ELONGATION
      is the angle between the line of site of the satellite and the Sun.
@@ -34058,11 +34058,11 @@ OBJECT = ELEMENT_DEFINITION
      the satellite in its polar orbit about the Earth.  OBSERVATION_INCLINATION
      is related to IRAS_CLOCK_ANGLE by the equation
      OBSERVATION_INCLINATION = 90 - IRAS_CLOCK_ANGLE.
-      
+
      For IRAS, SOLAR_ELONGATION and OBSERVATION_INCLINATION are related
      to geocentric ecliptic latitude (beta) and longitude (lamda) and
      the longitude of the Sun (lamda Sun) through the equations:
-      
+
        sin(OBSERVATION_INCLINATION) = sin(beta)/sin(SOLAR_ELONGATION)
          and
        cos(SOLAR_ELONGATION) = cos(beta)*cos(lamda - lamda Sun)."
@@ -34098,7 +34098,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 30
   DESCRIPTION = "
-      
+
      The observation_type element identifies the general type of
      an observation."
 END_OBJECT = ELEMENT_DEFINITION
@@ -34238,7 +34238,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
      The OFFSET_NUMBER indicates the offset value used in the analog to
      digital conversion.  The OFFSET_NUMBER times a constant is the voltage
      value added to the measured voltage signal before digitization."
@@ -34528,7 +34528,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The order_date element provides the date when upon which an order was
      placed for a data set."
 END_OBJECT = ELEMENT_DEFINITION
@@ -34562,7 +34562,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The order_status_date element provides the effective date
      of an order status change."
 END_OBJECT = ELEMENT_DEFINITION
@@ -34698,7 +34698,7 @@ OBJECT = ELEMENT_DEFINITION
      The PACKET_CREATION_SCLK specifies the value of the spacecraft clock
      at the time that data was packetized on board a spacecraft. This value
      is not always co-incident with the data acquisition time.
-      
+
      Note: for MPF and M98, this value was stored in the primary telemetry
      packet header of the first packet of a data file, and was the reference
      used for requesting the data packets from the TDS (Telemetry Delivery
@@ -35010,7 +35010,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The peer_review_start_date element provides the beginning
      date for a peer review."
 END_OBJECT = ELEMENT_DEFINITION
@@ -35022,7 +35022,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The peer_review_stop_date element provides the final date
      for a peer review."
 END_OBJECT = ELEMENT_DEFINITION
@@ -35036,7 +35036,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The PERIAPSIS_ALTITUDE element provides the distance between the spacecraft
      and the target body surface at periapsis on a particular orbit.
-      
+
      Note: For MARS EXPRESS, the altitude is measured from the surface of the
      target body, which is defined by an ellipsoid in the NAIF planetary
      constants kernel. (Contact the NAIF NODE for more information.)"
@@ -35372,7 +35372,7 @@ OBJECT = ELEMENT_DEFINITION
      (rotation of 360 degrees) elapsed since a reference day (e.g., the day
      on which a landing vehicle set down).  Days are measured in rotations
      of the planet in question from the reference day (which is day zero).
-      
+
      Note: For MPF, the planet_day_number was measured from 1 rather
      than 0 as the first day of surface operations. Negative numbers
      referred to pre-surface (cruise) images."
@@ -35584,7 +35584,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
           The keyword PPI:TIME_FORMAT is used to modify the meaning of the
           keyword-value pair DATA_TYPE = TIME within a data element (COLUMN
           or FIELD). This keyword can only be used in data elements where
@@ -35594,7 +35594,7 @@ OBJECT = ELEMENT_DEFINITION
           format. This keyword may only be used to define alternative time
           formats used in data files. Time values provided in labels and
           catalog files must be in PDS format.
-      
+
           The value assigned to the PPI:TIME_FORMAT keyword is a format
           specification. This specification defines the interpretation of
           every character (alpha, numeric, and non alpha-numeric) included
@@ -35606,97 +35606,97 @@ OBJECT = ELEMENT_DEFINITION
           specification describes the parsing algorithm for the date/time
           string of the length BYTES (not including any quotes) from left
           to right.
-      
+
           PPI:TIME_FORMAT may not be used to describe times which are
           defined relative to some reference time or epoch (e.g. Julian
           Date). As a result, times defined relative to some epoch must
           be declared as having some DATA_TYPE other than 'TIME'.
-      
+
           Each of the tokens are described as follows:
-      
+
              %YEAR% is the four-digit integer year token (length = 4).
-      
+
              %YR% is the two-digit integer year token. Values greater then
              50 are referenced to 1900 and values less or equal to 50 are
              referenced to 2000 (length = 2).
-      
+
              %YEARBC% is the four-digit integer year BC token (length = 2).
-      
+
              %FYEAR% is the generic fractional year token. There can be any
              number of digits before the decimal point, however, four should
              be sufficient for most data sets. If less than 4 digits precede
              the decimal point, leading zeros are implied. FYEAR is
              referenced to 0001 AD for positive values and negative values
              indicate years BC.
-      
+
              %MM% is the two-digit integer month token. Valid range is 1-12
              (length = 2).
-      
+
              %MON% is the three character month abbreviation token from the
              set {JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV,
              DEC}. The set is not case sensitive so that Jan = jan = JAN
              (length=3).
-      
+
              %MONTH% is the full month name (English) token where month is
              from the set {January, February, March, April, May, June, July,
              August, September, October, November, December}. The month
              value is not case sensitive so that May = may = MAY (length =
              3-8).
-      
+
              %DD% is the two-digit integer day of month token. Valid range
              is 1-31 (length = 2).
-      
+
              %DOY% is a three-digit integer day of year token where Jan 1 =
              001. Valid range is 1-366 (length=3)
-      
+
              %DOY0% is a three-digit integer day of year token where Jan 1 =
              000. If less than three digits are found then leading zero's
              are implied. Valid range is 0-365 (length = 3).
-      
+
              %FDAY% is the generic fractional day token. The field is
              terminated by a non-numeric character when the column BYTES is
              reached. FDAY can be either floating point or integer and can
              be either positive or negative. The start (FDAY=0.0) date/time
              for the generic FDAY counter is specified by a year elsewhere
              in the TIME_FORMAT string.
-      
+
              %HR% is the two digit integer hour of day token. If only one
              digit is found, then a leading zero is implied. Valid range is
              0-23 (length = 2).
-      
+
              %FHR% is the generic fractional hour token. The field is
              terminated by a non-numeric character or when the column BYTES
              is reached. FHR can be either floating point or integer and can
              be either positive or negative. The start date/time for the
              generic FHR is set elsewhere in the TIME_FORMAT string by the
              next largest time element token.
-      
+
              %MIN% is the two-digit integer minute of hour token. If only
              one digit is found, then a leading zero is implied. Valid range
              is 0-59 (length = 2).
-      
+
              %FMIN% is the generic fractional minute token. The field is
              terminated by a non-numeric character or when the column BYTES
              is reached. FMIN can be either floating point or integer and can
              be either positive or negative. The start date/time for the
              generic FMIN is set elsewhere in the TIME_FORMAT string by the
              next largest time element token.
-      
+
              %SEC% is the two-digit second of minute token. If only one digit
              is found, then a leading zero is implied. The valid range is 0-
              60 (length = 2).
-      
+
              %FSEC% is the generic fractional second token. The field is
              terminated by a non-numeric character or when the column BYTES
              is reached. FSEC can be either floating point or integer and can
              be either positive or negative. The start date/time for the
              generic FSEC is set by the next largest time element token in
              the TIME_FORMAT string.
-      
+
              %MSEC% is the three-digit integer millisecond of second token.
              If less than 3 digits are found, the leading zeros are implied.
              The valid range is 0-999 (length = 3).
-      
+
              %FMSEC% is the generic fractional millisecond token. The field
              is terminated by a non-numeric character or when the column
              BYTES is reached. FMSEC can be either floating point or integer
@@ -36060,7 +36060,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The product_release_date data element identifies the date
      on which a particular data product is released from one
      system or process to another, according to system- or
@@ -36075,7 +36075,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 40
   DESCRIPTION = "
-      
+
      The PRODUCT_TYPE data element identifies the type or
      category of a product within a data set.  Examples:
      EDR, DOCUMENT, CALIBRATION_IMAGE, SPICE_SP_KERNEL,
@@ -36600,7 +36600,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The publication_date element provides the date when a
      published item, such as a document or a compact disc, was
      issued."
@@ -36618,7 +36618,7 @@ OBJECT = ELEMENT_DEFINITION
      four-component representation of a rotation matrix.  This particular
      definition is focused on the PDS use of quaternions; one should refer
      to other sources for a more complete discourse on quaternion math.
-      
+
      A quaternion may be used to specify the rotation of one Cartesian
      reference frame--sometimes referred to as the base frame or the
      'From' frame--into coincidence with a second Cartesian reference
@@ -36628,35 +36628,35 @@ OBJECT = ELEMENT_DEFINITION
      action, specified by a Cartesian vector used as the positive axis of
      the rotation (right hand rule) and the magnitude (an angle) of
      rotation about that axis.
-      
+
      The quaternion may be thought of as defining the instantaneous
      orientation--sometimes called 'pointing'--of a structure such as an
      instrument, antenna, solar array or spacecraft bus, given relative to
      a specified reference frame (the base frame), at an epoch of interest.
-      
+
      Perhaps of more use is the concept that a quaternion may be used to
      rotate an arbitrary Cartesian 3-vector defined in one reference frame
      (e.g. an instrument's reference frame) to an equivalent vector
      defined in another reference frame (e.g. the frame tied to a
      spacecraft or the J2000 inertial reference frame).
-      
+
      A quaternion has four components.  One of the components is a scalar,
      a function of the angle of rotation (cosine of half the rotation
      angle), while the remaining three components are used to specify a
      vector, given in the base reference frame, about which the rotation
      will be made. In the PDS context a quaternion has a magnitude of one,
      and so may be treated as a unit quaternion.
-      
+
      In many cases a time tag (epoch) must be associated with the
      quaternion because the orientation varies over time. A time tag is
      not needed if the 'To' and 'From' frames have a fixed offset.
-      
+
      The QUATERNION_DESC element is always to be paired with the
      QUATERNION element, and will contain a complete description of the
      formation and rotational sense of the quaternion specified with the
      QUATERNION keyword, and the structure (organization of the four
      components) of the quaternion.
-      
+
      In the lingo of the NASA 'SPICE' ancillary information system a
      rotation matrix is synonymous with a C-matrix--that which may be
      obtained from a C-kernel. The SPICE Toolkit provides an assortment of
@@ -36683,15 +36683,15 @@ OBJECT = ELEMENT_DEFINITION
      keyword points is to be included in the /doc subdirectory of an
      archive product.  This particular definition is focused on the PDS
      use of quaternions.
-      
+
      In typical space science usage (and especially within the SPICE
      context) a quaternion is used to rotate a Cartesian 3-component
      position vector given in one reference frame (the 'From' frame) to a
      second frame (the 'To' frame).
-      
+
      The quaternion description file must clearly provide three pieces of
      information. These items are as follows.
-      
+
         1) Define the structure or organization of the quaternion: specify
      which component provides the angle of rotation and which three
      components specify the vector about which the rotation is to occur.
@@ -36699,7 +36699,7 @@ OBJECT = ELEMENT_DEFINITION
      form a rotation matrix from the quaternion elements being specified.
      As an example, in the SPICE context, the equations for forming a
      rotation matrix (a C-matrix) from the four quaternion elements are:
-      
+
                  +-                                                          -+
                  |           2    2                                           |
                  | 1 - 2 ( q2 + q3 )    2 (q1 q2 - q0 q3)   2 (q1 q3 + q0 q2) |
@@ -36713,54 +36713,54 @@ OBJECT = ELEMENT_DEFINITION
                  | 2 (q1 q3 - q0 q2)    2 (q2 q3 + q0 q1)   1 - 2 ( q1 + q2 ) |
                  |                                                            |
                  +-                                                          -+
-      
-      
-      
-      
+
+
+
+
         2) Provide a clear, unambiguous identification (and mathematical
      specification, if not readily available elsewhere) of the base frame
      (the 'From' frame) in which an input vector is given;
-      
+
         3) Provide a clear, unambiguous identification (and mathematical
      specification, if not readily available elsewhere) of the target
      frame (the 'To' frame) into which the input vector will be rotated by
      direct application of the quaternion.
-      
+
      It is strongly suggested that equations showing how to apply the
      rotation matrix derived from the quaternion be provided.  As an
      example, in the SPICE system:
-      
+
      A C-matrix is a 3x3 matrix that transforms Cartesian coordinates
      referenced to a ``base frame'' to coordinates in a target frame,
      which is often a frame fixed to an instrument, antenna, or other
      spacecraft structure for which knowing the orientation ('the
      pointing') is important.
-      
+
      The C-matrix transforms coordinates as follows: if a vector v has
      coordinates ( x, y, z ) in some base reference frame (like J2000),
      then v has coordinates ( x', y', z' ) in instrument-fixed
      coordinates, where
-      
-      
+
+
              [          ] [ x ]     [ x']
              | C-matrix | | y |  =  | y'|
              [          ] [ z ]     [ z']
-      
-      
-      
+
+
+
      With regards to the quaternion structure issue, unlike for some
      geometric quantities there is no standard for how to form a
      quaternion. Two formation rules are in common use (see below), and it
      is strongly suggested that users pick one of these.  But whatever is
      the rule being used in the particular instance must be carefully
      noted in the QUATERNION_DESC file.
-      
+
      In the descriptions below, one system defines the four components
      with indices of 0 through 3. The other system uses indices 1 through
      4. The use of one or the other numbering system is not important, but
      the two schemes are shown here to be consistent with other
      documentation or SPICE code that the user may encounter.
-      
+
      The first system defines components zero through three, with the 0th
      component as the scalar, and the 1st, 2nd and 3rd the vector
      components, where q0 = cos(a/2), q1 =-sin(a/2)*u1, q2 = -sin(a/2)*u2,
@@ -36772,7 +36772,7 @@ OBJECT = ELEMENT_DEFINITION
      Toolkit subroutines, and is therefore the PDS recommended structure.
      The SPICE Toolkit provides an assortment of routines that deal with
      quaternions.
-      
+
      The second system defines components one through four, with the
      fourth component as the scalar, and the 1st, 2nd and 3rd as the
      vector components, where q1 = sin(a/2)*u1, q2 = sin(a/2)*u2, q3 =
@@ -36782,10 +36782,10 @@ OBJECT = ELEMENT_DEFINITION
      of the components in the QUATERNION keyword will be ( q1, q2, q3, q4
      ) under this system.  This is the structure often found in spacecraft
      telemetry.
-      
+
      The equations for forming a rotation matrix from the four quaternion
      elements as defined in this alternate scheme are:
-      
+
                  +-                                                          -+
                  |           2    2                                           |
                  | 1 - 2 ( q2 + q3 )    2 (q1 q2 + q4 q3)   2 (q1 q3 - q4 q2) |
@@ -36799,18 +36799,18 @@ OBJECT = ELEMENT_DEFINITION
                  | 2 (q1 q3 + q4 q2)    2 (q2 q3 - q4 q1)   1 - 2 ( q1 + q2 ) |
                  |                                                            |
                  +-                                                          -+
-      
-      
+
+
      The rotation matrix transforms coordinates as follows: if a vector v
      has coordinates ( x, y, z ) in some base reference frame (like
      J2000), then v has coordinates ( x', y', z' ) in instrument-fixed
      coordinates, where
-      
-      
+
+
              [          ] [ x ]     [ x']
              |   ROT    | | y |  =  | y'|
              [          ] [ z ]     [ z']
-      
+
      (With ROT defined as shown above, this equation transforming a vector
      in the base frame to a vector in the target frame is the same as
      shown earlier for the SPICE-style quaternions. The name CMAT has been
@@ -36854,7 +36854,7 @@ OBJECT = ELEMENT_DEFINITION
        The x value is here defined as the pixel value in the LINE_SAMPLE
        direction, and the y value is defined as the pixel value in the LINE
        direction.
-      
+
        The reference pixel is commonly, but not always, defined
        to be the center of the image.  The coordinate may be specified to
        sub-pixel precision, and may be specified outside the physical
@@ -37097,7 +37097,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The RADIANCE_OFFSET element provides the constant value by which a stored
      radiance value is shifted or displaced.
-      
+
      Note: Expressed as an equation: true_radiance_value = radiance_offset +
      radiance_scaling_factor * stored_radiance_value. Use of this element is
      discouraged in favor of the more general offset element."
@@ -37365,7 +37365,7 @@ OBJECT = ELEMENT_DEFINITION
      RECORD_BYTES describes a file with RECORD_TYPE = STREAM
      (e.g. a SPREADSHEET), its value is set to the length of the longest
      record in the file.
-      
+
      Note:  In the PDS, the use of record_bytes, along with other
      file-related data elements is fully described in the Standards Reference."
 END_OBJECT = ELEMENT_DEFINITION
@@ -37439,7 +37439,7 @@ OBJECT = ELEMENT_DEFINITION
      coordinate system for the group in which the keyword occurs. This index is
      a set of integers which serve to identify coordinate system instances in a
      mission-specific manner.
-      
+
      Note: For MER, the indices are based on the ROVER_MOTION_COUNTER. This
      counter is incremented each time the rover moves (or may potentially have
      moved, e.g., due to arm motion). The full counter may have up to 5 values
@@ -37464,7 +37464,7 @@ OBJECT = ELEMENT_DEFINITION
      systems (such as 'SITE' for rover missions), which have multiple instances
      using the same name, REFERENCE_COORD_SYSTEM_INDEX is also required to
      completely identify the reference coordinate system.
-      
+
      Note: For MER, the reference is usually a SITE frame."
   STANDARD_VALUE_SET = {
      "GENERIC_FIXED",
@@ -37639,7 +37639,7 @@ OBJECT = ELEMENT_DEFINITION
      of this keyword should be a sequence of real numbers, in the same
      order as the axis subscripts, and using the same units (including
      scale factors) as the axes.
-      
+
      Note that the reference point is a logical concept, and thus is
      not required to be inside the associated object.  If, for example,
      the reference point described for an IMAGE object is outside the
@@ -37647,17 +37647,17 @@ OBJECT = ELEMENT_DEFINITION
      are determined by extrapolation of the image axes.  In this case
      the REFERENCE_POINT values will exceed at least some of the bounds
      of the axis parameters of the IMAGE.
-      
+
      The REFERENCE_POINT as defined here is analogous to the CRVALn
      values of the FITS standard.  Users should note that the CRVALn
      standard is often re-interpreted by data preparers, and should not
      assume that any particular CRVALn set of numbers will map directly
      to a valid REFERENCE_POINT without first verifying the local use
      of the CRVALn keywords.
-      
+
      The REFERENCE_POINT_DESC keyword should be used in conjunction with
      REFERENCE_POINT to describe the nature of the point being referenced.
-      
+
      See also the REFERENCE_POINT_INDEX keyword, which locates the
      reference point in units of the axis indices, rather than in physical
      units (analogous to the FITS CRPIXn keywords)."
@@ -37673,7 +37673,7 @@ OBJECT = ELEMENT_DEFINITION
      REFERENCE_POINT and REFERENCE_POINT_INDEX keywords to identify
      and describe the reference point associated with a multi-dimensional
      object - typically an IMAGE or ARRAY.
-      
+
      The reference point may be, for example, the center of a body, a
      standard star, or a specific location on a body or the celestial
      sphere.  This keyword should be used to define what the reference
@@ -37696,14 +37696,14 @@ OBJECT = ELEMENT_DEFINITION
      location is expressed as a sequence of values in units of the
      axis index, in the same order as the defined axes.  The indices
      for each axis are assumed to be numbered positively from 1.
-      
+
      Although the indices are integral, the REFERENCE_POINT_INDEX
      values are floating point and may be expressed to an appropriate
      level of precision.  For example, if the reference point is the
      location of the center of a target body and known to sub-pixel
      accuracy, then it may have a REFERENCE_POINT_INDEX value that
      looks like: (215.678, 500.234).
-      
+
      Note that the reference point is a logical concept, and thus is
      not required to be inside the associated object.  If, for example,
      the reference point described for an IMAGE object is outside the
@@ -37711,18 +37711,18 @@ OBJECT = ELEMENT_DEFINITION
      REFERENCE_POINT_INDEX are determined by extrapolation of the image
      axes.  In this case some of the REFERENCE_POINT_INDEX values may be
      negative or greater than the maximum index found in the image.
-      
+
      The REFERENCE_POINT_INDEX as defined here is analogous to the CRPIXn
      values of the FITS standard.  Users should note that the CRPIXn
      standard is often re-interpreted by data preparers, and should not
      assume that any particular CRPIXn set of numbers will map directly
      to a valid REFERENCE_POINT_INDEX without first verifying the local
      use of the CRPIXn keywords.
-      
+
      The REFERENCE_POINT_DESC keyword should be used in conjunction with
      REFERENCE_POINT_INDEX to describe the nature of the point being
      referenced.
-      
+
      See also the REFERENCE_POINT keyword, which locates the reference
      point in the physical units of the axes, rather than in index
      units (analogous to the FITS CRVALn keywords)."
@@ -37789,7 +37789,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
      The reflectance_scaling_factor element identifies the
      conversion factor from DN to reflectance."
 END_OBJECT = ELEMENT_DEFINITION
@@ -37825,7 +37825,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The registration_date element provides the date as of which
      an individual is registered as an authorized user of the PDS
      system."
@@ -37838,7 +37838,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
          The release_date element provides the date when a data set or
          portion of a data set is made available for use. Typically this
          is when the data is on-line and available for access."
@@ -37858,10 +37858,10 @@ OBJECT = ELEMENT_DEFINITION
          releases should use a value that represents the next increment
          over the previous RELEASE_ID (e.g., the second release should use
          a RELEASE_ID of '0002').
-      
+
          Releases are done when an existing data set or portion of a data
          set becomes available for distribution.
-      
+
          Note:  The DATA_SET_ID and RELEASE_ID are used as a combined
                 key to ensure all releases are unique."
 END_OBJECT = ELEMENT_DEFINITION
@@ -38310,30 +38310,30 @@ OBJECT = ELEMENT_DEFINITION
      in question intersects the celestial equator (reckoned eastward).
      Right ascension is used in conjunction with the DECLINATION keyword
      to specify a point on the sky.
-      
+
      To accurately specify a point on the sky, the following additional
      keywords are needed:
-      
+
         COORDINATE_SYSTEM_ID -- Specifies the reference system as B1950 or
         J2000.
-      
+
         EQUINOX_EPOCH - Specifies the epoch of equinox in decimal years.
-      
+
      For a complete discussion of right ascension, declination, epoch, and
      reference systems, see [SEIDELMANN1992]:
-      
+
         Seidelmann, P.K., Ed., 'Explanatory Supplement to the Astronomical
         Almanac', University Science Books, Sausalito, California, 1992.
-      
+
      To relate the specified values of right ascension and declination to
      an image, the following keyword is needed:
-      
+
         RA_DEC_REF_PIXEL - A two-valued keyword to specify the reference
         pixel to which the RA and dec apply.
-      
+
      An additional useful keyword for specifying the relation of
      declination and right_ascension to an image is:
-      
+
         PIXEL_ANGULAR_SCALE - the angular scale of the image in arcseconds
         per pixel."
 END_OBJECT = ELEMENT_DEFINITION
@@ -38359,10 +38359,10 @@ OBJECT = ELEMENT_DEFINITION
      specified for a particular moment in time, which can correspond to the
      time of an observation or can be specified with the REFERENCE_TIME
      element.  See also NODAL_REGRESSION_RATE.
-      
+
      Note: The invariable plane of a planet is equivalent to its equatorial
      plane for every ringed planet except Neptune.
-      
+
      Note: The 'above' side of the invariable plane is the IAU-defined
      northern hemisphere for Jupiter, Saturn and Neptune, but the
      IAU-defined southern hemisphere for Uranus."
@@ -38658,7 +38658,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The ROTATION_NOLOAD_CURRENT element specifies the
      no load current for the rotation motor of an instrument.
-      
+
      Note: For MER, it is used for the MER RAT during all
      operations of the instrument."
 END_OBJECT = ELEMENT_DEFINITION
@@ -38671,7 +38671,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The ROTATION_TORQUE_PARAMETER element provides the open-loop
      voltage supplied to an instrument rotation motor.
-      
+
      Note: For MER, this is the grinding wheel rotation motor during
      initialization/diagnostics, seek and scan, grinding, and brushing
      operations."
@@ -38731,7 +38731,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The ROVER_HEADING element provides a clockwise angular measure of the
      pointing direction of a rover from a specified direction in raw counts.
-      
+
      Note: For Mars Pathfinder, this value was measured from Lander north in
      BAMS (Binary Angle Measurements, where 2**16 BAMS equals one 360 degree
      revolution)."
@@ -38756,7 +38756,7 @@ OBJECT = ELEMENT_DEFINITION
      indices (e.g., MER), the motion counter could also contain any integer
      values which conform to the above definition, such as time or spacecraft
      clock values.
-      
+
      Note: For MER, the motion counter consists of five values. In order, they
      are Site, Drive, IDD, PMA, and HGA. The Site value increments whenever a
      new major Site frame is declared. The Drive value increments any time
@@ -38804,19 +38804,19 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The row_bytes element represents the maximum number of bytes in each
      data object row.
-      
+
      Notes:
-      
+
        (1) In the PDS, in object definitions for tables, the value of
            row_bytes includes terminators, separators, and delimiters unless
            row padding is used.  For padding at the beginning of a row, the
            keyword row_prefix_bytes may be used. For padding at the end of
            a row, row_suffix_bytes may be used.
-      
+
        (2) In object definitions for spreadsheets, the value of row_bytes
            is the maximum number of bytes possible in the row if each field
            uses its maximum allocation of bytes and including all delimiters.
-      
+
        (3) See the Standards Reference, TABLE and SPREADSHEET objects for
            more information."
 END_OBJECT = ELEMENT_DEFINITION
@@ -38936,7 +38936,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The SAMPLE_BIT_MODE_ID element identifies
      the type of pixel scaling performed.
-      
+
      Note: For MER, pixel scaling is accomplished
      by using onboard lookup tables or by shifting
      a specified bit into the most significant bit."
@@ -39030,7 +39030,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 6
   DESCRIPTION = "
-      
+
      The SAMPLE_DISPLAY_DIRECTION element is the preferred orientation of
      samples within a line for viewing on a display device. The default is
      right, meaning samples are viewed from left to right on the
@@ -39569,10 +39569,10 @@ OBJECT = ELEMENT_DEFINITION
         individual parameters of a scanning instrument. The parameters itself
         are explained in the SCAN_PARAMETER_DESC element that shall always
         accompany this keyword.
-      
+
         An example usage is (substitute quotes instead of apostrophies in the
         example below)):
-      
+
         SCAN_PARAMETER       = (1.2 <DEGREE>,     12.2 <DEGREE>)
         SCAN_PARAMETER_DESC  = ('SCAN_START_ANGLE', 'SCAN_STOP_ANGLE')"
 END_OBJECT = ELEMENT_DEFINITION
@@ -39929,7 +39929,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The SHUTTER_CORRECT_THRESH_COUNT element specifies the
      exposure time threshold for conditional shutter subtraction.
-      
+
      Note: For MER, the count is in increments of 5.1 ms."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -40055,7 +40055,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The SIGNAL_CHAIN_ID element identifies the signal chain (electronic signal
      path) number selected for charge-coupled device (CCD) output.
-      
+
      Note: For MARS EXPRESS the High-Resolution Stereo Colour Imager (HRSC) is
      composed of 10 channels, each consisting of a charge-coupled device (CCD).
      The data from these sensors are sent to the Data Processing Unit (DPU) via
@@ -40438,7 +40438,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The software_release_date element provides the date as of
      which a program was released for use."
 END_OBJECT = ELEMENT_DEFINITION
@@ -40703,7 +40703,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The SOURCE_ID element provides a unique
      identifier for the source of the data.
-      
+
      Note: For MER, the SOURCE_ID element is intended
      to provide a user of the data with a simple means
      for selecting the source of command."
@@ -40888,7 +40888,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 6
   DESCRIPTION = "
-      
+
      The spacecraft_id element provides a synonym or
      mnemonic for the name of a spacecraft which is uniquely
      associable with the spacecraft name.
@@ -40930,7 +40930,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The spacecraft_name element provides the full, unabbreviated
      name of a spacecraft.  See also: spacecraft_id,
      instrument_host_id."
@@ -41043,7 +41043,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = SUGGESTED
   MAXIMUM_LENGTH = 25
   DESCRIPTION = "
-      
+
      The spacecraft_pointing_mode element provides the pointing mode of the
      spacecraft.  The definition of the modes and the standard values are
      given via the SPACECRAFT_POINTING_MODE_DESC element, which shall always
@@ -41539,7 +41539,7 @@ OBJECT = ELEMENT_DEFINITION
      The START_ERROR_STATE provides the state of the error flags
      returned by an instrument or instrument host at the beginning
      of a specified event.
-      
+
      Note: For Mars Pathfinder, this was the state of the APXS
      error state flags at the beginning of an APXS sampling interval."
 END_OBJECT = ELEMENT_DEFINITION
@@ -41572,12 +41572,12 @@ OBJECT = ELEMENT_DEFINITION
   UNIT_ID = NONE
   STANDARD_VALUE_TYPE = RANGE
   DESCRIPTION = "
-      
+
      The start_julian_date element provides the Julian date of the start of
      a time period of interest.  Julian date is defined as an integer count
      of days elapsed since noon, January 1, 4713 B.C.  Thus, the Julian
      date of noon January 1, 1960 (A.D.) is 2436935.
-      
+
      Note: This element has been superceded by start_julian_date_value and
      should no longer be used."
 END_OBJECT = ELEMENT_DEFINITION
@@ -41592,7 +41592,7 @@ OBJECT = ELEMENT_DEFINITION
      The START_JULIAN_DATE_VALUE provides the full Julian date
      (i.e., including date fraction) of the start of an observation
      or event.  Julian dates are expressed as real numbers.
-      
+
      Note that this keyword should contain the full Julian date,
      not the modified Julian date."
 END_OBJECT = ELEMENT_DEFINITION
@@ -41720,7 +41720,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The START_TIME_ET element provides the time of data acquisition
      in spacecraft event time (SCET), ephemeris time (ET) format.
-      
+
      For Mars Odyssey, the START_TIME_ET represented the time of data
      acquisition of the leading edge of the detector array (filter 1),
      even if filter one was not downloaded."
@@ -41809,7 +41809,7 @@ OBJECT = ELEMENT_DEFINITION
      The STOP_ERROR_STATE element provides the state of the error
      flags returned by an instrument or instrument host at the
      end of a specified event.
-      
+
      Note: For Mars Pathfinder, this was the state of the APXS
      error state flags at the end of an APXS sampling interval."
 END_OBJECT = ELEMENT_DEFINITION
@@ -41824,7 +41824,7 @@ OBJECT = ELEMENT_DEFINITION
      The STOP_JULIAN_DATE_VALUE provides the full Julian date
      (i.e., including date fraction) of the end of an observation
      or event.  Julian dates are expressed as real numbers.
-      
+
      Note that this keyword should contain the full Julian date,
      not the modified Julian date."
 END_OBJECT = ELEMENT_DEFINITION
@@ -42686,7 +42686,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The SUN_FIND_PARM element is an array of values that provides the
      numerical parameters used in finding the sun centroid.
-      
+
      Note: For MER, this value is valid if the SUN_FIND_FLAG element is
      'TRUE'. If the SUN_FIND_FLAG element is 'FALSE', then this value
      becomes 'N/A'."
@@ -42771,7 +42771,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The support_request_date element provides the date that a
      support request was taken by the PDS operator."
 END_OBJECT = ELEMENT_DEFINITION
@@ -42819,7 +42819,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The support_resolution_date element provides the date that
      a support request was resolved by the PDS."
 END_OBJECT = ELEMENT_DEFINITION
@@ -43019,7 +43019,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The system_bulletin_date element is the date and time
      when the PDS operator logged a PDS system bulletin."
 END_OBJECT = ELEMENT_DEFINITION
@@ -43083,7 +43083,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = STATIC
   MAXIMUM_LENGTH = 20
   DESCRIPTION = "
-      
+
      The system_classification_id data element identifies a
      data element or object according to the data system that
      uses it.  In this document, system_classification_id is an
@@ -43121,7 +43121,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The system_event_date element provides the beginning date
      of a PDS scheduled event."
 END_OBJECT = ELEMENT_DEFINITION
@@ -47725,7 +47725,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = RANGE
   MINIMUM = 0
   DESCRIPTION = "
-      
+
        The number of pixels in which the target appears."
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -47966,7 +47966,7 @@ OBJECT = ELEMENT_DEFINITION
      0 (VC0) or virtual channel 1 (VC1) to a electrical ground support equipment
      (EGSE) computer 0 (EGSE_ID_0). The different routes can be defined with the
      telemetry source id element.
-      
+
      Examples (substitute quotes instead of apostrophe in the below example):
      TELEMETRY_SOURCE_ID = ('FM1','VC0','EGSE_ID_1')
      TELEMETRY_SOURCE_ID = ('EM','VC1','EGSE_ID_1')"
@@ -48240,7 +48240,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 10
   DESCRIPTION = "
-      
+
      The template_revision_date element indicates the latest
      revision date for a template (i.e. 1988-11-22)."
 END_OBJECT = ELEMENT_DEFINITION
@@ -48382,7 +48382,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The TIMEOUT_PARAMETER element provides the time at which an operation
      will timeout.
-      
+
      Note: For MER, this is the revolve timeout for grinding. If the
      grinding doesn't complete a full revolution within this time it will
      determine that it is not making sufficient progress and end the
@@ -48427,7 +48427,7 @@ OBJECT = ELEMENT_DEFINITION
      The element TORQUE_CONSTANT specifies
      the rotation motor torque constant of an...
      (this description incomplete at this time)
-      
+
      Valid UNIT_ID is : mN*m/mA"
 END_OBJECT = ELEMENT_DEFINITION
 OBJECT = ELEMENT_DEFINITION
@@ -48439,8 +48439,8 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The element TORQUE_GAIN specifies the torque controller
      proportional gain, derivative and integral gain.
-      
-     Valid UNIT_IDs are:	
+
+     Valid UNIT_IDs are:
       rad/(sec*m N*m)
       rad/(mN*m)
       rad*sec/(mN *m)"
@@ -48579,7 +48579,7 @@ OBJECT = ELEMENT_DEFINITION
            the value of the TWIST_ANGLE_TYPE element. If unspecified,
            TWIST_ANGLE_TYPE = GALILEO for Galileo data and
      TWIST_ANGLE_TYPE = DEFAULT for all other data.
-      
+
      Note: This element bears a simple relationship to the value of
            CELESTIAL_NORTH_CLOCK_ANGLE.
            When TWIST_ANGLE_TYPE = DEFAULT,
@@ -48600,7 +48600,7 @@ OBJECT = ELEMENT_DEFINITION
      pointing of an image or scan platform. Allowed values are DEFAULT and
      GALILEO. If unspecified, the value is GALILEO for Galileo data and
      DEFAULT for all other data.
-      
+
      The three elements RIGHT_ASCENSION,
      DECLINATION and TWIST_ANGLE define the C-matrix, which transforms a
      3-vector in celestial coordinates into a frame fixed to an image plane.
@@ -48611,21 +48611,21 @@ OBJECT = ELEMENT_DEFINITION
      points right, the y-axis points down, and the z-axis points along the
      camera's optic axis, when an image is displayed as defined by the
      SAMPLE_DISPLAY_DIRECTION and LINE_DISPLAY_DIRECTION elements.
-      
+
      For TWIST_ANGLE_TYPE = DEFAULT, the C-matrix is equal to
        C-matrix = [T]3 [90-D]1 [R+90]3
-      
+
       = |-sinR cosT-cosR sinD sinT  cosR cosT-sinR sinD sinT  cosD sinT|
         | sinR sinT-cosR sinD cosT -cosR sinT-sinR sinD cosT  cosD cosT|
         |        cosR cosD                 sinR cosD             sinD  |
-      
+
      For TWIST_ANGLE_TYPE = GALILEO, the C-matrix is defined by
        C-matrix = [T]3 [90-D]2 [R]3
-      
+
       = | sinR sinT+cosR sinD cosT  cosR sinT+sinR sinD cosT  -cosD cosT|
         |-sinR cosT-cosR sinD sinT  cosR cosT-sinR sinD sinT   cosD sinT|
         |        cosR cosD               sinR cosD               sinD   |
-      
+
      Here the notation [X]n specifies a rotation about the nth axis by
      angle X (in degrees). R refers to right ascension, D to declination,
      and T to twist angle."
@@ -48656,7 +48656,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 3
   MAXIMUM_LENGTH = 40
   DESCRIPTION = "
-      
+
      The UNCOMPRESSED_FILE_NAME element provides the location independent name
      of a file.  It excludes node or volume location, directory path names, and
      version specification.  To promote portability across multiple platforms,
@@ -48735,7 +48735,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = NONE
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The unit_id element indicates the common abbreviation or
      symbol for a unit of measure.  Example:  The unit KILOGRAM
      has the unit_id 'kg'.
@@ -49302,7 +49302,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = DYNAMIC
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The volume_series_name element provides a full, formal name
      that describes a broad categorization of data products or
      data sets related to a planetary body or a research
@@ -49409,7 +49409,7 @@ OBJECT = ELEMENT_DEFINITION
   STANDARD_VALUE_TYPE = FORMATION
   MAXIMUM_LENGTH = 40
   DESCRIPTION = "
-      
+
      The volume_set_id element identifies a data volume or a set
      of volumes.  Volume sets are normally considered as a
      single orderable entity. Examples: USA_NASA_PDS_MG_1001,
@@ -52593,7 +52593,7 @@ OBJECT = ELEMENT_DEFINITION
   MINIMUM_LENGTH = 1
   MAXIMUM_LENGTH = 60
   DESCRIPTION = "
-      
+
      The volume_set_name element provides the full, formal name
      of one or more data volumes containing a single data set or
      a collection of related data sets.  Volume sets are
@@ -52875,18 +52875,18 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The following definitions describe westernmost longitude for the
      body-fixed, rotating coordinate systems:
-      
+
      For Planetocentric coordinates and for Planetographic coordinates in
      which longitude increases toward the east, the westernmost (leftmost)
      longitude of a spatial area (e.g.,a map, mosaic, bin,feature or region)
      is the minimum numerical value of longitude unless it crosses the
      Prime Meridian.
-      
+
      For Planetographic coordinates in which longitude increases toward the
      west (prograde rotator), the westernmost (leftmost) longitude of a
      spatial area (e.g., a map,mosaic, bin, feature or region) is the maximum
      numerical value of longitude unless it crosses the Prime Meridian.
-      
+
      For the Earth, Moon and Sun, PDS also supports the traditional use of
      the range (-180,180) in which case the westernmost (leftmost) longitude
      is the minimum numerical value of longitude unless it crosses -180."
@@ -52928,7 +52928,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The WIND_SENSOR_POWER_TYPE Element provides a numeric
      identifier  for the operating power mode of a wind sensor.
-      
+
      Note: For Mars Pathfinder, the three valid values were:
      0: Low power throughout session,
      1: High power throughout session,
@@ -53017,7 +53017,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The Z_AXIS_DISTANCE element provides the distance from the z-axis
      home position to the lower motor hardstop of an instrument.
-      
+
      Note: For MER, this is the position to which the RAT will move after
      calibrating against the lower hardstop offset at the start of the
      RAT_DIAG or RAT_CAL commands and at the end of the RAT_GRIND,
@@ -53043,7 +53043,7 @@ OBJECT = ELEMENT_DEFINITION
   DESCRIPTION = "
      The Z_AXIS_STEP_SIZE element specifies the distance or step size
      required to move the z-axis of an instrument.
-      
+
      Note: For MER, this is the distance the RAT is moved in the negative
      direction once the grinding wheel is no longer able to complete a
      full revolution in the seek and scan operation. This is also the

@@ -37,7 +37,7 @@ class ObsVolumeNHxxLOXxxx(ObsVolumeNewHorizonsCommon):
         # This is because this (and the subsequent creation of opus_id) is used
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "data/20070108_003059/lor_0030598439_0x630_eng.lbl"
-        filespec = self._index_col('PATH_NAME') + self._index_col('FILE_NAME')
+        filespec = self._index_col('FILE_SPECIFICATION_NAME')
         return self.bundle + '/' + filespec
 
     def convert_filespec_from_lbl(self, filespec):
@@ -83,7 +83,7 @@ class ObsVolumeNHxxLOXxxx(ObsVolumeNewHorizonsCommon):
         return self._supp_index_col('DECLINATION')
 
     def field_obs_general_ring_obs_id(self):
-        image_num = self._index_col('FILE_NAME')[4:14]
+        image_num = self._index_col('FILE_SPECIFICATION_NAME').split('/')[-1][4:14]
         start_time = self._index_col('START_TIME')
         # This is really dumb, but it's what the old OPUS did so we do it for
         # backwards compatability
