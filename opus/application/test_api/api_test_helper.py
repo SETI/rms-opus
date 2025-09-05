@@ -331,7 +331,7 @@ class ApiTestHelper:
             return f'<img class="{match.group(1)}" src="XXX" {match.group(3)}>'
 
         result = re.sub(
-            '<img class="([\w-]*)" src="data:image/png;charset=utf-8;base64,([^"]*)" ([^>]*)>',
+            r'<img class="([^"]*)" src="data:image/png;charset=utf-8;base64,([^"]*)" ([^>]*)>',
             pull_out_image, data)
         return result, images
 
