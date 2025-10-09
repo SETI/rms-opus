@@ -120,9 +120,9 @@
                     "tooltip": "RMS-curated document collection for Voyager ISS observations.",
                     "product_type": "Documentation",
                     "product_count": 34,
-                    "download_count": 8,
-                    "download_size": 21981203,
-                    "download_size_pretty": "20M",
+                    "download_count": 22,
+                    "download_size": 22593705,
+                    "download_size_pretty": "21M",
                     "default_checked": 0,
                     "product_type_with_version": "vgiss_documentation@Current"
                 }

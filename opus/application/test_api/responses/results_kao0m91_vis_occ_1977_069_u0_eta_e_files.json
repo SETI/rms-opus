@@ -81,6 +81,18 @@
             "rms_index": [
                 "https://opus.pds-rings.seti.org/pds4-holdings/metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_rings_index.csv"
             ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_thumb.png"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_small.png"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_med.png"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_full.png"
+            ],
             "diagram_thumb": [
                 "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_diagram_thumb.png"
             ],
@@ -177,6 +189,18 @@
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/pds4-holdings/metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_rings_index.csv"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_thumb.png"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_small.png"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_med.png"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_preview_full.png"
                 ],
                 "diagram_thumb": [
                     "https://opus.pds-rings.seti.org/pds4-holdings/diagrams/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_eta_egress_diagram_thumb.png"

@@ -116,7 +116,7 @@
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS&surfacegeometrytargetname=SATURN&SURFACEGEOsaturn_subobserverplanetographiclatitude1=50&SURFACEGEOsaturn_subobserverplanetographiclatitude2=&SURFACEGEOsaturn_centerresolution1=5&SURFACEGEOsaturn_centerresolution2=10&target=SATURN",=302,"Images of the polar hexagon."
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS&CASSINIobsname=RDCOLSCNM",=285,"This was Jeff’s search. Results from revs 204, 206, 209, and 210. Name could be used again, adding more results."
 "https://opus.pds-rings.seti.org/#/planet=Pluto&mission=Voyager",=0,Voyager mission with Pluto as target
-"https://opus.pds-rings.seti.org/#/planet=Jupiter&RINGGEOringradius1=75000&RINGGEOringradius2=138000&RINGGEOphase1=20&RINGGEOphase2=150&rightasc1=10&rightasc2=270&declination1=-15&declination2=15&targetclass=Ring",120,
+"https://opus.pds-rings.seti.org/#/planet=Jupiter&RINGGEOringradius1=75000&RINGGEOringradius2=138000&RINGGEOphase1=20&RINGGEOphase2=150&rightasc1=10&rightasc2=270&declination1=-15&declination2=15&targetclass=Ring",122,
 "https://opus.pds-rings.seti.org/#/planet=Saturn&target=Saturn+Rings&RINGGEOringradius1=65000&RINGGEOringradius2=100000&RINGGEOphase1=0&RINGGEOphase2=150&RINGGEOsolarringelevation1=-20&RINGGEOsolarringelevation2=20&RINGGEOobserverringelevation1=-20&RINGGEOobserverringelevation2=20&rightasc1=30&rightasc2=150&declination1=-20&declination2=20",13290,
 "https://opus.pds-rings.seti.org/#/planet=Saturn&target=PAN,Saturn+Rings,SATURN&rightasc1=0&rightasc2=129&declination1=-30&declination2=30&wavelength1=0.5&wavelength2=1.0&RINGGEOringradius1=60000&RINGGEOringradius2=70000&RINGGEOsolarringelevation1=-20&RINGGEOsolarringelevation2=20",5419,"planet Saturn, target rings, Pan, Saturn; ra 0-129, dec -30,+30; wavelength from 0.5 to 1.0; ring radius 60000 to 70000; solar elevation -20 to +20"
 "https://opus.pds-rings.seti.org/#/planet=Jupiter&target=ADRASTEA&mission=Galileo",=16,"Jupiter + Adrastea, mission = galileo"
@@ -138,7 +138,7 @@
 "https://opus.pds-rings.seti.org/#/target=Venus&mission=Cassini&instrument=Cassini+ISS&wavelength1=0.70&wavelength2=0.75",=4,"Venus with cassini ISS, wavelength constrained"
 
 "https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=JUPITER",61403,Surface Geo Jupiter
-"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN",1260353,Surfae Geo Saturn
+"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN",1293095,Surfae Geo Saturn
 "https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN&planet=Saturn",1291235,Surface Geo Saturn with Intended Target Saturn
 "https://opus.pds-rings.seti.org/#/planet=Jupiter&target=Jupiter+Rings&rightasc1=5&rightasc2=120&declination1=10&declination2=25&RINGGEOphase1=135&RINGGEOphase2=140",122,
 "https://opus.pds-rings.seti.org/#/target=S/2004+S+13",13,

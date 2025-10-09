@@ -54,8 +54,8 @@
                     "tooltip": "RMS-curated document collection for Cassini VIMS observations.",
                     "product_type": "Documentation",
                     "product_count": 17,
-                    "download_count": 4,
-                    "download_size": 7846549,
+                    "download_count": 5,
+                    "download_size": 7942850,
                     "download_size_pretty": "7M",
                     "default_checked": 0,
                     "product_type_with_version": "covims_documentation@Current"

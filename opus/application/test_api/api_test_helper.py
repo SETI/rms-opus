@@ -1,4 +1,5 @@
 # opus/application/test_api/api_test_helper.py
+import base64
 import difflib
 from io import BytesIO
 import json
@@ -6,6 +7,7 @@ import os
 import re
 import tarfile
 import zipfile
+from PIL import Image, ImageChops
 
 import settings
 
@@ -124,7 +126,7 @@ class ApiTestHelper:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
 
-    def _run_html_equal_file(self, url, exp_file):
+    def _run_html_equal_file(self, url, exp_file, embedded_dynamic_image=False):
         print(url)
         response = self._get_response(url)
         self.assertEqual(200, response.status_code)
@@ -137,6 +139,12 @@ class ApiTestHelper:
             expected = fp.read()
         expected = self._clean_string(expected)
         resp = self._clean_string(str(response.content))
+        if embedded_dynamic_image:
+            # extract the dynamic images and replace with generic tests.
+            expected, expected_images = self.__extract_images(expected)
+            resp, resp_images = self.__extract_images(resp)
+        else:
+            expected_images = resp_images = []
         print('Got:')
         print(resp)
         print('Expected:')
@@ -144,6 +152,10 @@ class ApiTestHelper:
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
+        # There should be the same number of images, and they should decode identically.
+        self.assertEqual(len(expected), len(resp))
+        for image1, image2 in zip(expected_images, resp_images):
+            self.__assert_images_identical(image1, image2)
 
     def _run_html_startswith(self, url, expected):
         print(url)
@@ -307,3 +319,32 @@ class ApiTestHelper:
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertListEqual(resp, expected)
+
+    def __extract_images(self, data):
+        """ Replaces the embedded images with in the data XXX.
+          Returns the modified data, and a tuple of the bytes of the image(s)"""
+        images = []
+
+        def pull_out_image(match):
+            images.append(base64.b64decode(match.group(2).encode()))
+            # Return substitute value
+            return f'<img class="{match.group(1)}" src="XXX" {match.group(3)}>'
+
+        result = re.sub(
+            r'<img class="([^"]*)" src="data:image/png;charset=utf-8;base64,([^"]*)" ([^>]*)>',
+            pull_out_image, data)
+        return result, images
+
+    def __assert_images_identical(self, image1, image2):
+        """Verifies that two byte strings represent the same image."""
+        if image1 == image2:
+            # Shortcut. If both byte strings are the same, they must be identical images.
+            return
+        image1 = Image.open(BytesIO(image1)).convert('RGB')
+        image2 = Image.open(BytesIO(image2)).convert('RGB')
+        # Must be the same size
+        self.assertEqual(image1.size, image2.size, "Image size mismatch")
+
+        # getbbox returns the bounds of the non-zero elements. None if all are zero.
+        difference = ImageChops.difference(image1, image2)
+        self.assertIsNone(difference.getbbox(), "Images differ")

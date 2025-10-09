@@ -26,7 +26,7 @@ if [ "$yn" != "YES" ]; then
     echo "Aborting"
     exit 1
 fi
-source ~/src/rms-opus/p3venv/activate
-pip install -r ../../requirements-python3.txt
+# source ~/src/rms-opus/p3venv/activate
+# pip install -r ../../requirements-python3.txt
 echo "Running import with nohup - check nohup.out for status"
 nohup ./_import_all_internal.sh "$1" "$2" "$3" &

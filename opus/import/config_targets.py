@@ -85,9 +85,13 @@ TARGET_NAME_MAPPING = {
     '136199 ERIS':                  'ERIS',
     '10199 CHARIKLO':               'CHARIKLO',
     '15810 ARAWN':                  'ARAWN',
+    '15810 ARAWN (1994 JR1)':       'ARAWN',
     '50000 QUAOAR':                 'QUAOAR',
+    '50000 QUAOAR (2002 LM60)':     'QUAOAR',
     '28978 IXION':                  'IXION',
+    '28978 IXION (2001 KX76)':      'IXION',
     'ASTEROID 307261':              '2002 MS4',
+    'ASTEROID 307261 (2002 MS4)':   '2002 MS4',
     '2060 CHIRON':                  'CHIRON',
     '132524 APL':                   '2002 JF56',
     '38628 HUYA':                   'HUYA',
@@ -97,6 +101,7 @@ TARGET_NAME_MAPPING = {
     'ASTEROID 119951':              '2002 KX14',
     'ASTEROID 119951 (2002 KX14)':  '2002 KX14',
     'ASTEROID 516977':              '2002 HZ84',
+    'ASTEROID 516977 (2012 HZ84)':  '2002 HZ84',
     'PROXIMA CEN':                  'ALF_CEN',
     'WOLF 359':                     'CN_LEO',
     'INTERPLANETARY DUST':          'DUST',
@@ -557,7 +562,6 @@ TARGET_NAME_INFO = {
     '2001 FL185':           (None,  'OTHER',      '2001 FL185'),
     '2001 KP77':            (None,  'OTHER',      '2001 KP77'),
     '2002 GZ31':            (None,  'OTHER',      '2002 GZ31'),
-    '2002 JF56':            (None,  'OTHER',      '2002 JF56'),
     '2002 MS4':             (None,  'OTHER',      '2002 MS4'),
     '2002 UX25':            (None,  'OTHER',      '2002 UX25'),
     '2002 VV130':           (None,  'OTHER',      '2002 VV130'),
@@ -766,6 +770,8 @@ TARGET_NAME_INFO = {
     'ZET_ORI':              (None,  'OTHER',      'Zet Ori'),
     'ZET_PER':              (None,  'OTHER',      'Zet Per'),
     'ZET_PUP':              (None,  'OTHER',      'Zet Pup'),
+    'VARIABLE STARS IN MILKY WAY BULGE':  # NHKELO
+                            (None,  'OTHER',      'Variable Stars in Milky Way Bulge'),
 }
 
 # Map each star name to its RA and DEC

@@ -35,7 +35,8 @@
             ],
             "corss_occ_documentation": [
                 "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf",
-                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf"
+                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-Radio-Science-Users-Guide.pdf"
             ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl",
@@ -120,7 +121,8 @@
                 ],
                 "corss_occ_documentation": [
                     "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf",
-                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf"
+                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/CORSS_8xxx/Cassini-Radio-Science-Users-Guide.pdf"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl",

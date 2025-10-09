@@ -1,8 +1,10 @@
 # opus/application/test_api/test_help_api.py
 
 import logging
+import os
 import platform
 import requests
+import unittest
 from unittest import TestCase
 
 from django.core.cache import cache
@@ -95,7 +97,7 @@ class ApiHelpTests(TestCase, ApiTestHelper):
     def test__api_help_citing_qr(self):
         "[test_help_api.py] /__help: citing qr"
         url = '/__help/citing.html?searchurl=fred&stateurl=george'
-        self._run_html_equal_file(url, 'api_help_citing_qr.html')
+        self._run_html_equal_file(url, 'api_help_citing_qr.html', embedded_dynamic_image=True)
 
     def test__api_help_citing_pdf(self):
         "[test_help_api.py] /__help: citing pdf"
