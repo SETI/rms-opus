@@ -5,8 +5,9 @@
 # obs_surface_geometry_<TARGET> tables.
 ################################################################################
 
-from obs_base import ObsBase
+import julian
 
+from obs_base import ObsBase
 
 class ObsSurfaceGeometryTarget(ObsBase):
     def __init__(self, *args, **kwargs):
@@ -107,18 +108,22 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self):
         return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
 
     def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self):
         return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
 
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self):
         return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
 
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
         return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
 
     # Planetocentric Latitude
@@ -131,18 +136,22 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self):
         return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
 
     def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self):
         return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
 
     def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self):
         return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
 
     def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self):
         return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
 
     # West Longitude
@@ -247,17 +256,11 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     # Pole & Limb
 
-    def field_obs_surface_geometry_target_north_pole_clock_angle1(self):
-        return self._surface_geo_index_col('MINIMUM_NORTH_POLE_CLOCK_ANGLE', missing_ok=True)
+    def field_obs_surface_geometry_target_north_pole_clock_angle(self):
+        return self._surface_geo_index_col('NORTH_POLE_CLOCK_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_north_pole_clock_angle2(self):
-        return self._surface_geo_index_col('MAXIMUM_NORTH_POLE_CLOCK_ANGLE', missing_ok=True)
-
-    def field_obs_surface_geometry_target_north_pole_position_angle1(self):
-        return self._surface_geo_index_col('MINIMUM_NORTH_POLE_POSITION_ANGLE', missing_ok=True)
-
-    def field_obs_surface_geometry_target_north_pole_position_angle2(self):
-        return self._surface_geo_index_col('MAXIMUM_NORTH_POLE_POSITION_ANGLE', missing_ok=True)
+    def field_obs_surface_geometry_target_north_pole_position_angle(self):
+        return self._surface_geo_index_col('NORTH_POLE_POSITION_ANGLE', missing_ok=True)
 
     def field_obs_surface_geometry_target_limb_clock_angle1(self):
         return self._surface_geo_index_col('MINIMUM_LIMB_CLOCK_ANGLE', missing_ok=True)
@@ -273,31 +276,27 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     # Image Geometry
 
-    def field_obs_surface_geometry_target_radius_pixels1(self):
-        return self._surface_geo_index_col('MINIMUM_RADIUS_IN_PIXELS', missing_ok=True)
+    def field_obs_surface_geometry_target_diameter_pixels(self):
+        return self._surface_geo_index_col('DIAMETER_IN_PIXELS', missing_ok=True)
 
-    def field_obs_surface_geometry_target_radius_pixels2(self):
-        return self._surface_geo_index_col('MAXIMUM_RADIUS_IN_PIXELS', missing_ok=True)
+    def field_obs_surface_geometry_target_center_x_coordinate(self):
+        return self._surface_geo_index_col('CENTER_X_COORDINATE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_center_x_coordinate1(self):
-        return self._surface_geo_index_col('MINIMUM_CENTER_X_COORDINATE', missing_ok=True)
-
-    def field_obs_surface_geometry_target_center_x_coordinate2(self):
-        return self._surface_geo_index_col('MAXIMUM_CENTER_X_COORDINATE', missing_ok=True)
-
-    def field_obs_surface_geometry_target_center_y_coordinate1(self):
-        return self._surface_geo_index_col('MINIMUM_CENTER_Y_COORDINATE', missing_ok=True)
-
-    def field_obs_surface_geometry_target_center_y_coordinate2(self):
-        return self._surface_geo_index_col('MAXIMUM_CENTER_Y_COORDINATE', missing_ok=True)
+    def field_obs_surface_geometry_target_center_y_coordinate(self):
+        return self._surface_geo_index_col('CENTER_Y_COORDINATE', missing_ok=True)
 
     # Timing
 
     def field_obs_surface_geometry_target_surface_intercept_time1(self):
-        return self._surface_geo_index_col('MINIMUM_SURFACE_INTERCEPT_TIME', missing_ok=True)
+        return self._time_helper('surface_geo_row',
+                                 'MINIMUM_SURFACE_INTERCEPT_TIME',
+                                 missing_index_ok=True)
 
     def field_obs_surface_geometry_target_surface_intercept_time2(self):
-        return self._surface_geo_index_col('MAXIMUM_SURFACE_INTERCEPT_TIME', missing_ok=True)
+        return self._time2_helper('surface_geo_row',
+                                  self.field_obs_surface_geometry_target_surface_intercept_time1(),
+                                  'MAXIMUM_SURFACE_INTERCEPT_TIME',
+                                  missing_index_ok=True)
 
 
     ########################
@@ -321,10 +320,7 @@ class ObsSurfaceGeometryTarget(ObsBase):
                                 'center_resolution',
                                 'center_distance',
                                 'center_phase_angle',
-                                'north_pole_position_angle',
-                                'radius_pixels',
-                                'center_x_coordinate',
-                                'center_y_coordinate'):
+                                ):
             val1 = row[gridless_column+'1']
             val2 = row[gridless_column+'2']
             if (val1 != val2 and

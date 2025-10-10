@@ -5,6 +5,8 @@
 # obs_ring_geometry table.
 ################################################################################
 
+import julian
+
 from obs_base import ObsBase
 
 
@@ -227,16 +229,16 @@ class ObsRingGeometry(ObsBase):
         return self._ring_geo_index_col('COARSEST_RADIAL_RESOLUTION')
 
     def field_obs_ring_geometry_projected_long_resolution_angle1(self):
-        return self._ring_geo_index_col('FINEST_LONGITUDINAL_RESOLUTION')
+        return self._ring_geo_index_col('FINEST_LONGITUDINAL_RESOLUTION', missing_ok=True)
 
     def field_obs_ring_geometry_projected_long_resolution_angle2(self):
-        return self._ring_geo_index_col('COARSEST_LONGITUDINAL_RESOLUTION')
+        return self._ring_geo_index_col('COARSEST_LONGITUDINAL_RESOLUTION', missing_ok=True)
 
     def field_obs_ring_geometry_projected_long_resolution1(self):
-        return self._ring_geo_index_col('FINEST_LONGITUDINAL_RESOLUTION_KM')
+        return self._ring_geo_index_col('FINEST_LONGITUDINAL_RESOLUTION_KM', missing_ok=True)
 
     def field_obs_ring_geometry_projected_long_resolution2(self):
-        return self._ring_geo_index_col('COARSEST_LONGITUDINAL_RESOLUTION_KM')
+        return self._ring_geo_index_col('COARSEST_LONGITUDINAL_RESOLUTION_KM', missing_ok=True)
 
     # Lighting Geometry - Observed
 
@@ -310,34 +312,42 @@ class ObsRingGeometry(ObsBase):
 
     def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
         return self._ring_geo_index_col('MINIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
+                                        'MINIMUM_NORTH_BASED_CENTER_INCIDENCE_ANGLE',
                                         'RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
         return self._ring_geo_index_col('MAXIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
+                                        'MAXIMUM_NORTH_BASED_CENTER_INCIDENCE_ANGLE',
                                         'RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE')
 
     def field_obs_ring_geometry_ring_center_north_based_emission1(self):
         return self._ring_geo_index_col('MINIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
+                                        'MINIMUM_NORTH_BASED_CENTER_EMISSION_ANGLE',
                                         'RING_CENTER_NORTH_BASED_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_ring_center_north_based_emission2(self):
         return self._ring_geo_index_col('MAXIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
+                                        'MAXIMUM_NORTH_BASED_CENTER_EMISSION_ANGLE',
                                         'RING_CENTER_NORTH_BASED_EMISSION_ANGLE')
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
         return self._ring_geo_index_col('MINIMUM_SOLAR_RING_OPENING_ANGLE',
+                                        'MINIMUM_SOLAR_RING_CENTER_OPENING_ANGLE',
                                         'SOLAR_RING_OPENING_ANGLE')
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
         return self._ring_geo_index_col('MAXIMUM_SOLAR_RING_OPENING_ANGLE',
+                                        'MAXIMUM_SOLAR_RING_CENTER_OPENING_ANGLE',
                                         'SOLAR_RING_OPENING_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
         return self._ring_geo_index_col('MINIMUM_OBSERVER_RING_OPENING_ANGLE',
+                                        'MINIMUM_OBSERVER_RING_CENTER_OPENING_ANGLE',
                                         'OBSERVER_RING_OPENING_ANGLE')
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
         return self._ring_geo_index_col('MAXIMUM_OBSERVER_RING_OPENING_ANGLE',
+                                        'MAXIMUM_OBSERVER_RING_CENTER_OPENING_ANGLE',
                                         'OBSERVER_RING_OPENING_ANGLE')
 
     # Edge-On Viewing Geometry
@@ -404,33 +414,37 @@ class ObsRingGeometry(ObsBase):
     def field_obs_ring_geometry_edge_on_altitude2(self):
         return self._ring_geo_index_col('MAXIMUM_EDGE_ON_RING_ALTITUDE')
 
+    # Pole
+
+    def field_obs_ring_geometry_ring_pole_clock_angle(self):
+        return self._ring_geo_index_col('RING_POLE_CLOCK_ANGLE', missing_ok=True)
+
+    def field_obs_ring_geometry_ring_pole_position_angle(self):
+        return self._ring_geo_index_col('RING_POLE_POSITION_ANGLE', missing_ok=True)
+
     # Image Geometry
 
-    def field_obs_ring_geometry_ring_radius_pixels1(self):
-        return self._ring_geo_index_col('MINIMUM_RADIUS_IN_PIXELS')
+    def field_obs_ring_geometry_ring_diameter_pixels(self):
+        return self._ring_geo_index_col('RING_DIAMETER_IN_PIXELS', missing_ok=True)
 
-    def field_obs_ring_geometry_ring_radius_pixels2(self):
-        return self._ring_geo_index_col('MAXIMUM_RADIUS_IN_PIXELS')
+    def field_obs_ring_geometry_center_x_coordinate(self):
+        return self._ring_geo_index_col('RING_CENTER_X_COORDINATE', missing_ok=True)
 
-    def field_obs_ring_geometry_center_x_coordinate1(self):
-        return self._ring_geo_index_col('MINIMUM_CENTER_X_COORDINATE')
-
-    def field_obs_ring_geometry_center_x_coordinate2(self):
-        return self._ring_geo_index_col('MAXIMUM_CENTER_X_COORDINATE')
-
-    def field_obs_ring_geometry_center_y_coordinate1(self):
-        return self._ring_geo_index_col('MINIMUM_CENTER_Y_COORDINATE')
-
-    def field_obs_ring_geometry_center_y_coordinate2(self):
-        return self._ring_geo_index_col('MAXIMUM_CENTER_Y_COORDINATE')
+    def field_obs_ring_geometry_center_y_coordinate(self):
+        return self._ring_geo_index_col('RING_CENTER_Y_COORDINATE', missing_ok=True)
 
     # Timing
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
-        return self._ring_geo_index_col('MINIMUM_SURFACE_INTERCEPT_TIME')
+        return self._time_helper('ring_geo_row',
+                                 'MINIMUM_RING_INTERCEPT_TIME',
+                                 missing_index_ok=True)
 
     def field_obs_ring_geometry_ring_intercept_time2(self):
-        return self._ring_geo_index_col('MAXIMUM_SURFACE_INTERCEPT_TIME')
+        return self._time2_helper('ring_geo_row',
+                                  self.field_obs_ring_geometry_ring_intercept_time1(),
+                                  'MAXIMUM_RING_INTERCEPT_TIME',
+                                  missing_index_ok=True)
 
 
     ########################
@@ -457,9 +471,7 @@ class ObsRingGeometry(ObsBase):
                                 'ring_center_north_based_emission',
                                 'solar_ring_opening_angle',
                                 'observer_ring_opening_angle',
-                                'ring_radius_pixels',
-                                'center_x_coordinate',
-                                'center_y_coordinate'):
+        ):
             val1 = row[gridless_column+'1']
             val2 = row[gridless_column+'2']
             if (val1 != val2 and

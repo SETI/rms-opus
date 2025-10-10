@@ -116,6 +116,7 @@ TARGET_NAME_MAPPING = {
     'NON_SCIENC':                   'NONE',
     'NON SCIENC':                   'NONE',
     'NON SCIENCE':                  'NONE',
+    'NON_SCIENCE':                  'NONE',
 
     # Stars
     '126 TAU':                      '126_TAU',
