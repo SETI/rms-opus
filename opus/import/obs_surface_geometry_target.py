@@ -5,8 +5,6 @@
 # obs_surface_geometry_<TARGET> tables.
 ################################################################################
 
-import julian
-
 from obs_base import ObsBase
 
 class ObsSurfaceGeometryTarget(ObsBase):
@@ -122,7 +120,7 @@ class ObsSurfaceGeometryTarget(ObsBase):
                                            'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
 
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+        return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
                                            'MAXIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
 
@@ -175,7 +173,7 @@ class ObsSurfaceGeometryTarget(ObsBase):
                                            'SUB_OBSERVER_IAU_LONGITUDE')
 
     def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_IAU_LONGITUDE',
+        return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_IAU_LONGITUDE',
                                            'SUB_OBSERVER_IAU_LONGITUDE')
 
     def field_obs_surface_geometry_target_observer_west_longitude1(self):

@@ -5,8 +5,6 @@
 # obs_ring_geometry table.
 ################################################################################
 
-import julian
-
 from obs_base import ObsBase
 
 
