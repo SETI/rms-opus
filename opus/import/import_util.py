@@ -15,7 +15,6 @@ import traceback
 
 import julian
 import pdsfile
-import pdslogger
 import pdsparser
 import pdstable
 

@@ -469,7 +469,7 @@ class ObsRingGeometry(ObsBase):
                                 'ring_center_north_based_emission',
                                 'solar_ring_opening_angle',
                                 'observer_ring_opening_angle',
-        ):
+                                ):
             val1 = row[gridless_column+'1']
             val2 = row[gridless_column+'2']
             if (val1 != val2 and
