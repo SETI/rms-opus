@@ -82,7 +82,7 @@ if __name__ == "__main__":
         # 'vg-uvs-1-s-occ-1980-317-iother-e',
         # 'vg-rss-2-u-occ-1986-024-s43-four-i',
         # 'vg-uvs-2-n-occ-1989-236-sigsgr-i',
-        # 'vg-iss-2-s-prof'
+        # 'vg-iss-2-s-prof',
         # 'kao0m91-vis-occ-1977-069-u0-ringpl-i',
         # 'kao0m91-vis-occ-1977-069-u0-uranus-e',
         # 'kao0m91-vis-occ-1977-069-u0-eta-e'
