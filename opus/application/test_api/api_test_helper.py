@@ -17,7 +17,7 @@ class ApiTestHelper:
     # If this is set to True, then instead of comparing responses to files
     # we overwrite the files with the response to update the test results.
     # Use with extreme caution!
-    UPDATE_FILES = True
+    UPDATE_FILES = False
 
     def _get_response(self, url):
         if (not settings.TEST_GO_LIVE or
