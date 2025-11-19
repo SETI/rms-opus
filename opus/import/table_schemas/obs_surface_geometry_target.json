@@ -1594,7 +1594,7 @@
         "pi_disp_order": 631,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f:generic_angle",
+        "pi_form_type": "RANGE%.3f:longitude",
         "pi_intro": null,
         "pi_label": "Limb Clock Angle",
         "pi_label_results": "Limb Clock Angle (Max)",
