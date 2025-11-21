@@ -549,7 +549,8 @@ def api_get_widget(request, **kwargs):
             val1 = float(item['field1'])
             val2 = float(item['field2'])
             new_unit, new_val1, new_val2 = [], [], []
-            if valid_units is not None:
+            if valid_units is not None:  # pragma: no cover
+                # There are always valid units; this is just a safety check
                 for unit in valid_units:
                     new_unit.append(unit)
                     new_val1.append(format_unit_value(val1, default_format,
