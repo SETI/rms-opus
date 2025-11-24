@@ -1,4 +1,3 @@
-{% load json_dumps %}
 {% block menu %}
     <ul class="op-search-menu list-group list-group-flush">
         {% for div in menu.divs %}
@@ -50,7 +49,7 @@
                                                       "
                                                       data-dispunit="{% if p.disp_unit %}{{ p.disp_unit }}{% endif %}"
                                                       data-defaultunit="{% if p.default_unit %}{{ p.default_unit }}{% endif %}"
-                                                      data-availunits="{% if p.units|json_dumps %}{{ p.units }}{% endif %}"
+                                                      data-availunits="{% if p.units %}{{ p.units }}{% endif %}"
                                                       data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                                         <span class="op-menu-item">
                                                             <span class="op-search-param-checkmark">
@@ -99,7 +98,7 @@
                                       "
                                       data-dispunit="{% if p.disp_unit %}{{ p.disp_unit }}{% endif %}"
                                       data-defaultunit="{% if p.default_unit %}{{ p.default_unit }}{% endif %}"
-                                      data-availunits="{% if p.units %}{{ p.units|json_dumps }}{% endif %}"
+                                      data-availunits="{% if p.units %}{{ p.units }}{% endif %}"
                                       data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                         <span class="op-menu-item">
                                             <span class="op-search-param-checkmark">

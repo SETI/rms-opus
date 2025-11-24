@@ -37,6 +37,8 @@ class ObsSurfaceGeometry(ObsBase):
 
         new_target_list = []
         for target_name in target_list:
+            if target_name == '':
+                continue
             _, target_info = self._get_target_info(target_name)
             if target_info is None:
                 return None

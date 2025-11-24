@@ -769,6 +769,9 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                     # The inventory files are in CSV format, but the pdstable
                     # module can't read non-fixed-length records so we fake it up
                     # ourselves here.
+                    # The old format had as many extra columns as there were targets.
+                    # The new format has a single column with the targets separated
+                    # by commas.
                     table_filename = (assoc_label_path.replace('.LBL', '.CSV')
                                       .replace('.lbl', '.csv'))
                     assoc_rows = []
@@ -784,6 +787,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                                 # New format without OPUS ID column
                                 csv_ringobsid = None
                                 (csv_bundle, csv_filespec, *csv_targets) = row
+                            if len(csv_targets) == 1:
+                                csv_targets = csv_targets[0].split(',')  # New format
                             row_dict = {'BUNDLE_ID': csv_bundle.strip(),
                                         'FILE_SPECIFICATION_NAME': csv_filespec.strip(),
                                         'TARGET_LIST': csv_targets}
@@ -845,10 +850,10 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                             # dictionary keyed by opus_id containing a
                             # dictionary keyed by target name so we can collect
                             # all the target entries in one place.
-                            key2 = row.get('TARGET_NAME', None)
+                            key2 = row.get('TARGET_NAME', row.get('BODY_NAME', None))
                             if key2 is None:
                                 import_util.log_nonrepeating_error(
-                                    f'{assoc_label_path} is missing TARGET_NAME field')
+                                    f'{assoc_label_path} is missing TARGET_NAME or BODY_NAME field')
                                 break
                             if key not in assoc_dict:
                                 assoc_dict[key] = {}

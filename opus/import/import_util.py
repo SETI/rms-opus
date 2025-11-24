@@ -15,7 +15,6 @@ import traceback
 
 import julian
 import pdsfile
-import pdslogger
 import pdsparser
 import pdstable
 
@@ -432,7 +431,7 @@ def find_max_table_id(table_name):
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################
 
-class NoDupLogger(pdslogger.PdsLogger):
+class NoDupLogger:
     """Wrapper around PdsLogger that only logs each message one time.
 
     This is used for logging of PdsFile warnings that we don't want to see
@@ -445,6 +444,9 @@ class NoDupLogger(pdslogger.PdsLogger):
 
     def __init__(self, logger):
         self._logger = logger
+
+    def __getattr__(self, name):
+        return getattr(self._logger, name)
 
     def debug(self, msg, *args, **kwargs):
         key = (msg, args, kwargs)
@@ -473,7 +475,6 @@ class NoDupLogger(pdslogger.PdsLogger):
             return
         self._LOGGED_FATAL.append(key)
         self._logger.fatal(msg, *args, **kwargs)
-
 
 def _format_bundle_line():
     ret = ''

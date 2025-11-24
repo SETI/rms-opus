@@ -1520,6 +1520,13 @@
     },
     {
         "category": "metadata",
+        "product_type": "body_geometry",
+        "description": "Body Geometry Index",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "metadata",
         "product_type": "ring_geometry",
         "description": "Ring Geometry Index",
         "version_number": 999999,

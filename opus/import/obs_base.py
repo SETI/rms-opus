@@ -213,7 +213,7 @@ class ObsBase:
     def _supp_index_label_col(self, col, idx=None):
         return import_util.safe_column(self._metadata['supp_index_label'], col, idx=idx)
 
-    def _ring_geo_index_col(self, col, col2=None, idx=None):
+    def _ring_geo_index_col(self, col, col2=None, col3=None, idx=None, missing_ok=False):
         # Look up col; if missing try col2 instead. This supports both old and
         # new ring geometry metadata files, where the old ones have a single
         # value for gridless columns (e.g. ring_center_distance) while the
@@ -223,17 +223,21 @@ class ObsBase:
         if 'ring_geo_row' not in self._metadata or self._metadata['ring_geo_row'] is None:
             return None
         if (col not in self._metadata['ring_geo_row'] and
-            (col2 is None or col2 not in self._metadata['ring_geo_row'])):
-            if col2 is None:
-                self._log_nonrepeating_error(
-                    f'Column "{col}" not found in ring_geo')
-            else:
-                self._log_nonrepeating_error(
-                    f'Columns "{col}" or "{col2}" not found in ring_geo')
+            (col2 is None or col2 not in self._metadata['ring_geo_row']) and
+            (col3 is None or col3 not in self._metadata['ring_geo_row'])):
+            if not missing_ok:
+                if col2 is None:
+                    self._log_nonrepeating_error(
+                        f'Column "{col}" not found in ring_geo')
+                else:
+                    self._log_nonrepeating_error(
+                        f'Columns "{col}" or "{col2}" not found in ring_geo')
             return None
         ret = import_util.safe_column(self._metadata['ring_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
             ret = import_util.safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
+        if ret is None and col3 is not None:
+            ret = import_util.safe_column(self._metadata['ring_geo_row'], col3, idx=idx)
         return ret
 
     def _sky_geo_index_col(self, col, idx=None):
@@ -241,7 +245,7 @@ class ObsBase:
             return None
         return import_util.safe_column(self._metadata['sky_geo_row'], col, idx=idx)
 
-    def _surface_geo_index_col(self, col, col2=None, idx=None):
+    def _surface_geo_index_col(self, col, col2=None, col3=None, idx=None, missing_ok=False):
         # Look up col; if missing try col2 instead. This supports both old and
         # new surface geometry metadata files, where the old ones have a single
         # value for gridless columns (e.g. center_distance) while the
@@ -252,17 +256,21 @@ class ObsBase:
             self._metadata['surface_geo_row'] is None):
             return None
         if (col not in self._metadata['surface_geo_row'] and
-            (col2 is None or col2 not in self._metadata['surface_geo_row'])):
-            if col2 is None:
-                self._log_nonrepeating_error(
-                    f'Column "{col}" not found in surface_geo')
-            else:
-                self._log_nonrepeating_error(
-                    f'Columns "{col}" or "{col2}" not found in surface_geo')
+            (col2 is None or col2 not in self._metadata['surface_geo_row']) and
+            (col3 is None or col3 not in self._metadata['surface_geo_row'])):
+            if not missing_ok:
+                if col2 is None:
+                    self._log_nonrepeating_error(
+                        f'Column "{col}" not found in surface_geo')
+                else:
+                    self._log_nonrepeating_error(
+                        f'Columns "{col}" or "{col2}" not found in surface_geo')
             return None
         ret = import_util.safe_column(self._metadata['surface_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
             ret = import_util.safe_column(self._metadata['surface_geo_row'], col2, idx=idx)
+        if ret is None and col3 is not None:
+            ret = import_util.safe_column(self._metadata['surface_geo_row'], col3, idx=idx)
         return ret
 
     def _col_in_index(self, col):
@@ -367,9 +375,11 @@ class ObsBase:
 
     # Helpers for time fields
 
-    def _time_helper(self, index, column):
+    def _time_helper(self, index, column, missing_index_ok=False):
         # Read and convert a time, which can exist in various indexes or
         # columns.
+        if missing_index_ok and (index not in self._metadata or self._metadata[index] is None):
+            return None
         the_time = import_util.safe_column(self._metadata[index], column)
         if the_time is None:
             return None
@@ -382,10 +392,12 @@ class ObsBase:
 
         return time_sec
 
-    def _time2_helper(self, index, start_time_sec, column):
+    def _time2_helper(self, index, start_time_sec, column, missing_index_ok=False):
         # Read and convert the ending time, which can exist in various indexes or
         # columns. Compare it to the starting time to make sure they're in the proper
         # order.
+        if missing_index_ok and (index not in self._metadata or self._metadata[index] is None):
+            return None
         index_row = self._metadata[index]
         stop_time = import_util.safe_column(index_row, column)
         if stop_time is None:

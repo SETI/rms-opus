@@ -7,7 +7,6 @@
 
 from obs_base import ObsBase
 
-
 class ObsSurfaceGeometryTarget(ObsBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,6 +26,8 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     def field_obs_surface_geometry_target_instrument_id(self):
         return self.instrument_id
+
+    # East Longitude
 
     def field_obs_surface_geometry_target_iau_east_longitude1(self):
         long = self.field_obs_surface_geometry_target_iau_west_longitude2()
@@ -95,11 +96,7 @@ class ObsSurfaceGeometryTarget(ObsBase):
     # If the surface_geo contents are going to come from another source, the
     # instrument class can subclass these methods.
 
-    def field_obs_surface_geometry_target_planetocentric_latitude1(self):
-        return self._surface_geo_index_col('MINIMUM_PLANETOCENTRIC_LATITUDE')
-
-    def field_obs_surface_geometry_target_planetocentric_latitude2(self):
-        return self._surface_geo_index_col('MAXIMUM_PLANETOCENTRIC_LATITUDE')
+    # Planetographic Latitude
 
     def field_obs_surface_geometry_target_planetographic_latitude1(self):
         return self._surface_geo_index_col('MINIMUM_PLANETOGRAPHIC_LATITUDE')
@@ -107,23 +104,99 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def field_obs_surface_geometry_target_planetographic_latitude2(self):
         return self._surface_geo_index_col('MAXIMUM_PLANETOGRAPHIC_LATITUDE')
 
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self):
+        return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
+                                           'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
+                                           'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self):
+        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
+                                           'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
+                                           'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
+
+    # Planetocentric Latitude
+
+    def field_obs_surface_geometry_target_planetocentric_latitude1(self):
+        return self._surface_geo_index_col('MINIMUM_PLANETOCENTRIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_planetocentric_latitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_PLANETOCENTRIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self):
+        return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
+                                           'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
+                                           'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self):
+        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
+                                           'MINIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
+                                           'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
+
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
+                                           'MAXIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
+                                           'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
+
+    # West Longitude
+
     def field_obs_surface_geometry_target_iau_west_longitude1(self):
         return self._surface_geo_index_col('MINIMUM_IAU_LONGITUDE')
 
     def field_obs_surface_geometry_target_iau_west_longitude2(self):
         return self._surface_geo_index_col('MAXIMUM_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_solar_hour_angle1(self):
-        return self._surface_geo_index_col('MINIMUM_LOCAL_HOUR_ANGLE')
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self):
+        return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_IAU_LONGITUDE',
+                                           'SUB_SOLAR_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_solar_hour_angle2(self):
-        return self._surface_geo_index_col('MAXIMUM_LOCAL_HOUR_ANGLE')
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_IAU_LONGITUDE',
+                                           'SUB_SOLAR_IAU_LONGITUDE')
+
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self):
+        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_IAU_LONGITUDE',
+                                           'SUB_OBSERVER_IAU_LONGITUDE')
+
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_IAU_LONGITUDE',
+                                           'SUB_OBSERVER_IAU_LONGITUDE')
 
     def field_obs_surface_geometry_target_observer_west_longitude1(self):
         return self._surface_geo_index_col('MINIMUM_LONGITUDE_WRT_OBSERVER')
 
     def field_obs_surface_geometry_target_observer_west_longitude2(self):
         return self._surface_geo_index_col('MAXIMUM_LONGITUDE_WRT_OBSERVER')
+
+    # Distance & Resolution
+
+    def field_obs_surface_geometry_target_range_to_body1(self):
+        return self._surface_geo_index_col('MINIMUM_SURFACE_DISTANCE')
+
+    def field_obs_surface_geometry_target_range_to_body2(self):
+        return self._surface_geo_index_col('MAXIMUM_SURFACE_DISTANCE')
+
+    def field_obs_surface_geometry_target_center_distance1(self):
+        return self._surface_geo_index_col('MINIMUM_CENTER_DISTANCE',
+                                           'CENTER_DISTANCE')
+
+    def field_obs_surface_geometry_target_center_distance2(self):
+        return self._surface_geo_index_col('MAXIMUM_CENTER_DISTANCE',
+                                           'CENTER_DISTANCE')
 
     def field_obs_surface_geometry_target_finest_resolution1(self):
         return self._surface_geo_index_col('MINIMUM_FINEST_SURFACE_RESOLUTION')
@@ -137,11 +210,23 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def field_obs_surface_geometry_target_coarsest_resolution2(self):
         return self._surface_geo_index_col('MAXIMUM_COARSEST_SURFACE_RESOLUTION')
 
-    def field_obs_surface_geometry_target_range_to_body1(self):
-        return self._surface_geo_index_col('MINIMUM_SURFACE_DISTANCE')
+    def field_obs_surface_geometry_target_center_resolution1(self):
+        return self._surface_geo_index_col('MINIMUM_CENTER_RESOLUTION',
+                                           'CENTER_RESOLUTION')
 
-    def field_obs_surface_geometry_target_range_to_body2(self):
-        return self._surface_geo_index_col('MAXIMUM_SURFACE_DISTANCE')
+    def field_obs_surface_geometry_target_center_resolution2(self):
+        return self._surface_geo_index_col('MAXIMUM_CENTER_RESOLUTION',
+                                           'CENTER_RESOLUTION')
+
+    # Lighting Geometry
+
+    def field_obs_surface_geometry_target_center_phase_angle1(self):
+        return self._surface_geo_index_col('MINIMUM_CENTER_PHASE_ANGLE',
+                                           'CENTER_PHASE_ANGLE')
+
+    def field_obs_surface_geometry_target_center_phase_angle2(self):
+        return self._surface_geo_index_col('MAXIMUM_CENTER_PHASE_ANGLE',
+                                           'CENTER_PHASE_ANGLE')
 
     def field_obs_surface_geometry_target_phase1(self):
         return self._surface_geo_index_col('MINIMUM_PHASE_ANGLE')
@@ -161,77 +246,55 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def field_obs_surface_geometry_target_emission2(self):
         return self._surface_geo_index_col('MAXIMUM_EMISSION_ANGLE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
-                                           'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
+    def field_obs_surface_geometry_target_solar_hour_angle1(self):
+        return self._surface_geo_index_col('MINIMUM_LOCAL_HOUR_ANGLE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self):
-        return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
-                                           'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
+    def field_obs_surface_geometry_target_solar_hour_angle2(self):
+        return self._surface_geo_index_col('MAXIMUM_LOCAL_HOUR_ANGLE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
-                                           'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
+    # Pole & Limb
 
-    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self):
-        return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
-                                           'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
+    def field_obs_surface_geometry_target_north_pole_clock_angle(self):
+        return self._surface_geo_index_col('NORTH_POLE_CLOCK_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
-                                           'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
+    def field_obs_surface_geometry_target_north_pole_position_angle(self):
+        return self._surface_geo_index_col('NORTH_POLE_POSITION_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self):
-        return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
-                                           'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
+    def field_obs_surface_geometry_target_limb_clock_angle1(self):
+        return self._surface_geo_index_col('MINIMUM_LIMB_CLOCK_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
-                                           'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
+    def field_obs_surface_geometry_target_limb_clock_angle2(self):
+        return self._surface_geo_index_col('MAXIMUM_LIMB_CLOCK_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
-                                           'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
+    def field_obs_surface_geometry_target_limb_altitude1(self):
+        return self._surface_geo_index_col('MINIMUM_LIMB_ALTITUDE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_IAU_LONGITUDE',
-                                           'SUB_SOLAR_IAU_LONGITUDE')
+    def field_obs_surface_geometry_target_limb_altitude2(self):
+        return self._surface_geo_index_col('MAXIMUM_LIMB_ALTITUDE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self):
-        return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_IAU_LONGITUDE',
-                                           'SUB_SOLAR_IAU_LONGITUDE')
+    # Image Geometry
 
-    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_IAU_LONGITUDE',
-                                           'SUB_OBSERVER_IAU_LONGITUDE')
+    def field_obs_surface_geometry_target_diameter_pixels(self):
+        return self._surface_geo_index_col('DIAMETER_IN_PIXELS', missing_ok=True)
 
-    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self):
-        return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_IAU_LONGITUDE',
-                                           'SUB_OBSERVER_IAU_LONGITUDE')
+    def field_obs_surface_geometry_target_center_x_coordinate(self):
+        return self._surface_geo_index_col('CENTER_X_COORDINATE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_center_resolution1(self):
-        return self._surface_geo_index_col('MINIMUM_CENTER_RESOLUTION',
-                                           'CENTER_RESOLUTION')
+    def field_obs_surface_geometry_target_center_y_coordinate(self):
+        return self._surface_geo_index_col('CENTER_Y_COORDINATE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_center_resolution2(self):
-        return self._surface_geo_index_col('MAXIMUM_CENTER_RESOLUTION',
-                                           'CENTER_RESOLUTION')
+    # Timing
 
-    def field_obs_surface_geometry_target_center_distance1(self):
-        return self._surface_geo_index_col('MINIMUM_CENTER_DISTANCE',
-                                           'CENTER_DISTANCE')
+    def field_obs_surface_geometry_target_surface_intercept_time1(self):
+        return self._time_helper('surface_geo_row',
+                                 'MINIMUM_SURFACE_INTERCEPT_TIME',
+                                 missing_index_ok=True)
 
-    def field_obs_surface_geometry_target_center_distance2(self):
-        return self._surface_geo_index_col('MAXIMUM_CENTER_DISTANCE',
-                                           'CENTER_DISTANCE')
-
-    def field_obs_surface_geometry_target_center_phase_angle1(self):
-        return self._surface_geo_index_col('MINIMUM_CENTER_PHASE_ANGLE',
-                                           'CENTER_PHASE_ANGLE')
-
-    def field_obs_surface_geometry_target_center_phase_angle2(self):
-        return self._surface_geo_index_col('MAXIMUM_CENTER_PHASE_ANGLE',
-                                           'CENTER_PHASE_ANGLE')
+    def field_obs_surface_geometry_target_surface_intercept_time2(self):
+        return self._time2_helper('surface_geo_row',
+                                  self.field_obs_surface_geometry_target_surface_intercept_time1(),
+                                  'MAXIMUM_SURFACE_INTERCEPT_TIME',
+                                  missing_index_ok=True)
 
 
     ########################
@@ -254,7 +317,8 @@ class ObsSurfaceGeometryTarget(ObsBase):
                                 'sub_observer_iau_west_longitude',
                                 'center_resolution',
                                 'center_distance',
-                                'center_phase_angle'):
+                                'center_phase_angle',
+                                ):
             val1 = row[gridless_column+'1']
             val2 = row[gridless_column+'2']
             if (val1 != val2 and
