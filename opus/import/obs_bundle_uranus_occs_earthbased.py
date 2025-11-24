@@ -2,8 +2,8 @@
 # obs_bundle_uranus_occs_earthbased.py
 #
 # Defines the ObsBundleUranusOccsEarthbased class, which encapsulates fields in
-# the common tables for the PDS4 bundle "uranus_occs_earthbase". This class
-# supports multiple instruments in a single volume.
+# the common and common occultation tables for the PDS4 bundleset "uranus_occs_earthbased".
+# This class supports multiple instruments in a single bundleset.
 ################################################################################
 
 """
@@ -22,9 +22,7 @@ done
 """
 
 import config_targets
-
-from obs_common_pds4 import ObsCommonPDS4
-
+from obs_bundle_occ_common import ObsBundleOccCommon
 
 # TODOPDS4 We should be able to get rid of this mapping once
 # Observing_System_Component is available in the index file.
@@ -53,11 +51,9 @@ _LID_TO_INST = {
     'teide_155cm': 'teide.carlossanchez_1m55',
 }
 
-
-class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
+class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
     def _is_atmos(self):
         lid = self._index_col('pds:logical_identifier')
@@ -104,11 +100,6 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def mission_id(self):
         return 'HST' if self._inst_name == 'hst_fos' else 'GB'
 
-    @property
-    def primary_filespec(self):
-        return self._index_col('filepath')
-
-
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
@@ -135,27 +126,12 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
             return [(None, None)]
         return [(target_name, target_info[2])]
 
-    def field_obs_general_quantity(self):
-        return self._create_mult('OPDEPTH')
-
-    def field_obs_general_observation_type(self):
-        return self._create_mult('OCC')
-
-
-    ###################################
-    ### OVERRIDE FROM ObsWavelength ###
-    ###################################
-
-    def field_obs_wavelength_wavelength1(self):
-        return self._index_col('rings:minimum_wavelength') / 1000. # nm->microns
-
-    def field_obs_wavelength_wavelength2(self):
-        return self._index_col('rings:maximum_wavelength') / 1000. # nm->microns
-
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
+    
+    # Occultation type is set as 'STE' in obs_profile_pds4
 
     def field_obs_profile_source(self):
         star_name = self._index_col('rings:star_name')
@@ -174,88 +150,21 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     # Note - A lot of the ring-specific fields are missing from atmos labels so
     # they will just turn out to be None.
 
-    def field_obs_ring_geometry_ring_radius1(self):
-        return self._index_col('rings:minimum_ring_radius')
-
-    def field_obs_ring_geometry_ring_radius2(self):
-        return self._index_col('rings:maximum_ring_radius')
-
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('rings:radial_resolution')
 
     def field_obs_ring_geometry_projected_radial_resolution2(self):
         return self.field_obs_ring_geometry_projected_radial_resolution1()
 
-    def field_obs_ring_geometry_j2000_longitude1(self):
-        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
-            self.field_obs_ring_geometry_ascending_longitude2() == 360):
-            return 0
-        return self._ascending_to_j2000(
-            self.field_obs_ring_geometry_ascending_longitude1())
-
-    def field_obs_ring_geometry_j2000_longitude2(self):
-        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
-            self.field_obs_ring_geometry_ascending_longitude2() == 360):
-            return 360
-        return self._ascending_to_j2000(
-            self.field_obs_ring_geometry_ascending_longitude2())
-
-    def field_obs_ring_geometry_ascending_longitude1(self):
-        return self._index_col('rings:minimum_ring_longitude')
-
-    def field_obs_ring_geometry_ascending_longitude2(self):
-        return self._index_col('rings:maximum_ring_longitude')
-
-    def field_obs_ring_geometry_ring_azimuth_wrt_observer1(self):
-        return self._index_col('rings:minimum_ring_azimuth')
-
-    def field_obs_ring_geometry_ring_azimuth_wrt_observer2(self):
-        return self._index_col('rings:maximum_ring_azimuth')
-
     # Earth was seeing Uranus' south pole for the entire duration of this data set.
     # Thus the solar elevation was seeing the northern hemisphere and the
     # observer elevation was seeing the southern hemisphere.
     # For Uranus, these values are positive for the southern hemisphere.
-
-    def field_obs_ring_geometry_solar_ring_elevation1(self):
-        inc = self._index_col('rings:light_source_incidence_angle')
-        if inc is not None:
-            inc = inc - 90.
-        return inc
-
-    def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return self.field_obs_ring_geometry_solar_ring_elevation1()
-
-    def field_obs_ring_geometry_observer_ring_elevation1(self):
-        inc = self._index_col('rings:light_source_incidence_angle')
-        if inc is not None:
-            inc = 90. - inc
-        return inc
-
-    def field_obs_ring_geometry_observer_ring_elevation2(self):
-        return self.field_obs_ring_geometry_observer_ring_elevation1()
-
-    def field_obs_ring_geometry_phase1(self):
-        return 180.
-
-    def field_obs_ring_geometry_phase2(self):
-        return 180.
-
-    def field_obs_ring_geometry_incidence1(self):
-        return self._index_col('rings:light_source_incidence_angle')
-
-    def field_obs_ring_geometry_incidence2(self):
-        return self.field_obs_ring_geometry_incidence1()
-
-    def field_obs_ring_geometry_emission1(self):
-        em = self._index_col('rings:light_source_incidence_angle')
-        if em is not None:
-            em = 180. - em
-        return em
-
-    def field_obs_ring_geometry_emission2(self):
-        return self.field_obs_ring_geometry_emission1()
-
+    # The solar ring elevation, observer ring elevation, phase, incidence angle, and emission angle
+    # methods are in to obs_bundle_occ_common.py
+ 
+     
+    # The north-based fields are specific to planet and geometry.
     # Earth was seeing Uranus' south pole for the entire duration of this data set.
     # Thus the star was illuminating the north side of the rings, and the
     # north-based values are the same as the plain values.
@@ -272,36 +181,7 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
     def field_obs_ring_geometry_north_based_emission2(self):
         return self.field_obs_ring_geometry_emission2()
 
-    def field_obs_ring_geometry_ring_center_phase1(self):
-        return self.field_obs_ring_geometry_phase1()
-
-    def field_obs_ring_geometry_ring_center_phase2(self):
-        return self.field_obs_ring_geometry_phase2()
-
-    def field_obs_ring_geometry_ring_center_incidence1(self):
-        return self.field_obs_ring_geometry_incidence1()
-
-    def field_obs_ring_geometry_ring_center_incidence2(self):
-        return self.field_obs_ring_geometry_incidence2()
-
-    def field_obs_ring_geometry_ring_center_emission1(self):
-        return self.field_obs_ring_geometry_emission1()
-
-    def field_obs_ring_geometry_ring_center_emission2(self):
-        return self.field_obs_ring_geometry_emission2()
-
-    def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
-        return self.field_obs_ring_geometry_north_based_incidence1()
-
-    def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
-        return self.field_obs_ring_geometry_north_based_incidence2()
-
-    def field_obs_ring_geometry_ring_center_north_based_emission1(self):
-        return self.field_obs_ring_geometry_north_based_emission1()
-
-    def field_obs_ring_geometry_ring_center_north_based_emission2(self):
-        return self.field_obs_ring_geometry_north_based_emission2()
-
+    # The solar ring opening angle depends on planet and geometry.
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
         oa = self._index_col('rings:observed_ring_elevation')
         if oa is not None:
@@ -316,9 +196,3 @@ class ObsBundleUranusOccsEarthbased(ObsCommonPDS4):
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()
-
-    def field_obs_ring_geometry_ring_intercept_time1(self):
-        return self._index_col('rings:ring_event_start_tdb')
-
-    def field_obs_ring_geometry_ring_intercept_time2(self):
-        return self._index_col('rings:ring_event_stop_tdb')

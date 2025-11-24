@@ -92,6 +92,7 @@ def yield_import_bundle_ids(arguments):
                     bundle_descs.append('COVIMS_8xxx')
                     bundle_descs.append('VG_28xx')
                     bundle_descs.append('uranus_occs_earthbased')
+                    bundle_descs.append('cassini_uvis_solarocc_beckerjarmak2023')
                 elif desc.upper() == 'CASSINI':
                     bundle_descs.append('COISS_1xxx')
                     bundle_descs.append('COISS_2xxx')
