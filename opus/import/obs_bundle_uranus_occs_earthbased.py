@@ -130,7 +130,7 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
-    
+
     # Occultation type is set as 'STE' in obs_profile_pds4
 
     def field_obs_profile_source(self):
@@ -160,10 +160,9 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     # Thus the solar elevation was seeing the northern hemisphere and the
     # observer elevation was seeing the southern hemisphere.
     # For Uranus, these values are positive for the southern hemisphere.
-    # The solar ring elevation, observer ring elevation, phase, incidence angle, and emission angle
-    # methods are in to obs_bundle_occ_common.py
- 
-     
+    # The solar ring elevation, observer ring elevation, phase, incidence angle, and
+    # emission angle methods are in to obs_bundle_occ_common.py
+
     # The north-based fields are specific to planet and geometry.
     # Earth was seeing Uranus' south pole for the entire duration of this data set.
     # Thus the star was illuminating the north side of the rings, and the

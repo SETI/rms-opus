@@ -23,7 +23,7 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
-    
+
     def field_obs_general_quantity(self):
         return self._create_mult('OPDEPTH')
     # MJTM: observation_type is common to Becker/Jarmak and Uranus occs.
@@ -36,10 +36,16 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     ###################################
 
     def field_obs_wavelength_wavelength1(self):
-        return self._index_col('rings:minimum_wavelength') / 1000. # nm->microns
+        wl = self._index_col('rings:minimum_wavelength')
+        if wl is not None:
+            wl = wl / 1000.  # nm->microns
+        return wl
 
     def field_obs_wavelength_wavelength2(self):
-        return self._index_col('rings:maximum_wavelength') / 1000. # nm->microns
+        wl = self._index_col('rings:maximum_wavelength')
+        if wl is not None:
+            wl = wl / 1000.  # nm->microns
+        return wl
 
 
     #####################################

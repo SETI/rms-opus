@@ -262,10 +262,9 @@ BUNDLE_INFO = [
          'instrument_class': None},
     ),
 
-      (r'cassini_uvis_solarocc_beckerjarmak2023',
+    (r'cassini_uvis_solarocc_beckerjarmak2023',
         {'pds_version': 4,
-         'primary_index': ('<BUNDLE>_index_updated.csv',
-                           ),
+         'primary_index': ('<BUNDLE>_index_updated.csv',),
          'validate_index_rows': False,
          'temporal_camera': True,
          'instrument_class': ObsBundleCassiniUvisSolarOccBeckerJarmak},

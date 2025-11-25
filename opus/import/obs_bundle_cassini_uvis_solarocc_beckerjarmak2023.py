@@ -1,21 +1,18 @@
 ################################################################################
 # obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.py
 #
-# Defines the ObsBundleCasiniUvisSolarOccBeckerJarmak class, which encapsulates 
+# Defines the ObsBundleCassiniUvisSolarOccBeckerJarmak class, which encapsulates
 # fields in the common, common occultation, obs_mission_cassini, and obs_instrument_couvis
 # tables for COUVIS solar occultations. This class supports derived data from UVIS EUV
 # archived in cassini_uvis_solarocc_beckerjarmak2023.
 ################################################################################
 
-import opus_support
-import re 
 from datetime import datetime, date
-from import_util import safe_column, cached_tai_from_iso
 from obs_bundle_occ_common import ObsBundleOccCommon
 # MJTM: since there is no PDS4 Cassini Class, use PDS3 one for the moment
 from obs_volume_cassini_common import ObsVolumeCassiniCommon
 
-class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCassiniCommon):   
+class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCassiniCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -26,10 +23,10 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
-    
+
     @property
     def instrument_id(self):
-        return 'COUVIS' 
+        return 'COUVIS'
 
 
     ################################
@@ -54,10 +51,10 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
         return self._create_mult('SOL')
 
     def field_obs_profile_source(self):
-        return self._create_mult('Sun') 
+        return self._create_mult('Sun')
 
     def field_obs_profile_host(self):
-        return self._create_mult('cassini') 
+        return self._create_mult('cassini')
 
     def field_obs_profile_temporal_sampling(self):
         return self._index_col('rings:temporal_sampling') # sec
@@ -77,23 +74,23 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
         return None
 
     # The solar ring elevation, observer ring elevation, phase, incidence angle, and
-    # emission angles for  Becker/Jarmak are calculated in obs_bundle_occ_common.py.
+    # emission angles for Becker/Jarmak are calculated in obs_bundle_occ_common.py.
     # However, the north-based fields are specific to planet and geometry:
-    
+
     def _north_based_angle_helper(self):
-        # Work out north-based incidence angles based on date of Saturnian equinox 
+        # Work out north-based incidence angles based on date of Saturnian equinox
         # (when the sun was illuminating the north side of the rings).
-        
+
         inc = self.field_obs_ring_geometry_incidence1() # from index table
         em = self.field_obs_ring_geometry_emission1()
 
         # Get the ISO timestamp string from the index
-        iso = safe_column(self._metadata['index_row'], 'pds:start_date_time') # using the method defined in time_helper
+        iso = self._index_col('pds:start_date_time')
         if iso is None:
-            return (None, None)  
+            return (None, None)
 
-        # Convert to datetime
-        obs_dt = datetime.fromisoformat(iso.replace('Z', '+00:00')) #fromisoformat() doesn’t accept 'Z' for UTC.
+        # Convert to datetime - fromisoformat() doesn’t accept 'Z' for UTC.
+        obs_dt = datetime.fromisoformat(iso.replace('Z', '+00:00')) 
         obs_date = obs_dt.date() # Don't need HH:MM:SS
 
         saturn_equinox = date(2009, 8, 11)
@@ -115,33 +112,35 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
         return self._north_based_angle_helper()[1]
 
     def field_obs_ring_geometry_north_based_emission2(self):
-        return self.field_obs_ring_geometry_north_based_emission1()    
+        return self.field_obs_ring_geometry_north_based_emission1()
 
-    # Would be –rings:observed_ring_elevation, but that should become negative after 2009 and doesn't, so there may be errors in the Becker/Jarmak labels for rings:observed_ring_elevation 
-    #def field_obs_ring_geometry_solar_ring_opening_angle1(self): 
-    #    return (90.0 - self.field_obs_ring_geometry_north_based_incidence1())  
-    #def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-    #    return (90.0 + self.field_obs_ring_geometry_north_based_incidence1()) # This crashes so using same method as Uranus Occs for now (below). 
+    # Would be -rings:observed_ring_elevation, but that should become negative after 2009
+    # and doesn't, so there may be errors in the Becker/Jarmak labels for
+    # rings:observed_ring_elevation
+    # def field_obs_ring_geometry_solar_ring_opening_angle1(self):
+    #     return (90.0 - self.field_obs_ring_geometry_north_based_incidence1())
+    # def field_obs_ring_geometry_observer_ring_opening_angle1(self):
+    #     return (90.0 + self.field_obs_ring_geometry_north_based_incidence1())
+    # This crashes so using same method as Uranus Occs for now (below).
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self):
         oa = self._index_col('rings:observed_ring_elevation')
         if oa is not None:
             oa = -oa
-        return oa 
+        return oa
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return self.field_obs_ring_geometry_solar_ring_opening_angle1() 
-   
-   
+        return self.field_obs_ring_geometry_solar_ring_opening_angle1()
+
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
         return self._index_col('rings:observed_ring_elevation')
-  
+
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()
 
 
     #############################################
-    ### OVERRIDE FROM ObsVolumeCassiniCommon 
+    ### OVERRIDE FROM ObsVolumeCassiniCommon
     ### (analogous to obs_volume_couvis_8xxx) ###
     #############################################
 
