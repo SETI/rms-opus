@@ -97,10 +97,14 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
 
         if obs_date < saturn_equinox:
             # Before equinox ==> south side lit, so flip for north-based
-            return (180.0 - inc, 180.0 - em)
+            north_based_inc = 180.0 - inc if inc is not None else None
+            north_based_em = 180.0 - em if em is not None else None
         else:
             # On/after equinox ==> north side lit (no change)
-            return (inc, em)
+            north_based_inc = inc
+            north_based_em = em
+
+        return (north_based_inc, north_based_em)
 
     def field_obs_ring_geometry_north_based_incidence1(self):
         return self._north_based_angle_helper()[0]
