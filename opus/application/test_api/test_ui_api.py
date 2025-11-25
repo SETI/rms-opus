@@ -208,6 +208,11 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/__widget/RINGGEOphase.html?RINGGEOphase1_01=10&RINGGEOphase2_01=20&RINGGEOphase1_02=30&RINGGEOphase2_02=40'
         self._run_html_equal_file(url, 'api_widget_ringgeophase_constrained2.html')
 
+    def test__api_widget_ringradius(self):
+        "[test_ui_api.py] /__widget: RINGGEOringradius"
+        url = '/__widget/RINGGEOringradius.html'
+        self._run_html_equal_file(url, 'api_widget_ringradius.html')
+
     def test__api_widget_wavelength(self):
         "[test_ui_api.py] /__widget: wavelength"
         url = '/__widget/wavelength.html'

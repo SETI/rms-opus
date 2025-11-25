@@ -32,7 +32,7 @@ fi
 
 # Enable these commands to override the default PdsFile with a particular branch
 # git clone https://github.com/SETI/rms-pdsfile
-# (cd rms-pdsfile; git checkout sort_opus_products_output)
+# (cd rms-pdsfile; git checkout rf_251117_gossi)
 # pip uninstall -y rms-pdsfile
 # pip install -e ./rms-pdsfile
 

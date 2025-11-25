@@ -74,20 +74,8 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
         # to actually find the matching row in the supplemental index dictionary.
-        # Format: GO_0017/J0/OPNAV/C0347569700R.IMG
+        # Format: GO_0017/J0/OPNAV/C0347569700R.LBL
         return self.bundle + '/' + self._index_col('FILE_SPECIFICATION_NAME')
-
-    def opus_id_from_index_row(self, row):
-        # SL9 entries from the main index are ignored because those are in the
-        # sl9_index file.
-        if 'SPACECRAFT_CLOCK_START_COUNT' in row:
-            # We're looking at the main index
-            if 'SL9' in row['FILE_SPECIFICATION_NAME']:
-                return None
-        return super().opus_id_from_index_row(row)
-
-    def convert_filespec_from_lbl(self, filespec):
-        return filespec.replace('.LBL', '.IMG')
 
 
     ################################
@@ -195,14 +183,10 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     def field_obs_pds_product_id(self):
         s = self._index_col('FILE_SPECIFICATION_NAME')
 
-        # The filespec looks like GO_0017:[J0.OPNAV.C034640]5900R.IMG
-        # We want to extract C0346405900R
-        idx = s.find('.')
-        s = s[idx+1:]
-        idx = s.find('.')
-        s = s[idx+1:].replace(']', '').replace('.IMG', '')
+        return s.rsplit('/', 1)[-1].replace('.LBL', '')
 
-        return s
+    def field_obs_pds_note(self):
+        return self._index_col('PROCESSING_HISTORY_TEXT')
 
 
     ##################################

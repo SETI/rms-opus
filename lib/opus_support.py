@@ -1580,6 +1580,33 @@ UNIT_FORMAT_DB = {
                              ['r', 'rad', 'rads', 'radians']),
         }
     },
+    'angle_resolution': {
+        'display_search': True,
+        'display_result': True,
+        'default': 'degrees_pixel',
+        'conversions': {
+            'degrees_pixel': ('degrees/pixel',    1.,      None, None,
+                              ['d/p', 'd/pix', 'd/pixel', 'dperpix',
+                               'dperpixel',
+                               'deg/p', 'deg/pix', 'deg/pixel', 'degperpix',
+                               'degperpixel',
+                               'degs/p', 'degs/pix', 'degs/pixel',
+                               'degsperpix', 'degsperpixel',
+                               'degree/p', 'degree/pix', 'degree/pixel',
+                               'degreeperpix', 'degreeperpixel',
+                               'degrees/p', 'degrees/pix', 'degrees/pixel',
+                               'degreesperpix', 'degreesperpixel']),
+            'radians_pixel': ('radians/pixel',    DEG_RAD, None, None,
+                              ['r/p', 'r/pix', 'r/pixel', 'rperpix',
+                               'rperpixel',
+                               'rad/p', 'rad/pix', 'rad/pixel', 'radperpix',
+                               'radperpixel',
+                               'rads/p', 'rads/pix', 'rads/pixel',
+                               'radsperpix', 'radsperpixel',
+                               'radians/p', 'radians/pix', 'radians/pixel',
+                               'radiansperpix', 'radiansperpixel']),
+        }
+    },
     'latitude': { # Latitude on a body; includes declination
         'display_search': True,
         'display_result': True,

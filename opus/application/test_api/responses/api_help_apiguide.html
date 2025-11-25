@@ -3056,6 +3056,72 @@ planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
                     </tr>
                 
                     <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>North Pole Clock Angle<br/>degrees, radians</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_northpoleclockangle</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>North Pole Position Angle<br/>degrees, radians</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_northpolepositionangle</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Limb Clock Angle (Min)<br/>degrees, dms, radians</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_limbclockangle1</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Limb Clock Angle (Max)<br/>degrees, dms, radians</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_limbclockangle2</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Limb Altitude (Min)<br/>km, m, au</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_limbaltitude1</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Limb Altitude (Max)<br/>km, m, au</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_limbaltitude2</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Body Diameter in Pixels</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_diameterpixels</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Center X Coordinate</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_centerxcoordinate</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Center Y Coordinate</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_centerycoordinate</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Surface Intercept Start Time<br/>ymdhms, ydhms, jd, jed, mjd, mjed, et</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_surfaceintercepttime1</td>
+                    </tr>
+                
+                    <tr>
+                        <td>&lt;TARGET&gt; Surface Geometry Constraints</td>
+                        <td>Surface Intercept Stop Time<br/>ymdhms, ydhms, jd, jed, mjd, mjed, et</td>
+                        <td>SURFACEGEO&lt;TARGET&gt;_surfaceintercepttime2</td>
+                    </tr>
+                
+                    <tr>
                         <td>Ring Geometry Constraints</td>
                         <td>Observed Ring Radius (Min)<br/>km, m, jupiterradii, saturnradii, neptuneradii, uranusradii</td>
                         <td>RINGGEOringradius1</td>
@@ -3221,6 +3287,30 @@ planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
                         <td>Ring Geometry Constraints</td>
                         <td>Projected Radial Resolution (Max)<br/>km_pixel, m_pixel</td>
                         <td>RINGGEOprojectedradialresolution2</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Projected Longitudinal Resolution Angle (Min)<br/>degrees_pixel, radians_pixel</td>
+                        <td>RINGGEOprojectedlongitudinalresolutionangle1</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Projected Longitudinal Resolution Angle (Max)<br/>degrees_pixel, radians_pixel</td>
+                        <td>RINGGEOprojectedlongitudinalresolutionangle2</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Projected Longitudinal Resolution (Min)<br/>km_pixel, m_pixel</td>
+                        <td>RINGGEOprojectedlongitudinalresolution1</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Projected Longitudinal Resolution (Max)<br/>km_pixel, m_pixel</td>
+                        <td>RINGGEOprojectedlongitudinalresolution2</td>
                     </tr>
                 
                     <tr>
@@ -3405,18 +3495,6 @@ planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
                 
                     <tr>
                         <td>Ring Geometry Constraints</td>
-                        <td>Edge-On Longitude WRT RA=0 (Min)<br/>degrees, dms, radians</td>
-                        <td>RINGGEOedgeonJ2000longitude1</td>
-                    </tr>
-                
-                    <tr>
-                        <td>Ring Geometry Constraints</td>
-                        <td>Edge-On Longitude WRT RA=0 (Max)<br/>degrees, dms, radians</td>
-                        <td>RINGGEOedgeonJ2000longitude2</td>
-                    </tr>
-                
-                    <tr>
-                        <td>Ring Geometry Constraints</td>
                         <td>Edge-On Longitude WRT Ascending Node (Min)<br/>degrees, dms, radians</td>
                         <td>RINGGEOedgeonascendinglongitude1</td>
                     </tr>
@@ -3425,6 +3503,18 @@ planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
                         <td>Ring Geometry Constraints</td>
                         <td>Edge-On Longitude WRT Ascending Node (Max)<br/>degrees, dms, radians</td>
                         <td>RINGGEOedgeonascendinglongitude2</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Edge-On Longitude WRT RA=0 (Min)<br/>degrees, dms, radians</td>
+                        <td>RINGGEOedgeonJ2000longitude1</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Edge-On Longitude WRT RA=0 (Max)<br/>degrees, dms, radians</td>
+                        <td>RINGGEOedgeonJ2000longitude2</td>
                     </tr>
                 
                     <tr>
@@ -3473,6 +3563,36 @@ planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
                         <td>Ring Geometry Constraints</td>
                         <td>Edge-On Altitude (Max)<br/>km, m, au</td>
                         <td>RINGGEOedgeonaltitude2</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Ring Diameter in Pixels</td>
+                        <td>RINGGEOringdiameterpixels</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Ring Pole Clock Angle<br/>degrees, radians</td>
+                        <td>RINGGEOringpoleclockangle</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Center X Coordinate</td>
+                        <td>RINGGEOcenterxcoordinate</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Ring Pole Position Angle<br/>degrees, radians</td>
+                        <td>RINGGEOringpolepositionangle</td>
+                    </tr>
+                
+                    <tr>
+                        <td>Ring Geometry Constraints</td>
+                        <td>Center Y Coordinate</td>
+                        <td>RINGGEOcenterycoordinate</td>
                     </tr>
                 
                     <tr>
