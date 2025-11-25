@@ -9,10 +9,9 @@
 
 from datetime import datetime, date
 from obs_bundle_occ_common import ObsBundleOccCommon
-# MJTM: since there is no PDS4 Cassini Class, use PDS3 one for the moment
-from obs_volume_cassini_common import ObsVolumeCassiniCommon
+from obs_bundle_cassini_common import ObsBundleCassiniCommon
 
-class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCassiniCommon):
+class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsBundleCassiniCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
