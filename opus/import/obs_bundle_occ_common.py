@@ -26,7 +26,7 @@ class ObsBundleOccCommon(ObsCommonPDS4):
 
     def field_obs_general_quantity(self):
         return self._create_mult('OPDEPTH')
-    # MJTM: observation_type is common to Becker/Jarmak and Uranus occs.
+
     def field_obs_general_observation_type(self):
         return self._create_mult('OCC')
 

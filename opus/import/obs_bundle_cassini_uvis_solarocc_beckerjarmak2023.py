@@ -90,7 +90,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
             return (None, None)
 
         # Convert to datetime - fromisoformat() doesn’t accept 'Z' for UTC.
-        obs_dt = datetime.fromisoformat(iso.replace('Z', '+00:00')) 
+        obs_dt = datetime.fromisoformat(iso.replace('Z', '+00:00'))
         obs_date = obs_dt.date() # Don't need HH:MM:SS
 
         saturn_equinox = date(2009, 8, 11)
@@ -182,7 +182,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
 
 
     ##################################################
-    ### COPY FIELD METHODS FROM obs_volume_couvis_8xxx 
+    ### COPY FIELD METHODS FROM obs_volume_couvis_8xxx
     ### AND ADAPT FOR BeckerJarmak ###
     ##################################################
 
@@ -202,7 +202,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsVolumeCass
         return self.field_obs_profile_temporal_sampling()
 
     def field_obs_instrument_couvis_compression_type(self):
-        comp_type = "SQRT_9" # All BeckerJarmak observations use this compression type. 
+        comp_type = "SQRT_9" # All BeckerJarmak observations use this compression type.
         return self._create_mult_keep_case(comp_type)
 
     def field_obs_instrument_couvis_occultation_port_state(self):
