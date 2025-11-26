@@ -1,7 +1,7 @@
 ################################################################################
-# obs_volume_cassini_common.py
+# obs_cassini_common_pds3.py
 #
-# Defines the ObsVolumeCassiniCommon class, which encapsulates fields in the
+# Defines the ObsCassiniCommonPDS3 class, which encapsulates fields in the
 # common and obs_mission_cassini tables.
 ################################################################################
 
@@ -34,7 +34,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
     'FO': 'FO (Fomalhaut)',
     'FT': 'FT (Flux tube)',
     'GA': 'GA (Ganymede)',
-    'HE': 'HR (Helene)',
+    'HE': 'HE (Helene)',
     'HI': 'HI (Himalia)',
     'HY': 'HY (Hyperion)',
     'IA': 'IA (Iapetus)',
@@ -68,7 +68,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
     'SR': 'SR (Spacecraft RAM direction)',
     'ST': 'ST (Star)',
     'SU': 'SU (Sun)',
-    'SW': 'SE (Solar wind)',
+    'SW': 'SW (Solar wind)',
     'TE': 'TE (Tethys)',
     'TI': 'TI (Titan)',
     'TL': 'TL (Telesto)',
@@ -126,7 +126,7 @@ COISS_TARGET_DESC_MAPPING = {
 }
 
 
-class ObsVolumeCassiniCommon(ObsCommonPDS3):
+class ObsCassiniCommonPDS3(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -261,9 +261,7 @@ class ObsVolumeCassiniCommon(ObsCommonPDS3):
 
     def _cassini_normalize_mission_phase_name(self):
         time1 = self.field_obs_general_time1()
-        for phase, start_time, stop_time in _CASSINI_PHASE_NAME_MAPPING:
-            start_time_sec = start_time
-            stop_time_sec = stop_time
+        for phase, start_time_sec, stop_time_sec in _CASSINI_PHASE_NAME_MAPPING:
             if start_time_sec <= time1 < stop_time_sec:
                 return phase.upper()
         return None
