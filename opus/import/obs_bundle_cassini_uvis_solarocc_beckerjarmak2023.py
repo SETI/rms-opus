@@ -9,9 +9,9 @@
 
 from datetime import datetime, date
 from obs_bundle_occ_common import ObsBundleOccCommon
-from obs_bundle_cassini_common import ObsBundleCassiniCommon
+from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
-class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsBundleCassiniCommon):
+class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -143,7 +143,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsBundleCass
 
 
     #############################################
-    ### OVERRIDE FROM ObsVolumeCassiniCommon
+    ### OVERRIDE FROM ObsCassiniCommonPDS3
     ### (analogous to obs_volume_couvis_8xxx) ###
     #############################################
 

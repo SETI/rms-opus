@@ -11,12 +11,12 @@ import julian
 import opus_support
 
 import import_util
-from obs_volume_cassini_common import ObsVolumeCassiniCommon
+from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 _EQUINOX_DATE = julian.tai_from_iso('2009-08-11T01:40:08.914')
 
 
-class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
+class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -378,7 +378,7 @@ class ObsVolumeCOCIRS01xxx(ObsVolumeCassiniCommon):
 
 
     ############################################
-    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ############################################
 
     # Warning: Both the equi/point/ring index files and the supplemental index files

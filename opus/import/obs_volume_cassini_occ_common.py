@@ -8,10 +8,10 @@
 # occultation volumes
 ################################################################################
 
-from obs_volume_cassini_common import ObsVolumeCassiniCommon
+from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
-class ObsVolumeCassiniOccCommon(ObsVolumeCassiniCommon):
+class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

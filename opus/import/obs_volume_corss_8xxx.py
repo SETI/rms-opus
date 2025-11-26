@@ -143,7 +143,7 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
 
 
     ############################################
-    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ############################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):

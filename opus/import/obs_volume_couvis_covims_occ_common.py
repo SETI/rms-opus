@@ -121,7 +121,7 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
 
 
     ############################################
-    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ############################################
 
     def field_obs_mission_cassini_sequence_id(self):

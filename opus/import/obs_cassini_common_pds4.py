@@ -1,12 +1,12 @@
 ################################################################################
-# obs_bundle_cassini_common.py
+# obs_cassini_common_pds4.py
 #
-# Defines the ObsBundleCassiniCommon class, which encapsulates fields in the
+# Defines the ObsCassiniCommonPDS4 class, which encapsulates fields in the
 # common and obs_mission_cassini tables.
-# Note this began as a duplicate of (PDS3) obs_volume_cassini_common.py but will
-# diverge as PDS4 versions of the data, containing differences in terminology and
-# as well as corrections, get migrated. Currently, none of the Cassini PDS4
-# migrations have been imported into OPUS yet.
+# Note this began as a duplicate of the obs_cassini_common_pds3.py (formerly named
+# obs_volume_cassini_common.py) but will diverge as PDS4 versions of the data,
+# containing differences in terminology as well as corrections, get migrated.
+# Currently, none of the Cassini PDS4 migrations have been imported into OPUS yet.
 ################################################################################
 
 import re
@@ -38,7 +38,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
     'FO': 'FO (Fomalhaut)',
     'FT': 'FT (Flux tube)',
     'GA': 'GA (Ganymede)',
-    'HE': 'HR (Helene)',
+    'HE': 'HE (Helene)',
     'HI': 'HI (Himalia)',
     'HY': 'HY (Hyperion)',
     'IA': 'IA (Iapetus)',
@@ -72,7 +72,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
     'SR': 'SR (Spacecraft RAM direction)',
     'ST': 'ST (Star)',
     'SU': 'SU (Sun)',
-    'SW': 'SE (Solar wind)',
+    'SW': 'SW (Solar wind)',
     'TE': 'TE (Tethys)',
     'TI': 'TI (Titan)',
     'TL': 'TL (Telesto)',
@@ -130,7 +130,7 @@ COISS_TARGET_DESC_MAPPING = {
 }
 
 
-class ObsBundleCassiniCommon(ObsCommonPDS4):
+class ObsCassiniCommonPDS4(ObsCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

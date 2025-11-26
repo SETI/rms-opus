@@ -8,10 +8,10 @@
 
 import opus_support
 
-from obs_volume_cassini_common import ObsVolumeCassiniCommon
+from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
-class ObsVolumeCOVIMS0xxx(ObsVolumeCassiniCommon):
+class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -233,7 +233,7 @@ class ObsVolumeCOVIMS0xxx(ObsVolumeCassiniCommon):
 
 
     ############################################
-    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
+    ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ############################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
