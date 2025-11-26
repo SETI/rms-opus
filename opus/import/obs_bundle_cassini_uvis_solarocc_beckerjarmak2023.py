@@ -88,7 +88,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         if iso is None:
             return (None, None)
 
-        # Convert to datetime - fromisoformat() doesn’t accept 'Z' for UTC.
+        # Convert to datetime - fromisoformat() doesn't accept 'Z' for UTC.
         obs_dt = datetime.fromisoformat(iso.replace('Z', '+00:00'))
         obs_date = obs_dt.date() # Don't need HH:MM:SS
 

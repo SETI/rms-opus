@@ -265,9 +265,7 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4):
 
     def _cassini_normalize_mission_phase_name(self):
         time1 = self.field_obs_general_time1()
-        for phase, start_time, stop_time in _CASSINI_PHASE_NAME_MAPPING:
-            start_time_sec = start_time
-            stop_time_sec = stop_time
+        for phase, start_time_sec, stop_time_sec in _CASSINI_PHASE_NAME_MAPPING:
             if start_time_sec <= time1 < stop_time_sec:
                 return phase.upper()
         return None
