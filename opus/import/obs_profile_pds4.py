@@ -54,6 +54,7 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
 
     # TODO: Investigate further and fix if necessary. For the moment, assume BeckerJarmak optical depth
     # parameter can be interpreted the same as the Uranus Occs opacity parameter.
+    # Also, the -999 value in Becker/Jarmak data needs to be handled correctly.
     def field_obs_profile_optical_depth1(self):
         ret = self._index_col('rings:lowest_detectable_opacity') # Uranus Occs
         if ret is None:

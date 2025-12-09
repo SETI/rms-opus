@@ -93,13 +93,14 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     def instrument_id(self):
         return self._inst_name()
 
+
     @property
     def inst_host_id(self):
-        return 'HST' if self._inst_name() == 'hst_fos' else 'GB'
+        return 'HST' if self._inst_name() == 'hst.fos' else 'GB'
 
     @property
     def mission_id(self):
-        return 'HST' if self._inst_name() == 'hst_fos' else 'GB'
+        return 'HST' if self._inst_name() == 'hst.fos' else 'GB'
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
