@@ -2,21 +2,21 @@
 # obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.py
 #
 # Defines the ObsBundleCassiniUvisSolarOccBeckerJarmak class, which encapsulates
-# fields in the common, common occultation, obs_mission_cassini, and obs_instrument_couvis
-# tables for COUVIS solar occultations. This class supports derived data from UVIS EUV
-# archived in cassini_uvis_solarocc_beckerjarmak2023.
+# fields in the common, common occultation, obs_mission_cassini, and
+# obs_instrument_couvis tables for COUVIS solar occultations. This class
+# supports derived data from UVIS EUV archived in the
+# cassini_uvis_solarocc_beckerjarmak2023 bundle.
 ################################################################################
 
-from datetime import datetime, date
+from import_util import cached_tai_from_iso
 from obs_bundle_occ_common import ObsBundleOccCommon
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
+
+SATURN_EQUINOX_ET = cached_tai_from_iso("2009-08-11T00:00:00.000")
 
 class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def _inst_name(self):
-        return 'Cassini UVIS'
 
 
     #############################
@@ -32,8 +32,11 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    # Since the RA and dec of th Sun (not a point source) moves relative to the spacecraft (unlike distant stars),
-    # use None, i.e. don't override obs_profile.py's _prof_ra_dec_helper()
+    # Note the RA and Dec are returned as None. Although they could be computed, doing so
+    # would require spacecraft attitude and ephemeris, and is further complicated by the
+    # Sun being an extended source that moves relative to the spacecraft. More importantly,
+    # RA and Dec are not useful for occultations anyway, which rely on planet-centric
+    # geometry instead.
 
     def field_obs_general_planet_id(self):
         return self._create_mult('SAT')
@@ -66,12 +69,6 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
 
-    def field_obs_ring_geometry_projected_radial_resolution1(self):
-        return None
-
-    def field_obs_ring_geometry_projected_radial_resolution2(self):
-        return None
-
     # The solar ring elevation, observer ring elevation, phase, incidence angle, and
     # emission angles for Becker/Jarmak are calculated in obs_bundle_occ_common.py.
     # However, the north-based fields are specific to planet and geometry:
@@ -80,30 +77,24 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         # Work out north-based incidence angles based on date of Saturnian equinox
         # (when the sun was illuminating the north side of the rings).
 
-        inc = self.field_obs_ring_geometry_incidence1() # from index table
-        em = self.field_obs_ring_geometry_emission1()
+        inc = self.field_obs_ring_geometry_incidence1()
+        em  = self.field_obs_ring_geometry_emission1()
 
-        # Get the ISO timestamp string from the index
-        iso = self._index_col('pds:start_date_time')
-        if iso is None:
+        # Observation ET time (float seconds)
+        time1 = self.field_obs_general_time1() #pds:start_date_time converted to ET
+        if time1 is None:
             return (None, None)
 
-        # Convert to datetime - fromisoformat() doesn't accept 'Z' for UTC.
-        obs_dt = datetime.fromisoformat(iso.replace('Z', '+00:00'))
-        obs_date = obs_dt.date() # Don't need HH:MM:SS
-
-        saturn_equinox = date(2009, 8, 11)
-
-        if obs_date < saturn_equinox:
-            # Before equinox ==> south side lit, so flip for north-based
-            north_based_inc = 180.0 - inc if inc is not None else None
-            north_based_em = 180.0 - em if em is not None else None
+        # Before equinox ==> south side lit ==> flip to north-based
+        if time1 < SATURN_EQUINOX_ET:
+            north_inc = 180.0 - inc if inc is not None else None
+            north_em  = 180.0 - em  if em  is not None else None
         else:
             # On/after equinox ==> north side lit (no change)
-            north_based_inc = inc
-            north_based_em = em
+            north_inc = inc
+            north_em  = em
 
-        return (north_based_inc, north_based_em)
+        return (north_inc, north_em)
 
     def field_obs_ring_geometry_north_based_incidence1(self):
         return self._north_based_angle_helper()[0]
@@ -117,9 +108,9 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     def field_obs_ring_geometry_north_based_emission2(self):
         return self.field_obs_ring_geometry_north_based_emission1()
 
-    # Would be -rings:observed_ring_elevation, but that should become negative after 2009
-    # and doesn't, so there may be errors in the Becker/Jarmak labels for
-    # rings:observed_ring_elevation
+    # TODO: investigate the following. Would be -rings:observed_ring_elevation, but that should
+    # become negative after 2009 and doesn't, so there may be errors in the Becker/Jarmak labels
+    # for rings:observed_ring_elevation
     # def field_obs_ring_geometry_solar_ring_opening_angle1(self):
     #     return (90.0 - self.field_obs_ring_geometry_north_based_incidence1())
     # def field_obs_ring_geometry_observer_ring_opening_angle1(self):
@@ -142,52 +133,17 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()
 
 
-    #############################################
-    ### OVERRIDE FROM ObsCassiniCommonPDS3
-    ### (analogous to obs_volume_couvis_8xxx) ###
-    #############################################
-
-    # Haven't yet converted the SCLK methods from PDS3 to PDS4.
-    # The Becker/Jarmak index file is currently missing SCLK counts.
-
-    # def field_obs_mission_cassini_spacecraft_clock_count1(self):
-    #     sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
-    #     if sc == 'UNK':
-    #         return None
-    #     try:
-    #         sc_cvt = opus_support.parse_cassini_sclk(sc)
-    #     except Exception as e:
-    #         self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-    #         return None
-    #     return sc_cvt
-
-    # def field_obs_mission_cassini_spacecraft_clock_count2(self):
-    #     sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
-    #     if sc == 'UNK':
-    #         return None
-    #     try:
-    #         sc_cvt = opus_support.parse_cassini_sclk(sc)
-    #     except Exception as e:
-    #         self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-    #         return None
-
-    #     sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
-    #     if sc1 is not None and sc_cvt < sc1:
-    #         self._log_nonrepeating_warning(
-    #             f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
-    #             f'({sc_cvt}) are in the wrong order - setting to count1')
-    #         sc_cvt = sc1
-
-    #     return sc_cvt
+    ######################################
+    ### OVERRIDE FROM ObsCassiniCommon ###
+    ######################################
 
     def field_obs_mission_cassini_mission_phase_name(self):
         return self._create_mult(self._cassini_normalize_mission_phase_name())
 
 
-    ##################################################
-    ### COPY FIELD METHODS FROM obs_volume_couvis_8xxx
-    ### AND ADAPT FOR BeckerJarmak ###
-    ##################################################
+    ###############################################
+    ### FIELD METHODS FOR obs_instrument_couvis ###
+    ###############################################
 
     def field_obs_instrument_couvis_opus_id(self):
         return self.opus_id
@@ -223,7 +179,6 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     def field_obs_instrument_couvis_channel(self):
         return self._create_mult_keep_case('EUV')
 
-    # Leaving UVIS band, line, and sample parameters as None:
     def field_obs_instrument_couvis_band1(self):
         return None
 

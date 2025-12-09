@@ -120,9 +120,9 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
         return self._index_col('OBSERVED_RING_ELEVATION')
 
 
-    ############################################
+    ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
-    ############################################
+    ##########################################
 
     def field_obs_mission_cassini_sequence_id(self):
         return self._supp_index_col('SEQUENCE_ID')

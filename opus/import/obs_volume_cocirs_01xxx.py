@@ -377,9 +377,9 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         return self.field_obs_surface_geometry_target_center_distance1()
 
 
-    ############################################
+    ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
-    ############################################
+    ##########################################
 
     # Warning: Both the equi/point/ring index files and the supplemental index files
     # have an OBSERVATION_ID field and they're different! The index file version looks

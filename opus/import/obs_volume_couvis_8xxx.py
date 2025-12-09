@@ -59,9 +59,9 @@ class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
         return self._create_mult('UV')
 
 
-    ############################################
+    ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
-    ############################################
+    ##########################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')

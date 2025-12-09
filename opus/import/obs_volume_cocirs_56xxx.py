@@ -128,9 +128,9 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         return self._index_col('SPECTRUM_SAMPLES')
 
 
-    ############################################
+    ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
-    ############################################
+    ##########################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')

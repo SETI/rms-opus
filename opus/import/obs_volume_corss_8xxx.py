@@ -142,9 +142,9 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
         return self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
 
 
-    ############################################
+    ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
-    ############################################
+    ##########################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         count = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')

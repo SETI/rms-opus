@@ -243,7 +243,13 @@ BUNDLE_INFO = [
     ####################
     ### PDS4 BUNDLES ###
     ####################
-
+    (r'cassini_uvis_solarocc_beckerjarmak2023',
+        {'pds_version': 4,
+         'primary_index': ('<BUNDLE>_index.csv',),
+         'validate_index_rows': False,
+         'temporal_camera': True,
+         'instrument_class': ObsBundleCassiniUvisSolarOccBeckerJarmak},
+    ),
     (r'uranus_occ_u.*',
         {'pds_version': 4,
          'primary_index': ('<BUNDLE>_rings_index.csv',
@@ -260,13 +266,5 @@ BUNDLE_INFO = [
          'validate_index_rows': False,
          'temporal_camera': True,
          'instrument_class': None},
-    ),
-
-    (r'cassini_uvis_solarocc_beckerjarmak2023',
-        {'pds_version': 4,
-         'primary_index': ('<BUNDLE>_index_updated.csv',),
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': ObsBundleCassiniUvisSolarOccBeckerJarmak},
     ),
 ]

@@ -330,9 +330,9 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return (band2 - band1 + 1) // band_bin
 
 
-    ############################################
+    ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
-    ############################################
+    ##########################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')

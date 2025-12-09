@@ -2,8 +2,9 @@
 # obs_bundle_uranus_occs_earthbased.py
 #
 # Defines the ObsBundleUranusOccsEarthbased class, which encapsulates fields in
-# the common and common occultation tables for the PDS4 bundleset "uranus_occs_earthbased".
-# This class supports multiple instruments in a single bundleset.
+# the common and common occultation tables for the PDS4 bundleset
+# "uranus_occs_earthbased". This class supports multiple instruments in a single
+# bundleset.
 ################################################################################
 
 """
@@ -94,11 +95,11 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
 
     @property
     def inst_host_id(self):
-        return 'HST' if self._inst_name == 'hst_fos' else 'GB'
+        return 'HST' if self._inst_name() == 'hst_fos' else 'GB'
 
     @property
     def mission_id(self):
-        return 'HST' if self._inst_name == 'hst_fos' else 'GB'
+        return 'HST' if self._inst_name() == 'hst_fos' else 'GB'
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -161,7 +162,7 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     # observer elevation was seeing the southern hemisphere.
     # For Uranus, these values are positive for the southern hemisphere.
     # The solar ring elevation, observer ring elevation, phase, incidence angle, and
-    # emission angle methods are in to obs_bundle_occ_common.py
+    # emission angle methods are in obs_bundle_occ_common.py
 
     # The north-based fields are specific to planet and geometry.
     # Earth was seeing Uranus' south pole for the entire duration of this data set.

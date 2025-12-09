@@ -232,9 +232,9 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         return 96
 
 
-    ############################################
+    ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
-    ############################################
+    ##########################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = '1/' + self._index_col('SPACECRAFT_CLOCK_START_COUNT')

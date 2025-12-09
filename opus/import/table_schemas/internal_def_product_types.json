@@ -1008,5 +1008,25 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "ebur_occ_kernels",
         "definition": "SPICE kernels defining the Uranus equatorial and ring reference frames and the Kuiper Airborne Observatory track on March 10, 1977."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis_solar_occ_ring",
+        "definition": "Text files (*.tab) that tabulate an occultation ring profile as a time series. Associated labels (*.xml) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis_solar_occ_ring_supp",
+        "definition": "Text file (*.tab) that tabulates an occultation ring profile as a time series (supplemental data). Associated label (*.xml) describes the contents of the text file."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis_solar_occ_documentation",
+        "definition": "Ring Solar Occultation Atlases (1-RingSolarOccAtlasVol1V1.0.pdf, 2-RingSolarOccAtlasVol2V1.0.pdf). The UVIS User Guide (Cassini_UVIS_Users_Guide_20180706.pdf) that contains sections on EUV. The readme provides an overview and essential details for the bundle. Associated labels (*.xml) describe the contents of the PDF files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis_solar_occ_browse",
+        "definition": "Plots of signal, transparency, and normal optical depth for a single occultation; ingress and egress portions are given in separate files. Associated labels (*.xml) describe the contents of the detailed browse images."
     }
 ]

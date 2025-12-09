@@ -20,8 +20,6 @@ import do_cart
 import do_django
 import impglobals
 import import_util
-# MJTM: Needed for workaround
-from opus_secrets import PDS4_DATA_DIR
 
 
 ################################################################################
@@ -566,23 +564,15 @@ def import_one_bundle(bundle_id):
         impglobals.LOGGER.close()
         impglobals.CURRENT_BUNDLE_ID = None
         return True
-    # MJTM: comment out the following (to workaround the "cassini_uvis_solarocc_beckerjarmak2023 is not a bundle!"" error):
-    # if vol_info['pds_version'] == 3:
-    #     bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
-    # elif vol_info['pds_version'] == 4:
-    #     bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id)
-    # else:
-    #     import_util.log_error(f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')
-    #     return False
-    # MJTM : try the following workaround for bundleset and bundle that have same name
+
     if vol_info['pds_version'] == 3:
         bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
     elif vol_info['pds_version'] == 4:
         bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id) # This works fine for Uranus Occs Earthbased, where bundleset and bundle have different names
-        # Check if it resolved to a bundleset instead of a bundle
-        if bundle_pdsfile.is_bundleset_dir and not bundle_pdsfile.is_bundle: # Catch BeckerJarmak repeated name for bundleset/bundle
-            bundle_abspath = import_util.safe_join(PDS4_DATA_DIR, 'bundles', bundle_id, bundle_id) # construct the nested path: <root>/bundles/<bundleset_id>/<bundle_id>
-            bundle_pdsfile = pdsfile.pds4file.Pds4File.from_abspath(bundle_abspath)
+        if not bundle_pdsfile.is_bundle:
+            # Handle the case where the bundleset and bundle have the same name, in which case
+            # PdsFile prefers the bundleset, but we want to prefer the bundle
+            bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(f'bundles/{bundle_id}/{bundle_id}')
     else:
         import_util.log_error(f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')
         return False
@@ -598,8 +588,10 @@ def import_one_bundle(bundle_id):
     ##################################
     ### FIND PRIMARY INDEX FILE(s) ###
     ##################################
+
     primary_index_names = [
         x.replace('<BUNDLE>', bundle_id) for x in vol_info['primary_index']]
+
     # These are the metadata directories
     index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
 
