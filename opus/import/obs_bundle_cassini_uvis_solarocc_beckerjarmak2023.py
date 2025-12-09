@@ -81,14 +81,14 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         em  = self.field_obs_ring_geometry_emission1()
 
         # Observation ET time (float seconds)
-        time1 = self.field_obs_general_time1() #pds:start_date_time converted to ET
+        time1 = self.field_obs_general_time1() # pds:start_date_time converted to ET
         if time1 is None:
             return (None, None)
 
         # Before equinox ==> south side lit ==> flip to north-based
         if time1 < SATURN_EQUINOX_ET:
             north_inc = 180.0 - inc if inc is not None else None
-            north_em  = 180.0 - em  if em  is not None else None
+            north_em  = 180.0 - em if em is not None else None
         else:
             # On/after equinox ==> north side lit (no change)
             north_inc = inc
