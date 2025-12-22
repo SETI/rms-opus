@@ -1,0 +1,70 @@
+{
+    "data": {
+        "co-uvis-occ-2017-103-sun-i": {
+            "couvis_solar_occ_ring": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress.tab",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress.xml"
+            ],
+            "couvis_solar_occ_documentation": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/1-RingSolarOccAtlasVol1V1.0.pdf",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/1-RingSolarOccAtlasVol1V1.0.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/2-RingSolarOccAtlasVol2V1.0.pdf",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/2-RingSolarOccAtlasVol2V1.0.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/Cassini_UVIS_Users_Guide_20180706.pdf",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/Cassini_UVIS_Users_Guide_20180706.xml",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/readme.txt"
+            ],
+            "couvis_solar_occ_browse": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/browse/uvis_euv_2017_103_solar_time_series_ingress.jpg",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/browse/uvis_euv_2017_103_solar_time_series_ingress.xml"
+            ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_thumb.png"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_small.png"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_med.png"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_full.png"
+            ]
+        }
+    },
+    "versions": {
+        "co-uvis-occ-2017-103-sun-i": {
+            "Current": {
+                "couvis_solar_occ_ring": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress.tab",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress.xml"
+                ],
+                "couvis_solar_occ_documentation": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/1-RingSolarOccAtlasVol1V1.0.pdf",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/1-RingSolarOccAtlasVol1V1.0.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/2-RingSolarOccAtlasVol2V1.0.pdf",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/2-RingSolarOccAtlasVol2V1.0.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/Cassini_UVIS_Users_Guide_20180706.pdf",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/document/Cassini_UVIS_Users_Guide_20180706.xml",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/readme.txt"
+                ],
+                "couvis_solar_occ_browse": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/browse/uvis_euv_2017_103_solar_time_series_ingress.jpg",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/browse/uvis_euv_2017_103_solar_time_series_ingress.xml"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_thumb.png"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_small.png"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_med.png"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/previews/cassini_uvis_solarocc_beckerjarmak2023/cassini_uvis_solarocc_beckerjarmak2023/data/uvis_euv_2017_103_solar_time_series_ingress_preview_full.png"
+                ]
+            }
+        }
+    }
+}

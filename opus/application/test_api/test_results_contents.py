@@ -1280,3 +1280,33 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] kao0m91-vis-occ-1977-069-u0-eta-e images"
         url = "/api/images.json?opusid=kao0m91-vis-occ-1977-069-u0-eta-e"
         self._run_json_equal_file(url, "results_kao0m91_vis_occ_1977_069_u0_eta_e_images.json")
+
+    def test__results_contents_co_uvis_occ_2017_103_sun_i_metadata(self):
+        "[test_results_contents.py] co-uvis-occ-2017-103-sun-i metadata"
+        url = "/api/metadata/co-uvis-occ-2017-103-sun-i.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2017_103_sun_i_metadata.json")
+
+    def test__results_contents_co_uvis_occ_2017_103_sun_i_files(self):
+        "[test_results_contents.py] co-uvis-occ-2017-103-sun-i files"
+        url = "/api/files/co-uvis-occ-2017-103-sun-i.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2017_103_sun_i_files.json")
+
+    def test__results_contents_co_uvis_occ_2017_103_sun_i_images(self):
+        "[test_results_contents.py] co-uvis-occ-2017-103-sun-i images"
+        url = "/api/images.json?opusid=co-uvis-occ-2017-103-sun-i"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2017_103_sun_i_images.json")
+
+    def test__results_contents_co_uvis_occ_2008_083_sun_e_metadata(self):
+        "[test_results_contents.py] co-uvis-occ-2008-083-sun-e metadata"
+        url = "/api/metadata/co-uvis-occ-2008-083-sun-e.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2008_083_sun_e_metadata.json")
+
+    def test__results_contents_co_uvis_occ_2008_083_sun_e_files(self):
+        "[test_results_contents.py] co-uvis-occ-2008-083-sun-e files"
+        url = "/api/files/co-uvis-occ-2008-083-sun-e.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2008_083_sun_e_files.json")
+
+    def test__results_contents_co_uvis_occ_2008_083_sun_e_images(self):
+        "[test_results_contents.py] co-uvis-occ-2008-083-sun-e images"
+        url = "/api/images.json?opusid=co-uvis-occ-2008-083-sun-e"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2008_083_sun_e_images.json")
