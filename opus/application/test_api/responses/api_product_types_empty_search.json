@@ -154,6 +154,34 @@
         "version_name": "Current"
     },
     {
+        "category": "Cassini UVIS Solar Occultations",
+        "product_type": "couvis_solar_occ_ring",
+        "description": "Occultation Ring Time Series",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini UVIS Solar Occultations",
+        "product_type": "couvis_solar_occ_ring_supp",
+        "description": "Occultation Ring Time Series Supplemental",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini UVIS Solar Occultations",
+        "product_type": "couvis_solar_occ_documentation",
+        "description": "Documentation",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
+        "category": "Cassini UVIS Solar Occultations",
+        "product_type": "couvis_solar_occ_browse",
+        "description": "Detailed Browse",
+        "version_number": 999999,
+        "version_name": "Current"
+    },
+    {
         "category": "Cassini RSS",
         "product_type": "corss_occ_best_res",
         "description": "Occultation Profile (~1 km)",
