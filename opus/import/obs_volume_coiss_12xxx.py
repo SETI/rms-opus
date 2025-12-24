@@ -8,8 +8,8 @@
 
 import opus_support
 
-from obs_volume_cassini_common import (ObsVolumeCassiniCommon,
-                                       COISS_TARGET_DESC_MAPPING)
+from obs_cassini_common_pds3 import (ObsCassiniCommonPDS3,
+                                     COISS_TARGET_DESC_MAPPING)
 
 
 # Wavelength information for combinations of filters
@@ -176,7 +176,7 @@ _COISS_FILTER_WAVELENGTHS = {
 # W/MT3/BL1
 
 
-class ObsVolumeCOISS12xxx(ObsVolumeCassiniCommon):
+class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -354,9 +354,9 @@ class ObsVolumeCOISS12xxx(ObsVolumeCassiniCommon):
         return self._create_mult('NONE')
 
 
-    ############################################
-    ### OVERRIDE FROM ObsVolumeCassiniCommon ###
-    ############################################
+    ##########################################
+    ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
+    ##########################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         partition = self._index_col('SPACECRAFT_CLOCK_CNT_PARTITION')

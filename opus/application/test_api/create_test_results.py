@@ -86,6 +86,8 @@ if __name__ == "__main__":
         # 'kao0m91-vis-occ-1977-069-u0-ringpl-i',
         # 'kao0m91-vis-occ-1977-069-u0-uranus-e',
         # 'kao0m91-vis-occ-1977-069-u0-eta-e'
+        # 'co-uvis-occ-2017-103-sun-i', 
+        # 'co-uvis-occ-2008-083-sun-e'
     ]
 
     session = requests.Session()

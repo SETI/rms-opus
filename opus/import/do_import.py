@@ -568,10 +568,15 @@ def import_one_bundle(bundle_id):
     if vol_info['pds_version'] == 3:
         bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
     elif vol_info['pds_version'] == 4:
-        bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id)
+        bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id) # This works fine for Uranus Occs Earthbased, where bundleset and bundle have different names
+        if not bundle_pdsfile.is_bundle:
+            # Handle the case where the bundleset and bundle have the same name, in which case
+            # PdsFile prefers the bundleset, but we want to prefer the bundle
+            bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(f'bundles/{bundle_id}/{bundle_id}')
     else:
         import_util.log_error(f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')
         return False
+
 
     if not bundle_pdsfile.is_bundle:
         import_util.log_error(f'{bundle_id} is not a bundle!')
@@ -589,12 +594,14 @@ def import_one_bundle(bundle_id):
 
     # These are the metadata directories
     index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
+
     if vol_info['pds_version'] == 3:
         # These are the plain <volume>/index directories for PDS3 volumes that
         # don't have a separate metadata directory
         index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'INDEX'))
         index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'index'))
     found_in_this_dir = False
+
     for path in index_paths:
         if not os.path.exists(path):
             continue

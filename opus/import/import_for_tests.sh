@@ -30,6 +30,7 @@ python main_opus_import.py --do-all-import COVIMS_8001 $1
 python main_opus_import.py --do-all-import VG_28xx $1
 python main_opus_import.py --do-all-import COCIRS_0406,COCIRS_1003 $1
 python main_opus_import.py --do-all-import uranus_occ_u0_kao_91cm $1
+python main_opus_import.py --do-all-import cassini_uvis_solarocc_beckerjarmak2023 $1
 python main_opus_import.py --cleanup-aux-tables
 python main_opus_import.py --import-dictionary
 (cd ../application; python manage.py migrate)

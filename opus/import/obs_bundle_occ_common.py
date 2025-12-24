@@ -1,41 +1,28 @@
 ################################################################################
-# obs_volume_cassini_occ_common.py
+# obs_bundle_occ_common.py
 #
-# Defines the ObsVolumeCassiniOccCommon class, the parent for the
-# ObsVolumeCORSS8xxx, ObsVolumeCOUVIS8xxx, and ObsVolumeCOVIMS8xxx
-# classes, which encapsulate fields in the obs_instrument_corss,
-# obs_instrument_couvis, and obs_instrument_covims tables for the 8xxx
-# occultation volumes
+# Defines the ObsBundleOccCommon class, which encapsulate fields that are common
+# to the PDS4 occultation classes.
 ################################################################################
 
-from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+from obs_common_pds4 import ObsCommonPDS4
 
-
-class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
+class ObsBundleOccCommon(ObsCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
 
-    def convert_filespec_from_lbl(self, filespec):
-        return filespec.replace('.LBL', '.TAB')
+    @property
+    def primary_filespec(self):
+        return self._index_col('filepath')
 
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
-
-    def _target_name(self):
-        target_name, target_info = self._get_target_info('S RINGS')
-        return [(target_name, target_info[2])]
-        # MULTXXX2 - Comment out the above line to fake a multi-target results
-        target_name2, target_info2 = self._get_target_info('ENCELADUS')
-        target_name3, target_info3 = self._get_target_info('TETHYS')
-        return [(target_name, target_info[2]),
-                (target_name2, target_info2[2]),
-                (target_name3, target_info3[2])]
-
-    def field_obs_general_planet_id(self):
-        return self._create_mult('SAT')
 
     def field_obs_general_quantity(self):
         return self._create_mult('OPDEPTH')
@@ -44,31 +31,21 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
         return self._create_mult('OCC')
 
 
-    ################################
-    ### OVERRIDE FROM ObsProfile ###
-    ################################
+    ###################################
+    ### OVERRIDE FROM ObsWavelength ###
+    ###################################
 
-    def field_obs_profile_occ_dir(self):
-        filespec = self.primary_filespec
+    def field_obs_wavelength_wavelength1(self):
+        wl = self._index_col('rings:minimum_wavelength')
+        if wl is not None:
+            wl = wl / 1000.  # nm->microns
+        return wl
 
-        # We don't allow "Both" as a direction since these are always split into
-        # separate files.
-        if '_I_' in filespec:
-            return self._create_mult('I')
-        if '_E_' in filespec:
-            return self._create_mult('E')
-        self._log_nonrepeating_error(
-            f'Unknown ring occultation direction in filespec "{filespec}"')
-        return self._create_mult(None)
-
-    def field_obs_profile_body_occ_flag(self):
-        return self._create_mult(self._index_col('PLANETARY_OCCULTATION_FLAG'))
-
-    def field_obs_profile_optical_depth1(self):
-        return self._supp_index_col('LOWEST_DETECTABLE_OPACITY')
-
-    def field_obs_profile_optical_depth2(self):
-        return self._supp_index_col('HIGHEST_DETECTABLE_OPACITY')
+    def field_obs_wavelength_wavelength2(self):
+        wl = self._index_col('rings:maximum_wavelength')
+        if wl is not None:
+            wl = wl / 1000.  # nm->microns
+        return wl
 
 
     #####################################
@@ -76,16 +53,10 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
     #####################################
 
     def field_obs_ring_geometry_ring_radius1(self):
-        return self._index_col('MINIMUM_RING_RADIUS')
+        return self._index_col('rings:minimum_ring_radius')
 
     def field_obs_ring_geometry_ring_radius2(self):
-        return self._index_col('MAXIMUM_RING_RADIUS')
-
-    def field_obs_ring_geometry_projected_radial_resolution1(self):
-        return self._index_col('RADIAL_RESOLUTION')
-
-    def field_obs_ring_geometry_projected_radial_resolution2(self):
-        return self._index_col('RADIAL_RESOLUTION')
+        return self._index_col('rings:maximum_ring_radius')
 
     def field_obs_ring_geometry_j2000_longitude1(self):
         if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
@@ -102,22 +73,55 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
             self.field_obs_ring_geometry_ascending_longitude2())
 
     def field_obs_ring_geometry_ascending_longitude1(self):
-        return self._index_col('MINIMUM_RING_LONGITUDE')
+        return self._index_col('rings:minimum_ring_longitude')
 
     def field_obs_ring_geometry_ascending_longitude2(self):
-        return self._index_col('MAXIMUM_RING_LONGITUDE')
+        return self._index_col('rings:maximum_ring_longitude')
 
     def field_obs_ring_geometry_ring_azimuth_wrt_observer1(self):
-        return self._index_col('MINIMUM_OBSERVED_RING_AZIMUTH')
+        return self._index_col('rings:minimum_observed_ring_azimuth')
 
     def field_obs_ring_geometry_ring_azimuth_wrt_observer2(self):
-        return self._index_col('MAXIMUM_OBSERVED_RING_AZIMUTH')
+        return self._index_col('rings:maximum_observed_ring_azimuth')
+
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
+        inc = self._index_col('rings:light_source_incidence_angle')
+        if inc is not None:
+            inc = inc - 90.
+        return inc
+
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
+        return self.field_obs_ring_geometry_solar_ring_elevation1()
+
+    def field_obs_ring_geometry_observer_ring_elevation1(self):
+        inc = self._index_col('rings:light_source_incidence_angle')
+        if inc is not None:
+            inc = 90. - inc
+        return inc
+
+    def field_obs_ring_geometry_observer_ring_elevation2(self):
+        return self.field_obs_ring_geometry_observer_ring_elevation1()
 
     def field_obs_ring_geometry_phase1(self):
         return 180.
 
     def field_obs_ring_geometry_phase2(self):
         return 180.
+
+    def field_obs_ring_geometry_incidence1(self):
+        return self._index_col('rings:light_source_incidence_angle')
+
+    def field_obs_ring_geometry_incidence2(self):
+        return self.field_obs_ring_geometry_incidence1()
+
+    def field_obs_ring_geometry_emission1(self):
+        em = self._index_col('rings:light_source_incidence_angle')
+        if em is not None:
+            em = 180. - em
+        return em
+
+    def field_obs_ring_geometry_emission2(self):
+        return self.field_obs_ring_geometry_emission1()
 
     def field_obs_ring_geometry_ring_center_phase1(self):
         return self.field_obs_ring_geometry_phase1()
@@ -150,8 +154,7 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
         return self.field_obs_ring_geometry_north_based_emission2()
 
     def field_obs_ring_geometry_ring_intercept_time1(self):
-        return self._time_from_index(column='RING_EVENT_START_TIME')
+        return self._index_col('rings:ring_event_start_tdb')
 
     def field_obs_ring_geometry_ring_intercept_time2(self):
-        return self._time2_from_index(self.field_obs_ring_geometry_ring_intercept_time1(),
-                                      column='RING_EVENT_STOP_TIME')
+        return self._index_col('rings:ring_event_stop_tdb')

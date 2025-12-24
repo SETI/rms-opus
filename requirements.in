@@ -1,5 +1,5 @@
 # Generate requirements.txt with:
-# pip-compile --unsafe-package pip --unsafe-package setuptools --unsafe-package xattr -U -r
+# pip-compile --unsafe-package pip --unsafe-package setuptools --unsafe-package xattr -U -r > requirements.txt
 coverage
 django == 4.*
 django-storages

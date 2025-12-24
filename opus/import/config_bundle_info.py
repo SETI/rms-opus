@@ -31,7 +31,7 @@ from obs_volume_vg2803        import ObsVolumeVG2803VGRSS
 from obs_volume_vg2810        import ObsVolumeVG2810VGISS
 
 from obs_bundle_uranus_occs_earthbased import ObsBundleUranusOccsEarthbased
-
+from obs_bundle_cassini_uvis_solarocc_beckerjarmak2023 import ObsBundleCassiniUvisSolarOccBeckerJarmak
 
 # The BUNDLE_INFO structure is used to determine the details of importing
 # each distinct type of bundle/volume.
@@ -243,7 +243,13 @@ BUNDLE_INFO = [
     ####################
     ### PDS4 BUNDLES ###
     ####################
-
+    (r'cassini_uvis_solarocc_beckerjarmak2023',
+        {'pds_version': 4,
+         'primary_index': ('<BUNDLE>_index.csv',),
+         'validate_index_rows': False,
+         'temporal_camera': True,
+         'instrument_class': ObsBundleCassiniUvisSolarOccBeckerJarmak},
+    ),
     (r'uranus_occ_u.*',
         {'pds_version': 4,
          'primary_index': ('<BUNDLE>_rings_index.csv',

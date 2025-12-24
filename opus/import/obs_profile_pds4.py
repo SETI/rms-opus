@@ -8,7 +8,6 @@
 from obs_base_pds4 import ObsBasePDS4
 from obs_profile import ObsProfile
 
-
 class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,11 +52,20 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
     def field_obs_profile_temporal_sampling(self):
         return None
 
+    # TODO: Investigate further and fix if necessary. For the moment, assume BeckerJarmak optical depth
+    # parameter can be interpreted the same as the Uranus Occs opacity parameter.
+    # Also, the -999 value in Becker/Jarmak data needs to be handled correctly.
     def field_obs_profile_optical_depth1(self):
-        return self._index_col('rings:lowest_detectable_opacity')
+        ret = self._index_col('rings:lowest_detectable_opacity') # Uranus Occs
+        if ret is None:
+            ret = self._index_col('rings:lowest_detectable_normal_optical_depth') # BeckerJarmak. Note co-uvis-occ-2016-269-sun-i has -999.
+        return ret
 
     def field_obs_profile_optical_depth2(self):
-        return self._index_col('rings:highest_detectable_opacity')
+        ret = self._index_col('rings:highest_detectable_opacity') # Uranus Occs
+        if ret is None:
+            ret = self._index_col('rings:highest_detectable_normal_optical_depth') # BeckerJarmak. Note co-uvis-occ-2016-269-sun-i has -999.
+        return ret
 
     def field_obs_profile_wl_band(self):
         wl_range = self._index_col('pds:wavelength_range')
