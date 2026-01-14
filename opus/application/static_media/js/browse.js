@@ -3104,16 +3104,16 @@ var o_browse = {
             let buttonInfo = o_browse.cartButtonInfo(action);
 
             // prev/next buttons - put this in op-metadata-detail-view html...
-            let html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}"><i class="${buttonInfo[tab].icon} fa-2x float-left op-metadatabox-tooltip" title="${buttonInfo[tab].title} (or press spacebar)"></i></a></div>`;
+            let html = `<div class="col"><a href="#" class="op-cart-toggle op-metadatabox-tooltip" data-id="${opusId}" title="${buttonInfo[tab].title} (or press spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
             html += `<div class="col text-center op-obs-direction">`;
             let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
             let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-            html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}"><i class="far fa-arrow-alt-circle-left fa-2x  op-metadatabox-tooltip" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"></i></a>`;
-            html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}"><i class="far fa-arrow-alt-circle-right fa-2x op-metadatabox-tooltip" title="Next image: ${nextPrevHandles.next} (right arrow key)"></i></a>`;
+            html += `<a href="#" class="op-prev op-metadatabox-tooltip text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x "></i></a>`;
+            html += `<a href="#" class="op-next op-metadatabox-tooltip ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col text-start"><a href="#" class="menu pe-3 float-end text-center" role="button" data-id="${opusId}"><i class="fas fa-bars fa-2x op-metadatabox-tooltip" title="More options"></i></a></div>`;
+            html += `<div class="col text-start"><a href="#" class="menu op-metadatabox-tooltip pe-3 float-end text-center" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-metadata-detail-view-body .bottom").html(html);
 
             // update the binoculars here
@@ -3135,7 +3135,19 @@ var o_browse = {
                 maxWidth: opus.tooltipsMaxWidth,
                 theme: opus.tooltipsTheme,
                 delay: opus.tooltipsDelay,
+                contentAsHTML: true,
+                functionPosition: function(instance, helper, position){
+                    // Set the positions of tooltips at the middle of the icons in metadatabox
 
+                    // Get the position and size of the "i" tag (the icon)
+                    let iconRec = instance._$origin[0].firstChild.getBoundingClientRect();
+
+                    // make sure tooltips stay at the top and middle of the icon with some spaces (10 in this case)
+                    position.coord.top = iconRec.top - iconRec.height - 10;
+                    position.target = iconRec.left + (iconRec.width / 2);
+
+                    return position;
+                }
             });
 
             $(".op-metadatabox-img-tooltip").tooltipster({
