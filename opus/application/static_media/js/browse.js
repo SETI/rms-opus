@@ -3140,7 +3140,7 @@ var o_browse = {
                     // Set the positions of tooltips at the middle of the icons in metadatabox
 
                     // Get the position and size of the "i" tag (the icon)
-                    let iconRec = instance._$origin[0].firstChild.getBoundingClientRect();
+                    let iconRec = helper.origin.firstChild.getBoundingClientRect();
 
                     // make sure tooltips stay at the top and middle of the icon with some spaces (10 in this case)
                     position.coord.top = iconRec.top - iconRec.height - 10;
