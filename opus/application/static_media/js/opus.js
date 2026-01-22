@@ -973,6 +973,13 @@ var opus = {
                     break;
             }
         });
+
+        // Prevent the spacebar from scrolling the perfect scrollbar
+        $(".ps__thumb-y").on("keydown", function(e) {
+            if (e.code === "Space") {
+                e.preventDefault();
+            }
+        });
     },
 
     tooltipClickHandler: function () {
@@ -1195,13 +1202,6 @@ var opus = {
             o_browse.initInfiniteScroll(tab, `#${tab} .op-gallery-view`);
             o_browse.initInfiniteScroll(tab, `#${tab} .op-data-table-view`);
         }
-
-        // Prevent the spacebar from scrolling the perfect scrollbar
-        $(".ps__thumb-y").on("keydown", function(e) {
-            if (e.code === "Space") {
-                e.preventDefault();
-            }
-        });
 
         o_cart.initCart();
         o_detail.showDetailThumbInNav();
