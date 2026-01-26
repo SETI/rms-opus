@@ -973,6 +973,13 @@ var opus = {
                     break;
             }
         });
+
+        // Prevent the spacebar from scrolling the perfect scrollbar
+        $(".ps__thumb-y").on("keydown", function(e) {
+            if (e.code === "Space") {
+                e.preventDefault();
+            }
+        });
     },
 
     tooltipClickHandler: function () {
