@@ -500,13 +500,14 @@
         "pi_tooltip": null,
         "mult_options": [
               [   0, "IMG",                "Image", "010", "Y", null, null],
-              [   1, "SPE",             "Spectrum", "020", "Y", null, null],
-              [   2, "SPI",       "Spectral Image", "030", "Y", null, null],
-              [   3, "SCU",        "Spectral Cube", "040", "Y", null, null],
-              [   4,  "TS",          "Time Series", "050", "Y", null, null],
-              [   5, "STS", "Spectral Time Series", "060", "Y", null, null],
-              [   6, "OCC",  "Occultation Profile", "070", "Y", null, null],
-              [   7, "REF",  "Reflectance Profile", "080", "Y", null, null]
+              [   1, "MSC",               "Mosaic", "020", "Y", null, null],
+              [   2, "SPE",             "Spectrum", "030", "Y", null, null],
+              [   3, "SPI",       "Spectral Image", "040", "Y", null, null],
+              [   4, "SCU",        "Spectral Cube", "050", "Y", null, null],
+              [   5,  "TS",          "Time Series", "060", "Y", null, null],
+              [   6, "STS", "Spectral Time Series", "070", "Y", null, null],
+              [   7, "OCC",  "Occultation Profile", "080", "Y", null, null],
+              [   8, "REF",  "Reflectance Profile", "090", "Y", null, null]
         ]
     },
     {
