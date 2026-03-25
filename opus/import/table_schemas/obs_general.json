@@ -500,7 +500,7 @@
         "pi_tooltip": null,
         "mult_options": [
               [   0, "IMG",                "Image", "010", "Y", null, null],
-              [   1, "MSC",               "Mosaic", "020", "Y", null, null],
+              [   1, "MOS",               "Mosaic", "020", "Y", null, null],
               [   2, "SPE",             "Spectrum", "030", "Y", null, null],
               [   3, "SPI",       "Spectral Image", "040", "Y", null, null],
               [   4, "SCU",        "Spectral Cube", "050", "Y", null, null],
