@@ -98,6 +98,27 @@
         "version_name": "Current"
     },
     {
+       "category": "Cassini ISS F Ring Reprojected Image",
+       "description": "Reprojected Image",
+       "product_type": "coiss_f_ring_reproj_img",
+       "version_name": "Current",
+       "version_number": 999999
+    },
+    {
+       "category": "Cassini ISS F Ring Reprojected Image",
+       "description": "Reprojected Image SPICE Pointing",
+       "product_type": "coiss_f_ring_reproj_img_spice_pointing",
+       "version_name": "Current",
+       "version_number": 999999
+    },
+    {
+       "category": "Cassini ISS F Ring Reprojected Image",
+       "description": "Reprojected Image Metadata",
+       "product_type": "coiss_f_ring_reproj_img_metadata",
+       "version_name": "Current",
+       "version_number": 999999
+    },
+    {
         "category": "Cassini ISS",
         "product_type": "coiss_raw",
         "description": "Raw Image",
@@ -152,6 +173,41 @@
         "description": "Documentation",
         "version_number": 999999,
         "version_name": "Current"
+    },
+    {
+        "category": "Cassini ISS F Ring Mosaics",
+        "description": "Mosaic",
+        "product_type": "coiss_f_ring_mosaic",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "Cassini ISS F Ring Mosaics",
+        "description": "Mosaic Metadata",
+        "product_type": "coiss_f_ring_mosaic_metadata",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "Cassini ISS F Ring Mosaics",
+        "description": "Background-Subtracted Mosaic",
+        "product_type": "coiss_f_ring_mosaic_bkg_sub",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "Cassini ISS F Ring Mosaics",
+        "description": "Background-Subtracted Mosaic Metadata",
+        "product_type": "coiss_f_ring_mosaic_bkg_sub_metadata",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "Cassini ISS F Ring Mosaics",
+        "description": "Documentation",
+        "product_type": "coiss_f_ring_documentation",
+        "version_name": "Current",
+        "version_number": 999999
     },
     {
         "category": "Cassini UVIS Solar Occultations",
@@ -1568,6 +1624,27 @@
         "version_name": "Current"
     },
     {
+        "category": "metadata",
+        "description": "Global Mosaic Index",
+        "product_type": "coiss_f_ring_global_mosaic_index",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "metadata",
+        "description": "Global Background-Subtracted Mosaic Index",
+        "product_type": "coiss_f_ring_global_mosaic_bkg_sub_index",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "metadata",
+        "description": "Global Reprojected Image Index",
+        "product_type": "coiss_f_ring_global_reproj_img_index",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
         "category": "browse",
         "product_type": "browse_thumb",
         "description": "Browse Image (thumbnail)",
@@ -1595,6 +1672,90 @@
         "version_number": 999999,
         "version_name": "Current"
     },
+    {
+        "category": "browse",
+        "description": "Browse Mosaic Image (thumbnail)",
+        "product_type": "coiss_f_ring_mosaic_browse_thumb",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Mosaic Image (small)",
+        "product_type": "coiss_f_ring_mosaic_browse_small",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Mosaic Image (medium)",
+        "product_type": "coiss_f_ring_mosaic_browse_med",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Mosaic Image (full)",
+        "product_type": "coiss_f_ring_mosaic_browse_full",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Background-Subtracted Mosaic Image (thumbnail)",
+        "product_type": "coiss_f_ring_mosaic_browse_bkg_sub_thumb",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Background-Subtracted Mosaic Image (small)",
+        "product_type": "coiss_f_ring_mosaic_browse_bkg_sub_small",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Background-Subtracted Mosaic Image (medium)",
+        "product_type": "coiss_f_ring_mosaic_browse_bkg_sub_med",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Background-Subtracted Mosaic Image (full)",
+        "product_type": "coiss_f_ring_mosaic_browse_bkg_sub_full",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Reprojected Image (thumbnail)",
+        "product_type": "coiss_f_ring_browse_reproj_img_thumb",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Reprojected Image (small)",
+        "product_type": "coiss_f_ring_browse_reproj_img_small",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Reprojected Image (medium)",
+        "product_type": "coiss_f_ring_browse_reproj_img_med",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Reprojected Image (full)",
+        "product_type": "coiss_f_ring_browse_reproj_img_full",
+        "version_name": "Current",
+        "version_number": 999999
+},
     {
         "category": "diagram",
         "product_type": "diagram_thumb",

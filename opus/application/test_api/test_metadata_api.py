@@ -646,7 +646,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_greaterpixelsize_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize COISS"
         url = '/api/meta/range/endpoints/greaterpixelsize.json?instrument=Cassini+ISS'
-        expected = {'max': '1024', 'min': '256', 'nulls': 0, "units": None}
+        expected = {'max': '1024', 'min': '256', 'nulls': 302, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_COISS(self):
