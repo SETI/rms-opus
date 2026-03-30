@@ -1,0 +1,206 @@
+{
+    "data": {
+        "co-iss-n1479208692": {
+            "coiss_f_ring_reproj_img": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.img",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx"
+            ],
+            "coiss_f_ring_reproj_img_spice_pointing": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_suppl.txt"
+            ],
+            "coiss_f_ring_reproj_img_metadata": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img_metadata_params.tab"
+            ],
+            "coiss_raw": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1.IMG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt"
+            ],
+            "coiss_calib": [
+                "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.IMG",
+                "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.LBL"
+            ],
+            "coiss_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/thumbnail/1479208692_1479461954/N1479208692_1.IMG.jpeg_small"
+            ],
+            "coiss_medium": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/browse/1479208692_1479461954/N1479208692_1.IMG.jpeg"
+            ],
+            "coiss_full": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/full/1479208692_1479461954/N1479208692_1.IMG.png"
+            ],
+            "coiss_documentation": [
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Owen-2003-ISS-Distortion-Model.pdf",
+                "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
+            ],
+            "rms_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.tab"
+            ],
+            "inventory": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.csv",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.lbl"
+            ],
+            "planet_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.tab"
+            ],
+            "ring_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.lbl",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.tab"
+            ],
+            "coiss_f_ring_global_reproj_img_index": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.tab"
+            ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_thumb.jpg"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_small.jpg"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_med.jpg"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_full.png"
+            ],
+            "coiss_f_ring_browse_reproj_img_thumb": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_thumb.png"
+            ],
+            "coiss_f_ring_browse_reproj_img_small": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_small.png"
+            ],
+            "coiss_f_ring_browse_reproj_img_med": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_med.png"
+            ],
+            "coiss_f_ring_browse_reproj_img_full": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_full.png"
+            ]
+        }
+    },
+    "versions": {
+        "co-iss-n1479208692": {
+            "Current": {
+                "coiss_f_ring_reproj_img": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.img",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx"
+                ],
+                "coiss_f_ring_reproj_img_spice_pointing": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_suppl.txt"
+                ],
+                "coiss_f_ring_reproj_img_metadata": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img_metadata_params.tab"
+                ],
+                "coiss_raw": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt"
+                ],
+                "coiss_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.LBL"
+                ],
+                "coiss_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/thumbnail/1479208692_1479461954/N1479208692_1.IMG.jpeg_small"
+                ],
+                "coiss_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/browse/1479208692_1479461954/N1479208692_1.IMG.jpeg"
+                ],
+                "coiss_full": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/full/1479208692_1479461954/N1479208692_1.IMG.png"
+                ],
+                "coiss_documentation": [
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Archive-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/CISSCAL-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Plan.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Data-Product-SIS.txt",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.docx",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/ISS-Users-Guide.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/Owen-2003-ISS-Distortion-Model.pdf",
+                    "https://opus.pds-rings.seti.org/holdings/documents/COISS_0xxx/VICAR-File-Format.pdf"
+                ],
+                "rms_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.tab"
+                ],
+                "inventory": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.csv",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.lbl"
+                ],
+                "planet_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.tab"
+                ],
+                "ring_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.lbl",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.tab"
+                ],
+                "coiss_f_ring_global_reproj_img_index": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.tab"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_thumb.jpg"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_small.jpg"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_med.jpg"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1479208692_1479461954/N1479208692_1_full.png"
+                ],
+                "coiss_f_ring_browse_reproj_img_thumb": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_thumb.png"
+                ],
+                "coiss_f_ring_browse_reproj_img_small": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_small.png"
+                ],
+                "coiss_f_ring_browse_reproj_img_med": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_med.png"
+                ],
+                "coiss_f_ring_browse_reproj_img_full": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_browse_reproj_img_full.png"
+                ]
+            },
+            "2": {
+                "coiss_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.LBL"
+                ]
+            },
+            "1": {
+                "coiss_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v1/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v1/COISS_2008/data/1479208692_1479461954/N1479208692_1_CALIB.LBL"
+                ]
+            }
+        }
+    }
+}

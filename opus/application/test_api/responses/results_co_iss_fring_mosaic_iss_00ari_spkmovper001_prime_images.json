@@ -1,0 +1,33 @@
+{
+    "start_obs": 1,
+    "limit": 100,
+    "count": 1,
+    "available": 1,
+    "order": "time1,opusid",
+    "data": [
+        {
+            "opus_id": "co-iss-fring-mosaic-iss_00ari_spkmovper001_prime",
+            "thumb_url": "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_00ari_spkmovper001_prime/iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_thumb.png",
+            "thumb_alt_text": "iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_thumb.png",
+            "thumb_size_bytes": 4464,
+            "thumb_width": 100,
+            "thumb_height": 100,
+            "small_url": "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_00ari_spkmovper001_prime/iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_small.png",
+            "small_alt_text": "iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_small.png",
+            "small_size_bytes": 14648,
+            "small_width": 200,
+            "small_height": 200,
+            "med_url": "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_00ari_spkmovper001_prime/iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_med.png",
+            "med_alt_text": "iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_med.png",
+            "med_size_bytes": 222439,
+            "med_width": 1800,
+            "med_height": 400,
+            "full_url": "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_00ari_spkmovper001_prime/iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_full.png",
+            "full_alt_text": "iss_00ari_spkmovper001_prime_browse_mosaic_bkg_sub_full.png",
+            "full_size_bytes": 1648602,
+            "full_width": 18000,
+            "full_height": 401,
+            "ring_obs_id": null
+        }
+    ]
+}

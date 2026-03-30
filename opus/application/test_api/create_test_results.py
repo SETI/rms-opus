@@ -20,6 +20,7 @@ if __name__ == "__main__":
         # 'co-iss-n1461810160',
         # 'co-iss-n1462660850',
         # 'co-iss-n1463306217',
+        # 'co-iss-n1479208692',
         # 'co-iss-n1481652288',
         # 'co-iss-n1481663213',
         # 'co-iss-n1481666413',
@@ -86,8 +87,10 @@ if __name__ == "__main__":
         # 'kao0m91-vis-occ-1977-069-u0-ringpl-i',
         # 'kao0m91-vis-occ-1977-069-u0-uranus-e',
         # 'kao0m91-vis-occ-1977-069-u0-eta-e'
-        # 'co-uvis-occ-2017-103-sun-i', 
-        # 'co-uvis-occ-2008-083-sun-e'
+        # 'co-uvis-occ-2017-103-sun-i',
+        # 'co-uvis-occ-2008-083-sun-e',
+        # 'co-iss-fring-mosaic-iss_00ari_spkmovper001_prime',
+        # 'co-iss-fring-mosaic-iss_183ri_spokemov001_prime',
     ]
 
     session = requests.Session()
