@@ -1,9 +1,10 @@
 ################################################################################
 # obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.py
 #
-# Cassini ISS F-ring mosaic / reprojected-image bundle (RSFrench 2025).
-# Primary metadata: global_mosaic_index.tab, global_mosaic_bkg_sub_index.tab,
-# global_reproj_img_index.tab (file_spec -> primary label path).
+# Defines the ObsBundleCassiniIssFringMosaicsRSFrench2025 class, which encapsulates
+# fields in the common, obs_mission_cassini, and obs_instrument_coiss tables for
+# the PDS4 bundleset "cassini_iss_fring_mosaics_rsfrench2025". This class
+# supports derived data from the cassini_iss_fring_mosaics_rsfrench2025 bundle.
 ################################################################################
 
 import import_util
@@ -34,7 +35,7 @@ class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self.bundle + '/' + rel.strip()
 
     def primary_filespec_from_index_row(self, row, convert_lbl=False,
-                                        add_phase_from_row=False):
+                                        add_phase_from_inst=False):
         rel = row.get('file_spec')
         if rel is None:
             return None

@@ -1101,6 +1101,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_global_mosaic_bkg_sub_index",
+        "definition": "Global background-subtracted mosaic index files (global_mosaic_bkg_sub_index.tab and .lblx) for Cassini ISS F-ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss_f_ring_global_reproj_img_index",
         "definition": "Global reprojected image index files (global_reproj_img_index.tab and .lblx) for Cassini ISS F-ring reprojected frames."
     },

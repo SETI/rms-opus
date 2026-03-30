@@ -246,9 +246,7 @@ BUNDLE_INFO = [
     ####################
     (r'cassini_iss_fring_mosaics_rsfrench2025',
         {'pds_version': 4,
-         'primary_index': ('global_mosaic_index.tab',
-                           'global_mosaic_bkg_sub_index.tab',
-                           'global_reproj_img_index.tab'),
+         'primary_index': ('global_mosaic_index.tab',),
          'validate_index_rows': False,
          'temporal_camera': True,
          'instrument_class': ObsBundleCassiniIssFringMosaicsRSFrench2025},

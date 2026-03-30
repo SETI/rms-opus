@@ -108,7 +108,7 @@
     },
     {
         "field_name": "primary_lid",
-        "field_type": "char100",
+        "field_type": "char240",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
