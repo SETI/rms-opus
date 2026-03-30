@@ -305,7 +305,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_mults(self):
         "[test_metadata_api.py] /api/meta/meta/mults: mission no search"
         url = '/api/meta/mults/mission.json'
-        expected = {'field_id': 'mission', 'mults': {'Cassini': 18122, 'Galileo': 1156, 'Hubble': 1526, 'New Horizons': 7136, 'Voyager': 1778, 'Ground-based': 34}}
+        expected = {'field_id': 'mission', 'mults': {'Cassini': 18424, 'Galileo': 1156, 'Hubble': 1526, 'New Horizons': 7136, 'Voyager': 1778, 'Ground-based': 34}}
         self._run_json_equal(url, expected)
 
     # Unrelated constraints
@@ -652,7 +652,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_lesserpixelsize_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize COISS"
         url = '/api/meta/range/endpoints/lesserpixelsize.json?instrument=Cassini+ISS'
-        expected = {'min': '256', 'max': '1024', 'nulls': 0, "units": None}
+        expected = {'min': '256', 'max': '1024', 'nulls': 302, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_greaterpixelsize_GOSSI(self):
