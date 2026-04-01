@@ -34,6 +34,10 @@ class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
             return None
         return self.bundle + '/' + rel.strip()
 
+    @property
+    def camera(self):
+        return self._index_col('min_image_name')[-1].upper()
+
     def primary_filespec_from_index_row(self, row, convert_lbl=False,
                                         add_phase_from_inst=False):
         rel = row.get('file_spec')
@@ -230,7 +234,13 @@ class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self.field_obs_general_observation_duration()
 
     def field_obs_type_image_levels(self):
-        return 4096
+        return None
+
+    def field_obs_type_image_greater_pixel_size(self):
+        return 18000.
+
+    def field_obs_type_image_lesser_pixel_size(self):
+        return 401.
 
 
     ###################################
@@ -238,15 +248,15 @@ class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     ###################################
 
     def field_obs_wavelength_wavelength1(self):
-        camera, filter1, filter2 = 'N', 'CL1', 'CL2'
+        filter1, filter2 = 'CL1', 'CL2'
         central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[
-            (camera, filter1, filter2)]
+            (self.camera, filter1, filter2)]
         return (central_wl - fwhm / 2) / 1000.
 
     def field_obs_wavelength_wavelength2(self):
-        camera, filter1, filter2 = 'N', 'CL1', 'CL2'
+        filter1, filter2 = 'CL1', 'CL2'
         central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[
-            (camera, filter1, filter2)]
+            (self.camera, filter1, filter2)]
         return (central_wl + fwhm / 2) / 1000.
 
     def field_obs_wavelength_wave_res1(self):
@@ -279,13 +289,13 @@ class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self.instrument_id
 
     def field_obs_instrument_coiss_data_conversion_type(self):
-        return self._create_mult('12BIT')
+        return None
 
     def field_obs_instrument_coiss_compression_type(self):
-        return self._create_mult('LOSSLESS')
+        return None
 
     def field_obs_instrument_coiss_gain_mode_id(self):
-        return self._create_mult('12 ELECTRONS PER DN')
+        return None
 
     def field_obs_instrument_coiss_image_observation_type(self):
         return self._create_mult('SCIENCE')
@@ -294,25 +304,22 @@ class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return None
 
     def field_obs_instrument_coiss_shutter_mode_id(self):
-        return self._create_mult('NACONLY')
+        return None
 
     def field_obs_instrument_coiss_shutter_state_id(self):
-        return self._create_mult('ENABLED')
+        return self._create_mult('Enabled')
 
     def field_obs_instrument_coiss_image_number(self):
-        sc = self.field_obs_mission_cassini_spacecraft_clock_count1()
-        if sc is None:
-            return 0
-        return int(sc)
+        return None
 
     def field_obs_instrument_coiss_instrument_mode_id(self):
         return self._create_mult('FULL')
 
     def field_obs_instrument_coiss_target_desc(self):
-        return self._create_mult('SATURN-FRING')
+        return None
 
     def field_obs_instrument_coiss_combined_filter(self):
         return self._create_mult_keep_case('CLEAR')
 
     def field_obs_instrument_coiss_camera(self):
-        return self._create_mult('N')
+        return self._create_mult(self.camera)
