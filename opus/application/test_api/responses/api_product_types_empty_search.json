@@ -98,21 +98,21 @@
         "version_name": "Current"
     },
     {
-       "category": "Cassini ISS F Ring Reprojected Image",
+       "category": "Cassini ISS F Ring Reprojected Images",
        "description": "Reprojected Image",
        "product_type": "coiss_f_ring_reproj_img",
        "version_name": "Current",
        "version_number": 999999
     },
     {
-       "category": "Cassini ISS F Ring Reprojected Image",
+       "category": "Cassini ISS F Ring Reprojected Images",
        "description": "Reprojected Image SPICE Pointing",
        "product_type": "coiss_f_ring_reproj_img_spice_pointing",
        "version_name": "Current",
        "version_number": 999999
     },
     {
-       "category": "Cassini ISS F Ring Reprojected Image",
+       "category": "Cassini ISS F Ring Reprojected Images",
        "description": "Reprojected Image Metadata",
        "product_type": "coiss_f_ring_reproj_img_metadata",
        "version_name": "Current",
