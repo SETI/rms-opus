@@ -304,7 +304,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return None
 
     def field_obs_instrument_coiss_shutter_mode_id(self):
-        return self._create_mult(f'{self.camera}ACONLY')
+        return None
 
     def field_obs_instrument_coiss_shutter_state_id(self):
         return self._create_mult('Enabled')
