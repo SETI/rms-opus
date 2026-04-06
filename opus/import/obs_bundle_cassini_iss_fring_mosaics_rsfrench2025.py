@@ -179,10 +179,10 @@ class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_projected_radial_resolution2(self):
         return self.field_obs_ring_geometry_resolution2()
 
-    def field_obs_ring_geometry_projected_long_resolution1(self):
+    def field_obs_ring_geometry_projected_long_resolution_angle1(self):
         return self._index_col('rings:minimum_longitudinal_resolution')
 
-    def field_obs_ring_geometry_projected_long_resolution2(self):
+    def field_obs_ring_geometry_projected_long_resolution_angle2(self):
         return self._index_col('rings:maximum_longitudinal_resolution')
 
 
