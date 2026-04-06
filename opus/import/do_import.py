@@ -1577,7 +1577,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                 if pds_version == 3 and file.shelf_exists_if_expected() is False:
 
                     # For cross pds4 products, don't skip the import if shelves file
-                    # doesn't exists.
+                    # doesn't exist.
                     if not isinstance(file, pdsfile.pds4file.Pds4File):
                         # TODOPDS4 ^^^
                         import_util.log_nonrepeating_warning(
