@@ -1,7 +1,7 @@
 ################################################################################
 # obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.py
 #
-# Defines the ObsBundleCassiniIssFringMosaicsRSFrench2025 class, which encapsulates
+# Defines the ObsBundleCassiniISSFRingMosaicsRSFrench2025 class, which encapsulates
 # fields in the common, obs_mission_cassini, and obs_instrument_coiss tables for
 # the PDS4 bundleset "cassini_iss_fring_mosaics_rsfrench2025". This class
 # supports derived data from the cassini_iss_fring_mosaics_rsfrench2025 bundle.
@@ -14,7 +14,7 @@ from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 from obs_volume_coiss_12xxx import _COISS_FILTER_WAVELENGTHS
 
 
-class ObsBundleCassiniIssFringMosaicsRSFrench2025(ObsCassiniCommonPDS4):
+class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

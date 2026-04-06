@@ -32,7 +32,7 @@ from obs_volume_vg2810        import ObsVolumeVG2810VGISS
 
 from obs_bundle_uranus_occs_earthbased import ObsBundleUranusOccsEarthbased
 from obs_bundle_cassini_uvis_solarocc_beckerjarmak2023 import ObsBundleCassiniUvisSolarOccBeckerJarmak
-from obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import ObsBundleCassiniIssFringMosaicsRSFrench2025
+from obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import ObsBundleCassiniISSFRingMosaicsRSFrench2025
 
 # The BUNDLE_INFO structure is used to determine the details of importing
 # each distinct type of bundle/volume.
@@ -249,7 +249,7 @@ BUNDLE_INFO = [
          'primary_index': ('global_mosaic_index.tab',),
          'validate_index_rows': False,
          'temporal_camera': True,
-         'instrument_class': ObsBundleCassiniIssFringMosaicsRSFrench2025},
+         'instrument_class': ObsBundleCassiniISSFRingMosaicsRSFrench2025},
     ),
     (r'cassini_uvis_solarocc_beckerjarmak2023',
         {'pds_version': 4,
