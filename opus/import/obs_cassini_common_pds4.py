@@ -15,3 +15,11 @@ from obs_cassini_common import ObsCassiniCommon
 class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
+    ################################################################################
+    # Fetch observation id and related fields, PDS4 specific
+    ################################################################################
+
+    def field_obs_mission_cassini_obs_name(self):
+        return self._some_index_col('cassini:observation_id')

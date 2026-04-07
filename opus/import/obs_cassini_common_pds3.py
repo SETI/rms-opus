@@ -33,6 +33,13 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
 
 
     ################################################################################
+    # Fetch observation id and related fields, PDS3 specific
+    ################################################################################
+    def field_obs_mission_cassini_obs_name(self):
+        return self._some_index_col('OBSERVATION_ID')
+
+
+    ################################################################################
     # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
     ################################################################################
     def _cassini_intended_target_name(self):

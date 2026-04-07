@@ -45,53 +45,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
             return None
         return self.bundle + '/' + str(rel).strip()
 
-    def _some_index_col(self, col, idx=None):
-        if (col == 'OBSERVATION_ID' and self._metadata is not None and
-                self._metadata.get('index_row') and
-                'cassini:observation_id' in self._metadata['index_row']):
-            v = import_util.safe_column(
-                self._metadata['index_row'], 'cassini:observation_id', idx=idx)
-            if v is not None and isinstance(v, str):
-                return v.strip()
-            return v
-        return super()._some_index_col(col, idx=idx)
-
-
-    ################################
-    ### OVERRIDE FROM ObsProfilePDS4
-    ### (non-occultation; match ObsProfilePDS3 pattern)
-    ################################
-
-    def field_obs_profile_occ_type(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_occ_dir(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_body_occ_flag(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_temporal_sampling(self):
-        return None
-
-    def field_obs_profile_quality_score(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_optical_depth1(self):
-        return None
-
-    def field_obs_profile_optical_depth2(self):
-        return None
-
-    def field_obs_profile_wl_band(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_source(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_host(self):
-        return self._create_mult(None)
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -114,19 +67,15 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._create_mult('MOS')
 
     def field_obs_general_time1(self):
-        return self._time_from_index(column='pds:start_date_time')
+        return self._time_from_index()
 
     def field_obs_general_time2(self):
-        return self._time2_from_some_index(self.field_obs_general_time1(),
-                                           column='pds:stop_date_time')
+        return self._time2_from_index()
 
 
     ################################
     ### OVERRIDE FROM ObsPdsPDS4 ###
     ################################
-
-    def field_obs_pds_product_creation_time(self):
-        return self._time_from_index(column='product_creation_date')
 
     def field_obs_pds_note(self):
         return self._index_col('notes')
@@ -134,7 +83,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
-    ### (geometry lives in primary index)
     #####################################
 
     def field_obs_ring_geometry_ring_radius1(self):

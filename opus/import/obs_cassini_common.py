@@ -234,11 +234,12 @@ class ObsCassiniCommon(ObsBase):
     def field_obs_mission_cassini_instrument_id(self):
         return self.instrument_id
 
+    # Override this in obs_cassini_common_pds3/4
     def field_obs_mission_cassini_obs_name(self):
-        return self._some_index_col('OBSERVATION_ID')
+        return None
 
     def _rev_no(self):
-        obs_name = self._some_index_col('OBSERVATION_ID')
+        obs_name = self.field_obs_mission_cassini_obs_name()
         if not self._cassini_valid_obs_name(obs_name):
             return None
         obs_parts = obs_name.split('_')
@@ -273,7 +274,7 @@ class ObsCassiniCommon(ObsBase):
         return self._create_mult('No')
 
     def _prime_inst_id(self):
-        obs_name = self._some_index_col('OBSERVATION_ID')
+        obs_name = self.field_obs_mission_cassini_obs_name()
         if obs_name is None:
             return 'UNK'
 
@@ -326,7 +327,7 @@ class ObsCassiniCommon(ObsBase):
         return None
 
     def field_obs_mission_cassini_cassini_target_code(self):
-        obs_name = self._some_index_col('OBSERVATION_ID')
+        obs_name = self.field_obs_mission_cassini_obs_name()
         if obs_name is None:
             return self._create_mult(None)
         if not self._cassini_valid_obs_name(obs_name):
@@ -349,7 +350,7 @@ class ObsCassiniCommon(ObsBase):
         return self._create_mult_keep_case(target_name)
 
     def field_obs_mission_cassini_activity_name(self):
-        obs_name = self._some_index_col('OBSERVATION_ID')
+        obs_name = self.field_obs_mission_cassini_obs_name()
         if not self._cassini_valid_obs_name(obs_name):
             return None
         obs_parts = obs_name.split('_')
