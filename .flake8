@@ -1,5 +1,5 @@
 [flake8]
-max-line-length: 90
+max-line-length: 100
 extend-ignore =
     # unexpected indentation (comment)
     E116

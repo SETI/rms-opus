@@ -38,7 +38,7 @@ done
 for VOLUME in \
   EBROCC \
   uranus_occs_earthbased \
-  cassini_iss_fring_mosaics_rsfrench2025 \
+#   cassini_iss_fring_mosaics_rsfrench2025 \
   cassini_uvis_solarocc_beckerjarmak2023 \
   COUVIS_8xxx \
   COVIMS_8xxx \

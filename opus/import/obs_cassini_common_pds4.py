@@ -23,3 +23,32 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
 
     def field_obs_mission_cassini_obs_name(self):
         return self._some_index_col('cassini:observation_id')
+
+    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+        raw = self._index_col('cassini:spacecraft_clock_start_count')
+        if raw is None:
+            return None
+        try:
+            return opus_support.parse_cassini_sclk(str(raw).strip())
+        except Exception as e:
+            self._log_nonrepeating_error(
+                f'Unable to parse Cassini SCLK "{raw}": {e}')
+            return None
+
+    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+        raw = self._index_col('cassini:spacecraft_clock_stop_count')
+        if raw is None:
+            return None
+        try:
+            sc_cvt = opus_support.parse_cassini_sclk(str(raw).strip())
+        except Exception as e:
+            self._log_nonrepeating_error(
+                f'Unable to parse Cassini SCLK "{raw}": {e}')
+            return None
+        sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
+        if sc1 is not None and sc_cvt < sc1:
+            self._log_nonrepeating_warning(
+                'spacecraft_clock_count1 and spacecraft_clock_count2 are in the '
+                'wrong order - setting count2 to count1')
+            return sc1
+        return sc_cvt

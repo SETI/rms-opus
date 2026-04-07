@@ -97,6 +97,12 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_j2000_longitude2(self):
         return self._index_col('rings:maximum_inertial_ring_longitude')
 
+    def field_obs_ring_geometry_ascending_longitude1(self):
+        return self._index_col('rings:minimum_inertial_ring_longitude')
+
+    def field_obs_ring_geometry_ascending_longitude2(self):
+        return self._index_col('rings:maximum_inertial_ring_longitude')
+
     def field_obs_ring_geometry_phase1(self):
         return self._index_col('rings:minimum_phase_angle')
 
@@ -141,35 +147,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_mission_cassini_mission_phase_name(self):
         return self._create_mult(self._cassini_normalize_mission_phase_name())
 
-    def field_obs_mission_cassini_spacecraft_clock_count1(self):
-        raw = self._index_col('cassini:spacecraft_clock_start_count')
-        if raw is None:
-            return None
-        try:
-            return opus_support.parse_cassini_sclk(str(raw).strip())
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Unable to parse Cassini SCLK "{raw}": {e}')
-            return None
-
-    def field_obs_mission_cassini_spacecraft_clock_count2(self):
-        raw = self._index_col('cassini:spacecraft_clock_stop_count')
-        if raw is None:
-            return None
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(str(raw).strip())
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Unable to parse Cassini SCLK "{raw}": {e}')
-            return None
-        sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
-        if sc1 is not None and sc_cvt < sc1:
-            self._log_nonrepeating_warning(
-                'spacecraft_clock_count1 and spacecraft_clock_count2 are in the '
-                'wrong order - setting count2 to count1')
-            return sc1
-        return sc_cvt
-
 
     ###################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -197,14 +174,12 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def field_obs_wavelength_wavelength1(self):
         filter1, filter2 = 'CL1', 'CL2'
-        central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[
-            (self.camera, filter1, filter2)]
+        central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[(self.camera, filter1, filter2)]
         return (central_wl - fwhm / 2) / 1000.
 
     def field_obs_wavelength_wavelength2(self):
         filter1, filter2 = 'CL1', 'CL2'
-        central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[
-            (self.camera, filter1, filter2)]
+        central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[(self.camera, filter1, filter2)]
         return (central_wl + fwhm / 2) / 1000.
 
     def field_obs_wavelength_wave_res1(self):
@@ -219,12 +194,9 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_wavelength_wave_no_res2(self):
         return self.field_obs_wavelength_wave_no_res1()
 
-    def field_obs_wavelength_polarization_type(self):
-        return self._create_mult('NONE')
-
 
     ##############################################
-    ### FIELD METHODS FOR obs_instrument_coiss #
+    ### FIELD METHODS FOR obs_instrument_coiss ###
     ##############################################
 
     def field_obs_instrument_coiss_opus_id(self):
