@@ -7,8 +7,7 @@
 # supports derived data from the cassini_iss_fring_mosaics_rsfrench2025 bundle.
 ################################################################################
 
-import import_util
-import opus_support
+from import_util import cached_tai_from_iso
 
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 from obs_volume_coiss_12xxx import _COISS_FILTER_WAVELENGTHS
@@ -92,10 +91,18 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._index_col('rings:maximum_ring_radius')
 
     def field_obs_ring_geometry_j2000_longitude1(self):
-        return self._index_col('rings:minimum_inertial_ring_longitude')
+        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
+            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+            return 0
+        return self._ascending_to_j2000(
+            self.field_obs_ring_geometry_ascending_longitude1())
 
     def field_obs_ring_geometry_j2000_longitude2(self):
-        return self._index_col('rings:maximum_inertial_ring_longitude')
+        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
+            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+            return 360
+        return self._ascending_to_j2000(
+            self.field_obs_ring_geometry_ascending_longitude2())
 
     def field_obs_ring_geometry_ascending_longitude1(self):
         return self._index_col('rings:minimum_inertial_ring_longitude')
@@ -103,23 +110,89 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_ascending_longitude2(self):
         return self._index_col('rings:maximum_inertial_ring_longitude')
 
+    # Phase angle: The angle between the point where incoming source photons
+    # hit the ring , to the direction where outgoing photons to the observer
     def field_obs_ring_geometry_phase1(self):
         return self._index_col('rings:minimum_phase_angle')
 
     def field_obs_ring_geometry_phase2(self):
         return self._index_col('rings:maximum_phase_angle')
 
+    # Source: star, observer: COISS
+    # Incidence angle: the angle between the point where incoming source photons
+    # hit the ring, to the north pole of the planet we're looking at (normal vector
+    # on the surface of LIT side of the ring, same as source side), always between
+    # 0 (parallel to north pole) to 90 (parallel to ring)
     def field_obs_ring_geometry_incidence1(self):
         return self._index_col('rings:mean_incidence_angle')
 
     def field_obs_ring_geometry_incidence2(self):
         return self.field_obs_ring_geometry_incidence1()
 
+    # North based inc: the angle between the point where incoming source photons hit
+    # the ring to the normal vector on the NORTH side of the ring. 0-90 when north
+    # side of the ring is lit, and 90-180 when south side is lit.
+    def field_obs_ring_geometry_north_based_incidence1(self):
+        inc = self.field_obs_ring_geometry_incidence1()
+        if self._is_ring_north_side_lit():
+            return inc
+        else:
+            return 180. - inc
+
+    def field_obs_ring_geometry_north_based_incidence2(self):
+        return self.field_obs_ring_geometry_north_based_incidence1()
+
+    # Emission angle: the angle between the normal vector on the LIT side, to the
+    # direction where outgoing photons to the observer. 0-90 when observer is at the
+    # lit side of the ring, and 90-180 when it's at the dark side.
     def field_obs_ring_geometry_emission1(self):
         return self._index_col('rings:minimum_emission_angle')
 
     def field_obs_ring_geometry_emission2(self):
         return self._index_col('rings:maximum_emission_angle')
+
+    # North based ea: the angle between the normal vector on the NORTH side of the
+    # ring, to the direction where outgoing photons to the observer. 0-90 when
+    # observer is at the north side of the ring, and 90-180 when it's at the south
+    # side.
+    # If north side of the ring is lit, then north based emission angle is the same
+    # as the emission angle. If south side of the ring is lit, north based emission
+    # angle will be 180 - the emission angle.
+    def field_obs_ring_geometry_north_based_emission1(self):
+        ea = self.field_obs_ring_geometry_emission1()
+        if self._is_ring_north_side_lit():
+            return ea
+        else:
+            return 180. - ea
+
+    def field_obs_ring_geometry_north_based_emission2(self):
+        ea = self.field_obs_ring_geometry_emission2()
+        if self._is_ring_north_side_lit():
+            return ea
+        else:
+            return 180. - ea
+
+    # Opening angle to solar: the angle between the ring surface to the direction
+    # where incoming photons from the source. Positive if source is at the north
+    # side of the ring , negative if it's at the south side.
+    def field_obs_ring_geometry_solar_ring_opening_angle1(self):
+        north_based_inc = self.field_obs_ring_geometry_north_based_incidence1()
+        return 90. - north_based_inc
+
+    def field_obs_ring_geometry_solar_ring_opening_angle2(self):
+        north_based_inc = self.field_obs_ring_geometry_north_based_incidence2()
+        return 90. - north_based_inc
+
+    # Opening angle to observer: the angle between the ring surface to the direction
+    # where outgoing photons to the observer. Positive if observer is at the north
+    # side of the ring, negative if it's at the south side. (+/-)(90-emission_angle)
+    def field_obs_ring_geometry_observer_ring_opening_angle1(self):
+        north_based_ea = self.field_obs_ring_geometry_north_based_emission1()
+        return 90. - north_based_ea
+
+    def field_obs_ring_geometry_observer_ring_opening_angle2(self):
+        north_based_ea = self.field_obs_ring_geometry_north_based_emission2()
+        return 90. - north_based_ea
 
     def field_obs_ring_geometry_resolution1(self):
         return self._index_col('rings:minimum_radial_resolution')
@@ -138,6 +211,14 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def field_obs_ring_geometry_projected_long_resolution_angle2(self):
         return self._index_col('rings:maximum_longitudinal_resolution')
+
+    # Equinox: 2009-08-11T01:40:08.914
+    # After this time, north side of the ring is lit.
+    # Before this time, south side of the ring is lit.
+    def _is_ring_north_side_lit(self):
+        start_time = cached_tai_from_iso(self.field_obs_general_time1())
+        equinox_time = cached_tai_from_iso('2009-08-11T01:40:08.914')
+        return start_time > equinox_time
 
 
     ######################################
