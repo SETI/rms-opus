@@ -194,17 +194,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         north_based_ea = self.field_obs_ring_geometry_north_based_emission2()
         return 90. - north_based_ea
 
-    def field_obs_ring_geometry_resolution1(self):
+    def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('rings:minimum_radial_resolution')
 
-    def field_obs_ring_geometry_resolution2(self):
-        return self._index_col('rings:maximum_radial_resolution')
-
-    def field_obs_ring_geometry_projected_radial_resolution1(self):
-        return self.field_obs_ring_geometry_resolution1()
-
     def field_obs_ring_geometry_projected_radial_resolution2(self):
-        return self.field_obs_ring_geometry_resolution2()
+        return self._index_col('rings:maximum_radial_resolution')
 
     def field_obs_ring_geometry_projected_long_resolution_angle1(self):
         return self._index_col('rings:minimum_longitudinal_resolution')
