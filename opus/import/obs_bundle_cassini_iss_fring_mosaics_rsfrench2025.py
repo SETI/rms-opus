@@ -12,6 +12,18 @@ from import_util import cached_tai_from_iso
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 from obs_volume_coiss_12xxx import _COISS_FILTER_WAVELENGTHS
 
+NOTE_MAPPING = {
+    'B': 'Background-subtracted mosaic is missing data due to insufficient radial extent.',
+    'C': 'Some source images have corrupted or missing data.',
+    'E': 'Some areas may be overexposed.',
+    'M1': 'Multiple contiguous observations of the same inertial longitude range.',
+    'M2': 'One of a pair of observations taken at inertial longitudes roughly 180 degrees apart.',
+    'M3': 'Multiple observations of the same co-rotating longitude range but different inertial.',
+    'M4': 'Observations of different co-rotating and different inertial longitudes.',
+    'N': 'Non-inertial.',
+    'O': 'Occultation.',
+    'R': 'Follows one co-rotating longitude range with different inertial longitudes.',
+}
 
 class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
@@ -77,7 +89,12 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     ################################
 
     def field_obs_pds_note(self):
-        return self._index_col('notes')
+        raw = self._index_col('notes')
+        if raw is None: return ''
+
+        raw_list = raw.split(';')
+        note_list = [NOTE_MAPPING[note] for note in raw_list]
+        return ' '.join(note_list)
 
 
     #####################################
