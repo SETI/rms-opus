@@ -111,3 +111,117 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
             count = count.replace('.324', '.000')
 
         return count
+
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_coiss ###
+    ##############################################
+
+    def field_obs_instrument_coiss_opus_id(self):
+        return self.opus_id
+
+    def field_obs_instrument_coiss_bundle_id(self):
+        return self.bundle
+
+    def field_obs_instrument_coiss_instrument_id(self):
+        return self.instrument_id
+
+    def field_obs_instrument_coiss_data_conversion_type(self):
+        return self._create_mult(self._index_col('DATA_CONVERSION_TYPE'))
+
+    def field_obs_instrument_coiss_compression_type(self):
+        return self._create_mult(self._index_col('INST_CMPRS_TYPE'))
+
+    def field_obs_instrument_coiss_gain_mode_id(self):
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
+
+    def field_obs_instrument_coiss_image_observation_type(self):
+        obs_type = self._index_col('IMAGE_OBSERVATION_TYPE')
+
+        # Sometimes they have both SCIENCE,OPNAV and OPNAV,SCIENCE so normalize
+        # the order
+        ret_list = []
+        if obs_type.find('SCIENCE') != -1:
+            ret_list.append('SCIENCE')
+        if obs_type.find('OPNAV') != -1:
+            ret_list.append('OPNAV')
+        if obs_type.find('CALIBRATION') != -1:
+            ret_list.append('CALIBRATION')
+        if obs_type.find('ENGINEERING') != -1:
+            ret_list.append('ENGINEERING')
+        if obs_type.find('SUPPORT') != -1:
+            ret_list.append('SUPPORT')
+        if obs_type.find('UNK') != -1:
+            ret_list.append('UNKNOWN')
+
+        ret = '/'.join(ret_list)
+
+        # If the result isn't the same length as what we started with, we must've
+        # encountered a new type we didn't know about
+        if len(ret) != len(obs_type.replace('UNK','UNKNOWN')):
+            self._log_nonrepeating_error(
+                f'Unknown format for COISS image_observation_type: "{obs_type}"')
+            return self._create_mult(None)
+
+        return self._create_mult(ret)
+
+    def field_obs_instrument_coiss_missing_lines(self):
+        return self._index_col('MISSING_LINES')
+
+    def field_obs_instrument_coiss_shutter_mode_id(self):
+        return self._create_mult(self._index_col('SHUTTER_MODE_ID'))
+
+    def field_obs_instrument_coiss_shutter_state_id(self):
+        return self._create_mult(self._index_col('SHUTTER_STATE_ID'))
+
+    def field_obs_instrument_coiss_image_number(self):
+        return self._index_col('IMAGE_NUMBER')
+
+    def field_obs_instrument_coiss_instrument_mode_id(self):
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
+
+    def field_obs_instrument_coiss_target_desc(self):
+        target_desc = self._index_col('TARGET_DESC').upper()
+        if target_desc in COISS_TARGET_DESC_MAPPING:
+            target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+        return self._create_mult(target_desc)
+
+    def _combined_filter(self):
+        camera = self._index_col('INSTRUMENT_ID')[3]
+        filter1, filter2 = self._index_col('FILTER_NAME')
+
+        central_wl1, fwhm1, wl1 = self._coiss_wavelength_helper(camera, filter1, 'CL2')
+        central_wl2, fwhm2, wl2 = self._coiss_wavelength_helper(camera, 'CL1', filter2)
+
+        new_filter = None
+
+        if filter1 == 'CL1' and filter2 == 'CL2':
+            new_filter = 'CLEAR'
+        elif filter1 == 'CL1':
+            new_filter = filter2
+        elif filter2 == 'CL2':
+            new_filter = filter1
+        else:
+            # If one of them is a polarizer, put it second
+            if filter1.find('P') != -1:
+                new_filter = filter2 + '+' + filter1
+            elif filter2.find('P') != -1:
+                new_filter = filter1 + '+' + filter2
+            else:
+                if (((wl1 is None or wl2 is None or wl1 == wl2) and
+                     filter1 > filter2) or
+                    wl1 > wl2):
+                    # Place filters in wavelength order
+                    # If wavelengths are the same, make it name order
+                    filter1, filter2 = filter2, filter1
+                new_filter = filter1 + '+' + filter2
+
+        return new_filter
+
+    def field_obs_instrument_coiss_combined_filter(self):
+        new_filter = self._combined_filter()
+        return self._create_mult_keep_case(new_filter)
+
+    def field_obs_instrument_coiss_camera(self):
+        camera = self._index_col('INSTRUMENT_ID')[3]
+        assert camera in ('N', 'W')
+        return self._create_mult(camera)

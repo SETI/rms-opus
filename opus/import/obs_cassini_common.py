@@ -361,3 +361,55 @@ class ObsCassiniCommon(ObsBase):
 
     def field_obs_mission_cassini_sequence_id(self):
         return None
+
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_coiss ###
+    ##############################################
+
+    def field_obs_instrument_coiss_opus_id(self):
+        return None
+
+    def field_obs_instrument_coiss_bundle_id(self):
+        return None
+
+    def field_obs_instrument_coiss_instrument_id(self):
+        return None
+
+    def field_obs_instrument_coiss_data_conversion_type(self):
+        return None
+
+    def field_obs_instrument_coiss_compression_type(self):
+        return None
+
+    def field_obs_instrument_coiss_gain_mode_id(self):
+        return None
+
+    def field_obs_instrument_coiss_image_observation_type(self):
+        return None
+
+    def field_obs_instrument_coiss_missing_lines(self):
+        return None
+
+    def field_obs_instrument_coiss_shutter_mode_id(self):
+        return None
+
+    def field_obs_instrument_coiss_shutter_state_id(self):
+        return None
+
+    def field_obs_instrument_coiss_image_number(self):
+        return None
+
+    def field_obs_instrument_coiss_instrument_mode_id(self):
+        return None
+
+    def field_obs_instrument_coiss_target_desc(self):
+        return None
+
+    def _combined_filter(self):
+        return None
+
+    def field_obs_instrument_coiss_combined_filter(self):
+        return None
+
+    def field_obs_instrument_coiss_camera(self):
+        return None
