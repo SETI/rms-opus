@@ -7,36 +7,12 @@
 
 import config_targets
 from obs_common_pds3 import ObsCommonPDS3
-from obs_cassini_common import ObsCassiniCommon
-
-
-# These mappings are for the TARGET_DESC field to clean them up
-COISS_TARGET_DESC_MAPPING = {
-    'DIONE, RHEA, MIMAS(?), RINGS': 'ICY SATELLITES',
-    'GENERIC-SATELLITE': 'ICY SATELLITES',
-    'SATELLITE SEARCH': 'ICY SATELLITES',
-    'TETHYS, RHEA, RINGS': 'ICY SATELLITES',
-    'ENCELADUS, RINGS': 'ENCELADUS',
-    'IAPETUS FP1': 'IAPETUS',
-    'METHON': 'METHONE',
-    'ROCK': 'ROCKS',
-    'STAR -- CW LEO': 'STAR',
-    'STAR -- ETA CAR': 'STAR',
-    '--': 'UNKNOWN',
-    'UNK': 'UNKNOWN',
-    'F RING': 'SATURN-FRING'
-}
+from obs_cassini_common import (COISS_TARGET_DESC_MAPPING,
+                                ObsCassiniCommon)
 
 class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-
-    ################################################################################
-    # Fetch observation id and related fields, PDS3 specific
-    ################################################################################
-    def field_obs_mission_cassini_obs_name(self):
-        return self._some_index_col('OBSERVATION_ID')
 
 
     ################################################################################
@@ -112,9 +88,17 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
 
         return count
 
-    ##############################################
-    ### FIELD METHODS FOR obs_instrument_coiss ###
-    ##############################################
+
+    ##############################################################
+    ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
+    ##############################################################
+    def field_obs_mission_cassini_obs_name(self):
+        return self._some_index_col('OBSERVATION_ID')
+
+
+    #######################################################################
+    ### OVERRIDE METHODS FOR obs_instrument_coiss FROM ObsCassiniCommon ###
+    #######################################################################
 
     def field_obs_instrument_coiss_opus_id(self):
         return self.opus_id
@@ -184,38 +168,6 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
         if target_desc in COISS_TARGET_DESC_MAPPING:
             target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
         return self._create_mult(target_desc)
-
-    def _combined_filter(self):
-        camera = self._index_col('INSTRUMENT_ID')[3]
-        filter1, filter2 = self._index_col('FILTER_NAME')
-
-        central_wl1, fwhm1, wl1 = self._coiss_wavelength_helper(camera, filter1, 'CL2')
-        central_wl2, fwhm2, wl2 = self._coiss_wavelength_helper(camera, 'CL1', filter2)
-
-        new_filter = None
-
-        if filter1 == 'CL1' and filter2 == 'CL2':
-            new_filter = 'CLEAR'
-        elif filter1 == 'CL1':
-            new_filter = filter2
-        elif filter2 == 'CL2':
-            new_filter = filter1
-        else:
-            # If one of them is a polarizer, put it second
-            if filter1.find('P') != -1:
-                new_filter = filter2 + '+' + filter1
-            elif filter2.find('P') != -1:
-                new_filter = filter1 + '+' + filter2
-            else:
-                if (((wl1 is None or wl2 is None or wl1 == wl2) and
-                     filter1 > filter2) or
-                    wl1 > wl2):
-                    # Place filters in wavelength order
-                    # If wavelengths are the same, make it name order
-                    filter1, filter2 = filter2, filter1
-                new_filter = filter1 + '+' + filter2
-
-        return new_filter
 
     def field_obs_instrument_coiss_combined_filter(self):
         new_filter = self._combined_filter()

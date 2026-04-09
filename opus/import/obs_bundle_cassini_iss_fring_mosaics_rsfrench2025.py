@@ -287,48 +287,9 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self.field_obs_wavelength_wave_no_res1()
 
 
-    ##############################################
-    ### FIELD METHODS FOR obs_instrument_coiss ###
-    ##############################################
-
-    def field_obs_instrument_coiss_opus_id(self):
-        return self.opus_id
-
-    def field_obs_instrument_coiss_bundle_id(self):
-        return self.bundle
-
-    def field_obs_instrument_coiss_instrument_id(self):
-        return self.instrument_id
-
-    def field_obs_instrument_coiss_data_conversion_type(self):
-        return None
-
-    def field_obs_instrument_coiss_compression_type(self):
-        return None
-
-    def field_obs_instrument_coiss_gain_mode_id(self):
-        return None
-
-    def field_obs_instrument_coiss_image_observation_type(self):
-        return self._create_mult('SCIENCE')
-
-    def field_obs_instrument_coiss_missing_lines(self):
-        return None
-
-    def field_obs_instrument_coiss_shutter_mode_id(self):
-        return None
-
-    def field_obs_instrument_coiss_shutter_state_id(self):
-        return self._create_mult('Enabled')
-
-    def field_obs_instrument_coiss_image_number(self):
-        return None
-
-    def field_obs_instrument_coiss_instrument_mode_id(self):
-        return self._create_mult('FULL')
-
-    def field_obs_instrument_coiss_target_desc(self):
-        return None
+    #################################################################################
+    ### OVERRIDE FIELD METHODS FOR obs_instrument_coiss FROM ObsCassiniCommonPDS4 ###
+    #################################################################################
 
     def field_obs_instrument_coiss_combined_filter(self):
         return self._create_mult_keep_case('CLEAR')

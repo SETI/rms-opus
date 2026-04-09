@@ -9,7 +9,8 @@
 ################################################################################
 
 from obs_common_pds4 import ObsCommonPDS4
-from obs_cassini_common import ObsCassiniCommon
+from obs_cassini_common import (COISS_TARGET_DESC_MAPPING,
+                                ObsCassiniCommon)
 
 
 class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
@@ -17,9 +18,12 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         super().__init__(*args, **kwargs)
 
 
-    ################################################################################
-    # Fetch observation id and related fields, PDS4 specific
-    ################################################################################
+    ##############################################################
+    ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
+    ##############################################################
+
+    def field_obs_mission_cassini_obs_name(self):
+        return self._some_index_col('OBSERVATION_ID')
 
     def field_obs_mission_cassini_obs_name(self):
         return self._some_index_col('cassini:observation_id')
@@ -52,3 +56,65 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
                 'wrong order - setting count2 to count1')
             return sc1
         return sc_cvt
+
+
+    #######################################################################
+    ### OVERRIDE METHODS FOR obs_instrument_coiss FROM ObsCassiniCommon ###
+    #######################################################################
+
+    def field_obs_instrument_coiss_opus_id(self):
+        return self.opus_id
+
+    def field_obs_instrument_coiss_bundle_id(self):
+        return self.bundle
+
+    def field_obs_instrument_coiss_instrument_id(self):
+        return self.instrument_id
+
+    def field_obs_instrument_coiss_data_conversion_type(self):
+        return self._create_mult(self._index_col('cassini:data_conversion_type'))
+
+    def field_obs_instrument_coiss_compression_type(self):
+        return self._create_mult(self._index_col('cassini:inst_cmprs_type'))
+
+    def field_obs_instrument_coiss_gain_mode_id(self):
+        return self._create_mult(self._index_col('cassini:gain_mode_id'))
+
+    def field_obs_instrument_coiss_image_observation_type(self):
+        return self._create_mult(self._index_col('cassini:image_observation_type'))
+
+    def field_obs_instrument_coiss_missing_lines(self):
+        return self._index_col('cassini:missing_lines')
+
+    def field_obs_instrument_coiss_shutter_mode_id(self):
+        return self._create_mult(self._index_col('cassini:shutter_mode_id'))
+
+    def field_obs_instrument_coiss_shutter_state_id(self):
+        return self._create_mult(self._index_col('cassini:shutter_state_id'))
+
+    def field_obs_instrument_coiss_image_number(self):
+        return self._index_col('cassini:image_number')
+
+    def field_obs_instrument_coiss_instrument_mode_id(self):
+        return self._create_mult(self._index_col('cassini:instrument_mode_id'))
+
+    def field_obs_instrument_coiss_target_desc(self):
+        target_desc = self._index_col('cassini:pds3_​target_​desc').upper()
+        if target_desc in COISS_TARGET_DESC_MAPPING:
+            target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+        return self._create_mult(target_desc)
+
+    def field_obs_instrument_coiss_combined_filter(self):
+        camera = self._index_col('cassini:shutter_mode_id')[0]
+        assert camera in ('N', 'W')
+
+        filter1 = self._index_col('cassini:filter_name_1')
+        filter2 = self._index_col('cassini:filter_name_2')
+
+        new_filter = self._combined_filter(camera, filter1, filter2)
+        return self._create_mult_keep_case(new_filter)
+
+    def field_obs_instrument_coiss_camera(self):
+        camera = self._index_col('cassini:shutter_mode_id')[0]
+        assert camera in ('N', 'W')
+        return self._create_mult(camera)
