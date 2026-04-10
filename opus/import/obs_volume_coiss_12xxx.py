@@ -134,7 +134,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     def field_obs_wavelength_wavelength1(self):
         camera = self._index_col('INSTRUMENT_ID')[3]
         filter1, filter2 = self._index_col('FILTER_NAME')
-        central_wl, fwhm, effective_wl = self._coiss_wavelength_helper(camera, filter1, filter2)
+        central_wl, fwhm, _effective_wl = self._coiss_wavelength_helper(camera, filter1, filter2)
         if central_wl is None or fwhm is None:
             return None
         return (central_wl - fwhm/2) / 1000 # microns
@@ -142,8 +142,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     def field_obs_wavelength_wavelength2(self):
         camera = self._index_col('INSTRUMENT_ID')[3]
         filter1, filter2 = self._index_col('FILTER_NAME')
-        central_wl, fwhm, effective_wl = self._coiss_wavelength_helper(
-                                                    camera, filter1, filter2)
+        central_wl, fwhm, _effective_wl = self._coiss_wavelength_helper(camera, filter1, filter2)
         if central_wl is None or fwhm is None:
             return None
         return (central_wl + fwhm/2) / 1000 # microns
