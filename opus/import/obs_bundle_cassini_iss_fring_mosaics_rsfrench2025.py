@@ -116,9 +116,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def field_obs_pds_note(self):
         raw = self._index_col('notes')
-        if raw is not None: raw = raw.strip()
+        if raw is not None:
+            raw = raw.strip()
 
-        if not raw: return None
+        if not raw:
+            return None
 
         raw_list = raw.split(';')
         note_list = [NOTE_MAPPING[note] for note in raw_list]
