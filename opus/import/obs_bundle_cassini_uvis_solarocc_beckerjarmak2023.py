@@ -137,6 +137,9 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     ### OVERRIDE FROM ObsCassiniCommon ###
     ######################################
 
+    def field_obs_mission_cassini_obs_name(self):
+        return self._some_index_col('OBSERVATION_ID')
+
     def field_obs_mission_cassini_mission_phase_name(self):
         return self._create_mult(self._cassini_normalize_mission_phase_name())
 

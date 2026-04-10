@@ -7,8 +7,7 @@
 
 import config_targets
 from obs_common_pds3 import ObsCommonPDS3
-from obs_cassini_common import (COISS_TARGET_DESC_MAPPING,
-                                ObsCassiniCommon)
+from obs_cassini_common import ObsCassiniCommon
 
 class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     def __init__(self, *args, **kwargs):
@@ -28,8 +27,9 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
         if 'TARGET_DESC' in self._metadata['index_row']:
             # Only for COISS
             target_desc = self._index_col('TARGET_DESC').upper()
-            if target_desc in COISS_TARGET_DESC_MAPPING:
-                target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+            coiss_target_desc_mapping = self._coiss_target_desc_mapping()
+            if target_desc in coiss_target_desc_mapping:
+                target_desc = coiss_target_desc_mapping[target_desc]
             if target_desc in config_targets.TARGET_NAME_MAPPING:
                 target_desc = config_targets.TARGET_NAME_MAPPING[target_desc]
 
@@ -165,8 +165,9 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
 
     def field_obs_instrument_coiss_target_desc(self):
         target_desc = self._index_col('TARGET_DESC').upper()
-        if target_desc in COISS_TARGET_DESC_MAPPING:
-            target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+        coiss_target_desc_mapping = self._coiss_target_desc_mapping()
+        if target_desc in coiss_target_desc_mapping:
+            target_desc = coiss_target_desc_mapping[target_desc]
         return self._create_mult(target_desc)
 
     def field_obs_instrument_coiss_combined_filter(self):

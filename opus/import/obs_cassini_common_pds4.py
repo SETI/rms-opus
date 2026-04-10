@@ -11,8 +11,7 @@
 import opus_support
 
 from obs_common_pds4 import ObsCommonPDS4
-from obs_cassini_common import (COISS_TARGET_DESC_MAPPING,
-                                ObsCassiniCommon)
+from obs_cassini_common import ObsCassiniCommon
 
 
 class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
@@ -23,9 +22,6 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
     ##############################################################
     ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
     ##############################################################
-
-    def field_obs_mission_cassini_obs_name(self):
-        return self._some_index_col('OBSERVATION_ID')
 
     def field_obs_mission_cassini_obs_name(self):
         return self._some_index_col('cassini:observation_id')
@@ -104,8 +100,9 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         target_desc = self._index_col('cassini:pds3_​target_​desc')
         if target_desc is not None:
             target_desc = target_desc.upper()
-            if target_desc in COISS_TARGET_DESC_MAPPING:
-                target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+            coiss_target_desc_mapping = self._coiss_target_desc_mapping()
+            if target_desc in coiss_target_desc_mapping:
+                target_desc = coiss_target_desc_mapping[target_desc]
         return self._create_mult(target_desc)
 
     def field_obs_instrument_coiss_combined_filter(self):

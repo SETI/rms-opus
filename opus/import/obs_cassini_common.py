@@ -78,7 +78,7 @@ _CASSINI_TARGET_CODE_MAPPING = {
 }
 
 # These mappings are for the TARGET_DESC field to clean them up
-COISS_TARGET_DESC_MAPPING = {
+_COISS_TARGET_DESC_MAPPING = {
     'DIONE, RHEA, MIMAS(?), RINGS': 'ICY SATELLITES',
     'GENERIC-SATELLITE': 'ICY SATELLITES',
     'SATELLITE SEARCH': 'ICY SATELLITES',
@@ -294,6 +294,9 @@ class ObsCassiniCommon(ObsBase):
     ################################################################################
     # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
     ################################################################################
+
+    def _coiss_target_desc_mapping(self):
+        return _COISS_TARGET_DESC_MAPPING
 
     def _cassini_valid_obs_name(self, obs_name):
         r"""Check a Cassini observation name to see if it is parsable. Such a
