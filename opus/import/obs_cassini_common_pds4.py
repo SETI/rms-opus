@@ -8,6 +8,8 @@
 # using the attributes deduced from the OBSERVATION_ID).
 ################################################################################
 
+import opus_support
+
 from obs_common_pds4 import ObsCommonPDS4
 from obs_cassini_common import (COISS_TARGET_DESC_MAPPING,
                                 ObsCassiniCommon)
@@ -99,9 +101,11 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         return self._create_mult(self._index_col('cassini:instrument_mode_id'))
 
     def field_obs_instrument_coiss_target_desc(self):
-        target_desc = self._index_col('cassini:pds3_​target_​desc').upper()
-        if target_desc in COISS_TARGET_DESC_MAPPING:
-            target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+        target_desc = self._index_col('cassini:pds3_​target_​desc')
+        if target_desc is not None:
+            target_desc = target_desc.upper()
+            if target_desc in COISS_TARGET_DESC_MAPPING:
+                target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
         return self._create_mult(target_desc)
 
     def field_obs_instrument_coiss_combined_filter(self):

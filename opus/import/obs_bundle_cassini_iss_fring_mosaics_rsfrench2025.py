@@ -10,7 +10,6 @@
 from import_util import cached_tai_from_iso
 
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
-from obs_volume_coiss_12xxx import _COISS_FILTER_WAVELENGTHS
 
 NOTE_MAPPING = {
     'B': 'Background-subtracted mosaic is missing data due to insufficient radial extent.',
@@ -57,6 +56,40 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self.bundle + '/' + str(rel).strip()
 
 
+    ####################################
+    ### OVERRIDE FROM ObsProfilePDS4 ###
+    ####################################
+
+    def field_obs_profile_occ_type(self):
+        return self._create_mult(None)
+
+    def field_obs_profile_occ_dir(self):
+        return self._create_mult(None)
+
+    def field_obs_profile_body_occ_flag(self):
+        return self._create_mult(None)
+
+    def field_obs_profile_temporal_sampling(self):
+        return None
+
+    def field_obs_profile_quality_score(self):
+        return self._create_mult(None)
+
+    def field_obs_profile_optical_depth1(self):
+        return None
+
+    def field_obs_profile_optical_depth2(self):
+        return None
+
+    def field_obs_profile_wl_band(self):
+        return self._create_mult(None)
+
+    def field_obs_profile_source(self):
+        return self._create_mult(None)
+
+    def field_obs_profile_host(self):
+        return self._create_mult(None)
+
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
@@ -77,20 +110,15 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
             return self._create_mult('IMG')
         return self._create_mult('MOS')
 
-    def field_obs_general_time1(self):
-        return self._time_from_index()
-
-    def field_obs_general_time2(self):
-        return self._time2_from_index()
-
-
     ################################
     ### OVERRIDE FROM ObsPdsPDS4 ###
     ################################
 
     def field_obs_pds_note(self):
         raw = self._index_col('notes')
-        if raw is None: return ''
+        if raw is not None: raw = raw.strip()
+
+        if not raw: return None
 
         raw_list = raw.split(';')
         note_list = [NOTE_MAPPING[note] for note in raw_list]
@@ -102,9 +130,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     #####################################
 
     def field_obs_ring_geometry_ring_radius1(self):
+        # minimum_core_radius
         return self._index_col('rings:minimum_ring_radius')
 
     def field_obs_ring_geometry_ring_radius2(self):
+        # maximum_core_radius
         return self._index_col('rings:maximum_ring_radius')
 
     def field_obs_ring_geometry_j2000_longitude1(self):
@@ -122,9 +152,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
             self.field_obs_ring_geometry_ascending_longitude2())
 
     def field_obs_ring_geometry_ascending_longitude1(self):
+        # minimum_longitude_ascending_node
         return self._index_col('rings:minimum_inertial_ring_longitude')
 
     def field_obs_ring_geometry_ascending_longitude2(self):
+        # maximum_longitude_ascending_node
         return self._index_col('rings:maximum_inertial_ring_longitude')
 
     # Phase angle: The angle between the point where incoming source photons
@@ -176,18 +208,20 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     # as the emission angle. If south side of the ring is lit, north based emission
     # angle will be 180 - the emission angle.
     def field_obs_ring_geometry_north_based_emission1(self):
-        ea = self.field_obs_ring_geometry_emission1()
+        ea1 = self.field_obs_ring_geometry_emission1()
+        ea2 = self.field_obs_ring_geometry_emission2()
         if self._is_ring_north_side_lit():
-            return ea
+            return ea1
         else:
-            return 180. - ea
+            return 180. - ea2
 
     def field_obs_ring_geometry_north_based_emission2(self):
-        ea = self.field_obs_ring_geometry_emission2()
+        ea1 = self.field_obs_ring_geometry_emission1()
+        ea2 = self.field_obs_ring_geometry_emission2()
         if self._is_ring_north_side_lit():
-            return ea
+            return ea2
         else:
-            return 180. - ea
+            return 180. - ea1
 
     # Opening angle to solar: the angle between the ring surface to the direction
     # where incoming photons from the source. Positive if source is at the north
@@ -204,11 +238,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     # where outgoing photons to the observer. Positive if observer is at the north
     # side of the ring, negative if it's at the south side. (+/-)(90-emission_angle)
     def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        north_based_ea = self.field_obs_ring_geometry_north_based_emission1()
+        north_based_ea = self.field_obs_ring_geometry_north_based_emission2()
         return 90. - north_based_ea
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        north_based_ea = self.field_obs_ring_geometry_north_based_emission2()
+        north_based_ea = self.field_obs_ring_geometry_north_based_emission1()
         return 90. - north_based_ea
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
@@ -227,7 +261,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     # After this time, north side of the ring is lit.
     # Before this time, south side of the ring is lit.
     def _is_ring_north_side_lit(self):
-        start_time = cached_tai_from_iso(self.field_obs_general_time1())
+        start_time = self.field_obs_general_time1()
         equinox_time = cached_tai_from_iso('2009-08-11T01:40:08.914')
         return start_time > equinox_time
 
@@ -266,12 +300,12 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def field_obs_wavelength_wavelength1(self):
         filter1, filter2 = 'CL1', 'CL2'
-        central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[(self.camera, filter1, filter2)]
+        central_wl, fwhm, _effective = self._coiss_wavelength_helper(self.camera, filter1, filter2)
         return (central_wl - fwhm / 2) / 1000.
 
     def field_obs_wavelength_wavelength2(self):
         filter1, filter2 = 'CL1', 'CL2'
-        central_wl, fwhm, _effective = _COISS_FILTER_WAVELENGTHS[(self.camera, filter1, filter2)]
+        central_wl, fwhm, _effective = self._coiss_wavelength_helper(self.camera, filter1, filter2)
         return (central_wl + fwhm / 2) / 1000.
 
     def field_obs_wavelength_wave_res1(self):
