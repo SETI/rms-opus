@@ -91,6 +91,7 @@ if __name__ == "__main__":
         # 'co-uvis-occ-2008-083-sun-e',
         # 'co-iss-fring-mosaic-iss_00ari_spkmovper001_prime',
         # 'co-iss-fring-mosaic-iss_183ri_spokemov001_prime',
+        # 'co-iss-fring-mosaic-iss_036rf_fmovie002_vims'
     ]
 
     session = requests.Session()

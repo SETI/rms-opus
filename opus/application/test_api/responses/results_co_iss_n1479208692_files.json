@@ -6,9 +6,11 @@
                 "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx"
             ],
             "coiss_f_ring_reproj_img_spice_pointing": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx",
                 "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_suppl.txt"
             ],
             "coiss_f_ring_reproj_img_metadata": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx",
                 "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img_metadata_params.tab"
             ],
             "coiss_raw": [
@@ -102,9 +104,11 @@
                     "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx"
                 ],
                 "coiss_f_ring_reproj_img_spice_pointing": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx",
                     "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_suppl.txt"
                 ],
                 "coiss_f_ring_reproj_img_metadata": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img.lblx",
                     "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_reproj_img/iss_00ari_spkmovper001_prime/1479208692n_reproj_img_metadata_params.tab"
                 ],
                 "coiss_raw": [

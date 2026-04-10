@@ -56,7 +56,8 @@
         "mult_options": [
               [   0, "12BIT", "12BIT", "010", "Y", null, null],
               [   1,  "8LSB",  "8LSB", "020", "Y", null, null],
-              [   2, "TABLE", "TABLE", "030", "Y", null, null]
+              [   2, "TABLE", "TABLE", "030", "Y", null, null],
+              [   3,    null,   "N/A", "040", "Y", null, null]
           ]
     },
     {
@@ -84,7 +85,8 @@
         "mult_options": [
               [   0, "LOSSLESS",       "Lossless", "010", "Y", null, null],
               [   1,    "LOSSY",          "Lossy", "020", "Y", null, null],
-              [   2,  "NOTCOMP", "Not Compressed", "030", "Y", null, null]
+              [   2,  "NOTCOMP", "Not Compressed", "030", "Y", null, null],
+              [   3,       null,            "N/A", "040", "Y", null, null]
           ]
     },
     {
@@ -113,7 +115,8 @@
               [   0,  "12 ELECTRONS PER DN",  "12 Electrons per DN", "010", "Y", null, null],
               [   1,  "29 ELECTRONS PER DN",  "29 Electrons per DN", "020", "Y", null, null],
               [   2,  "95 ELECTRONS PER DN",  "95 Electrons per DN", "030", "Y", null, null],
-              [   3, "215 ELECTRONS PER DN", "215 Electrons per DN", "040", "Y", null, null]
+              [   3, "215 ELECTRONS PER DN", "215 Electrons per DN", "040", "Y", null, null],
+              [   4,                   null,                  "N/A", "050", "Y", null, null]
           ]
     },
     {
@@ -148,7 +151,8 @@
               [   6, "CALIBRATION",         "Calibration",         "070", "Y", null, null],
               [   7, "ENGINEERING",         "Engineering",         "080", "Y", null, null],
               [   8, "SUPPORT",             "Support",             "090", "Y", null, null],
-              [   9, "UNKNOWN",             "Unknown",             "100", "Y", null, null]
+              [   9, "UNKNOWN",             "Unknown",             "100", "Y", null, null],
+              [  10,      null,             "N/A",                 "110", "Y", null, null]
           ]
     },
     {
@@ -202,7 +206,8 @@
         "mult_options": [
               [   0, "NACONLY", "NACONLY", "010", "Y", null, null],
               [   1, "WACONLY", "WACONLY", "020", "Y", null, null],
-              [   2,  "BOTSIM",  "BOTSIM", "030", "Y", null, null]
+              [   2,  "BOTSIM",  "BOTSIM", "030", "Y", null, null],
+              [   3,      null,     "N/A", "040", "Y", null, null]
           ]
     },
     {
@@ -229,7 +234,8 @@
         "comments": "Definition is from COISS label",
         "mult_options": [
               [   0, "DISABLED", "Disabled", "010", "Y", null, null],
-              [   1, "ENABLED",  "Enabled",  "020", "Y", null, null]
+              [   1, "ENABLED",  "Enabled",  "020", "Y", null, null],
+              [   2,      null,  "N/A",      "030", "Y", null, null]
           ]
     },
     {
@@ -277,7 +283,8 @@
         "mult_options": [
               [   0, "FULL", "FULL", "010", "Y", null, null],
               [   1, "SUM2", "SUM2", "020", "Y", null, null],
-              [   2, "SUM4", "SUM4", "030", "Y", null, null]
+              [   2, "SUM4", "SUM4", "030", "Y", null, null],
+              [   3,   null,  "N/A", "040", "Y", null, null]
           ]
     },
     {
