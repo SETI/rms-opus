@@ -97,7 +97,7 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         return self._create_mult(self._index_col('cassini:instrument_mode_id'))
 
     def field_obs_instrument_coiss_target_desc(self):
-        target_desc = self._index_col('cassini:pds3_​target_​desc')
+        target_desc = self._index_col('cassini:pds3_target_desc')
         if target_desc is not None:
             target_desc = target_desc.upper()
             coiss_target_desc_mapping = self._coiss_target_desc_mapping()
