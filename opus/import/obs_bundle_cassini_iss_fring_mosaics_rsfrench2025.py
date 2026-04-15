@@ -55,6 +55,9 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
             return None
         return self.bundle + '/' + str(rel).strip()
 
+    def field_obs_pds_product_creation_time(self):
+        return self._time_from_index(column='product_creation_date')
+
 
     ####################################
     ### OVERRIDE FROM ObsProfilePDS4 ###
@@ -286,7 +289,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     ###################################
 
     def field_obs_type_image_image_type_id(self):
-        return self._create_mult('FRAM')
+        return self._create_mult('MOSAIC')
 
     def field_obs_type_image_duration(self):
         return self.field_obs_general_observation_duration()

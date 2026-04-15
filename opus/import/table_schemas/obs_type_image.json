@@ -64,7 +64,8 @@
               [   0, "FRAM",       "Frame",   "010", "Y", null, null],
               [   1, "RAST", "Raster Scan",   "020", "Y", null, null],
               [   2, "PUSH",   "Pushbroom",   "030", "Y", null, null],
-              [   3,   null,         "N/A",   "040", "Y", null, null]
+              [   3, "MOSAIC",    "Mosaic",   "040", "Y", null, null],
+              [   3,   null,         "N/A",   "050", "Y", null, null]
           ]
     },
     {
