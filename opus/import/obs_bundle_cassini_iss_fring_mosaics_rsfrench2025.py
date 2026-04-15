@@ -28,6 +28,16 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    #######################
+    ### HELPER FUNTIONS ###
+    #######################
+
+    def _camera(self):
+        return self._index_col('min_image_name')[-1].upper()
+
+    def _circumference(self):
+        f_ring_core = 140,221.3
+        return 3.14 * 2 * f_ring_core
 
     #############################
     ### OVERRIDE FROM ObsBase ###
@@ -43,10 +53,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         if rel is None:
             return None
         return self.bundle + '/' + rel.strip()
-
-    @property
-    def camera(self):
-        return self._index_col('min_image_name')[-1].upper()
 
     def primary_filespec_from_index_row(self, row, convert_lbl=False,
                                         add_phase_from_inst=False):
@@ -267,6 +273,15 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_projected_long_resolution_angle2(self):
         return self._index_col('rings:maximum_longitudinal_resolution')
 
+    # circumference * projected_long_resolution_angle / 360.
+    def field_obs_ring_geometry_projected_long_resolution1(self):
+        angular_resolution1 = self.field_obs_ring_geometry_projected_long_resolution_angle1()
+        return self._circumference() * angular_resolution1 / 360.
+
+    def field_obs_ring_geometry_projected_long_resolution2(self):
+        angular_resolution2 = self.field_obs_ring_geometry_projected_long_resolution_angle2()
+        return self._circumference() * angular_resolution2 / 360.
+
     # Equinox: 2009-08-11T01:40:08.914
     # After this time, north side of the ring is lit.
     # Before this time, south side of the ring is lit.
@@ -310,12 +325,12 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def field_obs_wavelength_wavelength1(self):
         filter1, filter2 = 'CL1', 'CL2'
-        central_wl, fwhm, _effective = self._coiss_wavelength_helper(self.camera, filter1, filter2)
+        central_wl, fwhm, _ = self._coiss_wavelength_helper(self._camera(), filter1, filter2)
         return (central_wl - fwhm / 2) / 1000.
 
     def field_obs_wavelength_wavelength2(self):
         filter1, filter2 = 'CL1', 'CL2'
-        central_wl, fwhm, _effective = self._coiss_wavelength_helper(self.camera, filter1, filter2)
+        central_wl, fwhm, _ = self._coiss_wavelength_helper(self._camera(), filter1, filter2)
         return (central_wl + fwhm / 2) / 1000.
 
     def field_obs_wavelength_wave_res1(self):
@@ -339,4 +354,4 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._create_mult_keep_case('CLEAR')
 
     def field_obs_instrument_coiss_camera(self):
-        return self._create_mult(self.camera)
+        return self._create_mult(self._camera())
