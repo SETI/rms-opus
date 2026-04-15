@@ -122,9 +122,14 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         if not raw:
             return None
 
-        raw_list = raw.split(';')
-        note_list = [NOTE_MAPPING[note] for note in raw_list]
-        return ' '.join(note_list)
+        note_list = []
+        for note in [n.strip() for n in raw.split(';') if n.strip()]:
+            if note not in NOTE_MAPPING:
+                self._log_nonrepeating_error(
+                    f'Unknown F Ring note code {note!r} in notes field: {raw!r}')
+            else:
+                note_list.append(NOTE_MAPPING[note])
+        return ' '.join(note_list) if note_list else None
 
 
     #####################################
