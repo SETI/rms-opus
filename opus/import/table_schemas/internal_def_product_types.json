@@ -1112,7 +1112,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss_f_ring_reproj_img",
-        "definition": "Reprojected image files (*.img) and associated labels (*.lblx) for Cassini ISS F ring reprojected images. Labels also include definitions for reprojected image metadata tables and spice pointing, which can be downloaded separately."
+        "definition": "Reprojected image files (*.img) and associated labels (*.lblx) for Cassini ISS F ring reprojected images. Labels also include definitions for reprojected image metadata tables and SPICE pointing, which can be downloaded separately."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -1122,7 +1122,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss_f_ring_reproj_img_metadata",
-        "definition": "Reprojected image metadata tables (*_reproj_img_metadata_params.tab) for Cassini ISS F ring. Labels also include definitions for reprojected image files and spice pointing, which can be downloaded separately."
+        "definition": "Reprojected image metadata tables (*_reproj_img_metadata_params.tab) for Cassini ISS F ring. Labels also include definitions for reprojected image files and SPICE pointing, which can be downloaded separately."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",

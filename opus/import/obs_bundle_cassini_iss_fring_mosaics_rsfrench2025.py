@@ -261,14 +261,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         north_based_ea = self.field_obs_ring_geometry_north_based_emission1()
         return 90. - north_based_ea
 
-    # Ring elevation to observer, same to opening angle. It's positive if observer
-    # is at north side of Saturn. Negative if observer is at south side of Saturn.
-    def field_obs_ring_geometry_observer_ring_elevation1(self):
-        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
-
-    def field_obs_ring_geometry_observer_ring_elevation2(self):
-        return self.field_obs_ring_geometry_observer_ring_opening_angle2()
-
     # Ring elevation to solar, same to opening angle except, it's positive if
     # source is at north side of Jupiter, Saturn, and Neptune, and south side of
     # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
@@ -278,6 +270,14 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def field_obs_ring_geometry_solar_ring_elevation1(self):
         return self.field_obs_ring_geometry_solar_ring_opening_angle2()
+
+    # Ring elevation to observer, same to opening angle. It's positive if observer
+    # is at north side of Saturn. Negative if observer is at south side of Saturn.
+    def field_obs_ring_geometry_observer_ring_elevation1(self):
+        return self.field_obs_ring_geometry_observer_ring_opening_angle1()
+
+    def field_obs_ring_geometry_observer_ring_elevation2(self):
+        return self.field_obs_ring_geometry_observer_ring_opening_angle2()
 
     def field_obs_ring_geometry_projected_radial_resolution1(self):
         return self._index_col('rings:minimum_radial_resolution')
