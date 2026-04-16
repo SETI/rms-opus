@@ -235,21 +235,21 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         else:
             return 180. - ea1
 
-    # Ring elevation to solar, the angle between the ring surface (intercept point) to the
-    # direction where incoming photons from the source. It's positive if ource is at north side of
-    # Jupiter, Saturn, and Neptune, and south side of Uranus. Negative if source is at south side
+    # Ring elevation to solar, the angle between the ring surface (intercept point) and the
+    # direction where incoming photons from the source. It's positive if source is at north side
+    # of Jupiter, Saturn, and Neptune, and south side of Uranus. Negative if source is at south side
     # of Jupiter, Saturn, and Neptune, and north side of Uranus.
-    # In this bundle, we target at Saturn.
+    # In this bundle, we target Saturn.
     def field_obs_ring_geometry_solar_ring_elevation1(self):
         north_based_inc = self.field_obs_ring_geometry_north_based_incidence1()
         return 90. - north_based_inc
 
-    def field_obs_ring_geometry_solar_ring_elevation1(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
         north_based_inc = self.field_obs_ring_geometry_north_based_incidence2()
         return 90. - north_based_inc
 
-    # Ring elevation to observer, the angle between the ring surface (intercept point) to the
-    # direction where outgoing photons to the observer. It's positive if observer is at north side
+    # Ring elevation to observer, the angle between the ring surface (intercept point) and the
+    # direction of outgoing photons to the observer. It's positive if observer is at north side
     # of Saturn. Negative if observer is at south side of Saturn.
     def field_obs_ring_geometry_observer_ring_elevation1(self):
         north_based_ea = self.field_obs_ring_geometry_north_based_emission2()
