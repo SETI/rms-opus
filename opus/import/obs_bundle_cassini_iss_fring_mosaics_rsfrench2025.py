@@ -36,7 +36,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._index_col('min_image_name')[-1].upper()
 
     def _circumference(self):
-        f_ring_core = 140,221.3
+        f_ring_core = 140221.3
         return 3.14 * 2 * f_ring_core
 
     #############################

@@ -24,7 +24,7 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
     ##############################################################
 
     def field_obs_mission_cassini_obs_name(self):
-        return self._some_index_col('cassini:observation_id')
+        return self._some_index_col('cassini:observation_id').strip()
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         raw = self._index_col('cassini:spacecraft_clock_start_count')
