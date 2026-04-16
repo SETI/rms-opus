@@ -113,10 +113,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self):
-        # Mosaic / bkg_sub tables: MOS; per-frame reprojected images: IMG
-        fs = self._index_col('file_spec')
-        if fs is not None and 'data_reproj_img' in fs.lower():
-            return self._create_mult('IMG')
         return self._create_mult('MOS')
 
     ################################
