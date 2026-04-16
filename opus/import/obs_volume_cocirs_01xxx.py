@@ -13,8 +13,6 @@ import opus_support
 import import_util
 from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
-_EQUINOX_DATE = julian.tai_from_iso('2009-08-11T01:40:08.914')
-
 
 class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def __init__(self, *args, **kwargs):
@@ -25,12 +23,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
 
     def _is_ring_map_projection(self):
         return self._get_cube_map_projection() == 'r'
-
-    # Equinox: 2009-08-11T01:40:08.914
-    # Before this time, south side of the ring is lit.
-    # After this time, north side of the ring is lit.
-    def _is_ring_north_side_lit(self):
-        return self.field_obs_general_time1() > _EQUINOX_DATE
 
     # Use north based emission angle to determine if observer is at the north of the
     # ring.

@@ -295,6 +295,14 @@ class ObsCassiniCommon(ObsBase):
     # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
     ################################################################################
 
+    # Equinox: 2009-08-11T01:40:08.914
+    # After this time, north side of the ring is lit.
+    # Before this time, south side of the ring is lit.
+    def _is_ring_north_side_lit(self):
+        start_time = self.field_obs_general_time1()
+        equinox_time = cached_tai_from_iso('2009-08-11T01:40:08.914')
+        return start_time > equinox_time
+
     def _coiss_target_desc_mapping(self):
         return _COISS_TARGET_DESC_MAPPING
 

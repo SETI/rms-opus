@@ -12,8 +12,6 @@ from import_util import cached_tai_from_iso
 from obs_bundle_occ_common import ObsBundleOccCommon
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
-SATURN_EQUINOX_TAI = cached_tai_from_iso("2009-08-11T00:00:00.000")
-
 class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -86,7 +84,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
             return (None, None)
 
         # Before equinox ==> south side lit ==> flip to north-based
-        if time1 < SATURN_EQUINOX_TAI:
+        if not self._is_ring_north_side_lit():
             north_inc = 180.0 - inc if inc is not None else None
             north_em  = 180.0 - em if em is not None else None
         else:

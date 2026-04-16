@@ -280,14 +280,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         angular_resolution2 = self.field_obs_ring_geometry_projected_long_resolution_angle2()
         return self._circumference() * angular_resolution2 / 360.
 
-    # Equinox: 2009-08-11T01:40:08.914
-    # After this time, north side of the ring is lit.
-    # Before this time, south side of the ring is lit.
-    def _is_ring_north_side_lit(self):
-        start_time = self.field_obs_general_time1()
-        equinox_time = cached_tai_from_iso('2009-08-11T01:40:08.914')
-        return start_time > equinox_time
-
 
     ######################################
     ### OVERRIDE FROM ObsCassiniCommon ###
