@@ -24,6 +24,7 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
     ##############################################################
 
     def field_obs_mission_cassini_obs_name(self):
+        # Strip leading/trailing whitespace from the label value
         return self._some_index_col('cassini:observation_id').strip()
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
