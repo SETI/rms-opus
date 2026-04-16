@@ -28,6 +28,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
     #######################
     ### HELPER FUNTIONS ###
     #######################
@@ -38,6 +39,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def _circumference(self):
         f_ring_core = 140221.3
         return 3.14 * 2 * f_ring_core
+
 
     #############################
     ### OVERRIDE FROM ObsBase ###
@@ -65,40 +67,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._time_from_index(column='product_creation_date')
 
 
-    ####################################
-    ### OVERRIDE FROM ObsProfilePDS4 ###
-    ####################################
-
-    def field_obs_profile_occ_type(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_occ_dir(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_body_occ_flag(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_temporal_sampling(self):
-        return None
-
-    def field_obs_profile_quality_score(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_optical_depth1(self):
-        return None
-
-    def field_obs_profile_optical_depth2(self):
-        return None
-
-    def field_obs_profile_wl_band(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_source(self):
-        return self._create_mult(None)
-
-    def field_obs_profile_host(self):
-        return self._create_mult(None)
-
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
@@ -114,6 +82,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def field_obs_general_observation_type(self):
         return self._create_mult('MOS')
+
 
     ################################
     ### OVERRIDE FROM ObsPdsPDS4 ###

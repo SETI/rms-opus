@@ -62,6 +62,42 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     def field_obs_profile_wl_band(self):
         return self._create_mult('UV')
 
+    def field_obs_profile_occ_dir(self):
+        occ_dir = self._index_col('rings:ring_profile_direction')
+        if occ_dir is None:
+            occ_dir = self._index_col('rings:time_series_direction')
+        if occ_dir is None:
+            self._log_nonrepeating_error(
+                'rings:ring_profile_direction and rings:time_series_direction" '
+                'missing')
+            return None
+        occ_dir = occ_dir.upper()
+        if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
+            return self._create_mult(occ_dir[0])
+        self._log_nonrepeating_error(f'Unknown profile direction "{occ_dir}"')
+        return self._create_mult(None)
+
+    def field_obs_profile_body_occ_flag(self):
+        return self._create_mult(self._index_col('rings:planetary_occultation_flag'))
+
+    def field_obs_profile_quality_score(self):
+        return self._create_mult(self._index_col('rings:data_quality_score'))
+
+    # TODO: Investigate further and fix if necessary. For the moment, assume BeckerJarmak optical
+    # depth parameter can be interpreted the same as the Uranus Occs opacity parameter.
+    # Also, the -999 value in Becker/Jarmak data needs to be handled correctly.
+    def field_obs_profile_optical_depth1(self):
+        ret = self._index_col('rings:lowest_detectable_opacity') # Uranus Occs
+        if ret is None:
+            ret = self._index_col('rings:lowest_detectable_normal_optical_depth') # BeckerJarmak. Note co-uvis-occ-2016-269-sun-i has -999.
+        return ret
+
+    def field_obs_profile_optical_depth2(self):
+        ret = self._index_col('rings:highest_detectable_opacity') # Uranus Occs
+        if ret is None:
+            ret = self._index_col('rings:highest_detectable_normal_optical_depth') # BeckerJarmak. Note co-uvis-occ-2016-269-sun-i has -999.
+        return ret
+
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
