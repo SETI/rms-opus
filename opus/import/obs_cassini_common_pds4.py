@@ -109,17 +109,34 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
                 target_desc = coiss_target_desc_mapping[target_desc]
         return self._create_mult(target_desc)
 
-    def field_obs_instrument_coiss_combined_filter(self):
-        camera = self._index_col('cassini:shutter_mode_id')[0]
-        assert camera in ('N', 'W')
+    def _coiss_camera_letter_pds4(self):
+        """Return 'N' or 'W' from cassini:shutter_mode_id, or None if unknown / ambiguous."""
+        sm = self._index_col('cassini:shutter_mode_id')
+        if sm is None:
+            return None
+        sm = str(sm).strip().upper()
+        if sm == 'NACONLY':
+            return 'N'
+        if sm == 'WACONLY':
+            return 'W'
+        if sm == 'BOTSIM':
+            self._log_nonrepeating_warning(
+                'cassini:shutter_mode_id BOTSIM does not select a single camera; '
+                'COISS camera left unset')
+            return None
+        self._log_nonrepeating_warning(
+            f'Unexpected cassini:shutter_mode_id {sm!r}; cannot derive COISS camera')
+        return None
 
+    def field_obs_instrument_coiss_combined_filter(self):
+        camera = self._coiss_camera_letter_pds4()
         filter1 = self._index_col('cassini:filter_name_1')
         filter2 = self._index_col('cassini:filter_name_2')
-
+        if camera is None:
+            return self._create_mult_keep_case(None)
         new_filter = self._combined_filter(camera, filter1, filter2)
         return self._create_mult_keep_case(new_filter)
 
     def field_obs_instrument_coiss_camera(self):
-        camera = self._index_col('cassini:shutter_mode_id')[0]
-        assert camera in ('N', 'W')
+        camera = self._coiss_camera_letter_pds4()
         return self._create_mult(camera)
