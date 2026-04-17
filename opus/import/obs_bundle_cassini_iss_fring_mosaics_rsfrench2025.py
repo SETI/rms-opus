@@ -28,7 +28,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
 
     #######################
-    ### HELPER FUNTIONS ###
+    ### HELPER FUNCTIONS ###
     #######################
 
     def _camera(self):
