@@ -300,6 +300,8 @@ class ObsCassiniCommon(ObsBase):
     # Before this time, south side of the ring is lit.
     def _is_ring_north_side_lit(self):
         start_time = self.field_obs_general_time1()
+        if start_time is None:
+            return None
         equinox_time = cached_tai_from_iso('2009-08-11T01:40:08.914')
         return start_time > equinox_time
 

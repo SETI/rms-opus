@@ -227,9 +227,13 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         if not self._is_ring_map_projection():
             return None
         inc = self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_ZENITH')
-        if self._is_ring_north_side_lit():
+        is_ring_north_side_lit = self._is_ring_north_side_lit()
+        if is_ring_north_side_lit is None:
+            return None
+        elif is_ring_north_side_lit:
             return inc
-        return 180. - inc
+        else:
+            return 180. - inc
 
     def field_obs_ring_geometry_incidence2(self):
         return self.field_obs_ring_geometry_incidence1()
@@ -238,9 +242,13 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         if not self._is_ring_map_projection():
             return None
         ea = self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
-        if self._is_ring_north_side_lit():
+        is_ring_north_side_lit = self._is_ring_north_side_lit()
+        if is_ring_north_side_lit is None:
+            return None
+        elif is_ring_north_side_lit:
             return ea
-        return 180. - ea
+        else:
+            return 180. - ea
 
     def field_obs_ring_geometry_emission2(self):
         return self.field_obs_ring_geometry_emission1()

@@ -164,7 +164,10 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     # side of the ring is lit, and 90-180 when south side is lit.
     def field_obs_ring_geometry_north_based_incidence1(self):
         inc = self.field_obs_ring_geometry_incidence1()
-        if self._is_ring_north_side_lit():
+        is_ring_north_side_lit = self._is_ring_north_side_lit()
+        if is_ring_north_side_lit is None:
+            return None
+        elif is_ring_north_side_lit:
             return inc
         else:
             return 180. - inc
@@ -191,7 +194,10 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_north_based_emission1(self):
         ea1 = self.field_obs_ring_geometry_emission1()
         ea2 = self.field_obs_ring_geometry_emission2()
-        if self._is_ring_north_side_lit():
+        is_ring_north_side_lit = self._is_ring_north_side_lit()
+        if is_ring_north_side_lit is None:
+            return None
+        elif is_ring_north_side_lit:
             return ea1
         else:
             return 180. - ea2
@@ -199,7 +205,10 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_north_based_emission2(self):
         ea1 = self.field_obs_ring_geometry_emission1()
         ea2 = self.field_obs_ring_geometry_emission2()
-        if self._is_ring_north_side_lit():
+        is_ring_north_side_lit = self._is_ring_north_side_lit()
+        if is_ring_north_side_lit is None:
+            return None
+        elif is_ring_north_side_lit:
             return ea2
         else:
             return 180. - ea1
