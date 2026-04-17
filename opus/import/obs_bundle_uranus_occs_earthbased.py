@@ -178,12 +178,16 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
 
     def field_obs_profile_wl_band(self):
         wl_range = self._index_col('pds:wavelength_range')
-        if wl_range.upper() == 'INFRARED':
+        if not wl_range:
+            self._log_nonrepeating_error('pds:wavelength_range missing')
+            return self._create_mult(None)
+        wl_upper = wl_range.upper()
+        if wl_upper == 'INFRARED':
             return self._create_mult('IR')
-        if wl_range.upper() == 'VISIBLE':
+        if wl_upper == 'VISIBLE':
             return self._create_mult('VI')
         self._log_nonrepeating_error(f'Unknown pds:wavelength_range "{wl_range}"')
-        return None
+        return self._create_mult(None)
 
     def field_obs_profile_source(self):
         star_name = self._index_col('rings:star_name')
