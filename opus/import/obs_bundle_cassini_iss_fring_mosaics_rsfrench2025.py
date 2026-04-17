@@ -7,8 +7,6 @@
 # supports derived data from the cassini_iss_fring_mosaics_rsfrench2025 bundle.
 ################################################################################
 
-from import_util import cached_tai_from_iso
-
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
 NOTE_MAPPING = {
