@@ -7,6 +7,8 @@
 # supports derived data from the cassini_iss_fring_mosaics_rsfrench2025 bundle.
 ################################################################################
 
+import math
+
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
 NOTE_MAPPING = {
@@ -36,7 +38,7 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def _circumference(self):
         f_ring_core = 140221.3
-        return 3.14 * 2 * f_ring_core
+        return 2 * math.pi * f_ring_core
 
 
     #############################
