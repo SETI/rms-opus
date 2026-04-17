@@ -139,6 +139,7 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
             return self._create_mult('STE')
         self._log_nonrepeating_error(
             f'Unknown rings:occultation:type "{occ_type}"')
+        return self._create_mult(None)
 
     def field_obs_profile_occ_dir(self):
         occ_dir = self._index_col('rings:ring_profile_direction')
@@ -146,9 +147,8 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
             occ_dir = self._index_col('rings:time_series_direction')
         if occ_dir is None:
             self._log_nonrepeating_error(
-                'rings:ring_profile_direction and rings:time_series_direction" '
-                'missing')
-            return None
+                'rings:ring_profile_direction and rings:time_series_direction missing')
+            return self._create_mult(None)
         occ_dir = occ_dir.upper()
         if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
             return self._create_mult(occ_dir[0])
