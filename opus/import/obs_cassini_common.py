@@ -15,8 +15,8 @@ import opus_support
 from import_util import cached_tai_from_iso
 from obs_base import ObsBase
 
-# These codes show up as the last two characters of the second part of an
-# observation name.
+# TODO: This is probably PDS3-only, move it to the PDS3 specific class in the future.
+# These codes show up as the last two characters of the second part of an observation name.
 _CASSINI_TARGET_CODE_MAPPING = {
     'AG': 'AG (Aegaeon)',
     'AN': 'AN (Anthe)',
