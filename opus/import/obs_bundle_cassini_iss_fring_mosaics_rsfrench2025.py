@@ -267,9 +267,9 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._create_mult(self._cassini_normalize_mission_phase_name())
 
 
-    ###################################
+    ##################################
     ### OVERRIDE FROM ObsTypeImage ###
-    ###################################
+    ##################################
 
     def field_obs_type_image_image_type_id(self):
         return self._create_mult('MOSAIC')
