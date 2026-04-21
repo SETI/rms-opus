@@ -109,11 +109,9 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     #####################################
 
     def field_obs_ring_geometry_ring_radius1(self):
-        # minimum_core_radius
         return self._index_col('rings:minimum_ring_radius')
 
     def field_obs_ring_geometry_ring_radius2(self):
-        # maximum_core_radius
         return self._index_col('rings:maximum_ring_radius')
 
     def field_obs_ring_geometry_j2000_longitude1(self):
@@ -142,11 +140,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_phase2(self):
         return self._index_col('rings:maximum_phase_angle')
 
-    # Source: star, observer: COISS
-    # Incidence angle: the angle between the point where incoming source photons
-    # hit the ring, to the north pole of the planet we're looking at (normal vector
-    # on the surface of LIT side of the ring, same as source side), always between
-    # 0 (parallel to north pole) to 90 (parallel to ring)
     def field_obs_ring_geometry_incidence1(self):
         return self._index_col('rings:mean_incidence_angle')
 
@@ -169,9 +162,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def field_obs_ring_geometry_north_based_incidence2(self):
         return self.field_obs_ring_geometry_north_based_incidence1()
 
-    # Emission angle: the angle between the normal vector on the LIT side, to the
-    # direction where outgoing photons to the observer. 0-90 when observer is at the
-    # lit side of the ring, and 90-180 when it's at the dark side.
     def field_obs_ring_geometry_emission1(self):
         return self._index_col('rings:minimum_emission_angle')
 
