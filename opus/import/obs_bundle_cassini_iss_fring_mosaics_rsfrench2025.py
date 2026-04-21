@@ -131,15 +131,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
             self.field_obs_ring_geometry_ascending_longitude2())
 
     def field_obs_ring_geometry_ascending_longitude1(self):
-        # minimum_longitude_ascending_node
         return self._index_col('rings:minimum_inertial_ring_longitude')
 
     def field_obs_ring_geometry_ascending_longitude2(self):
-        # maximum_longitude_ascending_node
         return self._index_col('rings:maximum_inertial_ring_longitude')
 
-    # Phase angle: The angle between the point where incoming source photons
-    # hit the ring , to the direction where outgoing photons to the observer
     def field_obs_ring_geometry_phase1(self):
         return self._index_col('rings:minimum_phase_angle')
 
