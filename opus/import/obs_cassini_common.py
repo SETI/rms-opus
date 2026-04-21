@@ -402,8 +402,10 @@ class ObsCassiniCommon(ObsBase):
 
         # If we don't have the exact key combination, try to set polarization equal
         # to CLEAR for lack of anything better to do.
-        nfilter1 = filter1 if filter1.find('P') == -1 else 'CL1'
-        nfilter2 = filter2 if filter2.find('P') == -1 else 'CL2'
+        # nfilter1 = filter1 if filter1.find('P') == -1 else 'CL1'
+        # nfilter2 = filter2 if filter2.find('P') == -1 else 'CL2'
+        nfilter1 = filter1 if filter1 and 'P' not in filter1 else 'CL1'
+        nfilter2 = filter2 if filter2 and 'P' not in filter2 else 'CL2'
         key2 = (camera, nfilter1, nfilter2)
         if key2 in _COISS_FILTER_WAVELENGTHS:
             self._log_nonrepeating_warning(
@@ -422,8 +424,8 @@ class ObsCassiniCommon(ObsBase):
         if filter1 is None or filter2 is None:
             filter1, filter2 = self._index_col('FILTER_NAME')
 
-        central_wl1, fwhm1, wl1 = self._coiss_wavelength_helper(camera, filter1, 'CL2')
-        central_wl2, fwhm2, wl2 = self._coiss_wavelength_helper(camera, 'CL1', filter2)
+        _central_wl1, _fwhm1, wl1 = self._coiss_wavelength_helper(camera, filter1, 'CL2')
+        _central_wl2, _fwhm2, wl2 = self._coiss_wavelength_helper(camera, 'CL1', filter2)
 
         new_filter = None
 
@@ -435,14 +437,19 @@ class ObsCassiniCommon(ObsBase):
             new_filter = filter1
         else:
             # If one of them is a polarizer, put it second
-            if filter1.find('P') != -1:
+            # if filter1.find('P') != -1:
+            if filter1 and 'P' in filter1:
                 new_filter = filter2 + '+' + filter1
-            elif filter2.find('P') != -1:
+            # elif filter2.find('P') != -1:
+            elif filter2 and 'P' in filter2:
                 new_filter = filter1 + '+' + filter2
             else:
-                if (((wl1 is None or wl2 is None or wl1 == wl2) and
-                     filter1 > filter2) or
-                    wl1 > wl2):
+                # if (((wl1 is None or wl2 is None or wl1 == wl2) and
+                #      filter1 > filter2) or
+                #     wl1 > wl2):
+                same_or_unknown_wl = (wl1 is None or wl2 is None or wl1 == wl2)
+                if ((same_or_unknown_wl and filter1 > filter2) or
+                    (not same_or_unknown_wl and wl1 > wl2)):
                     # Place filters in wavelength order
                     # If wavelengths are the same, make it name order
                     filter1, filter2 = filter2, filter1
