@@ -11,7 +11,7 @@ import math
 
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
-NOTE_MAPPING = {
+_NOTE_MAPPING = {
     'B': 'Background-subtracted mosaic is missing data due to insufficient radial extent.',
     'C': 'Some source images have corrupted or missing data.',
     'E': 'Some areas may be overexposed.',
@@ -24,6 +24,8 @@ NOTE_MAPPING = {
     'R': 'Follows one co-rotating longitude range with different inertial longitudes.',
 }
 
+_F_RING_CIRCUMFERENCE = 2 * math.pi * 140221.3
+
 class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,10 +37,6 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     def _camera(self):
         return self._index_col('min_image_name')[-1].upper()
-
-    def _circumference(self):
-        f_ring_core = 140221.3
-        return 2 * math.pi * f_ring_core
 
 
     #############################
@@ -98,11 +96,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
         note_list = []
         for note in [n.strip() for n in raw.split(';') if n.strip()]:
-            if note not in NOTE_MAPPING:
+            if note not in _NOTE_MAPPING:
                 self._log_nonrepeating_error(
                     f'Unknown F Ring note code {note!r} in notes field: {raw!r}')
             else:
-                note_list.append(NOTE_MAPPING[note])
+                note_list.append(_NOTE_MAPPING[note])
         return ' '.join(note_list) if note_list else None
 
 
@@ -252,11 +250,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     # circumference * projected_long_resolution_angle / 360.
     def field_obs_ring_geometry_projected_long_resolution1(self):
         angular_resolution1 = self.field_obs_ring_geometry_projected_long_resolution_angle1()
-        return self._circumference() * angular_resolution1 / 360.
+        return _F_RING_CIRCUMFERENCE * angular_resolution1 / 360.
 
     def field_obs_ring_geometry_projected_long_resolution2(self):
         angular_resolution2 = self.field_obs_ring_geometry_projected_long_resolution_angle2()
-        return self._circumference() * angular_resolution2 / 360.
+        return _F_RING_CIRCUMFERENCE * angular_resolution2 / 360.
 
 
     ######################################
