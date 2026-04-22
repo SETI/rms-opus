@@ -263,8 +263,10 @@ def safe_pdstable_read(filename, pds_version):
             try:
                 _ = [float(x) for x in col_data]
             except ValueError: # Something parsed badly
-                # Not ints or floats, just leave them as strings
-                pass
+                # Not ints or floats, just leave them as strings and strip surrounding spaces
+                # pass
+                for row in row:
+                    row[col_name] = row[col_name].strip()
             else: # All floats
                 for row in rows:
                     row[col_name] = float(row[col_name])
@@ -317,11 +319,6 @@ def safe_pdstable_read_pds3(filename):
 
     return rows, label
 
-def _strip_if_str(value):
-    if isinstance(value, str):
-        return value.strip()
-    return value
-
 def safe_column(row, column_name, idx=None):
     "Read a value from a pdstable column accounting for the mask."
 
@@ -330,17 +327,17 @@ def safe_column(row, column_name, idx=None):
 
     if column_name+'_mask' not in row:
         if idx is None:
-            return _strip_if_str(row[column_name])
-        return _strip_if_str(row[column_name][idx])
+            return row[column_name]
+        return row[column_name][idx]
 
     if idx is None:
         if np.any(row[column_name+'_mask']):
             return None
-        return _strip_if_str(row[column_name])
+        return row[column_name]
 
     if row[column_name+'_mask'][idx]:
         return None
-    return _strip_if_str(row[column_name][idx])
+    return row[column_name][idx]
 
 
 ################################################################################
