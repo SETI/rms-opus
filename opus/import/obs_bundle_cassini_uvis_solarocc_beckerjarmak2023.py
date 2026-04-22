@@ -82,10 +82,13 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     def field_obs_profile_quality_score(self):
         return self._create_mult(self._index_col('rings:data_quality_score'))
 
+    # TODO: Investigate further and fix if necessary.
+    # co-uvis-occ-2016-269-sun-i has -999, needs to be handled correctly.
     def field_obs_profile_optical_depth1(self):
         ret = self._index_col('rings:lowest_detectable_normal_optical_depth')
         return ret
 
+    # co-uvis-occ-2016-269-sun-i has -999, needs to be handled correctly.
     def field_obs_profile_optical_depth2(self):
         ret = self._index_col('rings:highest_detectable_normal_optical_depth')
         return ret
