@@ -265,7 +265,7 @@ def safe_pdstable_read(filename, pds_version):
             except ValueError: # Something parsed badly
                 # Not ints or floats, just leave them as strings and strip surrounding spaces
                 # pass
-                for row in row:
+                for row in rows:
                     row[col_name] = row[col_name].strip()
             else: # All floats
                 for row in rows:
