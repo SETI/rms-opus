@@ -109,20 +109,14 @@
         "description": "Reprojected Image",
         "product_type": "coiss_f_ring_reproj_img",
         "version_name": "Current",
-        "version_number": 999999},
+        "version_number": 999999
+    },
     {
         "category": "Cassini ISS B Ring Reprojected Images",
         "description": "Reprojected Image SPICE Pointing",
         "product_type": "coiss_b_ring_reproj_img_spice_pointing",
         "version_name": "Current",
         "version_number": 999999
-    },
-    {
-       "category": "Cassini ISS F Ring Reprojected Images",
-       "description": "Reprojected Image",
-       "product_type": "coiss_f_ring_reproj_img",
-       "version_name": "Current",
-       "version_number": 999999
     },
     {
        "category": "Cassini ISS F Ring Reprojected Images",
@@ -1745,6 +1739,13 @@
         "category": "browse",
         "description": "Browse Background-Subtracted Mosaic Image (full)",
         "product_type": "coiss_f_ring_mosaic_browse_bkg_sub_full",
+        "version_name": "Current",
+        "version_number": 999999
+    },
+    {
+        "category": "browse",
+        "description": "Browse Reprojected Image",
+        "product_type": "coiss_b_ring_browse_reproj_img",
         "version_name": "Current",
         "version_number": 999999
     },
