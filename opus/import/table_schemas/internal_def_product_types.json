@@ -1031,6 +1031,21 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_b_ring_reproj_img",
+        "definition": "Reprojected image files (*.fits) and associated labels (*.lblx) for Cassini ISS B ring reprojected images. Labels also include SPICE pointing, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_b_ring_reproj_img_spice_pointing",
+        "definition": "Reprojected image SPICE pointing supplement files (*_rprj_suppl.txt) for Cassini ISS B ring. Labels also include reprojected image files, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_b_ring_browse_reproj_img",
+        "definition": "Browse reprojected image preview PNGs (*_rprj_browse.png) for Cassini ISS B ring."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss_f_ring_mosaic",
         "definition": "Mosaic image files (*.img) and associated labels (*.lblx) for Cassini ISS F ring mosaics. Labels also include definitions for mosaic metadata tables, which can be downloaded separately."
     },
