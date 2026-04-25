@@ -99,35 +99,35 @@
     },
     {
         "category": "Cassini ISS B Ring Reprojected Images",
-        "description": "Reprojected Image",
+        "description": "B Ring Reprojected Image",
         "product_type": "coiss_b_ring_reproj_img",
         "version_name": "Current",
         "version_number": 999999
     },
     {
         "category": "Cassini ISS F Ring Reprojected Images",
-        "description": "Reprojected Image",
+        "description": "F Ring Reprojected Image",
         "product_type": "coiss_f_ring_reproj_img",
         "version_name": "Current",
         "version_number": 999999
     },
     {
         "category": "Cassini ISS B Ring Reprojected Images",
-        "description": "Reprojected Image SPICE Pointing",
+        "description": "B Ring Reprojected Image SPICE Pointing",
         "product_type": "coiss_b_ring_reproj_img_spice_pointing",
         "version_name": "Current",
         "version_number": 999999
     },
     {
        "category": "Cassini ISS F Ring Reprojected Images",
-       "description": "Reprojected Image SPICE Pointing",
+       "description": "F Ring Reprojected Image SPICE Pointing",
        "product_type": "coiss_f_ring_reproj_img_spice_pointing",
        "version_name": "Current",
        "version_number": 999999
     },
     {
        "category": "Cassini ISS F Ring Reprojected Images",
-       "description": "Reprojected Image Metadata",
+       "description": "F Ring Reprojected Image Metadata",
        "product_type": "coiss_f_ring_reproj_img_metadata",
        "version_name": "Current",
        "version_number": 999999
@@ -1744,35 +1744,35 @@
     },
     {
         "category": "browse",
-        "description": "Browse Reprojected Image",
+        "description": "B Ring Browse Reprojected Image",
         "product_type": "coiss_b_ring_browse_reproj_img",
         "version_name": "Current",
         "version_number": 999999
     },
     {
         "category": "browse",
-        "description": "Browse Reprojected Image (thumbnail)",
+        "description": "F Ring Browse Reprojected Image (thumbnail)",
         "product_type": "coiss_f_ring_browse_reproj_img_thumb",
         "version_name": "Current",
         "version_number": 999999
     },
     {
         "category": "browse",
-        "description": "Browse Reprojected Image (small)",
+        "description": "F Ring Browse Reprojected Image (small)",
         "product_type": "coiss_f_ring_browse_reproj_img_small",
         "version_name": "Current",
         "version_number": 999999
     },
     {
         "category": "browse",
-        "description": "Browse Reprojected Image (medium)",
+        "description": "F Ring Browse Reprojected Image (medium)",
         "product_type": "coiss_f_ring_browse_reproj_img_med",
         "version_name": "Current",
         "version_number": 999999
     },
     {
         "category": "browse",
-        "description": "Browse Reprojected Image (full)",
+        "description": "F Ring Browse Reprojected Image (full)",
         "product_type": "coiss_f_ring_browse_reproj_img_full",
         "version_name": "Current",
         "version_number": 999999
