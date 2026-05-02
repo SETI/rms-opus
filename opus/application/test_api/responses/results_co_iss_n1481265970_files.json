@@ -1,14 +1,6 @@
 {
     "data": {
         "co-iss-n1481265970": {
-            "coiss_b_ring_reproj_img": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj.fits",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj.lblx"
-            ],
-            "coiss_b_ring_reproj_img_spice_pointing": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj.lblx",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj_suppl.txt"
-            ],
             "coiss_raw": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL",
@@ -58,10 +50,6 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.lbl",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.tab"
             ],
-            "coiss_f_ring_global_reproj_img_index": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.lblx",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.tab"
-            ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_thumb.jpg"
             ],
@@ -73,24 +61,12 @@
             ],
             "browse_full": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png"
-            ],
-            "coiss_b_ring_browse_reproj_img": [
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/browse_derived/148XXXXXXX/1481265970n_rprj_browse.lblx",
-                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/browse_derived/148XXXXXXX/1481265970n_rprj_browse.png"
             ]
         }
     },
     "versions": {
         "co-iss-n1481265970": {
             "Current": {
-                "coiss_b_ring_reproj_img": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj.fits",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj.lblx"
-                ],
-                "coiss_b_ring_reproj_img_spice_pointing": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj.lblx",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/data_derived/148XXXXXXX/1481265970n_rprj_suppl.txt"
-                ],
                 "coiss_raw": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL",
@@ -140,10 +116,6 @@
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.lbl",
                     "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.tab"
                 ],
-                "coiss_f_ring_global_reproj_img_index": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.lblx",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_reproj_img_index.tab"
-                ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_thumb.jpg"
                 ],
@@ -155,10 +127,6 @@
                 ],
                 "browse_full": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png"
-                ],
-                "coiss_b_ring_browse_reproj_img": [
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/browse_derived/148XXXXXXX/1481265970n_rprj_browse.lblx",
-                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_spokes_hedman-hamilton-2024/cassini_iss_spokes_hedman-hamilton-2024/browse_derived/148XXXXXXX/1481265970n_rprj_browse.png"
                 ]
             },
             "2": {
