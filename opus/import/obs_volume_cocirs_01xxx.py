@@ -6,8 +6,6 @@
 # COCIRS_[01]xxx.
 ################################################################################
 
-import julian
-
 import opus_support
 
 import import_util
