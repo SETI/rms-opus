@@ -8,7 +8,6 @@
 # cassini_uvis_solarocc_beckerjarmak2023 bundle.
 ################################################################################
 
-from import_util import cached_tai_from_iso
 from obs_bundle_occ_common import ObsBundleOccCommon
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
