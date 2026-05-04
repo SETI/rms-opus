@@ -18,6 +18,8 @@ if [ $? -ne 0 ]; then exit -1; fi
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 uranus_occs_earthbased
 if [ $? -ne 0 ]; then exit -1; fi
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 cassini_uvis_solarocc_beckerjarmak2023
+# if [ $? -ne 0 ]; then exit -1; fi
+# python main_opus_import.py --do-all-import --override-db-schema $1 $3 cassini_iss_fring_mosaics_rsfrench2025
 if [ $? -ne 0 ]; then exit -1; fi
 python main_opus_import.py --do-all-import --override-db-schema $1 $3 COUVIS_8xxx
 if [ $? -ne 0 ]; then exit -1; fi

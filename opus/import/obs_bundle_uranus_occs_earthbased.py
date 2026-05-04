@@ -133,7 +133,54 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     ### OVERRIDE FROM ObsProfile ###
     ################################
 
-    # Occultation type is set as 'STE' in obs_profile_pds4
+    def field_obs_profile_occ_type(self):
+        occ_type = self._index_col('rings:occultation_type')
+        if occ_type == 'stellar':
+            return self._create_mult('STE')
+        self._log_nonrepeating_error(
+            f'Unknown rings:occultation:type "{occ_type}"')
+        return self._create_mult(None)
+
+    def field_obs_profile_occ_dir(self):
+        occ_dir = self._index_col('rings:ring_profile_direction')
+        if occ_dir is None:
+            occ_dir = self._index_col('rings:time_series_direction')
+        if occ_dir is None:
+            self._log_nonrepeating_error(
+                'rings:ring_profile_direction and rings:time_series_direction missing')
+            return self._create_mult(None)
+        occ_dir = occ_dir.upper()
+        if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
+            return self._create_mult(occ_dir[0])
+        self._log_nonrepeating_error(f'Unknown profile direction "{occ_dir}"')
+        return self._create_mult(None)
+
+    def field_obs_profile_body_occ_flag(self):
+        return self._create_mult(self._index_col('rings:planetary_occultation_flag'))
+
+    def field_obs_profile_quality_score(self):
+        return self._create_mult(self._index_col('rings:data_quality_score'))
+
+    def field_obs_profile_optical_depth1(self):
+        ret = self._index_col('rings:lowest_detectable_opacity')
+        return ret
+
+    def field_obs_profile_optical_depth2(self):
+        ret = self._index_col('rings:highest_detectable_opacity')
+        return ret
+
+    def field_obs_profile_wl_band(self):
+        wl_range = self._index_col('pds:wavelength_range')
+        if not wl_range:
+            self._log_nonrepeating_error('pds:wavelength_range missing')
+            return self._create_mult(None)
+        wl_upper = wl_range.upper()
+        if wl_upper == 'INFRARED':
+            return self._create_mult('IR')
+        if wl_upper == 'VISIBLE':
+            return self._create_mult('VI')
+        self._log_nonrepeating_error(f'Unknown pds:wavelength_range "{wl_range}"')
+        return self._create_mult(None)
 
     def field_obs_profile_source(self):
         star_name = self._index_col('rings:star_name')

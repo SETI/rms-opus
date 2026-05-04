@@ -1028,5 +1028,135 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "couvis_solar_occ_browse",
         "definition": "Plots of signal, transparency, and normal optical depth for a single occultation; ingress and egress portions are given in separate files. Associated labels (*.xml) describe the contents of the detailed browse images."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_b_ring_reproj_img",
+        "definition": "Reprojected image files (*.fits) and associated labels (*.lblx) for Cassini ISS B ring reprojected images. Labels also include SPICE pointing, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_b_ring_reproj_img_spice_pointing",
+        "definition": "Reprojected image SPICE pointing supplement files (*_rprj_suppl.txt) for Cassini ISS B ring. Labels also include reprojected image files, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_b_ring_browse_reproj_img",
+        "definition": "Browse reprojected image preview PNGs (*_rprj_browse.png) for Cassini ISS B ring."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic",
+        "definition": "Mosaic image files (*.img) and associated labels (*.lblx) for Cassini ISS F ring mosaics. Labels also include definitions for mosaic metadata tables, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_metadata",
+        "definition": "Mosaic metadata tables (*.tab) and associated labels (*.lblx) for Cassini ISS F ring mosaics. Labels also include definitions for mosaic image files, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_bkg_sub",
+        "definition": "Background-subtracted mosaic image files (*.img) and associated labels (*.lblx) for Cassini ISS F ring mosaics. Labels also include definitions for background-subtracted mosaic metadata tables, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_bkg_sub_metadata",
+        "definition": "Background-subtracted mosaic metadata tables (*.tab) and associated labels (*.lblx) for Cassini ISS F ring mosaics. Labels also include definitions for background-subtracted mosaic image files, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_thumb",
+        "definition": "Browse mosaic preview PNGs (*_thumb.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_small",
+        "definition": "Browse mosaic preview PNGs (*_small.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_med",
+        "definition": "Browse mosaic preview PNGs (*_med.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_full",
+        "definition": "Browse mosaic preview PNGs (*_full.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_bkg_sub_thumb",
+        "definition": "Browse background-subtracted mosaic preview PNGs (*_thumb.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_bkg_sub_small",
+        "definition": "Browse background-subtracted mosaic preview PNGs (*_small.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_bkg_sub_med",
+        "definition": "Browse background-subtracted mosaic preview PNGs (*_med.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_mosaic_browse_bkg_sub_full",
+        "definition": "Browse background-subtracted mosaic preview PNGs (*_full.png) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_documentation",
+        "definition": "Cassini ISS F ring mosaic bundle documentation (readme and user guide files)."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_global_mosaic_index",
+        "definition": "Global mosaic index files (global_mosaic_index.tab and .lblx) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_global_mosaic_bkg_sub_index",
+        "definition": "Global background-subtracted mosaic index files (global_mosaic_bkg_sub_index.tab and .lblx) for Cassini ISS F ring mosaics."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_global_reproj_img_index",
+        "definition": "Global reprojected image index files (global_reproj_img_index.tab and .lblx) for Cassini ISS F ring reprojected images."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_reproj_img",
+        "definition": "Reprojected image files (*.img) and associated labels (*.lblx) for Cassini ISS F ring reprojected images. Labels also include definitions for reprojected image metadata tables and SPICE pointing, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_reproj_img_spice_pointing",
+        "definition": "Reprojected image SPICE pointing supplement files (*_reproj_suppl.txt) for Cassini ISS F ring. Labels also include definitions for reprojected image metadata tables and reprojected image files, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_reproj_img_metadata",
+        "definition": "Reprojected image metadata tables (*_reproj_img_metadata_params.tab) for Cassini ISS F ring. Labels also include definitions for reprojected image files and SPICE pointing, which can be downloaded separately."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_browse_reproj_img_thumb",
+        "definition": "Browse reprojected image preview PNGs (*_browse_reproj_img_thumb.png) for Cassini ISS F ring."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_browse_reproj_img_small",
+        "definition": "Browse reprojected image preview PNGs (*_browse_reproj_img_small.png) for Cassini ISS F ring."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_browse_reproj_img_med",
+        "definition": "Browse reprojected image preview PNGs (*_browse_reproj_img_med.png) for Cassini ISS F ring."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "coiss_f_ring_browse_reproj_img_full",
+        "definition": "Browse reprojected image preview PNGs (*_browse_reproj_img_full.png) for Cassini ISS F ring."
     }
 ]

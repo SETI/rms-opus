@@ -6,14 +6,10 @@
 # COCIRS_[01]xxx.
 ################################################################################
 
-import julian
-
 import opus_support
 
 import import_util
 from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
-
-_EQUINOX_DATE = julian.tai_from_iso('2009-08-11T01:40:08.914')
 
 
 class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
@@ -25,12 +21,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
 
     def _is_ring_map_projection(self):
         return self._get_cube_map_projection() == 'r'
-
-    # Equinox: 2009-08-11T01:40:08.914
-    # Before this time, south side of the ring is lit.
-    # After this time, north side of the ring is lit.
-    def _is_ring_north_side_lit(self):
-        return self.field_obs_general_time1() > _EQUINOX_DATE
 
     # Use north based emission angle to determine if observer is at the north of the
     # ring.
@@ -235,9 +225,13 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         if not self._is_ring_map_projection():
             return None
         inc = self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_ZENITH')
-        if self._is_ring_north_side_lit():
+        is_ring_north_side_lit = self._is_ring_north_side_lit()
+        if is_ring_north_side_lit is None:
+            return None
+        elif is_ring_north_side_lit:
             return inc
-        return 180. - inc
+        else:
+            return 180. - inc
 
     def field_obs_ring_geometry_incidence2(self):
         return self.field_obs_ring_geometry_incidence1()
@@ -246,9 +240,13 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         if not self._is_ring_map_projection():
             return None
         ea = self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
-        if self._is_ring_north_side_lit():
+        is_ring_north_side_lit = self._is_ring_north_side_lit()
+        if is_ring_north_side_lit is None:
+            return None
+        elif is_ring_north_side_lit:
             return ea
-        return 180. - ea
+        else:
+            return 180. - ea
 
     def field_obs_ring_geometry_emission2(self):
         return self.field_obs_ring_geometry_emission1()

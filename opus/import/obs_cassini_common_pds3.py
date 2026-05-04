@@ -9,24 +9,6 @@ import config_targets
 from obs_common_pds3 import ObsCommonPDS3
 from obs_cassini_common import ObsCassiniCommon
 
-
-# These mappings are for the TARGET_DESC field to clean them up
-COISS_TARGET_DESC_MAPPING = {
-    'DIONE, RHEA, MIMAS(?), RINGS': 'ICY SATELLITES',
-    'GENERIC-SATELLITE': 'ICY SATELLITES',
-    'SATELLITE SEARCH': 'ICY SATELLITES',
-    'TETHYS, RHEA, RINGS': 'ICY SATELLITES',
-    'ENCELADUS, RINGS': 'ENCELADUS',
-    'IAPETUS FP1': 'IAPETUS',
-    'METHON': 'METHONE',
-    'ROCK': 'ROCKS',
-    'STAR -- CW LEO': 'STAR',
-    'STAR -- ETA CAR': 'STAR',
-    '--': 'UNKNOWN',
-    'UNK': 'UNKNOWN',
-    'F RING': 'SATURN-FRING'
-}
-
 class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,8 +27,9 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
         if 'TARGET_DESC' in self._metadata['index_row']:
             # Only for COISS
             target_desc = self._index_col('TARGET_DESC').upper()
-            if target_desc in COISS_TARGET_DESC_MAPPING:
-                target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
+            coiss_target_desc_mapping = self._coiss_target_desc_mapping()
+            if target_desc in coiss_target_desc_mapping:
+                target_desc = coiss_target_desc_mapping[target_desc]
             if target_desc in config_targets.TARGET_NAME_MAPPING:
                 target_desc = config_targets.TARGET_NAME_MAPPING[target_desc]
 
@@ -104,3 +87,94 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
             count = count.replace('.324', '.000')
 
         return count
+
+
+    ##############################################################
+    ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
+    ##############################################################
+    def field_obs_mission_cassini_obs_name(self):
+        return self._some_index_col('OBSERVATION_ID')
+
+
+    #######################################################################
+    ### OVERRIDE METHODS FOR obs_instrument_coiss FROM ObsCassiniCommon ###
+    #######################################################################
+
+    def field_obs_instrument_coiss_opus_id(self):
+        return self.opus_id
+
+    def field_obs_instrument_coiss_bundle_id(self):
+        return self.bundle
+
+    def field_obs_instrument_coiss_instrument_id(self):
+        return self.instrument_id
+
+    def field_obs_instrument_coiss_data_conversion_type(self):
+        return self._create_mult(self._index_col('DATA_CONVERSION_TYPE'))
+
+    def field_obs_instrument_coiss_compression_type(self):
+        return self._create_mult(self._index_col('INST_CMPRS_TYPE'))
+
+    def field_obs_instrument_coiss_gain_mode_id(self):
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
+
+    def field_obs_instrument_coiss_image_observation_type(self):
+        obs_type = self._index_col('IMAGE_OBSERVATION_TYPE')
+
+        # Sometimes they have both SCIENCE,OPNAV and OPNAV,SCIENCE so normalize
+        # the order
+        ret_list = []
+        if obs_type.find('SCIENCE') != -1:
+            ret_list.append('SCIENCE')
+        if obs_type.find('OPNAV') != -1:
+            ret_list.append('OPNAV')
+        if obs_type.find('CALIBRATION') != -1:
+            ret_list.append('CALIBRATION')
+        if obs_type.find('ENGINEERING') != -1:
+            ret_list.append('ENGINEERING')
+        if obs_type.find('SUPPORT') != -1:
+            ret_list.append('SUPPORT')
+        if obs_type.find('UNK') != -1:
+            ret_list.append('UNKNOWN')
+
+        ret = '/'.join(ret_list)
+
+        # If the result isn't the same length as what we started with, we must've
+        # encountered a new type we didn't know about
+        if len(ret) != len(obs_type.replace('UNK','UNKNOWN')):
+            self._log_nonrepeating_error(
+                f'Unknown format for COISS image_observation_type: "{obs_type}"')
+            return self._create_mult(None)
+
+        return self._create_mult(ret)
+
+    def field_obs_instrument_coiss_missing_lines(self):
+        return self._index_col('MISSING_LINES')
+
+    def field_obs_instrument_coiss_shutter_mode_id(self):
+        return self._create_mult(self._index_col('SHUTTER_MODE_ID'))
+
+    def field_obs_instrument_coiss_shutter_state_id(self):
+        return self._create_mult(self._index_col('SHUTTER_STATE_ID'))
+
+    def field_obs_instrument_coiss_image_number(self):
+        return self._index_col('IMAGE_NUMBER')
+
+    def field_obs_instrument_coiss_instrument_mode_id(self):
+        return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
+
+    def field_obs_instrument_coiss_target_desc(self):
+        target_desc = self._index_col('TARGET_DESC').upper()
+        coiss_target_desc_mapping = self._coiss_target_desc_mapping()
+        if target_desc in coiss_target_desc_mapping:
+            target_desc = coiss_target_desc_mapping[target_desc]
+        return self._create_mult(target_desc)
+
+    def field_obs_instrument_coiss_combined_filter(self):
+        new_filter = self._combined_filter()
+        return self._create_mult_keep_case(new_filter)
+
+    def field_obs_instrument_coiss_camera(self):
+        camera = self._index_col('INSTRUMENT_ID')[3]
+        assert camera in ('N', 'W')
+        return self._create_mult(camera)

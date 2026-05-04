@@ -65,7 +65,7 @@
     },
     {
         "field_name": "category",
-        "field_type": "char32",
+        "field_type": "char64",
         "field_key": true,
         "field_notnull": true
     },
@@ -77,7 +77,7 @@
     },
     {
         "field_name": "short_name",
-        "field_type": "char32",
+        "field_type": "char64",
         "field_key": true,
         "field_notnull": true
     },

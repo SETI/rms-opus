@@ -1,0 +1,138 @@
+{
+    "data": {
+        "co-iss-fring-mosaic-iss_183ri_spokemov001_prime": {
+            "coiss_f_ring_mosaic": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic.img",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic.lblx"
+            ],
+            "coiss_f_ring_mosaic_metadata": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_metadata_params.tab",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_metadata_src_imgs.tab"
+            ],
+            "coiss_f_ring_mosaic_bkg_sub": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub.img",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub.lblx"
+            ],
+            "coiss_f_ring_mosaic_bkg_sub_metadata": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub_metadata_params.tab",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub_metadata_src_imgs.tab"
+            ],
+            "coiss_f_ring_documentation": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/document/user_guide/f-ring-mosaics-user-guide.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/document/user_guide/f-ring-mosaics-user-guide.pdf",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/readme.txt"
+            ],
+            "coiss_f_ring_global_mosaic_index": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_index.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_index.tab"
+            ],
+            "coiss_f_ring_global_mosaic_bkg_sub_index": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_bkg_sub_index.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_bkg_sub_index.tab"
+            ],
+            "coiss_f_ring_mosaic_browse_thumb": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_thumb.png"
+            ],
+            "coiss_f_ring_mosaic_browse_small": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_small.png"
+            ],
+            "coiss_f_ring_mosaic_browse_med": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_med.png"
+            ],
+            "coiss_f_ring_mosaic_browse_full": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_full.png"
+            ],
+            "coiss_f_ring_mosaic_browse_bkg_sub_thumb": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_thumb.png"
+            ],
+            "coiss_f_ring_mosaic_browse_bkg_sub_small": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_small.png"
+            ],
+            "coiss_f_ring_mosaic_browse_bkg_sub_med": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_med.png"
+            ],
+            "coiss_f_ring_mosaic_browse_bkg_sub_full": [
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_full.png"
+            ]
+        }
+    },
+    "versions": {
+        "co-iss-fring-mosaic-iss_183ri_spokemov001_prime": {
+            "Current": {
+                "coiss_f_ring_mosaic": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic.img",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic.lblx"
+                ],
+                "coiss_f_ring_mosaic_metadata": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_metadata_params.tab",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_metadata_src_imgs.tab"
+                ],
+                "coiss_f_ring_mosaic_bkg_sub": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub.img",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub.lblx"
+                ],
+                "coiss_f_ring_mosaic_bkg_sub_metadata": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub_metadata_params.tab",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/data_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_mosaic_bkg_sub_metadata_src_imgs.tab"
+                ],
+                "coiss_f_ring_documentation": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/document/user_guide/f-ring-mosaics-user-guide.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/document/user_guide/f-ring-mosaics-user-guide.pdf",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/readme.txt"
+                ],
+                "coiss_f_ring_global_mosaic_index": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_index.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_index.tab"
+                ],
+                "coiss_f_ring_global_mosaic_bkg_sub_index": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_bkg_sub_index.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/miscellaneous/global_mosaic_bkg_sub_index.tab"
+                ],
+                "coiss_f_ring_mosaic_browse_thumb": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_thumb.png"
+                ],
+                "coiss_f_ring_mosaic_browse_small": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_small.png"
+                ],
+                "coiss_f_ring_mosaic_browse_med": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_med.png"
+                ],
+                "coiss_f_ring_mosaic_browse_full": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_full.png"
+                ],
+                "coiss_f_ring_mosaic_browse_bkg_sub_thumb": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_thumb.png"
+                ],
+                "coiss_f_ring_mosaic_browse_bkg_sub_small": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_small.png"
+                ],
+                "coiss_f_ring_mosaic_browse_bkg_sub_med": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_med.png"
+                ],
+                "coiss_f_ring_mosaic_browse_bkg_sub_full": [
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub.lblx",
+                    "https://opus.pds-rings.seti.org/pds4-holdings/bundles/cassini_iss_fring_mosaics_rsfrench2025/cassini_iss_fring_mosaics_rsfrench2025/browse_mosaic_bkg_sub/iss_183ri_spokemov001_prime/iss_183ri_spokemov001_prime_browse_mosaic_bkg_sub_full.png"
+                ]
+            }
+        }
+    }
+}

@@ -646,13 +646,13 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_greaterpixelsize_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize COISS"
         url = '/api/meta/range/endpoints/greaterpixelsize.json?instrument=Cassini+ISS'
-        expected = {'max': '1024', 'min': '256', 'nulls': 0, "units": None}
+        expected = {'min': '256', 'max': '1024', 'nulls': 0, 'units': None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_lesserpixelsize_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize COISS"
         url = '/api/meta/range/endpoints/lesserpixelsize.json?instrument=Cassini+ISS'
-        expected = {'min': '256', 'max': '1024', 'nulls': 0, "units": None}
+        expected = {'min': '256', 'max': '1024', 'nulls': 0, 'units': None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_greaterpixelsize_GOSSI(self):
@@ -686,7 +686,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_levels1_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 COISS"
         url = '/api/meta/range/endpoints/levels.json?instrument=Cassini+ISS'
-        expected = {'min': '4096', 'max': '4096', 'nulls': 0, "units": None}
+        expected = {'min': '4096', 'max': '4096', 'nulls': 0, 'units': None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_levels1_COVIMS(self):

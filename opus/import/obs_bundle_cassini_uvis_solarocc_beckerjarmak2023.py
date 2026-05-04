@@ -8,11 +8,8 @@
 # cassini_uvis_solarocc_beckerjarmak2023 bundle.
 ################################################################################
 
-from import_util import cached_tai_from_iso
 from obs_bundle_occ_common import ObsBundleOccCommon
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
-
-SATURN_EQUINOX_TAI = cached_tai_from_iso("2009-08-11T00:00:00.000")
 
 class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
@@ -64,6 +61,37 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     def field_obs_profile_wl_band(self):
         return self._create_mult('UV')
 
+    def field_obs_profile_occ_dir(self):
+        occ_dir = self._index_col('rings:ring_profile_direction')
+        if occ_dir is None:
+            occ_dir = self._index_col('rings:time_series_direction')
+        if occ_dir is None:
+            self._log_nonrepeating_error(
+                '"rings:ring_profile_direction" and "rings:time_series_direction" are missing')
+            return None
+        occ_dir = occ_dir.upper()
+        if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
+            return self._create_mult(occ_dir[0])
+        self._log_nonrepeating_error(f'Unknown profile direction "{occ_dir}"')
+        return self._create_mult(None)
+
+    def field_obs_profile_body_occ_flag(self):
+        return self._create_mult(self._index_col('rings:planetary_occultation_flag'))
+
+    def field_obs_profile_quality_score(self):
+        return self._create_mult(self._index_col('rings:data_quality_score'))
+
+    # TODO: Investigate further and fix if necessary.
+    # co-uvis-occ-2016-269-sun-i has -999, needs to be handled correctly.
+    def field_obs_profile_optical_depth1(self):
+        ret = self._index_col('rings:lowest_detectable_normal_optical_depth')
+        return ret
+
+    # co-uvis-occ-2016-269-sun-i has -999, needs to be handled correctly.
+    def field_obs_profile_optical_depth2(self):
+        ret = self._index_col('rings:highest_detectable_normal_optical_depth')
+        return ret
+
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
@@ -86,7 +114,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
             return (None, None)
 
         # Before equinox ==> south side lit ==> flip to north-based
-        if time1 < SATURN_EQUINOX_TAI:
+        if not self._is_ring_north_side_lit():
             north_inc = 180.0 - inc if inc is not None else None
             north_em  = 180.0 - em if em is not None else None
         else:
@@ -136,6 +164,9 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     ######################################
     ### OVERRIDE FROM ObsCassiniCommon ###
     ######################################
+
+    def field_obs_mission_cassini_obs_name(self):
+        return self._some_index_col('OBSERVATION_ID')
 
     def field_obs_mission_cassini_mission_phase_name(self):
         return self._create_mult(self._cassini_normalize_mission_phase_name())

@@ -1575,11 +1575,15 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                 # If the pdsfile is expecting the shelf file, check if corresponding
                 # shelves/info files exist, if not, we skip the file.
                 if pds_version == 3 and file.shelf_exists_if_expected() is False:
-                    # TODOPDS4 ^^^
-                    import_util.log_nonrepeating_warning(
-                        'Missing corresponding ' +
-                        f'shelves/info for {file.abspath}')
-                    continue
+
+                    # For cross pds4 products, don't skip the import if shelves file
+                    # doesn't exist.
+                    if not isinstance(file, pdsfile.pds4file.Pds4File):
+                        # TODOPDS4 ^^^
+                        import_util.log_nonrepeating_warning(
+                            'Missing corresponding ' +
+                            f'shelves/info for {file.abspath}')
+                        continue
 
                 # The following info are obtained from _info (from shelves/info)
                 url = file.url.strip('/')

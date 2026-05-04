@@ -92,6 +92,7 @@ def yield_import_bundle_ids(arguments):
                     bundle_descs.append('VG_28xx')
                     bundle_descs.append('uranus_occs_earthbased')
                     bundle_descs.append('cassini_uvis_solarocc_beckerjarmak2023')
+                    bundle_descs.append('cassini_iss_fring_mosaics_rsfrench2025')
                 elif desc.upper() == 'CASSINI':
                     bundle_descs.append('COISS_1xxx')
                     bundle_descs.append('COISS_2xxx')
@@ -262,8 +263,10 @@ def safe_pdstable_read(filename, pds_version):
             try:
                 _ = [float(x) for x in col_data]
             except ValueError: # Something parsed badly
-                # Not ints or floats, just leave them as strings
-                pass
+                # Not ints or floats, just leave them as strings and strip surrounding spaces
+                # pass
+                for row in rows:
+                    row[col_name] = row[col_name].strip()
             else: # All floats
                 for row in rows:
                     row[col_name] = float(row[col_name])
