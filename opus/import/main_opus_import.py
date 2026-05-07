@@ -418,9 +418,10 @@ try: # Top-level exception handling so we always log what's going on
 
     if not impglobals.ARGUMENTS.dont_use_shelves_only:
         Pds3File.use_shelves_only()
-        Pds4File.use_shelves_only()
+        # TODO: uncomment this and line 424 when PDS4 shelves files are used
+        # Pds4File.use_shelves_only()
     Pds3File.require_shelves(True)
-    Pds4File.require_shelves(True)
+    # Pds4File.require_shelves(True)
     if impglobals.ARGUMENTS.override_pds3_data_dir:
         Pds3File.preload(impglobals.ARGUMENTS.override_pds3_data_dir)
     else:
