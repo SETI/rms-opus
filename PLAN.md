@@ -204,8 +204,8 @@ memory. Consequences and rules:
   single PR number to execute, and repository access — plus, for PR-01 only, read access
   to the template repo at `/seti/all_repos/rms-devenv/repo_template` (the source of the
   copied scaffolding). Nothing else. The sub-agent reads §1–§3, §4's preamble,
-  its own PR section, and §4a/§5/§6 — it does not need, and must not rely on, any prior
-  conversation.
+  its own PR section, §4a/§5/§5a/§6, and the Execution notes appendix — it does not
+  need, and must not rely on, any prior conversation.
 - **All inter-PR state lives in artifacts, never in context:** the repository content,
   merged PR descriptions, and this plan file are the only carriers of state. Where a PR
   produces knowledge later PRs need (e.g. PR-19's spike outcome, PR-07's generator
@@ -683,8 +683,11 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
     Location target.
 - **CI:** `run-tests.yml` gains the docs-build job NOW (not earlier — `docs/` did not
   exist before this PR); pymarkdown scope and `run-all-checks.sh` extend to `docs/`.
-- README rewritten to template structure (badges, features, install, quick start;
-  BrowserStack acknowledgment kept).
+- README rewritten per the structure mandated by `.cursor/rules/doc_readme.mdc` (in the
+  repo since PR-01): Title, grouped badges, Introduction, Features, Installation, Quick
+  Start, Documentation, Contributing, License, with the `<!-- start-after-point -->`
+  marker for Sphinx inclusion; BrowserStack acknowledgment kept. (No template-repo access
+  needed — the copied rule file is the specification.)
 
 **PR-22: Packaging finalization & deploy flow.**
 - Console scripts `opus-import = opus_import.cli:main` and
