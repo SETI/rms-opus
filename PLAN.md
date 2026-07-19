@@ -235,7 +235,14 @@ memory. Consequences and rules:
   dev docs and the merged PR history.)
 - **First:** add `rewrite` to the `pull_request`/`push` branch filters of
   `run-app-tests.yml` (and the new `run-tests.yml`); every subsequent PR is actually
-  gated. These filters are narrowed back to `main` in PR-23.
+  gated. These filters are narrowed back to `main` in PR-23. **Branch-protection note:**
+  `rewrite` carries the same protection as `main` (1 approval + required status checks,
+  currently contexts "Run Lint" and "Test OPUS (self-hosted-linux, 3.12)"). Whenever a
+  PR renames a workflow or job (this PR replaces Run Lint; PR-19/PR-20 rename the
+  workflows), the required-check contexts on the `rewrite` protection must be updated to
+  the new names — via `gh api -X PUT
+  repos/SETI/rms-opus/branches/rewrite/protection/required_status_checks` if the
+  executor's token permits, otherwise reported for the orchestrator to do.
 - Add `pyproject.toml`: project metadata (name `rms-opus`, `requires-python >=3.12`,
   dynamic version via setuptools-scm with `write_to = "src/opus_config/_version.py"` —
   directory created then, harmless until PR-03 populates it), runtime deps lifted from
