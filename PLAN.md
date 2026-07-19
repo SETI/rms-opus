@@ -644,7 +644,11 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   runbook, log-analyzer cron — replaces `install.md`, deleted here); autodoc API
   reference (needs `OPUS_CONFIG=tests/fixtures/opus_ci.toml` + `django.setup()` in
   `conf.py` for the `opus.*` modules). `CODE_OF_CONDUCT.md` moves under `docs/`. Builds
-  clean under `-W` and `-n`; ReadTheDocs wired.
+  clean under `-W` and `-n`. **ReadTheDocs timing:** the RTD project is created by the
+  orchestrator (rfrench) *after* this PR's docs build clean — the sub-agent commits
+  `.readthedocs.yaml` and the RTD URLs (GUI link, `apiguide.pdf` redirect target) but
+  must not stall on the RTD site being live; it becomes live before PR-22's acceptance
+  run exercises the redirect.
 - **API guide migration (full content parity, second sanctioned API change):**
   - Port `apps/help/api_guide.md` into the dev guide as a "Public Web API" chapter set.
     **Content-parity acceptance:** every section of the source markdown appears in the
@@ -695,6 +699,8 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   infrastructure, distinct from app config).
 - PyPI publishing live: version tag on `main` → GitHub Release → `publish_to_pypi.yml`
   (first release cut after the merge PR); Test PyPI dry-run from the rewrite branch first.
+  (PyPI ownership of the `rms-opus` name and the `PYPI_API_TOKEN`/`TEST_PYPI_API_TOKEN`
+  repo secrets are confirmed in place — no verification step needed.)
 - **Final acceptance test** (see §6) on a clean machine/venv.
 
 **PR-23: Merge `rewrite` → `main`** after a full integration run, a production-style
