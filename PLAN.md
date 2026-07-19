@@ -201,7 +201,9 @@ memory. Consequences and rules:
 
 - **Input contract per sub-agent:** the checked-in plan file (this document lives at the
   repo root of the `rewrite` branch as `PLAN.md`, committed at branch creation), the
-  single PR number to execute, and repository access. Nothing else. The sub-agent reads §1–§3, §4's preamble,
+  single PR number to execute, and repository access — plus, for PR-01 only, read access
+  to the template repo at `/seti/all_repos/rms-devenv/repo_template` (the source of the
+  copied scaffolding). Nothing else. The sub-agent reads §1–§3, §4's preamble,
   its own PR section, and §4a/§5/§6 — it does not need, and must not rely on, any prior
   conversation.
 - **All inter-PR state lives in artifacts, never in context:** the repository content,
@@ -252,7 +254,8 @@ memory. Consequences and rules:
   target, select E,F,W,I,UP,B,SIM,C4,A,N,PT,RUF) with `perf_test/` in `exclude`;
   `[tool.pytest.ini_options]` (`testpaths=["tests"]`), `[tool.coverage]` (unit scope only
   — §5a), mypy section present but not yet enforced (also excluding `perf_test/`).
-- Copy `.cursor/rules` (17 files) + `.cursor/skills`, `.vscode`/`.cursor` settings,
+- Copy from the template repo (`/seti/all_repos/rms-devenv/repo_template` on the RMS
+  development machines): `.cursor/rules` (17 files) + `.cursor/skills`, `.vscode`/`.cursor` settings,
   `codecov.yml`, `.readthedocs.yaml`, `scripts/run-all-checks.sh` (ENABLE_RUFF_FORMAT
   stays false; ENABLE_MYPY flips true in Phase D; pymarkdown + pyroma enabled per
   template defaults — but until PR-21 creates `docs/`, the pymarkdown scan list and the
