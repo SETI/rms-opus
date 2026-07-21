@@ -199,9 +199,9 @@ Every PR is executed by a **fresh opus-class sub-agent with no inherited convers
 context** — contexts stay clean; nothing learned in PR-N travels to PR-N+1 through
 memory. Consequences and rules:
 
-- **Input contract per sub-agent:** the checked-in plan file (this document lives at the
-  repo root of the `rewrite` branch as `PLAN.md`, committed at branch creation), the
-  single PR number to execute, and repository access — plus, for PR-01 only, read access
+- **Input contract per sub-agent:** the checked-in plan file (this document lives in the
+  `rewrite` branch as `plans/opus_modernization_plan.md`, committed at branch creation),
+  the single PR number to execute, and repository access — plus, for PR-01 only, read access
   to the template repo at `/seti/all_repos/rms-devenv/repo_template` (the source of the
   copied scaffolding). Nothing else. The sub-agent reads §1–§3, §4's preamble,
   its own PR section, §4a/§5/§5a/§6, and the Execution notes appendix — it does not
@@ -210,7 +210,7 @@ memory. Consequences and rules:
   merged PR descriptions, and this plan file are the only carriers of state. Where a PR
   produces knowledge later PRs need (e.g. PR-19's spike outcome, PR-07's generator
   validation result, any deviation forced by reality), the executing sub-agent records it
-  in a **"Execution notes" appendix at the bottom of `PLAN.md`, amended in that same PR**
+  in a **"Execution notes" appendix at the bottom of `plans/opus_modernization_plan.md`, amended in that same PR**
   — dated, one bullet per fact, never rewriting the plan body.
 - **Orchestration:** the orchestrator (human, or a supervising agent) launches the
   sub-agent for PR-N only after PR-(N-1) is merged into `rewrite` with both workflows
@@ -231,10 +231,11 @@ memory. Consequences and rules:
 ### Phase A — Tooling bootstrap & dead code (no moves)
 
 **PR-01: Tooling: ruff replaces flake8; pyproject + template scaffolding; CI runs on `rewrite`.**
-- (`PLAN.md` — this document — and the executor guide in `CLAUDE.md` were committed
-  directly to `rewrite` at branch creation, before this PR; verify they are present.
-  `PLAN.md` is deleted in PR-23 when `rewrite` merges — its content is superseded by the
-  dev docs and the merged PR history.)
+- (`plans/opus_modernization_plan.md` — this document — the executive overview
+  `plans/opus_modernization_overview.md`, and the executor guide in `CLAUDE.md` were
+  committed directly to `rewrite` at branch creation, before this PR; verify they are
+  present. The `plans/` directory is deleted in PR-23 when `rewrite` merges — its content
+  is superseded by the dev docs and the merged PR history.)
 - **First:** add `rewrite` to the `pull_request`/`push` branch filters of
   `run-app-tests.yml` (and the new `run-tests.yml`); every subsequent PR is actually
   gated. These filters are narrowed back to `main` in PR-23. **Branch-protection note:**
