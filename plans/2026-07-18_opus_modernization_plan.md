@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 6 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check)
 
 ---
 
@@ -38,9 +38,10 @@ runner; full Sphinx developer documentation (no user docs needed).
 | Packaging | One distribution; `opus_support` folded in as an **internal** (non-user-visible) package |
 | Distribution | **Publish to PyPI** per template flow (GitHub Release on version tag → publish workflow); servers `pip install rms-opus` |
 | Config | Single **TOML** file located via **`OPUS_CONFIG` env var only** — the loader never falls back to a default path (multi-install servers each set their own) |
+| DB backend | **MySQL is the only implemented brand**, but the backend abstraction is *kept for the future*: `DB_BRAND` stays in the config and everywhere it is threaded today, `importdb.get_db()` keeps its `db_brand` dispatch, and `importdb/postgresql.py` remains as the stub for a future backend (**not** deleted) |
 | Versions | **Django 5.2 LTS**, **Python ≥3.12** (CI matrix 3.12/3.13); Django 4.2 is EOL |
 | obs typing | **Schema-validated annotations**: shared aliases + a CI test that cross-checks every `field_obs_*` annotation against `table_schemas/*.json` (decision table in PR-16) |
-| ruff | Adopt template rule set; **do not enforce `ruff format`** (the only template check disabled — the `ruff format --check` step is *deleted* when copying the template workflow; pymarkdown and pyroma ARE adopted per template) |
+| ruff | Adopt template rule set. **`ruff format` IS enforced, but only in the final format-only PR (PR-23)** — until then the template's `ruff format --check` workflow step is **kept but disabled** and `ENABLE_RUFF_FORMAT` in `run-all-checks.sh` stays `false`, exactly like the `ENABLE_MYPY` burn-down. The check is **never deleted** from the workflow or the script (we want it available for PR-23 and beyond). pymarkdown and pyroma ARE adopted per template |
 | Back-compat | Public web API behavior preserved (incl. `ringobsid`, `metadata_v2`, and the `/static_media/` URL namespace); the template's "no backwards compatibility" rule is waived *for the public API only* — internal code carries no compat shims. Two sanctioned, documented API changes only: #1082's 404→400 (PR-13) and `apiguide.pdf` becoming a redirect to the ReadTheDocs API guide (PR-21) |
 | API guide | The public API guide **moves into the Sphinx dev docs on ReadTheDocs** (full content parity with today's `api_guide.md`); the GUI's "API Guide" menu item opens the RTD page in a new tab instead of the in-app rendering; the in-app guide machinery (mistune rendering, `%` placeholders, `__help/apiguide.*`) is removed — see PR-21 |
 | Error PR scope | **Status codes + logging only** per the decision table in PR-13; error *bodies* stay as-is (body normalization is possible later work, not this rewrite) |
@@ -49,19 +50,19 @@ runner; full Sphinx developer documentation (no user docs needed).
 | Dictionary data | `pdsdd.full` (1.8 MB) + `contexts.csv` **ship as package data** (importlib.resources) — installs are self-contained |
 | log_analyzer | **Becomes a formal package in `src/`** runnable via `python -m opus_log_analyzer`; fully inside the ruff/mypy/test/docs gates |
 | perf_test | Stays a top-level directory outside `src/` and **explicitly excluded from ruff/mypy/pytest scopes in pyproject (PR-01)**; the checked-in `stream_c.exe` binary is deleted |
-| Coverage | GitHub-hosted unit CI: **≥90% measured over `opus_support`+`opus_config`+`opus_import`+`opus_log_analyzer` only** (`src/opus` — the Django app — is explicitly excluded from the unit gate; its coverage is owned by the integration workflow's retained **100%** gate). Two coverage configs, not one — see §5a |
+| Coverage | GitHub-hosted unit CI: **≥90% measured over `opus_support`+`opus_config`+`opus_import`+`opus_log_analyzer` only** (`src/opus_app` — the Django app — is explicitly excluded from the unit gate; its coverage is owned by the integration workflow's retained **100%** gate). Two coverage configs, not one — see §5a |
 | Version file | setuptools-scm `write_to = "src/opus_config/_version.py"`; every other package surfaces version at runtime via `importlib.metadata.version("rms-opus")` — no per-package `_version.py` |
 | Version scheme | Release tags **continue the existing zero-padded v3.x scheme** (next release after the merge: `v3.23.00`) — a declared deviation from the template's plain-SemVer tagging rule; setuptools-scm parses these tags fine (PEP 440 normalizes `3.23.00` → `3.23.0`) |
-| Django pkg name | The Django project package is importable as `opus` — accepted deliberately despite being a generic name (server venvs are dedicated to OPUS) |
+| Django pkg name | The Django project package is importable as `opus_app` (renamed from the generic `opus`); this also eliminates any risk of a repo-root `opus/` namespace dir shadowing the installed package |
 | Git history | **Strict move/modify separation**: a move commit contains ONLY renames; even mechanical import rewrites land in the immediately following commit, so `git log --follow` detection is perfect. No history rewriting |
-| Migrations | Django's own contrib tables (`django_session`, auth/contenttypes/admin) continue to be created by a migrate step — on pip-deployed servers this is **`django-admin migrate` with `DJANGO_SETTINGS_MODULE=opus.settings` and `OPUS_CONFIG` set** (repo-root `manage.py` is a dev convenience, not part of the wheel). OPUS tables are always created from scratch by import; OPUS-side Django migrations remain irrelevant |
+| Migrations | Django's own contrib tables (`django_session`, auth/contenttypes/admin) continue to be created by a migrate step — on pip-deployed servers this is **`django-admin migrate` with `DJANGO_SETTINGS_MODULE=opus_app.settings` and `OPUS_CONFIG` set** (repo-root `manage.py` is a dev convenience, not part of the wheel). OPUS tables are always created from scratch by import; OPUS-side Django migrations remain irrelevant |
 
 ### Remaining standing assumptions
 
-- The JS/CSS frontend is untouched except for being packaged as static assets (no bundler introduced).
+- The JS/CSS frontend is untouched except for being packaged as static assets (no bundler introduced). A JS build system/bundler is out of scope for this plan and is tracked separately in issue **#1436**, which already recommends introducing `npm` + a bundler (Vite).
 - `djangorestframework` moves to dev-extras. Note: `rest_framework` also sits in INSTALLED_APPS (`settings.py:142`) with a `REST_FRAMEWORK` block (146-149) until PR-09 removes both; between PR-01 and PR-09 the wheel's runtime deps alone cannot start the app — this is fine because `requirements.txt` remains the deploy mechanism until Phase F. Do **not** "fix" this by re-adding DRF to runtime deps.
 - `hurry.filesize` (one call site, `cart/views.py:34`) replaced by a small local helper; `pdfkit`/`qrcode`/`pyyaml` stay; `mistune` is **dropped in PR-21** (its only consumer is the in-app API-guide renderer, which PR-21 removes).
-- `manage.py` lives at repo root pointing at `opus.settings` (dev convenience); deployment remains Apache/mod_wsgi + memcached.
+- `manage.py` lives at repo root pointing at `opus_app.settings` (dev convenience); deployment remains Apache/mod_wsgi + memcached.
 
 ---
 
@@ -71,13 +72,13 @@ runner; full Sphinx developer documentation (no user docs needed).
 rms-opus/
 ├── pyproject.toml               # single config source for project, deps, ruff, mypy, pytest, setuptools-scm, and the UNIT coverage config (integration coverage config is separate — §5a)
 ├── README.md, CONTRIBUTING.md, LICENSE, codecov.yml, .readthedocs.yaml
-├── .cursor/{rules,skills}/      # copied from repo_template (17 rules, 4 skills)
+├── .cursor/{rules,skills}/      # copied from repo_template (13 rules — filecache.mdc + logging.mdc deliberately excluded; 4 skills)
 ├── .github/workflows/
-│   ├── run-tests.yml            # GitHub-hosted: ruff + mypy + pymarkdown + pytest (holdings-free, MySQL service container), matrix 3.12/3.13; docs-build job added in PR-21
+│   ├── run-tests.yml            # GitHub-hosted: ruff + mypy + bandit + vulture + pymarkdown + pytest (holdings-free, MySQL service container), matrix 3.12/3.13; docs-build job added in PR-21
 │   ├── run-integration.yml      # self-hosted: current end-to-end import + golden API suite (successor of run-app-tests.yml); 100% coverage gate kept
 │   └── publish_to_pypi.yml, publish_to_test_pypi.yml   # template release flow
 ├── scripts/
-│   ├── run-all-checks.sh        # from template; ENABLE_RUFF_FORMAT=false stays false
+│   ├── run-all-checks.sh        # from template; ENABLE_RUFF_FORMAT stays false until PR-23 (the format-only PR flips it true)
 │   ├── automated_tests/…        # kept, paths updated
 │   ├── import/                  # shell wrappers moved from opus/import: import_for_tests.sh, import_all.sh, _import_all_internal.sh, clone_database.sh, find_unknown_warnings.sh
 │   ├── releases/                # kept (v3.x tag flow)
@@ -92,9 +93,9 @@ rms-opus/
 │   │   ├── steps/               # do_* modules; do_import.py split into ≤1000-line submodules
 │   │   ├── table_schemas/*.json # package data
 │   │   ├── dictionary_data/     # pdsdd.full, contexts.csv (moved from top-level dictionary/; package data)
-│   │   └── util/                # schema-authoring tools incl. dump_pds_definitions.py (kept; its assert False fixed); OPUS2-era get_opus2_mults.py deleted
-│   ├── opus_log_analyzer/       # from log_analyzer/; python -m opus_log_analyzer; cli.py (renamed from log_analyzer.py); Jinja templates as package data
-│   └── opus/                    # Django project package
+│   │   └── util/                # schema-authoring tools KEPT (dump_pds_definitions.py — assert False fixed; retrieve_ra_dec.py); ALL OPUS2-porting-only tools deleted (get_opus2_mults.py, obs_table_to_schema.py, create_all_obs_table_schemas.sh, master_labels/, dump_param_info.sql) — see PR-02
+│   ├── opus_log_analyzer/       # from log_analyzer/; TWO top-level programs kept: log_analyzer.py + error_analyzer.py (NOT renamed to cli.py — there are two entry points); python -m opus_log_analyzer runs the log analyzer; Jinja templates as package data
+│   └── opus_app/                # Django project package (renamed from the generic `opus`)
 │       ├── settings.py, urls.py, wsgi.py
 │       ├── apps/{search,results,metadata,ui,cart,help,paraminfo,tools}/   # dictionary app removed
 │       ├── templates/, static/  # package data (directory static_media/ renamed static/; the public URL stays /static_media/ — see PR-05)
@@ -106,7 +107,7 @@ rms-opus/
 │   ├── opus_import/
 │   │   └── fixtures/mini_holdings/   # subsetted real PDS3 + PDS4 bundle indexes + 1-byte data stand-ins (see PR-19)
 │   ├── opus_log_analyzer/       # fixture log files → report snapshots
-│   └── opus/                    # Django tests that don't need a populated DB (written in PR-18)
+│   └── opus_app/                # Django tests that don't need a populated DB (written in PR-18)
 ├── integration/                 # holdings-dependent suites, kept essentially as-is; run explicitly (pytest integration), never by the default run
 │   ├── .coveragerc              # the 100%-gate coverage config (see §5a)
 │   ├── test_api/                # golden-response suite (411 fixtures) + api_test_helper
@@ -128,9 +129,9 @@ moves to `docs/` source material in PR-04 and is deleted when PR-21 ports it; th
 Notes:
 - `opus_support` keeps its import name (minimizes churn across its 22 importer files on both sides) but is documented as internal with no API guarantees. The 100KB single file is split by domain; its header's "100% test coverage" demand is preserved for this package.
 - The import pipeline's flat modules become real subpackages with absolute imports (`from opus_import.obs.obs_base import ObsBase`); the `field_obs_<table>_<column>` getattr dispatch is unaffected by packaging.
-- `opus_config` is deliberately its own tiny package because *both* `opus_import` and `opus` (Django) depend on it and neither should import the other.
-- `log_analyzer` is renamed `opus_log_analyzer` on the move (avoids squatting a generic top-level import name); its existing generic-engine/OPUS-subconfig split is preserved as subpackages.
-- After PR-04 and PR-05, the old top-level `opus/` directory is empty and is deleted in PR-05 (this also removes any chance of the repo-root `opus/` namespace dir shadowing the installed `opus` package when running from the repo root).
+- `opus_config` is deliberately its own tiny package because *both* `opus_import` and `opus_app` (Django) depend on it and neither should import the other.
+- `log_analyzer` is renamed `opus_log_analyzer` on the move (avoids squatting a generic top-level import name); its existing generic-engine/OPUS-subconfig split is preserved as subpackages. Its two top-level programs (`log_analyzer.py`, `error_analyzer.py`) are kept as separate modules — neither is renamed to `cli.py` because there are two entry points (see the console scripts in PR-22).
+- After PR-04 and PR-05, the old top-level `opus/` directory is empty and is deleted in PR-05. Because the Django package is renamed `opus_app`, there is no longer any repo-root `opus/` vs. installed-package name collision to worry about at all.
 
 ---
 
@@ -143,16 +144,19 @@ Loader in `opus_config`: frozen dataclasses per section, explicit validation, no
 anywhere.
 
 ```toml
-[database]      # host, schema, user, password  (DB_BRAND deleted — MySQL only)
+[database]      # brand (DB_BRAND — defaults to MySQL, kept for a future backend), host, schema, user, password
 [paths]         # pds3_holdings, pds4_holdings, logfile dirs, tar/manifest paths, notification/blog files, static_root
 [django]        # secret_key, debug, allowed_hosts, cache_server_prefix, public_url, product_http_path, viewmaster_url, log levels, fake-delay/error knobs
 [import]        # table_temp_prefix, log files
 [dictionary]    # pdsdd/contexts paths — default to the packaged data files (term_url dropped; no consumer anywhere). The table_schemas path (DICTIONARY_JSON_SCHEMA_PATH today) gets NO TOML key — schemas are resolved via importlib.resources
 ```
 
-- `opus/settings.py` reads the loaded config object (SECRET_KEY, DEBUG, ALLOWED_HOSTS,
-  DATABASES, cache prefix…); everything Django-modern otherwise (BASE_DIR via
-  `Path(__file__)`, lists not tuples, no deprecated settings).
+- `opus_app/settings.py` reads the loaded config object (SECRET_KEY, DEBUG, ALLOWED_HOSTS,
+  DATABASES — with `ENGINE` selected from `DB_BRAND` (MySQL today) — cache prefix…); made
+  **as Django-modern as possible**: `BASE_DIR` via `Path(__file__)` and `pathlib` paths
+  throughout, lists not tuples, the `STORAGES` setting (not the deprecated
+  `DEFAULT_FILE_STORAGE`/`STATICFILES_STORAGE`), `DEFAULT_AUTO_FIELD` set,
+  `USE_TZ = True`, no deprecated settings (`USE_L10N`, `ADMIN_MEDIA_PREFIX`, …).
 - `RMS_OPUS_PATH`/`RMS_OPUS_LIB_PATH` die — package data found via `importlib.resources`.
   The one non-package-data consumer of `RMS_OPUS_PATH` is
   `apps/tools/app_utils.py:178-212 get_git_version()` (chdir + `git log` for the About
@@ -173,7 +177,7 @@ path to the file), falling back to the process CWD, loads it with
 consumers** are rewritten against the shim: `opus_import/cli.py` (the old wildcard,
 PR-04), `opus/import/import_util.py:21` (`import opus_secrets`, used at :392 for
 `IMPORT_TABLE_TEMP_PREFIX` — PR-04), `opus/import/do_dictionary.py:15` (uses the three
-`DICTIONARY_*` settings — PR-04), and `opus/settings.py` (wildcard, PR-05). PR-04's
+`DICTIONARY_*` settings — PR-04), and the Django `settings.py` (wildcard, PR-05). PR-04's
 definition of done includes `grep -rn "import opus_secrets" src/` returning nothing. CI
 and server scripts export `OPUS_SECRETS` (and
 `scripts/automated_tests/opus_import_test_database.sh` stops relying on `cd opus/import`
@@ -216,11 +220,26 @@ memory. Consequences and rules:
   sub-agent for PR-N only after PR-(N-1) is merged into `rewrite` with both workflows
   green. PRs are strictly sequential; no parallel PR execution (later PRs edit files
   earlier PRs create).
-- **Definition of done for a sub-agent:** an open PR against `rewrite` with both
-  workflows green, a description covering what/why/testing evidence (plus the extra
-  artifacts specific PRs require: PR-07's `_meta` diff, PR-13's rule-annotated fixture
-  diff, PR-21's content-parity checklist), and any Execution-notes amendment. The
-  sub-agent does not merge; the orchestrator reviews and merges.
+- **Adversarial pre-PR review (required, before opening the PR):** once the work is
+  complete and both workflows are green locally, the executing sub-agent launches a
+  **fresh, independent opus-class sub-agent** to adversarially review the full diff
+  against: the Python coding style in `.cursor/rules/python.mdc`, documentation against
+  `doc_python.mdc` (and `doc_dev_guide.mdc` for the dev guide), test coverage **and** the
+  test-design/critique guidance in `python_testing.mdc` (are the tests meaningful, not just
+  present), adherence to this plan (decision tables, scope boundaries, strict move/modify
+  commit separation), and the
+  correctness/accuracy of the code changes. The executor resolves every finding — or
+  records in the PR why a finding is rejected — **before** opening the PR, and includes the
+  review summary in the PR description. The reviewer is advisory; it does not merge or open
+  the PR.
+- **Definition of done for a sub-agent:** the adversarial pre-PR review (above) is
+  complete and its findings addressed; then an open PR against `rewrite` with both
+  workflows green, a description covering what/why/testing evidence **and the adversarial
+  review summary** (plus the extra artifacts specific PRs require: PR-07's `_meta` diff,
+  PR-13's rule-annotated fixture diff, PR-21's content-parity checklist), and any
+  Execution-notes amendment. The PR itself is written and opened following
+  `.cursor/rules/pull_request.mdc`. The sub-agent does not merge; the orchestrator reviews
+  and merges.
 - **Stop-and-report rule:** if reality contradicts the plan (a file:line claim is stale,
   a step is impossible as written, a decision table doesn't cover a case), the sub-agent
   **stops and reports the contradiction in the PR/conversation rather than improvising**
@@ -234,11 +253,11 @@ memory. Consequences and rules:
 - (`plans/2026-07-18_opus_modernization_plan.md` — this document — the executive overview
   `plans/2026-07-19_opus_modernization_overview.md`, and the executor guide in `CLAUDE.md`
   were committed directly to `rewrite` at branch creation, before this PR; verify they are
-  present. The `plans/` and `critiques/` directories are deleted in PR-23 when `rewrite`
+  present. The `plans/` and `critiques/` directories are deleted in PR-24 when `rewrite`
   merges — their content is superseded by the dev docs and the merged PR history.)
 - **First:** add `rewrite` to the `pull_request`/`push` branch filters of
   `run-app-tests.yml` (and the new `run-tests.yml`); every subsequent PR is actually
-  gated. These filters are narrowed back to `main` in PR-23. **Branch-protection note:**
+  gated. These filters are narrowed back to `main` in PR-24. **Branch-protection note:**
   `rewrite` carries the same protection as `main` (1 approval + required status checks,
   currently contexts "Run Lint" and "Test OPUS (self-hosted-linux, 3.12)"). Whenever a
   PR renames a workflow or job (this PR replaces Run Lint; PR-19/PR-20 rename the
@@ -246,7 +265,10 @@ memory. Consequences and rules:
   the new names — via `gh api -X PUT
   repos/SETI/rms-opus/branches/rewrite/protection/required_status_checks` if the
   executor's token permits, otherwise reported for the orchestrator to do.
-- Add `pyproject.toml`: project metadata (name `rms-opus`, `requires-python >=3.12`,
+- **Copy the template's `pyproject.toml`
+  (`/seti/all_repos/rms-devenv/repo_template/pyproject.toml`) first, then modify it** for
+  OPUS — do not author it from scratch: project metadata (name `rms-opus`,
+  `requires-python >=3.12`,
   dynamic version via setuptools-scm with `write_to = "src/opus_config/_version.py"` —
   directory created then, harmless until PR-03 populates it), runtime deps lifted from
   `requirements.in` (django upgrade deferred to PR-09 — start with `django>=4.2,<5` to
@@ -254,32 +276,62 @@ memory. Consequences and rules:
   `djangorestframework`) and docs extras; `[tool.ruff]` per template (line 100, py312
   target, select E,F,W,I,UP,B,SIM,C4,A,N,PT,RUF) with `perf_test/` in `exclude`;
   `[tool.pytest.ini_options]` (`testpaths=["tests"]`), `[tool.coverage]` (unit scope only
-  — §5a), mypy section present but not yet enforced (also excluding `perf_test/`).
+  — §5a), mypy section present but not yet enforced (also excluding `perf_test/`);
+  `[tool.bandit]` (recurse `src/`, exclude tests + `perf_test/`) and `[tool.vulture]`
+  (min-confidence + a `vulture_whitelist.py` for framework/false-positive symbols, scoped
+  away from `perf_test/`) — **bandit is enabled in CI this PR; vulture's config lands here
+  but vulture is not enabled until PR-02, after the dead-code removal** (see below).
 - Copy from the template repo (`/seti/all_repos/rms-devenv/repo_template` on the RMS
-  development machines): `.cursor/rules` (17 files) + `.cursor/skills`, `.vscode`/`.cursor` settings,
-  `codecov.yml`, `.readthedocs.yaml`, `scripts/run-all-checks.sh` (ENABLE_RUFF_FORMAT
-  stays false; ENABLE_MYPY flips true in Phase D; pymarkdown + pyroma enabled per
-  template defaults — but until PR-21 creates `docs/`, the pymarkdown scan list and the
-  Sphinx step are limited to what exists: `README.md CONTRIBUTING.md .cursor/`),
+  development machines): `.cursor/rules` — **all except `filecache.mdc` and `logging.mdc`,
+  which are deliberately NOT copied** (13 of the template's 15 rules) — plus
+  `.cursor/skills`, `.vscode`/`.cursor` settings, `codecov.yml`, `.readthedocs.yaml`,
+  `scripts/run-all-checks.sh` (ENABLE_RUFF_FORMAT stays false until PR-23; ENABLE_MYPY
+  flips true in Phase D; **ENABLE_BANDIT flipped true this PR; ENABLE_VULTURE flipped true
+  in PR-02** — both default false in the template; pymarkdown + pyroma enabled per template
+  defaults — but until
+  PR-21 creates `docs/`, the pymarkdown scan list and the Sphinx step are limited to what
+  exists: `README.md CONTRIBUTING.md .cursor/`),
   `CONTRIBUTING.md`, PR/issue templates, publish workflows from repo_template. **When
-  adapting the template `run-tests.yml`, delete its `ruff format --check` step** (the
-  declared deviation). Delete `CODING_STYLE.md`, `CODE_REVIEW_TEMPLATE.txt`,
+  adapting the template `run-tests.yml`, keep its `ruff format --check` step but disable
+  it** (guarded like `ENABLE_MYPY`, off until PR-23) — do **not** delete it; PR-23 enables
+  it. Delete `CODING_STYLE.md`, `CODE_REVIEW_TEMPLATE.txt`,
   `scripts/create_all_venv.sh`, `scripts/test_all_venv.sh`; rename `LICENSE.md` → `LICENSE`.
+- **Governing cursor rules** (binding on executors and on the §4a adversarial review):
+  `python.mdc` = Python coding style; `python_testing.mdc` = test design and critique;
+  `doc_python.mdc` = overall documentation/docstring style; `doc_dev_guide.mdc` = the
+  Sphinx dev guide (PR-21); `doc_readme.mdc` = the README (PR-21);
+  `pull_request.mdc` = how every PR is written and opened. `filecache.mdc` and
+  `logging.mdc` are intentionally absent (not applicable to OPUS).
 - Replace `.flake8` + `run_flake8.sh` + `run-lint.yml` with ruff in the new `run-tests.yml`
-  (lint job only for now). Bring the codebase to `ruff check` clean. **Burn-down
+  (lint job runs `ruff check` + `bandit` now; vulture joins in PR-02, mypy in Phase D,
+  `ruff format --check` in PR-23). Bring the codebase to `ruff check` and `bandit`
+  clean. **Burn-down
   discipline:** the `[tool.ruff.lint.per-file-ignores]` table in pyproject *is* the
   burn-down list; PR-01 may seed it **only** with codes E722, F403, F405, N8xx, E501
   (today's flake8 ignores that need real refactoring); every other failing code must be
   fixed in PR-01 itself (import sorting, `.find()`→`in`, comprehensions, etc.). PR-17's
   exit criterion is that this table is empty. Ruff scope includes `log_analyzer/`.
+  **Bandit follows the same burn-down discipline:** findings are fixed or annotated
+  `# nosec` with a written justification (per `security.mdc`). (Vulture is enabled in PR-02
+  with its own whitelist burn-down — see there.) Both the bandit `# nosec`/config skips and
+  the vulture whitelist are shrunk to individually-justified entries by PR-17.
 - requirements.in/txt stay temporarily as the deploy mechanism until Phase F.
 
 **PR-02: Dead code removal & bug fixes.**
-- Delete `importdb/postgresql.py`; remove the brand concept end-to-end: `get_db()` loses
-  `db_brand`; `DB_BRAND` removed from `opus_secrets_template.py:12`,
+- **Enable vulture in CI + run-all-checks** (flip `ENABLE_VULTURE=true`; add the vulture
+  step to `run-tests.yml`) as the **final step of this PR, after all the dead-code deletions
+  below** — running it last means most of what vulture would flag is already gone. Genuine
+  remaining dead code it surfaces is removed here too; only irreducible false positives
+  (framework hooks, dynamically-referenced symbols) go in `vulture_whitelist.py`, which
+  PR-17 shrinks to individually-justified entries. Bring the tree vulture-clean before the
+  PR is opened.
+- **The DB-backend abstraction is KEPT** (decision table): do **not** delete
+  `importdb/postgresql.py`, do **not** remove `db_brand` from `get_db()`, and keep
+  `DB_BRAND` in every place it appears today (`opus_secrets_template.py:12`,
   `scripts/automated_tests/opus_setup_environment.sh:41`,
   `scripts/server/import_and_deploy/_opus_setup_environment.sh:31`, and the call site
-  `main_opus_import.py:442`.
+  `main_opus_import.py:442`). MySQL stays the only implemented brand; this preserves the
+  option of a future backend at no cost.
 - **Shelf-requirement fix (prerequisite for PR-19's holdings-free CI):** move the
   unconditional `Pds3File.require_shelves(True)` (`main_opus_import.py:423`) *inside* the
   `if not impglobals.ARGUMENTS.dont_use_shelves_only:` block at :419. Rationale: with
@@ -291,9 +343,14 @@ memory. Consequences and rules:
 - Remove dead code catalogued in #1434/#1435: dictionary app's commented-out
   views/urls/admin (app removal itself is PR-09), `instruments.py` commented hooks,
   `obs_volume_covims_0xxx.py` code after return, `obs_volume_cassini_occ_common.py`
-  commented block, OPUS2-era `util/get_opus2_mults.py` (deleted; `util/dump_pds_definitions.py`
-  is **kept** as a schema-authoring tool with its `assert False` replaced by a real error),
-  stale `install.md` refs to `requirements-python3.txt`, `perf_test/stream_c.exe`.
+  commented block, the **OPUS2-porting-only** `util/` tools (deleted: `get_opus2_mults.py`;
+  `obs_table_to_schema.py` plus its driver `create_all_obs_table_schemas.sh` and the
+  `master_labels/` reference labels it consumes; and `dump_param_info.sql` — all marked
+  *"should only be used for initial setup of the new import pipeline … deprecated"* and now
+  superseded by the checked-in `table_schemas/*.json`), stale `install.md` refs to
+  `requirements-python3.txt`, `perf_test/stream_c.exe`. `util/dump_pds_definitions.py` and
+  `util/retrieve_ra_dec.py` are **kept** (not OPUS2-porting; the former is a schema-authoring
+  tool with its `assert False` replaced by a real error).
 - Fix known bugs from #1434: `importdb/super.py:113` `showarning` typo;
   `obs_volume_hstjx_xxxx.py` unbound `wr/bw` (else-branch at ~91 before `bw // wr`);
   `obs_volume_hstox_xxxx.py` `wr1 > wr2` None comparison (~63-72). (The
@@ -340,11 +397,11 @@ memory. Consequences and rules:
   depending on `cd opus/import` for discovery), server import scripts — all invoke
   `python -m opus_import`.
 
-**PR-05: Move `opus/application/` → `src/opus/` Django package.**
+**PR-05: Move `opus/application/` → `src/opus_app/` Django package.**
 - `settings.py`/`urls.py` into the package; real `wsgi.py` committed (`opus.wsgi_template`
   deleted — note the memcache probe already lives in `settings.py:4-21` and simply moves
-  with it); repo-root `manage.py` with `DJANGO_SETTINGS_MODULE=opus.settings`; apps become
-  `opus.apps.*` (INSTALLED_APPS, ROOT_URLCONF, all cross-app imports rewritten from bare
+  with it); repo-root `manage.py` with `DJANGO_SETTINGS_MODULE=opus_app.settings`; apps become
+  `opus_app.apps.*` (INSTALLED_APPS, ROOT_URLCONF, all cross-app imports rewritten from bare
   names; `import settings` → `from django.conf import settings` everywhere); templates
   DIRS from BASE_DIR (stale `quide` path dropped). Secrets via the shim. The emptied
   top-level `opus/` directory is deleted. **This PR is executed as a single PR** — the
@@ -352,7 +409,7 @@ memory. Consequences and rules:
   commit and the rewrite commit independently); there is no per-app fallback (a partial
   split would require both import roots resolvable simultaneously, i.e. new sys.path
   shims, which this plan bans).
-- **Static files:** directory `static_media/` → `src/opus/static/`, but
+- **Static files:** directory `static_media/` → `src/opus_app/static/`, but
   `STATIC_URL = '/static_media/'` and the `OPUS_STATIC_ROOT`/Apache alias semantics are
   **unchanged, permanently** — the URL namespace is public surface (hardcoded in
   `opus.js:1120`, embedded in golden HTML fixtures, aliased in production Apache). Zero
@@ -362,7 +419,7 @@ memory. Consequences and rules:
 - **Integration invocation between this PR and PR-18 — explicit spec:**
   `run_coverage.sh` moves to repo root (invoked from root); the integration coverage
   config becomes `integration/.coveragerc` (see §5a) with includes updated to
-  `src/opus/apps/*`, `integration/test_api/*`, `src/opus_support/*`; `manage.py` custom
+  `src/opus_app/apps/*`, `integration/test_api/*`, `src/opus_support/*`; `manage.py` custom
   verbs (`api-all` etc.) keep working with their label mappings updated to
   `integration.test_api`; Django test discovery runs from repo root (`manage.py test
   integration`); `opus_run_unittests_coverage.sh` and `opus_check_coverage.sh` drop their
@@ -370,21 +427,28 @@ memory. Consequences and rules:
   `./coverage.xml`.
 
 **PR-06: Move `log_analyzer/` → `src/opus_log_analyzer/` package.**
-- Rename on move; **`log_analyzer.py` is renamed `cli.py` in the move commit** (its
-  existing `main()` becomes the entry point); `__main__.py` calls `cli.main()`; generic
-  engine and OPUS-specific `opus/` config become subpackages; Jinja `templates/` as
-  package data; `server/` cron templates relocate to `scripts/server/` **and are rewritten
-  to invoke `python -m opus_log_analyzer`**; its private `mypy.ini` deleted (config
-  consolidates into pyproject in Phase D).
-- **Config-module default fix:** `cli.py`'s `--configuration` default is the string
-  `'opus.configuration'` resolved via `importlib.import_module` (`log_analyzer.py:80,109`)
-  — after PR-05 that resolves to the installed *Django* package and breaks. The default
-  becomes `'opus_log_analyzer.opus.configuration'`, and a unit test asserts the default
-  module imports and exposes `Configuration`.
+- Rename on move; **both top-level programs are kept as separate modules —
+  `log_analyzer.py` and `error_analyzer.py` (do NOT rename either to `cli.py`; there are
+  two entry points, wired as console scripts in PR-22)**; add an `__main__.py` that calls
+  `log_analyzer.main()` so `python -m opus_log_analyzer` runs the log analyzer; the generic
+  engine and the OPUS-specific `opus/` config become subpackages (this internal
+  `opus_log_analyzer.opus` subpackage is unrelated to the Django `opus_app` package); Jinja
+  `templates/` as package data; `server/` cron templates relocate to `scripts/server/`
+  **and are rewritten to invoke the installed `opus_log_analyzer` / `opus_error_analyzer`
+  commands**; its private `mypy.ini` deleted (config consolidates into pyproject in
+  Phase D).
+- **Config-module default fix:** `log_analyzer.py`'s `--configuration` default is the
+  string `'opus.configuration'` resolved via `importlib.import_module`
+  (`log_analyzer.py:80,109`) — once installed as a package there is no top-level `opus`
+  package for that bare name to resolve against (and it must not be confused with the
+  Django `opus_app` package), so it breaks. The default becomes
+  `'opus_log_analyzer.opus.configuration'`, and a unit test asserts the default module
+  imports and exposes `Configuration`. (`error_analyzer.py` has no such config-module
+  default.)
 
 **PR-07: Split the checked-in `search/models.py` into a package; update the generator.**
 - The checked-in 700KB `models.py` is **restructured by hand/script** (no live DB needed)
-  into `opus/apps/search/models/` split by table group (obs tables, mult tables,
+  into `opus_app/apps/search/models/` split by table group (obs tables, mult tables,
   partables/param_info/etc.); duplicate `ZZDefinitions`/`ZZContexts` mappings dropped.
 - **Verification (two-process, because Django's app registry loads once):** a small
   script dumps every model's `_meta` (db_table, column names, field class names,
@@ -401,14 +465,17 @@ memory. Consequences and rules:
 **PR-08: Configuration: TOML + `opus_config` (design in §3).**
 - Implement the real loader in `opus_config` **with its unit tests in
   `tests/opus_config/`** (they gate the riskiest cutover in the plan); rewrite
-  consumption in `opus_import.cli`, `opus/settings.py`, `do_dictionary`; delete
+  consumption in `opus_import.cli`, `opus_app/settings.py`, `do_dictionary`; delete
   `_secrets_compat.py`, `opus_secrets_template.py`, `apps/dictionary/secrets_template.py`,
   and every remaining `opus_secrets`/`OPUS_SECRETS` reference;
   `scripts/automated_tests/opus_setup_environment.sh` and the server
-  `_opus_setup_environment.sh` emit `opus.toml` and export `OPUS_CONFIG`.
+  `_opus_setup_environment.sh` emit `opus.toml` (its `[database]` section keeps the
+  `DB_BRAND`/`brand` value) and export `OPUS_CONFIG`. This is the point at which the
+  `scripts/server/*` and `scripts/automated_tests/*` chains fully switch to the TOML
+  config + `OPUS_CONFIG` model.
 - **Check in `tests/fixtures/opus_ci.toml`** (dummy DB creds, tmp-dir paths): the standing
-  config for every GitHub-hosted job that must import `opus.settings` — mypy/django-stubs
-  (PR-14 on), pytest-django collection of `tests/opus` (PR-18 on), Sphinx autodoc (PR-21).
+  config for every GitHub-hosted job that must import `opus_app.settings` — mypy/django-stubs
+  (PR-14 on), pytest-django collection of `tests/opus_app` (PR-18 on), Sphinx autodoc (PR-21).
   `run-all-checks.sh` and the workflow jobs export `OPUS_CONFIG=tests/fixtures/opus_ci.toml`
   from this PR forward.
 - Replace `get_git_version()` internals (`apps/tools/app_utils.py:178-212`) with
@@ -429,10 +496,12 @@ memory. Consequences and rules:
   (`settings.py:142`) and the `REST_FRAMEWORK` block (dep already in dev extras),
   debug-toolbar remnants; MIDDLEWARE/INSTALLED_APPS as lists; the
   `multilines_template_tags` tag_re monkeypatch is **kept, with a comment pinning the
-  Django version it was verified against** (verify against 5.2 as part of this PR).
+  Django version it was verified against** (verify against 5.2 as part of this PR). Also
+  adopt the modern settings surface here (`STORAGES`, `DEFAULT_AUTO_FIELD`, timezone-aware
+  settings, `pathlib` paths) — **make `settings.py` as Django-modern as possible**.
   The migrate step (contrib tables) remains documented and unchanged.
 - **Remove the dictionary app**: `Definitions`/`Contexts` models + `get_def_for_tooltip()`
-  move to `opus/apps/tools/dictionary.py` (imports updated in paraminfo/ui/cart);
+  move to `opus_app/apps/tools/dictionary.py` (imports updated in paraminfo/ui/cart);
   dictionary urls/templates/statics deleted; `do_dictionary.py` import step untouched.
 - `hurry.filesize` call replaced by a local helper. Re-run the PR-07 `_meta` JSON diff under 5.2.
 
@@ -462,10 +531,13 @@ memory. Consequences and rules:
 
 **PR-12: SQL consistency.**
 - One documented convention + small helper module per side:
-  `opus/apps/tools/sql_builder.py` (identifier quoting via `connection.ops.quote_name`,
+  `opus_app/apps/tools/sql_builder.py` (identifier quoting via `connection.ops.quote_name`,
   composable SELECT/JOIN/WHERE assembly, `%s` params for all values). Scope is
-  **grep-defined**: every call site under `src/opus/apps/**` that *assembles* SQL from
-  strings is refactored through the builder. The five worst files by volume are
+  **grep-defined**: every call site under `src/opus_app/apps/**` that *assembles* SQL from
+  strings is refactored through the builder. **Preserve the explanatory comments** attached
+  to each SQL string — they often document *why* the query is built the way it is and how it
+  was designed; carry them onto the refactored builder calls, never drop them. The five
+  worst files by volume are
   `search/views.py`, `results/views.py`, `cart/views.py` (which alone has ~15 additional
   sites beyond its big `_get_download_info` region), `metadata/views.py`,
   `tools/file_utils.py` — but the grep, not this list, defines the work.
@@ -473,7 +545,7 @@ memory. Consequences and rules:
   call sites; constant literal statements with only `%s` placeholders (e.g.
   `search/views.py:1519`) are exempt. The criterion is that no site outside
   `sql_builder.py` builds SQL by string concatenation or interpolation:
-  `grep -nE "sql \+=|sql = .* \+ |f['\"].*(SELECT|INSERT|UPDATE|DELETE|CREATE)" -r src/opus/apps --include='*.py'`
+  `grep -nE "sql \+=|sql = .* \+ |f['\"].*(SELECT|INSERT|UPDATE|DELETE|CREATE)" -r src/opus_app/apps --include='*.py'`
   (excluding `sql_builder.py`) returns nothing.
 - `importdb/mysql.py` aligned to the same style (backtick-quoted identifiers validated
   against `^[A-Za-z0-9_]+$`, values always parameterized). Golden-response outputs must be
@@ -553,7 +625,9 @@ its own mypy.ini) is folded into the same strict config.
 **PR-17: Annotate the Django side + `opus_log_analyzer`** (tools, then app views/models
 with django-stubs; `HttpRequest`→`HttpResponse` signatures; log-analyzer engine and OPUS
 config classes). Remove every temporary mypy override — repo is mypy-strict clean. The
-`[tool.ruff.lint.per-file-ignores]` table is emptied (PR-01's exit criterion).
+`[tool.ruff.lint.per-file-ignores]` table is emptied (PR-01's exit criterion), and the
+bandit `# nosec`/skip set and the vulture whitelist are reduced to only irreducible,
+individually-justified entries.
 
 ### Phase E — Test suite
 
@@ -562,7 +636,7 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   `pytest` alone never touches `integration/`; markers `integration`, `holdings`,
   `livetest` are registered (strict-markers) and used to select *within* an explicit
   `pytest integration` invocation. No `-m` filter in addopts.
-- **Django under pytest:** `pytest-django` with `DJANGO_SETTINGS_MODULE=opus.settings`
+- **Django under pytest:** `pytest-django` with `DJANGO_SETTINGS_MODULE=opus_app.settings`
   and `OPUS_CONFIG` (CI fixture TOML for `tests/`, real TOML for `integration/`).
   **DB-lifecycle rule (fixed, not executor-chosen):** integration tests **remain
   `unittest.TestCase` subclasses** (pytest collects them natively and pytest-django does
@@ -572,7 +646,7 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   **`@pytest.mark.django_db` is forbidden in `integration/`** (it would wrap tests in
   transactions or, with `transaction=True`, flush the freshly imported schema) — a
   conftest collection hook asserts no integration test carries it.
-- `tests/opus/` (holdings-free Django unit tests — request parsing, pure helpers,
+- `tests/opus_app/` (holdings-free Django unit tests — request parsing, pure helpers,
   decorator behavior with mocked handlers) is written in this PR.
 - `manage.py` custom test verbs replaced by pytest invocations + a small conftest that
   reads `TEST_GO_LIVE`-style env config; `run_coverage.sh` deleted in favor of pytest-cov
@@ -618,11 +692,11 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   `importdb.mysql` SQL generation (against the service DB), the full obs-field-method
   fixture layer (extending PR-16's per-mission smoke to all instrument classes).
 - `opus_log_analyzer` tests: checked-in fixture Apache logs → expected report snapshots.
-- `run-tests.yml` final form for this phase: ruff + mypy + pymarkdown
+- `run-tests.yml` final form for this phase: ruff + mypy + bandit + vulture + pymarkdown
   (README/CONTRIBUTING/.cursor — `docs/` joins in PR-21) + pytest matrix (3.12/3.13) with
   codecov upload, all on `ubuntu-latest`. **Coverage gate: ≥90% via
   `--cov=opus_support --cov=opus_config --cov=opus_import --cov=opus_log_analyzer`**
-  (`src/opus` excluded — owned by the integration 100% gate).
+  (`src/opus_app` excluded — owned by the integration 100% gate).
 
 **PR-20: Integration workflow consolidation.**
 - `run-integration.yml` (successor of `run-app-tests.yml`): unchanged philosophy —
@@ -631,7 +705,7 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   DB-integrity checks, **100% coverage gate kept with its current scope** (via
   `integration/.coveragerc`, §5a, including the `tests/opus_support` contribution per
   PR-18) — invoked through pytest and the TOML config. Nightly cron + on-demand; PRs run
-  it too (as today; still triggering on `rewrite` until PR-23).
+  it too (as today; still triggering on `rewrite` until PR-24).
 
 ### Phase F — Documentation & packaging finalization
 
@@ -647,12 +721,15 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   (wsgi/Apache, memcached, `django-admin migrate` for Django contrib tables, import
   runbook, log-analyzer cron — replaces `install.md`, deleted here); autodoc API
   reference (needs `OPUS_CONFIG=tests/fixtures/opus_ci.toml` + `django.setup()` in
-  `conf.py` for the `opus.*` modules). `CODE_OF_CONDUCT.md` moves under `docs/`. Builds
-  clean under `-W` and `-n`. **ReadTheDocs timing:** the RTD project is created by the
-  orchestrator (rfrench) *after* this PR's docs build clean — the sub-agent commits
-  `.readthedocs.yaml` and the RTD URLs (GUI link, `apiguide.pdf` redirect target) but
-  must not stall on the RTD site being live; it becomes live before PR-22's acceptance
-  run exercises the redirect.
+  `conf.py` for the `opus_app.*` modules). `CODE_OF_CONDUCT.md` moves under `docs/`. Builds
+  clean under `-W` and `-n`. **ReadTheDocs timing:** the RTD site **cannot go live until
+  `rewrite` is merged to `main` (PR-24)** — so this PR (and PR-22) must not depend on a
+  live RTD site. The sub-agent commits `.readthedocs.yaml` and the RTD URLs (GUI link,
+  `apiguide.pdf` redirect target) and verifies the docs build clean locally, but the
+  checks that require the live site — the RTD guide actually resolving and the GUI menu
+  item opening it — are **manual, post-merge acceptance checks** performed by the
+  orchestrator after PR-24 (see §6). The `apiguide.pdf` 302 + `Location` target is asserted
+  in CI without the site being live.
 - **API guide migration (full content parity, second sanctioned API change):**
   - Port `apps/help/api_guide.md` into the dev guide as a "Public Web API" chapter set.
     **Content-parity acceptance:** every section of the source markdown appears in the
@@ -691,16 +768,23 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   needed — the copied rule file is the specification.)
 
 **PR-22: Packaging finalization & deploy flow.**
-- Console scripts `opus-import = opus_import.cli:main` and
-  `opus-log-analyzer = opus_log_analyzer.cli:main` (module created by PR-06) alongside the
-  `python -m` forms; package data audit (table_schemas, templates, static, help md/yaml,
+- Console scripts in `[project.scripts]`, **underscore names**, all shipped in the wheel
+  (`include` the packages): `opus_import = opus_import.cli:main`,
+  `opus_log_analyzer = opus_log_analyzer.log_analyzer:main`, and
+  `opus_error_analyzer = opus_log_analyzer.error_analyzer:main` (both log-analyzer modules
+  created by PR-06) alongside the `python -m opus_import` / `python -m opus_log_analyzer`
+  forms. **These installed commands are the top-level programs used on the server to
+  import and deploy a new database** — the `scripts/server/import_and_deploy/*` and
+  `scripts/automated_tests/*` chains invoke them by name (no repo-relative paths, no bare
+  `python -m` in the server chain). Package data audit (table_schemas, templates, static, help md/yaml,
   pdsdd.full, contexts.csv, Jinja templates, `py.typed` markers); `requirements.in/txt`
   deleted (deps live in pyproject; deploy pins via a `constraints.txt` generated at
   release if ops wants one).
 - `scripts/server/import_and_deploy/*` rewritten for the pip flow: venv + `pip install
-  rms-opus` (PyPI), `opus.toml` in place with `OPUS_CONFIG` set per install,
-  **`django-admin migrate`** (Django contrib tables; `DJANGO_SETTINGS_MODULE=opus.settings`),
-  `collectstatic`, Apache mod_wsgi pointing at installed `opus.wsgi`. The
+  rms-opus` (PyPI), the new `opus.toml` config file created and `OPUS_CONFIG` exported per
+  install, **`django-admin migrate`** (Django contrib tables;
+  `DJANGO_SETTINGS_MODULE=opus_app.settings`), `collectstatic`, Apache mod_wsgi pointing at
+  installed `opus_app.wsgi`; the import step runs the installed `opus_import` command. The
   shell-script-level variables currently sourced from `_read_opus_secrets.sh` move to an
   explicit `deploy.env` consumed only by the shell chain (documented as deploy
   infrastructure, distinct from app config).
@@ -710,10 +794,25 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
   repo secrets are confirmed in place — no verification step needed.)
 - **Final acceptance test** (see §6) on a clean machine/venv.
 
-**PR-23: Merge `rewrite` → `main`** after a full integration run, a production-style
+**PR-23: Enforce `ruff format` (format-only, final phase).**
+- Deliberately the **last content PR** so the large, purely mechanical formatting diff
+  never collides with any logic PR's review.
+- In one commit: flip `ENABLE_RUFF_FORMAT=true` in `run-all-checks.sh` and enable the
+  previously-disabled `ruff format --check` step in `run-tests.yml`.
+- In a **separate, format-only commit** (no logic changes): run `ruff format` across the
+  whole in-scope tree (`src/`, `tests/`, `integration/`, and `docs/` code; `perf_test/`
+  stays excluded per pyproject).
+- Both workflows green; **zero golden-fixture diffs** — formatting touches only Python
+  source, never `integration/test_api/responses/*`. The adversarial pre-PR review (§4a)
+  confirms the second commit is formatting-only.
+
+**PR-24: Merge `rewrite` → `main`** after a full integration run, a production-style
 deploy rehearsal, and a final `run-all-checks.sh` pass. Workflow branch filters narrowed
-back to `main`. First release tag (`v3.23.00`, continuing the existing scheme) and PyPI
-publish follow.
+back to `main`. **Post-merge manual acceptance (RTD only goes live after this merge):**
+the orchestrator creates/enables the ReadTheDocs project, then manually verifies the live
+RTD guide resolves, the GUI "API Guide" menu item opens it, and `apiguide.pdf` redirects
+to a reachable page (§6). First release tag (`v3.23.00`, continuing the existing scheme)
+and PyPI publish follow.
 
 ---
 
@@ -722,12 +821,14 @@ publish follow.
 | Stage | GitHub-hosted | Self-hosted |
 |---|---|---|
 | Today | flake8 only (main-only triggers) | full import + Django tests (holdings, 100% gate; main-only triggers) |
-| After PR-01 | ruff; **both workflows trigger on `rewrite`** | unchanged behavior, now gating rewrite PRs |
+| After PR-01 | ruff + bandit; **both workflows trigger on `rewrite`** | unchanged behavior, now gating rewrite PRs |
+| After PR-02 | + vulture (enabled after the dead-code removal) | unchanged |
 | After PR-03 | ruff + pytest (`tests/`, no DB) | green via explicit run_coverage.sh/.coveragerc/pip-install-e fixes |
 | After PR-08 | + `OPUS_CONFIG=tests/fixtures/opus_ci.toml` available to all jobs | secrets → TOML |
-| After PR-19 | ruff + mypy + pymarkdown + holdings-free pytest w/ MySQL container; 90% gate over the four non-Django packages | unchanged |
+| After PR-19 | ruff + mypy + bandit + vulture + pymarkdown + holdings-free pytest w/ MySQL container; 90% gate over the four non-Django packages | unchanged |
 | After PR-20 | same | pytest-driven integration, 100% gate kept |
 | After PR-21 | + Sphinx docs-build job; pymarkdown covers `docs/` | same |
+| After PR-23 | + `ruff format --check` enabled (the format-only PR) | same |
 
 The self-hosted workflow must stay green on **every** rewrite PR — it is the safety net
 proving behavior preservation while structure churns underneath.
@@ -742,7 +843,7 @@ would silently corrupt one gate or the other. Therefore:
   gate ≥90% (codecov + `fail_under`).
 - **Integration config** lives in `integration/.coveragerc` (activated via
   `COVERAGE_RCFILE=integration/.coveragerc` in the self-hosted workflow): the include
-  list `src/opus/apps/*`, `integration/test_api/*`, `src/opus_support/*` (migrated from
+  list `src/opus_app/apps/*`, `integration/test_api/*`, `src/opus_support/*` (migrated from
   today's `opus/application/.coveragerc` in PR-05); gate 100% via `opus_check_coverage.sh`.
 
 ---
@@ -754,13 +855,13 @@ integration suite passing with zero golden-fixture diffs (except the sanctioned 
 PR-13's status-code changes, each traceable to its decision table, and PR-21's API-guide
 fixture removal + redirect).
 
-End-to-end acceptance (PR-22/23, on a clean venv, no repo checkout on path):
+End-to-end acceptance (PR-22/PR-24, on a clean venv, no repo checkout on path):
 1. `pip install <built wheel>`; `OPUS_CONFIG=/path/to/opus.toml python -m opus_import --do-it-all <test bundles>` against a fresh MySQL schema → zero ERRORS.log entries; `--validate-perm` clean.
 2. `python -m opus_import --help` surface identical to the old CLI (documented diff otherwise).
-3. `django-admin migrate` (`DJANGO_SETTINGS_MODULE=opus.settings`) + serve `opus.wsgi` (mod_wsgi or gunicorn smoke run) against that schema; golden API suite passes against the live server, including `api/metadata_v2/...` and ringobsid conversions; `apiguide.pdf` returns 302 to the RTD guide; the GUI "API Guide" menu item opens the RTD page.
-4. `python -m opus_log_analyzer` produces a report from a sample log using packaged templates and the packaged default configuration module.
+3. `django-admin migrate` (`DJANGO_SETTINGS_MODULE=opus_app.settings`) + serve `opus_app.wsgi` (mod_wsgi or gunicorn smoke run) against that schema; golden API suite passes against the live server, including `api/metadata_v2/...` and ringobsid conversions; `apiguide.pdf` returns HTTP 302 with its `Location` pointing at the RTD guide URL (asserted **without** the RTD site being live). **Manual, post-merge (RTD only goes live after PR-24):** confirm the live RTD guide resolves and the GUI "API Guide" menu item opens it.
+4. The installed `opus_log_analyzer` and `opus_error_analyzer` console commands both run; `opus_log_analyzer` produces a report from a sample log using packaged templates and the packaged default configuration module.
 5. `pytest` (default, no holdings, no DB beyond the container) green with `-n auto`; coverage ≥90% over the four non-Django packages.
-6. `sphinx-build -W -n` clean; `mypy` strict clean; `ruff check` clean with an empty per-file-ignores table.
+6. `sphinx-build -W -n` clean; `mypy` strict clean; `ruff check` clean with an empty per-file-ignores table; `ruff format --check` clean (enabled in PR-23); `bandit` and `vulture` clean.
 
 ---
 
@@ -774,11 +875,11 @@ End-to-end acceptance (PR-22/23, on a clean venv, no repo checkout on path):
 - **xdist + shared MySQL state** → unit suite touches only per-test scratch schemas; integration suite stays serial; pytest-django never manages the integration DB (unittest.TestCase collection + `django_db_blocker.unblock()`; `django_db` marker forbidden there).
 - **Coverage gate integrity** → two separate configs (§5a); the 90% gate is introduced with PR-19 when the suite exists; the integration 100% gate keeps its scope explicitly, including the `tests/opus_support` contribution.
 - **Deployed servers during the rewrite** → `main` remains deployable throughout; `rewrite` merges once, with the deploy-flow rewrite (PR-22, incl. `django-admin migrate` and the `deploy.env` split) landing before the merge.
-- **log_analyzer scope addition** → 2,955 lines, the least-explored codebase now in scope; PR-06 is a pure move with two pre-identified landmines fixed (config-module default collision with the Django `opus` package; cron templates), and its lint/type/test debts are absorbed by the existing phase structure.
+- **log_analyzer scope addition** → 2,955 lines, the least-explored codebase now in scope; PR-06 is a pure move with pre-identified landmines fixed (config-module default no longer resolves once packaged — fixed to the absolute `opus_log_analyzer.opus.configuration`, with no confusion with the renamed Django `opus_app` package; two top-level programs `log_analyzer.py`/`error_analyzer.py` kept, neither renamed to `cli.py`; cron templates), and its lint/type/test debts are absorbed by the existing phase structure.
 
 ## 8. Self-critique (known weak points of this plan)
 
-- **PR-05 is the riskiest PR** (every import line in the Django app changes) and is deliberately executed as a single PR — a partial per-app split would require both import roots resolvable simultaneously (new sys.path shims), which this plan bans. Mitigation is the strict move/modify commit separation: the rename commit and the rewrite commit are reviewed independently, and the rewrite commit is almost entirely mechanical (`import settings` → `from django.conf import settings`; bare app names → `opus.apps.*`).
+- **PR-05 is the riskiest PR** (every import line in the Django app changes) and is deliberately executed as a single PR — a partial per-app split would require both import roots resolvable simultaneously (new sys.path shims), which this plan bans. Mitigation is the strict move/modify commit separation: the rename commit and the rewrite commit are reviewed independently, and the rewrite commit is almost entirely mechanical (`import settings` → `from django.conf import settings`; bare app names → `opus_app.apps.*`).
 - **The mini-holdings fixture spike (PR-19)** was the plan's largest unknown; it is now specified as subset-don't-synthesize with a mechanical success criterion, the PR-02 `require_shelves` prerequisite, and a time-boxed, pre-specified fallback — the residual risk is pdsfile's directory-acceptance logic, which the fallback covers.
 - **Phase ordering trade-off:** types (Phase D) land before the full test suite (Phase E). Mitigated by PR-16's two-layer test (schema check + behavioral smoke per mission), opus_support tests landing early (PR-03), and the GitHub pytest job running from PR-03 on.
 - **`ImportContext` (PR-11) is a wide mechanical diff** across every do_* module and many obs methods; the fixed threading pattern removes design latitude but not volume. The alternative (keep impglobals, wrap in accessors) was rejected as not actually fixing testability.

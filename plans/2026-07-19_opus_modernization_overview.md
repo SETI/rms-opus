@@ -47,7 +47,7 @@
 - All work happens on a **separate long-lived branch**; the production system and `main`
   remain stable and deployable throughout. Nothing goes live until the entire effort is
   complete, tested end-to-end, and rehearsed as a real deployment.
-- The work is divided into **23 reviewable pull requests across six phases**, executed
+- The work is divided into **24 reviewable pull requests across six phases**, executed
   sequentially by an AI developer working from a fixed, twice-audited specification, with
   a human reviewing and approving every step:
   1. **Foundations** — modern tooling and quality gates are installed; dead code and
