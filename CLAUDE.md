@@ -22,11 +22,23 @@ AI sub-agent with a fresh context per PR. **The complete, binding specification 
      contradiction; note it and proceed.
    - Record any fact later PRs need as a dated bullet in `plans/2026-07-18_opus_modernization_plan.md`'s "Execution notes"
      appendix, amended in your own PR. Never edit the plan body or earlier notes.
-4. Definition of done: an open PR against `rewrite` (never merge it yourself) with both
-   workflows green, a description covering what/why/testing evidence, plus any
-   PR-specific artifacts the plan requires (e.g. PR-07's `_meta` diff, PR-13's
-   rule-annotated fixture diff, PR-21's content-parity checklist).
-5. Conventional-commit titles (`feat:`/`fix:`/`refactor:`/`chore:`/`test:`/`docs:`…);
+4. Before opening the PR, run the **adversarial pre-PR review** (§4a): launch a fresh
+   opus-class sub-agent to review the full diff, address its findings, and repeat with a
+   new reviewer — up to **four churn-focused passes** (passes 2+ focus on what you changed
+   in response to the prior pass) until one comes back clean. If the fourth pass is still
+   not clean, **stop-and-report** why the reviews aren't converging instead of opening the
+   PR.
+5. Definition of done: an open PR against `rewrite` (never merge it yourself), titled with
+   its **phase letter + PR number** (e.g. `[Phase A · PR-01] feat: …`), with both
+   workflows green, a description covering what/why/testing evidence **and the adversarial
+   review summary**, plus any PR-specific artifacts the plan requires (e.g. PR-07's `_meta`
+   diff, PR-13's rule-annotated fixture diff, PR-21's content-parity checklist). After
+   opening, run the **post-PR CodeRabbit loop** (§4a): respond to every CodeRabbit comment
+   — fix the correct ones, reason-reject the rest — wait for it to settle, and re-trigger
+   with a `@coderabbitai review` comment in 10-minute increments if it's out of reviews.
+   Declare **ready to merge only once CI and CodeRabbit are both stable and green**; hand
+   the settled PR to the orchestrator to merge.
+6. Conventional-commit titles (`feat:`/`fix:`/`refactor:`/`chore:`/`test:`/`docs:`…);
    one logical change per commit.
 
 Repo facts an executor needs on day one: Python entry points and layout are described in
