@@ -1,4 +1,3 @@
-
 import json
 import re
 from enum import Enum, Flag, auto

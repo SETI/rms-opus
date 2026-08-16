@@ -990,6 +990,14 @@ body; never rewrite or delete earlier notes.*
     the `B610` `.extra()` sources, PR-12 addresses `B608`. (`B105` was the `'XXX'`
     placeholder in `apps/dictionary/secrets_template.py`, deleted in PR-08 — not a real
     secret.)
+  - **PR-02 hand-off — the 3 grandfathered `B006` (mutable-default) sites** are:
+    `opus/import/importdb/super.py` (`ImportDBSuper.__init__`),
+    `opus/import/import_util.py` (`read_schema_for_table(..., replace=[])`), and
+    `opus/application/apps/tools/file_utils.py`. PR-02 must fix all three before
+    removing the per-file `B006` ignores, else `ruff check` fails. `PT015`/`B011`
+    (`assert False`) are grandfathered in `super.py`, `mysql.py`, `util/
+    obs_table_to_schema.py`, `util/dump_pds_definitions.py`,
+    `obs_volume_hstix_xxxx.py`, and `log_analyzer/opus/query_handler.py`.
   - **`B019` fixes (behavior-preserving, integration-CI-gated):** `importdb/mysql.py`
     `table_info` `@cache`→instance dict `self._table_info_cache` (cleared where the two
     `.cache_clear()` calls were); `log_analyzer/ip_to_host_converter.py` `convert`

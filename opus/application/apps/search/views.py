@@ -15,11 +15,11 @@ import hashlib
 import json
 import logging
 import re
-
-# regex library used by MySQL
 import time
 
-import regex  # This is used instead of "re" because it's closer to the ICU
+# This is used instead of "re" because it's closer to the ICU regex library
+# used by MySQL.
+import regex
 import settings
 from django.apps import apps
 from django.core.cache import cache

@@ -41,14 +41,16 @@
 #   Per-check toggles (true/false). Defaults favor a minimal CI set; export to
 #   enable more tools in a given repo. Each check runs only if both RUN_* and
 #   ENABLE_* are true (RUN_* from CLI or defaults below; ENABLE_* from env):
+#   Defaults below reflect the OPUS modernization phase; each flips true in its
+#   owning PR (see the override block later in this script):
 #     ENABLE_RUFF_CHECK   (default: true)
-#     ENABLE_RUFF_FORMAT  (default: false)
-#     ENABLE_MYPY         (default: false)
-#     ENABLE_PYTEST       (default: true)
+#     ENABLE_RUFF_FORMAT  (default: false — until PR-23)
+#     ENABLE_MYPY         (default: false — until Phase D)
+#     ENABLE_PYTEST       (default: false — until PR-03 creates tests/)
 #     ENABLE_PYROMA       (default: true)
-#     ENABLE_BANDIT       (default: false)
-#     ENABLE_VULTURE      (default: false)
-#     ENABLE_SPHINX       (default: true)
+#     ENABLE_BANDIT       (default: true)
+#     ENABLE_VULTURE      (default: false — until PR-02)
+#     ENABLE_SPHINX       (default: false — until PR-21 creates docs/)
 #     ENABLE_PYMARKDOWN   PyMarkdown scan (default: true)
 #
 # Checks (each run separately; -d runs both Sphinx and Markdown):
