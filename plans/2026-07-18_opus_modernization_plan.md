@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed)
 
 ---
 
@@ -88,7 +88,7 @@ rms-opus/
 │   ├── opus_config/             # TOML config loader (frozen dataclasses, validation, OPUS_CONFIG env var, no default path); hosts _version.py; temporarily hosts the secrets shim (PR-03→PR-08)
 │   ├── opus_import/             # from opus/import; python -m opus_import
 │   │   ├── __main__.py, cli.py  # argparse surface unchanged
-│   │   ├── importdb/            # MySQL only (postgresql stub + brand concept removed)
+│   │   ├── importdb/            # MySQL only implemented; postgresql.py stub + DB_BRAND brand concept KEPT for the future
 │   │   ├── obs/                 # obs_* hierarchy as a subpackage (incl. field_types.py — NOT typing.py, which would trip ruff A005 stdlib-shadow)
 │   │   ├── steps/               # do_* modules; do_import.py split into ≤1000-line submodules
 │   │   ├── table_schemas/*.json # package data
@@ -232,14 +232,48 @@ memory. Consequences and rules:
   records in the PR why a finding is rejected — **before** opening the PR, and includes the
   review summary in the PR description. The reviewer is advisory; it does not merge or open
   the PR.
+  - **Iterate up to four review passes.** After the executor addresses a pass's findings,
+    it launches another fresh reviewer, **repeating until a pass comes back clean, up to a
+    maximum of four passes.** Each pass after the first focuses on the *churn* — the
+    changes the executor made in response to the previous pass — checking both that each
+    finding was actually fixed and that the fix introduced no new problem, rather than
+    re-reviewing the whole diff from scratch (a full re-read is still allowed when the
+    churn is large or structural). Watch for churn that oscillates (a later fix reverting
+    an earlier one) or grows instead of converging — that is a signal to stop patching and
+    reconsider the approach.
+  - **If the fourth pass is still not clean,** do **not** open the PR on a hope: the
+    executor analyzes *why* the reviews aren't converging (findings the fix can't satisfy,
+    conflicting guidance, a plan contradiction, an underspecified requirement) and
+    **stops-and-reports** that analysis rather than shipping. The orchestrator then
+    decides how to proceed.
+  - **Additional small, focused reviews are allowed** whenever the executor's judgment
+    warrants — e.g. a targeted re-check of one risky module or one contentious finding —
+    and do not count against the four-pass budget for the full-diff review.
+- **PR title format:** every PR title carries **the phase letter and PR number from this
+  plan** alongside the normal conventional-commit description, e.g.
+  `[Phase A · PR-01] feat: ruff replaces flake8; pyproject + template scaffolding`. The
+  phase/PR tag makes the PR's place in the sequence unambiguous at a glance.
+- **Post-PR CodeRabbit loop (required, after opening the PR):** once the PR is open, the
+  executor **lets CodeRabbit review it and responds to every CodeRabbit comment** — fixing
+  the ones that are correct (with a commit) and replying with a reasoned rejection to the
+  ones that are not. After pushing fixes, **wait for CodeRabbit to re-review and settle
+  again**; repeat until CodeRabbit raises nothing new. If CodeRabbit is rate-limited / out
+  of reviews, **wait in 10-minute increments and post a `@coderabbitai review` comment** to
+  re-trigger it, until it responds.
+- **Ready-to-merge gate:** the executor declares the PR ready to merge **only once both CI
+  workflows and CodeRabbit are simultaneously stable and green** — CI passing and
+  CodeRabbit having settled with no unresolved correct findings. Until then the PR is still
+  in progress. The sub-agent still does **not** merge; it hands the settled PR to the
+  orchestrator.
 - **Definition of done for a sub-agent:** the adversarial pre-PR review (above) is
-  complete and its findings addressed; then an open PR against `rewrite` with both
-  workflows green, a description covering what/why/testing evidence **and the adversarial
-  review summary** (plus the extra artifacts specific PRs require: PR-07's `_meta` diff,
-  PR-13's rule-annotated fixture diff, PR-21's content-parity checklist), and any
-  Execution-notes amendment. The PR itself is written and opened following
-  `.cursor/rules/pull_request.mdc`. The sub-agent does not merge; the orchestrator reviews
-  and merges.
+  complete and its findings addressed; then an open PR against `rewrite`, titled with its
+  phase/PR tag, with both workflows green, the post-PR CodeRabbit loop settled, a
+  description covering what/why/testing evidence **and the adversarial review summary**
+  (plus the extra artifacts specific PRs require: PR-07's `_meta` diff, PR-13's
+  rule-annotated fixture diff, PR-21's content-parity checklist), and any Execution-notes
+  amendment. The PR itself is written and opened following `.cursor/rules/pull_request.mdc`.
+  The sub-agent declares ready-to-merge per the gate above but does not merge; the
+  orchestrator reviews and merges.
 - **Stop-and-report rule:** if reality contradicts the plan (a file:line claim is stale,
   a step is impossible as written, a decision table doesn't cover a case), the sub-agent
   **stops and reports the contradiction in the PR/conversation rather than improvising**
