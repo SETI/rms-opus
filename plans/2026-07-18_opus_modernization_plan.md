@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved**)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes**)
 
 ---
 
@@ -260,11 +260,22 @@ memory. Consequences and rules:
   again**; repeat until CodeRabbit raises nothing new. If CodeRabbit is rate-limited / out
   of reviews, **wait in 10-minute increments and post a `@coderabbitai review` comment** to
   re-trigger it, until it responds.
+  - **Wide-PR exception (documented):** CodeRabbit hard-skips any PR whose changed-file
+    count exceeds its per-PR cap (100 files) with "Review skipped: N files exceed the
+    limit" — this is **not** rate-limiting and the 10-minute retry cannot clear it. A few
+    PRs are structurally wide by design (PR-01's repo-wide ruff burn-down ≈139 files; the
+    move PRs, esp. PR-05's Django-app rename, touch every import). For a PR that legitimately
+    exceeds the cap, **the CodeRabbit skip is accepted** and the §4a adversarial pre-PR
+    review (which covers the full diff) stands in its place; the executor records the
+    accepted skip (with the file count) in the PR description. This exception applies **only**
+    when the cap is genuinely exceeded — a normal-sized PR must still get CodeRabbit green,
+    and the executor must not split or reshape a PR merely to dodge review.
 - **Ready-to-merge gate:** the executor declares the PR ready to merge **only once both CI
   workflows and CodeRabbit are simultaneously stable and green** — CI passing and
-  CodeRabbit having settled with no unresolved correct findings. Until then the PR is still
-  in progress. The sub-agent still does **not** merge; it hands the settled PR to the
-  orchestrator.
+  CodeRabbit having settled with no unresolved correct findings — **or, for a PR that
+  exceeds CodeRabbit's file cap, once CI is green and the accepted-skip is recorded per the
+  wide-PR exception above.** Until then the PR is still in progress. The sub-agent still
+  does **not** merge; it hands the settled PR to the orchestrator.
 - **Definition of done for a sub-agent:** the adversarial pre-PR review (above) is
   complete and its findings addressed; then an open PR against `rewrite`, titled with its
   phase/PR tag, with both workflows green, the post-PR CodeRabbit loop settled, a
