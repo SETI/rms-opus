@@ -6,9 +6,8 @@
 # COCIRS_[01]xxx.
 ################################################################################
 
-import opus_support
-
 import import_util
+import opus_support
 from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 

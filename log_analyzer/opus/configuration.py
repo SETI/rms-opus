@@ -1,14 +1,17 @@
 import collections
 import textwrap
-from typing import List, Dict, Any, Tuple, TextIO, cast, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any, ClassVar, TextIO, cast
 
 from abstract_configuration import AbstractConfiguration
 from ip_to_host_converter import IpToHostConverter
 from log_entry import LogEntry
-from log_parser import Session, HostInfo
+from log_parser import HostInfo, Session
+
 from opus import slug
+
 from .html_generator import HtmlGenerator
-from .query_handler import QueryHandler, MetadataSlugInfo
+from .query_handler import MetadataSlugInfo, QueryHandler
 from .session_info import SessionInfo
 
 
@@ -22,16 +25,17 @@ class Configuration(AbstractConfiguration):
     _debug_show_all: bool
     _elide_session_info: bool
     _ip_to_host_converter: IpToHostConverter
-    _sessions_relative_directory: Optional[str]
+    _sessions_relative_directory: str | None
     _manifests: Sequence[str]
 
-    _sessionless_downloads: List[Tuple[str, LogEntry]]
+    _sessionless_downloads: list[tuple[str, LogEntry]]
 
-    DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
+    DEFAULT_COLUMN_INFO: ClassVar[list[str]] = ['opusid', 'instrument', 'planet', 'target',
+                                                'time1', 'observationduration']
 
     def __init__(self, *, api_host_url: str, debug_show_all: bool, no_sessions: bool,
                  ip_to_host_converter: IpToHostConverter,
-                 sessions_relative_directory: Optional[str],
+                 sessions_relative_directory: str | None,
                  manifests: Sequence[str],
                  **_: Any):
         self._slug_map = slug.ToInfoMap(api_host_url)
@@ -49,7 +53,7 @@ class Configuration(AbstractConfiguration):
         return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html,
                            self._sessionless_downloads)
 
-    def create_batch_html_generator(self, host_infos_by_ip: List[HostInfo]) -> HtmlGenerator:
+    def create_batch_html_generator(self, host_infos_by_ip: list[HostInfo]) -> HtmlGenerator:
         return HtmlGenerator(self, host_infos_by_ip)
 
     @property
@@ -61,25 +65,25 @@ class Configuration(AbstractConfiguration):
         return self._elide_session_info
 
     @property
-    def sessions_relative_directory(self) -> Optional[str]:
+    def sessions_relative_directory(self) -> str | None:
         return self._sessions_relative_directory
 
     @property
-    def sessionless_downloads(self) -> List[Tuple[str, LogEntry]]:
+    def sessionless_downloads(self) -> list[tuple[str, LogEntry]]:
         return self._sessionless_downloads
 
     @property
     def manifests(self) -> Sequence[str]:
         return self._manifests
 
-    def show_summary(self, sessions: List[Session], output: TextIO) -> None:
-        all_info: Dict[str, Dict[str, bool]] = collections.defaultdict(dict)
+    def show_summary(self, sessions: list[Session], output: TextIO) -> None:
+        all_info: dict[str, dict[str, bool]] = collections.defaultdict(dict)
         for session in sessions:
             session_info = cast(SessionInfo, session.session_info)
             search_slug_info, column_slug_info, _ = session_info.get_slug_info()
             for info_type, slug_and_flags in (("search", search_slug_info), ("column", column_slug_info)):
-                for slug, is_obsolete in slug_and_flags:
-                    all_info[info_type][slug] = is_obsolete
+                for slug_name, is_obsolete in slug_and_flags:
+                    all_info[info_type][slug_name] = is_obsolete
 
         def show_info(info_type: str) -> None:
             result = ', '.join(

@@ -7,7 +7,6 @@
 
 from obs_volume_vg28xx import ObsVolumeVG28xx
 
-
 # TODOPDS4 Verify that these are correct
 _DSN_NUM_TO_PDS4_INST = {
     43: 'canberra.dss43_70m',
@@ -68,7 +67,7 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
 
 
     def _is_voyager_at_uranus(self):
-        target_name, target_disp_name = self._target_name()[0]
+        target_name, _target_disp_name = self._target_name()[0]
         return target_name == 'U RINGS'
 
     # Source: Voyager RSS is at south, observer: earth is at north.

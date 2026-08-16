@@ -1,18 +1,16 @@
 import argparse
+import glob
 import importlib
 import ipaddress
 import operator
-import glob
 from enum import Enum, auto
-
-from typing import List, Optional, cast
+from typing import cast
 
 from abstract_configuration import AbstractConfiguration
 from cronjob_utils import expand_globs_and_dates
-from log_entry import LogReader, LogEntry
-from log_parser import LogParser
 from ip_to_host_converter import IpToHostConverter
-
+from log_entry import LogEntry, LogReader
+from log_parser import LogParser
 
 DEFAULT_FIELDS_PREFIX = 'https://opus.pds-rings.seti.org'
 
@@ -24,8 +22,8 @@ class RunType(Enum):
     FAKE_REALTIME = auto()
 
 
-def main(arguments: Optional[List[str]] = None) -> None:
-    def parse_ignored_ips(x: str) -> List[ipaddress.IPv4Network]:
+def main(arguments: list[str] | None = None) -> None:
+    def parse_ignored_ips(x: str) -> list[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
     parser = argparse.ArgumentParser(description='Process log files.')
@@ -132,9 +130,9 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_parser.run_realtime(iter(log_entries_list))
 
 
-def handle_cached_log_entries(args: argparse.Namespace) -> List[LogEntry]:
-    import pickle
+def handle_cached_log_entries(args: argparse.Namespace) -> list[LogEntry]:
     import hashlib
+    import pickle
 
     log_files = sorted(args.log_files)
     hash_key = hashlib.sha256(':'.join(log_files).encode()).hexdigest()
@@ -143,7 +141,7 @@ def handle_cached_log_entries(args: argparse.Namespace) -> List[LogEntry]:
     try:
         with open(filename, "rb") as data:
             print(f"Reading logs from {filename}")
-            return cast(List[LogEntry], pickle.load(data))
+            return cast(list[LogEntry], pickle.load(data))
     except FileNotFoundError as _e:
         pass
 

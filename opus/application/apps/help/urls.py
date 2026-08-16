@@ -1,14 +1,13 @@
 # help/urls.py
 from django.urls import re_path
-
 from help.views import (
     api_about,
+    api_api_guide,
     api_bundles,
+    api_citing_opus,
     api_faq,
     api_gettingstarted,
     api_splash,
-    api_api_guide,
-    api_citing_opus,
 )
 
 urlpatterns = [

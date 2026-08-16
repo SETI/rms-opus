@@ -15,47 +15,48 @@ import hashlib
 import json
 import logging
 import re
-import regex    # This is used instead of "re" because it's closer to the ICU
-                # regex library used by MySQL
+
+# regex library used by MySQL
 import time
 
+import regex  # This is used instead of "re" because it's closer to the ICU
+import settings
 from django.apps import apps
 from django.core.cache import cache
-from django.db import connection, DatabaseError
+from django.db import DatabaseError, connection
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import Http404, HttpResponseServerError
-
+from opus_support import (
+    convert_from_default_unit,
+    convert_to_default_unit,
+    format_unit_value,
+    get_default_unit,
+    get_valid_units,
+    parse_form_type,
+    parse_unit_value,
+)
 from paraminfo.models import ParamInfo
 from search.models import UserSearches
-from tools.app_utils import (enter_api_call,
-                             exit_api_call,
-                             get_mult_name,
-                             get_reqno,
-                             json_response,
-                             sort_dictionary,
-                             strip_numeric_suffix,
-                             throw_random_http404_error,
-                             throw_random_http500_error,
-                             HTTP404_BAD_LIMIT,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_NO_REQUEST,
-                             HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_SLUG,
-                             HTTP500_DATABASE_ERROR,
-                             HTTP500_SEARCH_CACHE_FAILED)
-from tools.db_utils import (MYSQL_EXECUTION_TIME_EXCEEDED,
-                            MYSQL_TABLE_ALREADY_EXISTS)
-
-import settings
-
-from opus_support import (convert_from_default_unit,
-                          convert_to_default_unit,
-                          format_unit_value,
-                          get_default_unit,
-                          get_valid_units,
-                          parse_form_type,
-                          parse_unit_value)
+from tools.app_utils import (
+    HTTP404_BAD_LIMIT,
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_NO_REQUEST,
+    HTTP404_SEARCH_PARAMS_INVALID,
+    HTTP404_UNKNOWN_SLUG,
+    HTTP500_DATABASE_ERROR,
+    HTTP500_SEARCH_CACHE_FAILED,
+    enter_api_call,
+    exit_api_call,
+    get_mult_name,
+    get_reqno,
+    json_response,
+    sort_dictionary,
+    strip_numeric_suffix,
+    throw_random_http404_error,
+    throw_random_http500_error,
+)
+from tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
 
 log = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ def api_normalize_input(request):
         ret = Http404(HTTP404_NO_REQUEST('/__api/normalizeinput.json'))
         exit_api_call(api_code, ret)
         raise ret
-    (selections, extras) = url_to_search_params(request.GET,
+    (selections, _extras) = url_to_search_params(request.GET,
                                                 allow_errors=True,
                                                 return_slugs=True,
                                                 pretty_results=True)
@@ -241,12 +242,12 @@ def api_string_search_choices(request, slug):
         limit = int(limit)
         if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
-    except ValueError:
+    except ValueError as err:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
         ret = Http404(HTTP404_BAD_LIMIT(limit, request))
         exit_api_call(api_code, ret)
-        raise ret
+        raise ret from err
 
     if (limit < 1 or limit > settings.SQL_MAX_LIMIT or
         throw_random_http404_error()):
@@ -258,7 +259,8 @@ def api_string_search_choices(request, slug):
 
     # We do this because the user may have included characters that aren't
     # allowed in a cache key
-    partial_query_hash = hashlib.md5(str.encode(partial_query)).hexdigest()
+    partial_query_hash = hashlib.md5(str.encode(partial_query),
+                                     usedforsecurity=False).hexdigest()
 
     # Is this result already cached?
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
@@ -908,14 +910,14 @@ def url_to_search_params(request_get, allow_errors=False,
         new_slug = slug_no_num+clause_num_str
         if new_slug in request_get:
             new_value = request_get[new_slug]
-        if new_value and qtype_val == 'regex' and not allow_regex_errors:
-            if not _valid_regex(new_value):
-                if not allow_errors:
-                    log.error('url_to_search_params: String "%s" '
-                              +'slug "%s" is not a valid regex',
-                              new_value, slug)
-                    return None, None
-                new_value = None
+        if (new_value and qtype_val == 'regex' and not allow_regex_errors
+                and not _valid_regex(new_value)):
+            if not allow_errors:
+                log.error('url_to_search_params: String "%s" '
+                          +'slug "%s" is not a valid regex',
+                          new_value, slug)
+                return None, None
+            new_value = None
         if return_slugs:
             selections[new_slug] = new_value
             qtypes[new_slug] = qtype_val
@@ -994,7 +996,7 @@ def get_user_query_table(selections, extras, api_code=None):
     cursor = connection.cursor()
 
     # Create a cache key
-    cache_table_num, cache_new_flag = set_user_search_number(selections, extras)
+    cache_table_num, _cache_new_flag = set_user_search_number(selections, extras)
     if cache_table_num is None: # pragma: no cover - database error
         log.error('get_user_query_table: Failed to make entry in user_searches'+
                   ' *** Selections %s *** Extras %s',
@@ -1070,7 +1072,8 @@ def set_user_search_number(selections, extras):
     shouldn't exist yet.
     """
     selections_json = str(json.dumps(sort_dictionary(selections)))
-    selections_hash = hashlib.md5(str.encode(selections_json)).hexdigest()
+    selections_hash = hashlib.md5(str.encode(selections_json),
+                                  usedforsecurity=False).hexdigest()
 
     qtypes_json = None
     qtypes_hash = 'NONE' # Needed for UNIQUE constraint to work
@@ -1087,7 +1090,8 @@ def set_user_search_number(selections, extras):
                 new_qtypes[qtype] = val
         if len(new_qtypes):
             qtypes_json = str(json.dumps(sort_dictionary(new_qtypes)))
-            qtypes_hash = hashlib.md5(str.encode(qtypes_json)).hexdigest()
+            qtypes_hash = hashlib.md5(str.encode(qtypes_json),
+                                      usedforsecurity=False).hexdigest()
 
     units_json = None
     units_hash = 'NONE' # Needed for UNIQUE constraint to work
@@ -1104,13 +1108,15 @@ def set_user_search_number(selections, extras):
                 new_units[unit] = val
         if len(new_units):
             units_json = str(json.dumps(sort_dictionary(new_units)))
-            units_hash = hashlib.md5(str.encode(units_json)).hexdigest()
+            units_hash = hashlib.md5(str.encode(units_json),
+                                     usedforsecurity=False).hexdigest()
 
     order_json = None
     order_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'order' in extras and extras['order'][0]:
         order_json = str(json.dumps(extras['order']))
-        order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
+        order_hash = hashlib.md5(str.encode(order_json),
+                                 usedforsecurity=False).hexdigest()
 
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  +':usersearchno:selections_hash:' + str(selections_hash)
@@ -1252,8 +1258,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
             # in a '1' or '2' - but for non-range types, it's OK to not
             # have the '1' or '2'. Note the non-single-column ranges were
             # already dealt with above.
-            (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(pi.form_type)
+            (form_type, _form_type_format,
+             _form_type_unit_id) = parse_form_type(pi.form_type)
             if form_type in settings.RANGE_FORM_TYPES: # pragma: no cover -
                 # We are missing the numeric suffix - import error
                 return None
@@ -1307,8 +1313,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
             except ParamInfo.DoesNotExist:
                 pass
         if pi:
-            (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(pi.form_type)
+            (form_type, _form_type_format,
+             _form_type_unit_id) = parse_form_type(pi.form_type)
             if form_type not in settings.RANGE_FORM_TYPES:
                 # Whoops! It's not a range, but we have a numeric suffix.
                 return None
@@ -1333,8 +1339,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
 
 def construct_query_string(selections, extras):
     """Given a set selections,extras generate the appropriate SQL SELECT"""
-    all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
-    all_units = extras['units'] if 'units' in extras else []
+    all_qtypes = extras.get('qtypes', [])
+    all_units = extras.get('units', [])
     finished_ranges = []    # Ranges are done for both sides at once so track
                             # which are finished to avoid duplicates
 
@@ -1371,8 +1377,8 @@ def construct_query_string(selections, extras):
         else:
             units = []
 
-        (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(param_info.form_type)
+        (form_type, _form_type_format,
+         _form_type_unit_id) = parse_form_type(param_info.form_type)
 
         if form_type in settings.MULT_FORM_TYPES:
             # This is where we convert from the "pretty" name the user selected
@@ -1621,7 +1627,7 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     if not param_info:
         return None, None
 
-    (form_type, form_type_format,
+    (_form_type, _form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
@@ -1631,7 +1637,7 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     values_min = selections.get(param_qualified_name_min, [])
     values_max = selections.get(param_qualified_name_max, [])
 
-    (form_type, form_type_format,
+    (_form_type, _form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
 
     if qtypes is None or len(qtypes) == 0:
@@ -1778,7 +1784,7 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     if not param_info:
         return None, None
 
-    (form_type, form_type_format,
+    (_form_type, _form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
@@ -1795,7 +1801,7 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     name_no_num = strip_numeric_suffix(param_info.name)
     col_d_long = cat_name + '.d_' + name_no_num
 
-    (form_type, form_type_format,
+    (_form_type, _form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
 
     if qtypes is None or len(qtypes) == 0:
@@ -2013,8 +2019,8 @@ def create_order_by_sql(order_params, descending_params):
             log.error('create_order_by_sql: Unable to resolve order'
                       +' slug "%s"', order_slug)
             return None, None, None
-        (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(pi.form_type)
+        (form_type, _form_type_format,
+         _form_type_unit_id) = parse_form_type(pi.form_type)
         order_param = pi.param_qualified_name()
         order_obs_tables.add(pi.category_name)
         if form_type in settings.MULT_FORM_TYPES:

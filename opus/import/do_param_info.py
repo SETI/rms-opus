@@ -6,10 +6,9 @@
 
 import json
 
-import opus_support
-
 import impglobals
 import import_util
+import opus_support
 
 
 def create_import_param_info_table():
@@ -27,7 +26,7 @@ def create_import_param_info_table():
 
     # read json file for ranges info
     ranges_filename = import_util.safe_join('table_schemas', 'param_info_ranges.json')
-    with open(ranges_filename, 'r') as fp:
+    with open(ranges_filename) as fp:
         try:
             # read contents (str) and convert it to a json object (dict)
             contents = fp.read()
@@ -51,7 +50,7 @@ def create_import_param_info_table():
                 continue
             field_name = column.get('field_name', None)
             form_type_str = column.get('pi_form_type', None)
-            (form_type, form_type_format,
+            (_form_type, _form_type_format,
              form_type_unit_id) = opus_support.parse_form_type(form_type_str)
             if form_type_unit_id and not opus_support.is_valid_unit_id(form_type_unit_id):
                 logger.log('error',

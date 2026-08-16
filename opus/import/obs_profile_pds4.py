@@ -8,6 +8,7 @@
 from obs_base_pds4 import ObsBasePDS4
 from obs_profile import ObsProfile
 
+
 class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

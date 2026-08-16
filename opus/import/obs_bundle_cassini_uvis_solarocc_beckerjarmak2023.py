@@ -11,6 +11,7 @@
 from obs_bundle_occ_common import ObsBundleOccCommon
 from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
+
 class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

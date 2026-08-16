@@ -19,7 +19,7 @@ def validate_param_info(namespace):
 
     logger.log('debug', 'Validating param_info table')
 
-    obs_table_names = sorted(list(db.table_names(namespace, prefix='obs_')))
+    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
 
     pi_table_name = db.convert_raw_to_namespace(namespace, 'param_info')
 
@@ -97,7 +97,7 @@ def validate_nulls(namespace):
 
     logger.log('debug', 'Validating non-NULL columns')
 
-    obs_table_names = sorted(list(db.table_names(namespace, prefix='obs_')))
+    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
     q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
@@ -131,7 +131,7 @@ def validate_min_max_order(namespace):
 
     logger.log('debug', 'Validating MIN/MAX columns')
 
-    obs_table_names = sorted(list(db.table_names(namespace, prefix='obs_')))
+    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
 
     pi_table_name = db.convert_raw_to_namespace(namespace, 'param_info')
 
@@ -190,7 +190,7 @@ def validate_filter_wavelength_consistency(namespace):
 
     logger.log('debug', 'Validating filter/wavelength consistency')
 
-    obs_table_names = sorted(list(db.table_names(namespace, prefix='obs_')))
+    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
 
     q = db.quote_identifier
     wl_table = q('obs_wavelength')

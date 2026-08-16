@@ -11,6 +11,7 @@
 ################################################################################
 
 import re
+
 import opus_support
 from import_util import cached_tai_from_iso
 from obs_base import ObsBase
@@ -365,9 +366,7 @@ class ObsCassiniCommon(ObsBase):
         ret = re.fullmatch(
     r'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d',
             obs_name)
-        if ret:
-            return True
-        return False
+        return bool(ret)
 
     # Break points for each planet
     _JUPITER_TAI = cached_tai_from_iso('2000-262T00:32:38.930')

@@ -6,20 +6,22 @@
 import logging
 from unittest import TestCase
 
+import settings
 from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, QueryDict
 from django.test import RequestFactory
+from search.views import (
+    api_normalize_input,
+    api_string_search_choices,
+    construct_query_string,
+    get_longitude_query,
+    get_range_query,
+    get_string_query,
+    set_user_search_number,
+    url_to_search_params,
+)
 
-from search.views import (api_normalize_input,
-                          api_string_search_choices,
-                          construct_query_string,
-                          get_longitude_query,
-                          get_range_query,
-                          get_string_query,
-                          set_user_search_number,
-                          url_to_search_params)
-import settings
 
 class searchTests(TestCase):
 
@@ -399,73 +401,73 @@ class searchTests(TestCase):
     def test__url_to_search_params_times_bad(self):
         "[test_search.py] url_to_search_params: bad date format"
         q = QueryDict('time1=2000 XXX 01')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_2(self):
         "[test_search.py] url_to_search_params: bad date format #2"
         q = QueryDict('time1=2000/13/23+06:00:00')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_3(self):
         "[test_search.py] url_to_search_params: bad date format #3"
         q = QueryDict('time1=2000-')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_4(self):
         "[test_search.py] url_to_search_params: bad date format #4"
         q = QueryDict('time1=06:00:00')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_qtype(self):
         "[test_search.py] url_to_search_params: bad qtype"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&qtype-time=contains')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_qtype_2(self):
         "[test_search.py] url_to_search_params: bad qtype 2"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&time1_2=2000-023T06:00:00&qtype-time=fred&qtype-time_2=all')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_qtype_3(self):
         "[test_search.py] url_to_search_params: bad qtype slug 3"
         q = QueryDict('qtype-time1=all')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_qtype_4(self):
         "[test_search.py] url_to_search_params: bad qtype slug 4"
         q = QueryDict('qtype-XXX=all')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_unit_1(self):
         "[test_search.py] url_to_search_params: bad unit slug 1"
         q = QueryDict('unit-time1=secs')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_clause_1(self):
         "[test_search.py] url_to_search_params: bad clause 1"
         q = QueryDict('time1_0=2000-023T06:00:00')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_clause_2(self):
         "[test_search.py] url_to_search_params: bad clause 2"
         q = QueryDict('time1_-1=2000-023T06:00:00')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_clause_3(self):
         "[test_search.py] url_to_search_params: bad clause 3"
         q = QueryDict('time1_XX=2000-023T06:00:00')
-        (selections, extras) = url_to_search_params(q)
+        (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
 

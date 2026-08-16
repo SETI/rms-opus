@@ -50,12 +50,10 @@ import json
 import os
 import re
 import sys
+from secrets import *
 
 import MySQLdb
-
 import pdsparser
-
-from secrets import *
 
 if not 3 <= len(sys.argv) <= 4:
     print('Usage:', file=sys.stderr)
@@ -175,9 +173,7 @@ for table_column in desc_rows:
         row['@field_type'] = 'real4'
     elif field_type.startswith('double'):
         row['@field_type'] = 'real8'
-    elif field_type.startswith('char'):
-        row['@field_type'] = field_type.lower().replace('(','').replace(')','')
-    elif field_type.startswith('varchar'):
+    elif field_type.startswith('char') or field_type.startswith('varchar'):
         row['@field_type'] = field_type.lower().replace('(','').replace(')','')
     elif field_type == 'text' or field_type == 'longtext':
         row['@field_type'] = 'text'
@@ -325,10 +321,10 @@ for table_column in desc_rows:
             elif index_type == 'INTEGER' and index_type_size < 23:
                 if row['@field_type'].find('int') == -1:
                     print(f'WARNING: {field_name} {field_type} not (PDS) int')
-            elif index_type == 'CHARACTER':
-                if row['@field_type'] != 'char'+str(index_type_size):
-                    print(f'WARNING: {field_name} {field_type} not (PDS) '+
-                          'char'+str(index_type_size))
+            elif (index_type == 'CHARACTER' and
+                  row['@field_type'] != 'char'+str(index_type_size)):
+                print(f'WARNING: {field_name} {field_type} not (PDS) '+
+                      'char'+str(index_type_size))
 
             row['data_source'] = (label_file, index_name)
             if val_min is not None:

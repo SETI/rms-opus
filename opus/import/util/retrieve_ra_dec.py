@@ -1,4 +1,5 @@
 import re
+
 import requests
 
 STARS = {
@@ -166,18 +167,18 @@ simbad_pat = re.compile(r'Object ([\*\+\. a-zA-Z0-9]+) ---')
 name_pat = re.compile(r'NAME (\w+)')
 
 for key in STARS:
-    id = key.replace('_', ' ')
+    star_id = key.replace('_', ' ')
     url = 'http://simbad.u-strasbg.fr/simbad/sim-id'
-    if id == 'LMC 303':
-        id = '@3114237'
+    if star_id == 'LMC 303':
+        star_id = '@3114237'
     params = {
         'output.format': 'ASCII',
-        'Ident': id.lower()
+        'Ident': star_id.lower()
     }
     r = session.get(url, params=params)
     match = radec_pat.search(r.text)
     if match is None:
-        print('FAIL', id)
+        print('FAIL', star_id)
         continue
     ra_h = int(match.group(1))
     ra_m = int(match.group(2))
@@ -216,4 +217,4 @@ for key in STARS:
     dec = dec_d + dec_m/60. + dec_s/60./60.
     if dec_sign == '-':
         dec = -dec
-    print('    %-24s(%13.9f, %13.9f),' % (f"'{key}':", ra, dec))
+    print('    {:<24}({:13.9f}, {:13.9f}),'.format(f"'{key}':", ra, dec))

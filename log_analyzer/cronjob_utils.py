@@ -2,11 +2,10 @@ import datetime
 import glob
 import re
 from argparse import Namespace
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import pytz
-
 
 """ Common code used for parsing cronjob args """
 

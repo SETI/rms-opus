@@ -35,58 +35,59 @@ import os
 import time
 
 import settings
-
 from django.apps import apps
 from django.core.cache import cache
-from django.db import connection, DatabaseError
+from django.db import DatabaseError, connection
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
-
-from metadata.views import (get_cart_count,
-                            get_result_count_helper)
+from metadata.views import get_cart_count, get_result_count_helper
+from opus_support import format_unit_value, parse_form_type
 from paraminfo.models import ParamInfo
 from search.models import Partables, TableNames
-from search.views import (get_param_info_by_slug,
-                          get_user_query_table,
-                          url_to_search_params,
-                          create_order_by_sql,
-                          parse_order_slug)
-from tools.app_utils import (cols_to_slug_list,
-                             convert_ring_obs_id_to_opus_id,
-                             csv_response,
-                             download_filename,
-                             enter_api_call,
-                             exit_api_call,
-                             get_mult_name,
-                             get_reqno,
-                             get_session_id,
-                             json_response,
-                             throw_random_http404_error,
-                             throw_random_http500_error,
-                             HTTP404_BAD_LIMIT,
-                             HTTP404_BAD_OFFSET,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_BAD_PAGENO,
-                             HTTP404_BAD_STARTOBS,
-                             HTTP404_MISSING_OPUS_ID,
-                             HTTP404_NO_REQUEST,
-                             HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_CATEGORY,
-                             HTTP404_UNKNOWN_FORMAT,
-                             HTTP404_UNKNOWN_OPUS_ID,
-                             HTTP404_UNKNOWN_RING_OBS_ID,
-                             HTTP404_UNKNOWN_SLUG,
-                             HTTP500_DATABASE_ERROR,
-                             HTTP500_INTERNAL_ERROR,
-                             HTTP500_SEARCH_CACHE_FAILED)
-from tools.db_utils import (query_table_for_opus_id,
-                            lookup_pretty_value_for_mult,
-                            lookup_pretty_value_for_mult_list)
+from search.views import (
+    create_order_by_sql,
+    get_param_info_by_slug,
+    get_user_query_table,
+    parse_order_slug,
+    url_to_search_params,
+)
+from tools.app_utils import (
+    HTTP404_BAD_LIMIT,
+    HTTP404_BAD_OFFSET,
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_BAD_PAGENO,
+    HTTP404_BAD_STARTOBS,
+    HTTP404_MISSING_OPUS_ID,
+    HTTP404_NO_REQUEST,
+    HTTP404_SEARCH_PARAMS_INVALID,
+    HTTP404_UNKNOWN_CATEGORY,
+    HTTP404_UNKNOWN_FORMAT,
+    HTTP404_UNKNOWN_OPUS_ID,
+    HTTP404_UNKNOWN_RING_OBS_ID,
+    HTTP404_UNKNOWN_SLUG,
+    HTTP500_DATABASE_ERROR,
+    HTTP500_INTERNAL_ERROR,
+    HTTP500_SEARCH_CACHE_FAILED,
+    cols_to_slug_list,
+    convert_ring_obs_id_to_opus_id,
+    csv_response,
+    download_filename,
+    enter_api_call,
+    exit_api_call,
+    get_mult_name,
+    get_reqno,
+    get_session_id,
+    json_response,
+    throw_random_http404_error,
+    throw_random_http500_error,
+)
+from tools.db_utils import (
+    lookup_pretty_value_for_mult,
+    lookup_pretty_value_for_mult_list,
+    query_table_for_opus_id,
+)
 from tools.file_utils import get_pds_preview_images, get_pds_products
-
-from opus_support import (format_unit_value,
-                          parse_form_type)
 
 log = logging.getLogger(__name__)
 
@@ -184,7 +185,7 @@ def api_get_data_and_images(request):
     new_image_list = []
     for image in image_list:
         new_image = {}
-        for key, val in image.items():
+        for _key, _val in image.items():
             for size in ['thumb', 'small', 'med', 'full']:
                 new_image[size] = {}
                 for sfx in ['url', 'alt_text', 'size_bytes', 'width', 'height']:
@@ -225,7 +226,7 @@ def api_get_data_and_images(request):
         raise ret
 
     order_list = []
-    for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
+    for _idx, (slug, label) in enumerate(zip(order_slugs, order_labels, strict=False)):
         removeable = not slug.endswith('opusid')
         desc = False
         if slug[0] == '-':
@@ -349,7 +350,7 @@ def api_get_data(request, fmt):
         raise ret
 
     (page_no, start_obs, limit,
-     page, order, aux, error) = get_search_results_chunk(request,
+     page, order, _aux, error) = get_search_results_chunk(request,
                                                          cols=cols,
                                                          return_opusids=True,
                                                          api_code=api_code)
@@ -868,14 +869,14 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
         csv_data = []
         columns = ['OPUS ID']
         if size is None:
-            for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
+            for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE:
                 columns.append(img_size.title() + ' URL')
         else:
             columns.append('URL')
         for image in image_list:
             if size is None:
                 row = [image['opus_id']]
-                for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
+                for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE:
                     if img_size+'_url' not in image: # pragma: no cover - always present
                         row.append('')
                     else:
@@ -940,7 +941,7 @@ def api_get_files(request, opus_id=None):
         # Override cols because we don't care about anything except
         # opusid
         (page_no, start_obs, limit,
-         page, order, aux, error) = get_search_results_chunk(request,
+         _page, order, aux, error) = get_search_results_chunk(request,
                                                 cols='',
                                                 return_opusids=True,
                                                 api_code=api_code)
@@ -1087,7 +1088,7 @@ def api_get_categories_for_search(request):
     labels = (TableNames.objects.filter(table_name__in=triggered_tables)
               .values('table_name','label').order_by('disp_order'))
 
-    ret = json_response([ob for ob in labels])
+    ret = json_response(list(labels))
     exit_api_call(api_code, ret)
     return ret
 
@@ -1385,11 +1386,10 @@ def get_search_results_chunk(request, use_cart=None,
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
-    if return_ringobsids:
-        if 'obs_general.ring_obs_id' not in column_names: # pragma: no cover -
-            # this should not normally be a request field, but could be
-            column_names.append('obs_general.ring_obs_id')
-            added_extra_columns += 1 # So we know to strip it off later
+    if return_ringobsids and 'obs_general.ring_obs_id' not in column_names: # pragma: no cover -
+        # this should not normally be a request field, but could be
+        column_names.append('obs_general.ring_obs_id')
+        added_extra_columns += 1 # So we know to strip it off later
     if return_cart_states:
         column_names.append('cart.opus_id')
         column_names.append('cart.recycled')
@@ -1398,10 +1398,9 @@ def get_search_results_chunk(request, use_cart=None,
     # go ahead and force opus_ids to be present because we can't actually
     # do a query on no columns, and we at least want to return a page
     # with the correct number of rows, even if they're all empty!
-    if return_opusids or not column_names:
-        if 'obs_general.opus_id' not in column_names:
-            column_names.append('obs_general.opus_id')
-            added_extra_columns += 1 # So we know to strip it off later
+    if (return_opusids or not column_names) and 'obs_general.opus_id' not in column_names:
+        column_names.append('obs_general.opus_id')
+        added_extra_columns += 1 # So we know to strip it off later
 
     # Figure out the sort order
     # Note: There is only a single sort order that is used for both the
@@ -1495,7 +1494,7 @@ def get_search_results_chunk(request, use_cart=None,
         drop_temp_table = True
         pid_sfx = str(os.getpid())
         time1 = time.time()
-        time_sfx = ('%.6f' % time1).replace('.', '_')
+        time_sfx = (f'{time1:.6f}').replace('.', '_')
         temp_table_name = 'temp_'+user_query_table
         temp_table_name += '_'+pid_sfx+'_'+time_sfx
         temp_sql = 'CREATE TEMPORARY TABLE '
@@ -1715,8 +1714,8 @@ def get_search_results_chunk(request, use_cart=None,
 
 def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
     "Returns results for specified slugs."
-    (page_no, start_obs, limit,
-     page, order, aux, error) = get_search_results_chunk(
+    (_page_no, _start_obs, _limit,
+     page, _order, _aux, error) = get_search_results_chunk(
                                                      request,
                                                      cols=cols,
                                                      opus_id=opus_id,
@@ -1755,7 +1754,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
 
     data = []
     if fmt == 'json':
-        for slug, result in zip(slug_list, page[0]):
+        for slug, result in zip(slug_list, page[0], strict=False):
             data.append({slug: result})
         return json_response(data)
     elif fmt == 'html':
@@ -1763,8 +1762,8 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
             # This is only for the Details tab. We allow desired units to be given but
             # we ignore them because they were already processed earlier during
             # get_search_results_chunk.
-            for slug, label, result in zip(slug_list, labels, page[0]):
-                pi, desired_units = get_param_info_by_slug(slug, 'col',
+            for slug, label, result in zip(slug_list, labels, page[0], strict=False):
+                pi, _desired_units = get_param_info_by_slug(slug, 'col',
                                                            allow_units_override=True)
                 data.append({label: (result, pi)})
             context = {'data': data,
@@ -1772,14 +1771,14 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
             return render(request,
                           'results/detail_metadata_slugs_internal.html',
                           context)
-        for label, result in zip(labels, page[0]):
+        for label, result in zip(labels, page[0], strict=False):
             data.append({label: result})
         context = {'data': data,
                    'url_cols': url_cols}
         return render(request, 'results/detail_metadata_slugs.html',
                       context)
     elif fmt == 'raw_data':
-        for slug, result in zip(slug_list, page[0]):
+        for slug, result in zip(slug_list, page[0], strict=False):
             data.append({slug: result})
         return data
     else: # pragma: no cover - error catchall
@@ -1827,12 +1826,12 @@ def get_triggered_tables(selections, extras, api_code=None):
             # Surface geometry has multiple targets per observation
             # so we just want to know if our val is in the result
             # (not the only result)
-            if 'obs_surface_geometry_name.target_name' in selections:
-                if (trigger_val.upper() ==
+            if ('obs_surface_geometry_name.target_name' in selections and
+                    trigger_val.upper() ==
                     selections['obs_surface_geometry_name.target_name'][0].upper()):
-                    # If the selected surfacegeo target has no result, we
-                    # still want to have the related menu item displayed.
-                    triggered_tables.append(partable_name)
+                # If the selected surfacegeo target has no result, we
+                # still want to have the related menu item displayed.
+                triggered_tables.append(partable_name)
         else:
             if trigger_tab + trigger_col in queries:
                 results = queries[trigger_tab + trigger_col]

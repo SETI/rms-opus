@@ -6,9 +6,7 @@
 ################################################################################
 
 import opus_support
-
 from obs_common_pds3 import ObsCommonPDS3
-
 
 _MISSION_PHASE_NAMES = {
     'JUPITER ENCOUNTER':              'Jupiter Encounter',

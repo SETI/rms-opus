@@ -8,11 +8,11 @@ import csv
 import glob
 import os
 
-import pdsparser
-
 import impglobals
 import import_util
 import opus_secrets
+import pdsparser
+
 
 def create_import_definitions_table():
     db = impglobals.DATABASE
@@ -44,11 +44,11 @@ def create_import_definitions_table():
     context = 'PSDD'
     try:
         label = pdsparser.PdsLabel.from_file(pds_file)
-    except IOError as e:
+    except OSError as e:
         logger.log('error', f'Failed to read {pds_file}: {e.strerror}')
         bad_db = True
     else:
-        for item_name in label.keys():
+        for item_name in label:
             if item_name == 'objects' or label[item_name] is None:
                 continue
             term = str(label[item_name]['NAME']).rstrip('\r\n')
@@ -125,7 +125,7 @@ def create_import_contexts_table():
     ctx_file = opus_secrets.DICTIONARY_CONTEXTS_FILE
     rows = []
     try:
-        with open(ctx_file, 'r') as csvfile:
+        with open(ctx_file) as csvfile:
             filereader = csv.reader(csvfile)
             for row in filereader:
                 if len(row) != 3:
@@ -138,7 +138,7 @@ def create_import_contexts_table():
                     'parent': parent
                 }
                 rows.append(new_row)
-    except IOError as e:
+    except OSError as e:
         logger.log('error', f'Failed to read {ctx_file}: {e.strerror}')
         return False
 

@@ -6,8 +6,9 @@
 ################################################################################
 
 import config_targets
-from obs_common_pds3 import ObsCommonPDS3
 from obs_cassini_common import ObsCassiniCommon
+from obs_common_pds3 import ObsCommonPDS3
+
 
 class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     def __init__(self, *args, **kwargs):

@@ -3,10 +3,10 @@
 import logging
 from unittest import TestCase
 
+import settings
 from django.core.cache import cache
 from tools.file_utils import get_pds_products
 
-import settings
 
 class fileUtilsTests(TestCase):
 

@@ -1,4 +1,4 @@
-from enum import Flag, auto, Enum
+from enum import Enum, Flag, auto
 
 
 class Action(Enum):

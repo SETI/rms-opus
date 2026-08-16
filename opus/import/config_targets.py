@@ -322,7 +322,7 @@ TARGET_NAME_INFO = {
     'VENUS':                ('VEN', 'PLANET',       'Venus'),
 
     'EARTH':                ('EAR', 'PLANET',       'Earth'),
-      'MOON':               ('EAR', 'REG_SAT',      'Moon'), # noqa: E131
+      'MOON':               ('EAR', 'REG_SAT',      'Moon'),
 
     'MARS':                 ('MAR', 'PLANET',       'Mars'),
 

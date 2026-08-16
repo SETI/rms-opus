@@ -7,20 +7,18 @@
 import csv
 import datetime
 import json
+import logging
 import os
 import random
 import string
 import subprocess
 import time
 
+import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import HttpResponse
-
 from search.models import ObsGeneral
 
-import settings
-
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -147,8 +145,7 @@ def exit_api_call(api_code, ret):
         if delay_amount: # pragma: no cover - internal debugging
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
         getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)
-    if api_code in _API_START_TIMES: # pragma: no cover - internal debugging
-        del _API_START_TIMES[api_code]
+    _API_START_TIMES.pop(api_code, None)
     if delay_amount: # pragma: no cover - internal debugging
         time.sleep(delay_amount)
 

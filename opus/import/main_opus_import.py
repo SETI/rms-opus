@@ -22,7 +22,7 @@ PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 RMS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
 
-from opus_secrets import * # noqa: E402
+from opus_secrets import *  # noqa: E402
 
 sys.path.insert(0, RMS_OPUS_LIB_PATH)
 
@@ -30,23 +30,23 @@ IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.dirname(IMPORT_ROOT)
 sys.path.insert(0, PROJECT_ROOT)
 
-import pdslogger # noqa: E402
+import pdslogger  # noqa: E402
+
 pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
 
-from config_data import * # noqa: E402
-import do_cart # noqa: E402
-import do_dictionary # noqa: E402
-import do_django # noqa: E402
-import do_import # noqa: E402
-import do_param_info # noqa: E402
-import do_partables # noqa: E402
-import do_table_names # noqa: E402
-import do_update_mult_info # noqa: E402
-import do_validate # noqa: E402
-import impglobals # noqa: E402
-import importdb # noqa: E402
-import import_util # noqa: E402
-
+import do_cart  # noqa: E402
+import do_dictionary  # noqa: E402
+import do_django  # noqa: E402
+import do_import  # noqa: E402
+import do_param_info  # noqa: E402
+import do_partables  # noqa: E402
+import do_table_names  # noqa: E402
+import do_update_mult_info  # noqa: E402
+import do_validate  # noqa: E402
+import impglobals  # noqa: E402
+import import_util  # noqa: E402
+import importdb  # noqa: E402
+from config_data import *  # noqa: E402
 
 ################################################################################
 # COMMAND LINE PROCESSING

@@ -8,7 +8,6 @@
 
 from obs_common_pds3 import ObsCommonPDS3
 
-
 _EBROCC_INST_TO_PDS4_INST = {
     'ESO1MAPPH': 'eso-la_silla.1m04',
     'ESO22MAPPH': 'eso-la_silla.2m2',

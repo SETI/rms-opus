@@ -1,17 +1,17 @@
-from django.db import models
-from dictionary.views import get_def_for_tooltip
-
 import json
 
+import settings
+from dictionary.views import get_def_for_tooltip
+from django.db import models
+from opus_support import (
+    display_result_unit,
+    get_default_unit,
+    get_unit_display_name,
+    is_valid_unit,
+    parse_form_type,
+)
 from search.models import TableNames
 
-import settings
-
-from opus_support import (display_result_unit,
-                          get_default_unit,
-                          get_unit_display_name,
-                          is_valid_unit,
-                          parse_form_type)
 
 class ParamInfo(models.Model):
     """
@@ -46,7 +46,7 @@ class ParamInfo(models.Model):
         ordering = ('category_name', 'sub_heading', 'disp_order')
 
     def __unicode__(self):
-        return u"%s" % self.name
+        return f"{self.name}"
 
     def param_qualified_name(self):
         return self.category_name + '.' + self.name
@@ -106,7 +106,7 @@ class ParamInfo(models.Model):
         return self.label_results + ' [' + pretty_name + ']'
 
     def get_default_unit(self, override_unit=None):
-        (form_type, form_type_format,
+        (_form_type, _form_type_format,
          form_type_unit_id) = parse_form_type(self.form_type)
         if form_type_unit_id and display_result_unit(form_type_unit_id):
             if override_unit:
@@ -125,7 +125,7 @@ class ParamInfo(models.Model):
         return display_name
 
     def is_valid_unit(self, unit):
-        (form_type, form_type_format,
+        (_form_type, _form_type_format,
          form_type_unit_id) = parse_form_type(self.form_type)
         if form_type_unit_id and display_result_unit(form_type_unit_id):
             return is_valid_unit(form_type_unit_id, unit)
@@ -139,13 +139,13 @@ class ParamInfo(models.Model):
         return ret
 
     def is_string(self):
-        (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(self.form_type)
+        (form_type, _form_type_format,
+         _form_type_unit_id) = parse_form_type(self.form_type)
         return form_type == 'STRING'
 
     def is_string_or_mult(self):
-        (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(self.form_type)
+        (form_type, _form_type_format,
+         _form_type_unit_id) = parse_form_type(self.form_type)
         return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
 
     def get_ranges_info(self):

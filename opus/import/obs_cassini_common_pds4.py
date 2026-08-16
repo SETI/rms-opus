@@ -9,9 +9,8 @@
 ################################################################################
 
 import opus_support
-
-from obs_common_pds4 import ObsCommonPDS4
 from obs_cassini_common import ObsCassiniCommon
+from obs_common_pds4 import ObsCommonPDS4
 
 
 class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):

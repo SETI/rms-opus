@@ -3,12 +3,11 @@ from __future__ import annotations
 import abc
 import atexit
 import datetime
-import functools
 import shelve
 import socket
+from collections.abc import Callable
 from ipaddress import IPv4Address
 from random import uniform
-from typing import Optional, Callable, Tuple
 
 
 class IpToHostConverter(metaclass=abc.ABCMeta):
@@ -16,7 +15,7 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
     This class is the abstract superclass of any class that has a method 'convert' that converts an ip address
     to a host name.
     """
-    RESULT_TYPE = Callable[[IPv4Address], Optional[str]]
+    RESULT_TYPE = Callable[[IPv4Address], str | None]
 
     @staticmethod
     def get_ip_to_host_converter(uses_reverse_dns: bool, dns_cache: bool, **_args) -> IpToHostConverter:
@@ -30,24 +29,30 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
         else:
             return NormalIpToHostConverter()
 
-    @functools.lru_cache(maxsize=None)
-    def convert(self, ip: IPv4Address) -> Optional[str]:
-        return self._convert(ip)
+    def __init__(self) -> None:
+        self._convert_cache: dict[IPv4Address, str | None] = {}
+
+    def convert(self, ip: IPv4Address) -> str | None:
+        if ip in self._convert_cache:
+            return self._convert_cache[ip]
+        result = self._convert(ip)
+        self._convert_cache[ip] = result
+        return result
 
     @abc.abstractmethod
-    def _convert(self, ip: IPv4Address) -> Optional[str]:
+    def _convert(self, ip: IPv4Address) -> str | None:
         raise Exception()
 
 
 class NullIpToHostConverter(IpToHostConverter):
     """An IpToHostConverter that just doesn't even bother trying."""
-    def _convert(self, ip: IPv4Address) -> Optional[str]:
+    def _convert(self, ip: IPv4Address) -> str | None:
         return None
 
 
 class NormalIpToHostConverter(IpToHostConverter):
     """An IpToHostConverter that calls gethostbyaddr to attempt to parse its value"""
-    def _convert(self, ip: IPv4Address) -> Optional[str]:
+    def _convert(self, ip: IPv4Address) -> str | None:
         try:
             name, _, _ = socket.gethostbyaddr(str(ip))
             return name
@@ -63,13 +68,15 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
 
     def __init__(self, file_name: str):
         super().__init__()
-        self._database = shelve.open(file_name)
+        # Long-lived persistent shelf: kept open for the object's lifetime and
+        # closed via the atexit handler below, so a context manager does not fit.
+        self._database = shelve.open(file_name)  # noqa: SIM115
         self._expired = self.__purge_old_database_entries()
         self._cached = self._created = 0
         atexit.register(self.__close)
 
-    def _convert(self, ip: IPv4Address) -> Optional[str]:
-        value: Optional[Tuple[Optional[str], datetime.timedelta]] = self._database.get(str(ip))
+    def _convert(self, ip: IPv4Address) -> str | None:
+        value: tuple[str | None, datetime.timedelta] | None = self._database.get(str(ip))
         if value:
             name, _timeout = value
             self._cached += 1

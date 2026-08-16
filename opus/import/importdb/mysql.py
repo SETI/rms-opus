@@ -1,12 +1,10 @@
-from functools import lru_cache
-
 try:
     import MySQLdb
     MYSQLDB_AVAILABLE = True
 except ImportError:
     MYSQLDB_AVAILABLE = False
 
-from importdb.super import ImportDBSuper, ImportDBException
+from importdb.super import ImportDBException, ImportDBSuper
 
 ERR_UNKNOWN_DATABASE = 1049
 
@@ -15,8 +13,10 @@ class ImportDBMySQL(ImportDBSuper):
     def __init__(self, *args, **kwargs):
         """Open the connection to a MySQL server. Note this will also
            create the database if it doesn't already exist."""
-        super(ImportDBMySQL, self).__init__(*args, **kwargs)
-        super(ImportDBMySQL, self)._enter('__init__')
+        super().__init__(*args, **kwargs)
+        super()._enter('__init__')
+
+        self._table_info_cache = {}
 
         if not MYSQLDB_AVAILABLE:
             self.read_only = True
@@ -44,7 +44,7 @@ class ImportDBMySQL(ImportDBSuper):
                     self.logger.log('fatal',
                             'Unable to connect to MySQL server '
                            +f'"{self.db_hostname}": {e.args[1]}')
-                raise ImportDBException(e)
+                raise ImportDBException(e) from e
 
             if self.logger:
                 self.logger.log('info',
@@ -65,7 +65,7 @@ class ImportDBMySQL(ImportDBSuper):
                             self.logger.log('fatal',
                             f'Unable to create new database "{self.db_schema}"'+
                             f': {e.args[1]}')
-                        raise ImportDBException(e)
+                        raise ImportDBException(e) from e
                     if self.logger:
                         self.logger.log('warning',
                                 f'  Created new database "{self.db_schema}"')
@@ -78,13 +78,13 @@ class ImportDBMySQL(ImportDBSuper):
                             self.logger.log('fatal',
                                 'Unable to use new database '+
                                 f'"{self.db_schema}": {e.args[1]}')
-                        raise ImportDBException(e)
+                        raise ImportDBException(e) from e
                 else:
                     if self.logger:
                         self.logger.log('fatal',
                             'Unable to use existing database '+
                             f'"{self.db_schema}": {e.args[1]}')
-                    raise ImportDBException(e)
+                    raise ImportDBException(e) from e
 
         if self.logger:
             self.logger.log('info',
@@ -118,14 +118,14 @@ class ImportDBMySQL(ImportDBSuper):
                 if self.logger:
                     self.logger.log('fatal',
                         f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
-                raise ImportDBException(e)
+                raise ImportDBException(e) from e
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def _execute(self, *args, **kwargs):
         if not MYSQLDB_AVAILABLE:
             return
-        super(ImportDBMySQL, self)._execute(*args, **kwargs)
+        super()._execute(*args, **kwargs)
 
     def _execute_and_fetchall(self, cmd, func_name):
         if not MYSQLDB_AVAILABLE:
@@ -140,14 +140,14 @@ class ImportDBMySQL(ImportDBSuper):
             if self.logger:
                 self.logger.log('fatal',
                     f'Failed in {func_name}: {e.args[1]}')
-            raise ImportDBException(e)
+            raise ImportDBException(e) from e
 
     def quote_identifier(self, s):
         return '`' + s + '`'
 
     def table_names(self, namespace, prefix=None):
         "Return a list of all table names in the schema."
-        super(ImportDBMySQL, self)._enter('table_names')
+        super()._enter('table_names')
 
         if self._table_names is None:
             cmd = f"""
@@ -157,11 +157,11 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
             # Note: SQL table names are case-insensitive on SOME OSes and this
             # query returns them in whatever case SQL returns them in.
             # But table_exists does a case-insensitive match.
-            self._table_names = set(x[0] for x in res)
+            self._table_names = {x[0] for x in res}
             # if self.logger:
             #     self.logger.log('debug',
             #             f'  Current table names: {sorted(self._table_names)}')
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
         if namespace == 'all':
             ret_names = self._table_names
@@ -179,7 +179,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         if prefix is None:
             return ret_names
 
-        if isinstance(prefix, list) or isinstance(prefix, tuple):
+        if isinstance(prefix, (list, tuple)):
             ret_list = []
             for name in ret_names:
                 for p in prefix:
@@ -190,10 +190,12 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 
         return [x for x in ret_names if x.startswith(prefix)]
 
-    @lru_cache(maxsize=None)
     def table_info(self, namespace, raw_table_name):
         "Return a list containing information about the table columns."
-        super(ImportDBMySQL, self)._enter('table_info')
+        cache_key = (namespace, raw_table_name)
+        if cache_key in self._table_info_cache:
+            return self._table_info_cache[cache_key]
+        super()._enter('table_info')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -248,12 +250,13 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             }
             column_list.append(column_dict)
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
+        self._table_info_cache[cache_key] = column_list
         return column_list
 
     def drop_table(self, namespace, raw_table_name, ignore_if_not_exists=True):
         "Delete the given table if it exists."
-        super(ImportDBMySQL, self)._enter('drop_table')
+        super()._enter('drop_table')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -276,7 +279,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 if self.logger:
                     self.logger.log('fatal',
                         f'Failed in drop_table on "{table_name}": {e.args[1]}')
-                raise ImportDBException(e)
+                raise ImportDBException(e) from e
 
             if self.logger:
                 if self.read_only:
@@ -292,19 +295,19 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 assert table_name.lower() in self._table_names, table_name
                 self._table_names.remove(table_name.lower())
 
-        self.table_info.cache_clear()
+        self._table_info_cache.clear()
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def create_table(self, namespace, raw_table_name, schema,
                      ignore_if_exists=True):
         """Create a new table from the given schema. Returns True if
            table successfully created; False if table already existed
            and ignore_if_exists==True."""
-        super(ImportDBMySQL, self)._enter('create_table')
+        super()._enter('create_table')
 
         if ignore_if_exists and self.table_exists(namespace, raw_table_name):
-            super(ImportDBMySQL, self)._exit()
+            super()._exit()
             return False
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
@@ -366,11 +369,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 enum_str = column.get('field_enum_options', None)
                 assert enum_str, (raw_table_name, column)
                 cmd += f'enum({enum_str})'
-            elif field_type == 'flag_yesno':
-                cmd += 'int unsigned' # Index for mult table
-            elif field_type == 'flag_onoff':
-                cmd += 'int unsigned' # Index for mult table
-            elif field_type == 'mult_idx':
+            elif field_type == 'flag_yesno' or field_type == 'flag_onoff' or field_type == 'mult_idx':
                 cmd += 'int unsigned' # Index for mult table
             elif field_type == 'timestamp':
                 cmd += 'timestamp'
@@ -436,7 +435,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to create table "{table_name}": {e.args[1]}')
-            raise ImportDBException(e)
+            raise ImportDBException(e) from e
 
         if self.logger:
             if self.read_only:
@@ -449,14 +448,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 self._table_names.add(table_name)
 
         self.tables_created.append(table_name)
-        self.table_info.cache_clear()
+        self._table_info_cache.clear()
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
         return True
 
     def analyze_table(self, namespace, raw_table_name):
         """Analyze the given table. This recomputes key distribution."""
-        super(ImportDBMySQL, self)._enter('analyze_table')
+        super()._enter('analyze_table')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -468,7 +467,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to analyze table "{table_name}": {e.args[1]}')
-            raise ImportDBException(e)
+            raise ImportDBException(e) from e
 
         if self.logger:
             if self.read_only:
@@ -476,10 +475,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             else:
                 self.logger.log('debug', f'Analyzed table "{table_name}"')
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def insert_row(self, namespace, raw_table_name, row):
-        super(ImportDBMySQL, self)._enter('insert_row')
+        super()._enter('insert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -506,9 +505,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to insert row into "{table_name}": {e.args[1]}')
-            raise ImportDBException(e)
+            raise ImportDBException(e) from e
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def insert_rows(self, namespace, raw_table_name, rows):
         """Insert multiple rows as one transation.
@@ -518,7 +517,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         if len(rows) == 0:
             return
 
-        super(ImportDBMySQL, self)._enter('insert_rows')
+        super()._enter('insert_rows')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -563,12 +562,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 if self.logger:
                     self.logger.log('fatal',
                     f'Failed to insert row into "{table_name}": {e.args[1]}')
-                raise ImportDBException(e)
+                raise ImportDBException(e) from e
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def update_row(self, namespace, raw_table_name, row, where):
-        super(ImportDBMySQL, self)._enter('insert_row')
+        super()._enter('insert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -597,12 +596,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to update row in "{table_name}": {e.args[1]}')
-            raise ImportDBException(e)
+            raise ImportDBException(e) from e
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def upsert_row(self, namespace, raw_table_name, key_name, row):
-        super(ImportDBMySQL, self)._enter('upsert_row')
+        super()._enter('upsert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -639,20 +638,20 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to insert row into "{table_name}": {e.args[1]}')
-            raise ImportDBException(e)
+            raise ImportDBException(e) from e
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def upsert_rows(self, namespace, table_name, key_name, rows):
-        super(ImportDBMySQL, self)._enter('upsert_rows')
+        super()._enter('upsert_rows')
 
         for row in rows:
             self.upsert_row(namespace, table_name, key_name, row)
 
-        super(ImportDBMySQL, self)._exit()
+        super()._exit()
 
     def delete_rows(self, namespace, raw_table_name, where=None):
-        super(ImportDBMySQL, self)._enter('delete_rows')
+        super()._enter('delete_rows')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
@@ -664,7 +663,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
     def copy_rows_between_namespaces(self, src_namespace, dest_namespace,
                                      raw_table_name, where=None):
-        super(ImportDBMySQL, self)._enter('copy_rows')
+        super()._enter('copy_rows')
 
         src_table_name = self.convert_raw_to_namespace(src_namespace,
                                                        raw_table_name)
@@ -679,14 +678,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         self._exit()
 
     def general_select(self, cmd):
-        super(ImportDBMySQL, self)._enter('cmd')
+        super()._enter('cmd')
 
         res = self._execute_and_fetchall('SELECT '+cmd, 'general_select')
         self._exit()
         return res
 
     def find_column_max(self, namespace, raw_table_name, column_name):
-        super(ImportDBMySQL, self)._enter('find_column_max')
+        super()._enter('find_column_max')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 

@@ -6,16 +6,14 @@
 #
 ################################################################################
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection
-
-from search.models import ObsGeneral
-
-import settings
+import logging
 
 import pdsfile.pdsviewable
+import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import connection
+from search.models import ObsGeneral
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -55,7 +53,8 @@ def get_pds_products(opus_id_list,
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
 
-    assert len(opus_id_list) > 0 and len(product_types) > 0
+    assert len(opus_id_list) > 0
+    assert len(product_types) > 0
 
     results = {} # Dict of opus_ids
 

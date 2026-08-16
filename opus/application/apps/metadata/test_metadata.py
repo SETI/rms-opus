@@ -3,19 +3,20 @@
 import logging
 from unittest import TestCase
 
+import settings
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
+from metadata.views import (
+    api_get_fields,
+    api_get_mult_counts,
+    api_get_mult_counts_internal,
+    api_get_range_endpoints,
+    api_get_range_endpoints_internal,
+    api_get_result_count,
+    api_get_result_count_internal,
+)
 
-from metadata.views import (api_get_fields,
-                            api_get_mult_counts,
-                            api_get_mult_counts_internal,
-                            api_get_result_count_internal,
-                            api_get_range_endpoints,
-                            api_get_range_endpoints_internal,
-                            api_get_result_count)
-
-import settings
 
 class MetadataTests(TestCase):
 

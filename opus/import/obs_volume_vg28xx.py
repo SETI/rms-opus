@@ -9,9 +9,7 @@
 ################################################################################
 
 import julian
-
 from obs_volume_voyager_common import ObsVolumeVoyagerCommon
-
 
 _VG_TARGET_TO_MISSION_PHASE_MAPPING = {
     'S RINGS': 'SATURN ENCOUNTER',
@@ -105,12 +103,11 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
         wl_band1 = self._supp_index_col('WAVELENGTH_BAND_1')
         wl_band2 = self._supp_index_col('WAVELENGTH_BAND_2')
 
-        if wl_band2 is not None and wl_band2 != 'N/A':
-            if wl_band1 != wl_band2:
-                self._log_nonrepeating_error(
-                    f'Mismatched WAVELENGTH_BAND_1 "{wl_band1}" and '+
-                    f'WAVELENGTH_BAND_2 "{wl_band2}"')
-                return self._create_mult(None)
+        if wl_band2 is not None and wl_band2 != 'N/A' and wl_band1 != wl_band2:
+            self._log_nonrepeating_error(
+                f'Mismatched WAVELENGTH_BAND_1 "{wl_band1}" and '+
+                f'WAVELENGTH_BAND_2 "{wl_band2}"')
+            return self._create_mult(None)
         if '-BAND' in wl_band1:
             wl_band1 = wl_band1[0]
         if 'VISUAL' in wl_band1:

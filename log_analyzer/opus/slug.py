@@ -1,9 +1,8 @@
-from __future__ import print_function
 
 import json
 import re
-from enum import Enum, auto, Flag
-from typing import Optional, Dict, Any, NamedTuple, cast
+from enum import Enum, Flag, auto
+from typing import Any, ClassVar, NamedTuple, cast
 
 import requests
 
@@ -59,11 +58,11 @@ class Info(NamedTuple):
 
 
 class ToInfoMap:
-    _slug_to_search_label: Dict[str, str]
-    _slug_to_column_label: Dict[str, str]
-    _old_slug_to_new_slug: Dict[str, str]
-    _search_map: Dict[str, Optional[Info]] = {}
-    _column_map: Dict[str, Optional[Info]] = {}
+    _slug_to_search_label: dict[str, str]
+    _slug_to_column_label: dict[str, str]
+    _old_slug_to_new_slug: dict[str, str]
+    _search_map: ClassVar[dict[str, Info | None]] = {}
+    _column_map: ClassVar[dict[str, Info | None]] = {}
 
     QTYPE_SUFFIX = ' (QT)'
     UNIT_SUFFIX = ' (UNIT)'
@@ -71,7 +70,7 @@ class ToInfoMap:
     OBSOLETE_SLUG_INFO = 'obsolete slug'
 
     # Slugs that should be ignored when see them as either a column name or as a search term.
-    SLUGS_NOT_IN_DB = {'browse', 'order', 'page', 'startobs',
+    SLUGS_NOT_IN_DB: ClassVar[set[str]] = {'browse', 'order', 'page', 'startobs',
                        'cart_browse', 'cart_order', 'cart_page', 'cart_startobs',
                        'colls_browse', 'colls_order', 'colls_page',
                        'colls_startobs',
@@ -94,7 +93,7 @@ class ToInfoMap:
 
         # Read the json
         raw_json = self.__read_json(url_prefix)
-        json_data: Dict[str, Any] = raw_json['data']
+        json_data: dict[str, Any] = raw_json['data']
 
         slug_to_search_label = {}
         slug_to_column_label = {}
@@ -121,7 +120,7 @@ class ToInfoMap:
             self._column_map[slug] = None
             self._search_map[slug] = None
 
-    def get_family_info_for_widget(self, widget: str) -> Optional[Family]:
+    def get_family_info_for_widget(self, widget: str) -> Family | None:
         widget = widget.lower()
         result = self._search_map.get(widget)
         if not result:
@@ -134,11 +133,11 @@ class ToInfoMap:
         else:
             return None
 
-    def get_info_for_search_slug(self, slug: str, value: str) -> Optional[Info]:
+    def get_info_for_search_slug(self, slug: str, value: str) -> Info | None:
         return self._get_info_for_search_slug(slug, True, value)
 
-    def _get_info_for_search_slug(self, original_slug: str, create: bool = True, value: str = '') -> Optional[Info]:
-        base_result: Optional[Info]
+    def _get_info_for_search_slug(self, original_slug: str, create: bool = True, value: str = '') -> Info | None:
+        base_result: Info | None
         slug = original_slug.lower()
         search_map = self._search_map
 
@@ -238,7 +237,7 @@ class ToInfoMap:
             family = Family(label=label, min='', max='')
         return Info(canonical_name=slug, label=label, flags=flag, family=family, family_type=family_type)
 
-    def get_info_for_column_slug(self, slug: str, create: bool = True) -> Optional[Info]:
+    def get_info_for_column_slug(self, slug: str, create: bool = True) -> Info | None:
         """Returns information about a slug that appears in a cols= part of a query
 
         :param slug: A slug that represents a column name
@@ -283,13 +282,13 @@ class ToInfoMap:
     DEFAULT_FIELDS_SUFFIX = '/opus/api/fields.json'
 
     @staticmethod
-    def __read_json(url_prefix: str) -> Dict[str, Any]:
+    def __read_json(url_prefix: str) -> dict[str, Any]:
         if url_prefix.endswith('/'):
             url_prefix = url_prefix[:-1]
         url = url_prefix + ToInfoMap.DEFAULT_FIELDS_SUFFIX
 
         if url.startswith('file://'):
-            with open(url[7:], "r") as file:
+            with open(url[7:]) as file:
                 text = file.read()
         else:
             response = requests.get(url)
@@ -300,10 +299,10 @@ class ToInfoMap:
         # This is a known bug in the JSON.  We correct it before writing it out.
         data = info['data']
         new_data = {}
-        for cat, slug_info in data.items():
+        for _cat, slug_info in data.items():
             new_data.update(slug_info)
         info['data'] = new_data
         assert new_data['ringobsid']
         del new_data['ringobsid']
         new_data['opusid']['old_slug'] = 'ringobsid'
-        return cast(Dict[str, Any], info)
+        return cast(dict[str, Any], info)

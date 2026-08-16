@@ -1,5 +1,6 @@
-from importdb.super import ImportDBException
 from importdb.mysql import ImportDBMySQL
+from importdb.super import ImportDBException
+
 # from importdb.postgresql import ImportDBPostgreSQL
 
 def get_db(db_brand, db_hostname, db_name, db_schema,

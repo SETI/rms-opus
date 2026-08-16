@@ -1,13 +1,14 @@
 import abc
 import re
+from collections.abc import Callable
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO, NewType
-
-from markupsafe import Markup
+from re import Match, Pattern
+from typing import Any, NewType, TextIO
 
 from log_entry import LogEntry
+from markupsafe import Markup
 
-SESSION_INFO = Tuple[List[str], Optional[str]]
+SESSION_INFO = tuple[list[str], str | None]
 LogId = NewType('LogId', int)
 
 
@@ -20,14 +21,14 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         raise Exception()
 
     @abc.abstractmethod
-    def create_batch_html_generator(self, host_infos_by_ip: List[Any]) -> 'AbstractBatchHtmlGenerator':
+    def create_batch_html_generator(self, host_infos_by_ip: list[Any]) -> 'AbstractBatchHtmlGenerator':
         """
         Creates a blackbox capable of giving the Jinja template whatever information it needs
         """
         raise Exception()
 
     @abc.abstractmethod
-    def show_summary(self, sessions: List[Any], output: TextIO) -> None:
+    def show_summary(self, sessions: list[Any], output: TextIO) -> None:
         """Implements the --summary operation, whatever that happens to mean for this configuration"""
         raise Exception()
 
@@ -42,7 +43,7 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
         raise Exception()
 
     @staticmethod
-    def quote_and_join_list(string_list: List[str]) -> str:
+    def quote_and_join_list(string_list: list[str]) -> str:
         return ', '.join(f'"{string}"' for string in string_list)
 
     @staticmethod
@@ -61,9 +62,9 @@ class PatternRegistry:
     A method is decorated with the regex of the URLs that it knows how to parse.
     """
 
-    METHOD = Callable[[Any, LogEntry, Dict[str, str], Match[str]], SESSION_INFO]
+    METHOD = Callable[[Any, LogEntry, dict[str, str], Match[str]], SESSION_INFO]
 
-    patterns: List[Tuple[Pattern[str], METHOD]]
+    patterns: list[tuple[Pattern[str], METHOD]]
 
     def __init__(self) -> None:
         self.patterns = []
@@ -74,7 +75,7 @@ class PatternRegistry:
             return method
         return decorator_for_pattern
 
-    def find_matching_pattern(self, path: str) -> Optional[Tuple[METHOD, Match[str]]]:
+    def find_matching_pattern(self, path: str) -> tuple[METHOD, Match[str]] | None:
         for (pattern, method) in self.patterns:
             match = re.match(pattern, path)
             if match:

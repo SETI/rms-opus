@@ -63,7 +63,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
         return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
-        spec_flag, filter1, filter2 = self._acs_spec_flag()
+        spec_flag, filter1, _filter2 = self._acs_spec_flag()
         if not spec_flag:
             return None
 
@@ -101,7 +101,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
         return min(max(lines, samples), spec_size)
 
     def field_obs_wavelength_polarization_type(self):
-        filter1, filter2 = self._decode_filters()
+        _filter1, filter2 = self._decode_filters()
         if filter2 is not None and filter2.startswith('POL'):
             return self._create_mult('LINEAR')
         return self._create_mult('NONE')
