@@ -1,0 +1,64 @@
+name: Run Tests
+run-name: "Run Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main, rewrite ]
+  push:
+    branches: [ main, rewrite ]
+  schedule:
+    - cron: "55 10 * * *"  # 2:55am PST, 3:55am PDT
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: Run Lint
+    runs-on: ubuntu-latest
+    env:
+      # Ruff formatting is not enforced until the format-only PR (PR-23); the
+      # step below is kept but disabled, mirroring the ENABLE_* toggles in
+      # scripts/run-all-checks.sh. PR-23 flips this to 'true'.
+      ENABLE_RUFF_FORMAT: 'false'
+      # Ruff/bandit scope tracks the current (pre-move) layout; it shifts to
+      # src/ as code moves in later PRs.
+      RUFF_PATHS: "lib opus/import opus/application/apps log_analyzer"
+      BANDIT_PATHS: "lib opus log_analyzer"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+
+      - name: Install lint tools
+        # The package is not yet pip-installable (src/ is populated in later
+        # PRs), so the lint tools are installed directly rather than via
+        # `pip install -e ".[dev]"`. Tool config still comes from pyproject.toml.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff "bandit[toml]" pymarkdownlnt
+
+      - name: Ruff (lint)
+        run: |
+          ruff check $RUFF_PATHS
+
+      - name: Ruff (format)
+        if: ${{ env.ENABLE_RUFF_FORMAT == 'true' }}
+        run: |
+          ruff format --check $RUFF_PATHS
+
+      - name: Bandit
+        run: |
+          bandit -c pyproject.toml -r $BANDIT_PATHS -q
+
+      - name: PyMarkdown
+        run: |
+          pymarkdown scan README.md CONTRIBUTING.md .cursor/
