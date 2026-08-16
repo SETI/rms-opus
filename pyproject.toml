@@ -1,0 +1,221 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rms-opus"
+dynamic = ["version"]
+description = "OPUS: the Outer Planets Unified Search tool for the PDS Ring-Moon Systems Node"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "django>=4.2,<5",
+  "django-storages",
+  "hurry.filesize",
+  "jinja2",
+  "markupsafe",
+  "mistune",
+  "mysqlclient",
+  "numpy>=1.26",
+  "pdfkit",
+  "pillow>=10.1",
+  "pyparsing",
+  "pytz",
+  "pyyaml>=6.0.1",
+  "qrcode",
+  "regex",
+  "requests",
+  "rms-julian",
+  "rms-pdsfile>=0.0.18",
+  "rms-pdslogger",
+  "rms-pdstable",
+  "rms-translator",
+]
+license = {text = "Apache-2.0"}
+authors = [
+  {name = "Robert S. French", email = "rfrench@seti.org"}
+]
+maintainers = [
+  {name = "Robert S. French", email = "rfrench@seti.org"}
+]
+keywords = ["pds", "planetary", "astronomy", "rings", "search", "opus"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Natural Language :: English",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Utilities",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows"
+]
+
+[project.urls]
+Homepage = "https://github.com/SETI/rms-opus"
+Documentation = "https://rms-opus.readthedocs.io/en/latest"
+Repository = "https://github.com/SETI/rms-opus"
+Source = "https://github.com/SETI/rms-opus"
+Issues = "https://github.com/SETI/rms-opus/issues"
+
+[project.optional-dependencies]
+dev = [
+  "rms-opus",
+  "coverage>=7.0",
+  # "mypy>=1.0",  # Enabled in Phase D (PR-14)
+  "pymarkdownlnt>=0.9.35",
+  "pytest>=7.0",
+  "pytest-cov>=4.0",
+  "pytest-django>=4.5",
+  "pytest-xdist>=3.8.0",
+  "djangorestframework",
+  "ruff>=0.8",
+  "bandit[toml]>=1.8",
+  "pyroma>=4.2",
+  # "vulture>=2.14",  # Enabled in PR-02 after the dead-code removal
+  "rms-opus[docs]",
+]
+docs = [
+  "myst-parser",
+  "sphinx>=7",
+  "sphinxcontrib-mermaid",
+  "sphinx-rtd-theme",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config"]
+markers = []
+
+[tool.setuptools]
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+write_to = "src/opus_config/_version.py"
+
+# Tool configuration
+
+[tool.coverage.run]
+branch = true
+parallel = true
+# Unit-coverage scope only (see plan §5a); the integration 100%-gate config
+# lives separately and is added when the Django app moves under src/.
+source = ["opus_support", "opus_config", "opus_import", "opus_log_analyzer"]
+omit = ["tests/*", "*/_version.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise NotImplementedError",
+]
+fail_under = 90
+
+[tool.mypy]
+strict = true
+disallow_subclassing_any = false
+exclude = ["perf_test/"]
+
+[[tool.mypy.overrides]]
+module = "opus_config._version"
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [
+  "perf_test",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+# Explicit rule set (recommended for library projects). Categories:
+# E, W = pycodestyle errors/warnings; F = Pyflakes; I = isort; UP = pyupgrade;
+# B = bugbear; SIM = simplify; C4 = comprehensions; A = builtins (no shadowing);
+# N = pep8-naming; PT = pytest-style; RUF = Ruff-specific (e.g. unused noqa).
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
+# Global (documented) ignores — NOT the per-file burn-down table.
+# PT011  - pytest.raises is too broad (template default).
+# SIM105 - Use contextlib.suppress for suppressions (template default).
+# SIM108 - Use ternary operator for simple if/else (template default).
+# PT009/PT027 - self.assertEqual / self.assertRaises. The live-DB integration
+#   suite (opus/application/apps/*/test_*.py) stays unittest.TestCase permanently
+#   (plan PR-18), so these unittest->pytest-assertion rules can never burn down
+#   and are ignored globally; PT018 and every other PT rule stay enforced.
+extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
+
+[tool.ruff.lint.per-file-ignores]
+# Burn-down list (plan PR-01). PR-17's exit criterion is that this table is empty.
+#
+# (1) Legacy flake8 ignores that need real refactoring; retired through PR-17.
+#     E722 - bare `except:`; E501 - line too long;
+#     F403 - `from module import *`; F405 - name may be undefined from star import;
+#     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
+"lib/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
+"opus/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
+"log_analyzer/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
+#
+# (2) Grandfathered pending PR-02, which rewrites these exact sites
+#     (`assert False` -> NotImplementedError; the ImportDBSuper.__init__ mutable
+#     default) and removes these entries. REMOVED IN PR-02.
+#     PT015/B011 = `assert False`; B006 = mutable default argument.
+"opus/import/importdb/super.py" = ["E722", "E501", "F403", "F405", "PT015", "B011", "B006"]
+"opus/import/importdb/mysql.py" = ["E722", "E501", "F403", "F405", "PT015", "B011"]
+"opus/import/util/obs_table_to_schema.py" = ["E722", "E501", "F403", "F405", "PT015", "B011"]
+"opus/import/util/dump_pds_definitions.py" = ["E722", "E501", "F403", "F405", "PT015", "B011"]
+"opus/import/obs_volume_hstix_xxxx.py" = ["E722", "E501", "F403", "F405", "PT015", "B011"]
+"log_analyzer/opus/query_handler.py" = ["E722", "E501", "F403", "F405", "PT015", "B011"]
+"opus/import/import_util.py" = ["E722", "E501", "F403", "F405", "B006"]
+"opus/application/apps/tools/file_utils.py" = ["E722", "E501", "F403", "F405", "B006"]
+
+[tool.pymarkdown.plugins.md013]
+# Line length (disable so README/CONTRIBUTING can use longer lines).
+enabled = false
+
+[tool.pymarkdown.plugins.md033]
+# Inline HTML (e.g. <br>) allowed in Markdown.
+enabled = false
+
+[tool.bandit]
+# Recurse the code trees; exclude tests and the out-of-scope perf_test/.
+# Targets track the current (pre-move) layout and shift to src/ as code moves.
+exclude_dirs = ["perf_test", "venv", ".venv", "test_api", "test_perf", "test_db_data"]
+targets = ["lib", "opus", "log_analyzer"]
+# Burn-down skip list (plan PR-01): category-level skips for existing patterns,
+# each justified below. PR-17 shrinks these to individually-justified `# nosec`
+# lines; PR-09 removes the `.extra()` sources (B610) and PR-12 formalizes SQL
+# assembly (B608). B324 (weak MD5) was fixed in-code via usedforsecurity=False.
+skips = [
+  "B101",  # assert_used: asserts are internal invariants, not input validation.
+  "B105",  # hardcoded_password_string: the only hit is the 'XXX' placeholder in
+           # a secrets *template* (removed in PR-08); not a real credential.
+  "B110",  # try_except_pass: legacy best-effort cleanup paths.
+  "B113",  # request_without_timeout: internal log-analyzer API client.
+  "B301",  # pickle: shelve/pickle over the tool's own locally-produced cache data.
+  "B311",  # random: non-cryptographic fault injection (throw_random_*).
+  "B403",  # import pickle/subprocess modules (imports alone are not the risk).
+  "B404",
+  "B506",  # yaml.load: parses a trusted, repo-bundled FAQ file via FullLoader.
+  "B603",  # subprocess without shell: fixed, internal command invocations.
+  "B607",  # start_process_with_partial_path: same internal invocations.
+  "B608",  # hardcoded_sql: values are always %s-parameterized and identifiers are
+           # validated; SQL assembly is formalized through a builder in PR-12.
+  "B610",  # django_extra_used: the .extra() calls are removed in PR-09.
+  "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
+]
+
+# Enabled in PR-02 after the dead-code removal.
+# [tool.vulture]
+# paths = ["lib", "opus", "log_analyzer"]
+# exclude = ["perf_test/"]
+# min_confidence = 70

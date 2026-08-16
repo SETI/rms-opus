@@ -1,0 +1,66 @@
+---
+description: Conventional commits, branching, and PR workflow for source control and code review.
+alwaysApply: false
+---
+
+# Git Workflow
+
+## 1. Commit Messages
+
+Use the **Conventional Commits** format:
+
+```
+<type>[(<scope>)]: <imperative summary>   (50 chars max for subject)
+
+[Optional body — wrap at 72 chars. Explain *what* and *why*, not *how*.]
+
+[Optional footer — e.g., Closes #123, BREAKING CHANGE: description]
+```
+
+### Allowed types
+
+| Type | When to use |
+|------|-------------|
+| `feat` | New user-facing feature or public API addition. |
+| `fix` | Bug fix. |
+| `docs` | Documentation-only change. |
+| `style` | Formatting, whitespace — no logic change. |
+| `refactor` | Code restructure with no behavior change. |
+| `perf` | Performance improvement. |
+| `test` | Adding or updating tests only. |
+| `build` | Build system or dependency change. |
+| `ci` | CI/CD configuration change. |
+| `chore` | Maintenance tasks that don't fit above. |
+
+### Rules
+
+- Subject line MUST be imperative mood ("Add X", not "Added X" or "Adds X").
+- Subject line MUST NOT exceed 50 characters.
+- Do NOT end the subject line with a period.
+- Separate subject from body with a blank line.
+- Body lines MUST NOT exceed 72 characters.
+- Reference related issues in the footer.
+- Each commit MUST represent one logical change. Do NOT mix unrelated changes.
+
+## 2. Branching Strategy
+
+This project uses a simple two-tier branching model:
+
+- **`main`** — Always releasable. Protected; requires PR review and passing CI. Releases are created by tagging commits on `main`.
+- **`feature/<name>`** — New features or enhancements, branched from `main`.
+- **`bugfix/<name>`** — Bug fixes, branched from `main`.
+
+There are NO separate release, hotfix, or develop branches. All work merges back to `main` via pull request.
+
+## 3. Pull Requests and Merging
+
+- ALWAYS create a PR for merging into `main`; direct pushes are prohibited.
+- PRs MUST pass all CI checks (lint, type-check, tests) before merge.
+- Prefer **squash merge** to keep `main` history linear and readable.
+- Delete the source branch after merge.
+
+## 4. Tagging and Releases
+
+- Tag releases on `main` with semantic versioning: `v<MAJOR>.<MINOR>.<PATCH>`.
+- Let `setuptools_scm` derive the package version from tags automatically.
+- Creating a GitHub Release from the tag triggers the PyPI publish workflow.

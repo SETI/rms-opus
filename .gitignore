@@ -13,7 +13,6 @@ logs
 log.txt
 nohup.out
 
-.vscode
 *venv*
 !scripts/*
 test_out*
@@ -27,3 +26,9 @@ coverage.xml
 htmlcov/
 
 profile.txt
+
+# Packaging (setuptools-scm writes the version file at build time)
+build/
+dist/
+*.egg-info/
+src/opus_config/_version.py
