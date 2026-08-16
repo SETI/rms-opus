@@ -968,3 +968,39 @@ body; never rewrite or delete earlier notes.*
   PR-01. PR-17's empty per-file-ignores-table exit criterion is unchanged and still holds.
   Bandit (142 findings, incl. 5×`B324` HIGH, 18×`B608`/PR-12, 4×`B610`/PR-09) uses its
   sanctioned `# nosec`/skips valve, unaffected.
+- **2026-08-16 (PR-01 executed):** facts later PRs rely on:
+  - **`N801`/`N802` actually fire** (`N802`×24 invalid-function-name, `N801`×7
+    invalid-class-name; ruff 0.16.3) — the earlier "`N` fires 0×" reading was contaminated
+    by a since-removed seed. Both are `N8xx`, authorized for the legacy seed, so they are
+    grandfathered in the `lib/**`, `opus/**`, `log_analyzer/**` per-file-ignore globs and
+    retired by PR-17 with the rest of that table.
+  - **Lint scope (pre-move):** ruff runs on `lib opus/import opus/application/apps
+    log_analyzer` (historical flake8 scope + log_analyzer); bandit on `lib opus
+    log_analyzer` with `exclude_dirs` for `test_api`/`test_perf`/`test_db_data`/`perf_test`.
+    These paths live in `run-tests.yml` (`RUFF_PATHS`/`BANDIT_PATHS` env), `pyproject.toml`
+    (`[tool.bandit].targets`, `[tool.ruff.lint.per-file-ignores]` globs), and
+    `run-all-checks.sh` (`OPUS_RUFF_PATHS`/`OPUS_BANDIT_PATHS`); **each move PR (PR-03..06)
+    must shift them toward `src/`.** `opus/application/{settings,urls,manage,
+    clear_django_cache}.py`, `test_api/`, `test_db_data/`, `test_perf/` are NOT yet
+    ruff-scoped (as under flake8) and get linted when they move.
+  - **Bandit burn-down:** `B324` (5× weak-MD5 cache keys in `search/views.py`) fixed
+    in-code with `usedforsecurity=False` (not skipped). A category `skips` list
+    (`B101,B105,B110,B113,B301,B311,B403,B404,B506,B603,B607,B608,B610,B704`) is in
+    `[tool.bandit]`, each justified; PR-17 shrinks it to per-line `# nosec`, PR-09 removes
+    the `B610` `.extra()` sources, PR-12 addresses `B608`. (`B105` was the `'XXX'`
+    placeholder in `apps/dictionary/secrets_template.py`, deleted in PR-08 — not a real
+    secret.)
+  - **`B019` fixes (behavior-preserving, integration-CI-gated):** `importdb/mysql.py`
+    `table_info` `@cache`→instance dict `self._table_info_cache` (cleared where the two
+    `.cache_clear()` calls were); `log_analyzer/ip_to_host_converter.py` `convert`
+    `@functools.cache`→instance dict `self._convert_cache` (a base `__init__` was added).
+  - **Tooling/CI shape:** the package is NOT pip-installable until `src/` exists (PR-03),
+    so the `run-tests.yml` lint job installs `ruff`/`bandit`/`pymarkdownlnt` directly, not
+    `pip install -e ".[dev]"`. `pyroma` passes 10/10 already and is enabled in
+    `run-all-checks.sh`; `pytest`/`sphinx` ENABLE flags are `false` there until PR-03/PR-21
+    create `tests/`/`docs/`. `run-tests.yml` keeps a disabled `ruff format` step
+    (`ENABLE_RUFF_FORMAT` env `false`) for PR-23.
+  - **Branch protection:** the new `run-tests.yml` lint job is deliberately named
+    **`Run Lint`**, so the existing required-status-check context `Run Lint` is preserved
+    (no `rewrite` protection edit needed); `Test OPUS (self-hosted-linux, 3.12)` is
+    unchanged.
