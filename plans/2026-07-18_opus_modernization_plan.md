@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved**)
 
 ---
 
@@ -308,7 +308,9 @@ memory. Consequences and rules:
   `requirements.in` (django upgrade deferred to PR-09 — start with `django>=4.2,<5` to
   keep working), dev extras (incl. `pytest-django`, `pytest-xdist`, `pytest-cov`,
   `djangorestframework`) and docs extras; `[tool.ruff]` per template (line 100, py312
-  target, select E,F,W,I,UP,B,SIM,C4,A,N,PT,RUF) with `perf_test/` in `exclude`;
+  target, select E,F,W,I,UP,B,SIM,C4,A,N,PT,RUF; global `ignore = ["PT009", "PT027"]` for
+  the permanently-`unittest` integration suite — see the burn-down discipline below) with
+  `perf_test/` in `exclude`;
   `[tool.pytest.ini_options]` (`testpaths=["tests"]`), `[tool.coverage]` (unit scope only
   — §5a), mypy section present but not yet enforced (also excluding `perf_test/`);
   `[tool.bandit]` (recurse `src/`, exclude tests + `perf_test/`) and `[tool.vulture]`
@@ -341,10 +343,33 @@ memory. Consequences and rules:
   `ruff format --check` in PR-23). Bring the codebase to `ruff check` and `bandit`
   clean. **Burn-down
   discipline:** the `[tool.ruff.lint.per-file-ignores]` table in pyproject *is* the
-  burn-down list; PR-01 may seed it **only** with codes E722, F403, F405, N8xx, E501
-  (today's flake8 ignores that need real refactoring); every other failing code must be
-  fixed in PR-01 itself (import sorting, `.find()`→`in`, comprehensions, etc.). PR-17's
-  exit criterion is that this table is empty. Ruff scope includes `log_analyzer/`.
+  burn-down list; PR-01 seeds it with two kinds of entry and **nothing else**:
+  1. **Legacy-refactor codes** (today's flake8 ignores that need real refactoring):
+     `E722, F403, F405, E501`. (`N8xx` is authorized but currently fires zero times — it
+     may be listed inertly or omitted.) Removed as the underlying code is cleaned up
+     through PR-17.
+  2. **Codes whose remediation this plan assigns to the *next* PR** — grandfathered here so
+     PR-01 doesn't pre-empt PR-02's scope, each entry annotated with its removal PR:
+     `PT015, B011` (`assert False`) and `B006` (mutable default arg) — PR-02 explicitly
+     rewrites these (`assert False` → `NotImplementedError`; the `ImportDBSuper.__init__`
+     default), and removes these ignores. **Removed in PR-02.**
+  Every **other** failing code must be fixed in PR-01 itself (import sorting, `.find()`→`in`,
+  comprehensions, `UP*`, `B904`, `B007`, `PT018` (3, composite assertions), etc.). PR-17's
+  exit criterion is that this table is empty (which holds: the legacy-refactor codes and the
+  two PR-02 grandfathers are each retired by their annotated PR, all ≤ PR-17).
+  - **Global `ratchet` exception for the retained `unittest` suite (not a per-file-ignore):**
+    `PT009` (1023 — `self.assertEqual` etc.) and `PT027` (215 — `self.assertRaises`) exist
+    solely to migrate `unittest`-style assertions to pytest-native ones, but PR-18 *fixes*
+    that the live-DB integration tests (today's `apps/*/test_*.py`, all
+    `django.test.TestCase` subclasses) **stay `unittest.TestCase` permanently**. Enforcing
+    these two codes would contradict that ratified decision, and no conversion PR will ever
+    retire them — so they cannot be burn-down entries. Instead, list them **once** in the
+    top-level `[tool.ruff.lint] ignore` (a documented global config choice, *not* the
+    per-file-ignores burn-down table), with a comment citing the PR-18 unittest decision.
+    This keeps `PT018` and all other `PT` rules enforced everywhere, keeps the per-file
+    burn-down table emptiable by PR-17, and costs nothing on the new function-style pytest
+    suites (plain `assert`/`pytest.raises` never trigger `PT009`/`PT027`). Ruff scope
+    includes `log_analyzer/`.
   **Bandit follows the same burn-down discipline:** findings are fixed or annotated
   `# nosec` with a written justification (per `security.mdc`). (Vulture is enabled in PR-02
   with its own whitelist burn-down — see there.) Both the bandit `# nosec`/config skips and
@@ -391,7 +416,9 @@ memory. Consequences and rules:
   `obs_profile_pds4.py` missing-return reported in #1434 is already fixed in the current
   tree — verify and do not hunt for it.) Bare `except:` → `except Exception`; pointless
   `except: raise` removed; `assert False` → `NotImplementedError`; mutable default arg in
-  `ImportDBSuper.__init__` fixed.
+  `ImportDBSuper.__init__` fixed. **Then remove the now-obsolete `PT015, B011, B006`
+  entries PR-01 grandfathered into `[tool.ruff.lint.per-file-ignores]`** (they were parked
+  there awaiting exactly these fixes); re-run `ruff check` to confirm still clean.
 - Replace `from config_data import *` with explicit imports (the opus_secrets wildcard
   fully dies in PR-08).
 
@@ -927,4 +954,17 @@ End-to-end acceptance (PR-22/PR-24, on a clean venv, no repo checkout on path):
 PRs need (spike outcomes, validation results, forced deviations). Never rewrite the plan
 body; never rewrite or delete earlier notes.*
 
-- (none yet)
+- **2026-08-16 (pre-PR-01, orchestrator plan-body amendment after a stop-and-report):**
+  the PR-01 ruff burn-down seed (`E722/F403/F405/N8xx/E501`) predated ruff's `PT`/`B`
+  categories. Verified counts (ruff 0.15.7, scope `lib opus/import opus/application/apps
+  log_analyzer`, select per plan): `PT009`×1023, `PT027`×215, `PT015`×27, `B011`×27,
+  `B006`×3, `PT018`×3, plus `B007`×17/`B904`×24/`B905`×7/`B019`×2/`B023`×2 and the
+  legacy-ignore codes `E501`×965/`F405`×19/`E722`×14/`F403`×4 (`N` fires 0×). Resolution
+  (now in the PR-01 burn-down text): `PT009`+`PT027` → documented global
+  `[tool.ruff.lint] ignore` (the live-DB integration tests stay `unittest.TestCase`
+  permanently per PR-18, so these never burn down); `PT015`/`B011`/`B006` → per-file
+  grandfather removed in **PR-02** when the `assert False`→`NotImplementedError` and
+  `ImportDBSuper.__init__` mutable-default fixes land; `PT018` and everything else fixed in
+  PR-01. PR-17's empty per-file-ignores-table exit criterion is unchanged and still holds.
+  Bandit (142 findings, incl. 5×`B324` HIGH, 18×`B608`/PR-12, 4×`B610`/PR-09) uses its
+  sanctioned `# nosec`/skips valve, unaffected.
