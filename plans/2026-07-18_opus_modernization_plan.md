@@ -1156,3 +1156,86 @@ body; never rewrite or delete earlier notes.*
     (only commented-out hook entries remained); both are still referenced by
     `import_util.py` (`PDSTABLE_REPLACEMENTS` is iterated; `PDSTABLE_PREPROCESS` only in a
     commented loop) and are below vulture's confidence gate.
+- **2026-08-17 (PR-03 executed):** facts later PRs rely on:
+  - **`opus_support` layout.** `src/opus_support/` holds the five domain modules the plan
+    names (`sclk.py`, `orbits.py`, `time_parsing.py`, `angles.py`, `units.py`) **plus a
+    sixth, private `_numeric_text.py`** holding `_strip_trailing_zeros` and
+    `_clean_numeric_field`. That sixth module is not scope creep, it is forced: `units`
+    imports the angle parse/format functions for `UNIT_FORMAT_DB` while `angles` needs
+    those two helpers, which used to live in the units section — a cycle. The dependency
+    graph is now `units -> angles -> _numeric_text` with `sclk`/`orbits`/`time_parsing`
+    as leaves.
+  - **The public surface is unchanged and re-exported in full.** `__init__.py` imports all
+    49 public names and lists them in `__all__` (`__all__` is also what keeps vulture from
+    flagging the re-exports). Verified against the pre-split module: same 49 names, none
+    added or missing, every public callable byte-identical, `UNIT_FORMAT_DB` deep-equal
+    including key order and every parse/format slot. `from opus_support import X` works
+    exactly as before on both sides; **later PRs should keep importing from the package
+    root, not from the submodules.** The five underscore helpers
+    (`_parse_multi_field_sclk`, `_format_multi_field_sclk`, `_parse_dms_hms`,
+    `_strip_trailing_zeros`, `_clean_numeric_field`) are deliberately *not* re-exported.
+  - **isort reclassification is a standing landmine for PR-04/05/06.** As soon as a tree
+    lands under `src/`, ruff's isort reclassifies it from third-party to first-party, so
+    every importing file's import block must be re-sorted **in the same PR** or the lint
+    job fails. PR-03 hit this on all 22 `opus_support` importers; the fix is
+    `ruff check --select I --fix <paths>` in the rewrite commit. It is a pure reordering,
+    but audit it under the §4a semantics lens anyway (PR-03's audit: `opus_support` has no
+    import-time side effects beyond `DEG_RAD = np.degrees(1)` and literal dicts, and it
+    imports none of the modules it now follows).
+  - **`opus_config` shim API (PR-04 and PR-05 consume it; PR-08 deletes it).**
+    `from opus_config._secrets_compat import load_secrets` returns the executed
+    `opus_secrets.py` as a module object, cached with `functools.cache`; every setting is
+    an attribute on it. `secrets_path()` exposes the resolution: `OPUS_SECRETS` (an
+    absolute path to the **file**, not its directory) first, then `opus_secrets.py` in the
+    process CWD. The module is deliberately **not** registered in `sys.modules`, so a
+    leftover `import opus_secrets` still fails loudly. A missing file raises
+    `FileNotFoundError`. PR-08 must delete `tests/opus_config/test_secrets_compat.py` and
+    `tests/opus_config/conftest.py` along with `_secrets_compat.py`.
+  - **`RMS_OPUS_LIB_PATH` is entirely gone** — both `sys.path.insert` calls, the
+    definition in `opus_secrets_template.py`, and the two shell generators that echoed it.
+    A repo-wide grep returns nothing. The **remaining** `sys.path` inserts belong to the
+    moves that own them: `main_opus_import.py` (`RMS_OPUS_ROOT` for `opus_secrets`, and
+    `PROJECT_ROOT`) is PR-04's, and `settings.py` (`PROJECT_ROOT`, `RMS_OPUS_ROOT`,
+    `apps/`) is PR-05's.
+  - **`pip install -e .` is now required to run anything.** It was added to
+    `run-app-tests.yml` (after the `requirements.txt` install; nothing is upgraded because
+    every pyproject bound is already satisfied), and to the two deploy scripts that build a
+    venv, `scripts/server/import_and_deploy/deploy_new_code_only.sh` and
+    `_opus_setup_environment.sh`. `scripts/automated_tests/*` does not install anything
+    itself and relies on the workflow. Confirmed that a shallow, tag-less checkout still
+    builds (setuptools-scm falls back to `0.0.0` rather than failing).
+  - **Tool scope paths after this PR** (still the same three files each move PR must
+    update): ruff `src opus/import opus/application/apps log_analyzer tests`; bandit
+    `src opus log_analyzer` (tests are never bandit-scanned); vulture
+    `src opus log_analyzer tests vulture_whitelist.py`. The `lib/**/*.py` row is gone from
+    `[tool.ruff.lint.per-file-ignores]`, which now holds only `opus/**` and
+    `log_analyzer/**`; **no `src/**` row was added and none should be** — code is brought
+    up to the full rule set as it moves.
+  - **Vulture found one masked dead import** when its scope widened from `lib` to `src`:
+    `import unittest` in `opus/application/test_api/test_help_api.py` (the file uses only
+    `from unittest import TestCase`). It had been suppressed because the inline test
+    classes in `lib/opus_support.py` referenced the name. Expect similar unmaskings as
+    each remaining tree moves.
+  - **pytest configuration.** `[tool.pytest.ini_options]` now sets
+    `filterwarnings = ["error"]` (verified clean on 3.12 and 3.13, serial and under
+    `-n auto`); add narrowly-scoped `default::`/`ignore::` entries with a comment if a
+    third-party warning appears. `ENABLE_PYTEST` in `run-all-checks.sh` is `true`.
+    `[tool.ruff] exclude` now lists `src/opus_config/_version.py` (setuptools-scm writes it
+    at build time and it is git-ignored, so a local editable install would otherwise fail
+    `ruff check src`).
+  - **New CI job.** `run-tests.yml` gained `Unit Tests (3.12)` / `Unit Tests (3.13)`. No
+    workflow or job was *renamed*, so the `rewrite` branch-protection contexts (`Run Lint`,
+    `Test OPUS (self-hosted-linux, 3.12)`) are unchanged; the new job is not a required
+    check. PR-19/PR-20 should add it to the required contexts when they rename the
+    workflows.
+  - **The integration 100% gate now covers `src/opus_support/*`.** `run_coverage.sh` begins
+    with `coverage erase` (the old first command implicitly reset the data file; the new one
+    appends) and runs `coverage run -a -m pytest ../../tests/opus_support`;
+    `opus/application/.coveragerc` includes `*/src/opus_support/*`. Verified by running
+    that exact sequence from `opus/application`: all six package modules at 100% statements
+    and 100% branches, with no test file measured. **Any change to `opus_support` in a later
+    PR must keep it at 100% or the self-hosted gate fails.**
+  - **No `py.typed` marker yet.** `[tool.setuptools.package-data]` already globs for it, but
+    `opus_support`/`opus_config` carry no annotations until PR-14; shipping the marker now
+    would tell downstream type-checkers to trust an untyped package. **PR-14 adds
+    `src/opus_support/py.typed` and `src/opus_config/py.typed` with the annotations.**
