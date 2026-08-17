@@ -75,7 +75,7 @@ dev = [
   "ruff>=0.8",
   "bandit[toml]>=1.8",
   "pyroma>=4.2",
-  # "vulture>=2.14",  # Enabled in PR-02 after the dead-code removal
+  "vulture>=2.14",
   "rms-opus[docs]",
 ]
 docs = [
@@ -205,8 +205,13 @@ skips = [
   "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
 ]
 
-# Enabled in PR-02 after the dead-code removal.
-# [tool.vulture]
-# paths = ["lib", "opus", "log_analyzer"]
-# exclude = ["perf_test/"]
-# min_confidence = 70
+# Enabled in PR-02 (after the dead-code removal). Genuine dead code is
+# deleted; irreducible false positives live in vulture_whitelist.py (which is
+# passed as an input path so its names count as used). PR-17 shrinks the
+# whitelist. Paths track the current (pre-move) layout and shift toward src/
+# as code moves; they are also set via OPUS_VULTURE_PATHS (run-all-checks.sh)
+# and VULTURE_PATHS (run-tests.yml).
+[tool.vulture]
+paths = ["lib", "opus", "log_analyzer", "vulture_whitelist.py"]
+exclude = ["*/perf_test/*"]
+min_confidence = 70
