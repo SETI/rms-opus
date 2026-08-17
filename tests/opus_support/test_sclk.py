@@ -22,7 +22,8 @@ from opus_support import (
 )
 
 # Clock counts run into the millions, where pytest.approx's relative default of
-# 1e-6 would tolerate an error of several whole ticks, so comparisons state an
+# 1e-6 would tolerate an error of several whole ticks, and one comparison is
+# against zero, where a relative tolerance means nothing at all. Both use an
 # absolute tolerance instead: half a unit in the seventh decimal place.
 SCLK_ABS_TOL = 5e-8
 

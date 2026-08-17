@@ -1196,10 +1196,9 @@ body; never rewrite or delete earlier notes.*
   - **`RMS_OPUS_LIB_PATH` is entirely gone** — both `sys.path.insert` calls, the
     definition in `opus_secrets_template.py`, and the two shell generators that echoed it.
     No executable reference remains (a repo-wide grep hits only explanatory comments and
-    the planning docs). The **remaining** `sys.path` inserts belong to the
-    moves that own them: `main_opus_import.py` (`RMS_OPUS_ROOT` for `opus_secrets`, and
-    `PROJECT_ROOT`) is PR-04's, and `settings.py` (`PROJECT_ROOT`, `RMS_OPUS_ROOT`,
-    `apps/`) is PR-05's.
+    the planning docs). The **remaining** `sys.path` inserts belong to the moves that own
+    them: `main_opus_import.py` (`RMS_OPUS_ROOT` for `opus_secrets`, and `PROJECT_ROOT`)
+    is PR-04's, and `settings.py` (`PROJECT_ROOT`, `RMS_OPUS_ROOT`, `apps/`) is PR-05's.
   - **`pip install -e .` is now required to run anything.** It was added to
     `run-app-tests.yml` (after the `requirements.txt` install; nothing is upgraded because
     every pyproject bound is already satisfied), and to the two deploy scripts that build a

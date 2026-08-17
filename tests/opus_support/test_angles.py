@@ -3,7 +3,7 @@
 The DMS and HMS parsers share one implementation that differs only in which letter it
 accepts and whether the result is scaled by 15, so they share one table of cases:
 ``{L}`` is replaced by the parser's letter and the expected value is multiplied by the
-parser's entry in ``ANGLE_SCALE``.
+``ANGLE_SCALE`` entry for that letter.
 """
 
 from collections.abc import Callable
