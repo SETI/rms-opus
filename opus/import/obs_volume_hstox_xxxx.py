@@ -64,7 +64,7 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
         wr1 = self._index_col('MAXIMUM_WAVELENGTH_RESOLUTION')
         wr2 = self._index_col('MINIMUM_WAVELENGTH_RESOLUTION')
         # This is necessary because in some cases these are backwards in the table!
-        if wr1 > wr2:
+        if wr1 is not None and wr2 is not None and wr1 > wr2:
             self._log_warning(
                 'MAXIMUM_WAVELENGTH_RESOLUTION < MINIMUM_WAVELENGTH_RESOLUTION; '
                 +'swapping')
@@ -75,7 +75,7 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
         wr1 = self._index_col('MAXIMUM_WAVELENGTH_RESOLUTION')
         wr2 = self._index_col('MINIMUM_WAVELENGTH_RESOLUTION')
         # This is necessary because in some cases these are backwards in the table!
-        if wr1 > wr2:
+        if wr1 is not None and wr2 is not None and wr1 > wr2:
             return wr1
         return wr2
 

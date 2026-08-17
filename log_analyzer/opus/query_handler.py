@@ -100,7 +100,7 @@ class QueryHandler:
         elif query_type == 'data' or query_type == 'dataimages':
             uses_metadata, uses_pages, uses_sort, current_state = True, True, True, State.FETCHING
         else:
-            assert False
+            raise NotImplementedError(query_type)
 
         previous_state = self._previous_state
         if current_state != previous_state:

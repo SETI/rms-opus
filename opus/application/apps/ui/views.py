@@ -374,11 +374,11 @@ def api_get_widget(request, **kwargs):
         # tells us how many times to go through loop below
         try:
             len1 = len(selections[param1])
-        except:
+        except Exception:
             len1 = 0
         try:
             len2 = len(selections[param2])
-        except:
+        except Exception:
             len2 = 0
         length = len1 if len1 > len2 else len2
 

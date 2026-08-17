@@ -364,7 +364,7 @@ def api_edit_cart(request, action, **kwargs):
         recycle_bin = int(recycle_bin)
         if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
-    except:
+    except Exception:
         log.error('api_edit_cart: Bad value for recyclebin %s: %s', recycle_bin,
                   request.GET)
         ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_bin, request))

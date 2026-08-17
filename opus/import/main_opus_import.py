@@ -539,7 +539,7 @@ try: # Top-level exception handling so we always log what's going on
 
     impglobals.LOGGER.close()
 
-except:
+except Exception:
     msg = 'Import failed with exception'
     if not impglobals.ARGUMENTS.log_suppress_traceback:
         msg += ':\n' + traceback.format_exc()

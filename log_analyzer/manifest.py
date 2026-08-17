@@ -30,7 +30,7 @@ class ManifestEntry(NamedTuple):
                                  # product_type_abbr=line['Product Type Abbrev'],
                                  # version=line['Version']
                                  )
-        except:
+        except Exception:
             return None
 
     @property
@@ -51,7 +51,7 @@ class Manifest(NamedTuple):
                 entries = [entry for line in reader
                            for entry in [ManifestEntry.from_csv_line(line)] if entry]
                 return Manifest(file_name, entries)
-        except:
+        except Exception:
             print(f"Error while reading Manifest file {file_name}")
             return None
 

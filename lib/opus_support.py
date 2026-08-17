@@ -856,7 +856,7 @@ def parse_time(iso, unit=None, **kwargs):
     # to do
     try:
         et = float(iso)
-    except:
+    except Exception:
         pass
     else:
         if not math.isfinite(et):
@@ -873,7 +873,7 @@ def parse_time(iso, unit=None, **kwargs):
             iso = 'MJED' + iso
     try:
         (day, sec, time_type) = julian.day_sec_from_string(iso, timesys=True)
-    except:
+    except Exception:
         raise ValueError(f'Invalid time syntax: {iso}') from None
     if time_type not in ('UTC', 'TDB'):
         raise ValueError(f'Invalid time system {time_type} when parsing {iso}')

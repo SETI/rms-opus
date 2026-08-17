@@ -19,7 +19,7 @@ elif 'MOON_GEOMETRY_TABLE' in label:
 elif 'RING_GEOMETRY_TABLE' in label:
     index_dict = label['RING_GEOMETRY_TABLE']
 else:
-    assert False
+    raise ValueError(f'No recognized table key found in label "{label_path}"')
 
 for field_name in sorted(index_dict.keys()):
     index_entry = index_dict[field_name.upper()]

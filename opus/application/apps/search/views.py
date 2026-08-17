@@ -401,7 +401,7 @@ def api_string_search_choices(request, slug):
                                         regex.IGNORECASE | regex.V1)
                 final_results = [pattern.sub('<b>\\1</b>', x)
                                  for x in final_results]
-            except:
+            except Exception:
                 pass
 
     if len(final_results) > limit:
