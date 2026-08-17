@@ -1,7 +1,8 @@
 """Tests for the unit lookup, conversion, parsing and formatting in ``opus_support``.
 
-These cases were extracted from the ``unittest`` classes that used to live inside
-``lib/opus_support.py`` and converted to table-driven pytest tests.
+``UNIT_FORMAT_DB`` drives all of it. These tests cover the lookups it answers, the
+numeric conversions to and from each group's default unit, and the formatting and
+parsing of a value in a requested unit.
 """
 
 from collections.abc import Callable
@@ -40,9 +41,14 @@ from opus_support import (
                          [convert_to_default_unit, convert_from_default_unit])
 def test_convert_rejects_unit_without_unit_id(
         converter: Callable[..., Any]) -> None:
-    """Naming a unit without a unit_id is a lookup error."""
-    with pytest.raises(KeyError):
+    """Naming a unit without a unit_id raises a bare, message-less KeyError.
+
+    The empty message is asserted rather than glossed over because it is the
+    module's current contract; giving it text would be a behavior change.
+    """
+    with pytest.raises(KeyError) as excinfo:
         converter(0, None, 'm')
+    assert str(excinfo.value) == ''
 
 
 @pytest.mark.parametrize('converter',

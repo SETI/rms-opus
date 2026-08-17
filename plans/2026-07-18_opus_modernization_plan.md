@@ -1160,11 +1160,12 @@ body; never rewrite or delete earlier notes.*
   - **`opus_support` layout.** `src/opus_support/` holds the five domain modules the plan
     names (`sclk.py`, `orbits.py`, `time_parsing.py`, `angles.py`, `units.py`) **plus a
     sixth, private `_numeric_text.py`** holding `_strip_trailing_zeros` and
-    `_clean_numeric_field`. That sixth module is not scope creep, it is forced: `units`
-    imports the angle parse/format functions for `UNIT_FORMAT_DB` while `angles` needs
-    those two helpers, which used to live in the units section — a cycle. The dependency
-    graph is now `units -> angles -> _numeric_text` with `sclk`/`orbits`/`time_parsing`
-    as leaves.
+    `_clean_numeric_field`. Those two helpers *had* to leave `units.py`: `units` imports
+    the angle parse/format functions for `UNIT_FORMAT_DB` while `angles` needs the
+    helpers, which sat in the units section — a cycle. Giving them their own module
+    rather than parking them in `angles.py` (which would also have been acyclic) keeps
+    `angles` about angles. The dependency graph is `units -> angles -> _numeric_text`
+    with `sclk`/`orbits`/`time_parsing` as leaves.
   - **The public surface is unchanged and re-exported in full.** `__init__.py` imports all
     49 public names and lists them in `__all__` (`__all__` is also what keeps vulture from
     flagging the re-exports). Verified against the pre-split module: same 49 names, none
@@ -1193,7 +1194,8 @@ body; never rewrite or delete earlier notes.*
     `tests/opus_config/conftest.py` along with `_secrets_compat.py`.
   - **`RMS_OPUS_LIB_PATH` is entirely gone** — both `sys.path.insert` calls, the
     definition in `opus_secrets_template.py`, and the two shell generators that echoed it.
-    A repo-wide grep returns nothing. The **remaining** `sys.path` inserts belong to the
+    No executable reference remains (a repo-wide grep hits only explanatory comments and
+    this plan). The **remaining** `sys.path` inserts belong to the
     moves that own them: `main_opus_import.py` (`RMS_OPUS_ROOT` for `opus_secrets`, and
     `PROJECT_ROOT`) is PR-04's, and `settings.py` (`PROJECT_ROOT`, `RMS_OPUS_ROOT`,
     `apps/`) is PR-05's.
@@ -1203,7 +1205,8 @@ body; never rewrite or delete earlier notes.*
     venv, `scripts/server/import_and_deploy/deploy_new_code_only.sh` and
     `_opus_setup_environment.sh`. `scripts/automated_tests/*` does not install anything
     itself and relies on the workflow. Confirmed that a shallow, tag-less checkout still
-    builds (setuptools-scm falls back to `0.0.0` rather than failing).
+    builds: setuptools-scm falls back to a `0.1.devN` guess-next-dev version rather than
+    failing. Do not rely on the exact fallback string.
   - **Tool scope paths after this PR** (still the same three files each move PR must
     update): ruff `src opus/import opus/application/apps log_analyzer tests`; bandit
     `src opus log_analyzer` (tests are never bandit-scanned); vulture

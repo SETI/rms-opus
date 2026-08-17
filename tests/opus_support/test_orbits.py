@@ -1,7 +1,7 @@
 """Tests for the Cassini orbit-number conversions in ``opus_support``.
 
-These cases were extracted from the ``unittest`` classes that used to live inside
-``lib/opus_support.py`` and converted to table-driven pytest tests.
+Cassini's first four Saturn orbits are named 0, A, B and C and map to the internal
+numbers -1, 0, 1 and 2; every later orbit maps to itself.
 """
 
 import re

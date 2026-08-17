@@ -1,9 +1,8 @@
 """Tests for the time parsing and formatting helpers in ``opus_support``.
 
-These cases were extracted from the ``unittest`` classes that used to live inside
-``lib/opus_support.py`` and converted to table-driven pytest tests. ``julian``
-has its own test suite, so these tests only check that ``opus_support`` drives it
-correctly.
+The arithmetic belongs to ``julian``, which has its own suite, so these tests check only
+that ``opus_support`` picks the right representation for each epoch, enforces its
+supported date range, and formats a parsed value back to the string it came from.
 """
 
 import re
@@ -22,9 +21,9 @@ from opus_support import (
     parse_time,
 )
 
-# The original suite used ``assertAlmostEqual(..., places=3)``, i.e. a
-# millisecond-scale absolute tolerance, which must be stated explicitly because
-# ``pytest.approx`` defaults to a relative comparison.
+# TAI values reach hundreds of millions of seconds, where pytest.approx's
+# relative default would tolerate whole minutes, so epoch comparisons state an
+# absolute tolerance instead: half a millisecond.
 TIME_ABS_TOL = 5e-4
 
 

@@ -42,9 +42,10 @@ jobs:
           python-version: 3.13
 
       - name: Install lint tools
-        # The package is not yet pip-installable (src/ is populated in later
-        # PRs), so the lint tools are installed directly rather than via
-        # `pip install -e ".[dev]"`. Tool config still comes from pyproject.toml.
+        # These tools only parse source, so this job installs them directly
+        # rather than installing the package and its dependencies with
+        # `pip install -e ".[dev]"` (which the test job below does). Tool
+        # configuration still comes from pyproject.toml.
         run: |
           python -m pip install --upgrade pip
           python -m pip install ruff "bandit[toml]" vulture pymarkdownlnt

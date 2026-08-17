@@ -1,21 +1,22 @@
-"""Transitional loader for the legacy ``opus_secrets.py`` configuration file.
+"""Loader for the hand-written ``opus_secrets.py`` configuration file.
 
-Until the TOML configuration lands, both the import pipeline and the Django backend still
-read their settings from a hand-written ``opus_secrets.py``. That file used to be found by
-inserting the repository root into ``sys.path`` and doing ``from opus_secrets import *``.
-Those inserts are gone, so the file is now located explicitly and executed by path.
+The import pipeline and the Django backend both read their settings from an
+``opus_secrets.py`` written by the deployment scripts. The file is located by path and
+executed, rather than imported, so that nothing depends on the repository layout or on
+the working directory of the process that reads it.
 
 Search order:
 
 1. The ``OPUS_SECRETS`` environment variable, an absolute path to the secrets *file*
-   (not its directory). Servers that host several OPUS installs set a distinct value
+   (not its directory). Servers hosting several OPUS installs set a distinct value
    per install.
 2. ``opus_secrets.py`` in the process's current working directory, which is what the
-   existing CI and deployment scripts produce.
-
-This module is private and short-lived: it is deleted, together with
-``opus_secrets_template.py``, when `opus_config` grows its real TOML loader.
+   CI and deployment scripts produce.
 """
+
+# This module is scaffolding, which is why it is private: it is deleted, together with
+# `opus_secrets_template.py`, when `opus_config` grows its TOML loader. Keep the surface
+# it exposes to `opus_import` and `opus_app` as small as possible so that swap is cheap.
 
 import functools
 import importlib.util
@@ -49,12 +50,12 @@ def secrets_path() -> Path:
 
 @functools.cache
 def load_secrets() -> ModuleType:
-    """Load the legacy secrets file and return it as a module.
+    """Load the secrets file and return it as a module.
 
-    The file is executed once per process and the resulting module is cached, matching
-    the semantics of the ``import opus_secrets`` it replaces. The module is deliberately
-    *not* registered in ``sys.modules``, so a stray ``import opus_secrets`` still fails
-    loudly instead of silently working.
+    The file is executed once per process and the resulting module is cached, so every
+    caller sees one set of settings. The module is deliberately *not* registered in
+    ``sys.modules``, so a stray ``import opus_secrets`` fails loudly instead of silently
+    resolving to this copy.
 
     Returns:
         The executed secrets module; every setting is an attribute on it.

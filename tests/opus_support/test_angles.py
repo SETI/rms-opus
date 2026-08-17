@@ -1,11 +1,9 @@
 """Tests for the DMS/HMS angle conversions in ``opus_support``.
 
-These cases were extracted from the ``unittest`` classes that used to live inside
-``lib/opus_support.py`` and converted to table-driven pytest tests. The DMS and
-HMS parsers share one implementation that differs only in which letter it
-accepts and whether the result is scaled by 15, so they share one table: ``{L}``
-is replaced by the parser's letter and the expected value is multiplied by the
-parser's scale.
+The DMS and HMS parsers share one implementation that differs only in which letter it
+accepts and whether the result is scaled by 15, so they share one table: ``{L}`` is
+replaced by the parser's letter and the expected value is multiplied by the parser's
+scale.
 """
 
 from collections.abc import Callable
@@ -20,9 +18,15 @@ from opus_support import (
     parse_hms_dms,
 )
 
+# (parser, letter, scale) for the tests that check a parsed value, and the same
+# pairs without the scale for the tests that only check that parsing fails.
 ANGLE_PARSERS = [
     pytest.param(parse_dms, 'd', 1, id='dms'),
     pytest.param(parse_hms, 'h', 15, id='hms'),
+]
+ANGLE_PARSER_LETTERS = [
+    pytest.param(parse_dms, 'd', id='dms'),
+    pytest.param(parse_hms, 'h', id='hms'),
 ]
 
 
@@ -109,7 +113,7 @@ def test_parse_angle_conversion_factor(parser: Callable[..., float],
                   conversion_factor=2) == expected * scale
 
 
-@pytest.mark.parametrize(('parser', 'letter', 'scale'), ANGLE_PARSERS)
+@pytest.mark.parametrize(('parser', 'letter'), ANGLE_PARSER_LETTERS)
 @pytest.mark.parametrize('text', [
     # Only the last stated component may be fractional.
     ('23.1{L} 30m 36s'),
@@ -125,8 +129,7 @@ def test_parse_angle_conversion_factor(parser: Callable[..., float],
     ('1e400'),
 ])
 def test_parse_angle_rejects_bad_components(parser: Callable[..., float],
-                                            letter: str, scale: int,
-                                            text: str) -> None:
+                                            letter: str, text: str) -> None:
     """Out-of-range components raise a bare, message-less ValueError.
 
     The empty message is asserted rather than glossed over because it is the

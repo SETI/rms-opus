@@ -1,7 +1,9 @@
 """Tests for the spacecraft-clock (SCLK) conversions in ``opus_support``.
 
-These cases were extracted from the ``unittest`` classes that used to live inside
-``lib/opus_support.py`` and converted to table-driven pytest tests.
+Each mission has a parser that turns a clock string into a number and a formatter that
+turns that number back into the mission's canonical string. The tables below cover the
+spellings each parser accepts, the ones it rejects, and the message every rejection
+carries.
 """
 
 import re
@@ -19,9 +21,9 @@ from opus_support import (
     parse_voyager_sclk,
 )
 
-# The original suite used ``assertAlmostEqual``, which compares to seven decimal
-# places; ``pytest.approx`` needs that stated explicitly because its relative
-# default would be far looser on clock values in the millions.
+# Clock counts run into the billions, where pytest.approx's relative default
+# would tolerate errors of hundreds of ticks, so comparisons state an absolute
+# tolerance instead: half a unit in the seventh decimal place.
 SCLK_ABS_TOL = 5e-8
 
 
@@ -410,10 +412,13 @@ def test_format_voyager_sclk_two_fields(value: float, expected: str) -> None:
     assert format_voyager_sclk(value, fields=2) == expected
 
 
-@pytest.mark.parametrize('fields', [2, 3])
-def test_format_voyager_sclk_accepts_dot_separator(fields: int) -> None:
+@pytest.mark.parametrize(('fields', 'expected'), [
+    (2, '05000.00'),
+    (3, '05000.00.001'),
+])
+def test_format_voyager_sclk_accepts_dot_separator(fields: int,
+                                                   expected: str) -> None:
     """The field separator can be switched from a colon to a dot."""
-    expected = '05000.00.001' if fields == 3 else '05000.00'
     assert format_voyager_sclk(5000, sep='.', fields=fields) == expected
 
 

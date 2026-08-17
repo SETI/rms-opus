@@ -45,6 +45,11 @@
         source venv/bin/activate
         pip install -r requirements.txt
 
+    Then install rms-opus itself in editable mode so that the packages under
+    `src/` (such as `opus_support`) are importable:
+
+        pip install -e .
+
 6. Edit the opus_secrets.py file
 
   - Copy the template:
