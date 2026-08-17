@@ -37,7 +37,12 @@ AI sub-agent with a fresh context per PR. **The complete, binding specification 
    — fix the correct ones, reason-reject the rest — wait for it to settle, and re-trigger
    with a `@coderabbitai review` comment in 10-minute increments if it's out of reviews.
    Declare **ready to merge only once CI and CodeRabbit are both stable and green**; hand
-   the settled PR to the orchestrator to merge.
+   the settled PR to the orchestrator to merge. **Wide-PR exception:** if CodeRabbit
+   hard-skips the PR because its changed-file count exceeds the 100-file cap (a structurally
+   wide PR like PR-01 or the move PRs — not rate-limiting), the skip is accepted, the §4a
+   adversarial review stands in its place, and you record the accepted skip + file count in
+   the PR description; the gate then needs only CI green. This applies only when the cap is
+   genuinely exceeded — never split or reshape a PR to dodge review.
 6. Conventional-commit titles (`feat:`/`fix:`/`refactor:`/`chore:`/`test:`/`docs:`…);
    one logical change per commit.
 
