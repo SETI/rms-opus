@@ -30,9 +30,9 @@ class ImportDBSuper:
         self._warning_list = []
         self._old_warning_handler = None
         # True only while our handler is installed, so _exit() restores exactly
-        # when _enter() installed. A plain `is not None` test on
-        # _old_warning_handler would be wrong when the saved handler is itself
-        # legitimately None.
+        # when _enter() installed. A separate flag is needed because
+        # _old_warning_handler is reset to None on restore, so it cannot serve
+        # as both the sentinel and the saved value.
         self._warning_handler_installed = False
 
     def _is_import_namespace(self, table_name):

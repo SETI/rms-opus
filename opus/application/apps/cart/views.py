@@ -365,8 +365,11 @@ def api_edit_cart(request, action, **kwargs):
         if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
     except Exception:
-        # %r (not %s) so CR/LF in the request-derived values cannot forge extra
-        # log lines (error_analyzer parses these logs line-anchored).
+        # %r (not %s) so CR/LF in recycle_bin -- still the raw request string
+        # when int() raised -- cannot forge extra log lines (error_analyzer
+        # parses these logs line-anchored). This hardens THIS call only; the
+        # same %s-of-request-data pattern remains elsewhere in this file and is
+        # swept systematically in the Phase C logging PR.
         log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin,
                   request.GET)
         ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_bin, request))

@@ -1108,6 +1108,17 @@ body; never rewrite or delete earlier notes.*
        PR-02 with an explicit `_warning_handler_installed` flag. Integration CI cannot reach
        it (the pipeline always passes a logger). **Lesson:** fixing a typo can activate dead
        code — audit what the misspelled statement was silently *not* doing.
+    3. **Pre-existing (NOT introduced by PR-02, left for Phase C):** `ImportDBSuper._exit()`
+       is never called from a `finally`. `read_rows()` and `table_exists()` call
+       `_enter()` … `_exit()` bare, while `_execute_and_fetchall()` raises
+       `ImportDBException` in ~15 places in `mysql.py`. On that path `_enter_stack` stays
+       non-empty, the warning handler stays installed process-wide, and
+       `_warning_handler_installed` stays stale-`True`. Impact today is nil (the process
+       exits shortly after via the top-level handler, and there is a single
+       `impglobals.DATABASE` instance), and PR-02's flag does not make it worse. The
+       related non-LIFO multi-instance clobber (`a._enter(); b._enter(); a._exit()`) is
+       likewise pre-existing and currently unreachable. **Phase C fix:** wrap the
+       `_enter`/`_exit` pairs in `try/finally` or turn them into a context manager.
   - **`instruments.py`** `PDSTABLE_PREPROCESS`/`PDSTABLE_REPLACEMENTS` are now empty lists
     (only commented-out hook entries remained); both are still referenced by
     `import_util.py` (`PDSTABLE_REPLACEMENTS` is iterated; `PDSTABLE_PREPROCESS` only in a
