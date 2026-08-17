@@ -1051,3 +1051,42 @@ body; never rewrite or delete earlier notes.*
     **`Run Lint`**, so the existing required-status-check context `Run Lint` is preserved
     (no `rewrite` protection edit needed); `Test OPUS (self-hosted-linux, 3.12)` is
     unchanged.
+- **2026-08-16 (PR-02 executed):** facts later PRs rely on:
+  - **Vulture is enabled.** Config is `[tool.vulture]` in `pyproject.toml`
+    (`min_confidence = 70`, `exclude = ["*/perf_test/*"]`, `paths = ["lib", "opus",
+    "log_analyzer", "vulture_whitelist.py"]`). Like `RUFF_PATHS`/`BANDIT_PATHS`, the vulture
+    scan paths live in **three** places that each move PR (PR-03..06) must shift toward
+    `src/`: `run-tests.yml` (`VULTURE_PATHS` env), `pyproject.toml` (`[tool.vulture].paths`),
+    and `run-all-checks.sh` (`OPUS_VULTURE_PATHS`). `vulture_whitelist.py` is always included
+    as an input path so whitelisted names count as used. At min-confidence 70 vulture only
+    reports unused **imports** (90%) and **unreachable code** (100%) tree-wide — unused
+    functions/classes/vars/attrs/args are 60% and below the gate — and a name is only flagged
+    when it appears nowhere else in the scanned set, so scanning the whole tree (including the
+    integration test suites) suppresses most argument/name false positives.
+  - **`vulture_whitelist.py` contents:** a single entry, `lineno` — the unused positional
+    parameter required by the `warnings.showwarning` callback signature in
+    `opus/import/importdb/super.py` and `opus/import/main_opus_import.py` (handlers use only
+    `message`). PR-17 shrinks the whitelist to individually-justified entries; this is already
+    minimal.
+  - **Per-file-ignores table shrank:** the PR-01 `PT015`/`B011`/`B006` grandfathers were
+    removed after the `assert False`→exception and mutable-default fixes landed. The
+    `[tool.ruff.lint.per-file-ignores]` table now holds **only** the legacy-refactor codes
+    (`E722, E501, F403, F405, N801, N802`) on the `lib/** opus/** log_analyzer/**` globs,
+    retired by PR-17. `assert False`→`raise NotImplementedError(...)` everywhere except
+    `util/dump_pds_definitions.py`, whose bad-input branch became `raise ValueError(...)` per
+    the plan's "replaced by a real error" wording for that file.
+  - **Shelf-requirement fix landed (PR-19 prerequisite):** `Pds3File.require_shelves(True)`
+    now lives **inside** the `if not ARGUMENTS.dont_use_shelves_only:` block in
+    `main_opus_import.py`, so `--dont-use-shelves-only` runs from the real filesystem without
+    requiring shelves. Default behavior (shelves used and required) is unchanged.
+  - **Files deleted this PR** (so later PRs don't expect them): OPUS2-porting-only
+    `opus/import/util/{get_opus2_mults.py, obs_table_to_schema.py,
+    create_all_obs_table_schemas.sh, dump_param_info.sql, master_labels/}`, the
+    fully-commented `opus/application/apps/dictionary/admin.py`, and `perf_test/stream_c.exe`.
+    Kept: `util/dump_pds_definitions.py`, `util/retrieve_ra_dec.py`. The DB-backend
+    abstraction (`importdb/postgresql.py`, `db_brand` in `get_db()`, `DB_BRAND`) was left
+    intact per the decisions table.
+  - **`instruments.py`** `PDSTABLE_PREPROCESS`/`PDSTABLE_REPLACEMENTS` are now empty lists
+    (only commented-out hook entries remained); both are still referenced by
+    `import_util.py` (`PDSTABLE_REPLACEMENTS` is iterated; `PDSTABLE_PREPROCESS` only in a
+    commented loop) and are below vulture's confidence gate.
