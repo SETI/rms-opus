@@ -1,0 +1,199 @@
+"""Angle conversions between DMS/HMS text and a numeric value in degrees.
+
+The parsers accept degrees-minutes-seconds, hours-minutes-seconds, a bare
+number, or a space-separated triple, and the formatter renders a value back in
+whichever of those the caller's unit asks for.
+"""
+
+import math
+import re
+
+import numpy as np
+
+from opus_support._numeric_text import _clean_numeric_field, _strip_trailing_zeros
+
+################################################################################
+################################################################################
+# ANGLE CONVERSION
+################################################################################
+
+def parse_dms_hms(s, conversion_factor=1, **kwargs):
+    """Parse DMS, HMS, or single number, but "x x x" defaults to DMS."""
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
+                          default='dms')
+
+def parse_hms_dms(s, conversion_factor=1, **kwargs):
+    """Parse DMS, HMS, or single number, but "x x x" defaults to HMS."""
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
+                          default='hms')
+
+def parse_dms(s, conversion_factor=1, **kwargs):
+    """Parse a DMS string or single number."""
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=False,
+                          default='dms')
+
+def parse_hms(s, conversion_factor=1, **kwargs):
+    """Parse an HMS string or single number."""
+    return _parse_dms_hms(s, conversion_factor, allow_dms=False, allow_hms=True,
+                          default='hms')
+
+def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
+                   default='dms'):
+    """Parse a DMS or HMS or "x x x" or plain number."""
+    # Note: conversion_factor is used here for unit=radians. In that case if
+    # the user enters something like "1d" it needs to be interpreted as degrees
+    # and converted to radians. But if the user just types a single number, that
+    # should be interpreted as radians directly.
+    s = s.lower().strip()
+    # '' and variants => s
+    s = s.replace("''", 's').replace('"', 's').replace(chr(8243), 's')
+    # ' and variants => m
+    s = s.replace("'", 'm').replace(chr(8242), 'm')
+    # deg symbol => d
+    s = s.replace(chr(176), 'd')
+
+    format_types = []
+    if allow_dms:
+        format_types.append(('d', 1))
+    if allow_hms:
+        format_types.append(('h', 15))
+    for format_char, format_factor in format_types:
+        # We allow exponential notation in the first position
+        match = re.fullmatch(r'(|[+-]) *(|\d+(|e(|\+)\d+)(|\.\d*)'+format_char+
+                             r') *(|\d+(|\.\d*)m) *(|\d+(|\.\d*)s)', s)
+        if match is None and format_char == default[0]:
+            # Check for just "N N N" if we are looking at the default format
+            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|.\d*))',
+                                 s)
+        if match:
+            neg = match[1]
+            degrees_hours = match[2]
+            minute = match[6]
+            second = match[8]
+            force_dh_int = False
+            force_m_int = False
+            val = 0
+            if second:
+                second = second.strip('s')
+                # Only "second" can have a fractional part if it's provided
+                force_m_int = True
+                force_dh_int = True
+                second = float(second)
+                if not math.isfinite(second) or second < 0 or second >= 60:
+                    raise ValueError
+                val += second / 3600
+            if minute:
+                minute = minute.strip('m')
+                # Only "minute" can have a fractional part if second is not
+                # provided
+                force_dh_int = True
+                minute = float(minute)
+                if force_m_int and minute != int(minute):
+                    raise ValueError
+                if not math.isfinite(minute) or minute < 0 or minute >= 60:
+                    raise ValueError
+                val += minute / 60
+            if degrees_hours:
+                degrees_hours = degrees_hours.strip(format_char)
+                degrees_hours = float(degrees_hours)
+                if force_dh_int and degrees_hours != int(degrees_hours):
+                    raise ValueError
+                if not math.isfinite(degrees_hours):
+                    raise ValueError
+                val += degrees_hours
+            if neg == '-':
+                val = -val
+            return val * format_factor / conversion_factor
+
+    # We don't want to allow numbers with spaces in them because that will cause
+    # potential ambiguity with the "x x x" DMS/HMS format.
+    s = _clean_numeric_field(s, compress_spaces=False)
+    ret = float(s)
+    if not math.isfinite(ret):
+        raise ValueError
+
+    # Note: It is very important that parse_hms_dms is NOT USED for things like
+    # units == 'radians' because this factor of 15 will be applied
+    # inappropriately
+    if default == 'hms':
+        ret *= 15
+
+    return ret
+
+
+def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
+                   keep_trailing_zeros=False):
+    """Format a number as DMS or HMS or a single number as appropriate."""
+    if unit == 'hours' or unit == 'hms':
+        # Just do the normal numeric formatting, but divide by 15 first to be
+        # in units of hours
+        val /= 15
+
+    # numerical_format is in degrees, regardless of whether val is in degrees
+    # or hours.
+    # For DMS, our fractional amount is in seconds, which is 1/3600 degree.
+    # Round it to 1/1000 to be conservative, which is 3 decimal
+    # places. Thus we should subtract 3 from the numerical_format size.
+    # For HMS, our fractional amount is in seconds (but val is in hours), which
+    # is 1/3600*15=1/240 degree. Round it to 1/100 to be conservative, which is
+    # 2 decimal places. Thus we should subtract 2 from the numerical_format
+    # size.
+    # For plain "hour", we need to add two digits to account for the factor of
+    # 15.
+    # For plain "radians", it's 2 digits for the factor of 57.
+    if unit == 'degrees':
+        subtract_amt = 0
+    elif unit == 'dms':
+        subtract_amt = 3
+    elif unit == 'hms':
+        subtract_amt = 2
+    elif unit == 'hours':
+        subtract_amt = -2
+    else:
+        assert unit == 'radians'
+        subtract_amt = -2
+
+    new_dec = max(int(numerical_format[1:-1])-subtract_amt, 0)
+
+    if unit in ['degrees', 'radians', 'hours']:
+        # Plain numeric formatting
+        new_format = f'%.{new_dec}f'
+        if abs(val) >= 1e8:
+            new_format = new_format.replace('f', 'e')
+        ret = new_format % val
+        if not keep_trailing_zeros:
+            ret = _strip_trailing_zeros(ret)
+        return ret
+
+    # For DMS or HMS, the new format is just for the seconds, so we want to have
+    # 2 digits with leading zeroes as necessary
+    if new_dec == 0:
+        new_format = '02d'
+    else:
+        new_format = f'0{new_dec+3}.{new_dec}f'
+
+    val_sec = val * 3600 # Do all the work in seconds for better rounding
+    neg = val_sec < 0
+    val_sec = abs(val_sec)
+    # Round the input number to the given precision
+    prec = 10**new_dec
+    val_sec = np.round(val_sec * prec) / prec
+    dh = int(val_sec // 3600)
+    val_sec = val_sec-dh*3600
+    m = min(int(val_sec // 60), 59)
+    val_sec = val_sec-m*60
+
+    leading_char = 'h'
+    if unit == 'dms':
+        leading_char = 'd'
+    leading_fmt = 'd'
+    if abs(val) >= 1e8:
+        leading_fmt = '.0e'
+    full_format = f'%{leading_fmt}{leading_char} %02dm %0{new_format}'
+    ret = full_format % (dh, m, val_sec)
+    if not keep_trailing_zeros:
+        ret = _strip_trailing_zeros(ret)
+    ret += 's'
+    if neg:
+        ret = '-' + ret
+    return ret
