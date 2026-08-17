@@ -21,9 +21,9 @@ from opus_support import (
     parse_voyager_sclk,
 )
 
-# Clock counts run into the billions, where pytest.approx's relative default
-# would tolerate errors of hundreds of ticks, so comparisons state an absolute
-# tolerance instead: half a unit in the seventh decimal place.
+# Clock counts run into the millions, where pytest.approx's relative default of
+# 1e-6 would tolerate an error of several whole ticks, so comparisons state an
+# absolute tolerance instead: half a unit in the seventh decimal place.
 SCLK_ABS_TOL = 5e-8
 
 

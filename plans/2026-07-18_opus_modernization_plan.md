@@ -1164,8 +1164,9 @@ body; never rewrite or delete earlier notes.*
     the angle parse/format functions for `UNIT_FORMAT_DB` while `angles` needs the
     helpers, which sat in the units section — a cycle. Giving them their own module
     rather than parking them in `angles.py` (which would also have been acyclic) keeps
-    `angles` about angles. The dependency graph is `units -> angles -> _numeric_text`
-    with `sclk`/`orbits`/`time_parsing` as leaves.
+    `angles` about angles. Dependency graph: `units` imports `angles`, `orbits`, `sclk`,
+    `time_parsing` and `_numeric_text`; `angles` imports `_numeric_text`; the other four
+    are leaves.
   - **The public surface is unchanged and re-exported in full.** `__init__.py` imports all
     49 public names and lists them in `__all__` (`__all__` is also what keeps vulture from
     flagging the re-exports). Verified against the pre-split module: same 49 names, none
@@ -1195,7 +1196,7 @@ body; never rewrite or delete earlier notes.*
   - **`RMS_OPUS_LIB_PATH` is entirely gone** — both `sys.path.insert` calls, the
     definition in `opus_secrets_template.py`, and the two shell generators that echoed it.
     No executable reference remains (a repo-wide grep hits only explanatory comments and
-    this plan). The **remaining** `sys.path` inserts belong to the
+    the planning docs). The **remaining** `sys.path` inserts belong to the
     moves that own them: `main_opus_import.py` (`RMS_OPUS_ROOT` for `opus_secrets`, and
     `PROJECT_ROOT`) is PR-04's, and `settings.py` (`PROJECT_ROOT`, `RMS_OPUS_ROOT`,
     `apps/`) is PR-05's.

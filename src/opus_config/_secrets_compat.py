@@ -1,9 +1,10 @@
-"""Loader for the hand-written ``opus_secrets.py`` configuration file.
+"""Loader for the ``opus_secrets.py`` configuration file.
 
 The import pipeline and the Django backend both read their settings from an
-``opus_secrets.py`` written by the deployment scripts. The file is located by path and
-executed, rather than imported, so that nothing depends on the repository layout or on
-the working directory of the process that reads it.
+``opus_secrets.py``, which the CI and deployment scripts generate and which a developer
+copies from ``opus_secrets_template.py`` and edits by hand. The file is located by path
+and executed rather than imported, so it need not be importable and no ``sys.path`` entry
+is required to reach it.
 
 Search order:
 

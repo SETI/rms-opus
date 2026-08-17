@@ -9,8 +9,8 @@ Configuration itself is read through `opus_config._secrets_compat`, which is pri
 the package exports nothing, and callers import the loader from that module directly.
 """
 
-# `_secrets_compat` is scaffolding. It is replaced wholesale by a TOML loader
-# (`OPUS_CONFIG`, frozen dataclasses, explicit validation) whose frozen section
-# objects become this package's public surface, so nothing outside the package should
-# grow a dependency on the shim beyond reading configuration values from it.
+# `_secrets_compat` is scaffolding. It is replaced wholesale when this package grows
+# its TOML loader (`OPUS_CONFIG`, frozen dataclasses, explicit validation), whose
+# frozen section objects then become the public surface here, so nothing outside the
+# package should grow a dependency on the shim beyond reading settings from it.
 __all__: list[str] = []

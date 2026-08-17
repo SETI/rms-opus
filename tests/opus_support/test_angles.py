@@ -1,9 +1,9 @@
 """Tests for the DMS/HMS angle conversions in ``opus_support``.
 
 The DMS and HMS parsers share one implementation that differs only in which letter it
-accepts and whether the result is scaled by 15, so they share one table: ``{L}`` is
-replaced by the parser's letter and the expected value is multiplied by the parser's
-scale.
+accepts and whether the result is scaled by 15, so they share one table of cases:
+``{L}`` is replaced by the parser's letter and the expected value is multiplied by the
+parser's entry in ``ANGLE_SCALE``.
 """
 
 from collections.abc import Callable
@@ -18,19 +18,17 @@ from opus_support import (
     parse_hms_dms,
 )
 
-# (parser, letter, scale) for the tests that check a parsed value, and the same
-# pairs without the scale for the tests that only check that parsing fails.
 ANGLE_PARSERS = [
-    pytest.param(parse_dms, 'd', 1, id='dms'),
-    pytest.param(parse_hms, 'h', 15, id='hms'),
-]
-ANGLE_PARSER_LETTERS = [
     pytest.param(parse_dms, 'd', id='dms'),
     pytest.param(parse_hms, 'h', id='hms'),
 ]
 
+# An HMS value is in hours, so parsing the same digits as HMS gives fifteen times the
+# DMS result. Keyed by letter so the parser table above stays the single source of truth.
+ANGLE_SCALE = {'d': 1, 'h': 15}
 
-@pytest.mark.parametrize(('parser', 'letter', 'scale'), ANGLE_PARSERS)
+
+@pytest.mark.parametrize(('parser', 'letter'), ANGLE_PARSERS)
 @pytest.mark.parametrize(('text', 'expected'), [
     # All three components present.
     ('0{L} 0m 0s', 0),
@@ -76,10 +74,10 @@ ANGLE_PARSER_LETTERS = [
     ('1e+9{L} 0m 0s', 1000000000),
     ('1e+0009{L} 0m 0s', 1000000000),
 ])
-def test_parse_angle(parser: Callable[..., float], letter: str, scale: int,
-                     text: str, expected: float) -> None:
+def test_parse_angle(parser: Callable[..., float], letter: str, text: str,
+                     expected: float) -> None:
     """DMS and HMS strings parse to degrees; HMS values are scaled by 15."""
-    assert parser(text.format(L=letter)) == expected * scale
+    assert parser(text.format(L=letter)) == expected * ANGLE_SCALE[letter]
 
 
 @pytest.mark.parametrize(('parser', 'text', 'expected'), [
@@ -98,22 +96,21 @@ def test_parse_dms_accepts_degree_symbol() -> None:
     assert parse_dms('23° 30m 36s') == 23.51
 
 
-@pytest.mark.parametrize(('parser', 'letter', 'scale'), ANGLE_PARSERS)
+@pytest.mark.parametrize(('parser', 'letter'), ANGLE_PARSERS)
 @pytest.mark.parametrize(('text', 'expected'), [
     # A bare number is already in the target unit, so it is not converted.
     ('123.456', 123.456),
     # An explicit unit letter means the value must be converted.
     ('123.456{L}', 123.456/2),
 ])
-def test_parse_angle_conversion_factor(parser: Callable[..., float],
-                                       letter: str, scale: int, text: str,
-                                       expected: float) -> None:
+def test_parse_angle_conversion_factor(parser: Callable[..., float], letter: str,
+                                       text: str, expected: float) -> None:
     """``conversion_factor`` applies only when the unit is stated explicitly."""
     assert parser(text.format(L=letter),
-                  conversion_factor=2) == expected * scale
+                  conversion_factor=2) == expected * ANGLE_SCALE[letter]
 
 
-@pytest.mark.parametrize(('parser', 'letter'), ANGLE_PARSER_LETTERS)
+@pytest.mark.parametrize(('parser', 'letter'), ANGLE_PARSERS)
 @pytest.mark.parametrize('text', [
     # Only the last stated component may be fractional.
     ('23.1{L} 30m 36s'),
