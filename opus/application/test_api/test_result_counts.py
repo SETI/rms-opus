@@ -6,7 +6,7 @@ import logging
 import requests
 from unittest import TestCase
 
-from rest_framework.test import APIClient, RequestsClient
+from rest_framework.test import RequestsClient
 
 import settings
 

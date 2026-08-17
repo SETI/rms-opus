@@ -103,23 +103,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
 
         return f'{pl_str}_CUBE_CO_VIMS_{image_num}_{phase_name}'
 
-        filename = self._index_col('FILE_NAME').split('/')[-1]
-        if filename.startswith('HDAC'):
-            image_camera = filename[:4]
-            image_time = filename[4:18]
-        else:
-            image_camera = filename[:3]
-            image_time = filename[3:17]
-        image_time_str = (image_time[:4] + '-' + image_time[5:8] + 'T' +
-                          image_time[9:11] + '-' + image_time[12:14])
-        planet = self._cassini_planet_id()
-        if planet == 'OTH':
-            pl_str = ''
-        else:
-            pl_str = planet[0]
-
-        return f'{pl_str}_CO_UVIS_{image_time_str}_{image_camera}'
-
     def field_obs_general_planet_id(self):
         return self._create_mult(self._cassini_planet_id())
 
