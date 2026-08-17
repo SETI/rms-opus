@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects**)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects; **rev 7.4 (2026-08-17): ratified that `ImportDBException`'s `BaseException` base is an old mistake — PR-10 narrows it to `Exception` with a mandatory audit of intervening `except Exception:` handlers (esp. `do_import.py:1462`); PR-09 told explicitly to delete (not relocate) the dictionary app's lone surviving `favicon` route, verified dead and a `STORAGES` import-time hazard**)
 
 ---
 
@@ -587,6 +587,20 @@ memory. Consequences and rules:
 - **Remove the dictionary app**: `Definitions`/`Contexts` models + `get_def_for_tooltip()`
   move to `opus_app/apps/tools/dictionary.py` (imports updated in paraminfo/ui/cart);
   dictionary urls/templates/statics deleted; `do_dictionary.py` import step untouched.
+  - **The `favicon` route in `dictionary/urls.py` is deleted with the app — do NOT relocate
+    it to the root `urls.py`.** After PR-02 it is the app's only live route, so it can look
+    load-bearing; it is not. Verified 2026-08-17: (i) `dictionary.urls` is included only
+    under `^dictionary/` and `^__dictionary/` (`application/urls.py`), so it answers
+    `/dictionary/favicon.ico`, never the root `/favicon.ico` browsers request; (ii) it
+    redirects to `staticfiles_storage.url('favicon.ico')` → `<STATIC_URL>favicon.ico`, which
+    **does not exist** (the assets are `static_media/img/favicon.ico` and
+    `img/faviconPDS.ico`), so it 302s to a 404; (iii) nothing reverses the `'favicon'` URL
+    name and no template references it. The real root favicon is served by the web-server
+    config, which is unaffected.
+  - **Interaction with `STORAGES` (same PR):** that `staticfiles_storage.url(...)` runs at
+    **import time**. If `ManifestStaticFilesStorage` were adopted while this route survived,
+    Django would raise at startup because `favicon.ico` is absent from the manifest.
+    Deleting the route removes the hazard — another reason not to relocate it.
 - `hurry.filesize` call replaced by a local helper. Re-run the PR-07 `_meta` JSON diff under 5.2.
 
 **PR-10: Import pipeline internal cleanup.**
@@ -596,6 +610,25 @@ memory. Consequences and rules:
 - Consolidate the ~18 duplicated SCLK try/except blocks into one helper on the mission
   common classes; named constants for magic numbers (wavenumber conversion, angles,
   detector sizes); typo fixes; `NoDupLogger` lists → sets; batch `upsert_rows`.
+- **Narrow `ImportDBException` from `BaseException` to `Exception`** (`importdb/super.py:4`).
+  Ratified 2026-08-17: deriving from `BaseException` is an old mistake, not a deliberate
+  design. **This is a control-flow change, not a one-line edit — it must be audited:**
+  today `except Exception:` handlers do *not* catch DB failures, so those failures
+  propagate to the top-level handler; after narrowing, every intervening `except Exception:`
+  will swallow them. Required work:
+  1. Audit all `except Exception` sites under `opus/import/` (28 at time of writing) for any
+     that sit between a DB operation and the top-level handler. **The critical one is
+     `do_import.py:1462`**, which wraps obs field-function calls (`res = func()`): a DB
+     failure raised inside a field function would be logged as "field function failed" and
+     **the import would continue**, silently producing an incomplete database instead of
+     aborting. Any such site must re-raise `ImportDBException` (or catch a narrower type).
+  2. Simplify PR-02's defensive `except (Exception, importdb.ImportDBException):` in
+     `main_opus_import.py` back to plain `except Exception:` — it exists only because of the
+     `BaseException` base and becomes redundant here.
+  3. Keep the deliberate `except importdb.ImportDBException: sys.exit(-1)` at
+     `main_opus_import.py:449` working (it is unaffected by the base-class change).
+  The integration suite gates this; a DB-failure path is not otherwise covered by CI, so
+  reason about each audited site statically and record the audit in the PR.
 
 **PR-11: Replace `impglobals` with an `ImportContext`.**
 - Dataclass carrying `db`, `logger`, `args`, and current-state fields; constructed in
