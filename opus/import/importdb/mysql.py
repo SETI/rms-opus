@@ -174,7 +174,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
                             for x in self._table_names if
                                 self._is_perm_namespace(x)]
         else:
-            assert False
+            raise NotImplementedError(namespace)
 
         if prefix is None:
             return ret_names
@@ -237,7 +237,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             elif data_type == 'mult_list':
                 field_type = 'mult_list'
             else:
-                assert False, data_type
+                raise NotImplementedError(data_type)
             if (field_type.startswith('int') and
                 column_type.find('unsigned') != -1):
                 field_type = 'u' + field_type
@@ -376,7 +376,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             elif field_type == 'datetime':
                 cmd += 'datetime'
             else:
-                assert False, field_type
+                raise NotImplementedError(field_type)
 
             field_default = column.get('field_default', 'NULL')
             if field_default is None:

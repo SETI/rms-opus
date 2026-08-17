@@ -251,7 +251,7 @@ def api_get_widget(request, **kwargs):
                addlink=true|false XXX???
     """
 
-    def _update_form_with_grouping(form, form_vals, glabel, gvalue):
+    def _update_form_with_grouping(form, form_vals, glabel):
         # Get each level of the directories, create proper mult group label
         # container based on the directory names
         dir_list = glabel.split('/')
@@ -374,11 +374,11 @@ def api_get_widget(request, **kwargs):
         # tells us how many times to go through loop below
         try:
             len1 = len(selections[param1])
-        except:
+        except Exception:
             len1 = 0
         try:
             len2 = len(selections[param2])
-        except:
+        except Exception:
             len2 = 0
         length = len1 if len1 > len2 else len2
 
@@ -502,8 +502,7 @@ def api_get_widget(request, **kwargs):
             if glabel is not None and glabel != 'NULL':  # noqa: SIM102
                 if model.objects.filter(grouping=glabel)[0:1]: # pragma: no cover -
                     # There should always be at least one item under the grouping
-                    form = _update_form_with_grouping(form, form_vals,
-                                                      glabel, glabel)
+                    form = _update_form_with_grouping(form, form_vals, glabel)
                     for count, mult in enumerate(model.objects.filter(grouping=glabel,
                                                       display='Y')
                                                 .order_by('disp_order')):

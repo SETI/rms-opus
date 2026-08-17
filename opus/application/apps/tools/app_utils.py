@@ -94,7 +94,7 @@ def get_reqno(request):
         reqno = int(reqno)
         if reqno < 0:
             reqno = None
-    except:
+    except Exception:
         reqno = None
     return reqno
 
@@ -140,7 +140,7 @@ def exit_api_call(api_code, ret):
         if isinstance(ret, HttpResponse):
             try:
                 s += '\n' + ret.content.decode()[:240]
-            except:
+            except Exception:
                 s += '\n(Unable to display)'
         if delay_amount: # pragma: no cover - internal debugging
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
@@ -183,7 +183,7 @@ def get_git_version(force_valid=False, use_tag=False):
         commit_id = (subprocess.check_output(['git', 'log', '--format=%H',
                                               '-n', '1'])
                      .strip().decode('utf8'))
-    except: # pragma: no cover - system bug
+    except Exception: # pragma: no cover - system bug
         log.warning('Unable to get the latest git commit id')
         if not force_valid:
             commit_id = str(random.getrandbits(128))
@@ -195,7 +195,7 @@ def get_git_version(force_valid=False, use_tag=False):
                    .strip().decode('utf8'))
             if '\n' in tag: # pragma: no cover - system-specific
                 tag = tag[:tag.index('\n')]
-        except:
+        except Exception:
             log.warning('Unable to get the current git tag')
 
     if tag: # pragma: no cover - depends on current git context

@@ -34,8 +34,6 @@ def create_import_param_info_table():
         except json.decoder.JSONDecodeError:
             logger.log('debug', f'Was reading ranges json file "{ranges_filename}"')
             raise
-        except:
-            raise
 
     rows = []
     for table_name in table_names:

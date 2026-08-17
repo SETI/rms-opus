@@ -46,7 +46,7 @@ import do_validate  # noqa: E402
 import impglobals  # noqa: E402
 import import_util  # noqa: E402
 import importdb  # noqa: E402
-from config_data import *  # noqa: E402
+from config_data import GROUP_FORM_TYPES  # noqa: E402
 
 ################################################################################
 # COMMAND LINE PROCESSING
@@ -418,10 +418,11 @@ try: # Top-level exception handling so we always log what's going on
 
     if not impglobals.ARGUMENTS.dont_use_shelves_only:
         Pds3File.use_shelves_only()
-        # TODO: uncomment this and line 424 when PDS4 shelves files are used
+        # TODO: uncomment this and the Pds4File line below when PDS4 shelves
+        # files are used
         # Pds4File.use_shelves_only()
-    Pds3File.require_shelves(True)
-    # Pds4File.require_shelves(True)
+        Pds3File.require_shelves(True)
+        # Pds4File.require_shelves(True)
     if impglobals.ARGUMENTS.override_pds3_data_dir:
         Pds3File.preload(impglobals.ARGUMENTS.override_pds3_data_dir)
     else:
@@ -539,7 +540,12 @@ try: # Top-level exception handling so we always log what's going on
 
     impglobals.LOGGER.close()
 
-except:
+# ImportDBException derives from BaseException (importdb/super.py), so it must be
+# named explicitly: this top-level handler exists to log every import failure, and
+# the import pipeline raises ImportDBException on any DB error. SystemExit and
+# KeyboardInterrupt are intentionally left to propagate (the old bare `except:`
+# wrongly swallowed them).
+except (Exception, importdb.ImportDBException):
     msg = 'Import failed with exception'
     if not impglobals.ARGUMENTS.log_suppress_traceback:
         msg += ':\n' + traceback.format_exc()

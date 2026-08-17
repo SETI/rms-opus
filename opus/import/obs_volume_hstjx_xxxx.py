@@ -90,6 +90,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
             bw = (1800-1250) * .0001
         else:
             self._log_nonrepeating_error(f'Unknown filter {filter1}')
+            return None
 
         spec_size = bw // wr
 

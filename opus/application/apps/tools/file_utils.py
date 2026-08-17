@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 def get_pds_products(opus_id_list,
                      loc_type='url',
-                     product_types=['all']):
+                     product_types=None):
     """Return all PDS products for a given opus_id(s) organized by version.
 
     The returned dict is indexed by opus_id and is in the same order as the
@@ -46,6 +46,9 @@ def get_pds_products(opus_id_list,
     """
     assert loc_type in ('path', 'url', 'raw'), loc_type
     assert opus_id_list is not None
+
+    if product_types is None:
+        product_types = ['all']
 
     if not isinstance(product_types, (list, tuple)):
         product_types = product_types.lower().split(',')

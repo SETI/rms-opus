@@ -6,7 +6,7 @@ class ImportDBException(BaseException):
 
 class ImportDBSuper:
     def __init__(self, db_hostname, db_name, db_schema, db_user, db_password,
-                 mult_form_types=[], import_prefix=None, logger=None,
+                 mult_form_types=None, import_prefix=None, logger=None,
                  read_only=False):
         self.log_sql = False
 
@@ -18,7 +18,7 @@ class ImportDBSuper:
         self.import_prefix = import_prefix
         self.logger = logger
         self.read_only = read_only
-        self._mult_form_types = mult_form_types
+        self._mult_form_types = [] if mult_form_types is None else mult_form_types
 
         self.tables_created = []
 
@@ -29,6 +29,11 @@ class ImportDBSuper:
         # Where Python warnings will be written
         self._warning_list = []
         self._old_warning_handler = None
+        # True only while our handler is installed, so _exit() restores exactly
+        # when _enter() installed. A separate flag is needed because
+        # _old_warning_handler is reset to None on restore, so it cannot serve
+        # as both the sentinel and the saved value.
+        self._warning_handler_installed = False
 
     def _is_import_namespace(self, table_name):
         if self.import_prefix is None:
@@ -47,7 +52,7 @@ class ImportDBSuper:
             return self.import_prefix + raw_table_name
         elif namespace == 'perm' or namespace == 'all':
             return raw_table_name
-        assert False
+        raise NotImplementedError
 
     def convert_namespace_to_raw(self, namespace, table_name):
         if self.import_prefix is None:
@@ -58,7 +63,7 @@ class ImportDBSuper:
                               .replace(self.import_prefix.lower(), ''))
         elif namespace == 'perm' or namespace == 'all':
             return table_name
-        assert False
+        raise NotImplementedError
 
     def _execute(self, cmd, param_list=None, cur=None, mutates=False):
         if self.log_sql and self.logger:
@@ -83,7 +88,8 @@ class ImportDBSuper:
                     self.conn.commit()
 
     def _execute_and_fetchall(self, cmd, func_name, cur=None):
-        assert False, 'ImportDBSuper::_execute_and_fetchall must be overriden'
+        raise NotImplementedError(
+            'ImportDBSuper::_execute_and_fetchall must be overriden')
 
     @staticmethod
     def _make_warning_handler(warning_list):
@@ -98,6 +104,7 @@ class ImportDBSuper:
             self._warning_list = []
             if self.logger:
                 self._old_warning_handler = warnings.showwarning
+                self._warning_handler_installed = True
                 warnings.showwarning = self._make_warning_handler(
                                                 self._warning_list)
 
@@ -111,14 +118,20 @@ class ImportDBSuper:
                     self.logger.log('warning', '  '+cmd)
                 for w in self._warning_list:
                     self.logger.log('warning', '  '+w)
-            warnings.showarning = self._old_warning_handler
-            self._old_warning_handler = None
+            # Restore only if we installed (i.e. only when self.logger was set);
+            # restoring unconditionally would assign None to
+            # warnings.showwarning, and the next warnings.warn() would then
+            # raise TypeError.
+            if self._warning_handler_installed:
+                warnings.showwarning = self._old_warning_handler
+                self._old_warning_handler = None
+                self._warning_handler_installed = False
 
     def quote_identifier(self, s):
-        assert False, 'ImportDBSuper::quote_identifier must be overriden'
+        raise NotImplementedError('ImportDBSuper::quote_identifier must be overriden')
 
     def table_names(self, namespace, prefix=None):
-        assert False, 'ImportDBSuper::table_names must be overriden'
+        raise NotImplementedError('ImportDBSuper::table_names must be overriden')
 
     def table_exists(self, namespace, table_name):
         self._enter('table_exists')
@@ -127,17 +140,17 @@ class ImportDBSuper:
         return table_name.lower() in table_names
 
     def table_info(self, namespace, table_name):
-        assert False, 'ImportDBSuper::table_info must be overriden'
+        raise NotImplementedError('ImportDBSuper::table_info must be overriden')
 
     def drop_table(self, namespace, raw_table_name, ignore_if_not_exists=True):
-        assert False, 'ImportDBSuper::drop_table must be overriden'
+        raise NotImplementedError('ImportDBSuper::drop_table must be overriden')
 
     def create_table(self, namespace, raw_table_name, schema_filename,
                      ignore_if_exists=True):
-        assert False, 'ImportDBSuper::create_table must be overriden'
+        raise NotImplementedError('ImportDBSuper::create_table must be overriden')
 
     def analyze_table(self, namespace, raw_table_name):
-        assert False, 'ImportDBSuper::analyze_table must be overriden'
+        raise NotImplementedError('ImportDBSuper::analyze_table must be overriden')
 
     def read_rows(self, namespace, raw_table_name, column_names, where=None):
         self._enter('read_rows')
@@ -155,30 +168,30 @@ class ImportDBSuper:
         return res
 
     def insert_row(self, namespace, raw_table_name, row):
-        assert False, 'ImportDBSuper::insert_row must be overriden'
+        raise NotImplementedError('ImportDBSuper::insert_row must be overriden')
 
     def insert_rows(self, namespace, raw_table_name, rows):
-        assert False, 'ImportDBSuper::insert_rows must be overriden'
+        raise NotImplementedError('ImportDBSuper::insert_rows must be overriden')
 
     def update_row(self, namespace, raw_table_name, row, where):
-        assert False, 'ImportDBSuper::update_row must be overriden'
+        raise NotImplementedError('ImportDBSuper::update_row must be overriden')
 
     def upsert_row(self, namespace, raw_table_name, key_name, row):
-        assert False, 'ImportDBSuper::upsert_row must be overriden'
+        raise NotImplementedError('ImportDBSuper::upsert_row must be overriden')
 
     def upsert_rows(self, namespace, raw_table_name, key_name, rows):
-        assert False, 'ImportDBSuper::upsert_rows must be overriden'
+        raise NotImplementedError('ImportDBSuper::upsert_rows must be overriden')
 
     def delete_rows(self, namespace, table_name, where):
-        assert False, 'ImportDBSuper::delete_rows must be overriden'
+        raise NotImplementedError('ImportDBSuper::delete_rows must be overriden')
 
     def copy_rows_between_namespaces(self, src_namespace, dest_namespace,
                                      raw_table_name, where=None):
-        assert False, ('ImportDBSuper::copy_rows_between_namespaces must be '+
-                       'overriden')
+        raise NotImplementedError('ImportDBSuper::copy_rows_between_namespaces '
+                                  'must be overriden')
 
     def general_select(self, cmd):
-        assert False, 'ImportDBSuper::general_select must be overriden'
+        raise NotImplementedError('ImportDBSuper::general_select must be overriden')
 
     def find_column_max(self, namespace, table_name, column_name):
-        assert False, 'ImportDBSuper::find_column_max must be overriden'
+        raise NotImplementedError('ImportDBSuper::find_column_max must be overriden')

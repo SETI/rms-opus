@@ -91,23 +91,26 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS burn-down state (plan §4, PR-01): bandit is on now; ruff-format waits for
-# PR-23; mypy for Phase D; vulture for PR-02; pytest for PR-03 (no tests/ yet);
-# sphinx for PR-21 (no docs/ yet). Each flag flips true in its owning PR.
+# OPUS burn-down state (plan §4): bandit and vulture are on now; ruff-format
+# waits for PR-23; mypy for Phase D; pytest for PR-03 (no tests/ yet); sphinx
+# for PR-21 (no docs/ yet). Each flag flips true in its owning PR.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=false}"
 : "${ENABLE_MYPY:=false}"
 : "${ENABLE_PYTEST:=false}"
 : "${ENABLE_PYROMA:=true}"
 : "${ENABLE_BANDIT:=true}"
-: "${ENABLE_VULTURE:=false}"
+: "${ENABLE_VULTURE:=true}"
 : "${ENABLE_SPHINX:=false}"
 : "${ENABLE_PYMARKDOWN:=true}"
 
 # Lint scope tracks the current (pre-move) layout; it shifts toward src/ as code
 # moves in later PRs. Ruff mirrors the historical flake8 scope plus log_analyzer.
+# Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
+# names count as used); min-confidence/exclude come from [tool.vulture].
 : "${OPUS_RUFF_PATHS:=lib opus/import opus/application/apps log_analyzer}"
 : "${OPUS_BANDIT_PATHS:=lib opus log_analyzer}"
+: "${OPUS_VULTURE_PATHS:=lib opus log_analyzer vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -437,7 +440,8 @@ run_code_checks() {
 
     if [ "$RUN_VULTURE" = true ] && [ "$ENABLE_VULTURE" = true ]; then
         print_info "Running vulture..."
-        if python -m vulture src tests; then
+        # shellcheck disable=SC2086  # word-splitting of the path list is intended
+        if python -m vulture $OPUS_VULTURE_PATHS; then
             print_success "Vulture passed"
         else
             print_error "Vulture failed"

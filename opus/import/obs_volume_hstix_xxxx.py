@@ -83,7 +83,7 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
             wr = 1400. / 130 * .001
             bw = (1700-1075) * .001
         else:
-            assert False, filter1
+            raise NotImplementedError(filter1)
 
         spec_size = bw // wr
 

@@ -75,7 +75,7 @@ dev = [
   "ruff>=0.8",
   "bandit[toml]>=1.8",
   "pyroma>=4.2",
-  # "vulture>=2.14",  # Enabled in PR-02 after the dead-code removal
+  "vulture>=2.14",
   "rms-opus[docs]",
 ]
 docs = [
@@ -165,20 +165,9 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 "opus/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
 "log_analyzer/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
 #
-# (2) Grandfathered pending PR-02, which rewrites these exact sites
-#     (`assert False` -> NotImplementedError; the ImportDBSuper.__init__ mutable
-#     default) and removes these entries. REMOVED IN PR-02.
-#     PT015/B011 = `assert False`; B006 = mutable default argument.
-#     (The legacy codes above are unioned in from the tree globs; only the
-#     PR-02 codes are listed here.)
-"opus/import/importdb/super.py" = ["PT015", "B011", "B006"]
-"opus/import/importdb/mysql.py" = ["PT015", "B011"]
-"opus/import/util/obs_table_to_schema.py" = ["PT015", "B011"]
-"opus/import/util/dump_pds_definitions.py" = ["PT015", "B011"]
-"opus/import/obs_volume_hstix_xxxx.py" = ["PT015", "B011"]
-"log_analyzer/opus/query_handler.py" = ["PT015", "B011"]
-"opus/import/import_util.py" = ["B006"]
-"opus/application/apps/tools/file_utils.py" = ["B006"]
+# (2) The PT015/B011 (`assert False`) and B006 (mutable default argument)
+#     sites PR-01 grandfathered here have been fixed in PR-02, so their
+#     per-file ignores are removed.
 
 [tool.pymarkdown.plugins.md013]
 # Line length (disable so README/CONTRIBUTING can use longer lines).
@@ -216,8 +205,13 @@ skips = [
   "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
 ]
 
-# Enabled in PR-02 after the dead-code removal.
-# [tool.vulture]
-# paths = ["lib", "opus", "log_analyzer"]
-# exclude = ["perf_test/"]
-# min_confidence = 70
+# Enabled in PR-02 (after the dead-code removal). Genuine dead code is
+# deleted; irreducible false positives live in vulture_whitelist.py (which is
+# passed as an input path so its names count as used). PR-17 shrinks the
+# whitelist. Paths track the current (pre-move) layout and shift toward src/
+# as code moves; they are also set via OPUS_VULTURE_PATHS (run-all-checks.sh)
+# and VULTURE_PATHS (run-tests.yml).
+[tool.vulture]
+paths = ["lib", "opus", "log_analyzer", "vulture_whitelist.py"]
+exclude = ["*/perf_test/*"]
+min_confidence = 70

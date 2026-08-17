@@ -91,8 +91,6 @@ class QueryHandler:
             return [], None
 
     def handle_query(self, _entry: LogEntry, query: dict[str, str], query_type: str) -> tuple[list[str], str | None]:
-        assert query_type in ['data', 'result_count', 'dataimages']
-
         result: list[str] = []
 
         if query_type == 'result_count':
@@ -100,7 +98,7 @@ class QueryHandler:
         elif query_type == 'data' or query_type == 'dataimages':
             uses_metadata, uses_pages, uses_sort, current_state = True, True, True, State.FETCHING
         else:
-            assert False
+            raise NotImplementedError(query_type)
 
         previous_state = self._previous_state
         if current_state != previous_state:

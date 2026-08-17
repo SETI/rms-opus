@@ -302,7 +302,7 @@ def safe_pdstable_read_pds3(filename):
 
     except KeyboardInterrupt:
         raise
-    except:
+    except Exception:
         msg = f'Exception during reading of "{filename}"'
         if not impglobals.ARGUMENTS.log_suppress_traceback:
             msg += ':\n' + traceback.format_exc()
@@ -386,20 +386,20 @@ def slug_name_for_sfc_target(target_name):
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
 
-def read_schema_for_table(table_name, replace=[]):
+def read_schema_for_table(table_name, replace=None):
     table_name = table_name.replace(opus_secrets.IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
-        assert replace == []
+        assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
-        replace=[('<TARGET>', table_name_for_sfc_target(target_name)),
-                 ('<SLUGTARGET>', slug_name_for_sfc_target(target_name))]
+        replace = [('<TARGET>', table_name_for_sfc_target(target_name)),
+                   ('<SLUGTARGET>', slug_name_for_sfc_target(target_name))]
     schema_filename = safe_join('table_schemas', table_name+'.json')
     if not os.path.exists(schema_filename):
         return None
     with open(schema_filename) as fp:
         try:
-            if replace is None:
+            if not replace:
                 return json.load(fp)
             contents = fp.read()
             for r in replace:
@@ -407,8 +407,6 @@ def read_schema_for_table(table_name, replace=[]):
             return json.loads(contents)
         except json.decoder.JSONDecodeError:
             log_debug(f'Was reading table "{table_name}"')
-            raise
-        except:
             raise
 
 def find_max_table_id(table_name):
