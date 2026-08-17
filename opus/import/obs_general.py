@@ -8,7 +8,7 @@
 import json
 import os
 
-import impglobals # It would be nice to have a better way to pass in cmd line args
+import impglobals  # It would be nice to have a better way to pass in cmd line args
 
 
 class ObsGeneral:
@@ -66,7 +66,7 @@ class ObsGeneral:
             self._log_nonrepeating_warning(
                 f'ViewSet threw ValueError for "{filespec}": {e}')
             viewset = None
-        except IOError as e:
+        except OSError as e:
             self._log_nonrepeating_warning(
                 f'ViewSet threw IOError for "{filespec}": {e}')
             viewset = None

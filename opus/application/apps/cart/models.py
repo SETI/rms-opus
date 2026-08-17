@@ -2,6 +2,7 @@
 
 from django.db import models
 
+
 class Cart(models.Model):
     session_id = models.CharField(max_length=80)
     obs_general = models.ForeignKey('search.ObsGeneral', models.DO_NOTHING)

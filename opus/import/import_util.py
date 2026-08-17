@@ -5,26 +5,24 @@
 ################################################################################
 
 import csv
-from functools import lru_cache
 import json
-import numpy as np
 import os
 import re
 import sys
 import traceback
-
-import julian
-import pdsfile
-import pdsparser
-import pdstable
-
-import opus_secrets
+from functools import lru_cache
+from typing import ClassVar
 
 import config_data
 import config_targets
 import impglobals
 import instruments
-
+import julian
+import numpy as np
+import opus_secrets
+import pdsfile
+import pdsparser
+import pdstable
 
 ################################################################################
 # GENERAL UTILITIES
@@ -253,7 +251,7 @@ def safe_pdstable_read(filename, pds_version):
         return rows
 
     # Infer data types from the data in each column
-    for col_name in rows[0].keys():
+    for col_name in rows[0]:
         col_data = [row[col_name] for row in rows]
         # First check if they are all integers
         try:
@@ -399,7 +397,7 @@ def read_schema_for_table(table_name, replace=[]):
     schema_filename = safe_join('table_schemas', table_name+'.json')
     if not os.path.exists(schema_filename):
         return None
-    with open(schema_filename, 'r') as fp:
+    with open(schema_filename) as fp:
         try:
             if replace is None:
                 return json.load(fp)
@@ -441,10 +439,10 @@ class NoDupLogger:
     This is used for logging of PdsFile warnings that we don't want to see
     over and over."""
 
-    _LOGGED_DEBUG = []
-    _LOGGED_WARN = []
-    _LOGGED_ERROR = []
-    _LOGGED_FATAL = []
+    _LOGGED_DEBUG: ClassVar[list[str]] = []
+    _LOGGED_WARN: ClassVar[list[str]] = []
+    _LOGGED_ERROR: ClassVar[list[str]] = []
+    _LOGGED_FATAL: ClassVar[list[str]] = []
 
     def __init__(self, logger):
         self._logger = logger

@@ -44,7 +44,7 @@ def update_mult_info():
             continue
 
         for mult_info in mult_options:
-            id_num, value, label, disp_order, display, definition = mult_info
+            id_num, _value, label, disp_order, display, _definition = mult_info
 
             row_dict = {
                 'label': str(label),

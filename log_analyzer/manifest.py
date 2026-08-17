@@ -4,9 +4,9 @@ import collections
 import csv
 import itertools
 import os
-import re
-from pathlib import Path, PosixPath
-from typing import NamedTuple, Sequence, Callable, Tuple, List, Dict, Any, Optional
+from collections.abc import Callable, Sequence
+from pathlib import PosixPath
+from typing import Any, NamedTuple
 
 
 class ManifestEntry(NamedTuple):
@@ -20,7 +20,7 @@ class ManifestEntry(NamedTuple):
     # version: str
 
     @staticmethod
-    def from_csv_line(line: Dict[str, str]) -> Optional[ManifestEntry]:
+    def from_csv_line(line: dict[str, str]) -> ManifestEntry | None:
         try:
             return ManifestEntry(opus_id=line['OPUS ID'],
                                  product_category=line['Product Category'],
@@ -44,9 +44,9 @@ class Manifest(NamedTuple):
     entries: Sequence[ManifestEntry]
 
     @staticmethod
-    def read_manifest(file_name: str) -> Optional[Manifest]:
+    def read_manifest(file_name: str) -> Manifest | None:
         try:
-            with open(file_name, 'r', newline='') as file:
+            with open(file_name, newline='') as file:
                 reader = csv.DictReader(file)
                 entries = [entry for line in reader
                            for entry in [ManifestEntry.from_csv_line(line)] if entry]
@@ -62,7 +62,7 @@ class Manifest(NamedTuple):
                 if manifest is not None]
 
     def size_in_bytes(self):
-        file_to_size: Dict[str, int] = collections.defaultdict(int)
+        file_to_size: dict[str, int] = collections.defaultdict(int)
         for entry in self.entries:
             file_to_size[entry.file_path] = max(file_to_size[entry.file_path], entry.size)
         return sum(file_to_size.values())
@@ -79,7 +79,7 @@ class Manifest(NamedTuple):
 
 
 class SummaryLine(NamedTuple):
-    key: Tuple[str, ...]
+    key: tuple[str, ...]
     manifest_count: int
     opus_id_count: int
     file_path_count: int
@@ -98,17 +98,17 @@ class ManifestStatus:
     def __init__(self, manifests: Sequence[Manifest]):
         self._manifests = manifests
 
-    def __get_one_table(self, grouper: Callable[[ManifestEntry], Tuple[str, ...]]) -> \
-            Tuple[Sequence[SummaryLine], SummaryLine]:
+    def __get_one_table(self, grouper: Callable[[ManifestEntry], tuple[str, ...]]) -> \
+            tuple[Sequence[SummaryLine], SummaryLine]:
         all_items = [(manifest, entry) for manifest in self._manifests for entry in manifest.entries]
         all_items.sort(key=lambda item: grouper(item[1]))
 
-        result: List[SummaryLine] = []
+        result: list[SummaryLine] = []
         for key, iter_items in itertools.groupby(all_items, key=lambda item: grouper(item[1])):
             items = list(iter_items)
             manifest_count = len({manifest for manifest, _ in items})
             opus_id_count = len({(manifest, entry.opus_id) for manifest, entry in items})
-            file_path_to_size: Dict[Tuple[Manifest, str], int] = collections.defaultdict(int)
+            file_path_to_size: dict[tuple[Manifest, str], int] = collections.defaultdict(int)
             for manifest, entry in items:
                 if file_path_to_size[manifest, entry.file_path] < entry.size:
                     file_path_to_size[manifest, entry.file_path] = entry.size
@@ -126,7 +126,7 @@ class ManifestStatus:
                             file_path_bytes=sum(x.file_path_bytes for x in result))
         return result, total
 
-    def __get_statistics(self) -> Dict[str, Any]:
+    def __get_statistics(self) -> dict[str, Any]:
         result1, total1 = self.__get_one_table(lambda entry: (entry.product_category, entry.product_type))
         result2, total2 = self.__get_one_table(lambda entry: (entry.volume_set,))
         result3, total3 = self.__get_one_table(lambda entry: (entry.volume_set, entry.product_type))
@@ -149,7 +149,7 @@ class ManifestStatus:
         }
 
     @staticmethod
-    def get_statistics(manifest_files: Sequence[str]) -> Dict[str, Any]:
+    def get_statistics(manifest_files: Sequence[str]) -> dict[str, Any]:
         manifests = Manifest.read_manifests(manifest_files)
         status = ManifestStatus(manifests)
         return status.__get_statistics()

@@ -22,48 +22,51 @@
 import logging
 
 import settings
-
+from cart.models import Cart
 from django.apps import apps
-from django.db import connection, DatabaseError
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Max, Min, Count
+from django.db import DatabaseError, connection
+from django.db.models import Count, Max, Min
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
-
-from cart.models import Cart
+from opus_support import (
+    format_unit_value,
+    get_default_unit,
+    get_valid_units,
+    is_valid_unit,
+    parse_form_type,
+)
 from paraminfo.models import ParamInfo
 from search.models import TableNames
-from search.views import (get_param_info_by_slug,
-                          get_user_query_table,
-                          set_user_search_number,
-                          url_to_search_params)
-from tools.app_utils import (csv_response,
-                             enter_api_call,
-                             exit_api_call,
-                             get_mult_name,
-                             get_reqno,
-                             json_response,
-                             strip_numeric_suffix,
-                             throw_random_http404_error,
-                             throw_random_http500_error,
-                             HTTP404_BAD_COLLAPSE,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_NO_REQUEST,
-                             HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_FORMAT,
-                             HTTP404_UNKNOWN_SLUG,
-                             HTTP404_UNKNOWN_UNITS,
-                             HTTP500_DATABASE_ERROR,
-                             HTTP500_INTERNAL_ERROR,
-                             HTTP500_SEARCH_CACHE_FAILED)
-
-from opus_support import (format_unit_value,
-                          get_default_unit,
-                          get_valid_units,
-                          is_valid_unit,
-                          parse_form_type)
+from search.views import (
+    get_param_info_by_slug,
+    get_user_query_table,
+    set_user_search_number,
+    url_to_search_params,
+)
+from tools.app_utils import (
+    HTTP404_BAD_COLLAPSE,
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_NO_REQUEST,
+    HTTP404_SEARCH_PARAMS_INVALID,
+    HTTP404_UNKNOWN_FORMAT,
+    HTTP404_UNKNOWN_SLUG,
+    HTTP404_UNKNOWN_UNITS,
+    HTTP500_DATABASE_ERROR,
+    HTTP500_INTERNAL_ERROR,
+    HTTP500_SEARCH_CACHE_FAILED,
+    csv_response,
+    enter_api_call,
+    exit_api_call,
+    get_mult_name,
+    get_reqno,
+    json_response,
+    strip_numeric_suffix,
+    throw_random_http404_error,
+    throw_random_http500_error,
+)
 
 log = logging.getLogger(__name__)
 
@@ -219,7 +222,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
     if param_qualified_name in selections:
         del selections[param_qualified_name]
 
-    cache_num, cache_new_flag = set_user_search_number(selections, extras)
+    cache_num, _cache_new_flag = set_user_search_number(selections, extras)
     if cache_num is None or throw_random_http500_error(): # pragma: no cover -
         # database error
         log.error('api_get_mult_counts: Failed to create user_selections entry'
@@ -505,7 +508,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
                  + ':rangeep:' + qualified_param_name_no_num
                  + ':units:' + str(units))
     if user_table:
-        cache_num, cache_new_flag = set_user_search_number(selections, extras)
+        cache_num, _cache_new_flag = set_user_search_number(selections, extras)
         if cache_num is None: # pragma: no cover - database error
             log.error('api_get_range_endpoints: Failed to create cache table '
                       +'for *** Selections %s *** Extras %s',
@@ -648,10 +651,10 @@ def api_get_fields(request, fmt, slug=None):
         collapse = int(collapse) != 0
         if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
-    except ValueError:
+    except ValueError as err:
         ret = Http404(HTTP404_BAD_COLLAPSE(collapse, request))
         exit_api_call(api_code, ret)
-        raise ret
+        raise ret from err
 
     ret = get_fields_info(fmt, request, api_code, slug=slug, collapse=collapse)
 
@@ -815,7 +818,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         else:
             entry['old_slug'] = f.old_slug
         entry['slug'] = entry['field_id'] # Backwards compatibility
-        entry['linked'] = True if f.referred_slug else False
+        entry['linked'] = bool(f.referred_slug)
         return_obj[cat][collapsed_slug] = entry
 
     # Organize return_obj before returning
@@ -826,7 +829,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         # Sort slugs of each category by disp_order
         cat_data = dict(sorted(cat_data.items(), key=lambda x: x[1]['disp_order']))
         return_obj[cat] = cat_data
-        for key, val in cat_data.items():
+        for _key, val in cat_data.items():
             del val['disp_order']
 
     if fmt == 'raw':
@@ -842,8 +845,8 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                   ]
 
         rows = []
-        for cat, cat_data in return_obj.items():
-            for k, v in cat_data.items():
+        for _cat, cat_data in return_obj.items():
+            for _k, v in cat_data.items():
                 # In csv, we will store the linked field value as 0 or 1.
                 linked = 1 if v['linked'] else 0
                 row_data = [(v['field_id'], v['category'], v['type'],

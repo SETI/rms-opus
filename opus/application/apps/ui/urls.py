@@ -1,15 +1,14 @@
 # ui/urls.py
-from django.urls import re_path
 from django.contrib import admin
-
+from django.urls import re_path
 from ui.views import (
-    api_notifications,
+    api_dummy,
     api_get_menu,
-    api_get_widget,
     api_get_metadata_selector,
+    api_get_widget,
     api_init_detail_page,
     api_normalize_url,
-    api_dummy
+    api_notifications,
 )
 
 urlpatterns = [

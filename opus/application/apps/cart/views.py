@@ -23,50 +23,50 @@ import time
 import zipfile
 
 import settings
-
-from django.db import connection, DatabaseError
-from django.http import (HttpResponse,
-                         HttpResponseServerError,
-                         Http404)
-from django.template.loader import get_template
-from django.views.decorators.cache import never_cache
-
-from hurry.filesize import size as nice_file_size
-
 from cart.models import Cart
 from dictionary.models import Definitions
-from metadata.views import (get_cart_count,
-                            get_result_count_helper)
-from results.views import (get_search_results_chunk,
-                           get_search_results_chunk_error_handler,
-                           labels_for_slugs)
+from django.db import DatabaseError, connection
+from django.http import Http404, HttpResponse, HttpResponseServerError
+from django.template.loader import get_template
+from django.views.decorators.cache import never_cache
+from hurry.filesize import size as nice_file_size
+from metadata.views import get_cart_count, get_result_count_helper
+from results.views import (
+    get_search_results_chunk,
+    get_search_results_chunk_error_handler,
+    labels_for_slugs,
+)
 from search.models import ObsGeneral
-from search.views import (url_to_search_params,
-                          get_user_query_table,
-                          parse_order_slug,
-                          create_order_by_sql)
-from tools.app_utils import (cols_to_slug_list,
-                             csv_response,
-                             download_filename,
-                             enter_api_call,
-                             exit_api_call,
-                             get_reqno,
-                             get_session_id,
-                             json_response,
-                             throw_random_http404_error,
-                             throw_random_http500_error,
-                             HTTP404_BAD_DOWNLOAD,
-                             HTTP404_BAD_OR_MISSING_RANGE,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_BAD_RECYCLEBIN,
-                             HTTP404_MISSING_OPUS_ID,
-                             HTTP404_NO_REQUEST,
-                             HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT,
-                             HTTP404_UNKNOWN_SLUG,
-                             HTTP500_DATABASE_ERROR,
-                             HTTP500_INTERNAL_ERROR,
-                             HTTP500_SEARCH_CACHE_FAILED)
+from search.views import (
+    create_order_by_sql,
+    get_user_query_table,
+    parse_order_slug,
+    url_to_search_params,
+)
+from tools.app_utils import (
+    HTTP404_BAD_DOWNLOAD,
+    HTTP404_BAD_OR_MISSING_RANGE,
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_BAD_RECYCLEBIN,
+    HTTP404_MISSING_OPUS_ID,
+    HTTP404_NO_REQUEST,
+    HTTP404_SEARCH_PARAMS_INVALID,
+    HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT,
+    HTTP404_UNKNOWN_SLUG,
+    HTTP500_DATABASE_ERROR,
+    HTTP500_INTERNAL_ERROR,
+    HTTP500_SEARCH_CACHE_FAILED,
+    cols_to_slug_list,
+    csv_response,
+    download_filename,
+    enter_api_call,
+    exit_api_call,
+    get_reqno,
+    get_session_id,
+    json_response,
+    throw_random_http404_error,
+    throw_random_http500_error,
+)
 from tools.file_utils import get_pds_products
 
 log = logging.getLogger(__name__)
@@ -120,8 +120,8 @@ def api_view_cart(request):
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id)
 
-    for name, product_versions in info['product_cat_dict'].items():
-        for ver, types in product_versions.items():
+    for _name, product_versions in info['product_cat_dict'].items():
+        for _ver, types in product_versions.items():
             for prod_type in types:
                 if (prod_type['slug_name'] in not_selected_product_types or
                     not prod_type['default_checked']):
@@ -369,7 +369,7 @@ def api_edit_cart(request, action, **kwargs):
                   request.GET)
         ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_bin, request))
         exit_api_call(api_code, ret)
-        raise ret
+        raise ret from None
 
     if action == 'add':
         err = _add_to_cart_table(opus_id, session_id, api_code)
@@ -640,9 +640,9 @@ def api_create_download(request, opus_id=None, fmt=None):
         if download_size > settings.MAX_DOWNLOAD_SIZE:
             ret = json_response({'error':
                  'Sorry, this download would require '
-                 +'{:,}'.format(download_size)
+                 +f'{download_size:,}'
                  +' bytes but the maximum allowed is '
-                 +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
+                 +f'{settings.MAX_DOWNLOAD_SIZE:,}'
                  +' bytes. Please either reduce the number of '
                  +'observations you are trying to download, reduce the number '
                  +'of data products for each observation, or download a URL '
@@ -658,7 +658,7 @@ def api_create_download(request, opus_id=None, fmt=None):
         if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
             ret = json_response({'error':
                  'Sorry, maximum cumulative download size ('
-                 +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
+                 +f'{settings.MAX_CUM_DOWNLOAD_SIZE:,}'
                  +' bytes) reached for this session'})
             exit_api_call(api_code, ret)
             return ret
@@ -672,18 +672,21 @@ def api_create_download(request, opus_id=None, fmt=None):
         if fmt == 'zip':
             archive_file = zipfile.ZipFile(response, mode=write_mode)
         else:
-            archive_file = tarfile.open(mode=write_mode, fileobj=response)
+            archive_file = tarfile.open(mode=write_mode, fileobj=response)  # noqa: SIM115
     else:
         if fmt == 'zip':
             archive_file = zipfile.ZipFile(archive_file_name, mode=write_mode)
         else:
-            archive_file = tarfile.open(name=archive_file_name, mode=write_mode)
+            archive_file = tarfile.open(name=archive_file_name, mode=write_mode)  # noqa: SIM115
 
-    manifest_fp = open(manifest_file_name, 'w')
+    # The archive, manifest, and URL handles are written incrementally across the
+    # rest of this function and closed explicitly below, so a context manager does
+    # not fit without restructuring the whole download-assembly block.
+    manifest_fp = open(manifest_file_name, 'w')  # noqa: SIM115
     manifest_fp.write('OPUS ID,Product Category,Product Type,'
                       +'Product Type Abbrev,'
                       +'Version,File Path,Checksum,Size\n')
-    url_fp = open(url_file_name, 'w')
+    url_fp = open(url_file_name, 'w')  # noqa: SIM115
 
     errors = []
     # Store the files' logical paths added to the zip file.
@@ -878,7 +881,7 @@ def _get_download_info(product_types, session_id):
     product_dict_by_short_name_ver = {}
 
     for res in results:
-        (category, sort_order, short_name, full_name, default_checked, ver, ver_num) = res
+        (category, _sort_order, short_name, full_name, default_checked, ver, _ver_num) = res
 
         pretty_name = category
         if category == 'metadata':
@@ -1032,7 +1035,7 @@ def _get_download_info(product_types, session_id):
     total_download_count = 0
 
     for res in results:
-        (category, sort_order, short_name, version_name, full_name,
+        (category, _sort_order, short_name, version_name, full_name,
          checked, download_size, download_count, product_count) = res
         short_name_ver = short_name + '@' + version_name.lower()
         download_size = int(download_size)
@@ -1129,7 +1132,7 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
     # key.
     # If the observation is already in the cart but in the recycle bin, this
     # will override that entry and set the recycled field to 0.
-    values = [(session_id, id, opus_id, 0) for opus_id, id in general_res]
+    values = [(session_id, obs_id, opus_id, 0) for opus_id, obs_id in general_res]
     q = connection.ops.quote_name
     sql = 'REPLACE INTO '+q('cart')+' ('+q('session_id')+','
     sql += q('obs_general_id')+','+q('opus_id')+','+q('recycled')+')'
@@ -1170,7 +1173,7 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
         cursor.executemany(sql, values)
     else:
         # Otherwise we remove the entries completely.
-        values = (session_id, [opus_id for opus_id in opus_id_list])
+        values = (session_id, list(opus_id_list))
         sql = 'DELETE FROM '+q('cart')
         sql += ' WHERE session_id=%s AND opus_id IN %s'
         log.debug('_remove_from_cart_table SQL: %s %s', sql, values)
@@ -1215,7 +1218,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         # short-lived, and we use it in the same way.
         pid_sfx = str(os.getpid())
         time1 = time.time()
-        time_sfx = ('%.6f' % time1).replace('.', '_')
+        time_sfx = (f'{time1:.6f}').replace('.', '_')
         params = []
         temp_table_name = 'temp_'+session_id+'_'+pid_sfx+'_'+time_sfx
         temp_sql = 'CREATE TEMPORARY TABLE '+q(temp_table_name)
@@ -1346,7 +1349,8 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             # the recycle bin because they go towards the same maximum either
             # way. So we should be left here with just:
             #       action == 'addrange' and not recycle_bin
-            assert action == 'addrange' and not recycle_bin
+            assert action == 'addrange'
+            assert not recycle_bin
 
             # Count the number of observations we're going to add
             sql = 'SELECT COUNT(*)'+sql_from+sql_where
@@ -1527,8 +1531,8 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 def _csv_helper(request, opus_id, api_code=None):
     "Create the data for a CSV file containing the cart data."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (page_no, start_obs, limit,
-     page, order, aux, error) = get_search_results_chunk(
+    (_page_no, _start_obs, _limit,
+     page, _order, _aux, error) = get_search_results_chunk(
                                                      request,
                                                      use_cart=(opus_id is None),
                                                      ignore_recycle_bin=True,

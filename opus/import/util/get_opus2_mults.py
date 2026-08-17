@@ -6,10 +6,9 @@
 # Once all tables are transferred over this program is deprecated.
 
 import sys
+from secrets import *
 
 import MySQLdb
-
-from secrets import *
 
 if len(sys.argv) != 2:
     print('Usage:', file=sys.stderr)

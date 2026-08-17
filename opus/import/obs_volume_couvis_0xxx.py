@@ -8,7 +8,6 @@
 import os
 
 import opus_support
-
 from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
@@ -52,7 +51,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return channel, image_time
 
     def _is_image(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         slit_state = self._index_col('SLIT_STATE')
 
         if channel == 'HSP' or channel == 'HDAC':
@@ -73,7 +72,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         dur = self._index_col('INTEGRATION_DURATION')
         if dur is None:
             return None
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         if channel == 'HSP':
             # HSP integration_duration is in milliseconds!
             return dur/1000
@@ -89,7 +88,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return [self._cassini_intended_target_name()]
 
     def field_obs_general_time2(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         start_time_sec = self.field_obs_general_time1()
         if channel != 'HSP':
             return self._time2_from_index(start_time_sec)
@@ -163,7 +162,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return self._create_mult('EMISSION')
 
     def field_obs_general_observation_type(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
             return self._create_mult('TS') # Time Series
         assert channel == 'EUV' or channel == 'FUV'
@@ -234,7 +233,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ###################################
 
     def field_obs_wavelength_wavelength1(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         if channel == 'HSP':
             return 0.11
         if channel == 'HDAC':
@@ -255,7 +254,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return None
 
     def field_obs_wavelength_wavelength2(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         if channel == 'HSP':
             return 0.19
         if channel == 'HDAC':
@@ -278,7 +277,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     def field_obs_wavelength_wave_res1(self):
         if not self._has_supp_index():
             return None
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         band_bin = self._supp_index_col('BAND_BINNING_FACTOR')
 
         if channel == 'EUV':
@@ -296,13 +295,13 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return self.field_obs_wavelength_wave_res1()
 
     def field_obs_wavelength_wave_no_res1(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
             return self._wave_no_res_from_full_bandwidth()
         return self._wave_no_res1_from_wave_res()
 
     def field_obs_wavelength_wave_no_res2(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
             return self._wave_no_res_from_full_bandwidth()
         return self._wave_no_res2_from_wave_res()
@@ -314,7 +313,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
 
         if channel == 'HSP' or channel == 'HDAC':
             return None
@@ -401,7 +400,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return self._create_mult(self._index_col('DWELL_TIME'))
 
     def field_obs_instrument_couvis_channel(self):
-        channel, image_time = self._channel_time_helper()
+        channel, _image_time = self._channel_time_helper()
         return self._create_mult_keep_case(channel)
 
     def field_obs_instrument_couvis_band1(self):

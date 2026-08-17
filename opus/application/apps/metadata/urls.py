@@ -1,14 +1,13 @@
 # metadata/urls.py
 from django.urls import re_path
-
 from metadata.views import (
-    api_get_result_count,
-    api_get_result_count_internal,
+    api_get_fields,
     api_get_mult_counts,
     api_get_mult_counts_internal,
     api_get_range_endpoints,
     api_get_range_endpoints_internal,
-    api_get_fields,
+    api_get_result_count,
+    api_get_result_count_internal,
 )
 
 urlpatterns = [

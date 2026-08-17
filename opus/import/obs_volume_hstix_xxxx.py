@@ -65,7 +65,7 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
         return self._create_mult('N')
 
     def field_obs_wavelength_spec_size(self):
-        spec_flag, filter1, filter2 = self._wfc3_spec_flag()
+        spec_flag, filter1, _filter2 = self._wfc3_spec_flag()
         if not spec_flag:
             return None
 

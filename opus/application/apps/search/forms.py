@@ -1,14 +1,12 @@
-import settings
-from django.apps import apps
-from django import forms
-from search.views import get_param_info_by_slug, is_single_column_range
-from tools.app_utils import (get_mult_name,
-                             get_numeric_suffix,
-                             strip_numeric_suffix)
-
-from opus_support import parse_form_type
-
 import logging
+
+import settings
+from django import forms
+from django.apps import apps
+from opus_support import parse_form_type
+from search.views import get_param_info_by_slug, is_single_column_range
+from tools.app_utils import get_mult_name, get_numeric_suffix, strip_numeric_suffix
+
 log = logging.getLogger(__name__)
 
 
@@ -27,12 +25,12 @@ class SearchForm(forms.Form):
     """
     def __init__(self, form_vals, *args, **kwargs):
         grouping = kwargs.pop('grouping', None)
-        super(SearchForm, self).__init__(form_vals, *args, **kwargs)
+        super().__init__(form_vals, *args, **kwargs)
 
         for slug in form_vals:
             param_info = get_param_info_by_slug(slug, 'search')
-            (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(param_info.form_type)
+            (form_type, _form_type_format,
+             _form_type_unit_id) = parse_form_type(param_info.form_type)
 
             if form_type == 'STRING':
                 choices = ((x,x) for x in settings.STRING_QTYPES)

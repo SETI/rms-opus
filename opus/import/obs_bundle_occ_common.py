@@ -7,6 +7,7 @@
 
 from obs_common_pds4 import ObsCommonPDS4
 
+
 class ObsBundleOccCommon(ObsCommonPDS4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

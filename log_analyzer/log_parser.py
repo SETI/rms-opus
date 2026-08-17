@@ -6,9 +6,10 @@ import itertools
 import string
 import sys
 from collections import deque
+from collections.abc import Iterator
 from ipaddress import IPv4Address
 from pathlib import Path
-from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
+from typing import Any, NamedTuple, TextIO
 
 from abstract_configuration import AbstractConfiguration, AbstractSessionInfo, LogId
 from ip_to_host_converter import IpToHostConverter
@@ -30,8 +31,8 @@ class LiveSession(NamedTuple):
 class Entry(NamedTuple):
     log_entry: LogEntry
     relative_start_time: datetime.timedelta
-    data: List[str]
-    opus_url: Optional[str]
+    data: list[str]
+    opus_url: str | None
     id: LogId
 
     def target_url(self) -> str:
@@ -40,7 +41,7 @@ class Entry(NamedTuple):
 
 class Session(NamedTuple):
     host_ip: IPv4Address
-    entries: List[Entry]
+    entries: list[Entry]
     session_info: AbstractSessionInfo
     id: str
 
@@ -66,8 +67,8 @@ class Session(NamedTuple):
 
 class HostInfo(NamedTuple):
     ip: IPv4Address
-    name: Optional[str]
-    sessions: List[Session]
+    name: str | None
+    sessions: list[Session]
 
     @property
     def total_time(self) -> datetime.timedelta:
@@ -85,7 +86,7 @@ class LogParser:
     _session_timeout: datetime.timedelta
     _output: TextIO
     _by_ip: bool
-    _ignored_ips: List[ipaddress.IPv4Network]
+    _ignored_ips: list[ipaddress.IPv4Network]
     _ip_to_host_converter: IpToHostConverter
     _id_generator: Iterator[str]
 
@@ -93,24 +94,25 @@ class LogParser:
                  session_timeout_minutes: int, output: str,
                  uses_html: bool, by_ip: bool,
                  ip_to_host_converter: IpToHostConverter,
-                 ignored_ips: List[ipaddress.IPv4Network],
+                 ignored_ips: list[ipaddress.IPv4Network],
                  **_: Any):
         self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
         if output:
             Path(output).parent.mkdir(parents=True, exist_ok=True)
-        self._output = open(output, "w") if output else sys.stdout
+        # Program-lifetime output stream (a file or stdout); not a scoped resource.
+        self._output = open(output, "w") if output else sys.stdout  # noqa: SIM115
         self._uses_html = uses_html
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
         self._ip_to_host_converter = ip_to_host_converter
         self._id_generator = (f'{self.__base36(value):>04}' for value in itertools.count(1))
 
-    def run_batch(self, log_entries: List[LogEntry]) -> None:
-        print(f'Parsing input')
+    def run_batch(self, log_entries: list[LogEntry]) -> None:
+        print('Parsing input')
         all_sessions = self.__get_session_list(log_entries, self._uses_html)
 
-        def do_grouping(by_ip: bool) -> List[HostInfo]:
+        def do_grouping(by_ip: bool) -> list[HostInfo]:
             if by_ip:
                 all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
                 sessions_list = [list(group)
@@ -134,7 +136,7 @@ class LogParser:
             host_infos = do_grouping(by_ip=True)
             self.__generate_batch_html_output(host_infos)
 
-    def run_summary(self, log_entries: List[LogEntry]) -> None:
+    def run_summary(self, log_entries: list[LogEntry]) -> None:
         """Print out all slugs that have appeared in the text."""
         all_sessions = self.__get_session_list(log_entries, uses_html=False)
         self._configuration.show_summary(all_sessions, self._output)
@@ -147,8 +149,8 @@ class LogParser:
         appearing in other sessions.  Note that log_entries is typically a generator tailing a file.
         """
         output = self._output
-        live_sessions: Dict[IPv4Address, LiveSession] = {}
-        previous_host_ip: Optional[IPv4Address] = None
+        live_sessions: dict[IPv4Address, LiveSession] = {}
+        previous_host_ip: IPv4Address | None = None
         need_host_separator: bool = False
         for entry in log_entries:
             if any(entry.host_ip in ipNetwork for ipNetwork in self._ignored_ips):
@@ -201,10 +203,10 @@ class LogParser:
 
             self.__print_entry_info(entry, entry_info, current_session.start_time)
 
-    def __get_session_list(self, log_entries: List[LogEntry], uses_html: bool) -> List[Session]:
+    def __get_session_list(self, log_entries: list[LogEntry], uses_html: bool) -> list[Session]:
         """Group the log entries into parsed sessions."""
 
-        sessions: List[Session] = []
+        sessions: list[Session] = []
         log_entries.sort(key=lambda entry: (entry.host_ip, entry.time))
         for session_host_ip, session_log_entries_iter in itertools.groupby(log_entries, lambda entry: entry.host_ip):
             if any(session_host_ip in ipNetwork for ipNetwork in self._ignored_ips):
@@ -221,10 +223,12 @@ class LogParser:
 
                 session_start_time = entry.time
 
-                def create_session_entry(log_entry: LogEntry, entry_info: List[str],
-                                         opus_url: Optional[str], log_id: LogId) -> Entry:
+                def create_session_entry(log_entry: LogEntry, entry_info: list[str],
+                                         opus_url: str | None, log_id: LogId,
+                                         session_start_time: datetime.datetime = session_start_time
+                                         ) -> Entry:
                     return Entry(log_entry=log_entry,
-                                 relative_start_time=entry.time - session_start_time,
+                                 relative_start_time=log_entry.time - session_start_time,
                                  data=entry_info, opus_url=opus_url, id=log_id)
 
                 current_session_entries = [create_session_entry(entry, entry_info, opus_url, entry_id)]
@@ -248,7 +252,7 @@ class LogParser:
 
         return sessions
 
-    def __generate_batch_text_output(self, host_infos: List[HostInfo]) -> None:
+    def __generate_batch_text_output(self, host_infos: list[HostInfo]) -> None:
         output = self._output
         assert not self._uses_html
         for i, host_info in enumerate(host_infos):
@@ -263,11 +267,11 @@ class LogParser:
                 for entry in entries:
                     self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
-    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo]) -> None:
+    def __generate_batch_html_output(self, host_infos_by_ip: list[HostInfo]) -> None:
         batch_html_generator = self._configuration.create_batch_html_generator(host_infos_by_ip)
         batch_html_generator.generate_output(self._output)
 
-    def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
+    def __print_entry_info(self, this_entry: LogEntry, this_entry_info: list[str],
                            session_start_time: datetime.datetime) -> None:
         """Print out the information for a log entry."""
         duration = this_entry.time - session_start_time
@@ -283,7 +287,7 @@ class LogParser:
             return f'{ip}'
 
     @staticmethod
-    def __sort_key_from_ip_and_name(ip: IPv4Address, name: Optional[str]) -> Any:
+    def __sort_key_from_ip_and_name(ip: IPv4Address, name: str | None) -> Any:
         if name:
             return 1, tuple(reversed(name.lower().split('.')))
         else:
@@ -293,7 +297,7 @@ class LogParser:
 
     @classmethod
     def __base36(cls, value: int) -> str:
-        result: List[str] = []
+        result: list[str] = []
         assert value > 0
         while value > 0:
             value, modulus = divmod(value, 36)

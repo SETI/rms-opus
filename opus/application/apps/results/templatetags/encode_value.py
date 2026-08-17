@@ -1,6 +1,6 @@
-from django import template
-
 import urllib
+
+from django import template
 
 register = template.Library()
 

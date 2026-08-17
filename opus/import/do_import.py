@@ -10,17 +10,14 @@ import os
 import re
 import traceback
 
-import pdsfile
-
-import opus_support
-
 import config_bundle_info
 import config_data
 import do_cart
 import do_django
 import impglobals
 import import_util
-
+import opus_support
+import pdsfile
 
 ################################################################################
 # TABLE PREPARATION
@@ -204,7 +201,7 @@ def copy_bundle_from_import_to_permanent(bundle_id):
 
     q = impglobals.DATABASE.quote_identifier
 
-    table_schemas, table_names_in_order = create_tables_for_import(bundle_id,
+    _table_schemas, table_names_in_order = create_tables_for_import(bundle_id,
                                                                    namespace='perm')
     for table_name in table_names_in_order:
         if table_name.startswith('obs_surface_geometry__'):
@@ -407,7 +404,7 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
     if disp_order is None:
         # No disp_order specified, so make one up
         # Update the display_order
-        (form_type, form_type_format,
+        (_form_type, _form_type_format,
          form_type_unit_id) = opus_support.parse_form_type(table_column['pi_form_type'])
         parse_func = opus_support.get_single_parse_function(form_type_unit_id)
 
@@ -448,13 +445,13 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
                 disp_order = 'zzx' + str(label)
         elif parse_func:
             try:
-                disp_order = '%030.9f' % parse_func(str(val))
+                disp_order = f'{parse_func(str(val)):030.9f}'
             except Exception as e:
                 import_util.log_nonrepeating_error(
 f'Unable to parse "{label}" for type "range_func_name": {e}')
                 disp_order = label
         elif all_numeric:
-            disp_order = '%20.9f' % float(label)
+            disp_order = f'{float(label):20.9f}'
         elif label in ('Yes', 'On'):
             disp_order = 'zzAYes'
         elif label in ('No', 'Off'):
@@ -463,7 +460,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
             disp_order = label
 
     if isinstance(disp_order, (int, float)):
-        disp_order = '%030.9f' % disp_order
+        disp_order = f'{disp_order:030.9f}'
     if len(mult_table) == 0:
         next_id = 0
     else:
@@ -783,7 +780,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                                       .replace('.lbl', '.csv'))
                     assoc_rows = []
                     assoc_label_dict = {} # Not used
-                    with open(table_filename, 'r') as table_file:
+                    with open(table_filename) as table_file:
                         csvreader = csv.reader(table_file)
                         for row in csvreader:
                             if len(row) > 2 and row[2].count('-') > 1:
@@ -1512,7 +1509,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
             else:
                 pref += pref_list[-1][:3]
             pref = pref.upper()
-        sort_order = pref + ('%03d' % sort_order_num)
+        sort_order = pref + f'{sort_order_num:03d}'
         list_of_sublists = products[product_type]
 
         skip_current_product_type = False
@@ -1574,16 +1571,15 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
 
                 # If the pdsfile is expecting the shelf file, check if corresponding
                 # shelves/info files exist, if not, we skip the file.
-                if pds_version == 3 and file.shelf_exists_if_expected() is False:
-
-                    # For cross pds4 products, don't skip the import if shelves file
-                    # doesn't exist.
-                    if not isinstance(file, pdsfile.pds4file.Pds4File):
-                        # TODOPDS4 ^^^
-                        import_util.log_nonrepeating_warning(
-                            'Missing corresponding ' +
-                            f'shelves/info for {file.abspath}')
-                        continue
+                # For cross pds4 products, don't skip the import if the shelves file
+                # doesn't exist.
+                if (pds_version == 3 and file.shelf_exists_if_expected() is False
+                        and not isinstance(file, pdsfile.pds4file.Pds4File)):
+                    # TODOPDS4 ^^^
+                    import_util.log_nonrepeating_warning(
+                        'Missing corresponding ' +
+                        f'shelves/info for {file.abspath}')
+                    continue
 
                 # The following info are obtained from _info (from shelves/info)
                 url = file.url.strip('/')
@@ -1597,9 +1593,9 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                         import_util.find_max_table_id('obs_files'))
                 impglobals.MAX_TABLE_ID_CACHE['obs_files'] = (
                     impglobals.MAX_TABLE_ID_CACHE['obs_files']+1)
-                id = impglobals.MAX_TABLE_ID_CACHE['obs_files']
+                table_id = impglobals.MAX_TABLE_ID_CACHE['obs_files']
 
-                row = {'id': id,
+                row = {'id': table_id,
                        'obs_general_id': obs_general_id,
                        'opus_id': opus_id,
                        'bundle_id': bundle_id,
@@ -1703,12 +1699,11 @@ def do_import_steps():
     # If --import is given, first delete the bundles from the import tables,
     # then do the new import
     if (impglobals.ARGUMENTS.do_import or
-        impglobals.ARGUMENTS.delete_import_bundles):
-        if not old_imp_tables_dropped:
-            import_util.log_warning('Importing on top of previous import tables!')
-            for bundle_id in import_util.yield_import_bundle_ids(
-                                                    impglobals.ARGUMENTS):
-                delete_bundle_from_obs_tables(bundle_id, 'import')
+        impglobals.ARGUMENTS.delete_import_bundles) and not old_imp_tables_dropped:
+        import_util.log_warning('Importing on top of previous import tables!')
+        for bundle_id in import_util.yield_import_bundle_ids(
+                                                impglobals.ARGUMENTS):
+            delete_bundle_from_obs_tables(bundle_id, 'import')
 
     if impglobals.ARGUMENTS.do_import:
         for bundle_id in bundle_id_list:

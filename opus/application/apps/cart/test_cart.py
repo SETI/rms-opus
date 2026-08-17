@@ -3,18 +3,19 @@
 import logging
 from unittest import TestCase
 
+import settings
+from cart.views import (
+    api_cart_status,
+    api_create_download,
+    api_edit_cart,
+    api_get_cart_csv,
+    api_reset_session,
+    api_view_cart,
+)
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
 
-from cart.views import (api_cart_status,
-                        api_create_download,
-                        api_edit_cart,
-                        api_get_cart_csv,
-                        api_reset_session,
-                        api_view_cart)
-
-import settings
 
 class cartTests(TestCase):
 

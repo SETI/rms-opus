@@ -1,18 +1,16 @@
 # ui/test_ui.py
 
+import json
 import logging
 import sys
 from unittest import TestCase
 
+import settings
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
+from ui.views import api_normalize_url, api_notifications
 
-from ui.views import (api_notifications,
-                      api_normalize_url)
-
-import json
-import settings
 
 class uiTests(TestCase):
 

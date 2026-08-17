@@ -16,9 +16,13 @@
 #
 ################################################################################
 
-import settings
+import logging
 import os
 
+import settings
+from cart.models import Cart
+from dictionary.models import Definitions
+from dictionary.views import get_def_for_tooltip
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
@@ -29,45 +33,39 @@ from django.utils.html import escape
 from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
-
-from cart.models import Cart
-from dictionary.models import Definitions
-from dictionary.views import get_def_for_tooltip
+from opus_support import (
+    display_search_unit,
+    display_unit_ever,
+    format_unit_value,
+    get_default_unit,
+    get_disp_default_and_avail_units,
+    get_unit_display_names,
+    get_valid_units,
+    parse_form_type,
+)
 from paraminfo.models import ParamInfo
 from results.views import get_triggered_tables
 from search.forms import SearchForm
 from search.models import ObsGeneral, TableNames
-from search.views import (get_param_info_by_slug,
-                          is_single_column_range,
-                          url_to_search_params)
-from tools.app_utils import (cols_to_slug_list,
-                             convert_ring_obs_id_to_opus_id,
-                             enter_api_call,
-                             exit_api_call,
-                             get_git_version,
-                             get_mult_name,
-                             get_reqno,
-                             get_session_id,
-                             json_response,
-                             strip_numeric_suffix,
-                             throw_random_http404_error,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_NO_REQUEST)
+from search.views import get_param_info_by_slug, is_single_column_range, url_to_search_params
+from tools.app_utils import (
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_NO_REQUEST,
+    cols_to_slug_list,
+    convert_ring_obs_id_to_opus_id,
+    enter_api_call,
+    exit_api_call,
+    get_git_version,
+    get_mult_name,
+    get_reqno,
+    get_session_id,
+    json_response,
+    strip_numeric_suffix,
+    throw_random_http404_error,
+)
 from tools.db_utils import lookup_pretty_value_for_mult
-from tools.file_utils import (get_displayed_browse_products,
-                              get_pds_preview_images,
-                              get_pds_products)
+from tools.file_utils import get_displayed_browse_products, get_pds_preview_images, get_pds_products
 
-from opus_support import (display_search_unit,
-                          display_unit_ever,
-                          format_unit_value,
-                          get_disp_default_and_avail_units,
-                          get_default_unit,
-                          get_unit_display_names,
-                          get_valid_units,
-                          parse_form_type)
-
-import logging
 log = logging.getLogger(__name__)
 
 @method_decorator(never_cache, name='dispatch')
@@ -75,7 +73,7 @@ class main_site(TemplateView): # pragma: no cover - only accessed from browser
     template_name = "ui/base.html"
 
     def get_context_data(self, **kwargs):
-        context = super(main_site, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         menu = _get_menu_labels(None, 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
         context['default_widgets'] = settings.DEFAULT_WIDGETS
@@ -112,7 +110,7 @@ def api_notifications(request):
 
     lastupdate = None
     try:
-        with open(settings.OPUS_LAST_BLOG_UPDATE_FILE, 'r') as fp: # pragma: no cover -
+        with open(settings.OPUS_LAST_BLOG_UPDATE_FILE) as fp: # pragma: no cover -
             # There's no guarantee there will be a blog update file during the
             # unit tests
             lastupdate_val = fp.read().strip()
@@ -125,7 +123,7 @@ def api_notifications(request):
     notification = None
     notification_modify = None
     try:
-        with open(settings.OPUS_NOTIFICATION_FILE, 'r') as fp: # pragma: no cover -
+        with open(settings.OPUS_NOTIFICATION_FILE) as fp: # pragma: no cover -
             # There's no guarantee there will be a notification file during the
             # unit tests
             notification_val = fp.read().strip()
@@ -260,8 +258,8 @@ def api_get_widget(request, **kwargs):
         html = ''
         num_of_u_tags = len(dir_list)
         current_hierarchy = ''
-        for idx, dir in enumerate(dir_list):
-            current_hierarchy = dir if idx == 0 else (current_hierarchy + '_' + dir)
+        for idx, dir_name in enumerate(dir_list):
+            current_hierarchy = dir_name if idx == 0 else (current_hierarchy + '_' + dir_name)
             # Check if the current hierarchy exists
             if current_hierarchy in form: # pragma: no cover - XXX
                 # We don't currently have any multi-level categories so this will
@@ -274,7 +272,7 @@ def api_get_widget(request, **kwargs):
                 # we will render the input form
                 if idx == len(dir_list) - 1:
                     html += (SearchForm(form_vals,
-                                        auto_id='%s_' + str(dir),
+                                        auto_id='%s_' + str(dir_name),
                                         grouping=glabel).as_ul()
                             +'</ul>' * num_of_u_tags)
                     form += html
@@ -289,7 +287,7 @@ def api_get_widget(request, **kwargs):
                      +'<span class="indicator fa fa-plus">'
                      +'</span>'
                      +'<span class="mult-group-label">'
-                     +str(dir) + '</span>'
+                     +str(dir_name) + '</span>'
                      +'<span class="hints"></span></div>'
                      +'<ul class="mult-group"'
                      +' data-group=' + str(current_hierarchy) + '>')
@@ -297,7 +295,7 @@ def api_get_widget(request, **kwargs):
                 # We don't currently have any multi-level categories so this will always
                 # execute.
                 html += (SearchForm(form_vals,
-                                    auto_id='%s_' + str(dir),
+                                    auto_id='%s_' + str(dir_name),
                                     grouping=glabel).as_ul()
                         +'</ul>' * num_of_u_tags)
         form += html
@@ -473,8 +471,7 @@ def api_get_widget(request, **kwargs):
         # None grouping values will be displayed before grouping values
         if list(model.objects.filter(grouping=None)):
             form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
-            count = 0
-            for mult in (model.objects.filter(display='Y')
+            for count, mult in enumerate(model.objects.filter(display='Y')
                                         .order_by('disp_order')):
                 tp_id = mult.label
                 # If there is any invalid characters for HTML class/id
@@ -489,7 +486,6 @@ def api_get_widget(request, **kwargs):
                     # No mults currently have tooltips
                     customized_input = True
                 options.append((count, mult.label, mult_tooltip, tp_id))
-                count += 1
 
         # Group the entries with the same grouping values.
         # Different groups will be displayed based on group_disp_order
@@ -500,13 +496,15 @@ def api_get_widget(request, **kwargs):
         for entry in grouping_entries:
             options_of_a_group = []
             glabel = entry['grouping']
-            if glabel is not None and glabel != 'NULL':
+            # Not collapsed into one `if`: the inner condition carries its own
+            # `# pragma: no cover`, which must stay attached to that condition for
+            # the integration coverage gate.
+            if glabel is not None and glabel != 'NULL':  # noqa: SIM102
                 if model.objects.filter(grouping=glabel)[0:1]: # pragma: no cover -
                     # There should always be at least one item under the grouping
                     form = _update_form_with_grouping(form, form_vals,
                                                       glabel, glabel)
-                    count = 0
-                    for mult in (model.objects.filter(grouping=glabel,
+                    for count, mult in enumerate(model.objects.filter(grouping=glabel,
                                                       display='Y')
                                                 .order_by('disp_order')):
                         tp_id = mult.label
@@ -519,7 +517,6 @@ def api_get_widget(request, **kwargs):
                             customized_input = True
                         options_of_a_group.append((count, mult.label,
                                                    mult_tooltip, tp_id))
-                        count += 1
                     grouped_options[(glabel,glabel)] = options_of_a_group
 
     # This is a really horrible hack. They removed the ability to set a default
@@ -557,7 +554,7 @@ def api_get_widget(request, **kwargs):
                                                       form_type_unit_id, unit))
                     new_val2.append(format_unit_value(val2, default_format,
                                                       form_type_unit_id, unit))
-            item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
+            item['valid_units_info'] = zip(new_unit, new_val1, new_val2, strict=False)
 
     # Get the current selections for customized widget inputs, need to pass into
     # template and check the selected checkboxes.
@@ -616,10 +613,10 @@ def api_init_detail_page(request, **kwargs):
 
     try:
         obs_general = ObsGeneral.objects.get(opus_id=opus_id)
-    except ObjectDoesNotExist:
+    except ObjectDoesNotExist as err:
         # This OPUS ID isn't even in the database!
         exit_api_call(api_code, None)
-        raise Http404
+        raise Http404 from err
     instrument_id = lookup_pretty_value_for_mult(
         get_param_info_by_slug('instrumentid', 'col'),
         obs_general.instrument_id, False)
@@ -875,7 +872,7 @@ def api_normalize_url(request):
                    +'" is not searchable; it has been removed.')
             msg_list.append(msg)
             continue
-        (form_type, form_type_format,
+        (form_type, _form_type_format,
          form_type_unit_id) = parse_form_type(pi_searchable.form_type)
 
         is_range = form_type in settings.RANGE_FORM_TYPES
@@ -1046,7 +1043,7 @@ def api_normalize_url(request):
 
         ### Handle units ###
 
-        (form_type, form_type_format,
+        (form_type, _form_type_format,
          form_type_unit_id) = parse_form_type(pi.form_type)
         valid_units = get_valid_units(form_type_unit_id)
         # For our purpose, a unit_id that is never shown to the user (not
@@ -1134,7 +1131,7 @@ def api_normalize_url(request):
             temp_dict[qtype_slug] = qtype_val
         if unit_slug and unit_val is not None:
             temp_dict[unit_slug] = unit_val
-        (selections, extras) = url_to_search_params(temp_dict,
+        (selections, _extras) = url_to_search_params(temp_dict,
                                                     allow_errors=True,
                                                     return_slugs=True,
                                                     pretty_results=True)
@@ -1196,21 +1193,21 @@ def api_normalize_url(request):
 
     # Sort all the clauses for each slug key in numerical order
     # If there are duplicate numbers, do it in syntactic order
-    for search_slug, search_list in search_slugs_by_clause.items():
+    for _search_slug, search_list in search_slugs_by_clause.items():
         search_list.sort(key=lambda x: (0 if x[0] == '' else int(x[0][1:]),
                                         x))
 
     for search_slug in sorted(search_slugs_by_clause.keys(),
                               key=str.lower):
         for idx, search_data in enumerate(search_slugs_by_clause[search_slug]):
-            (clause_str,
+            (_clause_str,
              search1, search1_val,
              search2, search2_val,
              qtype, qtype_val,
              unit, unit_val) = search_data
             clause_num_str = ''
             if len(search_slugs_by_clause[search_slug]) != 1:
-                clause_num_str = '_%02d' % (idx+1)
+                clause_num_str = f'_{idx+1:02d}'
             if search1 and search1_val is not None:
                 new_url_search_list.append([search1+clause_num_str,
                                             search1_val])
@@ -1230,12 +1227,7 @@ def api_normalize_url(request):
 
     ### COLS
     cols_list = []
-    if 'cols' in original_slugs:
-        cols = original_slugs['cols']
-    else:
-        # msg = 'The "cols" field is missing; it has been set to the default.'
-        # msg_list.append(msg)
-        cols = settings.DEFAULT_COLUMNS
+    cols = original_slugs.get('cols', settings.DEFAULT_COLUMNS)
     if (cols ==
         'ringobsid,planet,target,phase1,phase2,time1,time2'):
         msg = ('Your URL uses the old defaults for selected metadata; '
@@ -1297,10 +1289,7 @@ def api_normalize_url(request):
 
     ### WIDGETS
     widgets_list = []
-    if 'widgets' in original_slugs:
-        widgets = original_slugs['widgets']
-    else:
-        widgets = ''
+    widgets = original_slugs.get('widgets', '')
     if (widgets == 'planet,target' and
         widgets != settings.DEFAULT_WIDGETS): # pragma: no cover -
         # At least for now, these are the same, so this can't happen
@@ -1354,12 +1343,7 @@ def api_normalize_url(request):
     ### ORDER
     order_list = []
     order_slug_list = []
-    if 'order' in original_slugs:
-        orders = original_slugs['order']
-    else:
-        # msg = 'The "order" field is missing; it has been set to the default.'
-        # msg_list.append(msg)
-        orders = settings.DEFAULT_SORT_ORDER
+    orders = original_slugs.get('order', settings.DEFAULT_SORT_ORDER)
     if orders == 'time1' and orders != settings.DEFAULT_SORT_ORDER:
         # msg = ('Your URL uses the old defaults for sort order; '
         #        +'they have been replaced with the new defaults.')
@@ -1509,7 +1493,7 @@ def api_normalize_url(request):
 
     ### DETAIL
     detail_val = None
-    if 'detail' in original_slugs and original_slugs['detail']:
+    if original_slugs.get('detail'):
         opus_id = convert_ring_obs_id_to_opus_id(original_slugs['detail'])
         if not opus_id:
             msg = ('You appear to be using an obsolete RINGOBS_ID ('
@@ -1543,8 +1527,7 @@ def api_normalize_url(request):
     #
 
     for slug_to_ignore in settings.SLUGS_NOT_IN_DB:
-        if slug_to_ignore in original_slugs:
-            del original_slugs[slug_to_ignore]
+        original_slugs.pop(slug_to_ignore, None)
 
     # Now let's see if we forgot anything
     for slug in original_slugs:
@@ -1705,7 +1688,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
             if table_name == 'obs_instrument_cocirs':
                 menu_data[table_name]['menu_help'] = "Cassini CIRS data is only available through June 30, 2010"
 
-        if d.table_name in sub_headings and sub_headings[d.table_name]:
+        if sub_headings.get(d.table_name):
             # this div is divided into sub headings
             menu_data[table_name]['has_sub_heading'] = True
 
@@ -1791,7 +1774,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         else:
             search_div['collapsed'] = 'collapsed'
             search_div['show'] = ''
-        divs = [search_div] + list(divs)
+        divs = [search_div, *list(divs)]
         menu_data.setdefault('search_fields', {})
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:

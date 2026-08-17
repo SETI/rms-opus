@@ -7,7 +7,6 @@
 ################################################################################
 
 import opus_support
-
 from obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIMSOccCommon
 
 

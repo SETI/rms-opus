@@ -1,16 +1,16 @@
 # results/urls.py
 from django.urls import re_path
 from results.views import (
-    api_get_data_and_images,
-    api_get_data,
-    api_get_metadata,
-    api_get_metadata_internal,
-    api_get_images,
-    api_get_images_by_size,
-    api_get_image,
-    api_get_files,
     api_get_categories_for_opus_id,
     api_get_categories_for_search,
+    api_get_data,
+    api_get_data_and_images,
+    api_get_files,
+    api_get_image,
+    api_get_images,
+    api_get_images_by_size,
+    api_get_metadata,
+    api_get_metadata_internal,
     api_get_product_types_for_opus_id,
     api_get_product_types_for_search,
 )

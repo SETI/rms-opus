@@ -17,31 +17,30 @@
 
 import base64
 import datetime
-from io import BytesIO
 import logging
-import mistune
 import os
 import platform
-import qrcode
 import re
+from io import BytesIO
 
-import yaml
+import mistune
 import pdfkit
-
-from django.http import Http404, HttpResponse, HttpRequest
+import qrcode
+import settings
+import yaml
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
-
 from metadata.views import get_fields_info
-from search.models import ObsGeneral, MultObsGeneralInstrumentId
-from tools.app_utils import (enter_api_call,
-                             exit_api_call,
-                             get_git_version,
-                             throw_random_http404_error,
-                             HTTP404_NO_REQUEST)
-
-import settings
+from search.models import MultObsGeneralInstrumentId, ObsGeneral
+from tools.app_utils import (
+    HTTP404_NO_REQUEST,
+    enter_api_call,
+    exit_api_call,
+    get_git_version,
+    throw_random_http404_error,
+)
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +106,7 @@ def api_bundles(request, fmt):
                            .filter(id=d['instrument_id']))
         all_bundles.setdefault(instrument_name[0]['label'],
                                []).append(d['bundle_id'])
-    for k,v in all_bundles.items():
+    for k,_v in all_bundles.items():
         all_bundles[k] = ', '.join(all_bundles[k])
 
     context = {'all_bundles': all_bundles}
@@ -135,7 +134,7 @@ def api_faq(request, fmt):
 
     path = os.path.dirname(os.path.abspath(__file__))
     faq_content_file = 'faq.yaml'
-    with open(os.path.join(path, faq_content_file), 'r') as stream:
+    with open(os.path.join(path, faq_content_file)) as stream:
         text = stream.read()
         try:
             faq = yaml.load(text, Loader=yaml.FullLoader)
@@ -144,7 +143,7 @@ def api_faq(request, fmt):
             # FAQ.YAML file
             log.error('api_faq error: %s', str(exc))
             exit_api_call(api_code, None)
-            raise Http404
+            raise Http404 from exc
 
     context = {'faq': faq,
                'allow_collapse': fmt == 'html'}
@@ -274,7 +273,7 @@ def api_api_guide(request, fmt):
 
     path = os.path.dirname(os.path.abspath(__file__))
     guide_content_file = 'api_guide.md'
-    with open(os.path.join(path, guide_content_file), 'r') as stream:
+    with open(os.path.join(path, guide_content_file)) as stream:
         text = stream.read()
         text = text.replace('%HOST%', prefix)
         text = text.replace('%DATE%', current_date)
@@ -300,8 +299,8 @@ def api_api_guide(request, fmt):
 
     fields_dict = get_fields_info('raw', request, api_code, collapse=True)
     fields = []
-    for cat, cat_data in fields_dict.items():
-        for field_name, field in cat_data.items():
+    for _cat, cat_data in fields_dict.items():
+        for _field_name, field in cat_data.items():
             field['pretty_units'] = None
             available_units = field['available_units']
             if available_units:

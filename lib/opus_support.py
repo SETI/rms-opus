@@ -12,11 +12,11 @@
 ################################################################################
 
 import math
-import numpy as np
 import re
 import unittest
 
 import julian
+import numpy as np
 
 DEG_RAD = np.degrees(1)
 
@@ -87,8 +87,8 @@ def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
     for part in parts:
         try:
             ints.append(int(part))
-        except ValueError:
-            raise ValueError(f'{scname} clock fields must be integers: {sclk}')
+        except ValueError as err:
+            raise ValueError(f'{scname} clock fields must be integers: {sclk}') from err
 
     # Check fields for valid ranges and add them up
     if ints[0] < 0 or len(parts[0]) > ndigits:
@@ -308,11 +308,10 @@ def parse_new_horizons_sclk(sclk, **kwargs):
     value = _parse_multi_field_sclk(sclk, 10, ':', 50000, 'New Horizons')
 
     # Validate the partition number if any
-    if parts[1]:
-        if ((parts[0] == '3' and value < 150000000.) or
-            (parts[0] == '1' and value > 150000000.)):
-            raise ValueError('New Horizons partition number is invalid: '
-                                f'{original_sclk}')
+    if parts[1] and ((parts[0] == '3' and value < 150000000.) or
+        (parts[0] == '1' and value > 150000000.)):
+        raise ValueError('New Horizons partition number is invalid: '
+                            f'{original_sclk}')
 
     return value
 
@@ -516,18 +515,18 @@ def parse_cassini_orbit(orbit, **kwargs):
     orbit = orbit.upper().strip('0')
     try:
         return CASSINI_ORBIT_NUMBER[orbit]
-    except KeyError:
-        raise ValueError(f'Invalid Cassini orbit {orbit}')
+    except KeyError as err:
+        raise ValueError(f'Invalid Cassini orbit {orbit}') from err
 
 def format_cassini_orbit(value, **kwargs):
     """Convert an internal number for a Cassini orbit to its displayed value."""
     if value >= 3:
-        return '%03d' % value
+        return f'{value:03d}'
 
     try:
         return CASSINI_ORBIT_NAME[value]
-    except KeyError:
-        raise ValueError(f'Invalid Cassini orbit {value}')
+    except KeyError as err:
+        raise ValueError(f'Invalid Cassini orbit {value}') from err
 
 class CassiniOrbitTest(unittest.TestCase):
     def test_parse_bad_orbit(self):
@@ -618,8 +617,8 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
     if len(parts) == 2:
         try:
             partition = int(parts[0])
-        except ValueError:
-            raise ValueError(f'Partition number is not an integer: {sclk}')
+        except ValueError as err:
+            raise ValueError(f'Partition number is not an integer: {sclk}') from err
 
         if planet is None:
             if partition not in VOYAGER_PLANET_PARTITIONS.values():
@@ -656,8 +655,8 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
     try:
         for part in parts:
             ints.append(int(part))
-    except ValueError:
-        raise ValueError(f'Voyager clock fields must be integers: {sclk}')
+    except ValueError as err:
+        raise ValueError(f'Voyager clock fields must be integers: {sclk}') from err
 
     # If we have just a single six- or seven-digit number, maybe the separator
     # was omitted. This is how Voyager image names are handled.
@@ -875,7 +874,7 @@ def parse_time(iso, unit=None, **kwargs):
     try:
         (day, sec, time_type) = julian.day_sec_from_string(iso, timesys=True)
     except:
-        raise ValueError(f'Invalid time syntax: {iso}')
+        raise ValueError(f'Invalid time syntax: {iso}') from None
     if time_type not in ('UTC', 'TDB'):
         raise ValueError(f'Invalid time system {time_type} when parsing {iso}')
     ret = julian.tai_from_day(day) + sec
@@ -895,14 +894,14 @@ def format_time_jd(tai, **kwargs):
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
-    return 'JD%.8f' % jd
+    return f'JD{jd:.8f}'
 
 def format_time_jed(tai, **kwargs):
     jed = julian.jd_from_time(tai, timesys='TAI', jdsys='TDB')
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
-    return 'JED%.8f' % jed
+    return f'JED{jed:.8f}'
 
 def format_time_mjd(tai, **kwargs):
     (day, sec) = julian.day_sec_from_tai(tai)
@@ -910,18 +909,18 @@ def format_time_mjd(tai, **kwargs):
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
-    return 'MJD%.8f' % mjd
+    return f'MJD{mjd:.8f}'
 
 def format_time_mjed(tai, **kwargs):
     mjed = julian.mjd_from_time(tai, timesys='TAI', mjdsys='TDB')
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
-    return 'MJED%.8f' % mjed
+    return f'MJED{mjed:.8f}'
 
 def format_time_et(tai, **kwargs):
     et = julian.tdb_from_tai(tai)
-    return '%.3f' % et
+    return f'{et:.3f}'
 
 class TimeTest(unittest.TestCase):
     # Note - julian.py has its own test suite, so we don't need to duplicate
@@ -1099,18 +1098,16 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
                 # provided
                 force_dh_int = True
                 minute = float(minute)
-                if force_m_int:
-                    if minute != int(minute):
-                        raise ValueError
+                if force_m_int and minute != int(minute):
+                    raise ValueError
                 if not math.isfinite(minute) or minute < 0 or minute >= 60:
                     raise ValueError
                 val += minute / 60
             if degrees_hours:
                 degrees_hours = degrees_hours.strip(format_char)
                 degrees_hours = float(degrees_hours)
-                if force_dh_int:
-                    if degrees_hours != int(degrees_hours):
-                        raise ValueError
+                if force_dh_int and degrees_hours != int(degrees_hours):
+                    raise ValueError
                 if not math.isfinite(degrees_hours):
                     raise ValueError
                 val += degrees_hours
@@ -1866,7 +1863,7 @@ def get_valid_units(unit_id):
 
     If unit_id is None, we return None.
     """
-    unit_info = UNIT_FORMAT_DB.get(unit_id, None)
+    unit_info = UNIT_FORMAT_DB.get(unit_id)
     valid_units = None
     if unit_info is not None:
         # This will create a list with the same order as written in the dict
@@ -1878,7 +1875,7 @@ def get_unit_display_names(unit_id):
     """Get a dictionary with valid units as keys and display names as values.
 
     If unit_id is None, we return None."""
-    unit_info = UNIT_FORMAT_DB.get(unit_id, None)
+    unit_info = UNIT_FORMAT_DB.get(unit_id)
     display_names = None
     if unit_info is not None:
         display_names = {}
@@ -1925,7 +1922,7 @@ def display_unit_ever(unit_id):
 
 def get_disp_default_and_avail_units(param_form_type):
     """Return display, default, and available units for a given ParamInfo form type."""
-    (form_type, form_type_format,
+    (_form_type, _form_type_format,
      form_type_unit_id) = parse_form_type(param_form_type)
 
     is_displayed = display_result_unit(form_type_unit_id)
@@ -2039,8 +2036,8 @@ def parse_unit_value(s, numerical_format, unit_id, unit):
         if unit is None:
             unit = get_default_unit(unit_id)
         unit = unit.lower()
-        (display_name, conversion_factor, parse_func,
-         display_func, _) = UNIT_FORMAT_DB[unit_id]['conversions'][unit]
+        (_display_name, conversion_factor, parse_func,
+         _display_func, _) = UNIT_FORMAT_DB[unit_id]['conversions'][unit]
     if parse_func is None:
         # Direct numeric conversion with no special parsing
         # Choose between float or int parsing
@@ -2063,7 +2060,7 @@ def parse_unit_value(s, numerical_format, unit_id, unit):
                 for suffix in trial_suffix_list:
                     sorted_suffixes.append((suffix, trial_unit, trial_conversion))
             sorted_suffixes.sort(key=lambda x: -len(x[0]))
-            for trial_suffix, trial_unit, trial_conversion in sorted_suffixes:
+            for trial_suffix, trial_unit, _trial_conversion in sorted_suffixes:
                 if s.endswith(trial_suffix):
                     force_unit = trial_unit
                     # Strip off the unit name from the number

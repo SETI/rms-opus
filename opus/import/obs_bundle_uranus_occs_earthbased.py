@@ -70,7 +70,7 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
         lid = self._index_col('pds:logical_identifier')
         lid = lid.split(':')
         main_lid = lid[3]
-        _, _, star, inst1, inst2 = main_lid.split('_')
+        _, _, _star, inst1, inst2 = main_lid.split('_')
         return _LID_TO_INST[f'{inst1}_{inst2}']
 
     def _star_id(self):

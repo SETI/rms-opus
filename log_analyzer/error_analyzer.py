@@ -5,14 +5,14 @@ import itertools
 import re
 import sys
 from bisect import bisect_left, bisect_right
-from collections import deque, defaultdict
+from collections import defaultdict, deque
+from collections.abc import Iterable
 from operator import attrgetter
-from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict, cast
+from typing import NamedTuple, TextIO, cast
 
 from cronjob_utils import expand_globs_and_dates
 from jinga_environment import JINJA_ENVIRONMENT
-from log_entry import LogReader, LogEntry
-
+from log_entry import LogEntry, LogReader
 
 ERROR_PATTERN = re.compile(r'^\[([^\]]+)\] \[([^\]]+)\] \[([^\]]+)\] \[(client|remote) ([^\]]+):\d+\] (.*)$')
 
@@ -27,24 +27,24 @@ class ErrorEntry(NamedTuple):
     host_ip: ipaddress.IPv4Address
     message: str
     full_message: str
-    code_location: Optional[str] = None
-    severity: Optional[str] = None
+    code_location: str | None = None
+    severity: str | None = None
 
 
 class ErrorAndLog(NamedTuple):
-    error_entries: List[ErrorEntry]
-    log_entries: List[LogEntry]
+    error_entries: list[ErrorEntry]
+    log_entries: list[LogEntry]
 
 
-class ErrorReader(object):
-    _files: List[str]
-    _ignored_ips: List[ipaddress.IPv4Network]
-    _ignored_errors: List[str]
+class ErrorReader:
+    _files: list[str]
+    _ignored_ips: list[ipaddress.IPv4Network]
+    _ignored_errors: list[str]
     _output: TextIO
-    _seen_errors: Dict[Tuple[str, ...], List[ErrorAndLog]]
+    _seen_errors: dict[tuple[str, ...], list[ErrorAndLog]]
     _uses_html: bool
 
-    def __init__(self, files: List[str], ignored_ips: List[ipaddress.IPv4Network], ignored_errors: List[str],
+    def __init__(self, files: list[str], ignored_ips: list[ipaddress.IPv4Network], ignored_errors: list[str],
                  output: TextIO, uses_html: bool):
         self._files = files
         self._ignored_ips = ignored_ips
@@ -68,7 +68,7 @@ class ErrorReader(object):
             self._check_one_ip(error_entries, log_entries)
         self._show_results()
 
-    def _get_error_entries(self) -> List[ErrorEntry]:
+    def _get_error_entries(self) -> list[ErrorEntry]:
         files = [file for file in self._files if "error" in file]
         if not files:
             raise Exception("You must specify at least one error log.")
@@ -85,7 +85,7 @@ class ErrorReader(object):
         result = any(ignored_error in entry.full_message for ignored_error in self._ignored_errors)
         return result
 
-    def _get_log_entries(self) -> List[LogEntry]:
+    def _get_log_entries(self) -> list[LogEntry]:
         files = [file for file in self._files if "access" in file]
         log_entries = LogReader.read_logs(files)
         return [entry for entry in log_entries
@@ -95,7 +95,7 @@ class ErrorReader(object):
                 if not(entry.status == 200 and entry.url.path.startswith('/static_media'))]
 
     @staticmethod
-    def _read_error_files(file_names: Iterable[str]) -> List[ErrorEntry]:
+    def _read_error_files(file_names: Iterable[str]) -> list[ErrorEntry]:
         error_entries = []
         for file_name in sorted(file_names):
             print(f'Reading {file_name}')
@@ -107,7 +107,7 @@ class ErrorReader(object):
         return error_entries
 
     @staticmethod
-    def __parse_line_in_error_log(line: str) -> Optional[ErrorEntry]:
+    def __parse_line_in_error_log(line: str) -> ErrorEntry | None:
         """Converts a line from an Apache log file into a LogEntry."""
         match = re.match(ERROR_PATTERN, line)
         if not match:
@@ -126,19 +126,17 @@ class ErrorReader(object):
         else:
             return ErrorEntry(time=time, host_ip=host_ip, message=rest, full_message=rest)
 
-    def _check_one_ip(self, error_entries: List[ErrorEntry], log_entries: List[LogEntry]) -> None:
+    def _check_one_ip(self, error_entries: list[ErrorEntry], log_entries: list[LogEntry]) -> None:
         error_entries_deque = deque(error_entries)
         log_entry_dates = [log_entry.time.replace(tzinfo=None) for log_entry in log_entries]
 
-        def merge_error_entries(old_entries: List[ErrorEntry], new_entry: ErrorEntry) -> bool:
+        def merge_error_entries(old_entries: list[ErrorEntry], new_entry: ErrorEntry) -> bool:
             # In some cases, error logs can be more than one line long.  This function returns true if the next
             # line in the error log probably belongs with the previous ones.
             delta = new_entry.time - old_entries[-1].time
             if delta >= ERROR_LEEWAY:
                 return False
-            if new_entry.message in (x.message for x in old_entries):
-                return False
-            return True
+            return new_entry.message not in (x.message for x in old_entries)
 
         while error_entries_deque:
             these_error_entries = [error_entries_deque.popleft()]
@@ -146,7 +144,7 @@ class ErrorReader(object):
                 these_error_entries.append(error_entries_deque.popleft())
             if not log_entries:
                 # don't bother looking if there are no log entries
-                these_log_entries: List[LogEntry] = []
+                these_log_entries: list[LogEntry] = []
             else:
                 start_time = these_error_entries[0].time.replace(microsecond=0)
                 end_time = these_error_entries[-1].time
@@ -161,7 +159,7 @@ class ErrorReader(object):
 
     def _show_results(self) -> None:
         seen_errors = self._seen_errors
-        results: List[Tuple[Tuple[str, ...], int, datetime.datetime, List[List[LogEntry]]]] = []
+        results: list[tuple[tuple[str, ...], int, datetime.datetime, list[list[LogEntry]]]] = []
         for key in sorted(seen_errors.keys(), key=lambda strs: (-len(seen_errors[strs]), -len(strs), strs)):
             sorted_error_and_log_pairs = sorted(seen_errors[key], key=lambda x: x.error_entries[0].time)
             min_time = sorted_error_and_log_pairs[0].error_entries[0].time
@@ -180,7 +178,7 @@ class ErrorReader(object):
 
     def __generate_text_output(
             self,
-            results: List[Tuple[Tuple[str, ...], int, datetime.datetime, List[List[LogEntry]]]]) -> None:
+            results: list[tuple[tuple[str, ...], int, datetime.datetime, list[list[LogEntry]]]]) -> None:
         output = self._output
         for key, count, min_time, all_sorted_log_entries in results:
             output.write('\n========================\n\n')
@@ -197,18 +195,18 @@ class ErrorReader(object):
                     for log_entry in log_entries:
                         output.write(f'{log_entry.time} {log_entry.url.geturl()}\n')
                 else:
-                    output.write(f'Log entries missing\n')
+                    output.write('Log entries missing\n')
 
     def __generate_html_output(
             self,
-            results: List[Tuple[Tuple[str, ...], int, datetime.datetime, List[List[LogEntry]]]]) -> None:
+            results: list[tuple[tuple[str, ...], int, datetime.datetime, list[list[LogEntry]]]]) -> None:
         template = JINJA_ENVIRONMENT.get_template('error_analysis.html')
         for result in template.generate(results=results):
             self._output.write(result)
 
 
-def main(arguments: Optional[List[str]] = None) -> None:
-    def parse_ignored_ips(x: str) -> List[ipaddress.IPv4Network]:
+def main(arguments: list[str] | None = None) -> None:
+    def parse_ignored_ips(x: str) -> list[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
     parser = argparse.ArgumentParser(description='Process log files.')
@@ -242,7 +240,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
     else:
         ignored_errors = []
 
-    output = sys.stdout if not args.output else open(args.output, "w")
+    # Program-lifetime output stream (a file or stdout); not a scoped resource.
+    output = sys.stdout if not args.output else open(args.output, "w")  # noqa: SIM115
     ErrorReader(args.log_files, ignored_ips, ignored_errors, output, args.uses_html).run()
 
 

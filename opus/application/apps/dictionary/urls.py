@@ -1,6 +1,5 @@
-from django.urls import re_path
-
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.urls import re_path
 from django.views.generic.base import RedirectView
 
 # from dictionary.views import (

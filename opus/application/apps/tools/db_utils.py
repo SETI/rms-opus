@@ -4,14 +4,10 @@
 #
 ################################################################################
 
-from django.apps import apps
-
-from tools.app_utils import get_mult_name
-
-from opus_support import parse_form_type
-
 import settings
-
+from django.apps import apps
+from opus_support import parse_form_type
+from tools.app_utils import get_mult_name
 
 MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_TABLE_ALREADY_EXISTS = 1050
@@ -46,8 +42,8 @@ def lookup_pretty_value_for_mult(param_info, value, cvt_null):
     if param_info.form_type is None: # pragma: no cover - import error
         return None
 
-    (form_type, form_type_format,
-     form_type_unit_id) = parse_form_type(param_info.form_type)
+    (form_type, _form_type_format,
+     _form_type_unit_id) = parse_form_type(param_info.form_type)
 
     if form_type not in settings.MULT_FORM_TYPES: # pragma: no cover - import error
         return None

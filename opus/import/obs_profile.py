@@ -20,7 +20,7 @@ class ObsProfile:
     _STAR_RA_DEC_SLOP = 0. # Decided at meeting 2020/05/14 to have stars as fixed pts
 
     def _prof_ra_dec_helper(self, index, col):
-        target_name, target_info = self._star_name_helper(index, col)
+        target_name, _target_info = self._star_name_helper(index, col)
         if target_name is None:
             return None, None, None, None
         if target_name not in config_targets.STAR_RA_DEC:

@@ -6,7 +6,6 @@
 ################################################################################
 
 import opus_support
-
 from obs_common_pds3 import ObsCommonPDS3
 
 

@@ -1,10 +1,11 @@
 import io
 import ipaddress
 import re
+from collections.abc import Iterable, Iterator
 from datetime import datetime
 from time import sleep
-from typing import List, Optional, Iterator, NamedTuple, Iterable
-from urllib.parse import urlsplit, SplitResult
+from typing import NamedTuple
+from urllib.parse import SplitResult, urlsplit
 
 # https://gist.github.com/sumeetpareek/9644255
 parts = [
@@ -25,19 +26,19 @@ LOG_PATTERN = re.compile(r'\s+'.join(parts) + r'\s*\Z')
 class LogEntry(NamedTuple):
     """Information from one line of an Apache log entry."""
     host_ip: ipaddress.IPv4Address
-    user: Optional[str]
+    user: str | None
     status: int
     method: str
     url: SplitResult
-    size: Optional[int]
-    agent: Optional[str]
+    size: int | None
+    agent: str | None
     time_string: str
     time: datetime
 
 
-class LogReader(object):
+class LogReader:
     @staticmethod
-    def read_logs(file_names: Iterable[str]) -> List[LogEntry]:
+    def read_logs(file_names: Iterable[str]) -> list[LogEntry]:
         log_entries = []
         for file_name in file_names:
             print(f'Reading {file_name}')
@@ -50,7 +51,7 @@ class LogReader(object):
 
     @staticmethod
     def read_logs_from_tailed_file(file_name: str, sleep_time: float = 1.0) -> Iterator[LogEntry]:
-        with open(file_name, "r") as file:
+        with open(file_name) as file:
             while True:
                 curr_position = file.tell()
                 log_line = file.readline()
@@ -63,7 +64,7 @@ class LogReader(object):
                         yield log_entry
 
     @staticmethod
-    def __parse_line(line: str) -> Optional[LogEntry]:
+    def __parse_line(line: str) -> LogEntry | None:
         """Converts a line from an Apache log file into a LogEntry."""
         match = re.match(LOG_PATTERN, line)
         if not match:

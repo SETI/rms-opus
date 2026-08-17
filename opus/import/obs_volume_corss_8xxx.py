@@ -7,9 +7,7 @@
 ################################################################################
 
 import opus_support
-
 from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
-
 
 # TODOPDS4 Verify that these are correct
 _DSN_NUM_TO_PDS4_INST = {
