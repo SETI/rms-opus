@@ -540,7 +540,12 @@ try: # Top-level exception handling so we always log what's going on
 
     impglobals.LOGGER.close()
 
-except Exception:
+# ImportDBException derives from BaseException (importdb/super.py), so it must be
+# named explicitly: this top-level handler exists to log every import failure, and
+# the import pipeline raises ImportDBException on any DB error. SystemExit and
+# KeyboardInterrupt are intentionally left to propagate (the old bare `except:`
+# wrongly swallowed them).
+except (Exception, importdb.ImportDBException):
     msg = 'Import failed with exception'
     if not impglobals.ARGUMENTS.log_suppress_traceback:
         msg += ':\n' + traceback.format_exc()
