@@ -91,8 +91,6 @@ class QueryHandler:
             return [], None
 
     def handle_query(self, _entry: LogEntry, query: dict[str, str], query_type: str) -> tuple[list[str], str | None]:
-        assert query_type in ['data', 'result_count', 'dataimages']
-
         result: list[str] = []
 
         if query_type == 'result_count':

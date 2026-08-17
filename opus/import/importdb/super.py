@@ -29,6 +29,11 @@ class ImportDBSuper:
         # Where Python warnings will be written
         self._warning_list = []
         self._old_warning_handler = None
+        # True only while our handler is installed, so _exit() restores exactly
+        # when _enter() installed. A plain `is not None` test on
+        # _old_warning_handler would be wrong when the saved handler is itself
+        # legitimately None.
+        self._warning_handler_installed = False
 
     def _is_import_namespace(self, table_name):
         if self.import_prefix is None:
@@ -99,6 +104,7 @@ class ImportDBSuper:
             self._warning_list = []
             if self.logger:
                 self._old_warning_handler = warnings.showwarning
+                self._warning_handler_installed = True
                 warnings.showwarning = self._make_warning_handler(
                                                 self._warning_list)
 
@@ -112,8 +118,14 @@ class ImportDBSuper:
                     self.logger.log('warning', '  '+cmd)
                 for w in self._warning_list:
                     self.logger.log('warning', '  '+w)
-            warnings.showwarning = self._old_warning_handler
-            self._old_warning_handler = None
+            # Restore only if we installed (i.e. only when self.logger was set);
+            # restoring unconditionally would assign None to
+            # warnings.showwarning, and the next warnings.warn() would then
+            # raise TypeError.
+            if self._warning_handler_installed:
+                warnings.showwarning = self._old_warning_handler
+                self._old_warning_handler = None
+                self._warning_handler_installed = False
 
     def quote_identifier(self, s):
         raise NotImplementedError('ImportDBSuper::quote_identifier must be overriden')

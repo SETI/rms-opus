@@ -365,7 +365,9 @@ def api_edit_cart(request, action, **kwargs):
         if throw_random_http404_error(): # pragma: no cover - internal debugging
             raise ValueError
     except Exception:
-        log.error('api_edit_cart: Bad value for recyclebin %s: %s', recycle_bin,
+        # %r (not %s) so CR/LF in the request-derived values cannot forge extra
+        # log lines (error_analyzer parses these logs line-anchored).
+        log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin,
                   request.GET)
         ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_bin, request))
         exit_api_call(api_code, ret)
