@@ -1086,7 +1086,7 @@ body; never rewrite or delete earlier notes.*
     Kept: `util/dump_pds_definitions.py`, `util/retrieve_ra_dec.py`. The DB-backend
     abstraction (`importdb/postgresql.py`, `db_brand` in `get_db()`, `DB_BRAND`) was left
     intact per the decisions table.
-  - **Two exception/handler landmines in `opus/import` that Phase C's error-handling and
+  - **Exception/handler landmines in `opus/import` that Phase C's error-handling and
     logging work (and any future `except:` cleanup) must know about:**
     1. **`ImportDBException` derives from `BaseException`**, not `Exception`
        (`importdb/super.py`), and `importdb/mysql.py` raises it in ~15 places with no
