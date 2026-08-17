@@ -47,6 +47,31 @@ def test_secrets_path_ignores_empty_env_var(tmp_path: Path,
     assert secrets_path() == tmp_path / SECRETS_FILENAME
 
 
+def test_secrets_path_rejects_relative_env_var(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A relative path is refused even when it names a file that exists.
+
+    Resolving it would silently make the settings depend on the working directory
+    the process was started in.
+    """
+    _write_secrets(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(OPUS_SECRETS_ENV_VAR, SECRETS_FILENAME)
+    with pytest.raises(ValueError, match=re.escape(
+            f'{OPUS_SECRETS_ENV_VAR} must be an absolute path')):
+        secrets_path()
+
+
+def test_load_secrets_rejects_relative_env_var(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The loader refuses a relative path rather than reading the file it names."""
+    _write_secrets(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(OPUS_SECRETS_ENV_VAR, SECRETS_FILENAME)
+    with pytest.raises(ValueError, match=re.escape(SECRETS_FILENAME)):
+        load_secrets()
+
+
 def test_load_secrets_exposes_attributes(tmp_path: Path,
                                          monkeypatch: pytest.MonkeyPatch) -> None:
     """Every name defined in the secrets file is an attribute of the loaded module."""

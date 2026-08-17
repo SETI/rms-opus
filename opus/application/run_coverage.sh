@@ -1,3 +1,4 @@
+#!/bin/bash
 coverage erase
 if [ $? -ne 0 ]; then exit -1; fi
 coverage run -a -m pytest ../../tests/opus_support

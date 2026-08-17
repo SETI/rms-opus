@@ -42,10 +42,20 @@ def secrets_path() -> Path:
     Returns:
         The value of the ``OPUS_SECRETS`` environment variable if it is set and
         non-empty, otherwise ``opus_secrets.py`` in the current working directory.
+
+    Raises:
+        ValueError: If ``OPUS_SECRETS`` is set to a relative path. Resolving one
+            against the working directory would make the settings a process
+            inherits depend on where it happens to have been started, which is
+            exactly what naming the file explicitly is meant to prevent.
     """
     env_value = os.environ.get(OPUS_SECRETS_ENV_VAR)
     if env_value:
-        return Path(env_value)
+        path = Path(env_value)
+        if not path.is_absolute():
+            raise ValueError(f'{OPUS_SECRETS_ENV_VAR} must be an absolute path to the '
+                             f'secrets file: {path}')
+        return path
     return Path.cwd() / SECRETS_FILENAME
 
 
@@ -62,6 +72,7 @@ def load_secrets() -> ModuleType:
         The executed secrets module; every setting is an attribute on it.
 
     Raises:
+        ValueError: If ``OPUS_SECRETS`` is set to a relative path.
         FileNotFoundError: If no secrets file exists at `secrets_path`.
         Exception: Whatever the secrets file itself raises while executing.
     """

@@ -1238,6 +1238,34 @@ body; never rewrite or delete earlier notes.*
     that exact sequence from `opus/application`: all six package modules at 100% statements
     and 100% branches, with no test file measured. **Any change to `opus_support` in a later
     PR must keep it at 100% or the self-hosted gate fails.**
+  - **Four latent defects in the moved `opus_support` code, found by CodeRabbit on the
+    PR-03 review and deliberately NOT fixed here** (PR-03 is a pure move; changing any of
+    them alters behavior, which a move PR must not do, and the integration suite could not
+    distinguish a fix from a regression in the same diff). **No PR in the plan owns
+    `opus_support` bug fixes, so the orchestrator must assign these** — the natural home is
+    a small dedicated PR, or PR-14 (which is already the only PR that opens these files):
+    1. **`units.py` `wavenumber_resolution` loses two unit aliases to missing commas.**
+       In both conversion entries a suffix list has adjacent string literals with no comma
+       (`'cm^-1perpixel'` / `'cm**-1/p'`, and `'m^-1perpixel'` / `'m**-1/p'`), so Python
+       concatenates them: the list holds `'cm^-1perpixelcm**-1/p'` and neither original
+       alias. `parse_unit_value` matches user-typed suffixes against these lists, so
+       `1 cm^-1perpixel` and `1 cm**-1/p` are not recognized and the fused entry can never
+       match. **User-visible.** Fixing it needs a test that parses one suffix per alias
+       list.
+    2. **`angles.py` fallback "N N N" regex has an unescaped dot.** The last group is
+       `(\d+(|.\d*))`, so `.` matches any character and inputs like `'1 30 36 5'` or
+       `'1 30 36a5'` reach `float(second)`, which raises a `ValueError` carrying CPython's
+       conversion message. Every other rejection in that function raises a bare
+       `ValueError`, and `tests/opus_support/test_angles.py` asserts that empty-message
+       contract, so fixing the regex changes which message those inputs produce.
+    3. **`orbits.py` `parse_cassini_orbit` has an unreachable raise and reports a mangled
+       value.** The `raise ValueError(f'Invalid Cassini orbit {orbit}')` sits inside the
+       `try` whose own `except ValueError: pass` swallows it, and `orbit` is later rebound
+       to the stripped string, so `'0002'` reports `Invalid Cassini orbit 2`.
+    4. **`sclk.py` `_parse_multi_field_sclk` has a no-op statement.** `parts[-1]` is
+       evaluated and discarded where the comment says the empty final field is deleted.
+       Output is unchanged (the padding loop pads the empty field anyway), so it is dead
+       code that PR-02 missed — vulture does not flag bare expression statements.
   - **No `py.typed` marker yet.** `[tool.setuptools.package-data]` already globs for it, but
     `opus_support`/`opus_config` carry no annotations until PR-14; shipping the marker now
     would tell downstream type-checkers to trust an untyped package. **PR-14 adds
