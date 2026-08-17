@@ -1086,6 +1086,28 @@ body; never rewrite or delete earlier notes.*
     Kept: `util/dump_pds_definitions.py`, `util/retrieve_ra_dec.py`. The DB-backend
     abstraction (`importdb/postgresql.py`, `db_brand` in `get_db()`, `DB_BRAND`) was left
     intact per the decisions table.
+  - **Two exception/handler landmines in `opus/import` that Phase C's error-handling and
+    logging work (and any future `except:` cleanup) must know about:**
+    1. **`ImportDBException` derives from `BaseException`**, not `Exception`
+       (`importdb/super.py`), and `importdb/mysql.py` raises it in ~15 places with no
+       handler except the narrow one around `get_db()`. A blanket bare-`except:` →
+       `except Exception:` conversion therefore **silently stops the top-level "always log"
+       handler in `main_opus_import.py` from catching it** (DB failures escape unlogged,
+       exit code changes). PR-02 preserved behavior with an explicit
+       `except (Exception, importdb.ImportDBException):`; the `BaseException` base class was
+       left unchanged (out of scope). Narrowing that base class is a candidate for the
+       Phase C error-handling PR — if it is changed to `Exception`, the explicit tuple can
+       be simplified.
+    2. **The warning-handler install/restore was asymmetric.** `ImportDBSuper._enter()`
+       saves+installs `warnings.showwarning` **only `if self.logger:`**, but `_exit()`
+       restored it **unconditionally** — so with `logger=None` it assigned
+       `warnings.showwarning = None` and the next `warnings.warn()` raised
+       `TypeError: warnings.showwarning() must be set to a function or method`. This was
+       **latent until PR-02 fixed the `showarning` typo** (the misspelling made the restore
+       a no-op on a bogus module attribute), i.e. the typo fix activated the bug. Fixed in
+       PR-02 with an explicit `_warning_handler_installed` flag. Integration CI cannot reach
+       it (the pipeline always passes a logger). **Lesson:** fixing a typo can activate dead
+       code — audit what the misspelled statement was silently *not* doing.
   - **`instruments.py`** `PDSTABLE_PREPROCESS`/`PDSTABLE_REPLACEMENTS` are now empty lists
     (only commented-out hook entries remained); both are still referenced by
     `import_util.py` (`PDSTABLE_REPLACEMENTS` is iterated; `PDSTABLE_PREPROCESS` only in a
