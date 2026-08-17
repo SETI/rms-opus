@@ -5,8 +5,9 @@
 # common and obs_mission_voyager tables.
 ################################################################################
 
-import opus_support
 from obs_common_pds3 import ObsCommonPDS3
+
+import opus_support
 
 
 class ObsVolumeVoyagerCommon(ObsCommonPDS3):

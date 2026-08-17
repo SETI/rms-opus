@@ -27,15 +27,6 @@ from django.db import DatabaseError, connection
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import Http404, HttpResponseServerError
-from opus_support import (
-    convert_from_default_unit,
-    convert_to_default_unit,
-    format_unit_value,
-    get_default_unit,
-    get_valid_units,
-    parse_form_type,
-    parse_unit_value,
-)
 from paraminfo.models import ParamInfo
 from search.models import UserSearches
 from tools.app_utils import (
@@ -57,6 +48,16 @@ from tools.app_utils import (
     throw_random_http500_error,
 )
 from tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
+
+from opus_support import (
+    convert_from_default_unit,
+    convert_to_default_unit,
+    format_unit_value,
+    get_default_unit,
+    get_valid_units,
+    parse_form_type,
+    parse_unit_value,
+)
 
 log = logging.getLogger(__name__)
 

@@ -47,7 +47,6 @@ echo "DB_PASSWORD = '${OPUS_DB_PASSWORD}'" >> opus_secrets.py
 echo "PDS3_DATA_DIR = '${PDS3_HOLDINGS_DIR}'" >> opus_secrets.py
 echo "PDS4_DATA_DIR = '${PDS4_HOLDINGS_DIR}'" >> opus_secrets.py
 echo "RMS_OPUS_PATH = '${CWD}'" >> opus_secrets.py
-echo "RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')" >> opus_secrets.py
 echo "DEBUG = True" >> opus_secrets.py
 echo "ALLOWED_HOSTS = ('127.0.0.1', 'localhost')" >> opus_secrets.py
 echo "SECRET_KEY = 'fred'" >> opus_secrets.py

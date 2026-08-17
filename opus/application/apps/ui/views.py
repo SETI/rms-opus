@@ -33,16 +33,6 @@ from django.utils.html import escape
 from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
-from opus_support import (
-    display_search_unit,
-    display_unit_ever,
-    format_unit_value,
-    get_default_unit,
-    get_disp_default_and_avail_units,
-    get_unit_display_names,
-    get_valid_units,
-    parse_form_type,
-)
 from paraminfo.models import ParamInfo
 from results.views import get_triggered_tables
 from search.forms import SearchForm
@@ -65,6 +55,17 @@ from tools.app_utils import (
 )
 from tools.db_utils import lookup_pretty_value_for_mult
 from tools.file_utils import get_displayed_browse_products, get_pds_preview_images, get_pds_products
+
+from opus_support import (
+    display_search_unit,
+    display_unit_ever,
+    format_unit_value,
+    get_default_unit,
+    get_disp_default_and_avail_units,
+    get_unit_display_names,
+    get_valid_units,
+    parse_form_type,
+)
 
 log = logging.getLogger(__name__)
 

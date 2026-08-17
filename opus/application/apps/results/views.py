@@ -42,7 +42,6 @@ from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from metadata.views import get_cart_count, get_result_count_helper
-from opus_support import format_unit_value, parse_form_type
 from paraminfo.models import ParamInfo
 from search.models import Partables, TableNames
 from search.views import (
@@ -88,6 +87,8 @@ from tools.db_utils import (
     query_table_for_opus_id,
 )
 from tools.file_utils import get_pds_preview_images, get_pds_products
+
+from opus_support import format_unit_value, parse_form_type
 
 log = logging.getLogger(__name__)
 

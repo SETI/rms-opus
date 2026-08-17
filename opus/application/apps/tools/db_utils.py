@@ -6,8 +6,9 @@
 
 import settings
 from django.apps import apps
-from opus_support import parse_form_type
 from tools.app_utils import get_mult_name
+
+from opus_support import parse_form_type
 
 MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_TABLE_ALREADY_EXISTS = 1050

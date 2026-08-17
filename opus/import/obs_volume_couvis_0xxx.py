@@ -7,8 +7,9 @@
 
 import os
 
-import opus_support
 from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+
+import opus_support
 
 
 class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):

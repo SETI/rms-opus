@@ -31,13 +31,6 @@ from django.db.models import Count, Max, Min
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
-from opus_support import (
-    format_unit_value,
-    get_default_unit,
-    get_valid_units,
-    is_valid_unit,
-    parse_form_type,
-)
 from paraminfo.models import ParamInfo
 from search.models import TableNames
 from search.views import (
@@ -66,6 +59,14 @@ from tools.app_utils import (
     strip_numeric_suffix,
     throw_random_http404_error,
     throw_random_http500_error,
+)
+
+from opus_support import (
+    format_unit_value,
+    get_default_unit,
+    get_valid_units,
+    is_valid_unit,
+    parse_form_type,
 )
 
 log = logging.getLogger(__name__)

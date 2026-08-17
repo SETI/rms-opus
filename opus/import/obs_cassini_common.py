@@ -12,9 +12,10 @@
 
 import re
 
-import opus_support
 from import_util import cached_tai_from_iso
 from obs_base import ObsBase
+
+import opus_support
 
 # TODO: This is probably PDS3-only, move it to the PDS3 specific class in the future.
 # These codes show up as the last two characters of the second part of an observation name.
