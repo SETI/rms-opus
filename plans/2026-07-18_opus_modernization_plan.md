@@ -1008,6 +1008,22 @@ body; never rewrite or delete earlier notes.*
     `run-all-checks.sh`; `pytest`/`sphinx` ENABLE flags are `false` there until PR-03/PR-21
     create `tests/`/`docs/`. `run-tests.yml` keeps a disabled `ruff format` step
     (`ENABLE_RUFF_FORMAT` env `false`) for PR-23.
+  - **SIM118 regression on a duck-typed object (found by integration CI, fixed):**
+    the burn-down rewrote `for item_name in label.keys():` →
+    `for item_name in label:` in `opus/import/do_dictionary.py`, but `label` is a
+    `pdsparser.PdsLabel` — dict-*like* (`.keys()`/keyed `__getitem__`) but with no
+    `__iter__`, so bare iteration falls back to integer indexing and raises
+    `KeyError: 0`, crashing the dictionary import. Restored `.keys()` with a
+    targeted `# noqa: SIM118` + explanatory comment (not a per-file-ignore, to keep
+    the PR-17 table clean). **Lesson for later PRs:** lint autofixes that remove
+    `.keys()/.values()/.items()`, introduce `.get()`, or change membership/`in`
+    tests can silently break on custom dict-like objects (pdsparser, DB rows); the
+    holdings-free lint job cannot see it — only integration CI can. A full audit of
+    every such autofix in this PR confirmed the other five `.keys()` removals
+    (`value_to_sessions` defaultdict, `self._session_search_slugs` dict,
+    `PREVIEW_SIZE_TO_PDS_TYPE` dict ×2, `rows[0]` csv.DictReader row) and every new
+    `.get()` (`extras`, `original_slugs`, `sub_headings`, `UNIT_FORMAT_DB`, `query`)
+    are on genuine `dict`s; SIM103/SIM102/C4 changes are type-preserving.
   - **Branch protection:** the new `run-tests.yml` lint job is deliberately named
     **`Run Lint`**, so the existing required-status-check context `Run Lint` is preserved
     (no `rewrite` protection edit needed); `Test OPUS (self-hosted-linux, 3.12)` is

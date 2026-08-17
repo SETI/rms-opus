@@ -48,7 +48,10 @@ def create_import_definitions_table():
         logger.log('error', f'Failed to read {pds_file}: {e.strerror}')
         bad_db = True
     else:
-        for item_name in label:
+        # pdsparser.PdsLabel is dict-like (keyed __getitem__) but not iterable,
+        # so bare iteration falls back to integer indexing and raises; iterate
+        # its keys explicitly.
+        for item_name in label.keys():  # noqa: SIM118
             if item_name == 'objects' or label[item_name] is None:
                 continue
             term = str(label[item_name]['NAME']).rstrip('\r\n')
