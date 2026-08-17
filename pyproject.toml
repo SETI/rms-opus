@@ -92,7 +92,16 @@ markers = []
 # Warnings are errors so a third-party deprecation cannot rot unnoticed. Add a
 # narrowly-scoped "default::"/"ignore::" entry (with a comment) only for a
 # warning coming from code we cannot fix.
-filterwarnings = ["error"]
+filterwarnings = [
+  "error",
+  # rms-julian calls pyparsing's camelCase compatibility synonyms (setParseAction,
+  # setName, ...) while building its date grammar at import time, and pyparsing
+  # deprecates them. Third-party on both sides and unavoidable: importing julian at
+  # all raises it. Scoped to that one message shape rather than to the whole
+  # category. Fixed upstream in rms-julian 3.0.2; requirements.txt still pins 3.0.1
+  # for the integration runner, so this entry goes away when that pin moves.
+  "ignore:.* deprecated - use .*:DeprecationWarning",
+]
 
 [tool.setuptools]
 [tool.setuptools.packages.find]

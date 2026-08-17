@@ -1219,10 +1219,23 @@ body; never rewrite or delete earlier notes.*
     `from unittest import TestCase`). It had been suppressed because the inline test
     classes in `lib/opus_support.py` referenced the name. Expect similar unmaskings as
     each remaining tree moves.
-  - **pytest configuration.** `[tool.pytest.ini_options]` now sets
-    `filterwarnings = ["error"]` (verified clean on 3.12 and 3.13, serial and under
-    `-n auto`); add narrowly-scoped `default::`/`ignore::` entries with a comment if a
-    third-party warning appears. `ENABLE_PYTEST` in `run-all-checks.sh` is `true`.
+  - **pytest configuration, and the one dependency-skew trap it exposed.**
+    `[tool.pytest.ini_options]` sets `filterwarnings = ["error"]`, with exactly one
+    narrowly-scoped exception. **The GitHub-hosted and self-hosted jobs do not run the
+    same dependency versions**: the unit job installs `.[dev]` (unpinned, so latest),
+    while the integration runner installs `requirements.txt` (pinned). Under the pins
+    (`rms-julian==3.0.1`, `pyparsing==3.3.1`) merely importing `julian` raises
+    `DeprecationWarning: 'setParseAction' deprecated`, because julian builds its date
+    grammar with pyparsing's camelCase compatibility synonyms at import time. That turned
+    every `tests/opus_support` collection into an error on the self-hosted runner while
+    the GitHub job (which gets `rms-julian` 3.0.2, where it is fixed) was green. The
+    filter `"ignore:.* deprecated - use .*:DeprecationWarning"` covers it, scoped to that
+    message shape rather than to the whole category; **it becomes removable when
+    `requirements.txt` moves past `rms-julian` 3.0.1** (a candidate for PR-22's
+    dependency work). **Lesson for later PRs: a pytest-config or dependency change that
+    is green on the GitHub job can still fail the integration runner purely on pinned
+    versions — reproduce with a venv built from `requirements.txt` before trusting it.**
+    `ENABLE_PYTEST` in `run-all-checks.sh` is `true`.
     `[tool.ruff] exclude` now lists `src/opus_config/_version.py` (setuptools-scm writes it
     at build time and it is git-ignored, so a local editable install would otherwise fail
     `ruff check src`).
