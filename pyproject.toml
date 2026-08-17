@@ -133,6 +133,8 @@ target-version = "py312"
 line-length = 100
 exclude = [
   "perf_test",
+  # Written by setuptools-scm at build time and git-ignored; not our code.
+  "src/opus_config/_version.py",
 ]
 
 [tool.ruff.format]
