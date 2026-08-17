@@ -3,7 +3,7 @@ branch = True
 include =
     apps/*
     test_api/*
-    */opus_support.py
+    */src/opus_support/*
 omit =
     manage.py
     test_api/api_test_helper.py

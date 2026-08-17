@@ -70,6 +70,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install wheel
           python -m pip install -r requirements.txt
+          # opus_support is imported as an installed package now that the
+          # RMS_OPUS_LIB_PATH sys.path insert is gone. Dependencies are already
+          # satisfied by requirements.txt, so this only wires up src/.
+          python -m pip install -e .
           echo
           python -m pip freeze
           echo

@@ -4,7 +4,6 @@ import logging
 import os
 import platform
 import requests
-import unittest
 from unittest import TestCase
 
 from django.core.cache import cache
