@@ -46,7 +46,7 @@ import do_validate  # noqa: E402
 import impglobals  # noqa: E402
 import import_util  # noqa: E402
 import importdb  # noqa: E402
-from config_data import *  # noqa: E402
+from config_data import GROUP_FORM_TYPES  # noqa: E402
 
 ################################################################################
 # COMMAND LINE PROCESSING
