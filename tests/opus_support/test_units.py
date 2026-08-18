@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from opus_support import (
+    UNIT_FORMAT_DB,
     adjust_format_string_for_units,
     convert_from_default_unit,
     convert_to_default_unit,
@@ -282,6 +283,59 @@ def test_parse_unit_value_float(text: str, expected: float) -> None:
     val = parse_unit_value(text, '.3f', 'duration', 'milliseconds')
     assert isinstance(val, float)
     assert val == expected
+
+
+@pytest.mark.parametrize(('text', 'expected'), [
+    # The "perpixel" and "**-1" spellings of both wavenumber-resolution units.
+    ('1 cm^-1perpix', 1),
+    ('1 cm^-1perpixel', 1),
+    ('1 cm**-1/p', 1),
+    ('1 cm**-1perpixel', 1),
+    ('1 m^-1perpix', 0.01),
+    ('1 m^-1perpixel', 0.01),
+    ('1 m**-1/p', 0.01),
+    ('1 m**-1perpixel', 0.01),
+])
+def test_parse_unit_value_wavenumber_resolution_suffix(text: str,
+                                                       expected: float) -> None:
+    """The four wavenumber-resolution spellings a missing comma destroyed, plus neighbors.
+
+    Each is parsed and converted to cm^-1/pixel, so a spelling that resolved to the
+    wrong one of the two units would give the wrong number rather than passing.
+    """
+    assert parse_unit_value(text, '.10f', 'wavenumber_resolution',
+                            '1_cm_pixel') == pytest.approx(expected)
+
+
+def _suffix_cases() -> list[tuple[str, str, str]]:
+    """Return every (unit_id, unit, suffix) the unit database declares.
+
+    Only units parsed by the generic numeric path are included; a unit with its own
+    parse function never consults the suffix list.
+    """
+    return [(unit_id, unit, suffix)
+            for unit_id, info in UNIT_FORMAT_DB.items()
+            for unit, conversion in info['conversions'].items()
+            if conversion[2] is None
+            for suffix in conversion[4]]
+
+
+@pytest.mark.parametrize(('unit_id', 'unit', 'suffix'), _suffix_cases())
+def test_parse_unit_value_suffix_resolves_to_its_own_unit(unit_id: str, unit: str,
+                                                          suffix: str) -> None:
+    """Every declared suffix selects the unit that declares it.
+
+    Suffixes are matched longest-first across all of a unit_id's units, so a spelling
+    can be declared and still never win. Parsing "1<suffix>" while asking for that
+    same unit must give back exactly 1: any other value means a sibling unit's
+    suffix claimed the text and its conversion factor was applied instead.
+
+    This reads the suffixes out of the database, so it cannot see a spelling that is
+    missing from the database in the first place -- a suffix fused to its neighbor by
+    a missing comma tests as its fused self and passes. Guarding against that needs the
+    spellings written out, as in the wavenumber-resolution test above.
+    """
+    assert parse_unit_value('1' + suffix, '.10f', unit_id, unit) == pytest.approx(1)
 
 
 def test_parse_unit_value_int() -> None:
