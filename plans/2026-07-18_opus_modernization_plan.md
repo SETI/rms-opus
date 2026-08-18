@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects; **rev 7.4 (2026-08-17): ratified that `ImportDBException`'s `BaseException` base is an old mistake — PR-10 narrows it to `Exception` with a mandatory audit of intervening `except Exception:` handlers (esp. `do_import.py:1462`); PR-09 told explicitly to delete (not relocate) the dictionary app's lone surviving `favicon` route, verified dead and a `STORAGES` import-time hazard**)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects; **rev 7.4 (2026-08-17): ratified that `ImportDBException`'s `BaseException` base is an old mistake — PR-10 narrows it to `Exception` with a mandatory audit of intervening `except Exception:` handlers (esp. `do_import.py:1462`); PR-09 told explicitly to delete (not relocate) the dictionary app's lone surviving `favicon` route, verified dead and a `STORAGES` import-time hazard; **rev 7.5 (2026-08-17): added PR-03a (fix the four pre-existing `opus_support` defects CodeRabbit found during PR-03, incl. the user-visible `wavenumber_resolution` alias bug), inserted after PR-03 without renumbering**)
 
 ---
 
@@ -464,6 +464,43 @@ memory. Consequences and rules:
 - **GitHub workflow:** `run-tests.yml` gains its pytest job now (no MySQL needed yet),
   running `pytest` (= `tests/`) with `-n auto` on the 3.12/3.13 matrix — every subsequent
   PR is unit-tested in CI, not only via local run-all-checks.
+
+**PR-03a: Fix the four latent `opus_support` defects.**
+- Assigned 2026-08-17 after PR-03's CodeRabbit review surfaced four **pre-existing** bugs in
+  the moved code. PR-03 correctly refused to fix them (a pure move must not change
+  behavior), and no other PR owned them. This is a small, behavior-changing fix PR — it
+  lands **immediately after PR-03** so the user-visible parsing bug does not survive the
+  whole types phase. Full diagnoses are in the PR-03 Execution-notes bullet; do not
+  re-derive them.
+- Each fix **requires a regression test** in `tests/opus_support/` (the pytest suite and its
+  coverage gate went live in PR-03, so they have a home):
+  1. **`units.py` — `wavenumber_resolution` loses two aliases to missing commas.** Adjacent
+     string literals with no comma make Python concatenate them, so the list holds
+     `'cm^-1perpixelcm**-1/p'` and neither original alias; same defect in the `m^-1` entry.
+     `1 cm^-1perpixel` and `1 cm**-1/p` are therefore unrecognized and the fused entry can
+     never match. **User-visible — this is the reason this PR is not deferred.** Test must
+     parse one suffix per alias list.
+  2. **`angles.py` — unescaped dot in the fallback `"N N N"` regex.** `(\d+(|.\d*))` lets
+     `.` match any character, so `'1 30 36 5'` / `'1 30 36a5'` reach `float(second)` and
+     raise a `ValueError` carrying CPython's message. **Note the coupling:** every other
+     rejection in that function raises a bare `ValueError`, and `tests/opus_support/
+     test_angles.py` asserts that empty-message contract — so fixing the regex changes which
+     message these inputs produce and **the existing test must be updated in the same
+     commit**. Decide explicitly whether the contract is "bare ValueError for all rejects"
+     (preferred — then the fix must route these through the same raise) and state it.
+  3. **`orbits.py` — unreachable raise + mangled value in `parse_cassini_orbit`.** The
+     `raise ValueError(f'Invalid Cassini orbit {orbit}')` sits inside the `try` whose own
+     `except ValueError: pass` swallows it, and `orbit` is rebound to the stripped string,
+     so `'0002'` reports `Invalid Cassini orbit 2`. Fix both the reachability and the
+     reported value (report the original input).
+  4. **`sclk.py` — no-op statement in `_parse_multi_field_sclk`.** `parts[-1]` is evaluated
+     and discarded where the comment says the empty final field is deleted. Output is
+     unchanged (the padding loop pads it anyway), so this is dead code PR-02 missed —
+     vulture does not flag bare expression statements. Either make it the intended deletion
+     or remove it; **assert the output is unchanged either way**.
+- Integration CI gates the behavior change; `parse_unit_value` is used by the import
+  pipeline and the web app, so run the full local chain (§ local-testing note) before
+  opening.
 
 **PR-04: Move `opus/import/` → `src/opus_import/` package.**
 - Pure move: `cli.py` (from `main_opus_import.py`) + `__main__.py`; subpackages `obs/`,
