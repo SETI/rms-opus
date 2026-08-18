@@ -1229,8 +1229,10 @@ body; never rewrite or delete earlier notes.*
     grammar with pyparsing's camelCase compatibility synonyms at import time. That turned
     every `tests/opus_support` collection into an error on the self-hosted runner while
     the GitHub job (which gets `rms-julian` 3.0.2, where it is fixed) was green. The
-    filter `"ignore:.* deprecated - use .*:DeprecationWarning"` covers it, scoped to that
-    message shape rather than to the whole category; **it becomes removable when
+    filter `"ignore:'setParseAction' deprecated - use 'set_parse_action':DeprecationWarning"`
+    covers it, naming that one message rather than the whole category (verified by
+    capturing every warning `import julian` raises under those pins: five instances of
+    that single message, nothing else); **it becomes removable when
     `requirements.txt` moves past `rms-julian` 3.0.1** (a candidate for PR-22's
     dependency work). **Lesson for later PRs: a pytest-config or dependency change that
     is green on the GitHub job can still fail the integration runner purely on pinned

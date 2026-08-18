@@ -94,13 +94,15 @@ markers = []
 # warning coming from code we cannot fix.
 filterwarnings = [
   "error",
-  # rms-julian calls pyparsing's camelCase compatibility synonyms (setParseAction,
-  # setName, ...) while building its date grammar at import time, and pyparsing
-  # deprecates them. Third-party on both sides and unavoidable: importing julian at
-  # all raises it. Scoped to that one message shape rather than to the whole
-  # category. Fixed upstream in rms-julian 3.0.2; requirements.txt still pins 3.0.1
-  # for the integration runner, so this entry goes away when that pin moves.
-  "ignore:.* deprecated - use .*:DeprecationWarning",
+  # rms-julian 3.0.1 builds its date grammar with pyparsing's deprecated
+  # camelCase synonym `setParseAction`, so importing julian at all raises this.
+  # Third-party on both sides and unavoidable. This is the only warning julian
+  # raises on import (verified by capturing them all under
+  # rms-julian==3.0.1 + pyparsing==3.3.1), so the filter names that one message
+  # rather than the whole category. Fixed upstream in rms-julian 3.0.2;
+  # requirements.txt still pins 3.0.1 for the integration runner, so this entry
+  # goes away when that pin moves.
+  "ignore:'setParseAction' deprecated - use 'set_parse_action':DeprecationWarning",
 ]
 
 [tool.setuptools]
