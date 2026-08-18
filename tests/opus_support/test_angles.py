@@ -24,8 +24,16 @@ ANGLE_PARSERS = [
 ]
 
 # An HMS value is in hours, so parsing the same digits as HMS gives fifteen times the
-# DMS result. Keyed by letter so the parser table above stays the single source of truth.
+# DMS result. Keyed by letter so one table of cases can serve both parsers.
 ANGLE_SCALE = {'d': 1, 'h': 15}
+
+# Longer than the ~309 digits a float can hold, so float() returns infinity. The
+# component regexes accept a field of any length, so this reaches the range checks.
+OVERFLOWING_DIGITS = '1' * 400
+
+# A separate table from ANGLE_PARSERS: the "N N N" fallback is reached by all four
+# parsers, not only the two that take a letter, and these cases need no letter.
+ANGLE_TRIPLE_PARSERS = [parse_dms, parse_hms, parse_dms_hms, parse_hms_dms]
 
 
 @pytest.mark.parametrize(('parser', 'letter'), ANGLE_PARSERS)
@@ -65,9 +73,11 @@ ANGLE_SCALE = {'d': 1, 'h': 15}
     ('30.30m', 0.505),
     ('36s', 0.01),
     ('36.36s', 0.0101),
-    # Space-separated triples and bare numbers.
+    # Space-separated triples and bare numbers. A decimal point is the one
+    # character that may follow the seconds, with or without a fraction after it.
     ('0 0 0', 0),
     ('1 30 36.36', 1.5101),
+    ('1 30 36.', 1.51),
     ('123.456', 123.456),
     # Exponential notation is allowed in the leading component only.
     ('1000000000{L} 0m 0s', 1000000000),
@@ -124,13 +134,22 @@ def test_parse_angle_conversion_factor(parser: Callable[..., float], letter: str
     ('1234s'),
     # An overflowing exponent yields a non-finite value.
     ('1e400'),
+    # A component that overflows to infinity must not escape as the OverflowError
+    # that int() raises; the range check catches it first.
+    pytest.param('1e400{L} 0m 0s', id='overflowing-leading-component'),
+    pytest.param('0{L} ' + OVERFLOWING_DIGITS + 'm 0s',
+                 id='overflowing-minutes-component'),
+    # The leading component's regex admits an exponent and a fraction together,
+    # which float() will not accept.
+    ('1e5.{L}'),
+    ('1e5.5{L}'),
 ])
 def test_parse_angle_rejects_bad_components(parser: Callable[..., float],
                                             letter: str, text: str) -> None:
-    """Out-of-range components raise a bare, message-less ValueError.
+    """Components that are out of range, overflowing or malformed are all rejected.
 
-    The empty message is asserted rather than glossed over because it is the
-    module's current contract; giving it text would be a behavior change.
+    The empty message is asserted rather than glossed over because a single
+    message-less ValueError for every rejection is the parser's contract.
     """
     with pytest.raises(ValueError) as excinfo:
         parser(text.format(L=letter))
@@ -150,9 +169,36 @@ def test_parse_angle_rejects_bad_components(parser: Callable[..., float],
 ])
 def test_parse_angle_rejects_non_numeric(parser: Callable[..., float],
                                          text: str) -> None:
-    """Strings that are neither DMS/HMS nor a number fail the float conversion."""
-    with pytest.raises(ValueError, match='could not convert string to float'):
+    """Strings that are neither DMS/HMS nor a number raise a bare ValueError.
+
+    The failed float conversion is not allowed to leak its own message, so this
+    rejection is indistinguishable from every other one.
+    """
+    with pytest.raises(ValueError) as excinfo:
         parser(text)
+    assert str(excinfo.value) == ''
+
+
+@pytest.mark.parametrize('parser', ANGLE_TRIPLE_PARSERS)
+@pytest.mark.parametrize('text', [
+    # Anything but a decimal point ends the seconds field, leaving trailing text
+    # that belongs to no component.
+    '1 30 36 5',
+    '1 30 36a5',
+    '1 30 36-5',
+    # An exponent does not make a seconds field either, even though float() would
+    # have accepted the text on its own.
+    '1 30 36e0',
+    '0 0 59E0',
+    # Nor does a digit separator, which float() also accepts on its own.
+    '0 0 0_5',
+])
+def test_parse_angle_rejects_malformed_triple(parser: Callable[..., float],
+                                              text: str) -> None:
+    """Only a decimal point may follow the seconds of a "N N N" triple."""
+    with pytest.raises(ValueError) as excinfo:
+        parser(text)
+    assert str(excinfo.value) == ''
 
 
 def test_parse_dms_rejects_overflowing_degrees() -> None:

@@ -7,6 +7,7 @@ carries.
 """
 
 import re
+from collections.abc import Callable
 
 import pytest
 
@@ -26,6 +27,23 @@ from opus_support import (
 # against zero, where a relative tolerance means nothing at all. Both use an
 # absolute tolerance instead: half a unit in the seventh decimal place.
 SCLK_ABS_TOL = 5e-8
+
+
+################################################################################
+# SHARED MULTI-FIELD CLOCK BEHAVIOR
+################################################################################
+
+@pytest.mark.parametrize(('parser', 'omitted', 'written_out'), [
+    (parse_galileo_sclk, '1.', '1.00.0.0'),
+    (parse_new_horizons_sclk, '1:', '1:00000'),
+    (parse_cassini_sclk, '1.', '1.000'),
+])
+def test_parse_sclk_omitted_final_field(parser: Callable[[str], float],
+                                        omitted: str,
+                                        written_out: str) -> None:
+    """A clock ending in a separator reads the same as one with a zeroed final field."""
+    assert parser(omitted) == 1
+    assert parser(written_out) == 1
 
 
 ################################################################################

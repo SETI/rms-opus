@@ -46,16 +46,13 @@ def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
     if len(parts) > nfields:
         raise ValueError(f'More than {nfields} {scname} clock fields: {sclk}')
 
-    # The final part can be empty so we just delete it in that case
-    # and then will add it back in with zeroes later
-    if len(parts) > 1 and parts[-1] == '':
-        parts[-1]
-
     # Append fields to make the proper number
     while len(parts) < nfields:
         parts.append('')
 
-    # Append zeroes to make each field the proper length
+    # Append zeroes to make each field the proper length. A field the caller left
+    # empty -- a trailing separator, or one of the fields appended just above --
+    # therefore becomes all zeroes.
     for idx in range(1, len(parts)):
         modval_len = len(str(modvals[idx-1]-1))
         if len(parts[idx]) > modval_len:

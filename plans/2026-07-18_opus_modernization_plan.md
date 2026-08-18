@@ -1322,3 +1322,119 @@ body; never rewrite or delete earlier notes.*
     `opus_support`/`opus_config` carry no annotations until PR-14; shipping the marker now
     would tell downstream type-checkers to trust an untyped package. **PR-14 adds
     `src/opus_support/py.typed` and `src/opus_config/py.typed` with the annotations.**
+- **2026-08-18 (PR-03a executed):** all four defects from the PR-03 bullet above are fixed;
+  facts later PRs (especially PR-14, which reopens these files) rely on:
+  - **PLAN PREMISE CORRECTED (stop-and-report, resolved in this PR).** PR-03a item 2 states
+    "every other rejection in that function raises a bare `ValueError`". That was **false**:
+    `_parse_dms_hms` had *three* non-conforming rejection paths, not zero, and escaping the
+    dot alone would have left all three. The plan's decision ("bare ValueError for all
+    rejects", preferred — "the fix must route these through the same raise") was adopted
+    anyway, which required fixing all three:
+    1. the trailing `float(s)` leaked CPython's "could not convert string to float" text;
+    2. `float(degrees_hours)` leaked the same text, because the leading-component regex
+       admits an exponent and a fraction together (`'1e5.5d'`) which `float()` rejects —
+       **reachable from the public search API**, e.g.
+       `parse_unit_value('1e5.d', '.3f', 'longitude', 'dms')`;
+    3. a degrees/hours or minutes field long enough to overflow to infinity reached
+       `int(...)` and raised **`OverflowError`**, which `apps/search/views.py` does not
+       catch (it catches `ValueError` only) — an escaping 500. Fixed by ordering the
+       finiteness/range check before the integrality check in both fields.
+    All three now produce a message-less `ValueError`. The two `float()` sites use
+    `raise ... from err`, so their detail survives as `__cause__`; the overflow fix is a
+    statement reorder, so those rejections have `__cause__ is None` and the `OverflowError`
+    text is simply gone. `str(exc)` is `''` on every path.
+    **Verified by probe: 250,656 probes
+    (four public parsers × three conversion factors × 20,888 inputs) produced zero
+    non-bare and zero non-`ValueError` rejections**; an independent reviewer sweep of
+    240,040 probes (12,002 inputs incl. unicode digits, NUL, 100,000-digit fields) found
+    223,405 rejections and zero contract violations. The contract covers *rejected values*
+    only: a non-`str` argument raises `AttributeError`/`TypeError`, and
+    `conversion_factor=0` raises `ZeroDivisionError` on the DMS/HMS paths that divide by it
+    (the plain-number fallback never divides, so it returns the value unchanged). Neither
+    is production-reachable — `views.py` always passes a `str` and `UNIT_FORMAT_DB` only
+    ever supplies `1`, `1.` or `DEG_RAD`. **What the log loses:** `url_to_search_params`
+    (`apps/search/views.py:799-807`) logs `str(e)` and returns, so it never renders a
+    traceback and the chained `__cause__` reaches no operator; its line still names the
+    whole offending input, but no longer the failing sub-field (it was
+    `could not convert string to float: '36 5'` for the input `'1 30 36 5'`). Judged an
+    acceptable price for one contract. **Later PRs must keep this single contract**; do
+    not reintroduce a message, or any other exception type, on a `_parse_dms_hms`
+    rejection path.
+  - **The dot fix also narrows what `_parse_dms_hms` ACCEPTS, by design.** A `"N N N"`
+    triple whose seconds field was `\d+<any char>\d*` and happened to be a valid float in
+    `[0, 60)` used to parse: `'1 30 36e0'` → 1.51, `'0 0 0_5'` → 5 seconds, `'0 0 59E0'` →
+    59 seconds. Those spellings were only ever reachable *through* the bug (the DMS regex
+    proper never allowed an exponent or a digit separator in seconds) and now raise.
+    Differential sweep old-vs-new over 128,768 probes: **0 value differences on inputs both
+    accept and 0 reject→accept**; the only exception-type change is `OverflowError`→
+    `ValueError`. The accept→reject set is **infinite, not enumerable**; every member has
+    shape `N N N<non-dot><digits>` with a seconds text that parses as a float in `[0, 60)`,
+    minutes below 60 and a finite leading field. (That shape is a *superset* — `'1 90 36e0'`
+    matches it but was already rejected for its minutes. Corpus counts varied: 5 distinct
+    instances here, 16 and 195 in two independent reviewer corpora; treat the shape, not
+    any count, as the characterization.)
+    `tests/opus_support/test_angles.py::test_parse_angle_rejects_malformed_triple`
+    pins this across all four parsers.
+  - **`parse_cassini_orbit` reports the caller's original input**, not the `'0'`-stripped
+    name (`'0002'` → `Invalid Cassini orbit 0002`, not `... orbit 2`), and its raise for a
+    numeric orbit below 3 is now reachable. Side effect worth knowing: an orbit passed as an
+    `int` rather than a `str` now raises that `ValueError` instead of dying on `int.upper`
+    with an `AttributeError`. It has **three** reachable consumers, not one:
+    `field_obs_mission_cassini_rev_no_int` (`obs_cassini_common.py:510`), the import
+    display-order dispatch (`do_import.py:410,449`), and the **web search API**
+    (`table_schemas/obs_mission_cassini.json:106` declares
+    `"pi_form_type": "RANGE:range_cassini_rev_no"` → `views.py:762` `parse_unit_value` →
+    the `UNIT_FORMAT_DB` parse-func dispatch). All three are safe — the web path only ever
+    passes a `str`, and the other two catch `Exception` — but the reworded message now
+    surfaces in the OPUS search log and the import log as well. **PR-14 hand-off:**
+    `test_orbits.py::test_parse_cassini_orbit_rejects_integer` pins that `int` behavior,
+    so when PR-14 annotates the parameter as `orbit: str` that test needs a narrow
+    `# type: ignore[arg-type]` (keep it — it is the regression test proving the raise is
+    reachable) rather than deletion.
+  - **STILL OPEN, deliberately out of PR-03a's scope — the same escaping-`OverflowError`
+    class survives one function away.** `units.py:637-639` does `ret = parse_func(s)` then
+    `math.isfinite(ret)`; with `parse_func = int` (any `%d` numerical format) a long digit
+    string becomes a Python bigint and `math.isfinite` raises
+    `OverflowError: int too large to convert to float`. Reproduce with
+    `parse_unit_value('1'*400, 'd', None, None)`. It is web-reachable from every `RANGE%d`
+    slug and escapes `views.py:799`'s `except ValueError` as a 500, exactly like the angles
+    case fixed here. PR-03a fixed only the paths inside `_parse_dms_hms`, so **do not read
+    the bullet above as "this class is closed"** — **owner: PR-13** (API error handling).
+  - **Deviation from `python.mdc` §1 ("prefer explicit membership checks over catching
+    exceptions for control flow"), recorded for PR-14.** `orbits.py`'s letter lookup is
+    `try: CASSINI_ORBIT_NUMBER[name] / except KeyError`, which is the rule's literal
+    counter-example; `format_cassini_orbit` right below it has the same shape. PR-03a
+    briefly converted the first to an `in` test and reverted it, because converting one and
+    not the other made the module internally inconsistent and converting both is outside
+    the four assigned defects. **PR-14 should convert both sites together** — it is the PR
+    that reopens `opus_support` (PR-17 is the Django/log_analyzer annotation PR and does
+    not touch this tree).
+  - **A second stale claim in the PR-03a plan text, for the record.** §PR-03a item 1 says
+    the fused suffix "can never match". It could: pre-fix,
+    `parse_unit_value('1 cm^-1perpixelcm**-1/p', '.10f', 'wavenumber_resolution',
+    '1_cm_pixel')` returned `1.0`, because the fused string was a real entry that matched
+    itself. The defect and the fix are exactly as the plan describes; only that clause is
+    wrong.
+  - **`_parse_multi_field_sclk` output is provably unchanged** by the no-op removal: a
+    differential sweep of 4,826,796 inputs (every 1-to-5-field combination of 13
+    representative field spellings × 4 partition prefixes × the Galileo/New Horizons/Cassini
+    configurations) gave identical values *and* identical error messages before and after.
+    Voyager has its own parser and never reaches this code.
+  - **`ruff check --isolated --select ISC001,ISC002,ISC004 <paths>` is the detector for the
+    missing-comma defect class** (implicit string concatenation, `ISC004` being the
+    inside-a-collection case). Swept the whole tree: `src/` had exactly the two known sites
+    and nothing else, and **`opus/` and `log_analyzer/` are clean — zero
+    `ISC001`/`ISC002`/`ISC004` — so this defect class exists nowhere else in production
+    code.** (Both trees do have 151 `ISC003` "explicitly concatenated string" hits, but that
+    is a style rule about `'a' + 'b'`, not this bug. `tests/opus_support/test_sclk.py` has 52
+    intentional `ISC004` hits: long expected-error-message literals split across lines inside
+    `parametrize` tuples.) `ISC` is deliberately **not** added to the project rule set — that
+    set is PR-01's decision and `ISC003`/the test hits would have to be triaged first.
+  - **The `opus_support` 100% integration gate survived a behavior change.** Statement counts
+    moved (`angles.py` 117→123, `sclk.py` 161→159) and every module is still at 100%
+    statements and 100% branches. Note the trap: making the orbits raise reachable *removed*
+    the only coverage of the letter-lookup failure path,
+    which existing tests had been reaching only via the swallowed raise — a new
+    unknown-orbit-name test had to be added or the gate would have failed. **Expect this
+    whenever a fix makes an unreachable branch reachable: re-check what stopped being
+    covered, not just what started.**

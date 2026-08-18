@@ -387,7 +387,7 @@ UNIT_FORMAT_DB = {
                              '1/centimeter/pixel',
                              '1/centimeterperpix', '1/centimeterperpixel',
                              'cm^-1/p', 'cm^-1/pix', 'cm^-1/pixel',
-                             'cm^-1perpix', 'cm^-1perpixel'
+                             'cm^-1perpix', 'cm^-1perpixel',
                              'cm**-1/p', 'cm**-1/pix', 'cm**-1/pixel',
                              'cm**-1perpix', 'cm**-1perpixel']),
             '1_m_pixel':   ('m^-1/pixel',  1e-2, None, None,
@@ -397,7 +397,7 @@ UNIT_FORMAT_DB = {
                              '1/meter/pixel',
                              '1/meterperpix', '1/meterperpixel',
                              'm^-1/p', 'm^-1/pix', 'm^-1/pixel',
-                             'm^-1perpix', 'm^-1perpixel'
+                             'm^-1perpix', 'm^-1perpixel',
                              'm**-1/p', 'm**-1/pix', 'm**-1/pixel',
                              'm**-1perpix', 'm**-1perpixel']),
         }

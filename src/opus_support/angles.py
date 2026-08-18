@@ -18,28 +18,57 @@ from opus_support._numeric_text import _clean_numeric_field, _strip_trailing_zer
 ################################################################################
 
 def parse_dms_hms(s, conversion_factor=1, **kwargs):
-    """Parse DMS, HMS, or single number, but "x x x" defaults to DMS."""
+    """Parse DMS, HMS, or single number, but "x x x" defaults to DMS.
+
+    Raises:
+        ValueError: If the string is not a value this parser accepts, always with an
+            empty message.
+    """
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='dms')
 
 def parse_hms_dms(s, conversion_factor=1, **kwargs):
-    """Parse DMS, HMS, or single number, but "x x x" defaults to HMS."""
+    """Parse DMS, HMS, or single number, but "x x x" defaults to HMS.
+
+    Raises:
+        ValueError: If the string is not a value this parser accepts, always with an
+            empty message.
+    """
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='hms')
 
 def parse_dms(s, conversion_factor=1, **kwargs):
-    """Parse a DMS string or single number."""
+    """Parse a DMS string or single number.
+
+    Raises:
+        ValueError: If the string is not a value this parser accepts, always with an
+            empty message.
+    """
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=False,
                           default='dms')
 
 def parse_hms(s, conversion_factor=1, **kwargs):
-    """Parse an HMS string or single number."""
+    """Parse an HMS string or single number.
+
+    Raises:
+        ValueError: If the string is not a value this parser accepts, always with an
+            empty message.
+    """
     return _parse_dms_hms(s, conversion_factor, allow_dms=False, allow_hms=True,
                           default='hms')
 
 def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
                    default='dms'):
-    """Parse a DMS or HMS or "x x x" or plain number."""
+    """Parse a DMS or HMS or "x x x" or plain number.
+
+    Raises:
+        ValueError: If the string is not a value this parser accepts. Whichever of the
+            parser's paths rejected it, the exception carries an empty message, so a
+            caller never has to tell them apart. Rejection is all this promises: a
+            non-string argument, or a conversion_factor of zero on one of the paths that
+            divides by it, is a programming error and raises whatever the offending
+            operation raises.
+    """
     # Note: conversion_factor is used here for unit=radians. In that case if
     # the user enters something like "1d" it needs to be interpreted as degrees
     # and converted to radians. But if the user just types a single number, that
@@ -63,7 +92,7 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
                              r') *(|\d+(|\.\d*)m) *(|\d+(|\.\d*)s)', s)
         if match is None and format_char == default[0]:
             # Check for just "N N N" if we are looking at the default format
-            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|.\d*))',
+            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|\.\d*))',
                                  s)
         if match:
             neg = match[1]
@@ -88,17 +117,29 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
                 # provided
                 force_dh_int = True
                 minute = float(minute)
-                if force_m_int and minute != int(minute):
-                    raise ValueError
+                # Range-check before the integrality check: a field long enough to
+                # overflow to infinity would make int() raise OverflowError, which
+                # is not this parser's rejection contract.
                 if not math.isfinite(minute) or minute < 0 or minute >= 60:
+                    raise ValueError
+                if force_m_int and minute != int(minute):
                     raise ValueError
                 val += minute / 60
             if degrees_hours:
                 degrees_hours = degrees_hours.strip(format_char)
-                degrees_hours = float(degrees_hours)
-                if force_dh_int and degrees_hours != int(degrees_hours):
-                    raise ValueError
+                try:
+                    degrees_hours = float(degrees_hours)
+                except ValueError as err:
+                    # The regex above accepts an exponent and a fractional part
+                    # together ("1e5.5d"), which float() will not. The minute and
+                    # second groups have no such hole: stripping their trailing
+                    # letter always leaves a valid float.
+                    raise ValueError from err
+                # Finiteness before integrality, for the same reason as the minutes
+                # field above.
                 if not math.isfinite(degrees_hours):
+                    raise ValueError
+                if force_dh_int and degrees_hours != int(degrees_hours):
                     raise ValueError
                 val += degrees_hours
             if neg == '-':
@@ -108,7 +149,12 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
     # We don't want to allow numbers with spaces in them because that will cause
     # potential ambiguity with the "x x x" DMS/HMS format.
     s = _clean_numeric_field(s, compress_spaces=False)
-    ret = float(s)
+    try:
+        ret = float(s)
+    except ValueError as err:
+        # float() would name the offending text; keep the parser's one rejection
+        # contract instead and let the chained cause carry the detail.
+        raise ValueError from err
     if not math.isfinite(ret):
         raise ValueError
 
