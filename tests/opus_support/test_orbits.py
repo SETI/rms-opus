@@ -11,9 +11,34 @@ import pytest
 from opus_support import format_cassini_orbit, parse_cassini_orbit
 
 
-@pytest.mark.parametrize('orbit', ['-1', '1', '2'])
-def test_parse_cassini_orbit_rejects_bad_orbit(orbit: str) -> None:
-    """Numeric orbit names below 3 other than 0 have no letter equivalent."""
+@pytest.mark.parametrize('orbit', [
+    '-1',
+    '1',
+    '2',
+    # Zero-padded, as the orbit names in a product ID are.
+    '001',
+    '0002',
+])
+def test_parse_cassini_orbit_rejects_bad_number(orbit: str) -> None:
+    """Numeric orbit names below 3 other than 0 have no letter equivalent.
+
+    The rejected orbit is reported exactly as it was supplied, padding included.
+    """
+    with pytest.raises(ValueError,
+                       match=re.escape(f'Invalid Cassini orbit {orbit}')):
+        parse_cassini_orbit(orbit)
+
+
+def test_parse_cassini_orbit_rejects_integer() -> None:
+    """An orbit supplied as a number, not text, is rejected the same way."""
+    with pytest.raises(ValueError,
+                       match=re.escape('Invalid Cassini orbit 1')):
+        parse_cassini_orbit(1)
+
+
+@pytest.mark.parametrize('orbit', ['Z', '00Z', 'AB'])
+def test_parse_cassini_orbit_rejects_unknown_name(orbit: str) -> None:
+    """A non-numeric orbit name outside A, B and C has no internal number."""
     with pytest.raises(ValueError,
                        match=re.escape(f'Invalid Cassini orbit {orbit}')):
         parse_cassini_orbit(orbit)
