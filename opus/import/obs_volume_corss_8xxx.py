@@ -6,8 +6,9 @@
 # table).
 ################################################################################
 
-import opus_support
 from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
+
+import opus_support
 
 # TODOPDS4 Verify that these are correct
 _DSN_NUM_TO_PDS4_INST = {

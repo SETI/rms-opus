@@ -1156,3 +1156,132 @@ body; never rewrite or delete earlier notes.*
     (only commented-out hook entries remained); both are still referenced by
     `import_util.py` (`PDSTABLE_REPLACEMENTS` is iterated; `PDSTABLE_PREPROCESS` only in a
     commented loop) and are below vulture's confidence gate.
+- **2026-08-17 (PR-03 executed):** facts later PRs rely on:
+  - **`opus_support` layout.** `src/opus_support/` holds the five domain modules the plan
+    names (`sclk.py`, `orbits.py`, `time_parsing.py`, `angles.py`, `units.py`) **plus a
+    sixth, private `_numeric_text.py`** holding `_strip_trailing_zeros` and
+    `_clean_numeric_field`. Those two helpers *had* to leave `units.py`: `units` imports
+    the angle parse/format functions for `UNIT_FORMAT_DB` while `angles` needs the
+    helpers, which sat in the units section — a cycle. Giving them their own module
+    rather than parking them in `angles.py` (which would also have been acyclic) keeps
+    `angles` about angles. Dependency graph: `units` imports `angles`, `orbits`, `sclk`,
+    `time_parsing` and `_numeric_text`; `angles` imports `_numeric_text`; the other four
+    are leaves.
+  - **The public surface is unchanged and re-exported in full.** `__init__.py` imports all
+    49 public names and lists them in `__all__` (`__all__` is also what keeps vulture from
+    flagging the re-exports). Verified against the pre-split module: same 49 names, none
+    added or missing, every public callable byte-identical, `UNIT_FORMAT_DB` deep-equal
+    including key order and every parse/format slot. `from opus_support import X` works
+    exactly as before on both sides; **later PRs should keep importing from the package
+    root, not from the submodules.** The five underscore helpers
+    (`_parse_multi_field_sclk`, `_format_multi_field_sclk`, `_parse_dms_hms`,
+    `_strip_trailing_zeros`, `_clean_numeric_field`) are deliberately *not* re-exported.
+  - **isort reclassification is a standing landmine for PR-04/05/06.** As soon as a tree
+    lands under `src/`, ruff's isort reclassifies it from third-party to first-party, so
+    every importing file's import block must be re-sorted **in the same PR** or the lint
+    job fails. PR-03 hit this on all 22 `opus_support` importers; the fix is
+    `ruff check --select I --fix <paths>` in the rewrite commit. It is a pure reordering,
+    but audit it under the §4a semantics lens anyway (PR-03's audit: `opus_support` has no
+    import-time side effects beyond `DEG_RAD = np.degrees(1)` and literal dicts, and it
+    imports none of the modules it now follows).
+  - **`opus_config` shim API (PR-04 and PR-05 consume it; PR-08 deletes it).**
+    `from opus_config._secrets_compat import load_secrets` returns the executed
+    `opus_secrets.py` as a module object, cached with `functools.cache`; every setting is
+    an attribute on it. `secrets_path()` exposes the resolution: `OPUS_SECRETS` (an
+    absolute path to the **file**, not its directory) first, then `opus_secrets.py` in the
+    process CWD. The module is deliberately **not** registered in `sys.modules`, so a
+    leftover `import opus_secrets` still fails loudly. A missing file raises
+    `FileNotFoundError`. PR-08 must delete `tests/opus_config/test_secrets_compat.py` and
+    `tests/opus_config/conftest.py` along with `_secrets_compat.py`.
+  - **`RMS_OPUS_LIB_PATH` is entirely gone** — both `sys.path.insert` calls, the
+    definition in `opus_secrets_template.py`, and the two shell generators that echoed it.
+    No executable reference remains (a repo-wide grep hits only explanatory comments and
+    the planning docs). The **remaining** `sys.path` inserts belong to the moves that own
+    them: `main_opus_import.py` (`RMS_OPUS_ROOT` for `opus_secrets`, and `PROJECT_ROOT`)
+    is PR-04's, and `settings.py` (`PROJECT_ROOT`, `RMS_OPUS_ROOT`, `apps/`) is PR-05's.
+  - **`pip install -e .` is now required to run anything.** It was added to
+    `run-app-tests.yml` (after the `requirements.txt` install; nothing is upgraded because
+    every pyproject bound is already satisfied), and to the two deploy scripts that build a
+    venv, `scripts/server/import_and_deploy/deploy_new_code_only.sh` and
+    `_opus_setup_environment.sh`. `scripts/automated_tests/*` does not install anything
+    itself and relies on the workflow. Confirmed that a shallow, tag-less checkout still
+    builds: setuptools-scm falls back to a `0.1.devN` guess-next-dev version rather than
+    failing. Do not rely on the exact fallback string.
+  - **Tool scope paths after this PR** (still the same three files each move PR must
+    update): ruff `src opus/import opus/application/apps log_analyzer tests`; bandit
+    `src opus log_analyzer` (tests are never bandit-scanned); vulture
+    `src opus log_analyzer tests vulture_whitelist.py`. The `lib/**/*.py` row is gone from
+    `[tool.ruff.lint.per-file-ignores]`, which now holds only `opus/**` and
+    `log_analyzer/**`; **no `src/**` row was added and none should be** — code is brought
+    up to the full rule set as it moves.
+  - **Vulture found one masked dead import** when its scope widened from `lib` to `src`:
+    `import unittest` in `opus/application/test_api/test_help_api.py` (the file uses only
+    `from unittest import TestCase`). It had been suppressed because the inline test
+    classes in `lib/opus_support.py` referenced the name. Expect similar unmaskings as
+    each remaining tree moves.
+  - **pytest configuration, and the one dependency-skew trap it exposed.**
+    `[tool.pytest.ini_options]` sets `filterwarnings = ["error"]`, with exactly one
+    narrowly-scoped exception. **The GitHub-hosted and self-hosted jobs do not run the
+    same dependency versions**: the unit job installs `.[dev]` (unpinned, so latest),
+    while the integration runner installs `requirements.txt` (pinned). Under the pins
+    (`rms-julian==3.0.1`, `pyparsing==3.3.1`) merely importing `julian` raises
+    `DeprecationWarning: 'setParseAction' deprecated`, because julian builds its date
+    grammar with pyparsing's camelCase compatibility synonyms at import time. That turned
+    every `tests/opus_support` collection into an error on the self-hosted runner while
+    the GitHub job (which gets `rms-julian` 3.0.2, where it is fixed) was green. The
+    filter `"ignore:'setParseAction' deprecated - use 'set_parse_action':DeprecationWarning"`
+    covers it, naming that one message rather than the whole category (verified by
+    capturing every warning `import julian` raises under those pins: five instances of
+    that single message, nothing else); **it becomes removable when
+    `requirements.txt` moves past `rms-julian` 3.0.1** (a candidate for PR-22's
+    dependency work). **Lesson for later PRs: a pytest-config or dependency change that
+    is green on the GitHub job can still fail the integration runner purely on pinned
+    versions — reproduce with a venv built from `requirements.txt` before trusting it.**
+    `ENABLE_PYTEST` in `run-all-checks.sh` is `true`.
+    `[tool.ruff] exclude` now lists `src/opus_config/_version.py` (setuptools-scm writes it
+    at build time and it is git-ignored, so a local editable install would otherwise fail
+    `ruff check src`).
+  - **New CI job.** `run-tests.yml` gained `Unit Tests (3.12)` / `Unit Tests (3.13)`. No
+    workflow or job was *renamed*, so the `rewrite` branch-protection contexts (`Run Lint`,
+    `Test OPUS (self-hosted-linux, 3.12)`) are unchanged; the new job is not a required
+    check. PR-19/PR-20 should add it to the required contexts when they rename the
+    workflows.
+  - **The integration 100% gate now covers `src/opus_support/*`.** `run_coverage.sh` begins
+    with `coverage erase` (the old first command implicitly reset the data file; the new one
+    appends) and runs `coverage run -a -m pytest ../../tests/opus_support`;
+    `opus/application/.coveragerc` includes `*/src/opus_support/*`. Verified by running
+    that exact sequence from `opus/application`: all six package modules at 100% statements
+    and 100% branches, with no test file measured. **Any change to `opus_support` in a later
+    PR must keep it at 100% or the self-hosted gate fails.**
+  - **Four latent defects in the moved `opus_support` code, found by CodeRabbit on the
+    PR-03 review and deliberately NOT fixed here** (PR-03 is a pure move; changing any of
+    them alters behavior, which a move PR must not do, and the integration suite could not
+    distinguish a fix from a regression in the same diff). **No PR in the plan owns
+    `opus_support` bug fixes, so the orchestrator must assign these** — the natural home is
+    a small dedicated PR, or PR-14 (which is already the only PR that opens these files):
+    1. **`units.py` `wavenumber_resolution` loses two unit aliases to missing commas.**
+       In both conversion entries a suffix list has adjacent string literals with no comma
+       (`'cm^-1perpixel'` / `'cm**-1/p'`, and `'m^-1perpixel'` / `'m**-1/p'`), so Python
+       concatenates them: the list holds `'cm^-1perpixelcm**-1/p'` and neither original
+       alias. `parse_unit_value` matches user-typed suffixes against these lists, so
+       `1 cm^-1perpixel` and `1 cm**-1/p` are not recognized and the fused entry can never
+       match. **User-visible.** Fixing it needs a test that parses one suffix per alias
+       list.
+    2. **`angles.py` fallback "N N N" regex has an unescaped dot.** The last group is
+       `(\d+(|.\d*))`, so `.` matches any character and inputs like `'1 30 36 5'` or
+       `'1 30 36a5'` reach `float(second)`, which raises a `ValueError` carrying CPython's
+       conversion message. Every other rejection in that function raises a bare
+       `ValueError`, and `tests/opus_support/test_angles.py` asserts that empty-message
+       contract, so fixing the regex changes which message those inputs produce.
+    3. **`orbits.py` `parse_cassini_orbit` has an unreachable raise and reports a mangled
+       value.** The `raise ValueError(f'Invalid Cassini orbit {orbit}')` sits inside the
+       `try` whose own `except ValueError: pass` swallows it, and `orbit` is later rebound
+       to the stripped string, so `'0002'` reports `Invalid Cassini orbit 2`.
+    4. **`sclk.py` `_parse_multi_field_sclk` has a no-op statement.** `parts[-1]` is
+       evaluated and discarded where the comment says the empty final field is deleted.
+       Output is unchanged (the padding loop pads the empty field anyway), so it is dead
+       code that PR-02 missed — vulture does not flag bare expression statements.
+  - **No `py.typed` marker yet.** `[tool.setuptools.package-data]` already globs for it, but
+    `opus_support`/`opus_config` carry no annotations until PR-14; shipping the marker now
+    would tell downstream type-checkers to trust an untyped package. **PR-14 adds
+    `src/opus_support/py.typed` and `src/opus_config/py.typed` with the annotations.**

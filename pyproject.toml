@@ -89,6 +89,21 @@ docs = [
 testpaths = ["tests"]
 addopts = ["--strict-markers", "--strict-config"]
 markers = []
+# Warnings are errors so a third-party deprecation cannot rot unnoticed. Add a
+# narrowly-scoped "default::"/"ignore::" entry (with a comment) only for a
+# warning coming from code we cannot fix.
+filterwarnings = [
+  "error",
+  # rms-julian 3.0.1 builds its date grammar with pyparsing's deprecated
+  # camelCase synonym `setParseAction`, so importing julian at all raises this.
+  # Third-party on both sides and unavoidable. This is the only warning julian
+  # raises on import (verified by capturing them all under
+  # rms-julian==3.0.1 + pyparsing==3.3.1), so the filter names that one message
+  # rather than the whole category. Fixed upstream in rms-julian 3.0.2;
+  # requirements.txt still pins 3.0.1 for the integration runner, so this entry
+  # goes away when that pin moves.
+  "ignore:'setParseAction' deprecated - use 'set_parse_action':DeprecationWarning",
+]
 
 [tool.setuptools]
 [tool.setuptools.packages.find]
@@ -133,6 +148,8 @@ target-version = "py312"
 line-length = 100
 exclude = [
   "perf_test",
+  # Written by setuptools-scm at build time and git-ignored; not our code.
+  "src/opus_config/_version.py",
 ]
 
 [tool.ruff.format]
@@ -161,7 +178,8 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 #     E722 - bare `except:`; E501 - line too long;
 #     F403 - `from module import *`; F405 - name may be undefined from star import;
 #     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
-"lib/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
+#     `src/**` is deliberately absent: code is brought up to the full rule set
+#     as it moves there, and `src/opus_support` + `src/opus_config` are clean.
 "opus/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
 "log_analyzer/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
 #
@@ -179,9 +197,9 @@ enabled = false
 
 [tool.bandit]
 # Recurse the code trees; exclude tests and the out-of-scope perf_test/.
-# Targets track the current (pre-move) layout and shift to src/ as code moves.
+# Targets shift to src/ as code moves; `tests/` is deliberately not a target.
 exclude_dirs = ["perf_test", "venv", ".venv", "test_api", "test_perf", "test_db_data"]
-targets = ["lib", "opus", "log_analyzer"]
+targets = ["src", "opus", "log_analyzer"]
 # Burn-down skip list (plan PR-01): category-level skips for existing patterns,
 # each justified below. PR-17 shrinks these to individually-justified `# nosec`
 # lines; PR-09 removes the `.extra()` sources (B610) and PR-12 formalizes SQL
@@ -208,10 +226,11 @@ skips = [
 # Enabled in PR-02 (after the dead-code removal). Genuine dead code is
 # deleted; irreducible false positives live in vulture_whitelist.py (which is
 # passed as an input path so its names count as used). PR-17 shrinks the
-# whitelist. Paths track the current (pre-move) layout and shift toward src/
-# as code moves; they are also set via OPUS_VULTURE_PATHS (run-all-checks.sh)
-# and VULTURE_PATHS (run-tests.yml).
+# whitelist. Paths shift toward src/ as code moves; they are also set via
+# OPUS_VULTURE_PATHS (run-all-checks.sh) and VULTURE_PATHS (run-tests.yml).
+# tests/ is scanned too: its own dead imports are caught, and names that only
+# the suite uses then count as used.
 [tool.vulture]
-paths = ["lib", "opus", "log_analyzer", "vulture_whitelist.py"]
+paths = ["src", "opus", "log_analyzer", "tests", "vulture_whitelist.py"]
 exclude = ["*/perf_test/*"]
 min_confidence = 70

@@ -46,6 +46,9 @@ git pull
 
 python -m pip install --upgrade pip
 python -m pip install --upgrade -r requirements.txt
+# opus_support is imported from the installed distribution rather than
+# through a sys.path insertion, so the package itself must be installed.
+python -m pip install -e .
 
 cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus/application
 yes yes | python manage.py collectstatic

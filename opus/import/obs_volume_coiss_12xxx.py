@@ -6,8 +6,9 @@
 # COISS_[12]xxx.
 ################################################################################
 
-import opus_support
 from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+
+import opus_support
 
 
 class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):

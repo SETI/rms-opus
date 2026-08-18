@@ -23,13 +23,13 @@ jobs:
       # step below is kept but disabled, mirroring the ENABLE_* toggles in
       # scripts/run-all-checks.sh. PR-23 flips this to 'true'.
       ENABLE_RUFF_FORMAT: 'false'
-      # Ruff/bandit/vulture scope tracks the current (pre-move) layout; it
-      # shifts to src/ as code moves in later PRs. Vulture also scans
-      # vulture_whitelist.py so whitelisted names count as used;
-      # min-confidence/exclude come from [tool.vulture] in pyproject.toml.
-      RUFF_PATHS: "lib opus/import opus/application/apps log_analyzer"
-      BANDIT_PATHS: "lib opus log_analyzer"
-      VULTURE_PATHS: "lib opus log_analyzer vulture_whitelist.py"
+      # Ruff/bandit/vulture scope shifts to src/ as code moves in later PRs.
+      # Vulture also scans vulture_whitelist.py so whitelisted names count as
+      # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
+      # tests/ is linted and vulture-scanned but never bandit-scanned.
+      RUFF_PATHS: "src opus/import opus/application/apps log_analyzer tests"
+      BANDIT_PATHS: "src opus log_analyzer"
+      VULTURE_PATHS: "src opus log_analyzer tests vulture_whitelist.py"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -42,9 +42,10 @@ jobs:
           python-version: 3.13
 
       - name: Install lint tools
-        # The package is not yet pip-installable (src/ is populated in later
-        # PRs), so the lint tools are installed directly rather than via
-        # `pip install -e ".[dev]"`. Tool config still comes from pyproject.toml.
+        # These tools only parse source, so this job installs them directly
+        # rather than installing the package and its dependencies with
+        # `pip install -e ".[dev]"` (which the test job below does). Tool
+        # configuration still comes from pyproject.toml.
         run: |
           python -m pip install --upgrade pip
           python -m pip install ruff "bandit[toml]" vulture pymarkdownlnt
@@ -69,3 +70,44 @@ jobs:
       - name: PyMarkdown
         run: |
           pymarkdown scan README.md CONTRIBUTING.md .cursor/
+
+  test:
+    # Holdings-free unit tests. No database is needed yet; a MySQL service
+    # container joins this job when the import test suite lands.
+    name: Unit Tests (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm derives the version from tags, which a shallow
+          # clone does not fetch.
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install MySQL client headers
+        # mysqlclient is a runtime dependency and ships no Linux wheel, so it
+        # is compiled here and needs the MySQL/MariaDB client development files.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Install package and dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Pytest
+        # testpaths (= tests/) and the strict options come from pyproject.toml.
+        run: |
+          pytest -n auto --dist loadscope

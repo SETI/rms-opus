@@ -16,8 +16,9 @@ import do_cart
 import do_django
 import impglobals
 import import_util
-import opus_support
 import pdsfile
+
+import opus_support
 
 ################################################################################
 # TABLE PREPARATION

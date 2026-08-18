@@ -6,8 +6,9 @@
 ################################################################################
 
 import numpy as np
-import opus_support
 from obs_volume_galileo_common import ObsVolumeGalileoCommon
+
+import opus_support
 
 # GOSSI is 10.16 microRad / pixel and 800x800
 _GOSSI_FOV_RAD = 10.16e-6 * 800

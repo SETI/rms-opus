@@ -24,6 +24,9 @@ python3.12 -m venv opus_venv 2>&1
 source opus_venv/bin/activate
 python -m pip install --upgrade pip 2>&1
 python -m pip install -r requirements.txt 2>&1
+# opus_support is imported from the installed distribution rather than
+# through a sys.path insertion, so the package itself must be installed.
+python -m pip install -e . 2>&1
 
 # Create the opus_secrets.py file
 
@@ -37,7 +40,6 @@ echo "DB_PASSWORD = '${OPUS_DB_PASSWORD}'" >> opus_secrets.py
 echo "PDS3_DATA_DIR = '${PDS3_HOLDINGS_DIR}'" >> opus_secrets.py
 echo "PDS4_DATA_DIR = '${PDS4_HOLDINGS_DIR}'" >> opus_secrets.py
 echo "RMS_OPUS_PATH = '${OPUS_SRC_DIR}/${OPUS_DIR_NAME}'" >> opus_secrets.py
-echo "RMS_OPUS_LIB_PATH = os.path.join(RMS_OPUS_PATH, 'lib')" >> opus_secrets.py
 echo "ALLOWED_HOSTS = ('127.0.0.1', 'localhost'," >> opus_secrets.py
 echo "                 'staging.pds.seti.org',      '10.1.10.15'," >> opus_secrets.py
 echo "                 'tools2.pds-rings.seti.org', '104.244.248.30', 'tools2.pds.seti.org', '10.1.10.30'," >> opus_secrets.py

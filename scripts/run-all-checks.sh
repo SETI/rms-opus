@@ -46,10 +46,10 @@
 #     ENABLE_RUFF_CHECK   (default: true)
 #     ENABLE_RUFF_FORMAT  (default: false — until PR-23)
 #     ENABLE_MYPY         (default: false — until Phase D)
-#     ENABLE_PYTEST       (default: false — until PR-03 creates tests/)
+#     ENABLE_PYTEST       (default: true)
 #     ENABLE_PYROMA       (default: true)
 #     ENABLE_BANDIT       (default: true)
-#     ENABLE_VULTURE      (default: false — until PR-02)
+#     ENABLE_VULTURE      (default: true)
 #     ENABLE_SPHINX       (default: false — until PR-21 creates docs/)
 #     ENABLE_PYMARKDOWN   PyMarkdown scan (default: true)
 #
@@ -91,26 +91,27 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS burn-down state (plan §4): bandit and vulture are on now; ruff-format
-# waits for PR-23; mypy for Phase D; pytest for PR-03 (no tests/ yet); sphinx
-# for PR-21 (no docs/ yet). Each flag flips true in its owning PR.
+# OPUS burn-down state (plan §4): bandit, vulture and pytest are on now;
+# ruff-format waits for PR-23; mypy for Phase D; sphinx for PR-21 (no docs/
+# yet). Each flag flips true in its owning PR.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=false}"
 : "${ENABLE_MYPY:=false}"
-: "${ENABLE_PYTEST:=false}"
+: "${ENABLE_PYTEST:=true}"
 : "${ENABLE_PYROMA:=true}"
 : "${ENABLE_BANDIT:=true}"
 : "${ENABLE_VULTURE:=true}"
 : "${ENABLE_SPHINX:=false}"
 : "${ENABLE_PYMARKDOWN:=true}"
 
-# Lint scope tracks the current (pre-move) layout; it shifts toward src/ as code
-# moves in later PRs. Ruff mirrors the historical flake8 scope plus log_analyzer.
-# Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
-# names count as used); min-confidence/exclude come from [tool.vulture].
-: "${OPUS_RUFF_PATHS:=lib opus/import opus/application/apps log_analyzer}"
-: "${OPUS_BANDIT_PATHS:=lib opus log_analyzer}"
-: "${OPUS_VULTURE_PATHS:=lib opus log_analyzer vulture_whitelist.py}"
+# Lint scope shifts toward src/ as code moves in later PRs. Ruff mirrors the
+# historical flake8 scope plus log_analyzer and the new test suite. Vulture
+# scans the same code trees plus vulture_whitelist.py (so whitelisted names
+# count as used); min-confidence/exclude come from [tool.vulture]. Bandit
+# never scans tests.
+: "${OPUS_RUFF_PATHS:=src opus/import opus/application/apps log_analyzer tests}"
+: "${OPUS_BANDIT_PATHS:=src opus log_analyzer}"
+: "${OPUS_VULTURE_PATHS:=src opus log_analyzer tests vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -403,7 +404,8 @@ run_code_checks() {
 
     # -n controls parallelism; --dist loadscope keeps each test module on one
     # worker to avoid time-mocking and fixture-isolation interference.
-    # Coverage (--cov=psfmodel) and strict options come from pyproject.toml addopts.
+    # testpaths and the strict options come from pyproject.toml; the
+    # coverage gate joins this run with the import suite (PR-19).
     if [ "$RUN_PYTEST" = true ] && [ "$ENABLE_PYTEST" = true ]; then
         print_info "Running pytest (-n ${PYTEST_WORKERS})..."
         if python -m pytest -q -n "$PYTEST_WORKERS" --dist loadscope tests; then

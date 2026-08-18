@@ -5,8 +5,9 @@
 # common and obs_mission_new_horizons tables.
 ################################################################################
 
-import opus_support
 from obs_common_pds3 import ObsCommonPDS3
+
+import opus_support
 
 _MISSION_PHASE_NAMES = {
     'JUPITER ENCOUNTER':              'Jupiter Encounter',
