@@ -38,11 +38,9 @@
 #   RUN_RUFF_FORMAT, RUN_MYPY, RUN_PYTEST, RUN_PYROMA, RUN_BANDIT, RUN_VULTURE,
 #   RUN_SPHINX, RUN_PYMARKDOWN
 #
-#   Per-check toggles (true/false). Defaults favor a minimal CI set; export to
-#   enable more tools in a given repo. Each check runs only if both RUN_* and
-#   ENABLE_* are true (RUN_* from CLI or defaults below; ENABLE_* from env):
-#   Defaults below reflect the OPUS modernization phase; each flips true in its
-#   owning PR (see the override block later in this script):
+#   Per-check toggles (true/false). Each check runs only if both RUN_* and
+#   ENABLE_* are true (RUN_* from CLI or defaults below; ENABLE_* from env or
+#   the defaults block below). OPUS flips each default true in its owning PR:
 #     ENABLE_RUFF_CHECK   (default: true)
 #     ENABLE_RUFF_FORMAT  (default: false — until PR-23)
 #     ENABLE_MYPY         (default: false — until Phase D)
