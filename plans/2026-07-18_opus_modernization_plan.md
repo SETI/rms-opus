@@ -1452,3 +1452,128 @@ body; never rewrite or delete earlier notes.*
     unknown-orbit-name test had to be added or the gate would have failed. **Expect this
     whenever a fix makes an unreachable branch reachable: re-check what stopped being
     covered, not just what started.**
+- **2026-08-18 (PR-04 executed):** the import pipeline is `src/opus_import`; facts later PRs
+  rely on:
+  - **Where the files the plan did not name individually landed.** `create_opus_models.sh`
+    is a **sixth** shell script that lived in `opus/import/` (the plan lists five); it is
+    really a Django-side generator — it runs `manage.py inspectdb` from `opus/application`
+    and writes `apps/search/models.py` — but it is a shell script, so it lives under
+    `scripts/`, with its **contents untouched**. It is **not** import tooling, so it does
+    not belong in `scripts/import/`: it has its own directory,
+    `scripts/models/create_opus_models.sh` (orchestrator's call, 2026-08-19).
+    **PR-07 owns rewriting it.** The import
+    pipeline's **five** Markdown files did **not** go to `docs/`: `README.md` (a
+    scratchpad TODO list) is `src/opus_import/README.md`, the three `docs/*.md` are
+    `src/opus_import/docs/`, and `table_schemas/README.md` stays with the schemas.
+    Reason: `scripts/run-all-checks.sh` pymarkdown-scans `docs/` as soon as it exists, and
+    those files have **68 violations** (MD025/MD024 heading structure, MD007, MD022,
+    MD041) that only PR-21's port will fix. `NEW_INSTRUMENT_TEMPLATE.txt` **is** in
+    `docs/` as the plan directs — it is not Markdown, so it does not trip that scan.
+    **PR-21 must collect the ported sources from those three directories plus `docs/`,
+    and note that its port list names only four of the five Markdown files:
+    `src/opus_import/README.md` has no plan-assigned destination, so PR-21 must decide to
+    port or delete it rather than leave it orphaned.**
+  - **`cli.py`'s shape and its two intended CLI differences.** The old script body is now
+    `_create_argument_parser()` (the argparse block verbatim) plus `main()` (everything
+    else, same statements in the same order), so importing the module no longer runs an
+    import; `__main__.py` calls `main()`, and **PR-22's `opus_import = opus_import.cli:main`
+    console script already resolves**. (1) `prog='opus_import'` is set explicitly —
+    otherwise argparse reports `__main__.py`. (2) **`--help` no longer requires an
+    `opus_secrets.py`**: `load_secrets()` is called inside `main()` after the arguments
+    parse, where the old module-level `from opus_secrets import *` ran before argparse.
+    Verified: `--help` output is otherwise byte-identical to the old script's modulo the
+    program name (whitespace-collapsed comparison).
+  - **Only two shim consumers are left on the import side**, not three: `cli.py` (twelve
+    settings, read through `secrets = load_secrets()`) and `import_util.py`
+    (`IMPORT_TABLE_TEMP_PREFIX`, read through `load_secrets()` at its use site).
+    **`do_dictionary` needs no settings at all now** — its three `DICTIONARY_*` paths
+    became package data — so **PR-08's "rewrite consumption in `do_dictionary`" is empty
+    work** unless §3's `[dictionary]` TOML section is meant to keep an override, which
+    nothing currently needs. The three settings were deleted from
+    `opus_secrets_template.py` and from both `*_setup_environment.sh` generators.
+  - **Package data is reached through `import_util`:** `TABLE_SCHEMA_DIR`,
+    `DICTIONARY_DATA_DIR` (both `importlib.resources` traversables) and
+    `table_schema_files(pattern)`, which returns the matching schema files **sorted by
+    name** (`glob.glob` returned file-system order). Use these rather than `__file__`
+    arithmetic. `read_schema_for_table` reads UTF-8 explicitly; every packaged file is
+    ASCII today.
+  - **`namespaces = false` is now set in `[tool.setuptools.packages.find]`, and it
+    matters for PR-05/PR-06.** Without it, setuptools treats every data directory inside a
+    package (`table_schemas`, `dictionary_data`, `docs`) as a **PEP 420 namespace
+    package**: they become importable, and — the reason it was found — their contents are
+    attributed to *that* package, so `[tool.setuptools.exclude-package-data]` entries
+    written against `opus_import` silently do not apply. PR-05's `templates/`, `static/`
+    and PR-06's Jinja `templates/` are the same shape; keep the setting.
+    `exclude-package-data` keeps `src/opus_import/{README.md,docs/*.md}` out of the wheel.
+  - **Tool scope paths after this PR** (the same three files each remaining move PR must
+    update): ruff `src opus/application/apps log_analyzer tests` (`opus/import` dropped);
+    bandit `src opus log_analyzer` and vulture `src opus log_analyzer tests
+    vulture_whitelist.py` are **unchanged** — both already covered the tree under both
+    names. `[tool.ruff.lint.per-file-ignores]`'s `opus/**/*.py` row now covers **only the
+    Django app**; no `src/**` row was added. Bringing the tree up to the full rule set
+    cost 27 `E501` wraps (Cassini phase table, two MySQL SQL strings, a `do_import`
+    comment, a regex, and the uranus_occs docstring's shell commands) and nothing else:
+    `E722`/`N801`/`N802` never fired here, and the only `F403`/`F405` came from the
+    `opus_secrets` wildcard this PR deletes.
+  - **`src/opus_import/config_bundle_info.py` carries a file-level `# flake8: noqa`**,
+    which ruff honors, so that one file is entirely unlinted (this predates the move).
+    **PR-17 should remove it** as part of emptying the ignore table; its long
+    `obs_bundle_*` import lines are what it hides.
+  - **Vulture unmasked one name when `import_util`'s local `schema_filename` disappeared**
+    (the PR-03 lesson repeating): `ImportDBSuper.create_table`'s third parameter was still
+    called `schema_filename` although every caller and `ImportDBMySQL.create_table` pass a
+    parsed schema. Renamed to `schema`; abstract method, no behavior. **Expect another
+    round of unmaskings in PR-05/PR-06.**
+  - **`OPUS_SECRETS` is now exported by** `scripts/automated_tests/opus_import_test_database.sh`
+    (which no longer `cd`s into `opus/import`), `scripts/server/import_and_deploy/
+    _opus_setup_environment.sh` (where the file is written; it is sourced, so the export
+    reaches the import step) and `deploy_new_code_only.sh` (which reuses an existing
+    checkout). The Django side still finds `opus_secrets.py` through `settings.py`'s
+    `sys.path` inserts — **PR-05 owns switching it to the shim**, and
+    `opus_run_unittests_coverage.sh` will need the same export then.
+  - **The `scripts/import/*` wrappers now run from the repository root**, not from their
+    own directory (`import_all.sh` calls `./scripts/import/_import_all_internal.sh`;
+    `import_for_tests.sh` greps `"${OPUS_SECRETS:-opus_secrets.py}"` and migrates via
+    `opus/application`). PR-19 still reads `import_for_tests.sh` for its bundle list.
+  - **`cli.py`'s one import-time side effect is dead code.**
+    `pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'` (moved verbatim, and now after
+    the step imports rather than before them, which the isort re-sort could only have
+    mattered for) assigns an attribute **rms-pdslogger 3.2.1 does not have** — its
+    timestamp format is the private `_TIME_FMT` (`'%Y-%m-%d %H:%M:%S.%f'`), which is why
+    the import logs still print microseconds. So the statement has been a no-op for some
+    time; it was kept because a move PR must not change behavior, and vulture cannot see
+    a cross-module attribute assignment. **Owner: the logging PR (PR-13, #512)** — delete
+    it or set the format through a supported API. It is the only import-time statement in
+    the package that mutates anything *outside* itself, but **the package as a whole is not
+    import-safe, and that list is not worth enumerating**: `importdb/mysql.py` runs a
+    guarded `import MySQLdb`, `import_util.py` resolves two `importlib.resources`
+    traversables, `obs/obs_volume_vg28xx.py` and `obs/obs_cassini_common.py` build
+    `julian`-based time tables at module (and, for Cassini, class-body) level, and the two
+    `util/` scripts in the next bullet do their entire job at import. **Assume any
+    `opus_import` module does work when it is imported** — three review passes each found
+    another instance of a closed list being short.
+  - **Two latent defects found in the moved code and deliberately NOT fixed** (a pure move
+    must not change behavior; the PR-03 precedent applies — the orchestrator should assign
+    them, and PR-10, which reopens these files, is the natural home):
+    1. `steps/do_dictionary.py:130` — `logger.log('error', 'Bad row in "{ctxfile}": {row}')`
+       is missing its `f` prefix, so a malformed `contexts.csv` row is reported with the
+       braces literal and names neither the file nor the row. The name it would
+       interpolate does not exist either (the variable is `ctx_file`), so adding the
+       prefix alone would raise `NameError` — both have to be fixed together. It is the
+       **only** un-prefixed format string in `src/`, `opus/` and `log_analyzer/` (found by
+       an AST sweep excluding docstrings, `.format()` receivers and f-string parts).
+       **`RUF027` does not find it and cannot**: that rule only fires when the placeholder
+       name is bound in scope, and `ctxfile` is precisely what is not — so do not read a
+       clean `ruff --preview --select RUF027` run as this class being closed.
+    2. `util/retrieve_ra_dec.py` does its work at **module level** (a `for` loop issuing
+       SIMBAD HTTP requests), and `util/dump_pds_definitions.py` reads `sys.argv[1]` the
+       same way. Nothing imports either — they are hand-run authoring tools — but they are
+       inside a package now, so `import opus_import.util.retrieve_ra_dec` would hit the
+       network. **PR-21 must keep `opus_import.util` out of Sphinx autodoc**, and PR-15
+       should give both a `main()` when it annotates them.
+  - **Verification evidence.** The full local chain
+    (`scripts/automated_tests/opus_main_test.sh`: import of the 30-bundle test set into a
+    fresh MySQL schema, then the Django unit tests with the 100% coverage gate) passed,
+    which is the only end-to-end oracle the import half has. A built wheel installed into
+    a clean venv runs `python -m opus_import --help` from outside the repository and reads
+    `table_schemas`/`dictionary_data` out of `site-packages`.

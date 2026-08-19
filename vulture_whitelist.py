@@ -11,7 +11,7 @@
 
 # `lineno` is a required positional parameter of the warnings.showwarning
 # callback protocol (message, category, filename, lineno, file, line). Our
-# handlers in opus/import/importdb/super.py and opus/import/main_opus_import.py
+# handlers in src/opus_import/importdb/super.py and src/opus_import/cli.py
 # use only `message`, so `lineno` is unused but cannot be dropped without
 # breaking the callback signature.
 lineno  # unused variable (warnings.showwarning callback)

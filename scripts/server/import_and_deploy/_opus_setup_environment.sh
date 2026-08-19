@@ -79,9 +79,12 @@ echo "IMPORT_TABLE_TEMP_PREFIX = 'imp_'" >> opus_secrets.py
 echo "IMPORT_LOGFILE_DIR = '${OPUS_LOG_DIR}'" >> opus_secrets.py
 echo "IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import.log')" >> opus_secrets.py
 echo "IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log')" >> opus_secrets.py
-echo "DICTIONARY_PDSDD_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/pdsdd.full')" >> opus_secrets.py
-echo "DICTIONARY_CONTEXTS_FILE = os.path.join(RMS_OPUS_PATH, 'dictionary/contexts.csv')" >> opus_secrets.py
-echo "DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH, 'opus/import/table_schemas')" >> opus_secrets.py
+# The DICTIONARY_* settings are gone: pdsdd.full, contexts.csv and the table_schemas
+# directory ship inside the opus_import package and are found with importlib.resources.
+
+# The import pipeline is an installed package now, so it locates the secrets file by
+# this variable instead of by the directory it happens to be invoked from.
+export OPUS_SECRETS=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus_secrets.py
 
 echo
 echo

@@ -69,8 +69,8 @@ python manage.py migrate
 yes yes | python manage.py collectstatic
 python clear_django_cache.py
 
-cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus/import
-python main_opus_import.py --import-dict --clean
+cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
+python -m opus_import --import-dict --clean
 
 sudo systemctl start memcached
 sudo systemctl start apache2

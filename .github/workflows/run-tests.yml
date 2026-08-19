@@ -18,6 +18,9 @@ jobs:
   lint:
     name: Run Lint
     runs-on: ubuntu-latest
+    # Without this, a hung runner burns GitHub's 6-hour default before failing.
+    # Real runtime is well under a minute; 15 leaves generous headroom.
+    timeout-minutes: 15
     env:
       # Ruff formatting is not enforced until the format-only PR (PR-23); the
       # step below is kept but disabled, mirroring the ENABLE_* toggles in
@@ -27,7 +30,7 @@ jobs:
       # Vulture also scans vulture_whitelist.py so whitelisted names count as
       # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
       # tests/ is linted and vulture-scanned but never bandit-scanned.
-      RUFF_PATHS: "src opus/import opus/application/apps log_analyzer tests"
+      RUFF_PATHS: "src opus/application/apps log_analyzer tests"
       BANDIT_PATHS: "src opus log_analyzer"
       VULTURE_PATHS: "src opus log_analyzer tests vulture_whitelist.py"
     steps:
@@ -76,6 +79,11 @@ jobs:
     # container joins this job when the import test suite lands.
     name: Unit Tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    # Without this, a hung runner burns GitHub's 6-hour default before failing
+    # (observed 2026-08-19: a 3.12 job wedged for 40 min against a ~1 min
+    # normal runtime while its 3.13 sibling passed). Includes the apt-get and
+    # pip install steps, which are the network-dependent ones.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

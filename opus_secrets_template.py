@@ -143,19 +143,6 @@ IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log'
 # The prefix URL to look up individual terms in the dictionary.
 DICTIONARY_TERM_URL = '<DICTIONARY_URL>'
 
-
-####################################
-### NEEDED FOR DICTIONARY IMPORT ###
-####################################
-
-# The pdsdd.full file including path
-DICTIONARY_PDSDD_FILE = os.path.join(RMS_OPUS_PATH,
-                                     'dictionary/pdsdd.full')
-
-# The contexts.csv file including path
-DICTIONARY_CONTEXTS_FILE = os.path.join(RMS_OPUS_PATH,
-                                        'dictionary/contexts.csv')
-
-# The location of the OPUS .json table_schema files
-DICTIONARY_JSON_SCHEMA_PATH = os.path.join(RMS_OPUS_PATH,
-                                           'opus/import/table_schemas')
+# The dictionary import needs no settings: pdsdd.full, contexts.csv and the OPUS .json
+# table schemas ship inside the opus_import package and are found with
+# importlib.resources.
