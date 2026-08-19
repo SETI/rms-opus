@@ -87,7 +87,11 @@ docs = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--strict-markers", "--strict-config"]
+# importlib import mode: the per-package test directories carry no __init__.py, and under
+# the default "prepend" mode that makes test module basenames tree-wide unique names. The
+# first collision is already foreseeable — this PR adds tests/opus_import/test_cli.py and
+# the remaining move PRs bring an opus_app and a log_analyzer with the same obvious name.
+addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib"]
 markers = []
 # Warnings are errors so a third-party deprecation cannot rot unnoticed. Add a
 # narrowly-scoped "default::"/"ignore::" entry (with a comment) only for a

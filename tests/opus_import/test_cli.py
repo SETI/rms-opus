@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+import opus_import.__main__
 from opus_config._secrets_compat import OPUS_SECRETS_ENV_VAR
 from opus_import import cli
 
@@ -44,16 +45,17 @@ def test_parser_names_the_import_option_do_import() -> None:
     assert args.do_import is True
 
 
-def test_parser_rejects_an_unknown_option() -> None:
-    """An unknown option is refused rather than ignored."""
+def test_parser_rejects_an_unknown_option(capsys: pytest.CaptureFixture[str]) -> None:
+    """An unknown option is refused rather than ignored, and named in the error."""
     with pytest.raises(SystemExit) as excinfo:
         cli._create_argument_parser().parse_args(['--no-such-option'])
     assert excinfo.value.code == 2
+    assert '--no-such-option' in capsys.readouterr().err
 
 
-def test_main_is_importable_as_an_entry_point() -> None:
-    """`main` is the callable the console script and ``python -m`` both dispatch to."""
-    assert callable(cli.main)
+def test_module_execution_dispatches_to_main() -> None:
+    """``python -m opus_import`` runs `cli.main`, which PR-22 also wires as a script."""
+    assert opus_import.__main__.main is cli.main
 
 
 def _run_without_settings(directory: Path, *arguments: str) -> subprocess.CompletedProcess[str]:

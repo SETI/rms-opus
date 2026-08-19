@@ -26,10 +26,11 @@ def test_dictionary_data_dir_holds_the_pds_sources() -> None:
 
 
 def test_table_schema_files_matches_the_pattern() -> None:
-    """The pattern is matched against the file name, and only files are returned."""
+    """The pattern is matched against the file name alone, prefix and suffix both."""
     names = [entry.name for entry in import_util.table_schema_files('obs*.json')]
     assert names, 'no obs schemas found'
-    assert all(name.startswith('obs') and name.endswith('.json') for name in names)
+    assert all(name.startswith('obs') for name in names)
+    assert all(name.endswith('.json') for name in names)
     assert 'param_info.json' not in names
     # The directory also holds .txt and .md files that the pattern must not admit.
     assert 'obs_general_unused_telescopes.txt' not in names
