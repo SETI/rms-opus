@@ -1457,9 +1457,11 @@ body; never rewrite or delete earlier notes.*
   - **Where the files the plan did not name individually landed.** `create_opus_models.sh`
     is a **sixth** shell script that lived in `opus/import/` (the plan lists five); it is
     really a Django-side generator — it runs `manage.py inspectdb` from `opus/application`
-    and writes `apps/search/models.py` — but it is a shell script, so it went to
-    `scripts/import/create_opus_models.sh` with its **contents untouched**; **PR-07 owns
-    rewriting it** and may prefer to relocate it next to the Django app. The import
+    and writes `apps/search/models.py` — but it is a shell script, so it lives under
+    `scripts/`, with its **contents untouched**. It is **not** import tooling, so it does
+    not belong in `scripts/import/`: it has its own directory,
+    `scripts/models/create_opus_models.sh` (orchestrator's call, 2026-08-19).
+    **PR-07 owns rewriting it.** The import
     pipeline's **five** Markdown files did **not** go to `docs/`: `README.md` (a
     scratchpad TODO list) is `src/opus_import/README.md`, the three `docs/*.md` are
     `src/opus_import/docs/`, and `table_schemas/README.md` stays with the schemas.
