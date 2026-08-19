@@ -9,7 +9,7 @@ from opus_app.apps.ui.views import main_site
 # django.setup()) and inert either way, because no app defines an admin module.
 admin.autodiscover()
 
-# UI resources - the homepage - ui.views
+# UI resources - the homepage - opus_app.apps.ui.views
 base_urlpatterns = [
     re_path(r'^$', main_site.as_view()),
     re_path(r'^opus/$', main_site.as_view()),

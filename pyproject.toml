@@ -233,7 +233,8 @@ enabled = false
 enabled = false
 
 [tool.bandit]
-# Recurse the code trees; exclude tests and the out-of-scope perf_test/.
+# Recurse the code trees; exclude the live-DB test directories that were
+# excluded before the move, and the out-of-scope perf_test/.
 # Targets shift to src/ as code moves; `tests/` is deliberately not a target.
 # Path-anchored so a same-named directory elsewhere in the tree cannot match by
 # accident. integration/apps_db_tests is deliberately absent: those modules were

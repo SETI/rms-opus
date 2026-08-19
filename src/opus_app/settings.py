@@ -340,8 +340,6 @@ LOGGING = {
 
 os.environ['REUSE_DB'] = "1"  # for test runner
 
-# Note: OPUS_DB is from secrets.py
-
 DATABASES = {
     'default': {
         'NAME': DB_SCHEMA_NAME,  # local database name

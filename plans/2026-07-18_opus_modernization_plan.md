@@ -1692,11 +1692,12 @@ body; never rewrite or delete earlier notes.*
     -m`), rather than only in the workflow, so local runs behave identically.
   - **`manage.py test` from the root needs an explicit label.** Bare `manage.py test` would
     discover the whole repository, so `run_coverage.sh` runs
-    `coverage run -a manage.py test -b "${1:-integration}"`. Its optional argument changed
-    meaning from a `manage.py` verb *prefix* (`manage.py $1 test`, which could never have
-    worked — argparse would have read the verb as the subcommand) to a **test label**, so
-    `./run_coverage.sh api-all` now works and resolves through `manage.py`'s own verb
-    mapping. The api-* verbs map to `integration.test_api*`.
+    `coverage run -a manage.py test -b "${@:-integration}"`. Its optional arguments changed
+    meaning from a single `manage.py` verb *prefix* (`manage.py $1 test`, which could never
+    have worked — argparse would have read the verb as the subcommand) to **test labels**,
+    all of which are forwarded, so the multi-verb form the suite's README documents
+    (`./run_coverage.sh api-livetest-dev api-all`) works and resolves through `manage.py`'s
+    own verb mapping. The api-* verbs map to `integration.test_api*`.
   - **`opus.wsgi_template` is gone**, replaced by the committed `src/opus_app/wsgi.py`
     (`DJANGO_SETTINGS_MODULE=opus_app.settings`), and `deploy_new_code_and_database.sh` no
     longer seds a generated `opus.wsgi`. **The Apache vhost's `WSGIScriptAlias` still points
