@@ -1460,9 +1460,12 @@ body; never rewrite or delete earlier notes.*
     and writes `apps/search/models.py` — but it is a shell script, so it went to
     `scripts/import/create_opus_models.sh` with its **contents untouched**; **PR-07 owns
     rewriting it** and may prefer to relocate it next to the Django app. The import
-    pipeline's four Markdown files did **not** go to `docs/`: `README.md` (a scratchpad
-    TODO list) is `src/opus_import/README.md`, the three `docs/*.md` are
+    pipeline's **five** Markdown files did **not** go to `docs/`: `README.md` (a
+    scratchpad TODO list) is `src/opus_import/README.md`, the three `docs/*.md` are
     `src/opus_import/docs/`, and `table_schemas/README.md` stays with the schemas.
+    **Note for PR-21:** its port list names only four of them —
+    `src/opus_import/README.md` has no plan-assigned destination, and PR-21 must decide
+    to port or delete it rather than leave it orphaned.
     Reason: `scripts/run-all-checks.sh` pymarkdown-scans `docs/` as soon as it exists, and
     those files have **68 violations** (MD025/MD024 heading structure, MD007, MD022,
     MD041) that only PR-21's port will fix. `NEW_INSTRUMENT_TEMPLATE.txt` **is** in
@@ -1530,6 +1533,32 @@ body; never rewrite or delete earlier notes.*
     own directory (`import_all.sh` calls `./scripts/import/_import_all_internal.sh`;
     `import_for_tests.sh` greps `"${OPUS_SECRETS:-opus_secrets.py}"` and migrates via
     `opus/application`). PR-19 still reads `import_for_tests.sh` for its bundle list.
+  - **The package has exactly one import-time side effect, and it is dead.**
+    `cli.py`'s `pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'` (moved verbatim, and now after
+    the step imports rather than before them, which the isort re-sort could only have
+    mattered for) assigns an attribute **rms-pdslogger 3.2.1 does not have** — its
+    timestamp format is the private `_TIME_FMT` (`'%Y-%m-%d %H:%M:%S.%f'`), which is why
+    the import logs still print microseconds. So the statement has been a no-op for some
+    time; it was kept because a move PR must not change behavior, and vulture cannot see
+    a cross-module attribute assignment. **Owner: the logging PR (PR-13, #512)** — delete
+    it or set the format through a supported API. The only other import-time side effect
+    in the package is `importdb/mysql.py`'s guarded `import MySQLdb`.
+  - **Two latent defects found in the moved code and deliberately NOT fixed** (a pure move
+    must not change behavior; the PR-03 precedent applies — the orchestrator should assign
+    them, and PR-10, which reopens these files, is the natural home):
+    1. `steps/do_dictionary.py:130` — `logger.log('error', 'Bad row in "{ctxfile}": {row}')`
+       is missing its `f` prefix, so a malformed `contexts.csv` row is reported with the
+       braces literal and names neither the file nor the row. The name it would
+       interpolate does not exist either (the variable is `ctx_file`), so adding the
+       prefix alone would raise `NameError` — both have to be fixed together. A sweep with
+       `ruff check --isolated --preview --select RUF027` plus a manual grep found this as
+       the **only** un-prefixed format string in `src/`, `opus/` and `log_analyzer/`.
+    2. `util/retrieve_ra_dec.py` does its work at **module level** (a `for` loop issuing
+       SIMBAD HTTP requests), and `util/dump_pds_definitions.py` reads `sys.argv[1]` the
+       same way. Nothing imports either — they are hand-run authoring tools — but they are
+       inside a package now, so `import opus_import.util.retrieve_ra_dec` would hit the
+       network. **PR-21 must keep `opus_import.util` out of Sphinx autodoc**, and PR-15
+       should give both a `main()` when it annotates them.
   - **Verification evidence.** The full local chain
     (`scripts/automated_tests/opus_main_test.sh`: import of the 30-bundle test set into a
     fresh MySQL schema, then the Django unit tests with the 100% coverage gate) passed,
