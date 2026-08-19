@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects; **rev 7.4 (2026-08-17): ratified that `ImportDBException`'s `BaseException` base is an old mistake — PR-10 narrows it to `Exception` with a mandatory audit of intervening `except Exception:` handlers (esp. `do_import.py:1462`); PR-09 told explicitly to delete (not relocate) the dictionary app's lone surviving `favicon` route, verified dead and a `STORAGES` import-time hazard; **rev 7.5 (2026-08-17): added PR-03a (fix the four pre-existing `opus_support` defects CodeRabbit found during PR-03, incl. the user-visible `wavenumber_resolution` alias bug), inserted after PR-03 without renumbering; **rev 7.6 (2026-08-18): PR-13 given a named bug to fix — `math.isfinite()` raises `OverflowError`, not `ValueError`, on a huge int, so a crafted numeric query param escapes `parse_unit_value` as an HTTP 500 where rule 2 requires 400; corrected the PR-03a claim that the fused suffix could never match; **rev 7.7 (2026-08-19): `create_opus_models.sh` homed in its own `scripts/models/` (it is a Django-side generator, not import tooling); PR-10 given two more named bugs from PR-04 — the un-prefixed f-string in `do_dictionary.py` (whose placeholder name is also wrong) and making `util/` import-safe, since `retrieve_ra_dec.py` fires ~160 SIMBAD requests from its module body and PR-21's autodoc imports every module**; **rev 7.8 (2026-08-19): §4a review-scoping rule added — the four-pass budget is a ceiling, not a quota (one clean pass ends the loop), and move PRs must brief the reviewer with an explicit five-item scope list (move purity, completeness, mechanical-rewrite correctness incl. string-literal module paths, pinned invariants, CI rewiring) with the pre-existing code inside moved files out of scope**; **rev 7.9 (2026-08-19): ratified PR-05's stop-and-report on the per-file-ignores table — a move PR may carry a PR-17-owned code glob to its new `src/**` path under three stated criteria (the PR-03/PR-04 execution note's "no `src/**` row and none should be" was a two-small-package observation that does not scale to the 26K-line Django app); `N802`/`N801` renames in the Django app are behavior-risky because view names are string-referenced in `urls.py`; PR-06's row decided in advance as `E501` only**)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects; **rev 7.4 (2026-08-17): ratified that `ImportDBException`'s `BaseException` base is an old mistake — PR-10 narrows it to `Exception` with a mandatory audit of intervening `except Exception:` handlers (esp. `do_import.py:1462`); PR-09 told explicitly to delete (not relocate) the dictionary app's lone surviving `favicon` route, verified dead and a `STORAGES` import-time hazard; **rev 7.5 (2026-08-17): added PR-03a (fix the four pre-existing `opus_support` defects CodeRabbit found during PR-03, incl. the user-visible `wavenumber_resolution` alias bug), inserted after PR-03 without renumbering; **rev 7.6 (2026-08-18): PR-13 given a named bug to fix — `math.isfinite()` raises `OverflowError`, not `ValueError`, on a huge int, so a crafted numeric query param escapes `parse_unit_value` as an HTTP 500 where rule 2 requires 400; corrected the PR-03a claim that the fused suffix could never match; **rev 7.7 (2026-08-19): `create_opus_models.sh` homed in its own `scripts/models/` (it is a Django-side generator, not import tooling); PR-10 given two more named bugs from PR-04 — the un-prefixed f-string in `do_dictionary.py` (whose placeholder name is also wrong) and making `util/` import-safe, since `retrieve_ra_dec.py` fires ~160 SIMBAD requests from its module body and PR-21's autodoc imports every module**; **rev 7.8 (2026-08-19): §4a review-scoping rule added — the four-pass budget is a ceiling, not a quota (one clean pass ends the loop), and move PRs must brief the reviewer with an explicit five-item scope list (move purity, completeness, mechanical-rewrite correctness incl. string-literal module paths, pinned invariants, CI rewiring) with the pre-existing code inside moved files out of scope**; **rev 7.9 (2026-08-19): ratified PR-05's stop-and-report on the per-file-ignores table — a move PR may carry a PR-17-owned code glob to its new `src/**` path under three stated criteria (the PR-03/PR-04 execution note's "no `src/**` row and none should be" was a two-small-package observation that does not scale to the 26K-line Django app); `N802`/`N801` renames in the Django app are behavior-risky because view names are string-referenced in `urls.py`; PR-06's row decided in advance as `E501` only**; **rev 7.10 (2026-08-19): the repo-root `integration/` directory is renamed `integration_tests/` (done inside PR-05, before merge, since the tree is new and PR-05's diff already touches every referencing string) — `integration/` reads as third-party connectors rather than a test tree, and `tests/` + `integration_tests/` pairs properly; it stays a **root-level sibling** of `tests/` because PR-18's `testpaths=["tests"]` selection model depends on it not being nested; the pytest *marker* is still named `integration`**)
 
 ---
 
@@ -108,7 +108,7 @@ rms-opus/
 │   │   └── fixtures/mini_holdings/   # subsetted real PDS3 + PDS4 bundle indexes + 1-byte data stand-ins (see PR-19)
 │   ├── opus_log_analyzer/       # fixture log files → report snapshots
 │   └── opus_app/                # Django tests that don't need a populated DB (written in PR-18)
-├── integration/                 # holdings-dependent suites, kept essentially as-is; run explicitly (pytest integration), never by the default run
+├── integration_tests/           # holdings-dependent suites, kept essentially as-is; run explicitly (pytest integration_tests), never by the default run
 │   ├── .coveragerc              # the 100%-gate coverage config (see §5a)
 │   ├── test_api/                # golden-response suite (411 fixtures) + api_test_helper
 │   ├── apps_db_tests/           # the old per-app DB-dependent unittest files, pytest-collected
@@ -413,7 +413,7 @@ memory. Consequences and rules:
       function names are referenced as *strings* in `urls.py`, template tags and `manage.py`
       verb mappings, so a bulk rename is a semantic change and belongs nowhere near a move
       PR. This is the clearest case of criterion (c).
-    - **PR-05 (settled):** `"src/opus_app/**/*.py"` and `"integration/**/*.py"` carry
+    - **PR-05 (settled):** `"src/opus_app/**/*.py"` and `"integration_tests/**/*.py"` carry
       `["E501", "N801", "N802"]` — 1111 + 7 + 180 = 1298 sites over ~26K lines, verified by
       the orchestrator. `E722`/`F403`/`F405` are deliberately absent (they fire zero times).
     - **PR-06 (decided in advance, do not re-litigate):** carry `"src/opus_log_analyzer/**/*.py" = ["E501"]`
@@ -577,15 +577,20 @@ memory. Consequences and rules:
   **unchanged, permanently** — the URL namespace is public surface (hardcoded in
   `opus.js:1120`, embedded in golden HTML fixtures, aliased in production Apache). Zero
   golden-fixture diffs expected from this PR.
-- test_api + per-app DB tests **+ `test_db_data/` + `test_perf/`** move to `integration/`
+- test_api + per-app DB tests **+ `test_db_data/` + `test_perf/`** move to `integration_tests/`
   (with `__init__.py` files so unittest discovery keeps working). URL patterns byte-identical.
+  The directory is named `integration_tests/`, **not** `integration/` (rev 7.10): the bare
+  name reads as third-party connectors rather than a test tree, and it is also a top-level
+  importable package because the `manage.py` verbs use dotted labels. It is a **root-level
+  sibling of `tests/`, never nested inside it** — PR-18's `testpaths=["tests"]` selection
+  model depends on the default `pytest` run not reaching it.
 - **Integration invocation between this PR and PR-18 — explicit spec:**
   `run_coverage.sh` moves to repo root (invoked from root); the integration coverage
-  config becomes `integration/.coveragerc` (see §5a) with includes updated to
-  `src/opus_app/apps/*`, `integration/test_api/*`, `src/opus_support/*`; `manage.py` custom
+  config becomes `integration_tests/.coveragerc` (see §5a) with includes updated to
+  `src/opus_app/apps/*`, `integration_tests/test_api/*`, `src/opus_support/*`; `manage.py` custom
   verbs (`api-all` etc.) keep working with their label mappings updated to
-  `integration.test_api`; Django test discovery runs from repo root (`manage.py test
-  integration`); `opus_run_unittests_coverage.sh` and `opus_check_coverage.sh` drop their
+  `integration_tests.test_api`; Django test discovery runs from repo root (`manage.py test
+  integration_tests`); `opus_run_unittests_coverage.sh` and `opus_check_coverage.sh` drop their
   `cd opus/application` and use repo root; `run-app-tests.yml` codecov upload path becomes
   `./coverage.xml`.
 
@@ -862,17 +867,18 @@ individually-justified entries.
 
 **PR-18: pytest everywhere.**
 - **Selection model:** the default run is directory-scoped (`testpaths=["tests"]`), so
-  `pytest` alone never touches `integration/`; markers `integration`, `holdings`,
+  `pytest` alone never touches `integration_tests/`; markers `integration`, `holdings`,
   `livetest` are registered (strict-markers) and used to select *within* an explicit
-  `pytest integration` invocation. No `-m` filter in addopts.
+  `pytest integration_tests` invocation. No `-m` filter in addopts. (The *marker* stays
+  named `integration`; only the directory is `integration_tests/`.)
 - **Django under pytest:** `pytest-django` with `DJANGO_SETTINGS_MODULE=opus_app.settings`
-  and `OPUS_CONFIG` (CI fixture TOML for `tests/`, real TOML for `integration/`).
+  and `OPUS_CONFIG` (CI fixture TOML for `tests/`, real TOML for `integration_tests/`).
   **DB-lifecycle rule (fixed, not executor-chosen):** integration tests **remain
   `unittest.TestCase` subclasses** (pytest collects them natively and pytest-django does
   not manage the DB for them), preserving today's deliberate no-create/no-teardown
   behavior against the live imported schema; an autouse session fixture in
-  `integration/conftest.py` uses `django_db_blocker.unblock()` for the session.
-  **`@pytest.mark.django_db` is forbidden in `integration/`** (it would wrap tests in
+  `integration_tests/conftest.py` uses `django_db_blocker.unblock()` for the session.
+  **`@pytest.mark.django_db` is forbidden in `integration_tests/`** (it would wrap tests in
   transactions or, with `transaction=True`, flush the freshly imported schema) — a
   conftest collection hook asserts no integration test carries it.
 - `tests/opus_app/` (holdings-free Django unit tests — request parsing, pure helpers,
@@ -932,7 +938,7 @@ individually-justified entries.
   self-hosted runner, real holdings, fresh `opus_test_db_<id>`,
   `scripts/import/import_for_tests.sh` bundle list, golden-response API suite,
   DB-integrity checks, **100% coverage gate kept with its current scope** (via
-  `integration/.coveragerc`, §5a, including the `tests/opus_support` contribution per
+  `integration_tests/.coveragerc`, §5a, including the `tests/opus_support` contribution per
   PR-18) — invoked through pytest and the TOML config. Nightly cron + on-demand; PRs run
   it too (as today; still triggering on `rewrite` until PR-24).
 
@@ -986,7 +992,7 @@ individually-justified entries.
     machinery are deleted; the `mistune` dependency is dropped (sole consumer). `pdfkit`
     stays (other help PDFs).
   - **Fixtures/tests:** delete the `api_help_apiguide.html` golden fixture and its tests
-    in `integration/test_api/test_help_api.py`; add a test asserting the 302 and its
+    in `integration_tests/test_api/test_help_api.py`; add a test asserting the 302 and its
     Location target.
 - **CI:** `run-tests.yml` gains the docs-build job NOW (not earlier — `docs/` did not
   exist before this PR); pymarkdown scope and `run-all-checks.sh` extend to `docs/`.
@@ -1029,10 +1035,10 @@ individually-justified entries.
 - In one commit: flip `ENABLE_RUFF_FORMAT=true` in `run-all-checks.sh` and enable the
   previously-disabled `ruff format --check` step in `run-tests.yml`.
 - In a **separate, format-only commit** (no logic changes): run `ruff format` across the
-  whole in-scope tree (`src/`, `tests/`, `integration/`, and `docs/` code; `perf_test/`
+  whole in-scope tree (`src/`, `tests/`, `integration_tests/`, and `docs/` code; `perf_test/`
   stays excluded per pyproject).
 - Both workflows green; **zero golden-fixture diffs** — formatting touches only Python
-  source, never `integration/test_api/responses/*`. The adversarial pre-PR review (§4a)
+  source, never `integration_tests/test_api/responses/*`. The adversarial pre-PR review (§4a)
   confirms the second commit is formatting-only.
 
 **PR-24: Merge `rewrite` → `main`** after a full integration run, a production-style
@@ -1070,9 +1076,9 @@ would silently corrupt one gate or the other. Therefore:
   `exclude_lines` options + the unit run's settings; invoked as
   `pytest --cov=opus_support --cov=opus_config --cov=opus_import --cov=opus_log_analyzer`;
   gate ≥90% (codecov + `fail_under`).
-- **Integration config** lives in `integration/.coveragerc` (activated via
-  `COVERAGE_RCFILE=integration/.coveragerc` in the self-hosted workflow): the include
-  list `src/opus_app/apps/*`, `integration/test_api/*`, `src/opus_support/*` (migrated from
+- **Integration config** lives in `integration_tests/.coveragerc` (activated via
+  `COVERAGE_RCFILE=integration_tests/.coveragerc` in the self-hosted workflow): the include
+  list `src/opus_app/apps/*`, `integration_tests/test_api/*`, `src/opus_support/*` (migrated from
   today's `opus/application/.coveragerc` in PR-05); gate 100% via `opus_check_coverage.sh`.
 
 ---
