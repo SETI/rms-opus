@@ -5,10 +5,9 @@
 ################################################################################
 
 import csv
-import glob
 import os
+from importlib.resources import as_file
 
-import opus_secrets
 import pdsparser
 
 from opus_import import impglobals, import_util
@@ -25,16 +24,11 @@ def create_import_definitions_table():
 
     bad_db = False
 
-    pds_file = opus_secrets.DICTIONARY_PDSDD_FILE
-    json_schema_path = opus_secrets.DICTIONARY_JSON_SCHEMA_PATH + '/obs*.json'
-    json_list = glob.glob(json_schema_path)
-    json_def_path = (opus_secrets.DICTIONARY_JSON_SCHEMA_PATH +
-                     '/internal_def*.json')
-    json_list += glob.glob(json_def_path)
+    pds_file = import_util.DICTIONARY_DATA_DIR / 'pdsdd.full'
+    json_list = import_util.table_schema_files('obs*.json')
+    json_list += import_util.table_schema_files('internal_def*.json')
     # Tooltips for mults
-    json_tooltips_def_path = (opus_secrets.DICTIONARY_JSON_SCHEMA_PATH +
-                     '/mult_tooltips*.json')
-    mult_tooltips_json_list = glob.glob(json_tooltips_def_path)
+    mult_tooltips_json_list = import_util.table_schema_files('mult_tooltips*.json')
     json_list += mult_tooltips_json_list
 
     rows = []
@@ -43,7 +37,8 @@ def create_import_definitions_table():
 
     context = 'PSDD'
     try:
-        label = pdsparser.PdsLabel.from_file(pds_file)
+        with as_file(pds_file) as pds_path:
+            label = pdsparser.PdsLabel.from_file(pds_path)
     except OSError as e:
         logger.log('error', f'Failed to read {pds_file}: {e.strerror}')
         bad_db = True
@@ -68,9 +63,8 @@ def create_import_definitions_table():
             }
             rows.append(new_row)
 
-    for file_path in json_list:
-        file_name = os.path.basename(file_path)
-        file_name = os.path.splitext(file_name)[0]
+    for schema_file in json_list:
+        file_name = os.path.splitext(schema_file.name)[0]
         logger.log('info', f'Importing {file_name}')
         schema = import_util.read_schema_for_table(file_name)
         for column in schema:
@@ -102,8 +96,9 @@ def create_import_definitions_table():
 
     # create entries in contexts table for mults tooltips
     mult_tp_ctx_rows = []
-    for li in mult_tooltips_json_list:
-        slug = li[li.rindex('_')+1:-5]
+    for tooltips_file in mult_tooltips_json_list:
+        name = tooltips_file.name
+        slug = name[name.rindex('_')+1:-5]
         new_row = {
             'name': f'MULT_{slug.upper()}',
             'description': f'OPUS {slug.title()}',
@@ -125,10 +120,10 @@ def create_import_contexts_table():
     # Start from scratch
     db.create_table('import', 'contexts', ctx_schema, ignore_if_exists=False)
 
-    ctx_file = opus_secrets.DICTIONARY_CONTEXTS_FILE
+    ctx_file = import_util.DICTIONARY_DATA_DIR / 'contexts.csv'
     rows = []
     try:
-        with open(ctx_file) as csvfile:
+        with ctx_file.open(encoding='utf-8') as csvfile:
             filereader = csv.reader(csvfile)
             for row in filereader:
                 if len(row) != 3:

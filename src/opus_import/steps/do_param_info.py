@@ -24,15 +24,14 @@ def create_import_param_info_table():
     table_names = db.table_names('perm', prefix='obs_')
 
     # read json file for ranges info
-    ranges_filename = import_util.safe_join('table_schemas', 'param_info_ranges.json')
-    with open(ranges_filename) as fp:
-        try:
-            # read contents (str) and convert it to a json object (dict)
-            contents = fp.read()
-            ranges_json = json.loads(contents)
-        except json.decoder.JSONDecodeError:
-            logger.log('debug', f'Was reading ranges json file "{ranges_filename}"')
-            raise
+    ranges_file = import_util.TABLE_SCHEMA_DIR / 'param_info_ranges.json'
+    contents = ranges_file.read_text(encoding='utf-8')
+    try:
+        # convert the contents (str) to a json object (dict)
+        ranges_json = json.loads(contents)
+    except json.decoder.JSONDecodeError:
+        logger.log('debug', f'Was reading ranges json file "{ranges_file}"')
+        raise
 
     rows = []
     for table_name in table_names:
@@ -64,7 +63,7 @@ def create_import_param_info_table():
                     ranges = json.dumps(ranges)
                 else:
                     logger.log('error',
-                               f'pi_ranges: "{ranges}" is not in "{ranges_filename}"')
+                               f'pi_ranges: "{ranges}" is not in "{ranges_file}"')
                     return False
 
             new_row = {

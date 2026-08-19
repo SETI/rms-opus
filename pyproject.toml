@@ -111,6 +111,11 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+# The import pipeline reads these at run time through importlib.resources, so they have
+# to be inside the wheel: the JSON schemas that define every OPUS table (plus the README
+# describing their format and the two lists of values deliberately left unmapped), and
+# the PDS data dictionary sources that `--import-dictionary` reads.
+"opus_import" = ["table_schemas/*", "dictionary_data/*"]
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"

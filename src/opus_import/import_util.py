@@ -5,12 +5,14 @@
 ################################################################################
 
 import csv
+import fnmatch
 import json
 import os
 import re
 import sys
 import traceback
 from functools import lru_cache
+from importlib.resources import files
 from typing import ClassVar
 
 import julian
@@ -21,6 +23,13 @@ import pdstable
 
 from opus_config._secrets_compat import load_secrets
 from opus_import import config_data, config_targets, impglobals, instruments
+
+# Data that ships inside the package, located through importlib.resources rather than
+# from __file__ or the working directory so that it is found in an installed wheel too:
+# the JSON schemas that define every OPUS table, and the PDS data dictionary sources the
+# dictionary import step reads.
+TABLE_SCHEMA_DIR = files('opus_import') / 'table_schemas'
+DICTIONARY_DATA_DIR = files('opus_import') / 'dictionary_data'
 
 ################################################################################
 # GENERAL UTILITIES
@@ -384,6 +393,21 @@ def slug_name_for_sfc_target(target_name):
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
 
+def table_schema_files(pattern):
+    """Return the packaged table_schemas files whose names match a glob pattern.
+
+    Parameters:
+        pattern: An `fnmatch` pattern matched against the file name alone, such as
+            ``obs*.json``.
+
+    Returns:
+        The matching files, sorted by name, as importlib.resources traversables. Sorting
+        makes an import run's order independent of the file system's directory order.
+    """
+    return sorted((entry for entry in TABLE_SCHEMA_DIR.iterdir()
+                   if entry.is_file() and fnmatch.fnmatch(entry.name, pattern)),
+                  key=lambda entry: entry.name)
+
 def read_schema_for_table(table_name, replace=None):
     table_name = table_name.replace(load_secrets().IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
@@ -392,20 +416,18 @@ def read_schema_for_table(table_name, replace=None):
         table_name = 'obs_surface_geometry_target'
         replace = [('<TARGET>', table_name_for_sfc_target(target_name)),
                    ('<SLUGTARGET>', slug_name_for_sfc_target(target_name))]
-    schema_filename = safe_join('table_schemas', table_name+'.json')
-    if not os.path.exists(schema_filename):
+    schema_file = TABLE_SCHEMA_DIR / (table_name+'.json')
+    if not schema_file.is_file():
         return None
-    with open(schema_filename) as fp:
-        try:
-            if not replace:
-                return json.load(fp)
-            contents = fp.read()
+    contents = schema_file.read_text(encoding='utf-8')
+    try:
+        if replace:
             for r in replace:
                 contents = contents.replace(r[0], r[1])
-            return json.loads(contents)
-        except json.decoder.JSONDecodeError:
-            log_debug(f'Was reading table "{table_name}"')
-            raise
+        return json.loads(contents)
+    except json.decoder.JSONDecodeError:
+        log_debug(f'Was reading table "{table_name}"')
+        raise
 
 def find_max_table_id(table_name):
     max1 = -1
