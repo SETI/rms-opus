@@ -18,6 +18,9 @@ jobs:
   lint:
     name: Run Lint
     runs-on: ubuntu-latest
+    # Without this, a hung runner burns GitHub's 6-hour default before failing.
+    # Real runtime is well under a minute; 15 leaves generous headroom.
+    timeout-minutes: 15
     env:
       # Ruff formatting is not enforced until the format-only PR (PR-23); the
       # step below is kept but disabled, mirroring the ENABLE_* toggles in
@@ -76,6 +79,11 @@ jobs:
     # container joins this job when the import test suite lands.
     name: Unit Tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    # Without this, a hung runner burns GitHub's 6-hour default before failing
+    # (observed 2026-08-19: a 3.12 job wedged for 40 min against a ~1 min
+    # normal runtime while its 3.13 sibling passed). Includes the apt-get and
+    # pip install steps, which are the network-dependent ones.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

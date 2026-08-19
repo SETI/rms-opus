@@ -18,6 +18,10 @@ jobs:
   test:
     name: Test OPUS
     runs-on: ${{ matrix.os }}
+    # Without this, a hung run occupies the self-hosted runner for GitHub's
+    # 6-hour default, blocking every other job queued for it. A full import +
+    # test cycle is ~32 min; 90 absorbs a slow import without masking a hang.
+    timeout-minutes: 90
     strategy:
       matrix:
         # Because we can run multiple imports at the same time
