@@ -1,7 +1,10 @@
 #!/bin/bash
+#
+# Run this from the root of the repository, with rms-opus installed in the active
+# environment. The settings come from $OPUS_SECRETS, or from ./opus_secrets.py.
 if [ $# -lt 2 ];
 then
-    echo 'Usage: import_all.sh <production_database_name> "-u<username> -p<password> -h <hostname>" <other_params>'
+    echo 'Usage: scripts/import/import_all.sh <production_database_name> "-u<username> -p<password> -h <hostname>" <other_params>'
     exit 1
 fi
 if [[ ! `hostname` =~ "tools" && ! `hostname` =~ "ringlet" ]];
@@ -27,6 +30,6 @@ if [ "$yn" != "YES" ]; then
     exit 1
 fi
 # source ~/src/rms-opus/p3venv/activate
-# pip install -r ../../requirements-python3.txt
+# pip install -r requirements.txt
 echo "Running import with nohup - check nohup.out for status"
-nohup ./_import_all_internal.sh "$1" "$2" "$3" &
+nohup ./scripts/import/_import_all_internal.sh "$1" "$2" "$3" &

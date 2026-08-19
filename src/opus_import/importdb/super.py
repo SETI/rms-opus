@@ -145,7 +145,7 @@ class ImportDBSuper:
     def drop_table(self, namespace, raw_table_name, ignore_if_not_exists=True):
         raise NotImplementedError('ImportDBSuper::drop_table must be overriden')
 
-    def create_table(self, namespace, raw_table_name, schema_filename,
+    def create_table(self, namespace, raw_table_name, schema,
                      ignore_if_exists=True):
         raise NotImplementedError('ImportDBSuper::create_table must be overriden')
 

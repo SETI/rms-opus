@@ -27,7 +27,7 @@ jobs:
       # Vulture also scans vulture_whitelist.py so whitelisted names count as
       # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
       # tests/ is linted and vulture-scanned but never bandit-scanned.
-      RUFF_PATHS: "src opus/import opus/application/apps log_analyzer tests"
+      RUFF_PATHS: "src opus/application/apps log_analyzer tests"
       BANDIT_PATHS: "src opus log_analyzer"
       VULTURE_PATHS: "src opus log_analyzer tests vulture_whitelist.py"
     steps:

@@ -107,7 +107,7 @@ SCOPE_SPECIFIED=false
 # scans the same code trees plus vulture_whitelist.py (so whitelisted names
 # count as used); min-confidence/exclude come from [tool.vulture]. Bandit
 # never scans tests.
-: "${OPUS_RUFF_PATHS:=src opus/import opus/application/apps log_analyzer tests}"
+: "${OPUS_RUFF_PATHS:=src opus/application/apps log_analyzer tests}"
 : "${OPUS_BANDIT_PATHS:=src opus log_analyzer}"
 : "${OPUS_VULTURE_PATHS:=src opus log_analyzer tests vulture_whitelist.py}"
 

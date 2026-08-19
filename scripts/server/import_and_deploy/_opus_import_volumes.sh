@@ -1,6 +1,6 @@
 # This file should only be used via "source"
 
-cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus/import
+cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 
 set +e
 
@@ -8,7 +8,7 @@ echo "** DESTROY NEW DATABASE **"
 echo
 echo "Start time:" `date`
 echo
-python main_opus_import.py --drop-permanent-tables --scorched-earth > /dev/null 2>&1
+python -m opus_import --drop-permanent-tables --scorched-earth > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -25,7 +25,7 @@ do
     echo
     echo "Start time:" `date`
     echo
-    python main_opus_import.py --import-check-duplicate-id --do-all-import ${VOLUME} > /dev/null 2>&1
+    python -m opus_import --import-check-duplicate-id --do-all-import ${VOLUME} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         cat ${OPUS_LOG_DIR}/ERRORS.log
         exit -1
@@ -54,7 +54,7 @@ do
     echo
     echo "Start time:" `date`
     echo
-    python main_opus_import.py --do-all-import ${VOLUME} > /dev/null 2>&1
+    python -m opus_import --do-all-import ${VOLUME} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         cat ${OPUS_LOG_DIR}/ERRORS.log
         exit -1
@@ -66,7 +66,7 @@ echo "** CREATE AUX TABLES **"
 echo
 echo "Start time:" `date`
 echo
-python main_opus_import.py --cleanup-aux-tables > /dev/null 2>&1
+python -m opus_import --cleanup-aux-tables > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -77,7 +77,7 @@ echo "** IMPORT DICTIONARY **"
 echo
 echo "Start time:" `date`
 echo
-python main_opus_import.py --import-dictionary > /dev/null 2>&1
+python -m opus_import --import-dictionary > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -88,7 +88,7 @@ echo "** VALIDATE TABLES **"
 echo
 echo "Start time:" `date`
 echo
-python main_opus_import.py --validate-perm > /dev/null 2>&1
+python -m opus_import --validate-perm > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -101,7 +101,7 @@ echo "** MIGRATE **"
 echo
 echo "Start time:" `date`
 echo
-cd ../application
+cd opus/application
 python manage.py migrate 2>&1
 echo
 

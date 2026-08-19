@@ -21,6 +21,11 @@ source ${IMPORT_SCRIPT_DIR}/_read_opus_secrets.sh
 export OPUS_SRC_DIR=${OPUS_DIR}/src
 export OPUS_DIR_NAME=rms-opus
 
+# This deploy reuses the checkout's existing secrets file rather than writing one; the
+# import pipeline is an installed package now and locates it by this variable instead of
+# by the directory it happens to be invoked from.
+export OPUS_SECRETS=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus_secrets.py
+
 cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 
 if [ -n "$(git status --porcelain)" ]; then
@@ -54,8 +59,8 @@ cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus/application
 yes yes | python manage.py collectstatic
 python clear_django_cache.py
 
-cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus/import
-python main_opus_import.py --create-param-info --create-partables --create-table-names --import-dict
+cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
+python -m opus_import --create-param-info --create-partables --create-table-names --import-dict
 
 sudo systemctl start memcached
 sudo systemctl start apache2
