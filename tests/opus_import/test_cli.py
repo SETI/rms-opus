@@ -53,8 +53,13 @@ def test_parser_rejects_an_unknown_option(capsys: pytest.CaptureFixture[str]) ->
     assert '--no-such-option' in capsys.readouterr().err
 
 
-def test_module_execution_dispatches_to_main() -> None:
-    """``python -m opus_import`` runs `cli.main`, which PR-22 also wires as a script."""
+def test_module_entry_point_binds_main() -> None:
+    """``opus_import.__main__`` dispatches to exactly `cli.main` and to nothing else.
+
+    That the module runs at all under ``python -m`` is covered end to end by the
+    subprocess tests below; this pins *which* callable it runs, which is also the one
+    PR-22 wires up as a console script.
+    """
     assert opus_import.__main__.main is cli.main
 
 

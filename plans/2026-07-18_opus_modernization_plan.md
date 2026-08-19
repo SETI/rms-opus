@@ -1542,10 +1542,14 @@ body; never rewrite or delete earlier notes.*
     time; it was kept because a move PR must not change behavior, and vulture cannot see
     a cross-module attribute assignment. **Owner: the logging PR (PR-13, #512)** — delete
     it or set the format through a supported API. It is the only import-time statement in
-    the package that mutates anything outside itself; the rest of the import-time work is
-    `importdb/mysql.py`'s guarded `import MySQLdb`, `obs/obs_volume_vg28xx.py`'s
-    `julian.tai_from_iso` call building its threshold-time tables, and the two `util/`
-    scripts in the next bullet — **the package as a whole is not import-safe**.
+    the package that mutates anything *outside* itself, but **the package as a whole is not
+    import-safe, and that list is not worth enumerating**: `importdb/mysql.py` runs a
+    guarded `import MySQLdb`, `import_util.py` resolves two `importlib.resources`
+    traversables, `obs/obs_volume_vg28xx.py` and `obs/obs_cassini_common.py` build
+    `julian`-based time tables at module (and, for Cassini, class-body) level, and the two
+    `util/` scripts in the next bullet do their entire job at import. **Assume any
+    `opus_import` module does work when it is imported** — three review passes each found
+    another instance of a closed list being short.
   - **Two latent defects found in the moved code and deliberately NOT fixed** (a pure move
     must not change behavior; the PR-03 precedent applies — the orchestrator should assign
     them, and PR-10, which reopens these files, is the natural home):
