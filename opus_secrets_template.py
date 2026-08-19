@@ -69,7 +69,7 @@ SECRET_KEY = '<SECRET_KEY>'
 STATIC_ROOT = '<STATIC_ROOT>'
 
 # Where static files are served from if this is a non-production environment,
-# usually .../rms-opus/opus/application/static_media
+# usually .../rms-opus/src/opus_app/static
 # If this is a production environment, this should be the same as STATIC_ROOT
 OPUS_STATIC_ROOT = '<OPUS_STATIC_ROOT>'
 

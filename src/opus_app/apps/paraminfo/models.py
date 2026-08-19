@@ -1,10 +1,10 @@
 import json
 
-import settings
-from dictionary.views import get_def_for_tooltip
+from django.conf import settings
 from django.db import models
-from search.models import TableNames
 
+from opus_app.apps.dictionary.views import get_def_for_tooltip
+from opus_app.apps.search.models import TableNames
 from opus_support import (
     display_result_unit,
     get_default_unit,

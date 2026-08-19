@@ -1,4 +1,4 @@
-# opus/application/search/test_db_integrity.py
+# integration/test_db_data/test_local_db_integrity.py
 
 from unittest import TestCase
 
@@ -6,34 +6,36 @@ from django.apps import apps
 from django.db import connection
 from django.db.models import Count
 
-from paraminfo.models import ParamInfo
-from search.models import (MultObsGeneralInstrumentId,
-                           MultObsGeneralMissionId,
-                           MultObsGeneralPlanetId,
-                           ObsGeneral,
-                           ObsInstrumentCocirs,
-                           ObsInstrumentCoiss,
-                           ObsInstrumentCouvis,
-                           ObsInstrumentCovims,
-                           ObsInstrumentGossi,
-                           ObsInstrumentNhlorri,
-                           ObsInstrumentNhmvic,
-                           ObsInstrumentVgiss,
-                           ObsMissionCassini,
-                           ObsMissionGalileo,
-                           ObsMissionHubble,
-                           ObsMissionNewHorizons,
-                           ObsMissionVoyager,
-                           ObsPds,
-                           ObsProfile,
-                           ObsSurfaceGeometryMimas,
-                           ObsSurfaceGeometryName,
-                           ObsTypeImage,
-                           ObsWavelength,
-                           Partables,
-                           TableNames)
+from opus_app.apps.paraminfo.models import ParamInfo
+from opus_app.apps.search.models import (
+    MultObsGeneralInstrumentId,
+    MultObsGeneralMissionId,
+    MultObsGeneralPlanetId,
+    ObsGeneral,
+    ObsInstrumentCocirs,
+    ObsInstrumentCoiss,
+    ObsInstrumentCouvis,
+    ObsInstrumentCovims,
+    ObsInstrumentGossi,
+    ObsInstrumentNhlorri,
+    ObsInstrumentNhmvic,
+    ObsInstrumentVgiss,
+    ObsMissionCassini,
+    ObsMissionGalileo,
+    ObsMissionHubble,
+    ObsMissionNewHorizons,
+    ObsMissionVoyager,
+    ObsPds,
+    ObsProfile,
+    ObsSurfaceGeometryMimas,
+    ObsSurfaceGeometryName,
+    ObsTypeImage,
+    ObsWavelength,
+    Partables,
+    TableNames,
+)
+from opus_app.apps.tools.db_utils import MYSQL_TABLE_NOT_EXISTS
 
-from tools.db_utils import MYSQL_TABLE_NOT_EXISTS
 
 class DBIntegrityTest(TestCase):
 
@@ -350,16 +352,15 @@ class DBIntegrityTest(TestCase):
            Django models.
         """
         # Mimas sets the standard template
-        expected_fields = sorted([n for n in ObsSurfaceGeometryMimas.__dict__])
+        expected_fields = sorted(ObsSurfaceGeometryMimas.__dict__)
         param_info = (ParamInfo.objects
                       .filter(category_name__contains='surface_geometry__'))
-        all_category_names = sorted(list(set([p.category_name
-                                              for p in param_info])))
+        all_category_names = sorted({p.category_name for p in param_info})
         for cat_name in all_category_names:
             model_name = cat_name.title().replace('_','')
             print(f'Working on {model_name}')
             model = apps.get_model('search', model_name)
-            fields = sorted([n for n in model.__dict__])
+            fields = sorted(model.__dict__)
             print(f'Found {len(fields)} fields expected {len(expected_fields)}')
             self.assertEqual(expected_fields, fields)
 

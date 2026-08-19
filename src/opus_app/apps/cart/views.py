@@ -22,28 +22,29 @@ import tarfile
 import time
 import zipfile
 
-import settings
-from cart.models import Cart
-from dictionary.models import Definitions
+from django.conf import settings
 from django.db import DatabaseError, connection
 from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 from hurry.filesize import size as nice_file_size
-from metadata.views import get_cart_count, get_result_count_helper
-from results.views import (
+
+from opus_app.apps.cart.models import Cart
+from opus_app.apps.dictionary.models import Definitions
+from opus_app.apps.metadata.views import get_cart_count, get_result_count_helper
+from opus_app.apps.results.views import (
     get_search_results_chunk,
     get_search_results_chunk_error_handler,
     labels_for_slugs,
 )
-from search.models import ObsGeneral
-from search.views import (
+from opus_app.apps.search.models import ObsGeneral
+from opus_app.apps.search.views import (
     create_order_by_sql,
     get_user_query_table,
     parse_order_slug,
     url_to_search_params,
 )
-from tools.app_utils import (
+from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_DOWNLOAD,
     HTTP404_BAD_OR_MISSING_RANGE,
     HTTP404_BAD_OR_MISSING_REQNO,
@@ -67,7 +68,7 @@ from tools.app_utils import (
     throw_random_http404_error,
     throw_random_http500_error,
 )
-from tools.file_utils import get_pds_products
+from opus_app.apps.tools.file_utils import get_pds_products
 
 log = logging.getLogger(__name__)
 

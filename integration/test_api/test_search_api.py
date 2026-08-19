@@ -1,21 +1,23 @@
-# opus/application/test_api/test_search_api.py
+# integration/test_api/test_search_api.py
 
 import json
 import logging
-import requests
 from unittest import TestCase
 
+import requests
+from django.conf import settings
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
-from tools.app_utils import (HTTP404_BAD_LIMIT,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_SLUG)
+from opus_app.apps.tools.app_utils import (
+    HTTP404_BAD_LIMIT,
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_SEARCH_PARAMS_INVALID,
+    HTTP404_UNKNOWN_SLUG,
+)
 
 from .api_test_helper import ApiTestHelper
 
-import settings
 
 class ApiSearchTests(TestCase, ApiTestHelper):
 
@@ -52,7 +54,10 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
-        if 'full_search' not in expected:
+        # Kept nested (SIM102) so the inner test can keep its own
+        # `# pragma: no cover`; collapsing the two would put the outer test,
+        # which the suite does exercise, behind that pragma as well.
+        if 'full_search' not in expected: # noqa: SIM102
             if 'full_search' in jdata: # pragma: no cover - for future test cases
                 del jdata['full_search']
         new_choices = []
@@ -810,13 +815,15 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {'choices': ['G<b>O_0017</b>'],
                     # 'full_search': False,
                     'truncated_results': False,
-                    'reqno': 5, "reqno": 123}
+                    # The URL passes reqno twice; Django's QueryDict keeps the
+                    # last one, so 123 is what the response must echo back.
+                    'reqno': 123}
         self._run_json_equal(url, expected, ignore=['full_search'])
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=O_0017&reqno=100&reqno=123'
         expected = {'choices': ['G<b>O_0017</b>'],
                     # 'full_search': False,
                     'truncated_results': False,
-                    'reqno': 100, "reqno": 123}
+                    'reqno': 123}
         self._run_json_equal(url, expected, ignore=['full_search'])
 
     def test__api_stringsearchchoices_underscore(self):

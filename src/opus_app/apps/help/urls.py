@@ -1,6 +1,7 @@
 # help/urls.py
 from django.urls import re_path
-from help.views import (
+
+from opus_app.apps.help.views import (
     api_about,
     api_api_guide,
     api_bundles,

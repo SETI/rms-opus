@@ -1,4 +1,4 @@
-opus/application/static_media/admin linguist-vendored
-opus/application/static_media/cdn_fallback linguist-vendored
-opus/application/static_media/coreui linguist-vendored
-opus/application/static_media/perfect-scrollbar linguist-vendored
+src/opus_app/static/admin linguist-vendored
+src/opus_app/static/cdn_fallback linguist-vendored
+src/opus_app/static/coreui linguist-vendored
+src/opus_app/static/perfect-scrollbar linguist-vendored

@@ -1,22 +1,24 @@
-# opus/application/test_api/test_metadata_api.py
+# integration/test_api/test_metadata_api.py
 
 import json
 import logging
-import requests
 from unittest import TestCase
 
+import requests
+from django.conf import settings
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
-from tools.app_utils import (HTTP404_BAD_COLLAPSE,
-                             HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_UNITS,
-                             HTTP404_UNKNOWN_SLUG)
+from opus_app.apps.tools.app_utils import (
+    HTTP404_BAD_COLLAPSE,
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_SEARCH_PARAMS_INVALID,
+    HTTP404_UNKNOWN_SLUG,
+    HTTP404_UNKNOWN_UNITS,
+)
 
 from .api_test_helper import ApiTestHelper
 
-import settings
 
 class ApiMetadataTests(TestCase, ApiTestHelper):
 
@@ -208,13 +210,11 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_result_count_html_internal(self):
         "[test_metadata_api.py] /api/meta/result_count: primaryfilespec=1866365558 no qtype html internal"
         url = '/__api/meta/result_count.html?primaryfilespec=1866365558'
-        expected = b'<dl>\n<dt>result_count</dt><dd>2</dd>\n</dl>\n'
         self._run_status_equal(url, 404)
 
     def test__api_meta_result_count_csv_internal(self):
         "[test_metadata_api.py] /api/meta/result_count: primaryfilespec=1866365558 no qtype csv internal"
         url = '/__api/meta/result_count.csv?primaryfilespec=1866365558'
-        expected = b'result count,2\n'
         self._run_status_equal(url, 404)
 
     # reqno

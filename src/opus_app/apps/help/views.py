@@ -26,15 +26,16 @@ from io import BytesIO
 import mistune
 import pdfkit
 import qrcode
-import settings
 import yaml
+from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
-from metadata.views import get_fields_info
-from search.models import MultObsGeneralInstrumentId, ObsGeneral
-from tools.app_utils import (
+
+from opus_app.apps.metadata.views import get_fields_info
+from opus_app.apps.search.models import MultObsGeneralInstrumentId, ObsGeneral
+from opus_app.apps.tools.app_utils import (
     HTTP404_NO_REQUEST,
     enter_api_call,
     exit_api_call,

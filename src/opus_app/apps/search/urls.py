@@ -1,6 +1,7 @@
 # search/urls.py
 from django.urls import re_path
-from search.views import (
+
+from opus_app.apps.search.views import (
     api_normalize_input,
     api_string_search_choices,
 )

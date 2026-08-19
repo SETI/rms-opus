@@ -1,4 +1,4 @@
-# search/test_search.py
+# integration/apps_db_tests/test_search.py
 
 # These tests require the following volumes, imported in this order:
 # COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201,HSTI1_2003
@@ -6,12 +6,13 @@
 import logging
 from unittest import TestCase
 
-import settings
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, QueryDict
 from django.test import RequestFactory
-from search.views import (
+
+from opus_app.apps.search.views import (
     api_normalize_input,
     api_string_search_choices,
     construct_query_string,

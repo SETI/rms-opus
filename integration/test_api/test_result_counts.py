@@ -1,20 +1,20 @@
-# opus/application/test_api/test_result_counts.py
+# integration/test_api/test_result_counts.py
 
 import csv
 import json
 import logging
-import requests
 from unittest import TestCase
 
+import requests
+from django.conf import settings
 from rest_framework.test import RequestsClient
 
-import settings
 
 ##################
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
-    filename = "test_api/data/result_counts.csv"
+    filename = "integration/test_api/data/result_counts.csv"
 
     # disable error logging and trace output before test
     def setUp(self):
@@ -51,7 +51,7 @@ class APIResultCountsTests(TestCase):
         if settings.TEST_GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
             error_flag = []
             count = 0
-            with open(self.filename, "r") as csvfile:
+            with open(self.filename) as csvfile:
 
                 filereader = csv.reader(csvfile)
                 for row in filereader:
@@ -63,7 +63,7 @@ class APIResultCountsTests(TestCase):
                         msg += ' ==> FAIL!'
                         continue
 
-                    q_str, expected, info = row
+                    q_str, expected, _info = row
 
                     if q_str.find('#/') == -1:
                         msg = 'Bad results_count line: '+str(row)
@@ -131,4 +131,4 @@ class ApiForResultCounts:
         elif self.target == "dev":
             self.result_counts_api = self.api_base_url.format("http", "dev.pds")
         else:
-            assert False, self.target
+            raise AssertionError(self.target)

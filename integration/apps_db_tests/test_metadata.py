@@ -1,13 +1,14 @@
-# metadata/test_metadata.py
+# integration/apps_db_tests/test_metadata.py
 
 import logging
 from unittest import TestCase
 
-import settings
+from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
-from metadata.views import (
+
+from opus_app.apps.metadata.views import (
     api_get_fields,
     api_get_mult_counts,
     api_get_mult_counts_internal,

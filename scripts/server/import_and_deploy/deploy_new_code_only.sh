@@ -55,11 +55,10 @@ python -m pip install --upgrade -r requirements.txt
 # through a sys.path insertion, so the package itself must be installed.
 python -m pip install -e .
 
-cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus/application
-yes yes | python manage.py collectstatic
-python clear_django_cache.py
-
 cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
+yes yes | python manage.py collectstatic
+python -m opus_app.clear_django_cache
+
 python -m opus_import --create-param-info --create-partables --create-table-names --import-dict
 
 sudo systemctl start memcached

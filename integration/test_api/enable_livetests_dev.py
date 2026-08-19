@@ -1,5 +1,5 @@
-# opus/application/test_api/enable_livetests_dev.py
+# integration/test_api/enable_livetests_dev.py
 
-import settings
+from django.conf import settings
 
 settings.TEST_GO_LIVE = "dev"

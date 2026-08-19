@@ -1,10 +1,14 @@
-# cart/test_cart.py
+# integration/apps_db_tests/test_cart.py
 
 import logging
 from unittest import TestCase
 
-import settings
-from cart.views import (
+from django.conf import settings
+from django.core.cache import cache
+from django.http import Http404
+from django.test import RequestFactory
+
+from opus_app.apps.cart.views import (
     api_cart_status,
     api_create_download,
     api_edit_cart,
@@ -12,9 +16,6 @@ from cart.views import (
     api_reset_session,
     api_view_cart,
 )
-from django.core.cache import cache
-from django.http import Http404
-from django.test import RequestFactory
 
 
 class cartTests(TestCase):

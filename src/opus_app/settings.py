@@ -1,5 +1,7 @@
 import os
-import sys
+from pathlib import Path
+
+from opus_config._secrets_compat import load_secrets
 
 # First check to see if we have the memcache package installed
 _HAS_MEMCACHE = False
@@ -21,18 +23,81 @@ if _HAS_MEMCACHE:
 # print('memcache', _HAS_MEMCACHE)
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
-PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
-RMS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
-sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, RMS_OPUS_ROOT) # So we can import opus_secrets
 
-from opus_secrets import *
+# The directory this package was installed into (src/opus_app in a development
+# checkout). Templates and static files travel with the package, so they are
+# always found relative to this, never relative to the working directory.
+BASE_DIR = Path(__file__).resolve().parent
 
-sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
+################################################################################
+# Settings supplied by the installation's opus_secrets.py.
+#
+# The historical `from opus_secrets import *` wildcard is gone; every name the
+# application actually reads is assigned explicitly below, so nothing arrives in
+# this namespace unannounced. PR-08 replaces this block with the TOML loader in
+# opus_config and deletes the compatibility shim.
+################################################################################
+
+_secrets = load_secrets()
+
+# Django core.
+SECRET_KEY = _secrets.SECRET_KEY
+DEBUG = _secrets.DEBUG
+ALLOWED_HOSTS = _secrets.ALLOWED_HOSTS
+# Only the deployed-server secrets file defines STATIC_ROOT; the automated-test
+# one never has, because collectstatic does not run there. Falling back to None
+# preserves that, None being Django's own default.
+STATIC_ROOT = getattr(_secrets, 'STATIC_ROOT', None)
+
+# Database. (The engine is hardcoded to MySQL until PR-08 selects it from
+# DB_BRAND.)
+DB_HOST_NAME = _secrets.DB_HOST_NAME
+DB_SCHEMA_NAME = _secrets.DB_SCHEMA_NAME
+DB_USER = _secrets.DB_USER
+DB_PASSWORD = _secrets.DB_PASSWORD
+
+# Roots of the PDS3 and PDS4 holdings served to users.
+PDS3_DATA_DIR = _secrets.PDS3_DATA_DIR
+PDS4_DATA_DIR = _secrets.PDS4_DATA_DIR
+
+# Where rms-opus is checked out. Read only by tools.app_utils.get_git_version,
+# which PR-08 rewrites in terms of importlib.metadata.
+RMS_OPUS_PATH = _secrets.RMS_OPUS_PATH
+
+# Static files and public URLs.
+OPUS_STATIC_ROOT = _secrets.OPUS_STATIC_ROOT
+CACHE_SERVER_PREFIX = _secrets.CACHE_SERVER_PREFIX
+PUBLIC_OPUS_URL = _secrets.PUBLIC_OPUS_URL
+PRODUCT_HTTP_PATH = _secrets.PRODUCT_HTTP_PATH
+VIEWMASTER_ROOT_PATH = _secrets.VIEWMASTER_ROOT_PATH
+
+# Cart downloads.
+TAR_FILE_PATH = _secrets.TAR_FILE_PATH
+MANIFEST_FILE_PATH = _secrets.MANIFEST_FILE_PATH
+TAR_FILE_URL_PATH = _secrets.TAR_FILE_URL_PATH
+
+# Site content maintained outside the repository.
+OPUS_LAST_BLOG_UPDATE_FILE = _secrets.OPUS_LAST_BLOG_UPDATE_FILE
+OPUS_NOTIFICATION_FILE = _secrets.OPUS_NOTIFICATION_FILE
+
+# Logging.
+OPUS_LOG_FILE = _secrets.OPUS_LOG_FILE
+OPUS_LOG_FILE_LEVEL = _secrets.OPUS_LOG_FILE_LEVEL
+OPUS_LOG_CONSOLE_LEVEL = _secrets.OPUS_LOG_CONSOLE_LEVEL
+OPUS_LOG_DJANGO_LEVEL = _secrets.OPUS_LOG_DJANGO_LEVEL
+OPUS_LOG_API_CALLS = _secrets.OPUS_LOG_API_CALLS
+
+# Fault injection (see tools.app_utils).
+OPUS_FAKE_API_DELAYS = _secrets.OPUS_FAKE_API_DELAYS
+OPUS_FAKE_SERVER_ERROR404_PROBABILITY = _secrets.OPUS_FAKE_SERVER_ERROR404_PROBABILITY
+OPUS_FAKE_SERVER_ERROR500_PROBABILITY = _secrets.OPUS_FAKE_SERVER_ERROR500_PROBABILITY
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
 
+# The on-disk directory is opus_app/static/, but the public URL namespace stays
+# /static_media/ permanently: it is hardcoded in static/js/opus.js, embedded in
+# the golden API fixtures, and aliased in the production Apache configuration.
 STATIC_URL = '/static_media/'
 
 # Local time zone for this installation. Choices can be found here:
@@ -61,8 +126,7 @@ USE_L10N = True
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 STATICFILES_DIRS = [
-    (os.path.join(PROJECT_ROOT, 'static_media/')),
-    'static_media/',
+    BASE_DIR / 'static',
 ]
 
 ADMIN_MEDIA_PREFIX = ''
@@ -76,27 +140,30 @@ MIDDLEWARE = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
-    'apps.tools.opus_middleware.StripWhitespaceMiddleware',
+    'opus_app.apps.tools.opus_middleware.StripWhitespaceMiddleware',
     # prod remove:
     #'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'opus_app.urls'
 
 FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        # The apps/<app>/templates directories are also found by the
+        # app_directories loader below; they are listed here as well because
+        # that is how this project has always resolved them. apps/quide/ was
+        # dropped: that app has not existed for years.
         'DIRS': [
-            PROJECT_ROOT + '/templates',
-            PROJECT_ROOT + '/apps/',
-            PROJECT_ROOT + '/apps/ui/templates/',
-            PROJECT_ROOT + '/apps/dictionary/templates/',
-            PROJECT_ROOT + '/apps/results/templates/',
-            PROJECT_ROOT + '/apps/metadata/templates/',
-            PROJECT_ROOT + '/apps/quide/templates/',
-            PROJECT_ROOT + '/apps/search/templates/',
+            BASE_DIR / 'templates',
+            BASE_DIR / 'apps',
+            BASE_DIR / 'apps/ui/templates',
+            BASE_DIR / 'apps/dictionary/templates',
+            BASE_DIR / 'apps/results/templates',
+            BASE_DIR / 'apps/metadata/templates',
+            BASE_DIR / 'apps/search/templates',
         ],
         'OPTIONS': {
             'context_processors': [
@@ -129,15 +196,17 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'django.forms',
     'storages',
-    'search',
-    'paraminfo',
-    'metadata',
-    'help',
-    'results',
-    'ui',
-    'cart',
-    'tools',
-    'dictionary',
+    # Django derives each app label from the last component of these paths, so
+    # the labels stay 'search', 'paraminfo', ... exactly as before the move.
+    'opus_app.apps.search',
+    'opus_app.apps.paraminfo',
+    'opus_app.apps.metadata',
+    'opus_app.apps.help',
+    'opus_app.apps.results',
+    'opus_app.apps.ui',
+    'opus_app.apps.cart',
+    'opus_app.apps.tools',
+    'opus_app.apps.dictionary',
     'rest_framework',
 )
 
@@ -154,7 +223,7 @@ if _HAS_MEMCACHE: # pragma: no cover
         "default": {
             "BACKEND":"django.core.cache.backends.memcached.PyMemcacheCache",
             "LOCATION": "127.0.0.1:11211",
-    	    "TIMEOUT": None,
+            "TIMEOUT": None,
         },
     }
 else:
@@ -221,43 +290,47 @@ LOGGING = {
             'level': OPUS_LOG_DJANGO_LEVEL,
             'propagate': False,
         },
-        'results': {
+        # These keys must track the app modules' __name__, which the move to
+        # src/opus_app changed from e.g. 'cart.views' to
+        # 'opus_app.apps.cart.views'. A key that no longer prefixes a real
+        # logger name silently stops that app's records reaching the log file.
+        'opus_app.apps.results': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'search': {
+        'opus_app.apps.search': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'help': {
+        'opus_app.apps.help': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'metadata': {
+        'opus_app.apps.metadata': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'paraminfo': {
+        'opus_app.apps.paraminfo': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'ui': {
+        'opus_app.apps.ui': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'cart': {
+        'opus_app.apps.cart': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'tools': {
+        'opus_app.apps.tools': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'dictionary': {
+        'opus_app.apps.dictionary': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'search.forms': {
+        'opus_app.apps.search.forms': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },

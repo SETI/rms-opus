@@ -1,13 +1,14 @@
-# help/test_help.py
+# integration/apps_db_tests/test_help.py
 
 import logging
 from unittest import TestCase
 
-import settings
+from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
-from help.views import (
+
+from opus_app.apps.help.views import (
     api_about,
     api_api_guide,
     api_bundles,

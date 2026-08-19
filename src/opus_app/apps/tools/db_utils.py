@@ -4,10 +4,10 @@
 #
 ################################################################################
 
-import settings
 from django.apps import apps
-from tools.app_utils import get_mult_name
+from django.conf import settings
 
+from opus_app.apps.tools.app_utils import get_mult_name
 from opus_support import parse_form_type
 
 MYSQL_TABLE_NOT_EXISTS = 1146

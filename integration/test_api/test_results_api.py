@@ -1,27 +1,29 @@
-# opus/application/test_api/test_results_api.py
+# integration/test_api/test_results_api.py
 
 import json
 import logging
-import requests
 from unittest import TestCase
 
+import requests
+from django.conf import settings
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
-from opus.application.apps.tools.app_utils import (HTTP404_BAD_LIMIT,
-                                                   HTTP404_BAD_OFFSET,
-                                                   HTTP404_BAD_PAGENO,
-                                                   HTTP404_BAD_STARTOBS,
-                                                   HTTP404_SEARCH_PARAMS_INVALID)
 
-from tools.app_utils import (HTTP404_BAD_OR_MISSING_REQNO,
-                             HTTP404_UNKNOWN_CATEGORY,
-                             HTTP404_UNKNOWN_OPUS_ID,
-                             HTTP404_UNKNOWN_RING_OBS_ID,
-                             HTTP404_UNKNOWN_SLUG)
+from opus_app.apps.tools.app_utils import (
+    HTTP404_BAD_LIMIT,
+    HTTP404_BAD_OFFSET,
+    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP404_BAD_PAGENO,
+    HTTP404_BAD_STARTOBS,
+    HTTP404_SEARCH_PARAMS_INVALID,
+    HTTP404_UNKNOWN_CATEGORY,
+    HTTP404_UNKNOWN_OPUS_ID,
+    HTTP404_UNKNOWN_RING_OBS_ID,
+    HTTP404_UNKNOWN_SLUG,
+)
 
 from .api_test_helper import ApiTestHelper
 
-import settings
 
 class ApiResultsTests(TestCase, ApiTestHelper):
 
@@ -178,7 +180,6 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_data_no_results_default_json(self):
         "[test_results_api.py] /api/data: no results default cols json"
         url = '/api/data.json?opusid=notgoodid'
-        expected = {}
         self._run_json_equal_file(url, 'api_data_no_results_default_json.json')
 
     def test__api_data_no_results_default_csv(self):

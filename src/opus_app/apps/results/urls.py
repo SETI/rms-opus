@@ -1,6 +1,7 @@
 # results/urls.py
 from django.urls import re_path
-from results.views import (
+
+from opus_app.apps.results.views import (
     api_get_categories_for_opus_id,
     api_get_categories_for_search,
     api_get_data,
@@ -14,7 +15,7 @@ from results.views import (
     api_get_product_types_for_opus_id,
     api_get_product_types_for_search,
 )
-from ui.views import api_dummy
+from opus_app.apps.ui.views import api_dummy
 
 urlpatterns = [
     # The internal version of api/data and api/images that we don't advertise

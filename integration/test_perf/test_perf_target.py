@@ -3,8 +3,8 @@
 
 import random
 import time
-import urllib.request
 import urllib.parse
+import urllib.request
 
 import numpy as np
 
@@ -33,9 +33,9 @@ def run_one_test(search_params, columns, num_iterations, randomize_search=False)
             month = random.randint(1, 12)
             day = random.randint(1, 28)
             hr = random.randint(0, 23)
-            min = random.randint(0, 59)
+            minute = random.randint(0, 59)
             sec = random.randint(0, 59)
-            start_time = f'{yr:04d}-{month:02d}-{day:02d}T{hr:02d}:{min:02d}:{sec:02d}.'
+            start_time = f'{yr:04d}-{month:02d}-{day:02d}T{hr:02d}:{minute:02d}:{sec:02d}.'
             start_time += f'{iteration:03d}'
             presearch_params = f'time1={start_time}&'
         url = f'{HOST}/api/data.json?{presearch_params}{search_params}'
@@ -43,8 +43,7 @@ def run_one_test(search_params, columns, num_iterations, randomize_search=False)
         # print(url)
         start_time = time.time()
         with urllib.request.urlopen(url) as response:
-            html = response.read()
-            # print(html)
+            response.read()
             end_time = time.time()
             time_list.append(end_time-start_time)
     if not randomize_search and num_iterations > 1:

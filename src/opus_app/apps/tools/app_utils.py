@@ -14,10 +14,11 @@ import string
 import subprocess
 import time
 
-import settings
+from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import HttpResponse
-from search.models import ObsGeneral
+
+from opus_app.apps.search.models import ObsGeneral
 
 log = logging.getLogger(__name__)
 

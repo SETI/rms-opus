@@ -1,17 +1,19 @@
-# opus/application/test_api/api_test_helper.py
+# integration/test_api/api_test_helper.py
 import base64
 import difflib
-from io import BytesIO
 import json
 import os
 import re
 import tarfile
 import zipfile
+from io import BytesIO
+
+from django.conf import settings
 from PIL import Image, ImageChops
 
-import settings
-
-_RESPONSES_FILE_ROOT = 'test_api/responses/'
+# Relative to the working directory: the whole suite is run from the repository
+# root (see run_coverage.sh and integration/test_api/TEST_API_README.md).
+_RESPONSES_FILE_ROOT = 'integration/test_api/responses/'
 
 class ApiTestHelper:
     # If this is set to True, then instead of comparing responses to files
@@ -76,8 +78,10 @@ class ApiTestHelper:
                  .replace(r'\\n', r'\n')
                  .replace(r'\n', '\n'))
 
-    def _run_json_equal(self, url, expected, ignore=[]):
-        if not isinstance(ignore, (list, tuple)):
+    def _run_json_equal(self, url, expected, ignore=None):
+        if ignore is None:
+            ignore = []
+        elif not isinstance(ignore, (list, tuple)):
             ignore = [ignore]
         print(url)
         response = self._get_response(url)
@@ -102,7 +106,7 @@ class ApiTestHelper:
             with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
                 fp.write(json.dumps(jdata, indent=4))
             return
-        with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
+        with open(_RESPONSES_FILE_ROOT+exp_file) as fp:
             expected = json.loads(fp.read())
         print('Got:')
         print(jdata)
@@ -154,7 +158,9 @@ class ApiTestHelper:
         self.assertEqual(expected, resp)
         # There should be the same number of images, and they should decode identically.
         self.assertEqual(len(expected), len(resp))
-        for image1, image2 in zip(expected_images, resp_images):
+        # strict=False keeps the historical behavior: a length mismatch between
+        # the two image lists is silently ignored rather than raising.
+        for image1, image2 in zip(expected_images, resp_images, strict=False):
             self.__assert_images_identical(image1, image2)
 
     def _run_html_startswith(self, url, expected):
@@ -189,7 +195,7 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(200, response.status_code)
-        with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
+        with open(_RESPONSES_FILE_ROOT+exp_file) as fp:
             expected = fp.read()
         expected = self._remove_range(expected, start_str, end_str)
         resp = self._clean_string(str(response.content))
@@ -292,7 +298,9 @@ class ApiTestHelper:
             if fmt == 'zip':
                 archive_file = zipfile.ZipFile(path, mode=read_mode)
             else:
-                archive_file = tarfile.open(name=path, mode=read_mode)
+                # SIM115 suppressed: the archive is opened in one of four
+                # branches and closed once, below, where the branches rejoin.
+                archive_file = tarfile.open(name=path, mode=read_mode)  # noqa: SIM115
         else:
             binary_stream = BytesIO(response.content)
             read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
@@ -301,7 +309,8 @@ class ApiTestHelper:
             if fmt == 'zip':
                 archive_file = zipfile.ZipFile(binary_stream, mode=read_mode)
             else:
-                archive_file = tarfile.open(mode=read_mode, fileobj=binary_stream)
+                archive_file = tarfile.open(mode=read_mode,  # noqa: SIM115 (see above)
+                                            fileobj=binary_stream)
         if fmt == 'zip':
             resp = archive_file.namelist()
         else:

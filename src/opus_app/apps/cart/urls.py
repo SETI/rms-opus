@@ -1,5 +1,7 @@
 # cart/urls.py
-from cart.views import (
+from django.urls import re_path
+
+from opus_app.apps.cart.views import (
     api_cart_status,
     api_create_download,
     api_edit_cart,
@@ -7,7 +9,6 @@ from cart.views import (
     api_reset_session,
     api_view_cart,
 )
-from django.urls import re_path
 
 urlpatterns = [
     re_path(r'^__cart/view.json$', api_view_cart),

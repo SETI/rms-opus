@@ -1,6 +1,7 @@
 # metadata/urls.py
 from django.urls import re_path
-from metadata.views import (
+
+from opus_app.apps.metadata.views import (
     api_get_fields,
     api_get_mult_counts,
     api_get_mult_counts_internal,

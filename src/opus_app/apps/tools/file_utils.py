@@ -9,10 +9,11 @@
 import logging
 
 import pdsfile.pdsviewable
-import settings
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
-from search.models import ObsGeneral
+
+from opus_app.apps.search.models import ObsGeneral
 
 log = logging.getLogger(__name__)
 

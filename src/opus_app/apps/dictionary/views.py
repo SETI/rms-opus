@@ -1,6 +1,6 @@
 import logging
 
-from dictionary.models import Definitions
+from opus_app.apps.dictionary.models import Definitions
 
 log = logging.getLogger(__name__)
 

@@ -1,7 +1,8 @@
 # ui/urls.py
 from django.contrib import admin
 from django.urls import re_path
-from ui.views import (
+
+from opus_app.apps.ui.views import (
     api_dummy,
     api_get_menu,
     api_get_metadata_selector,

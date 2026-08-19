@@ -1,14 +1,15 @@
-# results/test_results.py
+# integration/apps_db_tests/test_results.py
 
 import logging
 from unittest import TestCase
 
-import settings
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, QueryDict
 from django.test import RequestFactory
-from results.views import (
+
+from opus_app.apps.results.views import (
     api_get_categories_for_opus_id,
     api_get_categories_for_search,
     api_get_data,

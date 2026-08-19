@@ -21,9 +21,8 @@
 
 import logging
 
-import settings
-from cart.models import Cart
 from django.apps import apps
+from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, connection
@@ -31,15 +30,17 @@ from django.db.models import Count, Max, Min
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
-from paraminfo.models import ParamInfo
-from search.models import TableNames
-from search.views import (
+
+from opus_app.apps.cart.models import Cart
+from opus_app.apps.paraminfo.models import ParamInfo
+from opus_app.apps.search.models import TableNames
+from opus_app.apps.search.views import (
     get_param_info_by_slug,
     get_user_query_table,
     set_user_search_number,
     url_to_search_params,
 )
-from tools.app_utils import (
+from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_COLLAPSE,
     HTTP404_BAD_OR_MISSING_REQNO,
     HTTP404_NO_REQUEST,
@@ -60,7 +61,6 @@ from tools.app_utils import (
     throw_random_http404_error,
     throw_random_http500_error,
 )
-
 from opus_support import (
     format_unit_value,
     get_default_unit,

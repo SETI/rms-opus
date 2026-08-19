@@ -65,7 +65,7 @@
 
 8. Run migrate:
 
-    cd <RMS-OPUS DIRECTORY>/opus/application
+    cd <RMS-OPUS DIRECTORY>
     python manage.py migrate
 
 9. Run the webserver

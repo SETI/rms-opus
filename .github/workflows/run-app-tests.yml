@@ -88,7 +88,7 @@ jobs:
         if: matrix.os == 'self-hosted-linux' && matrix.python-version == '3.12'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./opus/application/coverage.xml
+          files: ./coverage.xml
           verbose: true
 
       - name: Check coverage level

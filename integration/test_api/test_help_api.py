@@ -1,17 +1,16 @@
-# opus/application/test_api/test_help_api.py
+# integration/test_api/test_help_api.py
 
 import logging
-import os
 import platform
-import requests
 from unittest import TestCase
 
+import requests
+from django.conf import settings
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from .api_test_helper import ApiTestHelper
 
-import settings
 
 class ApiHelpTests(TestCase, ApiTestHelper):
 

@@ -20,16 +20,17 @@ import time
 # This is used instead of "re" because it's closer to the ICU regex library
 # used by MySQL.
 import regex
-import settings
 from django.apps import apps
+from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, connection
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import Http404, HttpResponseServerError
-from paraminfo.models import ParamInfo
-from search.models import UserSearches
-from tools.app_utils import (
+
+from opus_app.apps.paraminfo.models import ParamInfo
+from opus_app.apps.search.models import UserSearches
+from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_LIMIT,
     HTTP404_BAD_OR_MISSING_REQNO,
     HTTP404_NO_REQUEST,
@@ -47,8 +48,7 @@ from tools.app_utils import (
     throw_random_http404_error,
     throw_random_http500_error,
 )
-from tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
-
+from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
 from opus_support import (
     convert_from_default_unit,
     convert_to_default_unit,
@@ -469,7 +469,7 @@ def url_to_search_params(request_get, allow_errors=False,
 
     Example command line usage:
 
-    from search.views import *
+    from opus_app.apps.search.views import *
     from django.http import QueryDict
     q = QueryDict("planet=Saturn&bundleid=COISS_2&qtype-bundleid=begins&rightasc1=10&order=time1,-RINGGEOringcenterdistance")
     (selections,extras) = url_to_search_params(q)

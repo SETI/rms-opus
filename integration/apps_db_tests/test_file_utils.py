@@ -1,11 +1,12 @@
-# tools/test_file_utils.py
+# integration/apps_db_tests/test_file_utils.py
 
 import logging
 from unittest import TestCase
 
-import settings
+from django.conf import settings
 from django.core.cache import cache
-from tools.file_utils import get_pds_products
+
+from opus_app.apps.tools.file_utils import get_pds_products
 
 
 class fileUtilsTests(TestCase):
