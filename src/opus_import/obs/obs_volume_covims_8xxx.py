@@ -6,9 +6,8 @@
 # occultations.
 ################################################################################
 
-from obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIMSOccCommon
-
 import opus_support
+from opus_import.obs.obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIMSOccCommon
 
 
 class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):

@@ -5,8 +5,8 @@
 # are PDS4-specific.
 ################################################################################
 
-from obs_base_pds4 import ObsBasePDS4
-from obs_profile import ObsProfile
+from opus_import.obs.obs_base_pds4 import ObsBasePDS4
+from opus_import.obs.obs_profile import ObsProfile
 
 
 class ObsProfilePDS4(ObsProfile, ObsBasePDS4):

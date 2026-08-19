@@ -5,7 +5,7 @@
 # common and obs_mission_galileo tables.
 ################################################################################
 
-from obs_common_pds3 import ObsCommonPDS3
+from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsVolumeGalileoCommon(ObsCommonPDS3):

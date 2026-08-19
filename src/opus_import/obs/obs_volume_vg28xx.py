@@ -9,7 +9,8 @@
 ################################################################################
 
 import julian
-from obs_volume_voyager_common import ObsVolumeVoyagerCommon
+
+from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
 
 _VG_TARGET_TO_MISSION_PHASE_MAPPING = {
     'S RINGS': 'SATURN ENCOUNTER',

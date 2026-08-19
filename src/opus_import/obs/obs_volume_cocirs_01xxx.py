@@ -6,10 +6,9 @@
 # COCIRS_[01]xxx.
 ################################################################################
 
-import import_util
-from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
-
 import opus_support
+from opus_import import import_util
+from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
 class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):

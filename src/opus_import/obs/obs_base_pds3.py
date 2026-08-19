@@ -6,7 +6,8 @@
 ################################################################################
 
 import pdsfile
-from obs_base import ObsBase
+
+from opus_import.obs.obs_base import ObsBase
 
 
 class ObsBasePDS3(ObsBase):

@@ -4,9 +4,7 @@
 # Generate and maintain the table_names table.
 ################################################################################
 
-import config_data
-import impglobals
-import import_util
+from opus_import import config_data, impglobals, import_util
 
 
 def create_import_table_names_table():

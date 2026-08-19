@@ -7,32 +7,32 @@
 
 # flake8: noqa
 
-from obs_volume_cocirs_56xxx  import ObsVolumeCOCIRS56xxx
-from obs_volume_cocirs_01xxx  import ObsVolumeCOCIRS01xxx
-from obs_volume_coiss_12xxx   import ObsVolumeCOISS12xxx
-from obs_volume_corss_8xxx    import ObsVolumeCORSS8xxx
-from obs_volume_couvis_0xxx   import ObsVolumeCOUVIS0xxx
-from obs_volume_couvis_8xxx   import ObsVolumeCOUVIS8xxx
-from obs_volume_covims_0xxx   import ObsVolumeCOVIMS0xxx
-from obs_volume_covims_8xxx   import ObsVolumeCOVIMS8xxx
-from obs_volume_ebrocc_xxxx   import ObsVolumeEBROCCxxxx
-from obs_volume_go_0xxx       import ObsVolumeGO0xxx
-from obs_volume_hstjx_xxxx    import ObsVolumeHSTJxxxxx
-from obs_volume_hstnx_xxxx    import ObsVolumeHSTNxxxxx
-from obs_volume_hstox_xxxx    import ObsVolumeHSTOxxxxx
-from obs_volume_hstix_xxxx    import ObsVolumeHSTIxxxxx
-from obs_volume_hstux_xxxx    import ObsVolumeHSTUxxxxx
-from obs_volume_nhxxlo_xxxx   import ObsVolumeNHxxLOXxxx
-from obs_volume_nhxxmv_xxxx   import ObsVolumeNHxxMVXxxx
-from obs_volume_vgiss_5678xxx import ObsVolumeVGISS5678xxx
-from obs_volume_vg2801_vg2802 import (ObsVolumeVG2801VGPPS,
-                                      ObsVolumeVG2802VGUVS)
-from obs_volume_vg2803        import ObsVolumeVG2803VGRSS
-from obs_volume_vg2810        import ObsVolumeVG2810VGISS
+from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
+from opus_import.obs.obs_volume_cocirs_01xxx import ObsVolumeCOCIRS01xxx
+from opus_import.obs.obs_volume_coiss_12xxx import ObsVolumeCOISS12xxx
+from opus_import.obs.obs_volume_corss_8xxx import ObsVolumeCORSS8xxx
+from opus_import.obs.obs_volume_couvis_0xxx import ObsVolumeCOUVIS0xxx
+from opus_import.obs.obs_volume_couvis_8xxx import ObsVolumeCOUVIS8xxx
+from opus_import.obs.obs_volume_covims_0xxx import ObsVolumeCOVIMS0xxx
+from opus_import.obs.obs_volume_covims_8xxx import ObsVolumeCOVIMS8xxx
+from opus_import.obs.obs_volume_ebrocc_xxxx import ObsVolumeEBROCCxxxx
+from opus_import.obs.obs_volume_go_0xxx import ObsVolumeGO0xxx
+from opus_import.obs.obs_volume_hstjx_xxxx import ObsVolumeHSTJxxxxx
+from opus_import.obs.obs_volume_hstnx_xxxx import ObsVolumeHSTNxxxxx
+from opus_import.obs.obs_volume_hstox_xxxx import ObsVolumeHSTOxxxxx
+from opus_import.obs.obs_volume_hstix_xxxx import ObsVolumeHSTIxxxxx
+from opus_import.obs.obs_volume_hstux_xxxx import ObsVolumeHSTUxxxxx
+from opus_import.obs.obs_volume_nhxxlo_xxxx import ObsVolumeNHxxLOXxxx
+from opus_import.obs.obs_volume_nhxxmv_xxxx import ObsVolumeNHxxMVXxxx
+from opus_import.obs.obs_volume_vgiss_5678xxx import ObsVolumeVGISS5678xxx
+from opus_import.obs.obs_volume_vg2801_vg2802 import (ObsVolumeVG2801VGPPS,
+                                                      ObsVolumeVG2802VGUVS)
+from opus_import.obs.obs_volume_vg2803 import ObsVolumeVG2803VGRSS
+from opus_import.obs.obs_volume_vg2810 import ObsVolumeVG2810VGISS
 
-from obs_bundle_uranus_occs_earthbased import ObsBundleUranusOccsEarthbased
-from obs_bundle_cassini_uvis_solarocc_beckerjarmak2023 import ObsBundleCassiniUvisSolarOccBeckerJarmak
-from obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import ObsBundleCassiniISSFRingMosaicsRSFrench2025
+from opus_import.obs.obs_bundle_uranus_occs_earthbased import ObsBundleUranusOccsEarthbased
+from opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023 import ObsBundleCassiniUvisSolarOccBeckerJarmak
+from opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import ObsBundleCassiniISSFRingMosaicsRSFrench2025
 
 # The BUNDLE_INFO structure is used to determine the details of importing
 # each distinct type of bundle/volume.

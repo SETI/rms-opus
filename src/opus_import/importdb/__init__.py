@@ -1,5 +1,5 @@
-from importdb.mysql import ImportDBMySQL
-from importdb.super import ImportDBException
+from opus_import.importdb.mysql import ImportDBMySQL
+from opus_import.importdb.super import ImportDBException
 
 # from importdb.postgresql import ImportDBPostgreSQL
 

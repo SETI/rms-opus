@@ -5,8 +5,8 @@
 # are PDS3-specific.
 ################################################################################
 
-from obs_base_pds3 import ObsBasePDS3
-from obs_profile import ObsProfile
+from opus_import.obs.obs_base_pds3 import ObsBasePDS3
+from opus_import.obs.obs_profile import ObsProfile
 
 
 class ObsProfilePDS3(ObsProfile, ObsBasePDS3):

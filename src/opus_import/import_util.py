@@ -13,16 +13,14 @@ import traceback
 from functools import lru_cache
 from typing import ClassVar
 
-import config_data
-import config_targets
-import impglobals
-import instruments
 import julian
 import numpy as np
-import opus_secrets
 import pdsfile
 import pdsparser
 import pdstable
+
+from opus_config._secrets_compat import load_secrets
+from opus_import import config_data, config_targets, impglobals, instruments
 
 ################################################################################
 # GENERAL UTILITIES
@@ -387,7 +385,7 @@ def slug_name_for_sfc_target(target_name):
     return target_name
 
 def read_schema_for_table(table_name, replace=None):
-    table_name = table_name.replace(opus_secrets.IMPORT_TABLE_TEMP_PREFIX, '').lower()
+    table_name = table_name.replace(load_secrets().IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
         assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')

@@ -5,7 +5,7 @@
 # obs_surface_geometry_name table.
 ################################################################################
 
-from obs_base import ObsBase
+from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometryName(ObsBase):

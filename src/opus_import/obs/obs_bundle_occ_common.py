@@ -5,7 +5,7 @@
 # to the PDS4 occultation classes.
 ################################################################################
 
-from obs_common_pds4 import ObsCommonPDS4
+from opus_import.obs.obs_common_pds4 import ObsCommonPDS4
 
 
 class ObsBundleOccCommon(ObsCommonPDS4):

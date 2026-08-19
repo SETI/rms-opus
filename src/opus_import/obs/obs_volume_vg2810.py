@@ -6,7 +6,7 @@
 # radial profiles.
 ################################################################################
 
-from obs_volume_vg28xx import ObsVolumeVG28xx
+from opus_import.obs.obs_volume_vg28xx import ObsVolumeVG28xx
 
 
 class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):

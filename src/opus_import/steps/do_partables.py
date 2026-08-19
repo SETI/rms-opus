@@ -4,10 +4,8 @@
 # Generate and maintain the partables table.
 ################################################################################
 
-import config_data
-import impglobals
-import import_util
-from do_import import mult_table_lookup_id
+from opus_import import config_data, impglobals, import_util
+from opus_import.steps.do_import import mult_table_lookup_id
 
 
 def _lookup_table_column(table_schema, column_name):

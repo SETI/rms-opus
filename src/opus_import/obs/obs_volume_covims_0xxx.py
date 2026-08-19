@@ -6,9 +6,8 @@
 # occultations.
 ################################################################################
 
-from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
-
 import opus_support
+from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
 class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):

@@ -8,8 +8,8 @@
 # cassini_uvis_solarocc_beckerjarmak2023 bundle.
 ################################################################################
 
-from obs_bundle_occ_common import ObsBundleOccCommon
-from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
+from opus_import.obs.obs_bundle_occ_common import ObsBundleOccCommon
+from opus_import.obs.obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
 
 class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCommonPDS4):

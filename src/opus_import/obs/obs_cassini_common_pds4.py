@@ -8,10 +8,9 @@
 # using the attributes deduced from the OBSERVATION_ID).
 ################################################################################
 
-from obs_cassini_common import ObsCassiniCommon
-from obs_common_pds4 import ObsCommonPDS4
-
 import opus_support
+from opus_import.obs.obs_cassini_common import ObsCassiniCommon
+from opus_import.obs.obs_common_pds4 import ObsCommonPDS4
 
 
 class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):

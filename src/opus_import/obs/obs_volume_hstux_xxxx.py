@@ -7,7 +7,7 @@
 # combines them all together.
 ################################################################################
 
-from obs_volume_hubble_common import ObsVolumeHubbleCommon
+from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):

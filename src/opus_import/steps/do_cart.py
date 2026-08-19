@@ -4,8 +4,7 @@
 # Create an empty cart table.
 ################################################################################
 
-import impglobals
-import import_util
+from opus_import import impglobals, import_util
 
 
 def create_cart():

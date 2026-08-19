@@ -9,7 +9,7 @@
 
 import math
 
-from obs_cassini_common_pds4 import ObsCassiniCommonPDS4
+from opus_import.obs.obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
 _NOTE_MAPPING = {
     'B': 'Background-subtracted mosaic is missing data due to insufficient radial extent.',

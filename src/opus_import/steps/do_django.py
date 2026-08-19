@@ -4,8 +4,7 @@
 # Things related to Django and the OPUS UI.
 ################################################################################
 
-import impglobals
-import import_util
+from opus_import import impglobals, import_util
 
 
 def drop_cache_tables():

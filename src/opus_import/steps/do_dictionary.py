@@ -8,10 +8,10 @@ import csv
 import glob
 import os
 
-import impglobals
-import import_util
 import opus_secrets
 import pdsparser
+
+from opus_import import impglobals, import_util
 
 
 def create_import_definitions_table():

@@ -5,8 +5,8 @@
 # PDS4-specific.
 ################################################################################
 
-from obs_base_pds4 import ObsBasePDS4
-from obs_pds import ObsPds
+from opus_import.obs.obs_base_pds4 import ObsBasePDS4
+from opus_import.obs.obs_pds import ObsPds
 
 
 class ObsPdsPDS4(ObsPds, ObsBasePDS4):

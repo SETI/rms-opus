@@ -5,7 +5,7 @@
 # common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
 ################################################################################
 
-from obs_volume_vg28xx import ObsVolumeVG28xx
+from opus_import.obs.obs_volume_vg28xx import ObsVolumeVG28xx
 
 # TODOPDS4 Verify that these are correct
 _DSN_NUM_TO_PDS4_INST = {

@@ -22,8 +22,8 @@ python pds4_create_xml_index.py /mnt/rms-holdings/pds4-holdings/bundles/uranus_o
 done
 """
 
-import config_targets
-from obs_bundle_occ_common import ObsBundleOccCommon
+from opus_import import config_targets
+from opus_import.obs.obs_bundle_occ_common import ObsBundleOccCommon
 
 # TODOPDS4 We should be able to get rid of this mapping once
 # Observing_System_Component is available in the index file.

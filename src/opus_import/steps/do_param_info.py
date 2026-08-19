@@ -6,10 +6,8 @@
 
 import json
 
-import impglobals
-import import_util
-
 import opus_support
+from opus_import import impglobals, import_util
 
 
 def create_import_param_info_table():

@@ -4,7 +4,7 @@ try:
 except ImportError:
     MYSQLDB_AVAILABLE = False
 
-from importdb.super import ImportDBException, ImportDBSuper
+from opus_import.importdb.super import ImportDBException, ImportDBSuper
 
 ERR_UNKNOWN_DATABASE = 1049
 

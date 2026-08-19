@@ -6,7 +6,7 @@
 # for each instrument but combines them all together.
 ################################################################################
 
-from obs_common_pds3 import ObsCommonPDS3
+from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsVolumeHubbleCommon(ObsCommonPDS3):

@@ -6,7 +6,7 @@
 # VGISS_[5678]xxx.
 ################################################################################
 
-from obs_volume_voyager_common import ObsVolumeVoyagerCommon
+from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
 
 # Data from: https://pds-rings.seti.org/voyager/iss/inst_cat_wa1.html#inst_info
 # (WL MIN, WL MAX)

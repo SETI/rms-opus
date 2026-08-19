@@ -4,8 +4,7 @@
 # Update the details of preprogrammed mult tables.
 ################################################################################
 
-import impglobals
-import import_util
+from opus_import import impglobals, import_util
 
 
 def update_mult_info():

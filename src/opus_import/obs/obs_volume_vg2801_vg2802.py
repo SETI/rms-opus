@@ -8,7 +8,7 @@
 # except for the instrument_id. Neither has a dedicated instrument table.
 ################################################################################
 
-from obs_volume_vg28xx import THRESHOLD_START_TIME_VG_AT_NORTH, ObsVolumeVG28xx
+from opus_import.obs.obs_volume_vg28xx import THRESHOLD_START_TIME_VG_AT_NORTH, ObsVolumeVG28xx
 
 
 class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):

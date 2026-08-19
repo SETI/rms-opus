@@ -5,7 +5,7 @@
 # obs_surface_geometry_<TARGET> tables.
 ################################################################################
 
-from obs_base import ObsBase
+from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometryTarget(ObsBase):

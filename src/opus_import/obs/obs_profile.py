@@ -5,7 +5,7 @@
 # obs_profile table.
 ################################################################################
 
-import config_targets
+from opus_import import config_targets
 
 
 class ObsProfile:

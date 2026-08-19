@@ -4,7 +4,7 @@
 # Perform various validations on the database.
 ################################################################################
 
-import impglobals
+from opus_import import impglobals
 
 
 def validate_param_info(namespace):

@@ -5,8 +5,8 @@
 # obs_surface_geometry table.
 ################################################################################
 
-import impglobals
-from obs_base import ObsBase
+from opus_import import impglobals
+from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometry(ObsBase):

@@ -8,7 +8,7 @@
 import json
 import os
 
-import impglobals  # It would be nice to have a better way to pass in cmd line args
+from opus_import import impglobals  # It would be nice to have a better way to pass in cmd line args
 
 
 class ObsGeneral:

@@ -5,9 +5,9 @@
 # overrides target names and SCLK counts.
 ################################################################################
 
-import config_targets
-from obs_cassini_common import ObsCassiniCommon
-from obs_common_pds3 import ObsCommonPDS3
+from opus_import import config_targets
+from opus_import.obs.obs_cassini_common import ObsCassiniCommon
+from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):

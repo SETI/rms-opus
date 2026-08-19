@@ -8,7 +8,7 @@
 # occultation volumes
 ################################################################################
 
-from obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
 class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):

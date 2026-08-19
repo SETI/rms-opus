@@ -10,15 +10,11 @@ import os
 import re
 import traceback
 
-import config_bundle_info
-import config_data
-import do_cart
-import do_django
-import impglobals
-import import_util
 import pdsfile
 
 import opus_support
+from opus_import import config_bundle_info, config_data, impglobals, import_util
+from opus_import.steps import do_cart, do_django
 
 ################################################################################
 # TABLE PREPARATION

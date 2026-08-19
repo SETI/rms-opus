@@ -7,8 +7,7 @@
 
 import json
 
-import config_targets
-import import_util
+from opus_import import config_targets, import_util
 
 
 class ObsBase:

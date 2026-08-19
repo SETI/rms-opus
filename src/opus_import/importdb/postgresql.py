@@ -1,7 +1,7 @@
 # import csv
 # import psycopg2 as pg
 
-from importdb.super import ImportDBSuper
+from opus_import.importdb.super import ImportDBSuper
 
 
 class ImportDBPostgreSQL(ImportDBSuper):

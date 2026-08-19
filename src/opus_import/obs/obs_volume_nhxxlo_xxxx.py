@@ -6,7 +6,7 @@
 # NHxxLO_xxxx.
 ################################################################################
 
-from obs_volume_new_horizons_common import ObsVolumeNewHorizonsCommon
+from opus_import.obs.obs_volume_new_horizons_common import ObsVolumeNewHorizonsCommon
 
 
 class ObsVolumeNHxxLOXxxx(ObsVolumeNewHorizonsCommon):

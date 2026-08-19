@@ -5,7 +5,7 @@
 # are common to the ObsVolumeCOUVIS8xxx and ObsVolumeCOVIMS8xxx classes.
 ################################################################################
 
-from obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
+from opus_import.obs.obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
 
 
 class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
