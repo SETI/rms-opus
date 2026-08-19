@@ -1644,15 +1644,17 @@ body; never rewrite or delete earlier notes.*
     `mappingproxy` has a real `__iter__`, audited under the §4a duck-typing lens),
     `A001`/`F841` in `test_perf_target.py`, and two `F601` duplicate `reqno` dict keys in
     `test_search_api.py` whose shadowed halves were already dead at runtime. Four `# noqa`
-    directives, of three kinds, were added with written justifications (PR-17 owns burning
-    them down):
+    directives, of three kinds, were added with written justifications (PR-17 revisits them
+    with the rest of the suppression sets; all four are individually justified and
+    structurally irreducible):
     `# noqa: E402` on `clear_django_cache.py`'s cache import, which has to follow
     `settings.configure()`; `# noqa: SIM115` on the two `tarfile.open` calls
     in `api_test_helper._run_archive_file_equal` (opened in one of four branches, closed once
     where they rejoin) and `# noqa: SIM102` on a nested `if` in `test_search_api.py` (the
     inner test carries its own `# pragma: no cover`; collapsing would put the outer test,
     which the suite does exercise, behind that pragma too). A file's self-naming banner
-    comment was repointed wherever the file itself changed directory — the relocated suites
+    comment was repointed wherever it would otherwise have become wrong — that is, wherever
+    the file's path relative to its package root changed: the relocated suites
     (`# integration/test_api/test_cart_api.py`) and the project package
     (`# opus_app/urls.py`). The per-app modules keep app-relative banners (`# cart/urls.py`
     in `opus_app/apps/cart/urls.py`), which stay accurate relative to `apps/`; that is the
