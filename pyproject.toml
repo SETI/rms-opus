@@ -108,6 +108,11 @@ filterwarnings = [
 [tool.setuptools]
 [tool.setuptools.packages.find]
 where = ["src"]
+# Only directories with an __init__.py are packages. Without this, the data and
+# documentation directories inside opus_import (table_schemas, dictionary_data, docs)
+# would each be picked up as a PEP 420 namespace package, making them importable and
+# putting their contents outside the package-data rules below.
+namespaces = false
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
@@ -116,6 +121,13 @@ where = ["src"]
 # describing their format and the two lists of values deliberately left unmapped), and
 # the PDS data dictionary sources that `--import-dictionary` reads.
 "opus_import" = ["table_schemas/*", "dictionary_data/*"]
+
+[tool.setuptools.exclude-package-data]
+# include-package-data is on by default, which would otherwise ship the import
+# pipeline's developer notes inside the wheel. They document how to add an instrument
+# and how the database is laid out; PR-21 ports them into the Sphinx developer guide and
+# deletes them.
+"opus_import" = ["README.md", "docs/*.md"]
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
