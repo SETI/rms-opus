@@ -1609,8 +1609,10 @@ body; never rewrite or delete earlier notes.*
     — the last is the flattened `apps/*/test_*.py` set, whose module basenames were already
     unique; the dictionary app's contentless `tests.py` became
     `apps_db_tests/test_dictionary.py` so the flattened directory keeps naming its origin.
-    `integration/` and `integration/apps_db_tests/` have `__init__.py`;
-    **`integration/test_perf/` deliberately does not** — it had none before, so unittest
+    `integration/`, `integration/test_api/`, `integration/test_db_data/` and
+    `integration/apps_db_tests/` all have `__init__.py` (the middle two carried theirs
+    through the move, and `manage.py`'s api-* labels depend on `test_api` being a
+    package); **`integration/test_perf/` deliberately does not** — it had none before, so unittest
     discovery skipped it, and `test_perf_target.py` does its whole job (HTTP requests to a
     live server) in its module body. Adding one would make `manage.py test` run it.
   - **The per-file-ignores glob followed the code, and that contradicts an earlier note.**
@@ -1641,12 +1643,20 @@ body; never rewrite or delete earlier notes.*
     `test_local_db_integrity.py` (`sorted([n for n in X.__dict__])` → `sorted(X.__dict__)`;
     `mappingproxy` has a real `__iter__`, audited under the §4a duck-typing lens),
     `A001`/`F841` in `test_perf_target.py`, and two `F601` duplicate `reqno` dict keys in
-    `test_search_api.py` whose shadowed halves were already dead at runtime. Two suppressions
-    were added with written justifications: `# noqa: SIM115` on the two `tarfile.open` calls
+    `test_search_api.py` whose shadowed halves were already dead at runtime. Four `# noqa`
+    directives, of three kinds, were added with written justifications (PR-17 owns burning
+    them down):
+    `# noqa: E402` on `clear_django_cache.py`'s cache import, which has to follow
+    `settings.configure()`; `# noqa: SIM115` on the two `tarfile.open` calls
     in `api_test_helper._run_archive_file_equal` (opened in one of four branches, closed once
     where they rejoin) and `# noqa: SIM102` on a nested `if` in `test_search_api.py` (the
     inner test carries its own `# pragma: no cover`; collapsing would put the outer test,
-    which the suite does exercise, behind that pragma too). `zip()` gained an explicit
+    which the suite does exercise, behind that pragma too). A file's self-naming banner
+    comment was repointed wherever the file itself changed directory — the relocated suites
+    (`# integration/test_api/test_cart_api.py`) and the project package
+    (`# opus_app/urls.py`). The per-app modules keep app-relative banners (`# cart/urls.py`
+    in `opus_app/apps/cart/urls.py`), which stay accurate relative to `apps/`; that is the
+    convention, not an oversight. `zip()` gained an explicit
     `strict=False` rather than `strict=True`, to keep the suite asserting exactly what it
     asserted before.
   - **`LOGGING`'s logger keys had to be renamed and this is a silent failure mode.** Every
