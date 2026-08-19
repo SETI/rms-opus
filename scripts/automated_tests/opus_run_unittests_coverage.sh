@@ -14,8 +14,8 @@ DATA_DIR=$TEST_CAT_DIR/data
 
 # opus_setup_environment.sh wrote opus_secrets.py into the repository root, which
 # is also where this script runs; name it explicitly rather than relying on the
-# working directory, because opus_app.settings now reads it through the
-# opus_config shim rather than a sys.path insertion.
+# working directory, because opus_app.settings resolves it through the
+# opus_config shim.
 export OPUS_SECRETS="$(pwd)/opus_secrets.py"
 
 # The integration suite's 100% coverage gate has its own configuration; without

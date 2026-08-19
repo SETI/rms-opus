@@ -64,9 +64,8 @@ pip install mod-wsgi
 ln -s ${OPUS_SRC_DIR}/${OPUS_DIR_NAME} ${OPUS_SRC_DIR}/rms-opus
 
 cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
-# There is no longer a generated opus.wsgi: the WSGI application is the
-# committed opus_app/wsgi.py inside the installed distribution. The Apache
-# vhost's WSGIScriptAlias must point at
+# The WSGI application is opus_app/wsgi.py inside the installed distribution,
+# so nothing is generated here. The Apache vhost's WSGIScriptAlias must point at
 # ${OPUS_SRC_DIR}/rms-opus/src/opus_app/wsgi.py; PR-22 rewrites this deploy
 # chain around `pip install rms-opus` and owns that vhost change.
 python manage.py migrate

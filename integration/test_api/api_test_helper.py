@@ -158,8 +158,8 @@ class ApiTestHelper:
         self.assertEqual(expected, resp)
         # There should be the same number of images, and they should decode identically.
         self.assertEqual(len(expected), len(resp))
-        # strict=False keeps the historical behavior: a length mismatch between
-        # the two image lists is silently ignored rather than raising.
+        # strict=False: a length mismatch between the two image lists is
+        # ignored rather than raising.
         for image1, image2 in zip(expected_images, resp_images, strict=False):
             self.__assert_images_identical(image1, image2)
 

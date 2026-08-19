@@ -46,10 +46,10 @@ echo "                 'tools2.pds-rings.seti.org', '104.244.248.30', 'tools2.pd
 echo "                 'tools.pds-rings.seti.org',  '104.244.248.20', 'tools.pds.seti.org',  '10.1.10.20'," >> opus_secrets.py
 echo "                 'opus.pds-rings.seti.org',   '104.244.248.40', 'opus.pds.seti.org',   '10.1.10.40')" >> opus_secrets.py
 echo "SECRET_KEY = '${OPUS_SECRET_KEY}'" >> opus_secrets.py
+# On a deployed server collectstatic gathers the static files into
+# ${OPUS_DIR}/static_media, which is unrelated to the in-repo source directory
+# (src/opus_app/static).
 echo "STATIC_ROOT = '${OPUS_DIR}/static_media'" >> opus_secrets.py
-# The served static files are collected into STATIC_ROOT, so this stays
-# ${OPUS_DIR}/static_media on a deployed server; only the in-repo source
-# directory was renamed (src/opus_app/static).
 echo "OPUS_STATIC_ROOT = '${OPUS_DIR}/static_media'" >> opus_secrets.py
 echo "CACHE_SERVER_PREFIX = 'production'" >> opus_secrets.py
 echo "TAR_FILE_PATH = '${OPUS_DIR}/downloads/'" >> opus_secrets.py

@@ -32,10 +32,9 @@ BASE_DIR = Path(__file__).resolve().parent
 ################################################################################
 # Settings supplied by the installation's opus_secrets.py.
 #
-# The historical `from opus_secrets import *` wildcard is gone; every name the
-# application actually reads is assigned explicitly below, so nothing arrives in
-# this namespace unannounced. PR-08 replaces this block with the TOML loader in
-# opus_config and deletes the compatibility shim.
+# Every name the application reads is assigned explicitly below, so nothing
+# enters this namespace unannounced. PR-08 replaces this block with the TOML
+# loader in opus_config and deletes the compatibility shim.
 ################################################################################
 
 _secrets = load_secrets()
@@ -45,8 +44,8 @@ SECRET_KEY = _secrets.SECRET_KEY
 DEBUG = _secrets.DEBUG
 ALLOWED_HOSTS = _secrets.ALLOWED_HOSTS
 # Only the deployed-server secrets file defines STATIC_ROOT; the automated-test
-# one never has, because collectstatic does not run there. Falling back to None
-# preserves that, None being Django's own default.
+# one does not, because collectstatic never runs there. None is Django's own
+# default.
 STATIC_ROOT = getattr(_secrets, 'STATIC_ROOT', None)
 
 # Database. (The engine is hardcoded to MySQL until PR-08 selects it from
@@ -60,7 +59,8 @@ DB_PASSWORD = _secrets.DB_PASSWORD
 PDS3_DATA_DIR = _secrets.PDS3_DATA_DIR
 PDS4_DATA_DIR = _secrets.PDS4_DATA_DIR
 
-# Where rms-opus is checked out. Read only by tools.app_utils.get_git_version,
+# Where rms-opus is checked out. Read only by
+# opus_app.apps.tools.app_utils.get_git_version,
 # which PR-08 rewrites in terms of importlib.metadata.
 RMS_OPUS_PATH = _secrets.RMS_OPUS_PATH
 
@@ -87,7 +87,7 @@ OPUS_LOG_CONSOLE_LEVEL = _secrets.OPUS_LOG_CONSOLE_LEVEL
 OPUS_LOG_DJANGO_LEVEL = _secrets.OPUS_LOG_DJANGO_LEVEL
 OPUS_LOG_API_CALLS = _secrets.OPUS_LOG_API_CALLS
 
-# Fault injection (see tools.app_utils).
+# Fault injection (see opus_app.apps.tools.app_utils).
 OPUS_FAKE_API_DELAYS = _secrets.OPUS_FAKE_API_DELAYS
 OPUS_FAKE_SERVER_ERROR404_PROBABILITY = _secrets.OPUS_FAKE_SERVER_ERROR404_PROBABILITY
 OPUS_FAKE_SERVER_ERROR500_PROBABILITY = _secrets.OPUS_FAKE_SERVER_ERROR500_PROBABILITY
@@ -95,9 +95,10 @@ OPUS_FAKE_SERVER_ERROR500_PROBABILITY = _secrets.OPUS_FAKE_SERVER_ERROR500_PROBA
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
 
-# The on-disk directory is opus_app/static/, but the public URL namespace stays
-# /static_media/ permanently: it is hardcoded in static/js/opus.js, embedded in
-# the golden API fixtures, and aliased in the production Apache configuration.
+# The on-disk directory is opus_app/static/; the public URL namespace is
+# /static_media/ and must stay that way, because it is hardcoded in
+# static/js/opus.js, embedded in the golden API fixtures, and aliased in the
+# production Apache configuration.
 STATIC_URL = '/static_media/'
 
 # Local time zone for this installation. Choices can be found here:
@@ -152,10 +153,9 @@ FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # The apps/<app>/templates directories are also found by the
-        # app_directories loader below; they are listed here as well because
-        # that is how this project has always resolved them. apps/quide/ was
-        # dropped: that app has not existed for years.
+        # The apps/<app>/templates directories are reachable through the
+        # app_directories loader below as well; this project lists them here
+        # too.
         'DIRS': [
             BASE_DIR / 'templates',
             BASE_DIR / 'apps',
@@ -197,7 +197,7 @@ INSTALLED_APPS = (
     'django.forms',
     'storages',
     # Django derives each app label from the last component of these paths, so
-    # the labels stay 'search', 'paraminfo', ... exactly as before the move.
+    # the labels are 'search', 'paraminfo', 'metadata', ...
     'opus_app.apps.search',
     'opus_app.apps.paraminfo',
     'opus_app.apps.metadata',
@@ -290,10 +290,10 @@ LOGGING = {
             'level': OPUS_LOG_DJANGO_LEVEL,
             'propagate': False,
         },
-        # These keys must track the app modules' __name__, which the move to
-        # src/opus_app changed from e.g. 'cart.views' to
-        # 'opus_app.apps.cart.views'. A key that no longer prefixes a real
-        # logger name silently stops that app's records reaching the log file.
+        # Each key must be a prefix of the app modules' __name__ (they call
+        # logging.getLogger(__name__), giving e.g. 'opus_app.apps.cart.views').
+        # A key that prefixes no real logger name silently stops that app's
+        # records reaching the log file.
         'opus_app.apps.results': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',

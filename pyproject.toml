@@ -206,21 +206,23 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 #     F403 - `from module import *`; F405 - name may be undefined from star import;
 #     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
 #
-# PR-05 moved the Django app to src/opus_app and its live-DB suites to
-# integration/, so the glob that covered opus/** follows the code. It is NOT
-# burned down here: E501 (1115) and N801/N802 (187) are exactly the
-# legacy-refactor codes PR-01 assigned to PR-17, and reformatting/renaming that
-# much in a move PR would pre-empt it. Everything outside the legacy set was
-# fixed in this PR, and the tree no longer needs E722/F403/F405 at all: bare
-# `except:` never appeared in it, and the `from opus_secrets import *` wildcard
-# that produced its only F403/F405 is gone.
+# The Django app and its live-DB suites carry only the three codes that still
+# fire there: 1115 E501 and 187 N801/N802, all of which PR-01 assigned to PR-17.
+# They are not burned down by the PR that moved the tree here, because
+# reformatting and renaming on that scale is PR-17's work, not a move's.
+# E722/F403/F405 are absent from these globs deliberately: this tree contains no
+# bare `except:`, and settings.py reads the secrets file through opus_config
+# rather than a star import.
+#
+# `src/opus_support`, `src/opus_config`, `src/opus_import`, `tests` and
+# `manage.py` have no row at all: they meet the full rule set.
 "src/opus_app/**/*.py" = ["E501", "N801", "N802"]
 "integration/**/*.py" = ["E501", "N801", "N802"]
 "log_analyzer/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
 #
-# (2) The PT015/B011 (`assert False`) and B006 (mutable default argument)
-#     sites PR-01 grandfathered here have been fixed in PR-02, so their
-#     per-file ignores are removed.
+# The PT015/B011 (`assert False`) and B006 (mutable default argument) sites
+# PR-01 grandfathered here were fixed in PR-02, so their per-file ignores are
+# gone.
 
 [tool.pymarkdown.plugins.md013]
 # Line length (disable so README/CONTRIBUTING can use longer lines).
