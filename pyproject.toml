@@ -207,9 +207,9 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 #     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
 #
 # The Django app and its live-DB suites carry only the three codes that still
-# fire there: 1115 E501 and 187 N801/N802, all of which PR-01 assigned to PR-17.
-# They are not burned down by the PR that moved the tree here, because
-# reformatting and renaming on that scale is PR-17's work, not a move's.
+# fire there: over a thousand E501 and 187 N801/N802, all of which PR-01
+# assigned to PR-17. They are not burned down by the PR that moved the tree
+# here, because reformatting and renaming on that scale is PR-17's work.
 # E722/F403/F405 are absent from these globs deliberately: this tree contains no
 # bare `except:`, and settings.py reads the secrets file through opus_config
 # rather than a star import.
@@ -235,7 +235,14 @@ enabled = false
 [tool.bandit]
 # Recurse the code trees; exclude tests and the out-of-scope perf_test/.
 # Targets shift to src/ as code moves; `tests/` is deliberately not a target.
-exclude_dirs = ["perf_test", "venv", ".venv", "test_api", "test_perf", "test_db_data"]
+# Path-anchored so a same-named directory elsewhere in the tree cannot match by
+# accident. integration/apps_db_tests is deliberately absent: those modules were
+# scanned when they lived under the app packages, and a move does not change
+# what is scanned.
+exclude_dirs = [
+  "perf_test", "venv", ".venv",
+  "integration/test_api", "integration/test_perf", "integration/test_db_data",
+]
 targets = ["src", "integration", "log_analyzer", "manage.py"]
 # Burn-down skip list (plan PR-01): category-level skips for existing patterns,
 # each justified below. PR-17 shrinks these to individually-justified `# nosec`

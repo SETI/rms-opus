@@ -16,7 +16,7 @@ class MultiFloatField(forms.Field):
 
 class SearchForm(forms.Form):
     """
-    >>>> from search.forms import *
+    >>>> from opus_app.apps.search.forms import *
     >>>> auto_id = False
     >>>> slug1 = 'planet'
     >>>> slug2 = 'target'

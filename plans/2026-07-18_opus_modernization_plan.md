@@ -1617,7 +1617,7 @@ body; never rewrite or delete earlier notes.*
     The PR-03 note says "no `src/**` row was added and none should be — code is brought up
     to the full rule set as it moves". That held for `opus_support` (clean) and
     `opus_import` (27 `E501` wraps). For the Django app it does not: with the table emptied,
-    ruff reports **1115 `E501` + 180 `N802` + 7 `N801`** across `src/opus_app` and
+    ruff reports **1111 `E501` + 180 `N802` + 7 `N801`** across `src/opus_app` and
     `integration` — precisely the legacy-refactor codes PR-01 assigns to **PR-17** ("removed
     as the underlying code is cleaned up through PR-17"; the PR-01 note pins `N801`/`N802` to
     PR-17 by name). Burning them down here would have pre-empted PR-17 and buried the move in
@@ -1662,12 +1662,14 @@ body; never rewrite or delete earlier notes.*
     `PUBLIC_OPUS_URL`, `PRODUCT_HTTP_PATH`, `VIEWMASTER_ROOT_PATH`, `TAR_FILE_PATH`,
     `MANIFEST_FILE_PATH`, `TAR_FILE_URL_PATH`, `OPUS_LAST_BLOG_UPDATE_FILE`,
     `OPUS_NOTIFICATION_FILE`, `OPUS_LOG_FILE`, `OPUS_LOG_{FILE,CONSOLE,DJANGO}_LEVEL`,
-    `OPUS_LOG_API_CALLS` and the three `OPUS_FAKE_*` knobs — 27 names; the TOML schema must
+    `OPUS_LOG_API_CALLS` and the three `OPUS_FAKE_*` knobs — 29 names; the TOML schema must
     cover all of them. **`STATIC_ROOT` is read with a `getattr(..., None)` fallback**
     because `scripts/automated_tests/opus_setup_environment.sh` has never written it (only
     the server generator does) and the wildcard silently left it at Django's own default.
-    `DB_BRAND`, `DB_DATABASE_NAME`, the `IMPORT_*` settings and `DICTIONARY_TERM_URL` are no
-    longer surfaced to Django at all — nothing read them through `settings.`.
+    `DB_BRAND`, `DB_DATABASE_NAME`, `OPUS_LOGFILE_DIR`, the `IMPORT_*` settings and
+    `DICTIONARY_TERM_URL` are no longer surfaced to Django at all — nothing read them
+    through `settings.`. (`OPUS_LOGFILE_DIR` is only a helper the secrets file uses to
+    build `OPUS_LOG_FILE`.)
   - **`BASE_DIR` exists now** (`Path(__file__).resolve().parent`) and carries
     `STATICFILES_DIRS` and the template `DIRS`. Two stale entries went with the move: the
     `apps/quide/templates/` directory (gone for years, per the plan) and a bare relative
@@ -1722,7 +1724,10 @@ body; never rewrite or delete earlier notes.*
     namespace packages. `apps/help/{api_guide.md,faq.yaml}` ship, which they must — the help
     views read them via `__file__`. **Not done, left for PR-21/PR-22:** the Django app's
     per-app `README.md` files also ship, where PR-04 excluded `opus_import`'s equivalents via
-    `exclude-package-data`.
+    `exclude-package-data`; and so do the four `linguist-vendored` asset trees
+    (`static/{admin,coreui,cdn_fallback,perfect-scrollbar}`, several MB of third-party
+    JS/CSS). Shipping them is what serving the site from an installed distribution requires,
+    but PR-22 should decide deliberately rather than by default.
   - **Verification evidence.** Test-by-test discovery equivalence was proved before running
     anything: `DiscoverRunner.build_suite` on the pre-move tree and on `integration` both
     yield **1522** ids, identical after normalizing the module prefix (the one difference is

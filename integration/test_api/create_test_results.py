@@ -1,3 +1,6 @@
+# Hand-run against a local server to regenerate golden fixtures. Unlike the rest
+# of the suite, which runs from the repository root, this writes to
+# `responses/` relative to the working directory, so run it from this directory.
 if __name__ == "__main__":
     import json
 

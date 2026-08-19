@@ -309,8 +309,9 @@ class ApiTestHelper:
             if fmt == 'zip':
                 archive_file = zipfile.ZipFile(binary_stream, mode=read_mode)
             else:
-                archive_file = tarfile.open(mode=read_mode,  # noqa: SIM115 (see above)
-                                            fileobj=binary_stream)
+                # SIM115 suppressed for the same reason as above.
+                archive_file = tarfile.open(  # noqa: SIM115
+                    mode=read_mode, fileobj=binary_stream)
         if fmt == 'zip':
             resp = archive_file.namelist()
         else:
