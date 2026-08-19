@@ -162,7 +162,8 @@ STARS = {
 
 session = requests.Session()
 
-radec_pat = re.compile(r'Coordinates.ICRS,ep=J2000,eq=2000.: (\d+) (\d+) (\d+.\d+|\d+) +(\+|-)(\d+) (\d+) (\d+.\d+|\d+)')
+radec_pat = re.compile(r'Coordinates.ICRS,ep=J2000,eq=2000.: '
+                       r'(\d+) (\d+) (\d+.\d+|\d+) +(\+|-)(\d+) (\d+) (\d+.\d+|\d+)')
 simbad_pat = re.compile(r'Object ([\*\+\. a-zA-Z0-9]+) ---')
 name_pat = re.compile(r'NAME (\w+)')
 

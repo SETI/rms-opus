@@ -109,7 +109,9 @@ class ImportDBMySQL(ImportDBSuper):
             self.logger.log('info', f'  MySQL version: {self.mysql_version}')
 
             try:
-                cmd = "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES"
+                cmd = ("set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,"
+                       "ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,"
+                       "STRICT_ALL_TABLES")
                 if self.mysql_version[0] == '5':
                     cmd += ',NO_AUTO_CREATE_USER'
                 cmd += "'"
@@ -200,7 +202,8 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         cmd = f"""
-SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`, `CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
+SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
+`CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
 FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 `TABLE_NAME`='{table_name}' ORDER BY `ORDINAL_POSITION`"""
         rows = self._execute_and_fetchall(cmd, 'table_info')
@@ -369,7 +372,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 enum_str = column.get('field_enum_options', None)
                 assert enum_str, (raw_table_name, column)
                 cmd += f'enum({enum_str})'
-            elif field_type == 'flag_yesno' or field_type == 'flag_onoff' or field_type == 'mult_idx':
+            elif (field_type == 'flag_yesno' or field_type == 'flag_onoff' or
+                  field_type == 'mult_idx'):
                 cmd += 'int unsigned' # Index for mult table
             elif field_type == 'timestamp':
                 cmd += 'timestamp'

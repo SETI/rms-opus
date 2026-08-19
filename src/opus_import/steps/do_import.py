@@ -562,10 +562,12 @@ def import_one_bundle(bundle_id):
     if vol_info['pds_version'] == 3:
         bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
     elif vol_info['pds_version'] == 4:
-        bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id) # This works fine for Uranus Occs Earthbased, where bundleset and bundle have different names
+        # This works fine for Uranus Occs Earthbased, where bundleset and bundle have
+        # different names
+        bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id)
         if not bundle_pdsfile.is_bundle:
-            # Handle the case where the bundleset and bundle have the same name, in which case
-            # PdsFile prefers the bundleset, but we want to prefer the bundle
+            # Handle the case where the bundleset and bundle have the same name, in
+            # which case PdsFile prefers the bundleset, but we want to prefer the bundle
             bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(f'bundles/{bundle_id}/{bundle_id}')
     else:
         import_util.log_error(f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')

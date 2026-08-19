@@ -16,9 +16,21 @@ for i in `(cd /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased; ls
 do
 echo Processing $i
 mkdir -p /data/new-pds4-holdings/metadata/uranus_occs_earthbased/$i
-python pds4_create_xml_index.py /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased "${i}/data/rings/*_*00m.xml" --extra-file-info filename filepath --sort-by filepath --output-file /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_rings_index.csv
-python pds4_create_xml_index.py /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased "${i}/data/global/*_*00m.xml" --extra-file-info filename filepath --sort-by filepath --output-file /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_global_index.csv
-python pds4_create_xml_index.py /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased "${i}/data/atmosphere/*_atmos_*.xml" --extra-file-info filename filepath --sort-by filepath --output-file /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_atmosphere_index.csv
+python pds4_create_xml_index.py \
+    /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
+    "${i}/data/rings/*_*00m.xml" \
+    --extra-file-info filename filepath --sort-by filepath --output-file \
+    /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_rings_index.csv
+python pds4_create_xml_index.py \
+    /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
+    "${i}/data/global/*_*00m.xml" \
+    --extra-file-info filename filepath --sort-by filepath --output-file \
+    /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_global_index.csv
+python pds4_create_xml_index.py \
+    /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
+    "${i}/data/atmosphere/*_atmos_*.xml" \
+    --extra-file-info filename filepath --sort-by filepath --output-file \
+    /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_atmosphere_index.csv
 done
 """
 
