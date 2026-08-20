@@ -1,4 +1,4 @@
-# integration/test_api/test_help_api.py
+# integration_tests/test_api/test_help_api.py
 
 import logging
 import platform

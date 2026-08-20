@@ -1,4 +1,4 @@
-# integration/test_api/test_search_api.py
+# integration_tests/test_api/test_search_api.py
 
 import json
 import logging

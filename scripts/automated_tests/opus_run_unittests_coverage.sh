@@ -20,7 +20,7 @@ export OPUS_SECRETS="$(pwd)/opus_secrets.py"
 
 # The integration suite's 100% coverage gate has its own configuration; without
 # this, coverage would pick up the unit-coverage settings in pyproject.toml.
-export COVERAGE_RCFILE=integration/.coveragerc
+export COVERAGE_RCFILE=integration_tests/.coveragerc
 
 ./run_coverage.sh
 if [ $? -ne 0 ]; then

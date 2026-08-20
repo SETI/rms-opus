@@ -1,4 +1,4 @@
-# integration/test_db_data/test_local_db_integrity.py
+# integration_tests/test_db_data/test_local_db_integrity.py
 
 from unittest import TestCase
 

@@ -1,4 +1,4 @@
-# integration/test_api/enable_livetests_pro.py
+# integration_tests/test_api/enable_livetests_pro.py
 
 from django.conf import settings
 

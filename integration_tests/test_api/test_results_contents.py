@@ -1,4 +1,4 @@
-# integration/test_api/test_results_contents.py
+# integration_tests/test_api/test_results_contents.py
 
 import logging
 from unittest import TestCase

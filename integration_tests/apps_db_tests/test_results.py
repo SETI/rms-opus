@@ -1,4 +1,4 @@
-# integration/apps_db_tests/test_results.py
+# integration_tests/apps_db_tests/test_results.py
 
 import logging
 from unittest import TestCase

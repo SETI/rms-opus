@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-####################################################################
-### See integration/test_api/TEST_API_README.md for instructions ###
-####################################################################
+##########################################################################
+### See integration_tests/test_api/TEST_API_README.md for instructions ###
+##########################################################################
 
 import cProfile
 import io
@@ -28,25 +28,25 @@ if __name__ == '__main__':
     for command in sys.argv:
         if command == 'api-all':
             # Test API only
-            new_argv.append('integration.test_api')
+            new_argv.append('integration_tests.test_api')
         elif command == 'api-result-counts':
             # Test result_counts only (external server)
-            new_argv.append('integration.test_api.test_result_counts')
+            new_argv.append('integration_tests.test_api.test_result_counts')
         elif command == 'api-internal-db-result-counts':
             # Test result_counts only (internal server)
-            new_argv.append('integration.test_api.test_result_counts')
+            new_argv.append('integration_tests.test_api.test_result_counts')
             settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = True
         elif command == 'api-livetest-pro':
             # Test against production server opus.pds-rings.seti.org
             # (No VPN required)
-            new_argv.append('integration.test_api.enable_livetests_pro')
+            new_argv.append('integration_tests.test_api.enable_livetests_pro')
         elif command == 'api-livetest-dev':
             # Test against dev server dev.pds.seti.org
             # (VPN required)
-            new_argv.append('integration.test_api.enable_livetests_dev')
+            new_argv.append('integration_tests.test_api.enable_livetests_dev')
         elif command == 'api-internal-db':
             # The default - use internal DB
-            new_argv.append('integration.test_api.enable_livetests_internal')
+            new_argv.append('integration_tests.test_api.enable_livetests_internal')
         elif command == 'profile':
             # Turn on performance profiling
             do_profiling = True

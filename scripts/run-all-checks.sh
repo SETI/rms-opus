@@ -107,9 +107,9 @@ SCOPE_SPECIFIED=false
 # scans the same code trees plus vulture_whitelist.py (so whitelisted names
 # count as used); min-confidence/exclude come from [tool.vulture]. Bandit
 # never scans tests.
-: "${OPUS_RUFF_PATHS:=src integration log_analyzer tests manage.py}"
-: "${OPUS_BANDIT_PATHS:=src integration log_analyzer manage.py}"
-: "${OPUS_VULTURE_PATHS:=src integration log_analyzer tests manage.py vulture_whitelist.py}"
+: "${OPUS_RUFF_PATHS:=src integration_tests log_analyzer tests manage.py}"
+: "${OPUS_BANDIT_PATHS:=src integration_tests log_analyzer manage.py}"
+: "${OPUS_VULTURE_PATHS:=src integration_tests log_analyzer tests manage.py vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,4 +1,4 @@
-# integration/test_api/test_cart_api.py
+# integration_tests/test_api/test_cart_api.py
 
 import logging
 from unittest import TestCase

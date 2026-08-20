@@ -1,4 +1,4 @@
-# integration/test_api/api_test_helper.py
+# integration_tests/test_api/api_test_helper.py
 import base64
 import difflib
 import json
@@ -12,8 +12,8 @@ from django.conf import settings
 from PIL import Image, ImageChops
 
 # Relative to the working directory: the whole suite is run from the repository
-# root (see run_coverage.sh and integration/test_api/TEST_API_README.md).
-_RESPONSES_FILE_ROOT = 'integration/test_api/responses/'
+# root (see run_coverage.sh and integration_tests/test_api/TEST_API_README.md).
+_RESPONSES_FILE_ROOT = 'integration_tests/test_api/responses/'
 
 class ApiTestHelper:
     # If this is set to True, then instead of comparing responses to files

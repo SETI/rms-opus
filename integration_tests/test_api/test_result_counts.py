@@ -1,4 +1,4 @@
-# integration/test_api/test_result_counts.py
+# integration_tests/test_api/test_result_counts.py
 
 import csv
 import json
@@ -14,7 +14,7 @@ from rest_framework.test import RequestsClient
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
-    filename = "integration/test_api/data/result_counts.csv"
+    filename = "integration_tests/test_api/data/result_counts.csv"
 
     # disable error logging and trace output before test
     def setUp(self):

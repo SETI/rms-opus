@@ -1599,20 +1599,20 @@ body; never rewrite or delete earlier notes.*
     a clean venv runs `python -m opus_import --help` from outside the repository and reads
     `table_schemas`/`dictionary_data` out of `site-packages`.
 - **2026-08-19 (PR-05 executed):** the Django app is `src/opus_app`, its live-DB suites are
-  `integration/`, and both are driven from the repository root. Facts later PRs rely on:
+  `integration_tests/`, and both are driven from the repository root. Facts later PRs rely on:
   - **Where everything landed.** `src/opus_app/{__init__,settings,urls,clear_django_cache}.py`,
     `src/opus_app/apps/<app>/`, `src/opus_app/templates/`, `src/opus_app/static/` (from
     `static_media/`), plus a **new** `src/opus_app/wsgi.py`. `manage.py` and
     `run_coverage.sh` are at the **repository root**; `.coveragerc` is
-    `integration/.coveragerc`. The live-DB suites are `integration/test_api/`,
-    `integration/test_db_data/`, `integration/test_perf/` and `integration/apps_db_tests/`
+    `integration_tests/.coveragerc`. The live-DB suites are `integration_tests/test_api/`,
+    `integration_tests/test_db_data/`, `integration_tests/test_perf/` and `integration_tests/apps_db_tests/`
     — the last is the flattened `apps/*/test_*.py` set, whose module basenames were already
     unique; the dictionary app's contentless `tests.py` became
     `apps_db_tests/test_dictionary.py` so the flattened directory keeps naming its origin.
-    `integration/`, `integration/test_api/`, `integration/test_db_data/` and
-    `integration/apps_db_tests/` all have `__init__.py` (the middle two carried theirs
+    `integration_tests/`, `integration_tests/test_api/`, `integration_tests/test_db_data/` and
+    `integration_tests/apps_db_tests/` all have `__init__.py` (the middle two carried theirs
     through the move, and `manage.py`'s api-* labels depend on `test_api` being a
-    package); **`integration/test_perf/` deliberately does not** — it had none before, so unittest
+    package); **`integration_tests/test_perf/` deliberately does not** — it had none before, so unittest
     discovery skipped it, and `test_perf_target.py` does its whole job (HTTP requests to a
     live server) in its module body. Adding one would make `manage.py test` run it.
   - **The per-file-ignores glob followed the code, and that contradicts an earlier note.**
@@ -1620,12 +1620,12 @@ body; never rewrite or delete earlier notes.*
     to the full rule set as it moves". That held for `opus_support` (clean) and
     `opus_import` (27 `E501` wraps). For the Django app it does not: with the table emptied,
     ruff reports **1111 `E501` + 180 `N802` + 7 `N801`** across `src/opus_app` and
-    `integration` — precisely the legacy-refactor codes PR-01 assigns to **PR-17** ("removed
+    `integration_tests` — precisely the legacy-refactor codes PR-01 assigns to **PR-17** ("removed
     as the underlying code is cleaned up through PR-17"; the PR-01 note pins `N801`/`N802` to
     PR-17 by name). Burning them down here would have pre-empted PR-17 and buried the move in
     reformatting. **Resolution (stop-and-report recorded in the PR; the plan body was
     followed over the earlier note):** the `opus/**/*.py` row became `src/opus_app/**/*.py`
-    and `integration/**/*.py`, **trimmed to `["E501", "N801", "N802"]`** — `E722` never fired
+    and `integration_tests/**/*.py`, **trimmed to `["E501", "N801", "N802"]`** — `E722` never fired
     in this tree and the `opus_secrets` wildcard that produced its only `F403`/`F405` is gone
     — still retired by PR-17, whose empty-table exit criterion is unchanged. Everything
     outside the legacy set **was** fixed here (see below).
@@ -1655,7 +1655,7 @@ body; never rewrite or delete earlier notes.*
     which the suite does exercise, behind that pragma too). A file's self-naming banner
     comment was repointed wherever it would otherwise have become wrong — that is, wherever
     the file's path relative to its package root changed: the relocated suites
-    (`# integration/test_api/test_cart_api.py`) and the project package
+    (`# integration_tests/test_api/test_cart_api.py`) and the project package
     (`# opus_app/urls.py`). The per-app modules keep app-relative banners (`# cart/urls.py`
     in `opus_app/apps/cart/urls.py`), which stay accurate relative to `apps/`; that is the
     convention, not an oversight. `zip()` gained an explicit
@@ -1691,11 +1691,11 @@ body; never rewrite or delete earlier notes.*
     before, and no `staticfiles` warning.
   - **The fixture paths in the integration suite are CWD-relative and the CWD is the
     repository root.** `api_test_helper._RESPONSES_FILE_ROOT` is
-    `'integration/test_api/responses/'` and `test_ui.py`/`test_result_counts.py` name
-    `'integration/test_api/data/...'`. Anything that runs this suite from elsewhere breaks
+    `'integration_tests/test_api/responses/'` and `test_ui.py`/`test_result_counts.py` name
+    `'integration_tests/test_api/data/...'`. Anything that runs this suite from elsewhere breaks
     silently (the golden comparison would fail to open its files). PR-20, which makes the
     suite pytest-driven, should consider anchoring these on `__file__`.
-  - **`COVERAGE_RCFILE=integration/.coveragerc` must be exported by anything that runs
+  - **`COVERAGE_RCFILE=integration_tests/.coveragerc` must be exported by anything that runs
     coverage from the root**, because with no `.coveragerc` in the CWD coverage falls back to
     `pyproject.toml` and would silently pick up the *unit* config (`source` of the four
     non-Django packages, `fail_under = 90`), corrupting the 100% gate. It is exported in
@@ -1704,12 +1704,12 @@ body; never rewrite or delete earlier notes.*
     -m`), rather than only in the workflow, so local runs behave identically.
   - **`manage.py test` from the root needs an explicit label.** Bare `manage.py test` would
     discover the whole repository, so `run_coverage.sh` runs
-    `coverage run -a manage.py test -b "${@:-integration}"`. Its optional arguments changed
+    `coverage run -a manage.py test -b "${@:-integration_tests}"`. Its optional arguments changed
     meaning from a single `manage.py` verb *prefix* (`manage.py $1 test`, which could never
     have worked — argparse would have read the verb as the subcommand) to **test labels**,
     all of which are forwarded, so the multi-verb form the suite's README documents
     (`./run_coverage.sh api-livetest-dev api-all`) works and resolves through `manage.py`'s
-    own verb mapping. The api-* verbs map to `integration.test_api*`.
+    own verb mapping. The api-* verbs map to `integration_tests.test_api*`.
   - **`opus.wsgi_template` is gone**, replaced by the committed `src/opus_app/wsgi.py`
     (`DJANGO_SETTINGS_MODULE=opus_app.settings`), and `deploy_new_code_and_database.sh` no
     longer seds a generated `opus.wsgi`. **The Apache vhost's `WSGIScriptAlias` still points
@@ -1725,9 +1725,9 @@ body; never rewrite or delete earlier notes.*
     `tools.app_utils`, loading it as two distinct module objects. Both collapse to
     `opus_app.apps.tools.app_utils`; the two statements are merged.
   - **Tool scope paths after this PR** (the same three files each remaining move PR must
-    update): ruff `src integration log_analyzer tests manage.py`; bandit `src integration
-    log_analyzer manage.py`; vulture `src integration log_analyzer tests manage.py
-    vulture_whitelist.py`. `opus/` is gone from all of them, and `manage.py` had to be named
+    update): ruff `src integration_tests log_analyzer tests manage.py`; bandit
+    `src integration_tests log_analyzer manage.py`; vulture `src integration_tests
+    log_analyzer tests manage.py vulture_whitelist.py`. `opus/` is gone from all of them, and `manage.py` had to be named
     explicitly since it is a bare file at the root. PR-06 drops `log_analyzer` from all three
     (it moves under `src/`).
   - **The wheel already ships the Django app's templates and static files** — no
@@ -1742,18 +1742,18 @@ body; never rewrite or delete earlier notes.*
     JS/CSS). Shipping them is what serving the site from an installed distribution requires,
     but PR-22 should decide deliberately rather than by default.
   - **Verification evidence.** Test-by-test discovery equivalence was proved before running
-    anything: `DiscoverRunner.build_suite` on the pre-move tree and on `integration` both
+    anything: `DiscoverRunner.build_suite` on the pre-move tree and on `integration_tests` both
     yield **1522** ids, identical after normalizing the module prefix (the one difference is
     a `_FailedTest` for `test_results`, which needs a live DB at import time and fails
     identically on both sides). The full local chain (`opus_main_test.sh`: 30-bundle import
     into a fresh MySQL schema, then the Django suite under the 100% gate) then ran
     end-to-end with exit code 0 and **zero golden-fixture diffs** (`git status
-    integration/test_api/responses` empty afterwards). The pre-move baseline on the same
+    integration_tests/test_api/responses` empty afterwards). The pre-move baseline on the same
     machine was `Ran 1576 tests` / `OK` / `TOTAL 25645 stmts, 1876 branches, 100%`; the
     post-move run is `Ran 1576 tests` / `OK` / `TOTAL 22228 stmts, 1872 branches, 100%`.
     The whole 3,417-statement/4-branch delta is accounted for file by file: 3,411 statements
     and 4 branches are the eight per-app test modules leaving the coverage `include` scope
-    when they moved to `integration/apps_db_tests/` (they were 100%-covered, so the gate is
+    when they moved to `integration_tests/apps_db_tests/` (they were 100%-covered, so the gate is
     unaffected), and the remaining 6 are the dead statements the lint fixes deleted
     (`test_help_api.py` -1, `test_metadata_api.py` -2, `test_results_api.py` -2 — one
     `expected` assignment plus the merged duplicate import — `test_results_contents.py` -1).
@@ -1769,3 +1769,16 @@ body; never rewrite or delete earlier notes.*
     extras. A clean-venv wheel install therefore fails with
     `ModuleNotFoundError: No module named 'rest_framework'` at `django.setup()`. Do not
     "fix" this by re-adding DRF to the runtime dependencies (§1 standing assumptions).
+  - **The directory is `integration_tests/`, not `integration/`** (orchestrator's call,
+    2026-08-19, taken inside PR-05 while the tree was still unmerged). `integration/` reads
+    as third-party service connectors at a repository root, whereas `tests/` and
+    `integration_tests/` are visibly a pair; it is also a top-level importable package,
+    since `manage.py`'s api-* verbs map to dotted labels, so the generic name squatted an
+    import name for nothing. **It stays a sibling of `tests/`** — PR-18's selection model is
+    `testpaths = ["tests"]` exactly so a bare `pytest` never collects the holdings- and
+    DB-dependent suite, and moving it under `tests/` would break that. Everything the
+    earlier bullets say about `integration/` — the `__init__.py` layout, the CWD-relative
+    fixture paths, `COVERAGE_RCFILE`, the explicit `manage.py` label, the tool scope
+    lists — holds unchanged under the new name. The rename was done as a second pure
+    `git mv` commit (445 files, all `R100`) plus a string-update commit, so the original
+    703-file move commit was left untouched.
