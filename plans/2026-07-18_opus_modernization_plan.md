@@ -1935,17 +1935,23 @@ body; never rewrite or delete earlier notes.*
     `description` says "Process log files" although it takes error logs.
   - **Eight more pre-existing defects CodeRabbit raised on the PR-06 review and this PR
     deliberately did NOT fix** (a move PR must not change behavior; the PR-03/PR-04
-    precedent applies). None is reachable from the cron templates' batch path, which is
-    the only way this tool runs in production. **Natural owner: PR-17**, the annotation PR
-    for this tree, which will have to read every one of these functions anyway:
+    precedent applies). **Natural owner: PR-17**, the annotation PR for this tree, which
+    will have to read every one of these functions anyway. **Two of them run on every
+    cron invocation** — #2, because `--cronjob` selects `RunType.BATCH`, which calls
+    `LogReader.read_logs` on real Apache logs, and #7, because `Configuration.__init__`
+    constructs a `ToInfoMap`, whose `__read_json` fetches the fields JSON, before a single
+    line is parsed. #5, #6 and #8 are also exercised by an ordinary report run, but produce
+    wrong output or weak hardening rather than an abort. Only #1, #3 and #4 need a flag or
+    an object count the cron path never produces. Numbered as reported, not by severity:
     1. `ip_to_host_converter.py` — `ShelvedIPToHostConverter.__close` computes
        `min(...)` over the shelf's expiration values with no default, so an *empty*
        DNS cache raises `ValueError` at `atexit` time. Only reachable with the hidden
        `--xxdns-cache` flag.
     2. `log_entry.py` — `LogReader.__parse_line` lets `ValueError` from
-       `ipaddress.ip_address`, `int(status)`, `int(size)` or `strptime` escape, so one
-       malformed line aborts the whole run instead of being skipped like a non-matching
-       line.
+       `ipaddress.ip_address`, `int(size)` or `strptime` escape, so one malformed line
+       aborts the whole run instead of being skipped like a non-matching line. The
+       likeliest trigger is real: the `%h` field is `\S+`, so an Apache running
+       `HostnameLookups On` writes a host *name* there and `ip_address` rejects it.
     3. `manifest.py` — `from_csv_line` indexes `path.parts[2]` for `volume_set` without
        checking the path is absolute or deep enough; a short "File Path" column raises
        `IndexError`.
@@ -1957,8 +1963,9 @@ body; never rewrite or delete earlier notes.*
        instead of falling through to the second.
     6. `opus/slug.py` — a `canonical_name` is built with a `qtype-` prefix where the
        surrounding code uses `unit-`.
-    7. `opus/slug.py` — the `requests.get` that fetches the OPUS fields JSON has no
-       timeout (this is what bandit's `B113` skip covers).
+    7. `opus/slug.py` — `ToInfoMap.__read_json`'s `requests.get` for the OPUS fields JSON
+       has no timeout, so an unresponsive `--api-host-url` hangs the run indefinitely
+       before any log is read (this is what bandit's `B113` skip covers).
     8. `templates/{log_analysis,error_analysis}.html` — the report templates load
        Bootstrap/jQuery/Plotly from CDNs unpinned (`plotly-latest`) and without SRI
        hashes. These reports are internal operator pages served from
