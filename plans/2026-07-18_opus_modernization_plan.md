@@ -1862,8 +1862,8 @@ body; never rewrite or delete earlier notes.*
     the file system at import — `pytz.timezone` loads the zoneinfo database and
     `PackageLoader` resolves the packaged `templates/` — but both are idempotent reads of
     installed data, unlike the `opus_import.util` hazard PR-10 owns. Cross-group import
-    reordering happened in exactly two files, moving `markupsafe` after a first-party
-    import.
+    reordering happened in exactly two files, moving `markupsafe` ahead of `log_entry`,
+    which isort reclassified as first-party.
   - **Entry points.** `python -m opus_log_analyzer` runs the log analyzer through a new
     `__main__.py`; the error analyzer has no `python -m` package form (a package has one
     `__main__`) and is run as `python -m opus_log_analyzer.error_analyzer`. **Both of
@@ -1943,10 +1943,11 @@ body; never rewrite or delete earlier notes.*
     `--xxdns-cache`/`--xxcached_log_entry` flags, which the templates do not pass (`--dns`
     is `--reverse-dns` and selects the non-caching converter), so nothing changes for cron;
     but a hand-run with either flag now writes `.logs/` under the caller's working
-    directory rather than the checkout. (The one other CWD-relative path in the package,
-    `opus/slug.py`'s `open(url[7:])` for a `file://` `--api-host-url`, is a read of a
-    caller-supplied path and the templates pass no `--api-host-url`.) Another candidate
-    for PR-17.
+    directory rather than the checkout. (One further caller-supplied path is worth naming
+    because a URL hides it: `opus/slug.py` does `open(url[7:])` for a `file://`
+    `--api-host-url`. The templates pass no `--api-host-url`. The ordinary log-file and
+    manifest arguments resolve against the CWD too, but those are the paths the operator
+    types.) Another candidate for PR-17.
   - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 854 passed,
     pyroma 10/10, bandit, vulture, pymarkdown). A wheel installed with `--no-deps` into a
     clean venv outside the repository produces **byte-identical** HTML reports to the
