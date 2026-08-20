@@ -4,14 +4,13 @@ The former is in the top-level directory, while the latter is in the sub-directo
 Other users of this code should create their own subdirectory for their project-specific code.
 
 The log analyzer accesses the opus-specific code via a **configuration**.
-It looks for a class called `Configuration` in the file `opus/Configuration.py`.
-You can tell the log analyzer to look for the `Configuration` class in a different file by specifying the
-name of the file in which to find it.
-Because Python expects the name of a "module", you would write:
+It looks for a class called `Configuration` in the module `opus_log_analyzer.opus.configuration`.
+You can tell the log analyzer to look for the `Configuration` class in a different module by naming that
+module, which is imported by its full dotted path:
 ```
-log_analyzer --configuration myproject.Configuration
+opus_log_analyzer --configuration myproject.configuration
 ```
-to tell it find your configuration in `myproject/Configuration.py`.
+to tell it to find your configuration in `myproject/configuration.py`.
 
 ## Configuration
 

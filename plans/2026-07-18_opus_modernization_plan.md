@@ -1902,9 +1902,11 @@ body; never rewrite or delete earlier notes.*
     `opus_error_analyzer`), which is the intended `prog=` change.
   - **Tool scope paths after this PR — and there are no more move PRs to shift them.**
     ruff `src integration_tests tests manage.py`; bandit `src integration_tests manage.py`;
-    vulture `src integration_tests tests manage.py vulture_whitelist.py`. The three files
-    that carry them are unchanged (`pyproject.toml`, `run-tests.yml`,
-    `run-all-checks.sh`). The bandit `skips` entries justified as log-analyzer-owned
+    vulture `src integration_tests tests manage.py vulture_whitelist.py`. All three lists
+    were edited in all three files that carry them (`pyproject.toml`, `run-tests.yml`,
+    `run-all-checks.sh`) — it is the *set* of carrying files that is stable, and later PRs
+    still have to keep those three in step. The bandit `skips` entries justified as
+    log-analyzer-owned
     (`B113` request-without-timeout, `B301` pickle/shelve, `B704` markupsafe markup) are
     still needed — that code is still scanned, under its new path.
   - **Per-file-ignores.** The `log_analyzer/**/*.py` row became
@@ -1931,6 +1933,43 @@ body; never rewrite or delete earlier notes.*
   - **Two cosmetic pre-existing warts left alone**, for whoever reopens the tree:
     `jinga_environment.py` misspells "jinja", and `error_analyzer.py`'s argparse
     `description` says "Process log files" although it takes error logs.
+  - **Eight more pre-existing defects CodeRabbit raised on the PR-06 review and this PR
+    deliberately did NOT fix** (a move PR must not change behavior; the PR-03/PR-04
+    precedent applies). None is reachable from the cron templates' batch path, which is
+    the only way this tool runs in production. **Natural owner: PR-17**, the annotation PR
+    for this tree, which will have to read every one of these functions anyway:
+    1. `ip_to_host_converter.py` — `ShelvedIPToHostConverter.__close` computes
+       `min(...)` over the shelf's expiration values with no default, so an *empty*
+       DNS cache raises `ValueError` at `atexit` time. Only reachable with the hidden
+       `--xxdns-cache` flag.
+    2. `log_entry.py` — `LogReader.__parse_line` lets `ValueError` from
+       `ipaddress.ip_address`, `int(status)`, `int(size)` or `strptime` escape, so one
+       malformed line aborts the whole run instead of being skipped like a non-matching
+       line.
+    3. `manifest.py` — `from_csv_line` indexes `path.parts[2]` for `volume_set` without
+       checking the path is absolute or deep enough; a short "File Path" column raises
+       `IndexError`.
+    4. `opus/slug.py` — `ToInfoMap._search_map`/`_column_map` are `ClassVar`s, so two
+       `Configuration` instances in one process share (and cross-contaminate) their slug
+       caches. Harmless today because each run builds one configuration.
+    5. `opus/slug.py` — the `base_result` lookup uses `next(...)` over both `1`/`2`
+       suffixes without filtering `None`, so an unresolved first suffix stops the search
+       instead of falling through to the second.
+    6. `opus/slug.py` — a `canonical_name` is built with a `qtype-` prefix where the
+       surrounding code uses `unit-`.
+    7. `opus/slug.py` — the `requests.get` that fetches the OPUS fields JSON has no
+       timeout (this is what bandit's `B113` skip covers).
+    8. `templates/{log_analysis,error_analysis}.html` — the report templates load
+       Bootstrap/jQuery/Plotly from CDNs unpinned (`plotly-latest`) and without SRI
+       hashes. These reports are internal operator pages served from
+       `<WWW>/log_analyzer_results`, so this is hardening, not an exposure.
+    Also stale, and **owned by PR-21** along with the rest of the file: the parts of
+    `Configuration.md` this PR did not have to touch still document
+    `parse_log_entry(entry)` without its `log_id` parameter and name the required flag
+    method `get_session_flags` where `AbstractSessionInfo` declares `get_icon_flags`.
+    (The two statements the *move* invalidated — the invocation example and the default
+    configuration module — were corrected here, since a move PR does fix the paths it
+    breaks.)
   - **The cron templates name commands PR-22 has not created yet.** All three now call
     `opus_log_analyzer` from the activated virtualenv instead of `python log_analyzer.py`
     after a `cd` into the checkout, so the `<DIR>` placeholder is gone from them. Nothing
