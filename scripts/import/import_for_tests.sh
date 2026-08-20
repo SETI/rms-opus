@@ -37,7 +37,7 @@ python -m opus_import --do-all-import cassini_uvis_solarocc_beckerjarmak2023 $1
 # python -m opus_import --do-all-import cassini_iss_fring_mosaics_rsfrench2025 $1
 python -m opus_import --cleanup-aux-tables
 python -m opus_import --import-dictionary
-(cd opus/application; python manage.py migrate)
+python manage.py migrate
 python -m opus_import --validate-perm
 
 echo "ALL DONE!"

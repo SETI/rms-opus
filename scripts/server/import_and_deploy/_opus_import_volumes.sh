@@ -101,7 +101,6 @@ echo "** MIGRATE **"
 echo
 echo "Start time:" `date`
 echo
-cd opus/application
 python manage.py migrate 2>&1
 echo
 

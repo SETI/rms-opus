@@ -1,4 +1,6 @@
 #!/bin/sh
+# Run from the repository root, against a fully imported database.
+# PR-07 rewrites this to emit the split models package.
 rm -f /tmp/_*models.py
 python manage.py inspectdb > /tmp/_models.py
 if [ `grep Cache /tmp/_models.py | wc -l` -ne 0 ]
@@ -19,5 +21,5 @@ else
   sed -e "s/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/__models.py > /tmp/_models.py
   sed -e "s/obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)/obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/_models.py > /tmp/__models.py
   # Then get rid of any Auth or Django tables that are left
-  sed -e "s/'Django/'ZZDjango/g" < /tmp/__models.py | sed -e "s/'Auth/'ZZAuth/g" | sed -e "s/(Auth/(ZZAuth/g" > apps/search/models.py
+  sed -e "s/'Django/'ZZDjango/g" < /tmp/__models.py | sed -e "s/'Auth/'ZZAuth/g" | sed -e "s/(Auth/(ZZAuth/g" > src/opus_app/apps/search/models.py
 fi

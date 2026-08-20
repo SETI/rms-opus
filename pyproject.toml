@@ -142,8 +142,8 @@ write_to = "src/opus_config/_version.py"
 [tool.coverage.run]
 branch = true
 parallel = true
-# Unit-coverage scope only (see plan §5a); the integration 100%-gate config
-# lives separately and is added when the Django app moves under src/.
+# Unit-coverage scope only (see plan §5a); the integration 100%-gate config is
+# integration_tests/.coveragerc, selected with COVERAGE_RCFILE.
 source = ["opus_support", "opus_config", "opus_import", "opus_log_analyzer"]
 omit = ["tests/*", "*/_version.py"]
 
@@ -171,6 +171,10 @@ exclude = [
   "perf_test",
   # Written by setuptools-scm at build time and git-ignored; not our code.
   "src/opus_config/_version.py",
+  # The Django app's served static assets (JS/CSS/images). The one Python file
+  # in there is Django's own vendored admin/js/compress.py, marked
+  # linguist-vendored in .gitattributes; it is an asset, not project source.
+  "src/opus_app/static",
 ]
 
 [tool.ruff.format]
@@ -187,26 +191,38 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 # SIM105 - Use contextlib.suppress for suppressions (template default).
 # SIM108 - Use ternary operator for simple if/else (template default).
 # PT009/PT027 - self.assertEqual / self.assertRaises. The live-DB integration
-#   suite (opus/application/apps/*/test_*.py) stays unittest.TestCase permanently
-#   (plan PR-18), so these unittest->pytest-assertion rules can never burn down
-#   and are ignored globally; PT018 and every other PT rule stay enforced.
+#   suite (integration_tests/apps_db_tests/*, integration_tests/test_api/*) stays
+#   unittest.TestCase permanently (plan PR-18), so these unittest->pytest-assertion
+#   rules can never burn down and are ignored globally; PT018 and every other PT
+#   rule stay enforced.
 extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 
 [tool.ruff.lint.per-file-ignores]
 # Burn-down list (plan PR-01). PR-17's exit criterion is that this table is empty.
 #
-# (1) Legacy flake8 ignores that need real refactoring; retired through PR-17.
-#     E722 - bare `except:`; E501 - line too long;
+# Legacy flake8 ignores that need real refactoring; retired through PR-17.
+#     E501 - line too long;
+#     E722 - bare `except:`;
 #     F403 - `from module import *`; F405 - name may be undefined from star import;
 #     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
-#     `src/**` is deliberately absent: code is brought up to the full rule set
-#     as it moves there, and `src/opus_support` + `src/opus_config` are clean.
-"opus/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
+#
+# The Django app and its live-DB suites carry only the three codes that still
+# fire there: over a thousand E501 and 187 N801/N802, all of which PR-01
+# assigned to PR-17. They are not burned down by the PR that moved the tree
+# here, because reformatting and renaming on that scale is PR-17's work.
+# E722/F403/F405 are absent from these globs deliberately: this tree contains no
+# bare `except:`, and settings.py reads the secrets file through opus_config
+# rather than a star import.
+#
+# `src/opus_support`, `src/opus_config`, `src/opus_import`, `tests` and
+# `manage.py` have no row at all: they meet the full rule set.
+"src/opus_app/**/*.py" = ["E501", "N801", "N802"]
+"integration_tests/**/*.py" = ["E501", "N801", "N802"]
 "log_analyzer/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
 #
-# (2) The PT015/B011 (`assert False`) and B006 (mutable default argument)
-#     sites PR-01 grandfathered here have been fixed in PR-02, so their
-#     per-file ignores are removed.
+# The PT015/B011 (`assert False`) and B006 (mutable default argument) sites
+# PR-01 grandfathered here were fixed in PR-02, so their per-file ignores are
+# gone.
 
 [tool.pymarkdown.plugins.md013]
 # Line length (disable so README/CONTRIBUTING can use longer lines).
@@ -217,10 +233,19 @@ enabled = false
 enabled = false
 
 [tool.bandit]
-# Recurse the code trees; exclude tests and the out-of-scope perf_test/.
+# Recurse the code trees; exclude the fixture- and live-server-driven suites
+# (integration_tests/{test_api,test_db_data,test_perf}) and the out-of-scope
+# perf_test/.
 # Targets shift to src/ as code moves; `tests/` is deliberately not a target.
-exclude_dirs = ["perf_test", "venv", ".venv", "test_api", "test_perf", "test_db_data"]
-targets = ["src", "opus", "log_analyzer"]
+# Path-anchored so a same-named directory elsewhere in the tree cannot match by
+# accident. integration_tests/apps_db_tests is deliberately absent: the per-app suites
+# it holds are scanned.
+exclude_dirs = [
+  "perf_test", "venv", ".venv",
+  "integration_tests/test_api", "integration_tests/test_perf",
+  "integration_tests/test_db_data",
+]
+targets = ["src", "integration_tests", "log_analyzer", "manage.py"]
 # Burn-down skip list (plan PR-01): category-level skips for existing patterns,
 # each justified below. PR-17 shrinks these to individually-justified `# nosec`
 # lines; PR-09 removes the `.extra()` sources (B610) and PR-12 formalizes SQL
@@ -252,6 +277,7 @@ skips = [
 # tests/ is scanned too: its own dead imports are caught, and names that only
 # the suite uses then count as used.
 [tool.vulture]
-paths = ["src", "opus", "log_analyzer", "tests", "vulture_whitelist.py"]
+paths = ["src", "integration_tests", "log_analyzer", "tests", "manage.py",
+         "vulture_whitelist.py"]
 exclude = ["*/perf_test/*"]
 min_confidence = 70

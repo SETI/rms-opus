@@ -23,6 +23,7 @@ migrations/
 
 .coverage
 coverage.xml
+coverage_report.txt
 htmlcov/
 
 profile.txt
