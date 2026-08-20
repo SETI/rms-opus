@@ -2,7 +2,7 @@
 
 **Target executor:** an opus-class AI — **one fresh sub-agent per PR, no shared context** (execution protocol in §4a).
 **Strategy:** all PRs target a long-lived `rewrite` branch off `main`; `rewrite` merges to `main` once at the end.
-**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects; **rev 7.4 (2026-08-17): ratified that `ImportDBException`'s `BaseException` base is an old mistake — PR-10 narrows it to `Exception` with a mandatory audit of intervening `except Exception:` handlers (esp. `do_import.py:1462`); PR-09 told explicitly to delete (not relocate) the dictionary app's lone surviving `favicon` route, verified dead and a `STORAGES` import-time hazard; **rev 7.5 (2026-08-17): added PR-03a (fix the four pre-existing `opus_support` defects CodeRabbit found during PR-03, incl. the user-visible `wavenumber_resolution` alias bug), inserted after PR-03 without renumbering; **rev 7.6 (2026-08-18): PR-13 given a named bug to fix — `math.isfinite()` raises `OverflowError`, not `ValueError`, on a huge int, so a crafted numeric query param escapes `parse_unit_value` as an HTTP 500 where rule 2 requires 400; corrected the PR-03a claim that the fused suffix could never match; **rev 7.7 (2026-08-19): `create_opus_models.sh` homed in its own `scripts/models/` (it is a Django-side generator, not import tooling); PR-10 given two more named bugs from PR-04 — the un-prefixed f-string in `do_dictionary.py` (whose placeholder name is also wrong) and making `util/` import-safe, since `retrieve_ra_dec.py` fires ~160 SIMBAD requests from its module body and PR-21's autodoc imports every module**; **rev 7.8 (2026-08-19): §4a review-scoping rule added — the four-pass budget is a ceiling, not a quota (one clean pass ends the loop), and move PRs must brief the reviewer with an explicit five-item scope list (move purity, completeness, mechanical-rewrite correctness incl. string-literal module paths, pinned invariants, CI rewiring) with the pre-existing code inside moved files out of scope**; **rev 7.9 (2026-08-19): ratified PR-05's stop-and-report on the per-file-ignores table — a move PR may carry a PR-17-owned code glob to its new `src/**` path under three stated criteria (the PR-03/PR-04 execution note's "no `src/**` row and none should be" was a two-small-package observation that does not scale to the 26K-line Django app); `N802`/`N801` renames in the Django app are behavior-risky because view names are string-referenced in `urls.py`; PR-06's row decided in advance as `E501` only**; **rev 7.10 (2026-08-19): the repo-root `integration/` directory is renamed `integration_tests/` (done inside PR-05, before merge, since the tree is new and PR-05's diff already touches every referencing string) — `integration/` reads as third-party connectors rather than a test tree, and `tests/` + `integration_tests/` pairs properly; it stays a **root-level sibling** of `tests/` because PR-18's `testpaths=["tests"]` selection model depends on it not being nested; the pytest *marker* is still named `integration`**)
+**Date:** 2026-07-18 (rev 7, amended 2026-07-21 — rev 4 fixed all findings from two independent adversarial reviews; rev 5 added the API-guide migration to ReadTheDocs; rev 6 adds the per-PR sub-agent execution protocol; rev 7: console scripts with underscore names for `opus_import`/`opus_log_analyzer`/`opus_error_analyzer`; `ruff format` enforced but only in a final format-only PR (PR-23); Django package renamed `opus`→`opus_app`; `DB_BRAND`/DB-backend abstraction kept for the future; more OPUS2-porting `util/` tools deleted; settings.py made maximally Django-modern; a required adversarial pre-PR review governed by the named cursor rules (`python.mdc`, `python_testing.mdc`, `doc_python.mdc`, `doc_dev_guide.mdc`, `pull_request.mdc`); `filecache.mdc`/`logging.mdc` rules NOT copied; bandit + vulture enabled in CI and run-scripts (bandit in PR-01, vulture in PR-02 after the dead-code removal); pyproject copied from the template first; RTD acceptance made a manual post-merge check; the adversarial pre-PR review iterates up to four churn-focused passes then stops-and-reports if unconverged; a post-PR CodeRabbit loop (respond to/fix all comments, wait for settle, `@coderabbitai review` in 10-min increments if out of reviews) with a ready-to-merge gate on CI **and** CodeRabbit both green; PR titles carry the plan's phase/PR tag; fixed a stale §2 layout comment that said the postgresql stub was removed; **rev 7.1 (2026-08-16): PR-01 ruff burn-down amended after a stop-and-report — the seed set predated ruff's `PT`/`B` rules, which fire on tests the plan keeps/defers; `PT009`+`PT027` go in a documented global `ignore` (the integration suite stays `unittest` per PR-18), `PT015`/`B011`/`B006` are grandfathered per-file and removed in PR-02, `PT018` and the rest are fixed in PR-01; PR-17's empty-table criterion is preserved; **rev 7.2 (2026-08-16): documented wide-PR exception to the CodeRabbit merge gate — CodeRabbit hard-skips PRs over its 100-file cap (PR-01 ≈139 files; the move PRs), so for such PRs the skip is accepted and the §4a adversarial review substitutes; **rev 7.3 (2026-08-16): after a PR-01 integration failure (ruff SIM118 stripped `.keys()` off a `pdsparser.PdsLabel`, which has no `__iter__` → `KeyError` at import), added a mandatory §4a review lens for semantics-changing lint/refactor autofixes on duck-typed objects; **rev 7.4 (2026-08-17): ratified that `ImportDBException`'s `BaseException` base is an old mistake — PR-10 narrows it to `Exception` with a mandatory audit of intervening `except Exception:` handlers (esp. `do_import.py:1462`); PR-09 told explicitly to delete (not relocate) the dictionary app's lone surviving `favicon` route, verified dead and a `STORAGES` import-time hazard; **rev 7.5 (2026-08-17): added PR-03a (fix the four pre-existing `opus_support` defects CodeRabbit found during PR-03, incl. the user-visible `wavenumber_resolution` alias bug), inserted after PR-03 without renumbering; **rev 7.6 (2026-08-18): PR-13 given a named bug to fix — `math.isfinite()` raises `OverflowError`, not `ValueError`, on a huge int, so a crafted numeric query param escapes `parse_unit_value` as an HTTP 500 where rule 2 requires 400; corrected the PR-03a claim that the fused suffix could never match; **rev 7.7 (2026-08-19): `create_opus_models.sh` homed in its own `scripts/models/` (it is a Django-side generator, not import tooling); PR-10 given two more named bugs from PR-04 — the un-prefixed f-string in `do_dictionary.py` (whose placeholder name is also wrong) and making `util/` import-safe, since `retrieve_ra_dec.py` fires ~160 SIMBAD requests from its module body and PR-21's autodoc imports every module**; **rev 7.8 (2026-08-19): §4a review-scoping rule added — the four-pass budget is a ceiling, not a quota (one clean pass ends the loop), and move PRs must brief the reviewer with an explicit five-item scope list (move purity, completeness, mechanical-rewrite correctness incl. string-literal module paths, pinned invariants, CI rewiring) with the pre-existing code inside moved files out of scope**; **rev 7.9 (2026-08-19): ratified PR-05's stop-and-report on the per-file-ignores table — a move PR may carry a PR-17-owned code glob to its new `src/**` path under three stated criteria (the PR-03/PR-04 execution note's "no `src/**` row and none should be" was a two-small-package observation that does not scale to the 26K-line Django app); `N802`/`N801` renames in the Django app are behavior-risky because view names are string-referenced in `urls.py`; PR-06's row decided in advance as `E501` only**; **rev 7.10 (2026-08-19): the repo-root `integration/` directory is renamed `integration_tests/` (done inside PR-05, before merge, since the tree is new and PR-05's diff already touches every referencing string) — `integration/` reads as third-party connectors rather than a test tree, and `tests/` + `integration_tests/` pairs properly; it stays a **root-level sibling** of `tests/` because PR-18's `testpaths=["tests"]` selection model depends on it not being nested; the pytest *marker* is still named `integration`**; **rev 7.11 (2026-08-20): **PR-07 is DEFERRED ENTIRELY** — rfrench's call: the generated 700KB `search/models.py` needs a better solution than this plan proposed, and splitting the module solves nothing. The number is retired without renumbering (PR-03a precedent); the sequence is **PR-06 → PR-08**. `models.py` stays one checked-in file, `create_opus_models.sh` needs no rewrite (PR-05 already repointed it; PR-08 deletes its one stale comment), and the ZZ-duplicate removal is deferred with it. The two-process `_meta` JSON diff is **reassigned to PR-09**, where it becomes a check across the Django 5.2 upgrade that must come back **empty**.**)
 
 ---
 
@@ -212,8 +212,8 @@ memory. Consequences and rules:
   need, and must not rely on, any prior conversation.
 - **All inter-PR state lives in artifacts, never in context:** the repository content,
   merged PR descriptions, and this plan file are the only carriers of state. Where a PR
-  produces knowledge later PRs need (e.g. PR-19's spike outcome, PR-07's generator
-  validation result, any deviation forced by reality), the executing sub-agent records it
+  produces knowledge later PRs need (e.g. PR-19's spike outcome, PR-09's `_meta` diff
+  result, any deviation forced by reality), the executing sub-agent records it
   in a **"Execution notes" appendix at the bottom of `plans/2026-07-18_opus_modernization_plan.md`, amended in that same PR**
   — dated, one bullet per fact, never rewriting the plan body.
 - **Orchestration:** the orchestrator (human, or a supervising agent) launches the
@@ -309,7 +309,7 @@ memory. Consequences and rules:
   complete and its findings addressed; then an open PR against `rewrite`, titled with its
   phase/PR tag, with both workflows green, the post-PR CodeRabbit loop settled, a
   description covering what/why/testing evidence **and the adversarial review summary**
-  (plus the extra artifacts specific PRs require: PR-07's `_meta` diff, PR-13's
+  (plus the extra artifacts specific PRs require: PR-09's `_meta` diff, PR-13's
   rule-annotated fixture diff, PR-21's content-parity checklist), and any Execution-notes
   amendment. The PR itself is written and opened following `.cursor/rules/pull_request.mdc`.
   The sub-agent declares ready-to-merge per the gate above but does not merge; the
@@ -614,23 +614,35 @@ memory. Consequences and rules:
   imports and exposes `Configuration`. (`error_analyzer.py` has no such config-module
   default.)
 
-**PR-07: Split the checked-in `search/models.py` into a package; update the generator.**
-- The checked-in 700KB `models.py` is **restructured by hand/script** (no live DB needed)
-  into `opus_app/apps/search/models/` split by table group (obs tables, mult tables,
-  partables/param_info/etc.); duplicate `ZZDefinitions`/`ZZContexts` mappings dropped.
-- **Verification (two-process, because Django's app registry loads once):** a small
-  script dumps every model's `_meta` (db_table, column names, field class names,
-  null/key attributes) to JSON; run it once on the pre-split commit and once on the
-  post-split tree; diff the two JSON files — must be identical except the deleted ZZ
-  duplicates. No database connection involved.
-- `create_opus_models.sh` (a `manage.py inspectdb` + sed pipeline requiring a live
-  imported DB) is updated to emit the new package layout; since regeneration needs the
-  self-hosted environment, the generator change is validated by running it during the
-  next integration-CI import run and diffing against the checked-in package. PR-09
-  re-runs the `_meta` JSON diff after the Django 5.2 upgrade (inspectdb output is
-  version-dependent).
+**PR-07: ~~Split the checked-in `search/models.py` into a package~~ — DEFERRED ENTIRELY
+(orchestrator's decision, 2026-08-20). Do not execute this PR. The sequence runs
+PR-06 → PR-08.**
+- **Rationale (rfrench):** the generated 700KB `models.py` needs a *better solution* than
+  the one this plan proposed, and **splitting the module would not solve anything** — it
+  rearranges a generated artifact without addressing why a 700KB generated artifact is
+  checked in and hand-patched by a `sed` pipeline in the first place. Splitting it would
+  also add a second thing to keep in sync (the generator's emitted layout) for no gain.
+  Doing it now would entrench the current approach; the problem is left open for a real
+  fix outside this plan.
+- **Not renumbered.** PR-07 stays a retired number, exactly as PR-03a was inserted without
+  renumbering. Later PR numbers are unchanged.
+- **What stays as-is:** `src/opus_app/apps/search/models.py` remains a single checked-in
+  file, and `scripts/models/create_opus_models.sh` keeps emitting exactly that file. The
+  script needs **no rewrite** — PR-05 already repointed it at the repo root and
+  `src/opus_app/apps/search/models.py`, and its output layout is unchanged. Its only
+  PR-07 residue is the stale line-3 comment "PR-07 rewrites this to emit the split models
+  package", **which PR-08 deletes** (a one-line comment fix; see PR-08).
+- **The duplicate `ZZDefinitions`/`ZZContexts` mappings are NOT dropped** — that removal
+  lived only in this PR and is deferred with it.
+- **The `_meta` JSON diff technique survives, reassigned to PR-09** (see PR-09), where it
+  is a genuinely useful check in its own right: it is now run across the *Django upgrade*
+  rather than across a split, and needs no database.
 
 **PR-08: Configuration: TOML + `opus_config` (design in §3).**
+- **This PR immediately follows PR-06** — PR-07 is deferred entirely (rev 7.11).
+- **One-line carry-over from the deferred PR-07:** delete the now-false comment on line 3
+  of `scripts/models/create_opus_models.sh` ("PR-07 rewrites this to emit the split models
+  package"). Nothing else in that script changes — PR-05 already repointed it correctly.
 - Implement the real loader in `opus_config` **with its unit tests in
   `tests/opus_config/`** (they gate the riskiest cutover in the plan); rewrite
   consumption in `opus_import.cli`, `opus_app/settings.py`, `do_dictionary`; delete
@@ -685,7 +697,16 @@ memory. Consequences and rules:
     **import time**. If `ManifestStaticFilesStorage` were adopted while this route survived,
     Django would raise at startup because `favicon.ico` is absent from the manifest.
     Deleting the route removes the hazard — another reason not to relocate it.
-- `hurry.filesize` call replaced by a local helper. Re-run the PR-07 `_meta` JSON diff under 5.2.
+- `hurry.filesize` call replaced by a local helper.
+- **Model `_meta` JSON diff across the upgrade (inherited from the deferred PR-07, and now
+  this PR's own regression check).** Django's app registry loads once per process, so this
+  is **two processes**: a small script dumps every model's `_meta` (db_table, column names,
+  field class names, null/key attributes) to JSON; run it once on the pre-upgrade commit
+  (Django 4.x) and once on the post-upgrade tree (5.2); diff the two JSON files. **No
+  database connection is involved**, and with PR-07 deferred the models file is unchanged,
+  so the diff must be **empty** — any difference is a real Django-5.2 field-mapping change
+  and must be explained in the PR before merging. Attach the diff (or the empty result) as
+  a PR artifact.
 
 **PR-10: Import pipeline internal cleanup.**
 - Split `do_import.py` (1,782 lines) into `steps/` submodules (table prep, mult handling,
@@ -1105,7 +1126,7 @@ End-to-end acceptance (PR-22/PR-24, on a clean venv, no repo checkout on path):
 - **Breaking the public API silently during refactors** → golden-response suite runs on every PR (workflows trigger on `rewrite` from PR-01); fixtures only change in PR-13 (rule-annotated diff report) and PR-21 (API-guide fixture removal + redirect test).
 - **Move-PRs breaking CI via files outside `scripts/automated_tests/`** → each move PR enumerates its CI-reachable edits explicitly (PR-03: run_coverage.sh/.coveragerc/pip-install-e; PR-05: coverage config, manage.py verbs, check/upload paths; PR-06: cron templates + config-module default); the generalized rule in §4 covers the rest.
 - **Django 5.2 surprises** (tag_re monkeypatch, PyMemcacheCache, mysqlclient, `extra()` usage in `metadata/views.py:534-545`) → PR-09 includes a targeted deprecation sweep (`python -W error::DeprecationWarning manage.py check`) and the integration suite; `extra()` rewritten then.
-- **Models restructure drift** → PR-07's two-process `_meta` JSON diff (no DB needed for the checked-in split); generator changes validated on the self-hosted runner; diff re-run in PR-09 under 5.2.
+- **Models restructure drift** → **eliminated: PR-07 is deferred entirely (rev 7.11), so `models.py` is never restructured and the generator is never rewritten.** The residual risk is Django 5.2 changing `inspectdb`-style field mappings under an unchanged file, covered by PR-09's two-process `_meta` JSON diff (no DB needed), which must come back empty.
 - **`ImportContext` refactor regressions** → the threading pattern is fixed in PR-11 (no design latitude), the pytest beachhead (PR-03) and PR-02 seams exist, and the integration import run gates it.
 - **xdist + shared MySQL state** → unit suite touches only per-test scratch schemas; integration suite stays serial; pytest-django never manages the integration DB (unittest.TestCase collection + `django_db_blocker.unblock()`; `django_db` marker forbidden there).
 - **Coverage gate integrity** → two separate configs (§5a); the 90% gate is introduced with PR-19 when the suite exists; the integration 100% gate keeps its scope explicitly, including the `tests/opus_support` contribution.
@@ -1528,7 +1549,11 @@ body; never rewrite or delete earlier notes.*
     `scripts/`, with its **contents untouched**. It is **not** import tooling, so it does
     not belong in `scripts/import/`: it has its own directory,
     `scripts/models/create_opus_models.sh` (orchestrator's call, 2026-08-19).
-    **PR-07 owns rewriting it.** The import
+    **PR-07 owns rewriting it.** *[Orchestrator annotation, 2026-08-20 — superseded by
+    rev 7.11: PR-07 is deferred entirely, so nothing rewrites this script. PR-05 already
+    repointed it at the repo root and `src/opus_app/apps/search/models.py`, and its output
+    layout is unchanged; PR-08 deletes only its stale line-3 comment. The original
+    sentence is left in place because these notes are append-only.]* The import
     pipeline's **five** Markdown files did **not** go to `docs/`: `README.md` (a
     scratchpad TODO list) is `src/opus_import/README.md`, the three `docs/*.md` are
     `src/opus_import/docs/`, and `table_schemas/README.md` stays with the schemas.

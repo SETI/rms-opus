@@ -31,7 +31,7 @@ AI sub-agent with a fresh context per PR. **The complete, binding specification 
 5. Definition of done: an open PR against `rewrite` (never merge it yourself), titled with
    its **phase letter + PR number** (e.g. `[Phase A · PR-01] feat: …`), with both
    workflows green, a description covering what/why/testing evidence **and the adversarial
-   review summary**, plus any PR-specific artifacts the plan requires (e.g. PR-07's `_meta`
+   review summary**, plus any PR-specific artifacts the plan requires (e.g. PR-09's `_meta`
    diff, PR-13's rule-annotated fixture diff, PR-21's content-parity checklist). After
    opening, run the **post-PR CodeRabbit loop** (§4a): respond to every CodeRabbit comment
    — fix the correct ones, reason-reject the rest — wait for it to settle, and re-trigger
