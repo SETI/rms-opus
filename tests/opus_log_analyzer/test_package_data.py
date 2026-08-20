@@ -24,7 +24,11 @@ def test_every_template_ships() -> None:
 
 @pytest.mark.parametrize('name', TEMPLATE_NAMES)
 def test_template_loads_and_compiles(name: str) -> None:
-    """Each template is readable through the environment and compiles to that name."""
+    """Each template is readable through the environment and compiles.
+
+    `get_template` both resolves the name against the packaged directory and compiles the
+    source, so a template missing from the wheel or carrying a syntax error fails here.
+    """
     assert JINJA_ENVIRONMENT.get_template(name).name == name
 
 
@@ -39,6 +43,6 @@ def test_templates_are_found_from_any_working_directory(tmp_path: Path) -> None:
         [sys.executable, '-c',
          'from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT\n'
          "print(JINJA_ENVIRONMENT.get_template('log_analysis.html').name)"],
-        cwd=tmp_path, capture_output=True, text=True, check=False)
+        cwd=tmp_path, capture_output=True, text=True, check=False, timeout=60)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == 'log_analysis.html'

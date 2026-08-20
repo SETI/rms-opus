@@ -1855,11 +1855,15 @@ body; never rewrite or delete earlier notes.*
     style, matching `opus_import`. The isort reclassification PR-03 warned about applied
     here too (`ruff check --select I --fix`); audited under the §4a semantics lens and
     safe. The invariant, rather than a list that would go stale: **no module in this
-    package mutates anything outside itself at import time, and none does I/O** (an AST
-    sweep of every module-level statement found only constants, type aliases,
-    `re.compile`, `pytz.timezone`, `datetime.timedelta`, `NewType`/`TypeVar` and the
-    Jinja `Environment` construction). Cross-group reordering happened in exactly two
-    files, moving `markupsafe` ahead of a first-party import.
+    package mutates anything outside itself at import time, and none writes anything or
+    touches the network** (an AST sweep of every module-level statement found only
+    constants, type aliases, `re.compile`, `pytz.timezone`, `datetime.timedelta`,
+    `NewType`/`TypeVar` and the Jinja `Environment` construction). Two of those *do* read
+    the file system at import — `pytz.timezone` loads the zoneinfo database and
+    `PackageLoader` resolves the packaged `templates/` — but both are idempotent reads of
+    installed data, unlike the `opus_import.util` hazard PR-10 owns. Cross-group import
+    reordering happened in exactly two files, moving `markupsafe` after a first-party
+    import.
   - **Entry points.** `python -m opus_log_analyzer` runs the log analyzer through a new
     `__main__.py`; the error analyzer has no `python -m` package form (a package has one
     `__main__`) and is run as `python -m opus_log_analyzer.error_analyzer`. **Both of
@@ -1939,8 +1943,11 @@ body; never rewrite or delete earlier notes.*
     `--xxdns-cache`/`--xxcached_log_entry` flags, which the templates do not pass (`--dns`
     is `--reverse-dns` and selects the non-caching converter), so nothing changes for cron;
     but a hand-run with either flag now writes `.logs/` under the caller's working
-    directory rather than the checkout. Another candidate for PR-17.
-  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 855 passed,
+    directory rather than the checkout. (The one other CWD-relative path in the package,
+    `opus/slug.py`'s `open(url[7:])` for a `file://` `--api-host-url`, is a read of a
+    caller-supplied path and the templates pass no `--api-host-url`.) Another candidate
+    for PR-17.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 854 passed,
     pyroma 10/10, bandit, vulture, pymarkdown). A wheel installed with `--no-deps` into a
     clean venv outside the repository produces **byte-identical** HTML reports to the
     editable install for both programs, run from an unrelated working directory, using the

@@ -12,7 +12,7 @@ from opus_log_analyzer.log_analyzer import _create_argument_parser
 
 
 def test_default_configuration_module_supplies_a_configuration_class() -> None:
-    """The default `--configuration` names a module of this package that has `Configuration`.
+    """The default `--configuration` names a packaged module supplying `Configuration`.
 
     This is the whole contract `main()` relies on: it imports whatever module the option
     names and instantiates that module's `Configuration`. A bare top-level name would be
