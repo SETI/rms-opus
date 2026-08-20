@@ -5,8 +5,9 @@ from enum import Flag
 from re import Match, Pattern
 from typing import Any, NewType, TextIO
 
-from log_entry import LogEntry
 from markupsafe import Markup
+
+from opus_log_analyzer.log_entry import LogEntry
 
 SESSION_INFO = tuple[list[str], str | None]
 LogId = NewType('LogId', int)

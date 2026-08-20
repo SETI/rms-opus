@@ -102,14 +102,14 @@ SCOPE_SPECIFIED=false
 : "${ENABLE_SPHINX:=false}"
 : "${ENABLE_PYMARKDOWN:=true}"
 
-# Lint scope shifts toward src/ as code moves in later PRs. Ruff mirrors the
-# historical flake8 scope plus log_analyzer and the new test suite. Vulture
-# scans the same code trees plus vulture_whitelist.py (so whitelisted names
-# count as used); min-confidence/exclude come from [tool.vulture]. Bandit
+# Every code tree now lives under src/, with the live-DB suites in
+# integration_tests/, the unit suite in tests/ and manage.py at the root.
+# Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
+# names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
 # never scans tests.
-: "${OPUS_RUFF_PATHS:=src integration_tests log_analyzer tests manage.py}"
-: "${OPUS_BANDIT_PATHS:=src integration_tests log_analyzer manage.py}"
-: "${OPUS_VULTURE_PATHS:=src integration_tests log_analyzer tests manage.py vulture_whitelist.py}"
+: "${OPUS_RUFF_PATHS:=src integration_tests tests manage.py}"
+: "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
+: "${OPUS_VULTURE_PATHS:=src integration_tests tests manage.py vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

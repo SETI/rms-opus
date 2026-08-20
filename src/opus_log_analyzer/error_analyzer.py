@@ -10,9 +10,9 @@ from collections.abc import Iterable
 from operator import attrgetter
 from typing import NamedTuple, TextIO, cast
 
-from cronjob_utils import expand_globs_and_dates
-from jinga_environment import JINJA_ENVIRONMENT
-from log_entry import LogEntry, LogReader
+from opus_log_analyzer.cronjob_utils import expand_globs_and_dates
+from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT
+from opus_log_analyzer.log_entry import LogEntry, LogReader
 
 ERROR_PATTERN = re.compile(r'^\[([^\]]+)\] \[([^\]]+)\] \[([^\]]+)\] \[(client|remote) ([^\]]+):\d+\] (.*)$')
 
@@ -209,7 +209,9 @@ def main(arguments: list[str] | None = None) -> None:
     def parse_ignored_ips(x: str) -> list[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
-    parser = argparse.ArgumentParser(description='Process log files.')
+    # prog is explicit so the help text names the installed command whichever way the
+    # module is invoked, rather than the file argparse happens to have been run from.
+    parser = argparse.ArgumentParser(prog='opus_error_analyzer', description='Process log files.')
     parser.add_argument('--ignore-ip', '-x', default=[], action="append", metavar='cidrlist', dest='ignore_ip',
                         type=parse_ignored_ips,
                         help='list of ips to ignore.  May be specified multiple times')

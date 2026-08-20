@@ -11,9 +11,13 @@ from ipaddress import IPv4Address
 from pathlib import Path
 from typing import Any, NamedTuple, TextIO
 
-from abstract_configuration import AbstractConfiguration, AbstractSessionInfo, LogId
-from ip_to_host_converter import IpToHostConverter
-from log_entry import LogEntry
+from opus_log_analyzer.abstract_configuration import (
+    AbstractConfiguration,
+    AbstractSessionInfo,
+    LogId,
+)
+from opus_log_analyzer.ip_to_host_converter import IpToHostConverter
+from opus_log_analyzer.log_entry import LogEntry
 
 
 class LiveSession(NamedTuple):

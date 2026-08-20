@@ -6,11 +6,11 @@ import operator
 from enum import Enum, auto
 from typing import cast
 
-from abstract_configuration import AbstractConfiguration
-from cronjob_utils import expand_globs_and_dates
-from ip_to_host_converter import IpToHostConverter
-from log_entry import LogEntry, LogReader
-from log_parser import LogParser
+from opus_log_analyzer.abstract_configuration import AbstractConfiguration
+from opus_log_analyzer.cronjob_utils import expand_globs_and_dates
+from opus_log_analyzer.ip_to_host_converter import IpToHostConverter
+from opus_log_analyzer.log_entry import LogEntry, LogReader
+from opus_log_analyzer.log_parser import LogParser
 
 DEFAULT_FIELDS_PREFIX = 'https://opus.pds-rings.seti.org'
 
@@ -26,7 +26,9 @@ def main(arguments: list[str] | None = None) -> None:
     def parse_ignored_ips(x: str) -> list[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
-    parser = argparse.ArgumentParser(description='Process log files.')
+    # prog is explicit because argparse would otherwise name whatever file was executed:
+    # `__main__.py` for `python -m opus_log_analyzer`.
+    parser = argparse.ArgumentParser(prog='opus_log_analyzer', description='Process log files.')
 
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument('--batch', '-b',

@@ -9,12 +9,12 @@ from enum import Enum, auto
 from functools import reduce
 from typing import Any, NamedTuple, cast
 
-from log_entry import LogEntry
 from markupsafe import Markup
 
-from opus import slug as slug
-from opus.configuration_flags import Action
-from opus.slug import Family, FamilyType, Info
+from opus_log_analyzer.log_entry import LogEntry
+from opus_log_analyzer.opus import slug as slug
+from opus_log_analyzer.opus.configuration_flags import Action
+from opus_log_analyzer.opus.slug import Family, FamilyType, Info
 
 
 class SearchClause(NamedTuple):

@@ -125,6 +125,10 @@ namespaces = false
 # describing their format and the two lists of values deliberately left unmapped), and
 # the PDS data dictionary sources that `--import-dictionary` reads.
 "opus_import" = ["table_schemas/*", "dictionary_data/*"]
+# The log analyzer's Jinja report templates, loaded by package name (jinja2's
+# PackageLoader) rather than from the working directory, so an installed analyzer can
+# render HTML reports.
+"opus_log_analyzer" = ["templates/*"]
 
 [tool.setuptools.exclude-package-data]
 # include-package-data is on by default, which would otherwise ship the import
@@ -132,6 +136,10 @@ namespaces = false
 # and how the database is laid out; PR-21 ports them into the Sphinx developer guide and
 # deletes them.
 "opus_import" = ["README.md", "docs/*.md"]
+# Configuration.md documents how to write a log-analyzer configuration class; it is a
+# developer note, not something the installed analyzer reads. PR-21 decides whether to
+# port it into the Sphinx developer guide or drop it.
+"opus_log_analyzer" = ["Configuration.md"]
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
@@ -214,11 +222,16 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 # bare `except:`, and settings.py reads the secrets file through opus_config
 # rather than a star import.
 #
+# The log analyzer carries E501 alone: 153 long lines that PR-17 (which owns
+# this tree) rewraps. Measured with the table emptied, E722/F403/F405/N801/N802
+# fire zero times there, so the six-code row this tree used to carry was
+# over-broad and is trimmed to what actually fires.
+#
 # `src/opus_support`, `src/opus_config`, `src/opus_import`, `tests` and
 # `manage.py` have no row at all: they meet the full rule set.
 "src/opus_app/**/*.py" = ["E501", "N801", "N802"]
 "integration_tests/**/*.py" = ["E501", "N801", "N802"]
-"log_analyzer/**/*.py" = ["E722", "E501", "F403", "F405", "N801", "N802"]
+"src/opus_log_analyzer/**/*.py" = ["E501"]
 #
 # The PT015/B011 (`assert False`) and B006 (mutable default argument) sites
 # PR-01 grandfathered here were fixed in PR-02, so their per-file ignores are
@@ -236,7 +249,7 @@ enabled = false
 # Recurse the code trees; exclude the fixture- and live-server-driven suites
 # (integration_tests/{test_api,test_db_data,test_perf}) and the out-of-scope
 # perf_test/.
-# Targets shift to src/ as code moves; `tests/` is deliberately not a target.
+# Every code tree is under src/ now; `tests/` is deliberately not a target.
 # Path-anchored so a same-named directory elsewhere in the tree cannot match by
 # accident. integration_tests/apps_db_tests is deliberately absent: the per-app suites
 # it holds are scanned.
@@ -245,7 +258,7 @@ exclude_dirs = [
   "integration_tests/test_api", "integration_tests/test_perf",
   "integration_tests/test_db_data",
 ]
-targets = ["src", "integration_tests", "log_analyzer", "manage.py"]
+targets = ["src", "integration_tests", "manage.py"]
 # Burn-down skip list (plan PR-01): category-level skips for existing patterns,
 # each justified below. PR-17 shrinks these to individually-justified `# nosec`
 # lines; PR-09 removes the `.extra()` sources (B610) and PR-12 formalizes SQL
@@ -272,12 +285,12 @@ skips = [
 # Enabled in PR-02 (after the dead-code removal). Genuine dead code is
 # deleted; irreducible false positives live in vulture_whitelist.py (which is
 # passed as an input path so its names count as used). PR-17 shrinks the
-# whitelist. Paths shift toward src/ as code moves; they are also set via
-# OPUS_VULTURE_PATHS (run-all-checks.sh) and VULTURE_PATHS (run-tests.yml).
+# whitelist. The same paths are also set via OPUS_VULTURE_PATHS
+# (run-all-checks.sh) and VULTURE_PATHS (run-tests.yml).
 # tests/ is scanned too: its own dead imports are caught, and names that only
 # the suite uses then count as used.
 [tool.vulture]
-paths = ["src", "integration_tests", "log_analyzer", "tests", "manage.py",
+paths = ["src", "integration_tests", "tests", "manage.py",
          "vulture_whitelist.py"]
 exclude = ["*/perf_test/*"]
 min_confidence = 70
