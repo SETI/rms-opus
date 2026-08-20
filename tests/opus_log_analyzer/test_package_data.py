@@ -1,18 +1,18 @@
 """Tests for locating the Jinja report templates that ship inside `opus_log_analyzer`.
 
-The templates used to be loaded from the relative path `templates/`, so HTML reports
-could only be produced by running the analyzer from its own source directory. These
-tests pin the replacement: the templates are package data, located through the package
-itself, wherever the process happens to be running.
+The templates are package data, located through the package itself, so an installed
+analyzer renders its HTML reports from any working directory.
 """
 
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT
 
-# Every template the two programs ask for by name.
+# Every template the reports use, directly or through an {% include %}.
 TEMPLATE_NAMES = ('error_analysis.html', 'histogram.html', 'log_analysis.html',
                   'summary.html')
 
@@ -24,21 +24,21 @@ def test_every_template_ships() -> None:
 
 @pytest.mark.parametrize('name', TEMPLATE_NAMES)
 def test_template_loads_and_compiles(name: str) -> None:
-    """Each template is readable through the environment and compiles."""
-    assert JINJA_ENVIRONMENT.get_template(name) is not None
+    """Each template is readable through the environment and compiles to that name."""
+    assert JINJA_ENVIRONMENT.get_template(name).name == name
 
 
-def test_templates_are_found_from_any_working_directory(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """The templates are package data, so no working directory is privileged.
+def test_templates_are_found_from_any_working_directory(tmp_path: Path) -> None:
+    """No working directory is privileged, including the one the package is imported from.
 
-    While the loader was a relative file-system path, asking for a template from
-    anywhere but the analyzer's own source directory raised `TemplateNotFound`. The
-    loader is asked directly rather than through `get_template`, so the environment's
-    template cache cannot make the assertion pass for the wrong reason.
+    The environment resolves its template root while `jinga_environment` is being
+    imported, so this has to be a fresh interpreter started somewhere else entirely; a
+    `chdir` inside this process would come too late to prove anything.
     """
-    monkeypatch.chdir(tmp_path)
-    loader = JINJA_ENVIRONMENT.loader
-    assert loader is not None
-    source, _filename, _uptodate = loader.get_source(JINJA_ENVIRONMENT, 'log_analysis.html')
-    assert source
+    result = subprocess.run(
+        [sys.executable, '-c',
+         'from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT\n'
+         "print(JINJA_ENVIRONMENT.get_template('log_analysis.html').name)"],
+        cwd=tmp_path, capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == 'log_analysis.html'

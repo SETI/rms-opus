@@ -1854,9 +1854,12 @@ body; never rewrite or delete earlier notes.*
     `from opus_log_analyzer.opus.html_generator import …` so the package has one import
     style, matching `opus_import`. The isort reclassification PR-03 warned about applied
     here too (`ruff check --select I --fix`); audited under the §4a semantics lens and
-    safe — the only module-level work anywhere in the package is `re.compile`,
-    `pytz.timezone`, `NewType`, `TypeVar`, `datetime.timedelta` and the Jinja
-    `Environment` construction, and no module mutates anything outside itself.
+    safe. The invariant, rather than a list that would go stale: **no module in this
+    package mutates anything outside itself at import time, and none does I/O** (an AST
+    sweep of every module-level statement found only constants, type aliases,
+    `re.compile`, `pytz.timezone`, `datetime.timedelta`, `NewType`/`TypeVar` and the
+    Jinja `Environment` construction). Cross-group reordering happened in exactly two
+    files, moving `markupsafe` ahead of a first-party import.
   - **Entry points.** `python -m opus_log_analyzer` runs the log analyzer through a new
     `__main__.py`; the error analyzer has no `python -m` package form (a package has one
     `__main__`) and is run as `python -m opus_log_analyzer.error_analyzer`. **Both of
@@ -1874,17 +1877,25 @@ body; never rewrite or delete earlier notes.*
     knowing:** `PackageLoader.__init__` resolves and validates the template root, so a
     build that failed to ship `templates/` now raises `ValueError` when
     `opus_log_analyzer.jinga_environment` is *imported* rather than `TemplateNotFound`
-    at first render. Both programs import that module unconditionally, so the failure is
-    immediate and loud. `tests/opus_log_analyzer/test_package_data.py` pins it.
+    at first render. **Which programs see that when:** `error_analyzer` imports the module
+    at its own module level; `log_analyzer` does not import it at all and reaches it only
+    inside `main()`, transitively, through the `--configuration` module it imports by name
+    (`opus/configuration.py` → `opus/html_generator.py`). For the packaged default the
+    failure therefore still lands right after argument parsing, before any log is read.
+    `tests/opus_log_analyzer/test_package_data.py` pins that the templates ship and
+    resolve through the package (not the `ValueError` itself).
   - **The `--configuration` default fix, and the parser split it needed.** The default is
     the module-level constant `DEFAULT_CONFIGURATION_MODULE =
     'opus_log_analyzer.opus.configuration'`. The argparse block moved into
     `_create_argument_parser()` so the shipped default is assertable without running the
     analyzer (the `opus_import.cli` shape). Verified behavior-preserving by diffing the
-    whole parser surface old-vs-new: 23 actions and both mutually-exclusive groups compare
-    equal on option strings, dest, default, action class, nargs, const, help, metavar, type
-    and required, with the `--configuration` default the single intended difference, and
-    `--help` byte-identical.
+    whole parser surface before and after the split: 23 actions and both
+    mutually-exclusive groups compare equal on option strings, dest, default, action
+    class, nargs, const, help, metavar, type and required, with the `--configuration`
+    default the single intended difference. `--help` is byte-identical across the split;
+    measured against the *pre-move* program it differs only in the usage block's program
+    name (`log_analyzer.py` → `opus_log_analyzer`, `error_analyzer.py` →
+    `opus_error_analyzer`), which is the intended `prog=` change.
   - **Tool scope paths after this PR — and there are no more move PRs to shift them.**
     ruff `src integration_tests tests manage.py`; bandit `src integration_tests manage.py`;
     vulture `src integration_tests tests manage.py vulture_whitelist.py`. The three files
@@ -1921,13 +1932,23 @@ body; never rewrite or delete earlier notes.*
     after a `cd` into the checkout, so the `<DIR>` placeholder is gone from them. Nothing
     substitutes or executes these templates — they are hand-edited by the server
     administrator — and PR-22 declares the console script, so the window in which they
-    name a non-existent command never reaches a running server.
+    name a non-existent command never reaches a running server. **Dropping the `cd` is
+    behavior-neutral for every path the cron jobs exercise**, but two CWD-relative debug
+    artifacts survive it: `ip_to_host_converter.py`'s `.logs/reverse-dns` shelf and
+    `log_analyzer.py`'s `.logs/log-<hash>.db` entry cache. Both are gated on the hidden
+    `--xxdns-cache`/`--xxcached_log_entry` flags, which the templates do not pass (`--dns`
+    is `--reverse-dns` and selects the non-caching converter), so nothing changes for cron;
+    but a hand-run with either flag now writes `.logs/` under the caller's working
+    directory rather than the checkout. Another candidate for PR-17.
   - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 855 passed,
     pyroma 10/10, bandit, vulture, pymarkdown). A wheel installed with `--no-deps` into a
     clean venv outside the repository produces **byte-identical** HTML reports to the
     editable install for both programs, run from an unrelated working directory, using the
     packaged templates and the packaged default configuration module (`cmp` of both report
     pairs). The full local chain (`opus_main_test.sh`: 30-bundle import into a fresh MySQL
-    schema, then the Django suite under the 100% gate) passed with zero golden-fixture
-    diffs; this PR touches nothing the integration suite exercises, which is exactly why
-    the log analyzer needed its own direct verification.
+    schema, then the Django suite under the 100% gate) passed — `Ran 1576 tests` / `OK` /
+    `TOTAL 22228 stmts, 1872 branches, 100%`, identical to PR-05's post-move figures — with
+    zero golden-fixture diffs; this PR touches nothing the integration suite exercises,
+    which is exactly why the log analyzer needed its own direct verification. The
+    adversarial reviewer independently ran both programs on the pre-move code and on the
+    packaged code and got **byte-identical** text and HTML reports across the move.
