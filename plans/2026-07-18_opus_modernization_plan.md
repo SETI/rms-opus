@@ -1605,15 +1605,17 @@ body; never rewrite or delete earlier notes.*
     `static_media/`), plus a **new** `src/opus_app/wsgi.py`. `manage.py` and
     `run_coverage.sh` are at the **repository root**; `.coveragerc` is
     `integration_tests/.coveragerc`. The live-DB suites are `integration_tests/test_api/`,
-    `integration_tests/test_db_data/`, `integration_tests/test_perf/` and `integration_tests/apps_db_tests/`
-    — the last is the flattened `apps/*/test_*.py` set, whose module basenames were already
+    `integration_tests/test_db_data/`, `integration_tests/test_perf/` and
+    `integration_tests/apps_db_tests/` — the last is the flattened `apps/*/test_*.py` set,
+    whose module basenames were already
     unique; the dictionary app's contentless `tests.py` became
     `apps_db_tests/test_dictionary.py` so the flattened directory keeps naming its origin.
     `integration_tests/`, `integration_tests/test_api/`, `integration_tests/test_db_data/` and
     `integration_tests/apps_db_tests/` all have `__init__.py` (the middle two carried theirs
     through the move, and `manage.py`'s api-* labels depend on `test_api` being a
-    package); **`integration_tests/test_perf/` deliberately does not** — it had none before, so unittest
-    discovery skipped it, and `test_perf_target.py` does its whole job (HTTP requests to a
+    package); **`integration_tests/test_perf/` deliberately does not** — it had none
+    before, so unittest discovery skipped it, and `test_perf_target.py` does its whole job
+    (HTTP requests to a
     live server) in its module body. Adding one would make `manage.py test` run it.
   - **The per-file-ignores glob followed the code, and that contradicts an earlier note.**
     The PR-03 note says "no `src/**` row was added and none should be — code is brought up
@@ -1727,9 +1729,9 @@ body; never rewrite or delete earlier notes.*
   - **Tool scope paths after this PR** (the same three files each remaining move PR must
     update): ruff `src integration_tests log_analyzer tests manage.py`; bandit
     `src integration_tests log_analyzer manage.py`; vulture `src integration_tests
-    log_analyzer tests manage.py vulture_whitelist.py`. `opus/` is gone from all of them, and `manage.py` had to be named
-    explicitly since it is a bare file at the root. PR-06 drops `log_analyzer` from all three
-    (it moves under `src/`).
+    log_analyzer tests manage.py vulture_whitelist.py`. `opus/` is gone from all of them,
+    and `manage.py` had to be named explicitly since it is a bare file at the root. PR-06
+    drops `log_analyzer` from all three (it moves under `src/`).
   - **The wheel already ships the Django app's templates and static files** — no
     `package-data` entry was needed, because `include-package-data` plus setuptools-scm's
     file finder picks up every git-tracked file inside a package directory, and
