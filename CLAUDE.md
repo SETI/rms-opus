@@ -22,6 +22,14 @@ AI sub-agent with a fresh context per PR. **The complete, binding specification 
      contradiction; note it and proceed.
    - Record any fact later PRs need as a dated bullet in `plans/2026-07-18_opus_modernization_plan.md`'s "Execution notes"
      appendix, amended in your own PR. Never edit the plan body or earlier notes.
+   - **NEVER poll. Wait with a single blocking call.** Every tool call re-uploads the whole
+     conversation, so a loop of "check, then check again" costs more on each iteration and
+     buys nothing — a real PR executor burned hundreds of no-op `echo waiting-ci` calls this
+     way. Waiting on CI, CodeRabbit, or any long job means **one** call that returns when the
+     thing is actually done: `gh pr checks <N> --watch` (or `gh run watch <id>`), or a
+     `run_in_background` command with an `until <condition>; do sleep 60; done` loop that
+     exits on the event and notifies you. Never issue repeated status calls, `echo`/`sleep`
+     turns, or "let me check again" cycles. See §4a's *Waiting without burning tokens*.
 4. Before opening the PR, run the **adversarial pre-PR review** (§4a): launch a fresh
    opus-class sub-agent to review the full diff, address its findings, and repeat with a
    new reviewer — up to **four churn-focused passes** (passes 2+ focus on what you changed
