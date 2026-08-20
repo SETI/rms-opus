@@ -26,13 +26,14 @@ jobs:
       # step below is kept but disabled, mirroring the ENABLE_* toggles in
       # scripts/run-all-checks.sh. PR-23 flips this to 'true'.
       ENABLE_RUFF_FORMAT: 'false'
-      # Ruff/bandit/vulture scope shifts to src/ as code moves in later PRs.
+      # Every code tree lives under src/ now; the live-DB suites are in
+      # integration_tests/, the unit suite in tests/, manage.py at the root.
       # Vulture also scans vulture_whitelist.py so whitelisted names count as
       # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
       # tests/ is linted and vulture-scanned but never bandit-scanned.
-      RUFF_PATHS: "src integration_tests log_analyzer tests manage.py"
-      BANDIT_PATHS: "src integration_tests log_analyzer manage.py"
-      VULTURE_PATHS: "src integration_tests log_analyzer tests manage.py vulture_whitelist.py"
+      RUFF_PATHS: "src integration_tests tests manage.py"
+      BANDIT_PATHS: "src integration_tests manage.py"
+      VULTURE_PATHS: "src integration_tests tests manage.py vulture_whitelist.py"
     steps:
       - name: Checkout
         uses: actions/checkout@v6

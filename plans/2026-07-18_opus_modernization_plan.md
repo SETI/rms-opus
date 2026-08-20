@@ -1830,3 +1830,179 @@ body; never rewrite or delete earlier notes.*
     lists — holds unchanged under the new name. The rename was done as a second pure
     `git mv` commit (445 files, all `R100`) plus a string-update commit, so the original
     703-file move commit was left untouched.
+- **2026-08-19 (PR-06 executed):** the log analyzer is `src/opus_log_analyzer`, and Phase B
+  is complete — **every code tree now lives under `src/`**. Facts later PRs rely on:
+  - **Where everything landed.** The nine top-level modules, the `opus/` subpackage and
+    `templates/` moved verbatim to `src/opus_log_analyzer/`; the three cron templates went
+    to **`scripts/server/log_analyzer/`** (a subdirectory, matching the existing
+    `scripts/server/{database,import_and_deploy}/` shape — the plan says only "relocate to
+    `scripts/server/`"). `Configuration.md` stayed **inside the package**
+    (`src/opus_log_analyzer/Configuration.md`) for the PR-04 reason: `run-all-checks.sh`
+    pymarkdown-scans `docs/` as soon as it exists. It is kept out of the wheel by
+    `[tool.setuptools.exclude-package-data]`. **PR-21 must decide to port or delete it** —
+    it has no plan-assigned destination, exactly like `src/opus_import/README.md`. Its text
+    is stale in two ways already (it names `opus/Configuration.py`, but the module is
+    `opus/configuration.py`, and its `--configuration` example predates the packaging).
+  - **`log_analyzer/mypy.ini` is deleted.** It pinned `python_version = 3.7` with a
+    strict-ish option set; `[tool.mypy] strict = true` in pyproject supersedes it.
+    **Phase D should know this tree is the only one that arrives already annotated** —
+    nearly every function in it has parameter and return types, plus one
+    `# type: ignore` on `module.Configuration(**vars(args))` in `log_analyzer.py`
+    (the dynamically imported configuration class).
+  - **Imports are absolute throughout, including inside the `opus/` subpackage.** The
+    subpackage's `from .html_generator import …` forms became
+    `from opus_log_analyzer.opus.html_generator import …` so the package has one import
+    style, matching `opus_import`. The isort reclassification PR-03 warned about applied
+    here too (`ruff check --select I --fix`); audited under the §4a semantics lens and
+    safe. The invariant, rather than a list that would go stale: **no module in this
+    package mutates anything outside itself at import time, and none writes anything or
+    touches the network** (an AST sweep of every module-level statement found only
+    constants, type aliases, `re.compile`, `pytz.timezone`, `datetime.timedelta`,
+    `NewType`/`TypeVar` and the Jinja `Environment` construction). Two of those *do* read
+    the file system at import — `pytz.timezone` loads the zoneinfo database and
+    `PackageLoader` resolves the packaged `templates/` — but both are idempotent reads of
+    installed data, unlike the `opus_import.util` hazard PR-10 owns. Cross-group import
+    reordering happened in exactly two files, moving `markupsafe` ahead of `log_entry`,
+    which isort reclassified as first-party.
+  - **Entry points.** `python -m opus_log_analyzer` runs the log analyzer through a new
+    `__main__.py`; the error analyzer has no `python -m` package form (a package has one
+    `__main__`) and is run as `python -m opus_log_analyzer.error_analyzer`. **Both of
+    PR-22's console-script targets already resolve** — verified by loading
+    `opus_log_analyzer.log_analyzer:main` and `opus_log_analyzer.error_analyzer:main` as
+    entry points from a wheel installed in a clean venv. Both parsers set `prog`
+    explicitly (`opus_log_analyzer` / `opus_error_analyzer`), for the same reason
+    `opus_import.cli` does: argparse otherwise names the executed file, which for
+    `python -m opus_log_analyzer` is `__main__.py`.
+  - **The Jinja templates are loaded with `jinja2.PackageLoader('opus_log_analyzer',
+    'templates')`**, not `FileSystemLoader`, and are declared in
+    `[tool.setuptools.package-data]`. `PackageLoader` is the Jinja-native wrapper around
+    the same `importlib` lookup `opus_import` uses for its schemas, and it sidesteps the
+    question of whether a `Traversable` is `os.PathLike`. **One behavior change worth
+    knowing:** `PackageLoader.__init__` resolves and validates the template root, so a
+    build that failed to ship `templates/` now raises `ValueError` when
+    `opus_log_analyzer.jinga_environment` is *imported* rather than `TemplateNotFound`
+    at first render. **Which programs see that when:** `error_analyzer` imports the module
+    at its own module level; `log_analyzer` does not import it at all and reaches it only
+    inside `main()`, transitively, through the `--configuration` module it imports by name
+    (`opus/configuration.py` → `opus/html_generator.py`). For the packaged default the
+    failure therefore still lands right after argument parsing, before any log is read.
+    `tests/opus_log_analyzer/test_package_data.py` pins that the templates ship and
+    resolve through the package (not the `ValueError` itself).
+  - **The `--configuration` default fix, and the parser split it needed.** The default is
+    the module-level constant `DEFAULT_CONFIGURATION_MODULE =
+    'opus_log_analyzer.opus.configuration'`. The argparse block moved into
+    `_create_argument_parser()` so the shipped default is assertable without running the
+    analyzer (the `opus_import.cli` shape). Verified behavior-preserving by diffing the
+    whole parser surface before and after the split: 23 actions and both
+    mutually-exclusive groups compare equal on option strings, dest, default, action
+    class, nargs, const, help, metavar, type and required, with the `--configuration`
+    default the single intended difference. `--help` is byte-identical across the split;
+    measured against the *pre-move* program it differs only in the usage block's program
+    name (`log_analyzer.py` → `opus_log_analyzer`, `error_analyzer.py` →
+    `opus_error_analyzer`), which is the intended `prog=` change.
+  - **Tool scope paths after this PR — and there are no more move PRs to shift them.**
+    ruff `src integration_tests tests manage.py`; bandit `src integration_tests manage.py`;
+    vulture `src integration_tests tests manage.py vulture_whitelist.py`. All three lists
+    were edited in all three files that carry them (`pyproject.toml`, `run-tests.yml`,
+    `run-all-checks.sh`) — it is the *set* of carrying files that is stable, and later PRs
+    still have to keep those three in step. The bandit `skips` entries justified as
+    log-analyzer-owned
+    (`B113` request-without-timeout, `B301` pickle/shelve, `B704` markupsafe markup) are
+    still needed — that code is still scanned, under its new path.
+  - **Per-file-ignores.** The `log_analyzer/**/*.py` row became
+    `"src/opus_log_analyzer/**/*.py" = ["E501"]`, per §4's PR-06 pre-decision. Re-measured
+    on the pre-move tree with the whole table emptied (ruff 0.15.7): **153 `E501` and zero
+    `E722`/`F403`/`F405`/`N801`/`N802`** — the orchestrator's 2026-08-19 measurement
+    reproduced exactly. With the full rule set and the table emptied, `E501` is the *only*
+    code that fires in this tree, so nothing else had to be fixed on the way in. PR-17
+    still owns the row.
+  - **Vulture found nothing** when its scope moved from `log_analyzer` to
+    `src/opus_log_analyzer` — PR-04's "expect another round of unmaskings in PR-05/PR-06"
+    did not materialize here, and `vulture_whitelist.py` is unchanged (still the single
+    `lineno` entry).
+  - **A pre-existing crash in every non-batch run mode, found during verification and
+    deliberately NOT fixed** (a move PR must not change behavior; the PR-03/PR-04
+    precedent applies): `log_analyzer.py`'s `elif args.glob:` reads an attribute the
+    parser never defines, so `--summary`, `--realtime`/`-i`/`-r` and `--xxfake-realtime`
+    all die with `AttributeError: 'Namespace' object has no attribute 'glob'` before doing
+    any work. Only the default `--batch`/`--cronjob` path (which takes the other branch)
+    has ever run. Reproduce with `python -m opus_log_analyzer --summary <any log>`.
+    Whoever fixes it must decide what the branch was meant to do — it globs `log_files`
+    and `manifests`, which is what `expand_globs_and_dates` already does on the batch
+    path. **Natural owner: PR-17**, the only later PR that opens this tree.
+  - **Two cosmetic pre-existing warts left alone**, for whoever reopens the tree:
+    `jinga_environment.py` misspells "jinja", and `error_analyzer.py`'s argparse
+    `description` says "Process log files" although it takes error logs.
+  - **Eight more pre-existing defects CodeRabbit raised on the PR-06 review and this PR
+    deliberately did NOT fix** (a move PR must not change behavior; the PR-03/PR-04
+    precedent applies). **Natural owner: PR-17**, the annotation PR for this tree, which
+    will have to read every one of these functions anyway. **Two of them run on every
+    cron invocation** — #2, because `--cronjob` selects `RunType.BATCH`, which calls
+    `LogReader.read_logs` on real Apache logs, and #7, because `Configuration.__init__`
+    constructs a `ToInfoMap`, whose `__read_json` fetches the fields JSON, before a single
+    line is parsed. #5, #6 and #8 are also exercised by an ordinary report run, but produce
+    wrong output or weak hardening rather than an abort. Only #1, #3 and #4 need a flag or
+    an object count the cron path never produces. Numbered as reported, not by severity:
+    1. `ip_to_host_converter.py` — `ShelvedIPToHostConverter.__close` computes
+       `min(...)` over the shelf's expiration values with no default, so an *empty*
+       DNS cache raises `ValueError` at `atexit` time. Only reachable with the hidden
+       `--xxdns-cache` flag.
+    2. `log_entry.py` — `LogReader.__parse_line` lets `ValueError` from
+       `ipaddress.ip_address`, `int(size)` or `strptime` escape, so one malformed line
+       aborts the whole run instead of being skipped like a non-matching line. The
+       likeliest trigger is real: the `%h` field is `\S+`, so an Apache running
+       `HostnameLookups On` writes a host *name* there and `ip_address` rejects it.
+    3. `manifest.py` — `from_csv_line` indexes `path.parts[2]` for `volume_set` without
+       checking the path is absolute or deep enough; a short "File Path" column raises
+       `IndexError`.
+    4. `opus/slug.py` — `ToInfoMap._search_map`/`_column_map` are `ClassVar`s, so two
+       `Configuration` instances in one process share (and cross-contaminate) their slug
+       caches. Harmless today because each run builds one configuration.
+    5. `opus/slug.py` — the `base_result` lookup uses `next(...)` over both `1`/`2`
+       suffixes without filtering `None`, so an unresolved first suffix stops the search
+       instead of falling through to the second.
+    6. `opus/slug.py` — a `canonical_name` is built with a `qtype-` prefix where the
+       surrounding code uses `unit-`.
+    7. `opus/slug.py` — `ToInfoMap.__read_json`'s `requests.get` for the OPUS fields JSON
+       has no timeout, so an unresponsive `--api-host-url` hangs the run indefinitely
+       before any log is read (this is what bandit's `B113` skip covers).
+    8. `templates/{log_analysis,error_analysis}.html` — the report templates load
+       Bootstrap/jQuery/Plotly from CDNs unpinned (`plotly-latest`) and without SRI
+       hashes. These reports are internal operator pages served from
+       `<WWW>/log_analyzer_results`, so this is hardening, not an exposure.
+    Also stale, and **owned by PR-21** along with the rest of the file: the parts of
+    `Configuration.md` this PR did not have to touch still document
+    `parse_log_entry(entry)` without its `log_id` parameter and name the required flag
+    method `get_session_flags` where `AbstractSessionInfo` declares `get_icon_flags`.
+    (The two statements the *move* invalidated — the invocation example and the default
+    configuration module — were corrected here, since a move PR does fix the paths it
+    breaks.)
+  - **The cron templates name commands PR-22 has not created yet.** All three now call
+    `opus_log_analyzer` from the activated virtualenv instead of `python log_analyzer.py`
+    after a `cd` into the checkout, so the `<DIR>` placeholder is gone from them. Nothing
+    substitutes or executes these templates — they are hand-edited by the server
+    administrator — and PR-22 declares the console script, so the window in which they
+    name a non-existent command never reaches a running server. **Dropping the `cd` is
+    behavior-neutral for every path the cron jobs exercise**, but two CWD-relative debug
+    artifacts survive it: `ip_to_host_converter.py`'s `.logs/reverse-dns` shelf and
+    `log_analyzer.py`'s `.logs/log-<hash>.db` entry cache. Both are gated on the hidden
+    `--xxdns-cache`/`--xxcached_log_entry` flags, which the templates do not pass (`--dns`
+    is `--reverse-dns` and selects the non-caching converter), so nothing changes for cron;
+    but a hand-run with either flag now writes `.logs/` under the caller's working
+    directory rather than the checkout. (One further caller-supplied path is worth naming
+    because a URL hides it: `opus/slug.py` does `open(url[7:])` for a `file://`
+    `--api-host-url`. The templates pass no `--api-host-url`. The ordinary log-file and
+    manifest arguments resolve against the CWD too, but those are the paths the operator
+    types.) Another candidate for PR-17.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 854 passed,
+    pyroma 10/10, bandit, vulture, pymarkdown). A wheel installed with `--no-deps` into a
+    clean venv outside the repository produces **byte-identical** HTML reports to the
+    editable install for both programs, run from an unrelated working directory, using the
+    packaged templates and the packaged default configuration module (`cmp` of both report
+    pairs). The full local chain (`opus_main_test.sh`: 30-bundle import into a fresh MySQL
+    schema, then the Django suite under the 100% gate) passed — `Ran 1576 tests` / `OK` /
+    `TOTAL 22228 stmts, 1872 branches, 100%`, identical to PR-05's post-move figures — with
+    zero golden-fixture diffs; this PR touches nothing the integration suite exercises,
+    which is exactly why the log analyzer needed its own direct verification. The
+    adversarial reviewer independently ran both programs on the pre-move code and on the
+    packaged code and got **byte-identical** text and HTML reports across the move.

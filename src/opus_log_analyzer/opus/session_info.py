@@ -4,14 +4,17 @@ import urllib.parse
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from re import Match
 
-from abstract_configuration import SESSION_INFO, AbstractSessionInfo, LogId, PatternRegistry
-from log_entry import LogEntry
-
-from opus import slug
-
-from .configuration_flags import Action, IconFlags
-from .query_handler import MetadataSlugInfo, QueryHandler
-from .slug import Info
+from opus_log_analyzer.abstract_configuration import (
+    SESSION_INFO,
+    AbstractSessionInfo,
+    LogId,
+    PatternRegistry,
+)
+from opus_log_analyzer.log_entry import LogEntry
+from opus_log_analyzer.opus import slug
+from opus_log_analyzer.opus.configuration_flags import Action, IconFlags
+from opus_log_analyzer.opus.query_handler import MetadataSlugInfo, QueryHandler
+from opus_log_analyzer.opus.slug import Info
 
 LogMarker = LogId | tuple[LogId, int]
 

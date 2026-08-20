@@ -3,16 +3,14 @@ import textwrap
 from collections.abc import Sequence
 from typing import Any, ClassVar, TextIO, cast
 
-from abstract_configuration import AbstractConfiguration
-from ip_to_host_converter import IpToHostConverter
-from log_entry import LogEntry
-from log_parser import HostInfo, Session
-
-from opus import slug
-
-from .html_generator import HtmlGenerator
-from .query_handler import MetadataSlugInfo, QueryHandler
-from .session_info import SessionInfo
+from opus_log_analyzer.abstract_configuration import AbstractConfiguration
+from opus_log_analyzer.ip_to_host_converter import IpToHostConverter
+from opus_log_analyzer.log_entry import LogEntry
+from opus_log_analyzer.log_parser import HostInfo, Session
+from opus_log_analyzer.opus import slug
+from opus_log_analyzer.opus.html_generator import HtmlGenerator
+from opus_log_analyzer.opus.query_handler import MetadataSlugInfo, QueryHandler
+from opus_log_analyzer.opus.session_info import SessionInfo
 
 
 class Configuration(AbstractConfiguration):

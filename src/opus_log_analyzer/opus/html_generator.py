@@ -21,17 +21,16 @@ from typing import (
     cast,
 )
 
-from abstract_configuration import AbstractBatchHtmlGenerator
-from jinga_environment import JINJA_ENVIRONMENT
-from log_entry import LogEntry
-from log_parser import Entry, HostInfo, Session
-from manifest import ManifestStatus
-
-from .configuration_flags import Action, IconFlags
+from opus_log_analyzer.abstract_configuration import AbstractBatchHtmlGenerator
+from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT
+from opus_log_analyzer.log_entry import LogEntry
+from opus_log_analyzer.log_parser import Entry, HostInfo, Session
+from opus_log_analyzer.manifest import ManifestStatus
+from opus_log_analyzer.opus.configuration_flags import Action, IconFlags
 
 if TYPE_CHECKING:
-    from .configuration import Configuration
-    from .session_info import LogMarker, SessionInfo
+    from opus_log_analyzer.opus.configuration import Configuration
+    from opus_log_analyzer.opus.session_info import LogMarker, SessionInfo
 
 T = TypeVar('T')
 

@@ -6,13 +6,20 @@ import operator
 from enum import Enum, auto
 from typing import cast
 
-from abstract_configuration import AbstractConfiguration
-from cronjob_utils import expand_globs_and_dates
-from ip_to_host_converter import IpToHostConverter
-from log_entry import LogEntry, LogReader
-from log_parser import LogParser
+from opus_log_analyzer.abstract_configuration import AbstractConfiguration
+from opus_log_analyzer.cronjob_utils import expand_globs_and_dates
+from opus_log_analyzer.ip_to_host_converter import IpToHostConverter
+from opus_log_analyzer.log_entry import LogEntry, LogReader
+from opus_log_analyzer.log_parser import LogParser
 
 DEFAULT_FIELDS_PREFIX = 'https://opus.pds-rings.seti.org'
+
+# --configuration names a module, imported by name, that supplies the Configuration class
+# describing the site being analyzed. The default names the packaged OPUS configuration
+# by its absolute import path; a bare 'opus.configuration' resolved only while the
+# analyzer was run from its own source directory, and there is no top-level `opus`
+# package to fall back on (the Django project package is `opus_app`).
+DEFAULT_CONFIGURATION_MODULE = 'opus_log_analyzer.opus.configuration'
 
 
 class RunType(Enum):
@@ -22,11 +29,13 @@ class RunType(Enum):
     FAKE_REALTIME = auto()
 
 
-def main(arguments: list[str] | None = None) -> None:
+def _create_argument_parser() -> argparse.ArgumentParser:
     def parse_ignored_ips(x: str) -> list[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
-    parser = argparse.ArgumentParser(description='Process log files.')
+    # prog is explicit because argparse would otherwise name whatever file was executed:
+    # `__main__.py` for `python -m opus_log_analyzer`.
+    parser = argparse.ArgumentParser(prog='opus_log_analyzer', description='Process log files.')
 
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument('--batch', '-b',
@@ -75,7 +84,8 @@ def main(arguments: list[str] | None = None) -> None:
                         help="output file.  default is stdout.  For --batch, specifies the output pattern")
     parser.add_argument('--sessions-relative-directory', dest="sessions_relative_directory",
                         help="relative directory into which to store the sessions information")
-    parser.add_argument('--configuration', dest='configuration_file', default='opus.configuration',
+    parser.add_argument('--configuration', dest='configuration_file',
+                        default=DEFAULT_CONFIGURATION_MODULE,
                         help="location of python configuration file")
 
     # Stores DNS entries in a persistent database
@@ -88,7 +98,11 @@ def main(arguments: list[str] | None = None) -> None:
     parser.add_argument('--xxcached_log_entry', action='store_true', dest='cached_log_entries', help=argparse.SUPPRESS)
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
-    args = parser.parse_args(arguments)
+    return parser
+
+
+def main(arguments: list[str] | None = None) -> None:
+    args = _create_argument_parser().parse_args(arguments)
 
     run_type = cast(RunType, args.run_type)
 
