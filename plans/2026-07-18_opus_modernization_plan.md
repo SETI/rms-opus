@@ -2094,3 +2094,122 @@ body; never rewrite or delete earlier notes.*
     which is exactly why the log analyzer needed its own direct verification. The
     adversarial reviewer independently ran both programs on the pre-move code and on the
     packaged code and got **byte-identical** text and HTML reports across the move.
+- **2026-08-22 (PR-08 executed):** configuration is one TOML file located by `OPUS_CONFIG`;
+  `opus_secrets.py`, its two templates, the `OPUS_SECRETS` variable and the
+  `_secrets_compat` shim are gone. Facts later PRs rely on:
+  - **The loader's public surface.** `from opus_config import get_config` returns a frozen
+    `OpusConfig` with `.database`, `.paths`, `.django`, `.import_` (trailing underscore —
+    `import` is a keyword; the TOML table is `[import]`) and `.source`, the path it was read
+    from. `load_config(path)` reads a named file, touching neither the environment nor the
+    cache, which is what a test uses; `config_path()` resolves `OPUS_CONFIG`. `get_config`
+    is `functools.cache`d, so **anything that changes the environment mid-process must call
+    `get_config.cache_clear()`** — the root `tests/conftest.py` does that around every test
+    via an autouse fixture, and it is also where the `ci_config_path` fixture lives. Every
+    failure is a `ConfigError` (a plain `Exception` subclass) naming the file and, when one
+    key is at fault, the table and the key. The whole schema lives in
+    `src/opus_config/config.py`; `__init__.py` re-exports it with an explicit `__all__`.
+  - **Where each setting now comes from.** `[database]` brand/host/database/schema/user/
+    password; `[paths]` pds3_holdings, pds4_holdings, opus_log_file, import_log_dir, tar_dir,
+    manifest_dir, last_blog_update_file, notification_file, static_root (optional),
+    opus_static_root; `[django]` secret_key, debug, allowed_hosts, cache_server_prefix,
+    public_url, product_http_path, viewmaster_url, tar_file_url, log_file_level,
+    log_console_level, log_django_level, log_api_calls, fake_api_delays,
+    fake_error404_probability, fake_error500_probability; `[import]` table_temp_prefix,
+    log_file, debug_log_file. `settings.py` publishes each under the Django name the
+    application already used, so **no app or test code changed**: of the 29 names PR-05
+    recorded, 28 survive and only `RMS_OPUS_PATH` is gone (see `get_git_version` below).
+    `opus_import.cli` reads twelve settings and `import_util` reads `table_temp_prefix`.
+  - **Four deliberate departures from §3's one-line schema sketch, each with its reason.**
+    (1) **There is no `[dictionary]` table.** PR-04 turned `pdsdd.full`, `contexts.csv` and
+    the table schemas into package data, so nothing reads such a section; a table the code
+    never consults is configuration that silently does nothing, and PR-04's note already
+    called this clause of PR-08 empty work. (2) `[database]` keeps a **`database`** key
+    (the old `DB_DATABASE_NAME`, default `""`) that §3's sketch does not list: MySQL ignores
+    it but `importdb.get_db()` takes it as `db_name`, and the decisions table keeps the
+    DB-backend abstraction "everywhere it is threaded today". (3) `[paths].opus_log_file` is
+    a file rather than the "logfile dirs" §3 names, because the web application reads a file
+    path; `import_log_dir` is the directory `pdslogger.warning_handler` needs. (4) **Every
+    value is a `str`, never a `Path`.** `tar_dir`, `manifest_dir` and `tar_file_url` are
+    joined directly to a file name by `cart/views.py`, so they must keep their trailing
+    separator, which `Path` would strip; the loader therefore stores every value verbatim and
+    neither normalizes nor validates the separator (the template says it in capitals).
+  - **`OPUS_CONFIG` may be a relative path**, resolved against the process's working
+    directory. This is deliberate and load-bearing: the CI jobs set
+    `OPUS_CONFIG=tests/fixtures/opus_ci.toml`. It is the one place the new variable is
+    laxer than the shim's `OPUS_SECRETS`, which had to be absolute. An unset **or empty**
+    variable is a `ConfigError`; there is no default path anywhere in the loader.
+  - **Validation is strict in both directions:** a required key that is missing, a value of
+    the wrong TOML type, a `[database].brand` or level name outside its allowed set, an
+    unknown key in a table, an unknown top-level table or key, and a table name bound to a
+    non-table are all refused. Two consequences worth knowing: a boolean passed where a
+    number belongs is rejected (Python counts `True` as an `int`), and **brand and level names are
+    matched without regard to case and stored in the canonical spelling** — the test
+    generator's historic `'MySql'` reaches `get_db()` as `'MySQL'`, which is behavior-neutral
+    because `get_db` uppercases its argument.
+  - **Three types later PRs must not "simplify".** `django.log_api_calls` is `bool | str`
+    because `app_utils` tests it for truth and then calls `getattr(log, value.lower())`, so
+    the schema allows `false` or a level name. `django.fake_api_delays` is `int | None` and
+    **absent means None**, because `app_utils` tests `is not None` (0 is a real value meaning
+    "no delay", which the integration suite assigns). `ALLOWED_HOSTS` is now a **list** (the
+    TOML array) where the secrets file wrote a tuple; Django documents a list.
+  - **`get_git_version()` no longer runs git, and takes no parameters.** It returns
+    `importlib.metadata.version('rms-opus')`; its `force_valid`/`use_tag` parameters are gone
+    because neither "fall back to random bits" nor "prefer the tag" means anything for a
+    version read from package metadata, and the three call sites are updated.
+    `os`/`subprocess` left `apps/tools/app_utils.py` with it. **Behavior change worth
+    knowing:** the About page and the `?version=` cache-busting suffix now carry the
+    distribution version, which changes only when a release is installed, where the old code
+    produced a fresh random value per process whenever `git log` failed. The function keeps
+    its name because the plan specifies replacing its *internals*; **it is a rename candidate
+    for PR-21**, since it names git and no longer touches it. No golden fixture is affected:
+    `test_help_api.test__api_help_about` compares the response only up to
+    `<p><small>OPUS version`.
+  - **`tests/fixtures/opus_ci.toml` is the standing configuration for GitHub-hosted jobs**
+    (PR-14's mypy/django-stubs, PR-18's pytest-django collection, PR-21's Sphinx autodoc).
+    Every path in it is **directly under `/tmp`**, deliberately: Django's `LOGGING` opens a
+    `RotatingFileHandler` on `paths.opus_log_file` during `django.setup()`, so a path in a
+    subdirectory would make every such job create the directory first. `paths.static_root`
+    and `django.fake_api_delays` are absent, which keeps the file a working example of a
+    configuration that omits its optional keys. `OPUS_CONFIG=tests/fixtures/opus_ci.toml` is
+    set at the **workflow level** of `run-tests.yml`, so jobs added later inherit it, and as
+    a `: "${OPUS_CONFIG:=...}"` default in `run-all-checks.sh` that an exported value still
+    overrides. `tests/opus_config/test_config.py` loads the fixture so it cannot drift out of
+    the schema unnoticed.
+  - **Which chain exports `OPUS_CONFIG`:** `scripts/automated_tests/opus_import_test_database.sh`
+    and `opus_run_unittests_coverage.sh` (both `"$(pwd)/opus.toml"`, written by
+    `opus_setup_environment.sh` into the repository root), the server's
+    `_opus_setup_environment.sh` (which is sourced, so its export reaches every later deploy
+    step) and `deploy_new_code_only.sh`. `run_coverage.sh` and `scripts/import/import_for_tests.sh`
+    deliberately **do not default it**: they use `${OPUS_CONFIG:?...}` and fail with a
+    message naming the variable, because a default path is exactly what §3 forbids. The
+    "current database" banner in `import_for_tests.sh`/`import_all.sh` greps `^schema`.
+  - **The shell-format deploy env file is untouched.** `_read_opus_secrets.sh` and the four
+    `scripts/server/database/*.sh` still source `${SECRETS_DIR}/opus_secrets` for
+    script-level variables (`OPUS_DIR`, `OPUS_DB_USER`, holdings dirs); only application
+    configuration moved to TOML. **PR-22 owns that file** (it becomes `deploy.env`).
+  - **Two PR-08 instructions were already satisfied and needed no work,** noted so a later
+    reader does not hunt for them: the wildcard `F403`/`F405` per-file-ignores were already
+    dropped by PR-05 (the table has held only `E501`/`N801`/`N802` since), and
+    `grep -rn "sys.path" --include="*.py" src/` returns only a docstring sentence in
+    `wsgi.py`, no statement. The `do_dictionary` clause was empty work exactly as PR-04's
+    note predicted.
+  - **`B105` has left the bandit `skips` list** (PR-01 tied it to this PR): its only hit was
+    the `'XXX'` placeholder in `apps/dictionary/secrets_template.py`, and `bandit -t B105`
+    over `src integration_tests manage.py` is now clean. `B404`/`B603` are still needed even
+    though `app_utils` stopped importing `subprocess` — their only remaining hits are in
+    Django's vendored `src/opus_app/static/admin/js/compress.py`, which ruff excludes but
+    bandit still scans. `.gitignore` ignores `opus.toml` where it ignored `opus_secrets.py`.
+  - **PR-07 residue cleared:** the stale line-3 comment in
+    `scripts/models/create_opus_models.sh` is deleted. Nothing else in that script changed.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 937 passed,
+    pyroma 10/10, bandit, vulture, pymarkdown). Both generators were checked by rendering
+    their `opus.toml` heredoc with representative variables and loading the result: the test
+    generator reproduces `opus_test_db_<id>`, an absent `static_root` and
+    `<CWD>/src/opus_app/static`, and the server generator reproduces all sixteen allowed
+    hosts, `debug` from the hostname test, and `import_log_dir = ${OPUS_LOG_DIR}` — value for
+    value what the echoed Python file produced. `OPUS_CONFIG=tests/fixtures/opus_ci.toml
+    python manage.py check` reports the same single pre-existing `urls.W005` PR-05 recorded
+    and nothing else, which also proves `django.setup()` gets through `LOGGING` with that
+    fixture. `tests/opus_app/test_settings.py` imports the settings module in a subprocess
+    against a configuration whose every value is distinct, so a setting wired to the wrong
+    key cannot pass by holding a plausible value.
