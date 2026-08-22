@@ -219,7 +219,7 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 # assigned to PR-17. They are not burned down by the PR that moved the tree
 # here, because reformatting and renaming on that scale is PR-17's work.
 # E722/F403/F405 are absent from these globs deliberately: this tree contains no
-# bare `except:`, and settings.py reads the secrets file through opus_config
+# bare `except:`, and settings.py reads the configuration file through opus_config
 # rather than a star import.
 #
 # The log analyzer carries E501 alone: 153 long lines that PR-17 (which owns

@@ -107,7 +107,7 @@ tar_file_url = "<TAR_FILE_URL>/"
 # the values below.
 log_file_level = "INFO"
 log_console_level = "INFO"
-log_django_level = "WARN"
+log_django_level = "WARNING"
 
 # Log every API call at this level, or false to log none. Optional; the default
 # is false.

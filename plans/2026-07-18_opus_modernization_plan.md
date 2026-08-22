@@ -2133,6 +2133,24 @@ body; never rewrite or delete earlier notes.*
     joined directly to a file name by `cart/views.py`, so they must keep their trailing
     separator, which `Path` would strip; the loader therefore stores every value verbatim and
     neither normalizes nor validates the separator (the template says it in capitals).
+    `OpusConfig.source`, which is not a setting, is the one `Path` in the tree.
+  - **A fifth departure, this one resolving a conflict inside the plan.** §3 says
+    `settings.py` reads "DATABASES — with `ENGINE` selected from `DB_BRAND`", while §1's
+    decisions table says only that `DB_BRAND` stays "everywhere it is threaded today", a
+    list that did not include `settings.py` (PR-05 left `ENGINE` hardcoded with a comment
+    handing it to this PR). §3 wins, because the alternative is a silent split brain: a file
+    saying `brand = "PostgreSQL"` would validate, send the import pipeline to PostgreSQL and
+    leave the web application on MySQL. `settings.py` therefore maps the brand through a
+    two-entry `_DB_ENGINES` dict. Only MySQL is implemented, so its PostgreSQL entry is the
+    same kind of placeholder as `importdb/postgresql.py`; adding a brand to
+    `DATABASE_BRANDS` without adding it there is a `KeyError` at startup, which is the loud
+    failure this is for.
+  - **`WARN` is not an accepted level name.** The `[django]` level keys take the five
+    canonical `logging` names (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`); the
+    deprecated `WARN` alias the secrets files used is refused, and both generators write
+    `WARNING`. The reason is `log_api_calls`: it reaches `getattr(log, value.lower())` in
+    `app_utils`, and `Logger.warn` was **removed in Python 3.13**, which the 3.13 CI leg
+    would have hit. Since no `opus.toml` predates this PR, nothing had to be migrated.
   - **`OPUS_CONFIG` may be a relative path**, resolved against the process's working
     directory. This is deliberate and load-bearing: the CI jobs set
     `OPUS_CONFIG=tests/fixtures/opus_ci.toml`. It is the one place the new variable is
@@ -2143,9 +2161,12 @@ body; never rewrite or delete earlier notes.*
     unknown key in a table, an unknown top-level table or key, and a table name bound to a
     non-table are all refused. Two consequences worth knowing: a boolean passed where a
     number belongs is rejected (Python counts `True` as an `int`), and **brand and level names are
-    matched without regard to case and stored in the canonical spelling** — the test
-    generator's historic `'MySql'` reaches `get_db()` as `'MySQL'`, which is behavior-neutral
-    because `get_db` uppercases its argument.
+    matched without regard to case and stored in the canonical spelling** — a brand
+    written `'MySql'`, as the test generator used to write it, reaches `get_db()` as
+    `'MySQL'`, which is behavior-neutral because `get_db` uppercases its argument. A file
+    that is not valid UTF-8 is a `ConfigError` too: `tomllib` decodes the bytes itself, so
+    it fails with `UnicodeDecodeError` rather than `TOMLDecodeError`, and the loader catches
+    both.
   - **Three types later PRs must not "simplify".** `django.log_api_calls` is `bool | str`
     because `app_utils` tests it for truth and then calls `getattr(log, value.lower())`, so
     the schema allows `false` or a level name. `django.fake_api_delays` is `int | None` and
@@ -2155,7 +2176,8 @@ body; never rewrite or delete earlier notes.*
   - **`get_git_version()` no longer runs git, and takes no parameters.** It returns
     `importlib.metadata.version('rms-opus')`; its `force_valid`/`use_tag` parameters are gone
     because neither "fall back to random bits" nor "prefer the tag" means anything for a
-    version read from package metadata, and the three call sites are updated.
+    version read from package metadata; the two call sites that passed them are updated
+    (`ui/views.py` already called it bare).
     `os`/`subprocess` left `apps/tools/app_utils.py` with it. **Behavior change worth
     knowing:** the About page and the `?version=` cache-busting suffix now carry the
     distribution version, which changes only when a release is installed, where the old code
@@ -2166,9 +2188,11 @@ body; never rewrite or delete earlier notes.*
     `<p><small>OPUS version`.
   - **`tests/fixtures/opus_ci.toml` is the standing configuration for GitHub-hosted jobs**
     (PR-14's mypy/django-stubs, PR-18's pytest-django collection, PR-21's Sphinx autodoc).
-    Every path in it is **directly under `/tmp`**, deliberately: Django's `LOGGING` opens a
-    `RotatingFileHandler` on `paths.opus_log_file` during `django.setup()`, so a path in a
-    subdirectory would make every such job create the directory first. `paths.static_root`
+    Every path a job actually **opens** is directly under `/tmp`, deliberately: Django's
+    `LOGGING` opens a `RotatingFileHandler` on `paths.opus_log_file` during
+    `django.setup()`, so a path in a subdirectory would make every such job create the
+    directory first. The holdings roots and `opus_static_root` sit under `/tmp/opus_ci/`
+    because nothing ever opens them. `paths.static_root`
     and `django.fake_api_delays` are absent, which keeps the file a working example of a
     configuration that omits its optional keys. `OPUS_CONFIG=tests/fixtures/opus_ci.toml` is
     set at the **workflow level** of `run-tests.yml`, so jobs added later inherit it, and as
@@ -2199,6 +2223,18 @@ body; never rewrite or delete earlier notes.*
     though `app_utils` stopped importing `subprocess` — their only remaining hits are in
     Django's vendored `src/opus_app/static/admin/js/compress.py`, which ruff excludes but
     bandit still scans. `.gitignore` ignores `opus.toml` where it ignored `opus_secrets.py`.
+  - **One-time step on every deployed checkout, before the next deploy.**
+    `deploy_new_code_only.sh` reuses the checkout's existing configuration file and aborts on
+    any untracked file (its `git status --porcelain` guard). A live checkout has an
+    `opus_secrets.py`, which `.gitignore` no longer covers, and no `opus.toml` — so the
+    operator must write `opus.toml` from `opus.toml.template` and delete `opus_secrets.py`
+    before running that script again. `deploy_new_code_and_database.sh` and the full-import
+    chain need nothing, because they write the file themselves. **PR-22 owns making this
+    automatic.**
+  - **Both generators interpolate the password and the secret key into TOML *basic*
+    strings**, where `"` ends the string and `\` escapes: the same hazard the single-quoted
+    Python strings had, neither better nor worse, except that TOML fails loudly on an unknown
+    escape where Python was silent. Recorded so a later reader does not rediscover it as new.
   - **PR-07 residue cleared:** the stale line-3 comment in
     `scripts/models/create_opus_models.sh` is deleted. Nothing else in that script changed.
   - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 937 passed,

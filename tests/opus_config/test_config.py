@@ -176,7 +176,7 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
     ('paths.static_root', None),
     ('django.log_file_level', 'INFO'),
     ('django.log_console_level', 'INFO'),
-    ('django.log_django_level', 'WARN'),
+    ('django.log_django_level', 'WARNING'),
     ('django.log_api_calls', False),
     ('django.fake_api_delays', None),
     ('django.fake_error404_probability', 0.),
@@ -309,6 +309,18 @@ def test_load_config_rejects_invalid_toml(
     """A file that is not TOML at all is refused as such, not as a missing table."""
     with pytest.raises(ConfigError, match='is not a valid TOML file'):
         load_config(write_config('[database\nhost = localhost\n'))
+
+
+def test_load_config_rejects_a_file_that_is_not_utf8(tmp_path: Path) -> None:
+    """A file in the wrong encoding is refused as an unreadable file, not as a crash.
+
+    ``tomllib`` decodes the bytes itself, so this arrives as a `UnicodeDecodeError` rather
+    than the decode error TOML parsing raises.
+    """
+    path = tmp_path / 'opus.toml'
+    path.write_bytes(b'[database]\nhost = "\xff"\n')
+    with pytest.raises(ConfigError, match='is not a valid TOML file'):
+        load_config(path)
 
 
 def test_load_config_reports_a_missing_file(tmp_path: Path) -> None:

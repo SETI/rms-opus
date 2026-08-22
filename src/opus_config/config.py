@@ -65,7 +65,9 @@ OPUS_CONFIG_ENV_VAR = 'OPUS_CONFIG'
 DATABASE_BRANDS = ('MySQL', 'PostgreSQL')
 
 #: Logging levels the ``[django]`` level keys accept, as `logging` spells them.
-LOG_LEVELS = ('DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR', 'CRITICAL')
+#: `logging`'s deprecated ``WARN`` alias is deliberately absent: `log_api_calls`
+#: reaches `getattr` on a logger, and ``Logger.warn`` was removed in Python 3.13.
+LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
 
 #: Names of the tables a configuration file must contain, in file order.
 TABLE_NAMES = ('database', 'paths', 'django', 'import')
@@ -549,7 +551,7 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
         log_console_level=table.read_choice('log_console_level', LOG_LEVELS,
                                             default='INFO'),
         log_django_level=table.read_choice('log_django_level', LOG_LEVELS,
-                                           default='WARN'),
+                                           default='WARNING'),
         log_api_calls=table.read_bool_or_choice('log_api_calls', LOG_LEVELS,
                                                 default=False),
         fake_api_delays=table.read_optional_int('fake_api_delays'),
@@ -623,9 +625,9 @@ def load_config(path: Path | str) -> OpusConfig:
         The configuration the file describes.
 
     Raises:
-        ConfigError: If the file cannot be read, is not valid TOML, or does not match
-            the schema. The message names the file and, where one key is at fault,
-            the table and key.
+        ConfigError: If the file cannot be read, is not valid UTF-8, is not valid
+            TOML, or does not match the schema. The message names the file and, where
+            one key is at fault, the table and key.
     """
     source = Path(path)
     try:
@@ -634,7 +636,9 @@ def load_config(path: Path | str) -> OpusConfig:
     except OSError as err:
         raise ConfigError(f'Cannot read the OPUS configuration file {source}: '
                           f'{err.strerror}') from err
-    except tomllib.TOMLDecodeError as err:
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as err:
+        # tomllib decodes the bytes itself, so a file in the wrong encoding fails
+        # here too rather than reaching the caller as a UnicodeDecodeError.
         raise ConfigError(f'{source} is not a valid TOML file: {err}') from err
 
     tables = _read_tables(source, raw)

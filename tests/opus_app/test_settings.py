@@ -165,6 +165,25 @@ def test_allowed_hosts_is_a_list(loaded_settings: dict[str, object]) -> None:
     assert isinstance(loaded_settings['ALLOWED_HOSTS'], list)
 
 
+@pytest.mark.parametrize(('brand', 'engine'), [
+    ('MySQL', 'django.db.backends.mysql'),
+    ('PostgreSQL', 'django.db.backends.postgresql'),
+])
+def test_database_engine_follows_the_configured_brand(tmp_path: Path, brand: str,
+                                                      engine: str) -> None:
+    """The engine is selected from the brand the import pipeline reads from too.
+
+    Were it hardcoded, a configuration naming one brand would drive the import pipeline
+    and the web application at two different databases without saying so.
+    """
+    path = tmp_path / 'opus.toml'
+    path.write_text(DISTINCT_CONFIG.replace('brand = "MySQL"', f'brand = "{brand}"'))
+    result = _import_settings(path, tmp_path, 'DATABASES')
+    assert result.returncode == 0, result.stderr
+    databases: dict[str, dict[str, str]] = json.loads(result.stdout)['DATABASES']
+    assert databases['default']['ENGINE'] == engine
+
+
 def test_settings_omit_static_root_when_the_file_does(tmp_path: Path) -> None:
     """A configuration without static_root leaves Django's own default in place.
 

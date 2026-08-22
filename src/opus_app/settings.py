@@ -49,8 +49,9 @@ ALLOWED_HOSTS = list(_config.django.allowed_hosts)
 # development or test installation. None is Django's own default.
 STATIC_ROOT = _config.paths.static_root
 
-# Database. (The engine is hardcoded to MySQL, the only implemented brand; the
-# import pipeline threads database.brand through to its own backend selection.)
+# Database. The engine follows the configured brand (see _DB_ENGINES below), so
+# the web application and the import pipeline cannot disagree about which
+# database they are talking to.
 DB_HOST_NAME = _config.database.host
 DB_SCHEMA_NAME = _config.database.schema
 DB_USER = _config.database.user
@@ -336,11 +337,20 @@ LOGGING = {
 
 os.environ['REUSE_DB'] = "1"  # for test runner
 
+# Only MySQL is implemented; the PostgreSQL entry is the same placeholder as
+# opus_import.importdb.postgresql, kept so that adding the backend is a
+# configuration change rather than a settings change. The loader accepts no other
+# brand, so this lookup cannot fail for a valid configuration.
+_DB_ENGINES = {
+    'MySQL': 'django.db.backends.mysql',
+    'PostgreSQL': 'django.db.backends.postgresql',
+}
+
 DATABASES = {
     'default': {
         'NAME': DB_SCHEMA_NAME,  # local database name
         'HOST': DB_HOST_NAME,
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': _DB_ENGINES[_config.database.brand],
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
