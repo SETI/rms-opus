@@ -1,6 +1,5 @@
 #!/bin/sh
 # Run from the repository root, against a fully imported database.
-# PR-07 rewrites this to emit the split models package.
 rm -f /tmp/_*models.py
 python manage.py inspectdb > /tmp/_models.py
 if [ `grep Cache /tmp/_models.py | wc -l` -ne 0 ]
