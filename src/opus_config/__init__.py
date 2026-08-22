@@ -5,12 +5,41 @@ so the loader lives in its own tiny package. This package is also where setuptoo
 writes the distribution's `_version.py`; every other package in the distribution reads
 its version through `importlib.metadata.version("rms-opus")`.
 
-Configuration itself is read through `opus_config._secrets_compat`, which is private:
-the package exports nothing, and callers import the loader from that module directly.
+An installation is described by one TOML file, found through the ``OPUS_CONFIG``
+environment variable. `get_config` reads it once per process and returns an
+`OpusConfig`; `load_config` reads a file named directly, which is what a test does.
+The schema, and the errors an invalid file produces, are documented in
+`opus_config.config`.
 """
 
-# `_secrets_compat` is scaffolding. It is replaced wholesale when this package grows
-# its TOML loader (`OPUS_CONFIG`, frozen dataclasses, explicit validation), whose
-# frozen section objects then become the public surface here, so nothing outside the
-# package should grow a dependency on the shim beyond reading settings from it.
-__all__: list[str] = []
+from opus_config.config import (
+    DATABASE_BRANDS,
+    LOG_LEVELS,
+    OPUS_CONFIG_ENV_VAR,
+    TABLE_NAMES,
+    ConfigError,
+    DatabaseConfig,
+    DjangoConfig,
+    ImportConfig,
+    OpusConfig,
+    PathsConfig,
+    config_path,
+    get_config,
+    load_config,
+)
+
+__all__ = [
+    'DATABASE_BRANDS',
+    'LOG_LEVELS',
+    'OPUS_CONFIG_ENV_VAR',
+    'TABLE_NAMES',
+    'ConfigError',
+    'DatabaseConfig',
+    'DjangoConfig',
+    'ImportConfig',
+    'OpusConfig',
+    'PathsConfig',
+    'config_path',
+    'get_config',
+    'load_config',
+]

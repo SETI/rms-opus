@@ -1,0 +1,52 @@
+# The standing OPUS configuration for GitHub-hosted CI jobs, which have neither
+# PDS holdings nor a populated database. Every job that imports opus_app.settings
+# or the import pipeline exports OPUS_CONFIG=tests/fixtures/opus_ci.toml.
+#
+# The credentials below are dummies: nothing in this configuration is ever
+# connected to. The paths are all directly under /tmp, which exists on every
+# runner, so no job has to create a directory before Django's logging
+# configuration opens its log file.
+#
+# The optional keys (paths.static_root, django.fake_api_delays) are deliberately
+# left out: collectstatic never runs here, no API call is delayed, and their
+# absence keeps this file a working example of a configuration that omits them.
+
+[database]
+brand = "MySQL"
+host = "localhost"
+database = ""
+schema = "opus_ci_db"
+user = "opus_ci_user"
+password = "opus_ci_password"
+
+[paths]
+pds3_holdings = "/tmp/opus_ci/holdings"
+pds4_holdings = "/tmp/opus_ci/pds4-holdings"
+opus_log_file = "/tmp/opus_ci_opus_log.txt"
+import_log_dir = "/tmp"
+tar_dir = "/tmp/"
+manifest_dir = "/tmp/"
+last_blog_update_file = "/tmp/opus_ci_last_update.txt"
+notification_file = "/tmp/opus_ci_notification.html"
+opus_static_root = "/tmp/opus_ci/static_media"
+
+[django]
+secret_key = "opus-ci-not-a-real-secret-key"
+debug = false
+allowed_hosts = ["127.0.0.1", "localhost", "testserver"]
+cache_server_prefix = "opus_ci"
+public_url = "https://opus.pds-rings.seti.org/"
+product_http_path = "https://opus.pds-rings.seti.org/"
+viewmaster_url = "https://pds-rings.seti.org/"
+tar_file_url = "https://bad-host.org/"
+log_file_level = "INFO"
+log_console_level = "INFO"
+log_django_level = "WARN"
+log_api_calls = false
+fake_error404_probability = 0.0
+fake_error500_probability = 0.0
+
+[import]
+table_temp_prefix = "imp_"
+log_file = "/tmp/opus_ci_import.log"
+debug_log_file = "/tmp/opus_ci_import_debug.log"
