@@ -6,12 +6,11 @@
 
 import csv
 import datetime
+import importlib.metadata
 import json
 import logging
-import os
 import random
 import string
-import subprocess
 import time
 
 from django.conf import settings
@@ -173,41 +172,23 @@ def get_mult_name(param_qualified_name):
     """Returns mult widget foreign key table name."""
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
 
-def get_git_version(force_valid=False, use_tag=False):
-    curcwd = os.getcwd()
-    commit_id = 'Unknown'
-    tag = None
+def get_git_version():
+    """Return the version of the OPUS distribution this site is running.
 
-    try:
-        os.chdir(settings.RMS_OPUS_PATH)
-        # decode here to convert byte object to string
-        commit_id = (subprocess.check_output(['git', 'log', '--format=%H',
-                                              '-n', '1'])
-                     .strip().decode('utf8'))
-    except Exception: # pragma: no cover - system bug
-        log.warning('Unable to get the latest git commit id')
-        if not force_valid:
-            commit_id = str(random.getrandbits(128))
+    It identifies the deployed code on the About page and is the cache-busting
+    suffix on every static asset URL, so it changes exactly when a new release is
+    installed.
 
-    if use_tag: # pragma: no cover - only False when retrieving main site
-        try:
-            # decode here to convert byte object to string
-            tag = (subprocess.check_output(['git', 'tag', '--points-at', 'HEAD'])
-                   .strip().decode('utf8'))
-            if '\n' in tag: # pragma: no cover - system-specific
-                tag = tag[:tag.index('\n')]
-        except Exception:
-            log.warning('Unable to get the current git tag')
+    Returns:
+        The version of the installed ``rms-opus`` distribution, for example
+        ``3.23.0``.
 
-    if tag: # pragma: no cover - depends on current git context
-        if tag.startswith('v'):
-            tag = tag[1:]
-        ret = tag
-    else: # pragma: no cover
-        ret = commit_id
-
-    os.chdir(curcwd)
-    return ret
+    Raises:
+        importlib.metadata.PackageNotFoundError: If ``rms-opus`` is not installed,
+            which means the site is being run from a source tree that was never
+            installed and cannot serve static assets either.
+    """
+    return importlib.metadata.version('rms-opus')
 
 def cols_to_slug_list(slugs):
     if not slugs:

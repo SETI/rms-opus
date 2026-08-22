@@ -17,7 +17,7 @@ nohup.out
 !scripts/*
 test_out*
 coverage_out*
-opus_secrets.py
+opus.toml
 
 migrations/
 

@@ -21,7 +21,7 @@ import pdsfile
 import pdsparser
 import pdstable
 
-from opus_config._secrets_compat import load_secrets
+from opus_config import get_config
 from opus_import import config_data, config_targets, impglobals, instruments
 
 # Data that ships inside the package, located through importlib.resources rather than
@@ -409,7 +409,7 @@ def table_schema_files(pattern):
                   key=lambda entry: entry.name)
 
 def read_schema_for_table(table_name, replace=None):
-    table_name = table_name.replace(load_secrets().IMPORT_TABLE_TEMP_PREFIX, '').lower()
+    table_name = table_name.replace(get_config().import_.table_temp_prefix, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
         assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')

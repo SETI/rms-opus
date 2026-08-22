@@ -18,7 +18,7 @@ import warnings
 import pdslogger
 from pdsfile import Pds3File, Pds4File
 
-from opus_config._secrets_compat import load_secrets
+from opus_config import get_config
 from opus_import import impglobals, import_util, importdb
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.steps import (
@@ -60,15 +60,17 @@ def _create_argument_parser():
     )
     parser.add_argument(
         '--override-db-schema', type=str, default=None,
-        help='Override the db_schema specified in opus_secrets.py'
+        help='Override the database schema specified in the configuration file'
     )
     parser.add_argument(
         '--override-pds3-data-dir', type=str, default=None,
-        help='Override the PDS3_DATA_DIR specified in opus_secrets.py (.../holdings)'
+        help='Override the PDS3 holdings directory specified in the configuration '
+             'file (.../holdings)'
     )
     parser.add_argument(
         '--override-pds4-data-dir', type=str, default=None,
-        help='Override the PDS4_DATA_DIR specified in opus_secrets.py (.../pds4-holdings)'
+        help='Override the PDS4 holdings directory specified in the configuration '
+             'file (.../pds4-holdings)'
     )
     parser.add_argument(
         '--dont-use-shelves-only', action='store_true', default=False,
@@ -320,8 +322,8 @@ def main():
 
     Every step is driven by its own option; ``--do-it-all`` and its siblings simply turn
     several of them on. The database connection, the holdings directories and the log
-    file locations come from the ``opus_secrets.py`` file located by `load_secrets`,
-    which is read only once the arguments parse, so ``--help`` works without one.
+    file locations come from the configuration file named by ``OPUS_CONFIG``, which is
+    read only once the arguments parse, so ``--help`` works without one.
 
     Raises:
         SystemExit: With a non-zero status if the arguments are contradictory or any
@@ -371,15 +373,15 @@ def main():
     ################################################################################
 
     # Reading the settings is deferred until the arguments have parsed so that --help
-    # works without an opus_secrets.py.
-    secrets = load_secrets()
+    # works without a configuration file.
+    config = get_config()
 
     impglobals.LOGGER = pdslogger.PdsLogger(LOGNAME,
                 limits={'info': impglobals.ARGUMENTS.log_info_limit,
                         'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-    info_logfile = os.path.abspath(secrets.IMPORT_LOG_FILE)
-    debug_logfile = os.path.abspath(secrets.IMPORT_DEBUG_LOG_FILE)
+    info_logfile = os.path.abspath(config.import_.log_file)
+    debug_logfile = os.path.abspath(config.import_.debug_log_file)
 
     info_handler = pdslogger.file_handler(info_logfile, level=logging.INFO,
                                           rotation='ymdhms')
@@ -390,10 +392,10 @@ def main():
     impglobals.LOGGER.add_handler(debug_handler)
     impglobals.LOGGER.add_handler(pdslogger.stdout_handler)
 
-    handler = pdslogger.warning_handler(secrets.IMPORT_LOGFILE_DIR, rotation='none')
+    handler = pdslogger.warning_handler(config.paths.import_log_dir, rotation='none')
     impglobals.LOGGER.add_handler(handler)
 
-    handler = pdslogger.error_handler(secrets.IMPORT_LOGFILE_DIR, rotation='none')
+    handler = pdslogger.error_handler(config.paths.import_log_dir, rotation='none')
     impglobals.LOGGER.add_handler(handler)
 
     impglobals.PYTHON_WARNING_LIST = []
@@ -412,7 +414,7 @@ def main():
             '--drop-permanent-tables and --scorched-earth must be used together')
         sys.exit(-1)
 
-    our_schema_name = secrets.DB_SCHEMA_NAME
+    our_schema_name = config.database.schema
     if impglobals.ARGUMENTS.override_db_schema:
         our_schema_name = impglobals.ARGUMENTS.override_db_schema
 
@@ -437,11 +439,11 @@ def main():
         if impglobals.ARGUMENTS.override_pds3_data_dir:
             Pds3File.preload(impglobals.ARGUMENTS.override_pds3_data_dir)
         else:
-            Pds3File.preload(secrets.PDS3_DATA_DIR)
+            Pds3File.preload(config.paths.pds3_holdings)
         if impglobals.ARGUMENTS.override_pds4_data_dir:
             Pds4File.preload(impglobals.ARGUMENTS.override_pds4_data_dir)
         else:
-            Pds4File.preload(secrets.PDS4_DATA_DIR)
+            Pds4File.preload(config.paths.pds4_holdings)
 
         # We do this after the preload because we don't want to see all the preload
         # debug messages.
@@ -451,12 +453,12 @@ def main():
 
         try:
             impglobals.DATABASE = importdb.get_db(
-                                       secrets.DB_BRAND, secrets.DB_HOST_NAME,
-                                       secrets.DB_DATABASE_NAME, our_schema_name,
-                                       secrets.DB_USER, secrets.DB_PASSWORD,
+                                       config.database.brand, config.database.host,
+                                       config.database.database, our_schema_name,
+                                       config.database.user, config.database.password,
                                        mult_form_types=GROUP_FORM_TYPES,
                                        logger=impglobals.LOGGER,
-                                       import_prefix=secrets.IMPORT_TABLE_TEMP_PREFIX,
+                                       import_prefix=config.import_.table_temp_prefix,
                                        read_only=impglobals.ARGUMENTS.read_only)
         except importdb.ImportDBException:
             sys.exit(-1)

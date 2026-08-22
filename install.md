@@ -50,14 +50,19 @@
 
         pip install -e .
 
-6. Edit the opus_secrets.py file
+6. Write the opus.toml configuration file
 
   - Copy the template:
 
         cd <RMS-OPUS DIRECTORY>
-        cp opus_secrets_template.py opus_secrets.py
+        cp opus.toml.template opus.toml
 
-    Update opus_secrets.py as needed for your system.
+    Update opus.toml as needed for your system, then point OPUS at it. OPUS has
+    no default location for the file, so OPUS_CONFIG must be set in the
+    environment of every OPUS process (the web server, `manage.py`, and the
+    import pipeline):
+
+        export OPUS_CONFIG=<RMS-OPUS DIRECTORY>/opus.toml
 
 7. Make the logs directory
 

@@ -68,7 +68,7 @@ def api_about(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    git_id = get_git_version(True, True)
+    git_id = get_git_version()
     database_schema = settings.DB_SCHEMA_NAME
     database_host = settings.DB_HOST_NAME
     hostname = platform.node()
@@ -269,7 +269,7 @@ def api_api_guide(request, fmt):
 
     uri = HttpRequest.build_absolute_uri(request)
     prefix = '/'.join(uri.split('/')[:3])
-    git_id = get_git_version(True, True)
+    git_id = get_git_version()
     current_date = datetime.datetime.today().strftime('%d-%B-%Y')
 
     path = os.path.dirname(os.path.abspath(__file__))
