@@ -2148,9 +2148,19 @@ body; never rewrite or delete earlier notes.*
   - **`WARN` is not an accepted level name.** The `[django]` level keys take the five
     canonical `logging` names (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`); the
     deprecated `WARN` alias the secrets files used is refused, and both generators write
-    `WARNING`. The reason is `log_api_calls`: it reaches `getattr(log, value.lower())` in
-    `app_utils`, and `Logger.warn` was **removed in Python 3.13**, which the 3.13 CI leg
-    would have hit. Since no `opus.toml` predates this PR, nothing had to be migrated.
+    `WARNING`. **Correction, and a warning about this note's earlier wording:** it first
+    claimed `Logger.warn` was *removed* in Python 3.13 and that the 3.13 CI leg would have
+    hit it. That is **false** — CodeRabbit disproved it on the PR, and it was then measured
+    directly: `logging.Logger.warn` exists on 3.13.15 and on 3.14.5, where it emits
+    `DeprecationWarning: The 'warn' method is deprecated, use 'warning' instead`. The
+    narrowing stands on the deprecation alone, which is a smaller but real reason:
+    `log_api_calls` reaches `getattr(log, value.lower())` in `app_utils`, so its value names
+    a method directly, the unit suite runs under `filterwarnings = ["error"]` so any test
+    logging through the alias fails, and a deprecated name resolved by `getattr` is the kind
+    of thing that breaks quietly at a later upgrade. Since no `opus.toml` predates this PR,
+    nothing had to be migrated. **Two adversarial passes read this claim without checking
+    it; a later PR should treat "removed in version X" assertions here as unverified until
+    measured.**
   - **`OPUS_CONFIG` may be a relative path**, resolved against the process's working
     directory. This is deliberate and load-bearing: the CI jobs set
     `OPUS_CONFIG=tests/fixtures/opus_ci.toml`. It is the one place the new variable is
@@ -2231,11 +2241,16 @@ body; never rewrite or delete earlier notes.*
     before running that script again. `deploy_new_code_and_database.sh` and the full-import
     chain need nothing, because they write the file themselves. **PR-22 owns making this
     automatic.**
-  - **Both generators interpolate the password — and the deploy generator the secret key —
-    into TOML *basic* strings**, where `"` ends the string and `\` escapes: the same hazard
-    the single-quoted Python strings had, except that TOML fails loudly on an unknown escape
-    where Python only warns. (The test generator's secret key is the literal `fred`.)
-    Recorded so a later reader does not rediscover it as new.
+  - **Both generators escape every value they interpolate**, through a `toml_escape`
+    shell function that backslash-escapes `\` and `"` — the two characters a TOML basic
+    string gives meaning to. Without it a password or a path containing either produced a
+    file that does not parse, which the single-quoted Python secrets file was equally prone
+    to. Verified by rendering both heredocs with a password of `pa"ss\word` and a secret key
+    of `se"cret\key` and loading the result: both round-trip exactly, and benign values are
+    byte-identical to the unescaped output. **Both generators also `chmod 600 opus.toml`**,
+    because the file holds the database password and the Django secret key and would
+    otherwise take the caller's umask; the deploy generator is `source`d, so it must not set
+    a umask of its own.
   - **PR-07 residue cleared:** the stale line-3 comment in
     `scripts/models/create_opus_models.sh` is deleted. Nothing else in that script changed.
   - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 940 passed,

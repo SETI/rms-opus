@@ -47,29 +47,36 @@ fi
 # On a deployed server collectstatic gathers the static files into
 # ${OPUS_DIR}/static_media, which is unrelated to the in-repo source directory
 # (src/opus_app/static), and both static_root and opus_static_root point there.
+# Every value below is interpolated into a TOML basic string, where a backslash
+# escapes and a double quote ends the string, so a password or a path containing
+# either would otherwise produce a file that does not parse.
+toml_escape() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
 cat > opus.toml <<EOF
 [database]
 brand = "MySQL"
 host = "localhost"
 database = ""
-schema = "${OPUS_DB_NAME}"
-user = "${OPUS_DB_USER}"
-password = "${OPUS_DB_PASSWORD}"
+schema = "$(toml_escape "${OPUS_DB_NAME}")"
+user = "$(toml_escape "${OPUS_DB_USER}")"
+password = "$(toml_escape "${OPUS_DB_PASSWORD}")"
 
 [paths]
-pds3_holdings = "${PDS3_HOLDINGS_DIR}"
-pds4_holdings = "${PDS4_HOLDINGS_DIR}"
-opus_log_file = "${OPUS_LOG_DIR}/opus_logs/opus_log.txt"
-import_log_dir = "${OPUS_LOG_DIR}"
-tar_dir = "${OPUS_DIR}/downloads/"
-manifest_dir = "${OPUS_DIR}/manifests/"
-last_blog_update_file = "${LAST_BLOG_UPDATE_FILE}"
-notification_file = "${NOTIFICATION_FILE}"
-static_root = "${OPUS_DIR}/static_media"
-opus_static_root = "${OPUS_DIR}/static_media"
+pds3_holdings = "$(toml_escape "${PDS3_HOLDINGS_DIR}")"
+pds4_holdings = "$(toml_escape "${PDS4_HOLDINGS_DIR}")"
+opus_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_logs/opus_log.txt"
+import_log_dir = "$(toml_escape "${OPUS_LOG_DIR}")"
+tar_dir = "$(toml_escape "${OPUS_DIR}")/downloads/"
+manifest_dir = "$(toml_escape "${OPUS_DIR}")/manifests/"
+last_blog_update_file = "$(toml_escape "${LAST_BLOG_UPDATE_FILE}")"
+notification_file = "$(toml_escape "${NOTIFICATION_FILE}")"
+static_root = "$(toml_escape "${OPUS_DIR}")/static_media"
+opus_static_root = "$(toml_escape "${OPUS_DIR}")/static_media"
 
 [django]
-secret_key = "${OPUS_SECRET_KEY}"
+secret_key = "$(toml_escape "${OPUS_SECRET_KEY}")"
 debug = ${OPUS_DEBUG}
 allowed_hosts = [
     "127.0.0.1", "localhost",
@@ -79,10 +86,10 @@ allowed_hosts = [
     "opus.pds-rings.seti.org", "104.244.248.40", "opus.pds.seti.org", "10.1.10.40",
 ]
 cache_server_prefix = "production"
-public_url = "${OPUS_PUBLIC_URL}"
-product_http_path = "${OPUS_PRODUCT_HTTP_PATH}"
-viewmaster_url = "${OPUS_VIEWMASTER_URL}"
-tar_file_url = "${OPUS_TAR_FILE_URL}"
+public_url = "$(toml_escape "${OPUS_PUBLIC_URL}")"
+product_http_path = "$(toml_escape "${OPUS_PRODUCT_HTTP_PATH}")"
+viewmaster_url = "$(toml_escape "${OPUS_VIEWMASTER_URL}")"
+tar_file_url = "$(toml_escape "${OPUS_TAR_FILE_URL}")"
 log_file_level = "INFO"
 log_console_level = "INFO"
 log_django_level = "WARNING"
@@ -92,9 +99,12 @@ fake_error500_probability = 0.0
 
 [import]
 table_temp_prefix = "imp_"
-log_file = "${OPUS_LOG_DIR}/opus_import.log"
-debug_log_file = "${OPUS_LOG_DIR}/opus_import_debug.log"
+log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_import.log"
+debug_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_import_debug.log"
 EOF
+
+# The file holds the database password, so it must not inherit a permissive umask.
+chmod 600 opus.toml
 
 # The import pipeline and the web application are installed packages, so they
 # locate the configuration by this variable instead of by the directory they

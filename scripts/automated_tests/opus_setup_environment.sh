@@ -39,25 +39,32 @@ fi
 # paths.static_root is deliberately absent: collectstatic never runs here, so
 # Django's own default applies. django.fake_api_delays is absent for the same
 # kind of reason: the tests delay nothing.
+# Every value below is interpolated into a TOML basic string, where a backslash
+# escapes and a double quote ends the string, so a password or a path containing
+# either would otherwise produce a file that does not parse.
+toml_escape() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
 cat > opus.toml <<EOF
 [database]
 brand = "MySQL"
 host = "localhost"
 database = ""
-schema = "opus_test_db_${UNIQUE_ID}"
-user = "${OPUS_DB_USER}"
-password = "${OPUS_DB_PASSWORD}"
+schema = "opus_test_db_$(toml_escape "${UNIQUE_ID}")"
+user = "$(toml_escape "${OPUS_DB_USER}")"
+password = "$(toml_escape "${OPUS_DB_PASSWORD}")"
 
 [paths]
-pds3_holdings = "${PDS3_HOLDINGS_DIR}"
-pds4_holdings = "${PDS4_HOLDINGS_DIR}"
-opus_log_file = "${LOG_DIR}/opus_logs/opus_log.txt"
-import_log_dir = "${LOG_DIR}/import_logs"
-tar_dir = "${DOWNLOAD_DIR}/tar/"
-manifest_dir = "${DOWNLOAD_DIR}/manifest/"
-last_blog_update_file = "${DATA_DIR}/last_update.txt"
-notification_file = "${DATA_DIR}/notification.html"
-opus_static_root = "${CWD}/src/opus_app/static"
+pds3_holdings = "$(toml_escape "${PDS3_HOLDINGS_DIR}")"
+pds4_holdings = "$(toml_escape "${PDS4_HOLDINGS_DIR}")"
+opus_log_file = "$(toml_escape "${LOG_DIR}")/opus_logs/opus_log.txt"
+import_log_dir = "$(toml_escape "${LOG_DIR}")/import_logs"
+tar_dir = "$(toml_escape "${DOWNLOAD_DIR}")/tar/"
+manifest_dir = "$(toml_escape "${DOWNLOAD_DIR}")/manifest/"
+last_blog_update_file = "$(toml_escape "${DATA_DIR}")/last_update.txt"
+notification_file = "$(toml_escape "${DATA_DIR}")/notification.html"
+opus_static_root = "$(toml_escape "${CWD}")/src/opus_app/static"
 
 [django]
 secret_key = "fred"
@@ -77,10 +84,14 @@ fake_error500_probability = 0.0
 
 [import]
 table_temp_prefix = "imp_"
-log_file = "${LOG_DIR}/import_logs/opus_import.log"
-debug_log_file = "${LOG_DIR}/import_logs/opus_import_debug.log"
+log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import.log"
+debug_log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import_debug.log"
 EOF
 if [ $? -ne 0 ]; then exit -1; fi
+
+# The file holds the database password, so it must not inherit a permissive umask.
+chmod 600 opus.toml
+
 
 echo "opus.toml:"
 echo

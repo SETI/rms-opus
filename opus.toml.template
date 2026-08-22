@@ -65,9 +65,9 @@ last_blog_update_file = "<LAST_BLOG_UPDATE_FILE>"
 notification_file = "<NOTIFICATION_FILE>"
 
 # Where `manage.py collectstatic` gathers static files on a production server.
-# Optional: a development installation, which never runs collectstatic, leaves
-# this out and Django's own default applies.
-static_root = "<STATIC_ROOT>"
+# Optional, and commented out because a development installation never runs
+# collectstatic and wants Django's own default. Uncomment it on a server.
+# static_root = "<STATIC_ROOT>"
 
 # Where static files are served from. On a production server this is the same
 # directory as static_root; in a development installation it is usually

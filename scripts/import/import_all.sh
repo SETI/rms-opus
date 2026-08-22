@@ -2,6 +2,10 @@
 #
 # Run this from the root of the repository, with rms-opus installed in the active
 # environment, with OPUS_CONFIG naming the OPUS configuration file.
+# The import runs under nohup, so a missing configuration would otherwise surface
+# in nohup.out after the operator has already confirmed the erase.
+: "${OPUS_CONFIG:?OPUS_CONFIG must name the OPUS configuration file}"
+
 if [ $# -lt 2 ];
 then
     echo 'Usage: scripts/import/import_all.sh <production_database_name> "-u<username> -p<password> -h <hostname>" <other_params>'
