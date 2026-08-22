@@ -2231,13 +2231,14 @@ body; never rewrite or delete earlier notes.*
     before running that script again. `deploy_new_code_and_database.sh` and the full-import
     chain need nothing, because they write the file themselves. **PR-22 owns making this
     automatic.**
-  - **Both generators interpolate the password and the secret key into TOML *basic*
-    strings**, where `"` ends the string and `\` escapes: the same hazard the single-quoted
-    Python strings had, neither better nor worse, except that TOML fails loudly on an unknown
-    escape where Python was silent. Recorded so a later reader does not rediscover it as new.
+  - **Both generators interpolate the password — and the deploy generator the secret key —
+    into TOML *basic* strings**, where `"` ends the string and `\` escapes: the same hazard
+    the single-quoted Python strings had, except that TOML fails loudly on an unknown escape
+    where Python only warns. (The test generator's secret key is the literal `fred`.)
+    Recorded so a later reader does not rediscover it as new.
   - **PR-07 residue cleared:** the stale line-3 comment in
     `scripts/models/create_opus_models.sh` is deleted. Nothing else in that script changed.
-  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 937 passed,
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 940 passed,
     pyroma 10/10, bandit, vulture, pymarkdown). Both generators were checked by rendering
     their `opus.toml` heredoc with representative variables and loading the result: the test
     generator reproduces `opus_test_db_<id>`, an absent `static_root` and

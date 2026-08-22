@@ -3,9 +3,10 @@
 # or the import pipeline exports OPUS_CONFIG=tests/fixtures/opus_ci.toml.
 #
 # The credentials below are dummies: nothing in this configuration is ever
-# connected to. The paths are all directly under /tmp, which exists on every
-# runner, so no job has to create a directory before Django's logging
-# configuration opens its log file.
+# connected to. Every path a job actually opens is directly under /tmp, which
+# exists on every runner, so no job has to create a directory before Django's
+# logging configuration opens its log file. The holdings roots and
+# opus_static_root sit under /tmp/opus_ci/ because nothing ever opens them.
 #
 # The optional keys (paths.static_root, django.fake_api_delays) are deliberately
 # left out: collectstatic never runs here, no API call is delayed, and their
