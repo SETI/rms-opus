@@ -55,4 +55,4 @@ echo "Import is complete!"
 # echo "Making dev_$1 version of database"
 # echo "CREATE DATABASE dev_$1;" | mysql $2
 # mysql dev_$1 $2 < $sqldump
-# echo "NOTE: You must change opus_secrets.py and then run 'python manage.py migrate' before use"
+# echo "NOTE: You must change opus.toml and then run 'python manage.py migrate' before use"

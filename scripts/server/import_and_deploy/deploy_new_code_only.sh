@@ -21,10 +21,10 @@ source ${IMPORT_SCRIPT_DIR}/_read_opus_secrets.sh
 export OPUS_SRC_DIR=${OPUS_DIR}/src
 export OPUS_DIR_NAME=rms-opus
 
-# This deploy reuses the checkout's existing secrets file rather than writing one; the
-# import pipeline is an installed package now and locates it by this variable instead of
-# by the directory it happens to be invoked from.
-export OPUS_SECRETS=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus_secrets.py
+# This deploy reuses the checkout's existing configuration file rather than writing
+# one. OPUS has no default location for it, so every process this script starts is
+# given its path.
+export OPUS_CONFIG=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml
 
 cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 

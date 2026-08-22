@@ -14,6 +14,14 @@ defaults:
   run:
     shell: bash
 
+env:
+  # OPUS has no default location for its configuration file, so every process
+  # that reads OPUS settings is given one. This dummy configuration (dummy
+  # credentials, paths under /tmp) is what every GitHub-hosted job runs against:
+  # they have neither PDS holdings nor a populated database. The path is relative
+  # to the checkout, which is each job's working directory.
+  OPUS_CONFIG: tests/fixtures/opus_ci.toml
+
 jobs:
   lint:
     name: Run Lint

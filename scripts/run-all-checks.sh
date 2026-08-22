@@ -111,6 +111,15 @@ SCOPE_SPECIFIED=false
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
 : "${OPUS_VULTURE_PATHS:=src integration_tests tests manage.py vulture_whitelist.py}"
 
+# OPUS has no default location for its configuration file, so anything that reads
+# OPUS settings (pytest here, mypy/django-stubs and the Sphinx build later) is
+# given one. The checked-in dummy configuration holds dummy credentials and paths
+# under /tmp; it is relative to PROJECT_ROOT, which every check below runs from.
+# Export an absolute OPUS_CONFIG before invoking this script to check against a
+# real installation's configuration instead.
+: "${OPUS_CONFIG:=tests/fixtures/opus_ci.toml}"
+export OPUS_CONFIG
+
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

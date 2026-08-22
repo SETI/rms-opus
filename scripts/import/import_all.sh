@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Run this from the root of the repository, with rms-opus installed in the active
-# environment. The settings come from $OPUS_SECRETS, or from ./opus_secrets.py.
+# environment, with OPUS_CONFIG naming the OPUS configuration file.
 if [ $# -lt 2 ];
 then
     echo 'Usage: scripts/import/import_all.sh <production_database_name> "-u<username> -p<password> -h <hostname>" <other_params>'
@@ -17,7 +17,7 @@ echo "***** About to import ALL PDS DATA into a new database *****"
 echo "************************************************************"
 echo
 echo "The current production database is:"
-grep "^DB_SCHEMA_NAME" /opus/src/rms-opus/opus_secrets.py
+grep "^schema" /opus/src/rms-opus/opus.toml
 echo
 echo "About to ERASE and import to this database:" $1
 echo "with these SQL parameters:" $2

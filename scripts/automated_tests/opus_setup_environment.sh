@@ -22,7 +22,7 @@ if [ ! -d "$PDS4_HOLDINGS_DIR" ]; then
     exit -1
 fi
 
-# Create the opus_secrets.py file
+# Create the opus.toml configuration file
 
 echo "Ignore any error about pwd here..."
 CWD=`pwd -W` # So Windows bash will return a directory with C:
@@ -36,49 +36,54 @@ fi
 # pip uninstall -y rms-pdsfile
 # pip install -e ./rms-pdsfile
 
-echo "import os" > opus_secrets.py
-if [ $? -ne 0 ]; then exit -1; fi
-echo "DB_BRAND = 'MySql'" >> opus_secrets.py
-echo "DB_HOST_NAME = 'localhost'" >> opus_secrets.py
-echo "DB_DATABASE_NAME = ''" >> opus_secrets.py
-echo "DB_SCHEMA_NAME = 'opus_test_db_${UNIQUE_ID}'" >> opus_secrets.py
-echo "DB_USER = '${OPUS_DB_USER}'" >> opus_secrets.py
-echo "DB_PASSWORD = '${OPUS_DB_PASSWORD}'" >> opus_secrets.py
-echo "PDS3_DATA_DIR = '${PDS3_HOLDINGS_DIR}'" >> opus_secrets.py
-echo "PDS4_DATA_DIR = '${PDS4_HOLDINGS_DIR}'" >> opus_secrets.py
-echo "RMS_OPUS_PATH = '${CWD}'" >> opus_secrets.py
-echo "DEBUG = True" >> opus_secrets.py
-echo "ALLOWED_HOSTS = ('127.0.0.1', 'localhost')" >> opus_secrets.py
-echo "SECRET_KEY = 'fred'" >> opus_secrets.py
-echo "OPUS_STATIC_ROOT = '${CWD}/src/opus_app/static'" >> opus_secrets.py
-echo "CACHE_SERVER_PREFIX = 'staging_test'" >> opus_secrets.py
-echo "TAR_FILE_PATH = '${DOWNLOAD_DIR}/tar/'" >> opus_secrets.py
-echo "MANIFEST_FILE_PATH = '${DOWNLOAD_DIR}/manifest/'" >> opus_secrets.py
-echo "TAR_FILE_URL_PATH = 'https://bad-host.org/'" >> opus_secrets.py
-echo "PUBLIC_OPUS_URL = 'https://opus.pds-rings.seti.org/'" >> opus_secrets.py
-echo "PRODUCT_HTTP_PATH = 'https://opus.pds-rings.seti.org/'" >> opus_secrets.py
-echo "VIEWMASTER_ROOT_PATH = 'https://pds-rings.seti.org/'" >> opus_secrets.py
-echo "OPUS_LOGFILE_DIR = '${LOG_DIR}/opus_logs'" >> opus_secrets.py
-echo "OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')" >> opus_secrets.py
-echo "OPUS_LAST_BLOG_UPDATE_FILE = '${DATA_DIR}/last_update.txt'" >> opus_secrets.py
-echo "OPUS_NOTIFICATION_FILE = '${DATA_DIR}/notification.html'" >> opus_secrets.py
-echo "OPUS_LOG_FILE_LEVEL = 'INFO'" >> opus_secrets.py
-echo "OPUS_LOG_CONSOLE_LEVEL = 'INFO'" >> opus_secrets.py
-echo "OPUS_LOG_DJANGO_LEVEL = 'WARN'" >> opus_secrets.py
-echo "OPUS_LOG_API_CALLS = False" >> opus_secrets.py
-echo "OPUS_FAKE_API_DELAYS = None" >> opus_secrets.py
-echo "OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0." >> opus_secrets.py
-echo "OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0." >> opus_secrets.py
-echo "IMPORT_TABLE_TEMP_PREFIX = 'imp_'" >> opus_secrets.py
-echo "IMPORT_LOGFILE_DIR = '${LOG_DIR}/import_logs'" >> opus_secrets.py
-echo "IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import.log')" >> opus_secrets.py
-echo "IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log')" >> opus_secrets.py
-# The DICTIONARY_* settings are gone: pdsdd.full, contexts.csv and the table_schemas
-# directory ship inside the opus_import package and are found with importlib.resources.
+# paths.static_root is deliberately absent: collectstatic never runs here, so
+# Django's own default applies. django.fake_api_delays is absent for the same
+# kind of reason: the tests delay nothing.
+cat > opus.toml <<EOF
+[database]
+brand = "MySQL"
+host = "localhost"
+database = ""
+schema = "opus_test_db_${UNIQUE_ID}"
+user = "${OPUS_DB_USER}"
+password = "${OPUS_DB_PASSWORD}"
+
+[paths]
+pds3_holdings = "${PDS3_HOLDINGS_DIR}"
+pds4_holdings = "${PDS4_HOLDINGS_DIR}"
+opus_log_file = "${LOG_DIR}/opus_logs/opus_log.txt"
+import_log_dir = "${LOG_DIR}/import_logs"
+tar_dir = "${DOWNLOAD_DIR}/tar/"
+manifest_dir = "${DOWNLOAD_DIR}/manifest/"
+last_blog_update_file = "${DATA_DIR}/last_update.txt"
+notification_file = "${DATA_DIR}/notification.html"
+opus_static_root = "${CWD}/src/opus_app/static"
+
+[django]
+secret_key = "fred"
+debug = true
+allowed_hosts = ["127.0.0.1", "localhost"]
+cache_server_prefix = "staging_test"
+public_url = "https://opus.pds-rings.seti.org/"
+product_http_path = "https://opus.pds-rings.seti.org/"
+viewmaster_url = "https://pds-rings.seti.org/"
+tar_file_url = "https://bad-host.org/"
+log_file_level = "INFO"
+log_console_level = "INFO"
+log_django_level = "WARN"
+log_api_calls = false
+fake_error404_probability = 0.0
+fake_error500_probability = 0.0
+
+[import]
+table_temp_prefix = "imp_"
+log_file = "${LOG_DIR}/import_logs/opus_import.log"
+debug_log_file = "${LOG_DIR}/import_logs/opus_import_debug.log"
+EOF
 if [ $? -ne 0 ]; then exit -1; fi
 
-echo "opus_secrets.py:"
+echo "opus.toml:"
 echo
-cat opus_secrets.py
+cat opus.toml
 
 exit 0

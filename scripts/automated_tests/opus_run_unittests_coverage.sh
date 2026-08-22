@@ -12,11 +12,10 @@ LOG_DIR=$TEST_CAT_DIR/temp_logs
 DOWNLOAD_DIR=$TEST_CAT_DIR/downloads
 DATA_DIR=$TEST_CAT_DIR/data
 
-# opus_setup_environment.sh wrote opus_secrets.py into the repository root, which
-# is also where this script runs; name it explicitly rather than relying on the
-# working directory, because opus_app.settings resolves it through the
-# opus_config shim.
-export OPUS_SECRETS="$(pwd)/opus_secrets.py"
+# opus_setup_environment.sh wrote opus.toml into the repository root, which is also
+# where this script runs. OPUS has no default location for the configuration file,
+# so opus_app.settings is given its path.
+export OPUS_CONFIG="$(pwd)/opus.toml"
 
 # The integration suite's 100% coverage gate has its own configuration; without
 # this, coverage would pick up the unit-coverage settings in pyproject.toml.
