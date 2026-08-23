@@ -157,7 +157,6 @@ TEMPLATES = [
             BASE_DIR / 'templates',
             BASE_DIR / 'apps',
             BASE_DIR / 'apps/ui/templates',
-            BASE_DIR / 'apps/dictionary/templates',
             BASE_DIR / 'apps/results/templates',
             BASE_DIR / 'apps/metadata/templates',
             BASE_DIR / 'apps/search/templates',
@@ -203,7 +202,6 @@ INSTALLED_APPS = (
     'opus_app.apps.ui',
     'opus_app.apps.cart',
     'opus_app.apps.tools',
-    'opus_app.apps.dictionary',
     'rest_framework',
 )
 
@@ -320,10 +318,6 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'opus_app.apps.tools': {
-            'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
-        },
-        'opus_app.apps.dictionary': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },

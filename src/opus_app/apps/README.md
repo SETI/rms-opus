@@ -17,9 +17,6 @@ html ui components are generated here. The menu, tabs, widget columns, browse he
 ## guide
 a simple app to render and maintain our public API guide page.
 
-## dictionary
-connects a database named dictionary that is an extendable version of the PDS Data Dictionary, provides content for 'info' icons and 'get more info' links
-
 ## cart
 Everything to do with users creating "cart" aka the shopping cart. Initiating a cart, adding/editing the cart. Displaying the contents.   
 
@@ -30,4 +27,9 @@ Creating downloadable zip files, fetching and zipping and making manifest files.
 counting unique users and query activity for metrics reporting
 
 ## tools
-A small number of utilities or helpers that are used throughout the project.
+A small number of utilities or helpers that are used throughout the project. This
+includes `dictionary.py`, which holds the two models for the database-backed dictionary
+(an extendable version of the PDS Data Dictionary, populated by the import pipeline) and
+the tooltip lookup that supplies the content behind the UI's 'info' icons. Until the
+Django 5.2 upgrade those lived in a `dictionary` app of their own, whose browsable
+dictionary site had already been removed.
