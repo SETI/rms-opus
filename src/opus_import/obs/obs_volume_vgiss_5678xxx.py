@@ -6,6 +6,7 @@
 # VGISS_[5678]xxx.
 ################################################################################
 
+from opus_import.obs.obs_type_image import EIGHT_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
 
 # Data from: https://pds-rings.seti.org/voyager/iss/inst_cat_wa1.html#inst_info
@@ -117,7 +118,7 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         return self.field_obs_general_observation_duration()
 
     def field_obs_type_image_levels(self):
-        return 256
+        return EIGHT_BIT_IMAGE_LEVELS
 
     def _vgiss_pixel_size_helper(self):
         line1 = self._supp_index_col('FIRST_LINE')

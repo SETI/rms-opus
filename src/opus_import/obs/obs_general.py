@@ -150,7 +150,7 @@ class ObsGeneral:
         return self._time2_from_some_index(self.field_obs_general_time1())
 
     def field_obs_general_observation_duration(self):
-        # This is the default behavior, but will be overriden for some
+        # This is the default behavior, but will be overridden for some
         # instruments
         return max(self.field_obs_general_time2() - self.field_obs_general_time1(), 0)
 

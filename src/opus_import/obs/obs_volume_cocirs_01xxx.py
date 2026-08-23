@@ -8,6 +8,7 @@
 
 from opus_import import import_util
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
 
 class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
@@ -96,27 +97,27 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         wave_no2 = self._supp_index_col('MAXIMUM_WAVENUMBER')
         if wave_no2 is None:
             return None
-        return 10000. / wave_no2
+        return MICRONS_PER_CM / wave_no2
 
     def field_obs_wavelength_wavelength2(self):
         wave_no1 = self._supp_index_col('MINIMUM_WAVENUMBER')
         if wave_no1 is None:
             return None
-        return 10000. / wave_no1
+        return MICRONS_PER_CM / wave_no1
 
     def field_obs_wavelength_wave_res1(self):
         wnr = self._supp_index_col('BAND_BIN_WIDTH')
         wn2 = self._supp_index_col('MAXIMUM_WAVENUMBER')
         if wnr is None or wn2 is None:
             return None
-        return 10000.*wnr/(wn2*wn2)
+        return MICRONS_PER_CM*wnr/(wn2*wn2)
 
     def field_obs_wavelength_wave_res2(self):
         wnr = self._supp_index_col('BAND_BIN_WIDTH')
         wn1 = self._supp_index_col('MINIMUM_WAVENUMBER')
         if wnr is None or wn1 is None:
             return None
-        return 10000.*wnr/(wn1*wn1)
+        return MICRONS_PER_CM*wnr/(wn1*wn1)
 
     def field_obs_wavelength_wave_no1(self):
         return self._supp_index_col('MINIMUM_WAVENUMBER')
@@ -399,7 +400,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         sc = self._fix_cassini_sclk(sc)
         if not sc.startswith('1/'):
             self._log_nonrepeating_error(
-                f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
+                f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
             return None
         sc_cvt = self._parse_cassini_sclk(sc)
         if sc_cvt is None:

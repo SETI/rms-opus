@@ -7,6 +7,12 @@
 
 from opus_import.obs.obs_base import ObsBase
 
+# The number of distinct intensity levels a detector of a given bit depth records,
+# which is what field_obs_type_image_levels reports.
+EIGHT_BIT_IMAGE_LEVELS = 2**8
+TWELVE_BIT_IMAGE_LEVELS = 2**12
+SIXTEEN_BIT_IMAGE_LEVELS = 2**16
+
 
 class ObsTypeImage(ObsBase):
     def __init__(self, *args, **kwargs):

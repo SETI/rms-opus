@@ -7,6 +7,7 @@
 
 import numpy as np
 
+from opus_import.obs.obs_type_image import EIGHT_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_galileo_common import ObsVolumeGalileoCommon
 
 # GOSSI is 10.16 microRad / pixel and 800x800
@@ -200,7 +201,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         return exposure/1000
 
     def field_obs_type_image_levels(self):
-        return 256
+        return EIGHT_BIT_IMAGE_LEVELS
 
     def field_obs_type_image_greater_pixel_size(self):
         cutoff = self._supp_index_col('CUT_OUT_WINDOW')

@@ -7,6 +7,7 @@
 # combines them all together.
 ################################################################################
 
+from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
@@ -52,7 +53,7 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
     def field_obs_type_image_levels(self):
         if not self._is_image():
             return None
-        return 65536 # STIS Inst Handbook, Sec 7.5.1
+        return SIXTEEN_BIT_IMAGE_LEVELS # STIS Inst Handbook, Sec 7.5.1
 
 
     ###################################

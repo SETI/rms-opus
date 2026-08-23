@@ -8,6 +8,7 @@
 import os
 
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 
 
 class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
@@ -197,7 +198,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     def field_obs_type_image_levels(self):
         if not self._is_image():
             return None
-        return 65536
+        return SIXTEEN_BIT_IMAGE_LEVELS
 
     def _pixel_size_helper(self):
         if not self._is_image():

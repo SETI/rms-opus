@@ -7,6 +7,11 @@
 
 from opus_import.obs.obs_base import ObsBase
 
+# Wavelengths are stored in microns and wavenumbers in cm^-1, so converting between
+# them is wavelength = MICRONS_PER_CM / wavenumber, and a resolution converts as
+# MICRONS_PER_CM * resolution / wavenumber**2.
+MICRONS_PER_CM = 10000.
+
 
 class ObsWavelength(ObsBase):
     def __init__(self, *args, **kwargs):
@@ -33,14 +38,14 @@ class ObsWavelength(ObsBase):
         wl2 = self.field_obs_wavelength_wavelength2()
         if wave_res2 is None or wl2 is None:
             return None
-        return wave_res2 * 10000. / (wl2*wl2)
+        return wave_res2 * MICRONS_PER_CM / (wl2*wl2)
 
     def _wave_no_res2_from_wave_res(self):
         wave_res1 = self.field_obs_wavelength_wave_res1()
         wl1 = self.field_obs_wavelength_wavelength1()
         if wave_res1 is None or wl1 is None:
             return None
-        return wave_res1 * 10000. / (wl1*wl1)
+        return wave_res1 * MICRONS_PER_CM / (wl1*wl1)
 
 
     ####################################

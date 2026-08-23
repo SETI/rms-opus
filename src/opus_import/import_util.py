@@ -455,12 +455,19 @@ class NoDupLogger:
     """Wrapper around PdsLogger that only logs each message one time.
 
     This is used for logging of PdsFile warnings that we don't want to see
-    over and over."""
+    over and over. An import run produces hundreds of thousands of these, so
+    the record of what has been logged is a set: as a list it was scanned
+    linearly on every call, and it never shrinks."""
 
-    _LOGGED_DEBUG: ClassVar[list[str]] = []
-    _LOGGED_WARN: ClassVar[list[str]] = []
-    _LOGGED_ERROR: ClassVar[list[str]] = []
-    _LOGGED_FATAL: ClassVar[list[str]] = []
+    # Keyed by the repr of (msg, args, kwargs) rather than by the arguments
+    # themselves, because kwargs is a dict and a caller's args need not be
+    # hashable, so the tuple cannot go in a set directly. The record is
+    # class-level and deliberately shared by every instance and never cleared:
+    # the point is to log a given message once per process.
+    _LOGGED_DEBUG: ClassVar[set[str]] = set()
+    _LOGGED_WARN: ClassVar[set[str]] = set()
+    _LOGGED_ERROR: ClassVar[set[str]] = set()
+    _LOGGED_FATAL: ClassVar[set[str]] = set()
 
     def __init__(self, logger):
         self._logger = logger
@@ -468,33 +475,28 @@ class NoDupLogger:
     def __getattr__(self, name):
         return getattr(self._logger, name)
 
-    def debug(self, msg, *args, **kwargs):
-        key = (msg, args, kwargs)
-        if key in self._LOGGED_DEBUG:
+    @staticmethod
+    def _dedup_key(msg, args, kwargs):
+        return repr((msg, args, sorted(kwargs.items())))
+
+    def _log_once(self, logged, log_func, msg, args, kwargs):
+        key = self._dedup_key(msg, args, kwargs)
+        if key in logged:
             return
-        self._LOGGED_DEBUG.append(key)
-        self._logger.debug(msg, *args, **kwargs)
+        logged.add(key)
+        log_func(msg, *args, **kwargs)
+
+    def debug(self, msg, *args, **kwargs):
+        self._log_once(self._LOGGED_DEBUG, self._logger.debug, msg, args, kwargs)
 
     def warn(self, msg, *args, **kwargs):
-        key = (msg, args, kwargs)
-        if key in self._LOGGED_WARN:
-            return
-        self._LOGGED_WARN.append(key)
-        self._logger.warn(msg, *args, **kwargs)
+        self._log_once(self._LOGGED_WARN, self._logger.warn, msg, args, kwargs)
 
     def error(self, msg, *args, **kwargs):
-        key = (msg, args, kwargs)
-        if key in self._LOGGED_ERROR:
-            return
-        self._LOGGED_ERROR.append(key)
-        self._logger.error(msg, *args, **kwargs)
+        self._log_once(self._LOGGED_ERROR, self._logger.error, msg, args, kwargs)
 
     def fatal(self, msg, *args, **kwargs):
-        key = (msg, args, kwargs)
-        if key in self._LOGGED_FATAL:
-            return
-        self._LOGGED_FATAL.append(key)
-        self._logger.fatal(msg, *args, **kwargs)
+        self._log_once(self._LOGGED_FATAL, self._logger.fatal, msg, args, kwargs)
 
 def _format_bundle_line():
     ret = ''

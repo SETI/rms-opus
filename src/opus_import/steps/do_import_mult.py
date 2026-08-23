@@ -91,7 +91,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
     # If there is already an import version of the table, it means this is a
     # second run of the import pipeline without copying over to the new
     # database, so read the contents of the import version. But it's also
-    # possible we just created the mult table during the initalization phase
+    # possible we just created the mult table during the initialization phase
     # and it's empty. In that case ignore the import one.
     # Otherwise, if there is already a non-import version, read that one.
     # And if there's no table to be found anyway, create a new one.
@@ -208,7 +208,8 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
                 disp_order = f'{parse_func(str(val)):030.9f}'
             except Exception as e:
                 import_util.log_nonrepeating_error(
-f'Unable to parse "{label}" for type "range_func_name": {e}')
+                    f'Unable to parse "{label}" for unit type '
+                    f'"{form_type_unit_id}": {e}')
                 disp_order = label
         elif all_numeric:
             disp_order = f'{float(label):20.9f}'
@@ -270,7 +271,7 @@ def dump_import_mult_tables():
 
 
 def copy_mult_from_import_to_permanent():
-    """Copy ALL mult tables from import to permament. We have to do all tables,
+    """Copy ALL mult tables from import to permanent. We have to do all tables,
        not just the ones that have changed, because tables might have changed
        during previous import runs or previous bundles and we don't have a
        record of that."""
