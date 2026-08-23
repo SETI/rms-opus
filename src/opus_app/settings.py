@@ -51,7 +51,7 @@ ALLOWED_HOSTS = list(_config.django.allowed_hosts)
 # development or test installation. None is Django's own default.
 STATIC_ROOT = _config.paths.static_root
 
-# Database. The engine follows the configured brand (see _DB_ENGINES below), so
+# Database. The engine follows the configured brand (see _db_engines below), so
 # the web application and the import pipeline cannot disagree about which
 # database they are talking to.
 DB_HOST_NAME = _config.database.host
@@ -147,11 +147,15 @@ STORAGES = {
     },
 }
 
-# Every model OPUS defines names its own primary key (the tables are created by
-# the import pipeline, not by migrations), so this governs only the contrib
-# tables that `migrate` creates. It stays AutoField: those tables exist on the
-# deployed servers with 32-bit auto-increment keys, and BigAutoField would
-# generate migrations that alter them for no benefit.
+# This governs the contrib tables `migrate` creates AND the 19 OPUS models that
+# do not declare a primary key of their own — among them ParamInfo, Cart,
+# UserSearches, TableNames, Partables and the generated ZZ* duplicates — for
+# which Django synthesizes `id`. Do NOT read it as "contrib only".
+#
+# It stays AutoField. Those OPUS tables are created by the import pipeline, not
+# by a migration, with 32-bit AUTO_INCREMENT `id` columns; BigAutoField would
+# make Django's idea of the column disagree with the column, and would generate
+# migrations altering the contrib tables on the deployed servers for no benefit.
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 MIDDLEWARE = [

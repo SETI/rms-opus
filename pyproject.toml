@@ -281,12 +281,16 @@ skips = [
   "B607",  # start_process_with_partial_path: same internal invocations.
   "B608",  # hardcoded_sql: values are always %s-parameterized and identifiers are
            # validated; SQL assembly is formalized through a builder in PR-12.
-  "B610",  # django_extra_used: four QuerySet.extra() calls join a search to the
-           # dynamically-named cache table its results live in. The ORM cannot
-           # name a table that has no model, so every replacement is either
-           # RawSQL — bandit B611, which this list does NOT skip — or raw cursor
-           # SQL, which is B608 and belongs to PR-12. PR-09 stop-and-reported
-           # rather than choose; see its Execution note.
+  "B610",  # django_extra_used: four QuerySet.extra() calls. THREE of them
+           # (metadata/views.py:537,541 and results/views.py:1854) pass
+           # tables=[<cache table>] to join a search to the dynamically-named
+           # table its results live in; the ORM cannot name a table that has no
+           # model, so replacing those is either RawSQL — bandit B611, which this
+           # list does NOT skip — or raw cursor SQL, which is B608 and belongs to
+           # PR-12. The FOURTH (metadata/views.py:549) is only a where= on the
+           # model's own columns and is plainly ORM-expressible, but removing it
+           # alone would not retire this skip. PR-09 stop-and-reported rather
+           # than choose; see its Execution note.
   "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
 ]
 

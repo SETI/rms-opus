@@ -22,10 +22,13 @@ recompiles; `Lexer.tokenize` still resolves `tag_re` as a module global at call 
 so rebinding the attribute takes effect; and with the engine set up, `tag_re.flags`
 has gained `re.DOTALL` and a template reading `A{{\\n  x\\n}}B` renders as `AXB`,
 which it does not without the patch. Re-verify all three on the next Django upgrade.
+
+The recompile carries the original's flags forward rather than passing `re.DOTALL`
+alone, so a flag Django adds in some future release cannot be silently dropped here.
 """
 
 import re
 
 from django.template import base
 
-base.tag_re = re.compile(base.tag_re.pattern, re.DOTALL)
+base.tag_re = re.compile(base.tag_re.pattern, base.tag_re.flags | re.DOTALL)

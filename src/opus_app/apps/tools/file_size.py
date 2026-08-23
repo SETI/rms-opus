@@ -1,10 +1,11 @@
 # tools/file_size.py
 """Render a byte count the way the OPUS cart interface displays it.
 
-This replaces the one call OPUS made into `hurry.filesize`, a package last
-released in 2010 whose only use here was its default "traditional" system: powers
-of 1024, a single-letter suffix, and the fractional part truncated rather than
-rounded, so 1,048,575 bytes reads as "1023K" and not "1M".
+This replaces the two calls OPUS made into `hurry.filesize` (both in
+`cart/views.py`), a package last released in 2010 whose only use here was its
+default "traditional" system: powers of 1024, a single-letter suffix, and the
+fractional part truncated rather than rounded, so 1,048,575 bytes reads as
+"1023K" and not "1M".
 
 The output is part of the public API (`__cart/status.json` reports
 `download_size_pretty` and `total_download_size_pretty`) and appears in the golden

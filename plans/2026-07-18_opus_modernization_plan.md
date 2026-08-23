@@ -2354,31 +2354,48 @@ body; never rewrite or delete earlier notes.*
     install — says `django == 5.2.*` rather than mirroring that bound with `5.*`, because
     5.3 will not be an LTS and the decisions table chose **Django 5.2 LTS**, not "whatever
     5.x is current". `requirements.txt` resolves to **django==5.2.17** and was regenerated
-    with `pip-compile requirements.in`, the command its own header records — *not* the
-    `-U --unsafe-package …` form the comment at the top of `requirements.in` documents,
-    which additionally drops the `xattr` pin and belongs to PR-22's dependency work. The
-    resulting diff is django, django-storages, hurry-filesize and the generator's Python
-    line, and nothing else.
+    with plain `pip-compile requirements.in` — *not* the `-U --unsafe-package …` form the
+    comment at the top of `requirements.in` documents, which additionally drops the
+    `xattr` pin and belongs to PR-22's dependency work. The resulting diff is django,
+    django-storages, hurry-filesize and the generator's two header lines, and nothing
+    else. (pip-compile rewrites the "by the following command" header to include the
+    `--output-file` it was given, so the header itself changed even though the invocation
+    matched the old one; the Python line moved 3.11 -> 3.12 for the same reason.)
   - **The `_meta` JSON diff came back empty, and here is exactly what was compared.** The
     plan's check is "two processes, one per Django version, no database". Run as three
     dumps of `apps.get_models(include_auto_created=True, include_swapped=True)`:
     **A** = the pre-upgrade tree (`7ad01207`) under **Django 4.2.27**, **B** = the *same
     tree, untouched* under **Django 5.2.17**, **C** = the finished PR-09 tree under 5.2.17.
-    **A vs B is byte-identical across all 245 models** — that is the plan's regression
-    check, and it is empty, so Django 5.2 changes no field mapping under the unchanged
-    generated `search/models.py`. A vs C differs in exactly three keys, all intended and
+    **A vs B is byte-identical across all 245 models *and* the MySQL backend's
+    field-class -> column-type tables** — that is the plan's regression check, and it is
+    empty, so Django 5.2 changes no field mapping under the unchanged generated
+    `search/models.py`. Dumping those backend tables is what makes the check mean what it
+    says, and it was **missing from the first version of this artifact**: the per-field
+    record holds `get_internal_type()`, which only names the field *class*, so a release
+    that changed `"DateTimeField": "datetime(6)"` to something else would have produced a
+    byte-identical dump and the check would have passed vacuously. The dump therefore also
+    records `DatabaseWrapper`'s static `data_types` (27 entries), `_limited_data_types`
+    and `data_types_suffix`, read with `inspect.getattr_static` so nothing opens a
+    connection. Django **renamed** that table from `data_types` (4.2) to `_data_types`
+    (5.x), where `data_types` became a cached_property layered over it — the dump reads
+    whichever exists and compares only contents, since the rename is not a mapping change;
+    the contents are identical. A vs C differs in exactly three keys, all intended and
     each verified: `dictionary.Contexts`/`dictionary.Definitions` become
     `tools.Contexts`/`tools.Definitions` (identical field for field, only `app_label`
     moved — asserted, not eyeballed), and `sites.Site` disappears with
     `django.contrib.sites`. No other model differs in any recorded attribute.
   - **Two traps in writing such a dump, for whoever repeats it at the next upgrade.**
-    (1) **Do not key the dump by `db_table`.** Fourteen tables are mapped by *two* model
-    classes, because the generated `search/models.py` still carries the `ZZ*` duplicates
-    whose removal was deferred with PR-07 (`auth.Group` and `search.ZZAuthGroup` both map
-    `auth_group`; likewise `django_admin_log`, `auth_permission`, `auth_group_permissions`,
-    `auth_user_groups`, `auth_user_user_permissions`, `auth_user`, `django_site`,
-    `django_content_type`, `django_session`, `cart`, `contexts`, `definitions`,
-    `param_info`). Key by `_meta.label`, which is unique. (2) **Do not record
+    (1) **Do not key the dump by `db_table`.** **Fourteen** tables were mapped by *two*
+    model classes before this PR and **thirteen** after it, because the generated
+    `search/models.py` still carries the `ZZ*` duplicates whose removal was deferred with
+    PR-07 (`auth.Group` and `search.ZZAuthGroup` both map `auth_group`; likewise
+    `django_admin_log`, `auth_permission`, `auth_group_permissions`, `auth_user_groups`,
+    `auth_user_user_permissions`, `auth_user`, `django_content_type`, `django_session`,
+    `cart`, `contexts`, `definitions`, `param_info`). `django_site` is the one that
+    dropped out: `search.ZZDjangoSite` still maps it, but `sites.Site` left with
+    `django.contrib.sites`. Key by `_meta.label`, which is unique. Note that a duplicate
+    `db_table` is legal here only because these models are `managed = False` — Django's
+    `models.E028` duplicate-table check ignores unmanaged models. (2) **Do not record
     `field.db_type(connection)`.** It reads as the most direct expression of the mapping,
     but under 5.2 the MySQL backend's data-types table needs the server version, so it
     opens a connection — which this check forbids — and fails with an access-denied error
@@ -2398,15 +2415,30 @@ body; never rewrite or delete earlier notes.*
   - **`USE_TZ` is now `True`, and the upgrade would have flipped it either way.** Django's
     own default changed from `False` (4.2) to `True` (5.0+), and this project never set it,
     so 5.2 turns it on whether or not it is written down; it is now stated explicitly. The
-    reason this is safe was established by audit rather than assumed: **no code in
-    `src/opus_app` reads or writes a `DateTimeField` through the ORM.** Every such column
+    reason this is safe was established by audit: **no code written in `src/opus_app`
+    reads or writes a `DateTimeField` through the ORM.** Every OPUS-owned such column
     (`cart.timestamp`, `param_info.timestamp`, `definitions.timestamp`,
     `contexts.timestamp`, the whole generated set) is written by the import pipeline or by
     the cart's raw `connection.cursor()` SQL, and the only `datetime` calls in the Django
     app build a download filename and an About-page date string. `cart/models.py` even
-    says "this is not being used". A later PR that starts using the ORM for one of these
-    columns inherits UTC semantics against columns the import pipeline wrote as naive
-    local time — that is the trap this note exists for.
+    says "this is not being used". There are also **no `__date`/`__year`/`Trunc`/`Extract`
+    lookups anywhere in the tree**, so the flip introduces no dependency on MySQL's
+    `CONVERT_TZ` and its timezone tables — which is the usual way this bites a MySQL
+    project.
+    - **The one exception, which an earlier draft of this note wrongly omitted:
+      `django_session.expire_date`.** `SESSION_ENGINE` is Django's default database
+      backend and sessions are live (`tools/app_utils.py` calls `request.session.create()`;
+      `cart/views.py` reads and writes session data), so Django itself reads and writes
+      that `DateTimeField` through the ORM on essentially every request. Rows written
+      before the upgrade hold naive local time and are compared against a UTC `now()`
+      afterwards, so **sessions created before the cutover are treated as expired** (Pacific
+      time being 7-8 hours behind UTC). The effect is one-time and self-correcting — the
+      user silently gets a new session — and `SESSION_EXPIRE_AT_BROWSER_CLOSE` is already
+      `True`, so sessions are short-lived by design. Worth knowing on the deploy, not worth
+      preventing.
+    A later PR that starts using the ORM for one of the OPUS columns inherits UTC semantics
+    against columns the import pipeline wrote as naive local time — that is the trap this
+    note exists for.
   - **`STORAGES` is set to Django's own two backends, and `staticfiles` is deliberately
     NOT a manifest backend.** OPUS cache-busts asset URLs with its own `?version=` suffix
     from `app_utils`, and `ManifestStaticFilesStorage` would require every asset named in a
@@ -2482,11 +2514,21 @@ body; never rewrite or delete earlier notes.*
     measured rather than argued.** `nice_file_size` reproduces the package's default
     "traditional" system. **420,035 byte counts** — every value from 0 to 70,000, every
     unit boundary and its neighbours, and dense random sampling up to 4 EiB — produce
-    byte-identical strings, with **exactly two exceptions, at 2\*\*60-1 and 2\*\*60-2**,
-    where `hurry`'s `int(bytes / factor)` rounds up through the float and answers
-    "1024P" for a size that has not reached 1024 PiB; integer division answers the
-    truthful "1023P". `tests/opus_app/test_file_size.py` pins both the parity table and
-    that divergence. **The loop is shaped the way it is for the coverage gate:** a count
+    byte-identical strings. **The guarantee is exact, not statistical, for every size
+    OPUS can reach:** `hurry` computed `int(bytes / factor)` through a float, and any
+    integer below `2**53` is exactly representable as a double while division by a power
+    of two only adjusts the exponent, so below `2**53` bytes (8 PiB) the two expressions
+    *cannot* differ. `MAX_CUM_DOWNLOAD_SIZE` is 50 GiB, five orders of magnitude below
+    that. **Correction to an earlier draft of this note,** which claimed the divergence
+    was "exactly two values, at `2**60-1` and `2**60-2`, and that is the whole of it":
+    that is false, and the sweep only appeared to confirm it because the divergent windows
+    are narrow in absolute terms and random sampling almost never lands in one. Above
+    `2**53` the float quotient rounds up in a window immediately below each exact PiB
+    multiple, and the window **doubles as the magnitude doubles** — measured: 32 values
+    below 512 PiB, 64 below 1024 PiB, 128 below 2048 PiB, 8192 below 100000 PiB, and none
+    at all below 8 PiB. Where they differ, integer division is the truthful one.
+    `tests/opus_app/test_file_size.py` pins the parity table, the exactness property below
+    `2**53`, and two representatives of the divergence. **The loop is shaped the way it is for the coverage gate:** a count
     below one kilobyte falls out of the loop instead of matching a final table row,
     because the golden fixtures only ever exercise `0B`, `…K` and `…M` — never a gigabyte
     — and a final `(1024**0, 'B')` row would have left the fall-through `return`
@@ -2513,12 +2555,23 @@ body; never rewrite or delete earlier notes.*
        deprecation, and the deprecation sweep above is clean with all four call sites in
        place. Nothing about the upgrade forces this change.
     2. **There are exactly four sites** (`metadata/views.py:537,541,549` and
-       `results/views.py:1854` — §7's "534-545" is mechanical drift). All four do the same
-       thing: `.extra(where=[...], tables=[<cache table>])`, joining a search to the
-       **dynamically named** per-search cache table (`get_user_query_table` returns a name
-       like `cache_<n>`; the table is created by raw DDL and **has no model**).
-    3. **The ORM cannot express it.** With no model for the table, the only replacements
-       are (a) `filter(<col>__in=RawSQL('SELECT id FROM <table>'))`, which bandit flags as
+       `results/views.py:1854` — §7's "534-545" is mechanical drift), and **they are not
+       all the same shape** (an earlier draft of this note said they were):
+       - **Three** — `metadata/views.py:537,541` and `results/views.py:1854` — pass
+         `.extra(where=[...], tables=[<cache table>])`, joining a search to the
+         **dynamically named** per-search cache table (`get_user_query_table` returns a
+         name like `cache_<n>`; the table is created by raw DDL and **has no model**).
+         These are the hard ones.
+       - **One** — `metadata/views.py:549` — is `results.all().extra(where=[where])` with
+         `where` naming only the model's own columns (`<param1> IS NULL AND <param2> IS
+         NULL`, and `param1`/`param2` are ordinary fields of `table_model`). It is plainly
+         ORM-expressible as `filter(**{f'{param1}__isnull': True, ...})` with no `RawSQL`
+         and no bandit trade-off. It was left alone anyway: removing one of four does not
+         retire the `B610` skip, so it buys no gate progress while still changing a query
+         on the search path, and doing all four together under one owner is cleaner.
+    3. **For the other three the ORM cannot express it.** With no model for the table, the
+       only replacements are (a) `filter(<col>__in=RawSQL('SELECT id FROM <table>'))`,
+       which bandit flags as
        **B611 `django_rawsql_used` — a check the skip list does not contain**, so it trades
        one finding for a new one and additionally changes an inner join into a semi-join,
        a generated-SQL change on the search tool's hot path that cannot be measured here
@@ -2534,6 +2587,33 @@ body; never rewrite or delete earlier notes.*
     SQL assembly and would rewrite these four sites with the same builder. PR-17's
     "shrink the skip list" exit criterion is unaffected in kind, but it cannot retire
     `B610` unless someone does.
+  - **The upgrade raises the MySQL *server* floor, and nothing in the repository pins it.**
+    Django 5.1 dropped MySQL 5.7; **Django 5.2 requires MySQL 8.0.11+ (or MariaDB 10.5+)**.
+    `manage.py check` does not test this and the deprecation sweep cannot catch it — a too-old
+    server fails at query time instead. `mysqlclient==2.2.7` is fine (5.2 needs >= 1.4.3).
+    The local runner that gates this PR is **MySQL 8.0.46**, so the self-hosted integration
+    evidence is on a supported server. **What the deployed `tools`/`tools2` servers run was
+    not verified from here — PR-22 owns the deploy chain and must confirm it before
+    `rewrite` merges.** `install.md` documents no version either.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **964
+    passed**, pyroma 10/10, bandit, vulture, pymarkdown). The full local chain
+    (`opus_main_test.sh`: 30-bundle import into a fresh MySQL schema, then the Django suite
+    under the 100% gate) ran end to end with exit code 0: **`Ran 1576 tests` / `OK` /
+    `TOTAL 22220 stmts, 1876 branches, 100%`**, and **zero golden-fixture diffs**
+    (`git status integration_tests/test_api/responses` empty afterwards). Against PR-08's
+    baseline the statement count is **unchanged at 22220**; branches are **+4**, which is
+    exactly the two branch points of `file_size.py`'s loop, and `BrPart` is 0, so both arcs
+    of both are exercised — the design constraint above, confirmed by measurement rather
+    than by argument.
+  - **The wheel's runtime dependencies alone now start the application**, which **retires
+    PR-05's standing note** that a clean-venv wheel install dies at `django.setup()` with
+    `ModuleNotFoundError: No module named 'rest_framework'`. §1's standing assumption said
+    that held "until PR-09 removes both", and this is that PR. Verified: a wheel built from
+    this tree, installed into a clean venv with **runtime dependencies only**, loads
+    `opus_app.wsgi:application` from `site-packages`, builds the app registry, resolves the
+    relocated models with `app_label == 'tools'`, and reports **2 root URL patterns** (down
+    from 4, the two dictionary prefixes having gone). `djangorestframework` remains a dev
+    extra for the integration suite alone.
   - **Pre-existing staleness noticed but not fixed (candidate for PR-21's documentation
     work).** `src/opus_app/apps/README.md` describes apps that do not exist — `guide`,
     `downloads` and `metrics` — and omits `help` and `paraminfo`. This PR only removed its
