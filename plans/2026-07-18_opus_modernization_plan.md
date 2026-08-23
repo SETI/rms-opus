@@ -2689,13 +2689,18 @@ body; never rewrite or delete earlier notes.*
     (730) `import_one_index` + `get_opus_products_rows_for_filespec`, and
     `steps/do_import_obs.py` (310) `import_observation_table` +
     `import_run_field_function`. All five are under the plan's 1000-line limit. The move
-    was verified function by function against the pre-split file: of the 24 top-level
-    functions, **18 are byte-identical** and the other 6 differ only in qualifying a call
-    that now crosses a module boundary. **`_lookup_vol_info` is now public
-    `lookup_vol_info`** in `do_import_tables` (two modules call it), and
-    `do_partables` imports `mult_table_lookup_id` from `do_import_mult`.
+    was verified function by function against the pre-split file: **at the split commit**
+    (`3951b70d`), of the 24 top-level functions **18 were byte-identical** and the other 6
+    differed only in the three ways this bullet names. (Measured against the PR tip
+    instead it is 15/9, because later commits of this same PR edited three of the mult
+    functions on their own account — measure against the split commit, not the tip.) The
+    three differences: `_lookup_vol_info` is now public **`lookup_vol_info`** in
+    `do_import_tables` (two modules call it); `create_tables_for_import` calls a function
+    instead of mutating another module's set directly; and every remaining change is a
+    call that now crosses a module boundary and had to be qualified. `do_partables`
+    imports `mult_table_lookup_id` from `do_import_mult`.
   - **PR-11's "do_import's three module-level caches" now live in `do_import_mult`, and
-    two of them are no longer reachable with a `global` statement.** A `global` cannot
+    none of them is reachable with a `global` statement any more.** A `global` cannot
     name another module's binding, so `import_one_bundle` calls
     `do_import_mult.reset_bundle_mult_cache()` and `do_import_steps` calls
     `do_import_mult.reset_created_import_mult_tables()`, while
@@ -2709,6 +2714,11 @@ body; never rewrite or delete earlier notes.*
     it is written as `[name] = table_column` in three places and read only through
     `sorted(...)`, so **no value in it is ever consumed**. PR-11 may make it a set; PR-10
     did not, because the plan named only `NoDupLogger` for that treatment.
+  - **One message had to follow the `config_targets` split.**
+    `import_util.log_unknown_target_name` told the operator to "edit `config_targets.py`",
+    a file this PR removed. It now names `config_targets/target_name_info.py`, the module
+    that holds the table a new target has to be added to. It was the only reference to
+    the old path anywhere in `src/`, `scripts/` or `tests/`.
   - **`config_targets` is a package, and no consumer changed.**
     `config_targets/{target_name_mapping,target_name_info,star_ra_dec,
     planet_group_mapping}.py` hold one table each and `__init__.py` re-exports all four
@@ -2735,7 +2745,8 @@ body; never rewrite or delete earlier notes.*
     hit the DB, but it is outside that `try`. The other candidates: `update_mult_table`'s
     try body is a pure `opus_support` parse with its DB call ~60 lines above and outside
     it; `import_util.py:312` wraps `pdstable.PdsTable`; the 26 obs handlers each wrapped
-    one `opus_support` parser (21 of them are now the single `_parse_sclk` helper); and
+    one `opus_support` parser except two that wrap `import_util.cached_tai_from_iso`
+    (23 of the 26 are now the single `_parse_sclk` helper, leaving 3 plus the helper); and
     `src/opus_app` never imports `opus_import`, so its handlers are structurally excluded.
     **The invariant is now a test** — `tests/opus_import/test_exception_control_flow.py`
     sweeps every obs module for a database name or import, parametrized per module.
@@ -2747,8 +2758,11 @@ body; never rewrite or delete earlier notes.*
     `ImportDBMySQL.delete_rows` and `copy_rows_between_namespaces` were the only two
     mutating methods with no `except MySQLdb.Error` wrapper, so "no `except Exception` can
     catch a DB failure today" had two holes in it. Both now log and raise `ImportDBError`
-    like their twelve siblings. They are called on the hot delete/copy paths
-    (`do_import_tables`, six sites).
+    like every other mutating method in the file (13 `except MySQLdb.Error` blocks before
+    this PR, 15 after). Between them they have **eleven** call sites: `delete_rows` four,
+    all in `do_import_tables`; `copy_rows_between_namespaces` seven, two in
+    `do_import_tables` and one each in `do_dictionary` (x2), `do_table_names`,
+    `do_param_info` and `do_partables`.
   - **`upsert_rows` is batched; `upsert_row` now has no caller.** `upsert_rows` writes
     1000 rows per `INSERT ... ON DUPLICATE KEY UPDATE col=VALUES(col)` instead of one
     statement per row, mirroring `insert_rows`, and groups rows by column set so a mixed
@@ -2780,20 +2794,26 @@ body; never rewrite or delete earlier notes.*
     COCIRS_56xxx logs a bad SCLK as a **warning**, not an error (the only file that does,
     and the only reason `_parse_sclk` takes a `log_func`); COVIMS_8xxx count2 had its
     `+1` inside the `try`; and the two PDS4 sites parse `str(raw).strip()` while naming
-    the unstripped `raw` in the message. Verified by differential probe over all 23 field
-    functions x 19 SCLK spellings = **456 probes on the pre- and post-consolidation
+    the unstripped `raw` in the message. Verified by differential probe over all 24
+    spacecraft-clock field functions (the 23 rewritten sites plus COUVIS_0xxx's
+    arithmetically-derived count2) x 19 SCLK spellings = **456 probes on the pre- and
+    post-consolidation
     trees, with zero differences in return value or escaping exception**. 25 log messages
     differ, and every one is an intended correction: 4 are the PDS4 message now naming the
     string that was actually parsed, and 21 are both COCIRS count2 guards, which reported
     a badly formatted `SPACECRAFT_CLOCK_START_COUNT` while reading
-    `SPACECRAFT_CLOCK_STOP_COUNT`.
+    `SPACECRAFT_CLOCK_STOP_COUNT`. A probe is ephemeral, so the three non-canonical sites
+    also have durable tests in `tests/opus_import/test_obs_sclk_call_sites.py`, which
+    drive the real field functions; run against the pre-consolidation obs tree, its nine
+    behavior-preservation tests pass and exactly the three that assert the corrections
+    fail.
   - **`NoDupLogger` keys on a repr, not on the arguments.** The four `_LOGGED_*` class
     records are sets now (they were lists, scanned linearly on every call and never
     cleared). The key is `repr((msg, args, sorted(kwargs.items())))` rather than the tuple
     itself, **because `kwargs` is a dict and a caller's `args` need not be hashable** — a
     naive list-to-set conversion would raise `TypeError` on the first call that passed a
     keyword argument. Whoever annotates this in PR-15 should keep the repr.
-  - **Three pre-existing defects found and deliberately NOT fixed**, for whoever reopens
+  - **Four pre-existing defects found and deliberately NOT fixed**, for whoever reopens
     these files:
     1. **`ImportDBMySQL.__init__` calls `self.logger.log(...)` unguarded** at the
        "MySQL version" line (`mysql.py:109`) while every other logging call in the file is
@@ -2815,17 +2835,31 @@ body; never rewrite or delete earlier notes.*
        anywhere** in `src/`, `tests/` or `integration_tests/`. It was moved rather than
        deleted because a split PR should not lose code, and vulture does not flag unused
        functions at its confidence gate. A candidate deletion for PR-15 or PR-17.
+    4. **`do_import_index.py:495-497` initializes the wrong dictionary key** (found by
+       this PR's adversarial reviewer, in code the split moved verbatim). In
+       `import_one_index` the guard reads
+       `if table_name not in table_rows: table_rows[new_table_name] = []` and the next
+       line appends to `table_rows[table_name]`, so a genuinely absent `table_name`
+       raises `KeyError` while creating an entry under the other name. Pre-existing;
+       the surrounding surface-geometry path evidently always pre-creates the key.
+       Candidate for PR-15 or PR-17.
   - **Typos fixed, and one left.** `overriden`, `transation`, `initalization` and
     `permament` are gone from `src/opus_import`, along with the two named message bugs
     above and `do_import_mult`'s `for type "range_func_name"` — a literal placeholder that
     was never a variable, now naming the `form_type_unit_id` it actually failed to parse.
     **`src/opus_support/units.py:457` still says `initalization`**; that tree belongs to
     PR-14 and was left alone.
-  - **Bandit `B113`'s justification is now incomplete.** Its pyproject comment reads
-    "internal log-analyzer API client", but `util/retrieve_ra_dec.py`'s `session.get` is a
-    second timeout-less request site under the same skip. PR-17, which shrinks the skip
-    list to per-line `# nosec`, should either give that call a timeout or justify it
-    separately.
+  - **`util/retrieve_ra_dec.py` issues a request with no timeout, and bandit does not
+    see it.** Measured: `bandit -t B113 -r src` reports exactly one finding
+    (`src/opus_log_analyzer/opus/slug.py:293`), and running B113 against
+    `retrieve_ra_dec.py` alone reports none — the check matches a qualified
+    `requests.get(...)` and does not fire on `session.get(...)` through a local variable.
+    So the pyproject `B113` skip comment ("internal log-analyzer API client") is still
+    accurate about what the skip covers, and **PR-17 will find nothing to convert here**;
+    the missing timeout is a real but undetected defect in a hand-run tool, not a
+    suppressed finding. Giving that call a timeout is worth doing whenever someone reopens
+    the file; PR-10 left it alone because the plan's instruction for this module was to
+    change no behavior beyond moving the work into `main()` and switching to https.
   - **Plan drift, noted and proceeded with** (none of it changes an instruction's
     meaning): `do_import.py:1462` is `do_import_obs.py:303`; `main_opus_import.py:449`
     (the `except importdb.ImportDBError: sys.exit(-1)` around `get_db`) is `cli.py:463`
@@ -2833,7 +2867,7 @@ body; never rewrite or delete earlier notes.*
     `(Exception, ImportDBException)` tuple in `cli.py`, which is now plain
     `except Exception` as the plan directs; "~18" SCLK blocks was 23; and
     `config_targets.py` was 1,003 lines as stated.
-  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **1047
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **1064
     passed**, pyroma 10/10, bandit, vulture, pymarkdown). The full local chain
     (`opus_main_test.sh`: 30-bundle import into a fresh MySQL schema, then the Django
     suite under the 100% gate) ran end to end with exit code 0: the import logged **zero

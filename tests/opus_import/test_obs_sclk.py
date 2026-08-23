@@ -69,18 +69,32 @@ def test_a_bad_sclk_is_reported_and_returns_none(
         monkeypatch: pytest.MonkeyPatch) -> None:
     """A bad SCLK is one nonrepeating error naming the mission, the value and the cause.
 
-    The message is asserted in full because it is the text the import log shows an
-    operator, and it is what the 23 hand-written copies produced before this helper
-    existed.
+    The wrapper's whole format string is asserted, because it is the text the import log
+    shows an operator and it is what the 23 hand-written copies produced before this
+    helper existed. The reason for the failure is taken from the parser rather than
+    hard-coded, since that half is opus_support's message, not this helper's.
     """
     obs, logged = _recording_obs(cls, monkeypatch)
 
     with pytest.raises(Exception) as excinfo:
         parse_func(BAD_SCLK)
-    expected = f'Unable to parse {mission} SCLK "{BAD_SCLK}": {excinfo.value}'
+    reason = str(excinfo.value)
+    assert reason, 'the parser rejected the input with an empty message'
+    expected = f'Unable to parse {mission} SCLK "{BAD_SCLK}": {reason}'
 
     assert getattr(obs, helper_name)(BAD_SCLK) is None
     assert logged == [f'error: {expected}']
+
+
+def test_the_cassini_message_is_exactly_this_text(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """One literal spelling of the message, so the format string cannot drift silently."""
+    obs, logged = _recording_obs(ObsCassiniCommon, monkeypatch)
+
+    assert obs._parse_cassini_sclk('1/zzz') is None
+
+    assert logged == ['error: Unable to parse Cassini SCLK "1/zzz": '
+                      'Cassini clock fields must be integers: zzz']
 
 
 def test_cassini_can_report_a_bad_sclk_as_a_warning(

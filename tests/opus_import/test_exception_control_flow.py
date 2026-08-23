@@ -31,6 +31,7 @@ from opus_import.importdb import ImportDBError
 #: attribute the pipeline reaches the database through.
 _DB_NAMES = frozenset({
     'DATABASE',
+    '_execute', '_execute_and_fetchall',
     'analyze_table', 'convert_namespace_to_raw', 'convert_raw_to_namespace',
     'copy_rows_between_namespaces', 'create_table', 'delete_rows', 'drop_table',
     'find_column_max', 'general_select', 'insert_row', 'insert_rows', 'read_rows',
@@ -55,8 +56,9 @@ def test_import_db_error_is_an_ordinary_exception() -> None:
     assert issubclass(ImportDBError, Exception)
 
     with pytest.raises(Exception) as excinfo:
-        raise ImportDBError('boom')
+        raise ImportDBError('the database went away')
     assert type(excinfo.value) is ImportDBError
+    assert str(excinfo.value) == 'the database went away'
 
 
 @pytest.mark.parametrize('path', _OBS_MODULES, ids=lambda p: p.name)

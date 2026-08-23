@@ -9,10 +9,11 @@ parameter rather than interpolated, and the key column left out of the update cl
 
 from typing import Any
 
+import MySQLdb
 import pytest
 
 from opus_import.importdb.mysql import ImportDBMySQL
-from opus_import.importdb.super import ImportDBSuper
+from opus_import.importdb.super import ImportDBError, ImportDBSuper
 
 
 class _RecordingDB(ImportDBMySQL):
@@ -99,8 +100,56 @@ def test_upsert_rows_does_nothing_for_an_empty_row_set(db: _RecordingDB) -> None
 
 def test_upsert_rows_writes_null_for_a_missing_value(db: _RecordingDB) -> None:
     """None becomes the SQL NULL literal rather than a bound parameter."""
-    db.upsert_rows('import', 'mult_x', 'id', [{'id': 0, 'value': None}])
+    db.upsert_rows('import', 'mult_x', 'id',
+                   [{'id': 0, 'value': None}, {'id': 1, 'value': 'a'}])
 
+    assert len(db.executed) == 1
     cmd, params = db.executed[0]
-    assert 'VALUES(0,NULL)' in cmd
-    assert params == []
+    assert 'VALUES(0,NULL),(1,%s)' in cmd
+    assert params == ['a']
+
+
+def test_upsert_rows_omits_the_update_clause_for_a_key_only_row(
+        db: _RecordingDB) -> None:
+    """With nothing but the key there is nothing to assign, so no dangling clause.
+
+    Not reachable with today's eight-column mult rows, but the row-by-row
+    implementation emitted `ON DUPLICATE KEY UPDATE ` with an empty assignment list,
+    which is a syntax error.
+    """
+    db.upsert_rows('import', 'mult_x', 'id', [{'id': 0}])
+
+    cmd, _params = db.executed[0]
+    assert 'ON DUPLICATE KEY UPDATE' not in cmd
+    assert cmd == 'INSERT INTO `imp_mult_x` (`id`) VALUES(0)'
+
+
+class _FailingDB(_RecordingDB):
+    """An ImportDBMySQL whose every statement fails the way the server would."""
+
+    def _execute(self, cmd: str, param_list: Any = None, cur: Any = None,
+                 mutates: bool = False) -> None:
+        raise MySQLdb.Error(1146, "Table 'x' doesn't exist")
+
+
+@pytest.mark.parametrize(('method', 'args'), [
+    ('delete_rows', ('import', 'obs_general')),
+    ('copy_rows_between_namespaces', ('import', 'perm', 'obs_general')),
+    ('upsert_rows', ('import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}])),
+], ids=['delete_rows', 'copy_rows_between_namespaces', 'upsert_rows'])
+def test_a_failed_statement_becomes_an_import_db_error(method: str,
+                                                       args: tuple) -> None:
+    """Every mutating method reports a server failure as ImportDBError.
+
+    `delete_rows` and `copy_rows_between_namespaces` used to let the raw
+    `MySQLdb.Error` escape, which is the one kind of database failure a plain
+    `except Exception:` could have swallowed without the top-level handler ever
+    seeing it.
+    """
+    db = _FailingDB()
+
+    with pytest.raises(ImportDBError) as excinfo:
+        getattr(db, method)(*args)
+
+    assert "Table 'x' doesn't exist" in str(excinfo.value)
+    assert isinstance(excinfo.value.__cause__, MySQLdb.Error)

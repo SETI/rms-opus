@@ -535,7 +535,8 @@ def log_nonrepeating_warning(msg):
         log_warning(msg)
 
 def log_unknown_target_name(target_name):
-    msg = f'Unknown TARGET_NAME "{target_name}" - edit config_targets.py'
+    msg = (f'Unknown TARGET_NAME "{target_name}" - edit '
+           'config_targets/target_name_info.py')
     log_nonrepeating_error(msg)
 
 
