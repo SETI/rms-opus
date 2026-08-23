@@ -2265,7 +2265,7 @@ body; never rewrite or delete earlier notes.*
     password, leaving the calling shell's umask unchanged.
   - **PR-07 residue cleared:** the stale line-3 comment in
     `scripts/models/create_opus_models.sh` is deleted. Nothing else in that script changed.
-  - **Two process lessons from this PR's review, for every later executor.**
+  - **Three process lessons from this PR's review, for every later executor.**
     (1) **A green CodeRabbit check does not mean CodeRabbit reviewed the code.** Its check
     reported `pass` here while its actual state was "Review rate limited", and its last real
     review predated the head commit by two pushes. Combined with executor replies saying
@@ -2278,6 +2278,19 @@ body; never rewrite or delete earlier notes.*
     `\` and `"` looked like "the escaping finding, fixed", and `chmod 600` after the write
     looked like "the permissions finding, fixed". Re-read a fix against the *whole* property
     the finding was about, not against the sentence the finding used.
+    (3) **§4a's CodeRabbit re-trigger remedy does not apply to this rate limit, and a later
+    executor should not follow it here.** §4a says that if CodeRabbit "is rate-limited / out
+    of reviews", wait in 10-minute increments and post an `@coderabbitai review` comment. On
+    this PR that comment was posted twice, by the orchestrator and by the executor, and was
+    a **no-op both times**: CodeRabbit's own rate-limit message states that it "is an
+    incremental review system and does not re-review already reviewed commits", and that the
+    command "is applicable only when automatic reviews are paused". Automatic reviews were
+    not paused. **The correct action when automatic reviews are active is simply to wait**:
+    CodeRabbit picks up the unreviewed head commit itself once its limit clears. Reserve the
+    `@coderabbitai review` comment for a PR where automatic review really is paused.
+    The gate condition to wait on is a CodeRabbit **review** (not an issue comment) whose
+    `submitted_at` is later than the head commit's `committedDate`; on this PR the two
+    differed by twenty seconds, which is precisely the gap a `pass` badge hides.
   - **Notes audit (done after CodeRabbit disproved the `Logger.warn` claim above).** Every
     remaining numeric or behavioral assertion in this block was re-checked by measurement
     rather than by re-reading: the 29 names PR-05 recorded map to exactly 28 entries in
