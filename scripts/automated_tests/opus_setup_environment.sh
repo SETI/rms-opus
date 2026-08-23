@@ -40,13 +40,31 @@ fi
 # Django's own default applies. django.fake_api_delays is absent for the same
 # kind of reason: the tests delay nothing.
 # Every value below is interpolated into a TOML basic string, where a backslash
-# escapes and a double quote ends the string, so a password or a path containing
-# either would otherwise produce a file that does not parse.
+# escapes and a double quote ends the string. Escaping those two is not enough on
+# its own: TOML also forbids a literal control character anywhere in a basic
+# string, and no escape written here can smuggle one in. A newline or a tab in a
+# password or a path is a configuration error rather than something to encode, so
+# it is refused before anything is written, naming the variable at fault -- the
+# alternative is a file that this script's own loader rejects at startup.
+for _toml_var in \
+    UNIQUE_ID OPUS_DB_USER OPUS_DB_PASSWORD PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR \
+    LOG_DIR DOWNLOAD_DIR DATA_DIR CWD; do
+    case "${!_toml_var}" in
+        *[[:cntrl:]]*)
+            echo "ERROR: $_toml_var contains a control character (newline, tab or"
+            echo "       similar). TOML forbids one inside a quoted value, so"
+            echo "       opus.toml cannot be written. Correct the value and re-run."
+            exit 1
+            ;;
+    esac
+done
+unset _toml_var
+
 toml_escape() {
     printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
-cat > opus.toml <<EOF
+( umask 077; cat > opus.toml.tmp <<EOF
 [database]
 brand = "MySQL"
 host = "localhost"
@@ -87,9 +105,12 @@ table_temp_prefix = "imp_"
 log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import.log"
 debug_log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import_debug.log"
 EOF
+)
 if [ $? -ne 0 ]; then exit -1; fi
-
-# The file holds the database password, so it must not inherit a permissive umask.
+# The rename is atomic within the filesystem, so opus.toml is never present with
+# the caller's umask while it already holds the database password.
+mv opus.toml.tmp opus.toml
+if [ $? -ne 0 ]; then exit -1; fi
 chmod 600 opus.toml
 
 

@@ -18,6 +18,7 @@ nohup.out
 test_out*
 coverage_out*
 opus.toml
+opus.toml.tmp
 
 migrations/
 

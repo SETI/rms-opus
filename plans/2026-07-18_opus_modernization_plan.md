@@ -2241,16 +2241,28 @@ body; never rewrite or delete earlier notes.*
     before running that script again. `deploy_new_code_and_database.sh` and the full-import
     chain need nothing, because they write the file themselves. **PR-22 owns making this
     automatic.**
-  - **Both generators escape every value they interpolate**, through a `toml_escape`
-    shell function that backslash-escapes `\` and `"` — the two characters a TOML basic
-    string gives meaning to. Without it a password or a path containing either produced a
-    file that does not parse, which the single-quoted Python secrets file was equally prone
-    to. Verified by rendering both heredocs with a password of `pa"ss\word` and a secret key
-    of `se"cret\key` and loading the result: both round-trip exactly, and benign values are
-    byte-identical to the unescaped output. **Both generators also `chmod 600 opus.toml`**,
-    because the file holds the database password and the Django secret key and would
-    otherwise take the caller's umask; the deploy generator is `source`d, so it must not set
-    a umask of its own.
+  - **Both generators guard, escape and protect the file they write**, and a later PR
+    editing them must keep all three properties. (1) A `toml_escape` helper
+    backslash-escapes `\` and `"`, the two characters a TOML basic string gives meaning
+    to. (2) Escaping those two is **not sufficient**, which is the part that was missed on
+    the first attempt: TOML forbids a literal control character anywhere in a quoted value
+    and no escape written by the shell can smuggle one in, so both scripts refuse a value
+    containing one **before** writing anything, naming the offending variable. Otherwise the
+    generator emits a file its own loader rejects at startup. (3) The file is written to
+    `opus.toml.tmp` inside a `( umask 077; ... )` subshell and then `mv`d into place, rather
+    than written directly and `chmod`ed afterwards: it holds the database password and the
+    Django secret key, and the direct form left it readable at the caller's umask for the
+    whole write. The subshell is what keeps the umask local — the deploy generator is
+    `source`d, so a bare `umask 077` would persist into every later step including
+    `collectstatic`, which would then write assets Apache cannot read. `opus.toml.tmp` is
+    git-ignored so the code-only deploy's untracked-file guard cannot trip on it.
+    Verified against the shipped scripts by extracting their guard, helper and heredoc:
+    a password of `pa"ss\word` and a secret key of `se"cret\key` round-trip exactly and
+    benign values stay byte-identical; a password containing a newline or a tab exits 1
+    naming `OPUS_DB_PASSWORD` without reaching the write, and a file with an unescaped
+    newline is indeed rejected by `load_config`; and the write-then-rename sequence run over
+    a pre-existing mode-644 `opus.toml` yields mode 600 at every point the file holds the
+    password, leaving the calling shell's umask unchanged.
   - **PR-07 residue cleared:** the stale line-3 comment in
     `scripts/models/create_opus_models.sh` is deleted. Nothing else in that script changed.
   - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 940 passed,
