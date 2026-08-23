@@ -1,20 +1,23 @@
-"""The three spacecraft-clock call sites that are not the canonical shape.
+"""The spacecraft-clock call sites that needed more than a mechanical rewrite.
 
 Twenty of the 23 ``field_obs_mission_<mission>_spacecraft_clock_count*`` methods were
 identical modulo the mission name, and `test_obs_sclk` covers the helper they all now
-call. Three were not, and each had to be reshaped by hand when the try/except moved into
-the helper:
+call. **Three** call sites were not that shape and had to be reshaped by hand when the
+try/except moved into the helper:
 
 * COVIMS_8xxx count2 computed ``parse_cassini_sclk(sc)+1`` *inside* the try, so the
   ``+1`` had to move after the helper's None check;
 * the two PDS4 sites parse ``str(raw).strip()`` but named the unstripped ``raw`` in the
-  error message;
-* both COCIRS count2 methods reported a badly formatted
-  ``SPACECRAFT_CLOCK_START_COUNT`` while reading ``SPACECRAFT_CLOCK_STOP_COUNT``.
+  error message.
+
+A separate defect is covered here too, because it lives in the same methods: both COCIRS
+count2 guards reported a badly formatted ``SPACECRAFT_CLOCK_START_COUNT`` while reading
+``SPACECRAFT_CLOCK_STOP_COUNT``. That is in the guard *above* the try/except, not in the
+call site.
 
 The consolidation was verified by a differential probe against the pre-change tree, but
-a probe is ephemeral. These tests drive the real field functions so the three reshaped
-sites stay pinned.
+a probe is ephemeral. These tests drive the real field functions so the reshaped sites
+stay pinned.
 """
 
 from typing import Any
@@ -59,6 +62,7 @@ def _obs(cls: type, columns: dict[str, Any]) -> tuple[Any, list[str]]:
 # --- COVIMS_8xxx: the `+1` that moved out of the try -------------------------
 
 def _covims_8xxx(start: str, stop: str) -> tuple[Any, list[str]]:
+    """Build a COVIMS_8xxx observation whose two clock columns hold `start`/`stop`."""
     return _obs(ObsVolumeCOVIMS8xxx, {'SPACECRAFT_CLOCK_START_COUNT': start,
                                       'SPACECRAFT_CLOCK_STOP_COUNT': stop})
 
@@ -94,6 +98,7 @@ def test_covims_8xxx_count2_falls_back_to_count1_when_out_of_order() -> None:
 # --- PDS4: the message names the string that was actually parsed -------------
 
 def _fring_mosaics(start: Any, stop: Any) -> tuple[Any, list[str]]:
+    """Build a PDS4 F-ring-mosaic observation with its two clock columns set."""
     return _obs(ObsBundleCassiniISSFRingMosaicsRSFrench2025,
                 {'cassini:spacecraft_clock_start_count': start,
                  'cassini:spacecraft_clock_stop_count': stop})
@@ -131,32 +136,36 @@ def test_pds4_missing_sclk_column_is_none_without_logging() -> None:
 
 # --- COCIRS: the count2 guard names the column it actually read --------------
 
-@pytest.mark.parametrize('cls', [ObsVolumeCOCIRS01xxx, ObsVolumeCOCIRS56xxx],
-                         ids=['COCIRS_01xxx', 'COCIRS_56xxx'])
-def test_cocirs_count2_guard_names_the_stop_count(cls: type) -> None:
+#: The COCIRS volumes report a badly formatted clock count at different levels.
+COCIRS_GUARD_LEVEL = [(ObsVolumeCOCIRS01xxx, 'error'), (ObsVolumeCOCIRS56xxx, 'warning')]
+COCIRS_IDS = ['COCIRS_01xxx', 'COCIRS_56xxx']
+
+
+@pytest.mark.parametrize(('cls', 'level'), COCIRS_GUARD_LEVEL, ids=COCIRS_IDS)
+def test_cocirs_count2_guard_names_the_stop_count(cls: type, level: str) -> None:
     """A badly formatted stop count is reported as STOP, not START.
 
     Both count2 methods read SPACECRAFT_CLOCK_STOP_COUNT and reported
-    SPACECRAFT_CLOCK_START_COUNT, which sent an operator to the wrong column.
+    SPACECRAFT_CLOCK_START_COUNT, which sent an operator to the wrong column. The whole
+    line is asserted, so the level each volume reports at is pinned too.
     """
     obs, logged = _obs(cls, {'SPACECRAFT_CLOCK_START_COUNT': GOOD_SCLK,
                              'SPACECRAFT_CLOCK_STOP_COUNT': 'nonsense'})
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count2() is None
-    assert len(logged) == 1
     # _fix_cassini_sclk supplies the missing fractional field before the guard runs.
-    assert 'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "nonsense.000"' in logged[0]
+    assert logged == [f'{level}: Badly formatted SPACECRAFT_CLOCK_STOP_COUNT '
+                      '"nonsense.000"']
 
 
-@pytest.mark.parametrize('cls', [ObsVolumeCOCIRS01xxx, ObsVolumeCOCIRS56xxx],
-                         ids=['COCIRS_01xxx', 'COCIRS_56xxx'])
-def test_cocirs_count1_guard_still_names_the_start_count(cls: type) -> None:
+@pytest.mark.parametrize(('cls', 'level'), COCIRS_GUARD_LEVEL, ids=COCIRS_IDS)
+def test_cocirs_count1_guard_still_names_the_start_count(cls: type, level: str) -> None:
     """The count1 guard was already right and must stay that way."""
     obs, logged = _obs(cls, {'SPACECRAFT_CLOCK_START_COUNT': 'nonsense'})
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count1() is None
-    assert len(logged) == 1
-    assert 'Badly formatted SPACECRAFT_CLOCK_START_COUNT "nonsense.000"' in logged[0]
+    assert logged == [f'{level}: Badly formatted SPACECRAFT_CLOCK_START_COUNT '
+                      '"nonsense.000"']
 
 
 def test_cocirs_56xxx_reports_an_unparseable_sclk_as_a_warning() -> None:

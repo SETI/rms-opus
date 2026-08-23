@@ -2759,7 +2759,8 @@ body; never rewrite or delete earlier notes.*
     mutating methods with no `except MySQLdb.Error` wrapper, so "no `except Exception` can
     catch a DB failure today" had two holes in it. Both now log and raise `ImportDBError`
     like every other mutating method in the file (13 `except MySQLdb.Error` blocks before
-    this PR, 15 after). Between them they have **eleven** call sites: `delete_rows` four,
+    this PR, **16** after -- these two wrappers plus the one the batched `upsert_rows`
+    carries, alongside the one the now-callerless `upsert_row` keeps). Between them they have **eleven** call sites: `delete_rows` four,
     all in `do_import_tables`; `copy_rows_between_namespaces` seven, two in
     `do_import_tables` and one each in `do_dictionary` (x2), `do_table_names`,
     `do_param_info` and `do_partables`.
@@ -2813,7 +2814,7 @@ body; never rewrite or delete earlier notes.*
     itself, **because `kwargs` is a dict and a caller's `args` need not be hashable** — a
     naive list-to-set conversion would raise `TypeError` on the first call that passed a
     keyword argument. Whoever annotates this in PR-15 should keep the repr.
-  - **Four pre-existing defects found and deliberately NOT fixed**, for whoever reopens
+  - **Five pre-existing defects found and deliberately NOT fixed**, for whoever reopens
     these files:
     1. **`ImportDBMySQL.__init__` calls `self.logger.log(...)` unguarded** at the
        "MySQL version" line (`mysql.py:109`) while every other logging call in the file is
@@ -2843,6 +2844,13 @@ body; never rewrite or delete earlier notes.*
        raises `KeyError` while creating an entry under the other name. Pre-existing;
        the surrounding surface-geometry path evidently always pre-creates the key.
        Candidate for PR-15 or PR-17.
+    5. **`obs_cassini_common_pds3.py:63` calls a method that does not exist.**
+       `self._announce_unknown_target_name(target_name)` is defined nowhere in the tree
+       (the real helper is `ObsBase._log_unknown_target_name`), so that branch raises
+       `AttributeError` instead of logging. Pre-existing at `24ef9256`; it is the
+       Cassini PDS3 unknown-target path, and the `AttributeError` is caught by
+       `import_run_field_function`'s `except Exception`, which reports it as a failed
+       field function. Candidate for PR-15 or PR-17.
   - **Typos fixed, and one left.** `overriden`, `transation`, `initalization` and
     `permament` are gone from `src/opus_import`, along with the two named message bugs
     above and `do_import_mult`'s `for type "range_func_name"` — a literal placeholder that
