@@ -2403,9 +2403,10 @@ body; never rewrite or delete earlier notes.*
     `cart`, `contexts`, `definitions`, `param_info`). `django_site` is the one that
     dropped out: `search.ZZDjangoSite` still maps it, but `sites.Site` left with
     `django.contrib.sites`. Key by `_meta.label`, which is unique. Note that a duplicate
-    `db_table` is legal here because **at most one side of each pair is managed** (the
-    `ZZ*` side is always `managed = False`, while `auth.Group`, `sessions.Session` and the
-    rest are managed) — Django's `models.E028` duplicate-table check only indexes models
+    `db_table` is legal here because **at most one side of each pair is managed**: the
+    `ZZ*` side is always `managed = False`, the contrib side (`auth.Group`,
+    `sessions.Session`, …) is managed, and for `cart`, `contexts` and `definitions`
+    *neither* side is. Django's `models.E028` duplicate-table check only indexes models
     that are managed and not proxies, so no pair ever collides in it. (2) **Do not record
     `field.db_type(connection)`.** It reads as the most direct expression of the mapping,
     but under 5.2 the MySQL backend's data-types table needs the server version, so it
@@ -2440,7 +2441,11 @@ body; never rewrite or delete earlier notes.*
     `contexts.timestamp`, the whole generated set) is written by the import pipeline or by
     the cart's raw `connection.cursor()` SQL, and the only `datetime` calls in the Django
     app build a download filename and an About-page date string. `cart/models.py` even
-    says "this is not being used". There are also **no `__date`/`__year`/`Trunc`/`Extract`
+    says "this is not being used". To be precise about "reads": `ParamInfo` *is* fetched by
+    the ORM at about seven call sites, so its `timestamp` column is selected and converted
+    to a `datetime` on the way past — the value is simply never looked at, so the
+    conversion's timezone has no consumer. Nothing *writes* one.
+    There are also **no `__date`/`__year`/`Trunc`/`Extract`
     lookups anywhere in the tree**, so the flip introduces no dependency on MySQL's
     `CONVERT_TZ` and its timezone tables — which is the usual way this bites a MySQL
     project.
@@ -2461,7 +2466,7 @@ body; never rewrite or delete earlier notes.*
       invalidated**; only one already within 8 hours of its 14-day expiry is cut short. And
       because `SESSION_SAVE_EVERY_REQUEST = True`, the next request rewrites `expire_date`
       in UTC, so the skew self-heals immediately rather than persisting. The admin
-      timestamps are cosmetic — a pre-cutover row shows 8 hours off in admin history.
+      timestamps are cosmetic — a pre-cutover row shows 7-8 hours off in admin history.
     A later PR that starts using the ORM for one of the OPUS columns inherits UTC semantics
     against columns the import pipeline wrote as naive local time — that is the trap this
     note exists for.

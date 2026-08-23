@@ -91,10 +91,11 @@ def test_matches_the_transcribed_package_across_every_reachable_size() -> None:
     """Sweep `nice_file_size` against the old algorithm over the whole usable range.
 
     The parity table above pins hand-picked values; this drives both
-    implementations over ~25,000 counts, so a regression anywhere in the ladder is
-    caught rather than only at the values someone thought to list.
+    implementations over ~35,000 counts, sampled both uniformly and within each
+    unit rung, so a regression anywhere in the ladder is caught rather than only
+    at the values someone thought to list.
 
-    The range is capped at 2**53 because that is where the two provably cannot
+    Every count stays below 2**53, which is where the two provably cannot
     disagree: any integer below 2**53 is exactly representable as a double, and
     dividing it by a power of two only adjusts the exponent, so `int(x / factor)`
     truncates the same exact quotient `//` computes. 2**53 bytes is 8 PiB, and
@@ -105,7 +106,16 @@ def test_matches_the_transcribed_package_across_every_reachable_size() -> None:
     counts = list(range(0, 5000))
     for exponent in range(0, 6):
         factor = 1024 ** exponent
-        counts += [factor - 1, factor, factor + 1, 2 * factor, 1023 * factor]
+        counts += [factor - 1, factor, factor + 1, 2 * factor,
+                   min(1023 * factor, 2 ** 53 - 1)]
+        # Sample within this rung as well as uniformly overall. A uniform draw
+        # below 2**53 lands in the petabyte rung seven times out of eight and
+        # essentially never below a terabyte, so without this the megabyte and
+        # gigabyte rungs would be covered only by the boundary values listed
+        # above — exactly the "values someone thought to list" this sweep is
+        # meant to improve on.
+        counts += [rng.randrange(factor, min(1024 * factor, 2 ** 53))
+                   for _ in range(2000)]
     counts += [rng.randrange(0, 2 ** 53) for _ in range(20000)]
     for size_bytes in counts:
         assert nice_file_size(size_bytes) == hurry_filesize_size(size_bytes)
