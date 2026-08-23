@@ -57,8 +57,6 @@ google-resumable-media==2.8.0
     # via google-cloud-storage
 googleapis-common-protos==1.72.0
     # via google-api-core
-hurry-filesize==0.9
-    # via -r requirements.in
 idna==3.11
     # via requests
 iniconfig==2.3.0

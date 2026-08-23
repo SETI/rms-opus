@@ -27,7 +27,6 @@ from django.db import DatabaseError, connection
 from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
-from hurry.filesize import size as nice_file_size
 
 from opus_app.apps.cart.models import Cart
 from opus_app.apps.metadata.views import get_cart_count, get_result_count_helper
@@ -68,6 +67,7 @@ from opus_app.apps.tools.app_utils import (
     throw_random_http500_error,
 )
 from opus_app.apps.tools.dictionary import Definitions
+from opus_app.apps.tools.file_size import nice_file_size
 from opus_app.apps.tools.file_utils import get_pds_products
 
 log = logging.getLogger(__name__)
