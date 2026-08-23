@@ -165,6 +165,10 @@ radec_pat = re.compile(r'Coordinates.ICRS,ep=J2000,eq=2000.: '
 simbad_pat = re.compile(r'Object ([\*\+\. a-zA-Z0-9]+) ---')
 name_pat = re.compile(r'NAME (\w+)')
 
+# (connect, read) timeout for one SIMBAD lookup, in seconds. Without it a single
+# unresponsive request hangs the whole ~160-star run indefinitely.
+SIMBAD_TIMEOUT = (10, 60)
+
 
 def main():
     """Print the STAR_RA_DEC table, looking each star up in SIMBAD."""
@@ -180,7 +184,7 @@ def main():
             'output.format': 'ASCII',
             'Ident': star_id.lower()
         }
-        r = session.get(url, params=params)
+        r = session.get(url, params=params, timeout=SIMBAD_TIMEOUT)
         match = radec_pat.search(r.text)
         if match is None:
             print('FAIL', star_id)

@@ -2814,8 +2814,9 @@ body; never rewrite or delete earlier notes.*
     itself, **because `kwargs` is a dict and a caller's `args` need not be hashable** — a
     naive list-to-set conversion would raise `TypeError` on the first call that passed a
     keyword argument. Whoever annotates this in PR-15 should keep the repr.
-  - **Five pre-existing defects found and deliberately NOT fixed**, for whoever reopens
-    these files:
+  - **Four pre-existing defects found and deliberately NOT fixed**, for whoever reopens
+    these files. (A fifth, the `table_rows` key mismatch, was fixed here instead -- see
+    the CodeRabbit bullet below):
     1. **`ImportDBMySQL.__init__` calls `self.logger.log(...)` unguarded** at the
        "MySQL version" line (`mysql.py:109`) while every other logging call in the file is
        behind `if self.logger:`. Constructing the backend with `logger=None` — which the
@@ -2836,15 +2837,7 @@ body; never rewrite or delete earlier notes.*
        anywhere** in `src/`, `tests/` or `integration_tests/`. It was moved rather than
        deleted because a split PR should not lose code, and vulture does not flag unused
        functions at its confidence gate. A candidate deletion for PR-15 or PR-17.
-    4. **`do_import_index.py:495-497` initializes the wrong dictionary key** (found by
-       this PR's adversarial reviewer, in code the split moved verbatim). In
-       `import_one_index` the guard reads
-       `if table_name not in table_rows: table_rows[new_table_name] = []` and the next
-       line appends to `table_rows[table_name]`, so a genuinely absent `table_name`
-       raises `KeyError` while creating an entry under the other name. Pre-existing;
-       the surrounding surface-geometry path evidently always pre-creates the key.
-       Candidate for PR-15 or PR-17.
-    5. **`obs_cassini_common_pds3.py:63` calls a method that does not exist.**
+    4. **`obs_cassini_common_pds3.py:63` calls a method that does not exist.**
        `self._announce_unknown_target_name(target_name)` is defined nowhere in the tree
        (the real helper is `ObsBase._log_unknown_target_name`), so that branch raises
        `AttributeError` instead of logging. Pre-existing at `24ef9256`; it is the
@@ -2875,7 +2868,54 @@ body; never rewrite or delete earlier notes.*
     `(Exception, ImportDBException)` tuple in `cli.py`, which is now plain
     `except Exception` as the plan directs; "~18" SCLK blocks was 23; and
     `config_targets.py` was 1,003 lines as stated.
-  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **1064
+  - **Two pre-existing Majors CodeRabbit found were fixed here rather than deferred**
+    (rfrench's explicit authorization on the PR, as a narrow exception to §4a's
+    "stumbled-on bugs go to the notes"; the reasoning was that shipping a PR which
+    rewrote those exact lines and left a `KeyError` in place would be indefensible).
+    **Neither was introduced by the split** -- both are byte-identical in `24ef9256`'s
+    pre-split `do_import.py` (lines 1110-1112 and 1481). The split made them legible.
+    1. **`get_opus_products_rows_for_filespec` returned a bare `None`** when
+       `Pds3File/Pds4File.from_filespec` raised `ValueError`, while its only caller does
+       `table_rows[table_name].extend(rows)` -- so a *logged, recoverable* filespec
+       error became `TypeError: 'NoneType' object is not iterable` and aborted the whole
+       index import. It returns the (empty) `rows` list now.
+    2. **The `obs_surface_geometry` guard tested one key and initialized another**:
+       `if table_name not in table_rows: table_rows[new_table_name] = []`, then
+       `table_rows[table_name].append(row)`. **The correct key is `table_name`**, not
+       `new_table_name` -- the row on the line above is computed *for* `table_name`, and
+       the loop filters to exactly `'obs_surface_geometry'`. The two sibling guards
+       higher up legitimately use `new_table_name` because they handle the *derived*
+       `obs_surface_geometry__<TARGET>` names, which is what makes the mistake look
+       plausible. **The guard is unreachable today**: `table_rows` is pre-populated with
+       every entry of `table_names_in_order` before the row loop, and that loop only
+       yields names from the same list, so `table_name not in table_rows` is always
+       false. That is why neither the integration suite nor any test could have caught
+       it, and why `tests/opus_import/test_do_import_index.py` pins the rule in the
+       source (all four `table_rows` guards must initialize the key they tested) rather
+       than in behavior.
+  - **One CodeRabbit finding was reason-rejected**, recorded so it is not re-litigated:
+    `create_tables_for_import` does not guard against a `bundle_id` that matches no
+    `BUNDLE_INFO` pattern, so `lookup_vol_info` returning `None` would raise `TypeError`
+    on the permanent-copy path. It is real but unreachable in practice -- the ids come
+    from the import `obs_general` table, so every one of them matched a pattern when it
+    was imported, and only an edit to `BUNDLE_INFO` between the import and the copy
+    could break that. Fixing it means choosing failure semantics (skip the bundle and
+    continue, or abort the copy), which no decision table in the plan covers.
+    **Candidate for PR-15 or PR-17.**
+  - **Smaller CodeRabbit fixes worth knowing about.** Two `10000` literals in
+    `obs_wavelength.py` (the wavelength->wavenumber direction, spelled as an `int` where
+    the others were `10000.`) now use `MICRONS_PER_CM` as well -- the constant covers all
+    twelve conversion sites, not ten. `util/retrieve_ra_dec.py`'s SIMBAD request has an
+    explicit `(10, 60)` connect/read timeout, closing the defect the B113 bullet above
+    describes as real-but-undetected. `_mult_table_column_names` lost the `table_name`
+    parameter it never read, and its docstring no longer claims the column list varies
+    by table (it never did). `delete_bundle_from_obs_tables` and
+    `delete_opus_id_from_obs_tables` ask `table_names()` for `prefix=['obs_']` instead of
+    `['obs_', 'mult_']`; both only ever acted on `obs_` names, and `table_names` filters
+    a single cached query in Python, so no SQL changed. `analyze_all_tables` keeps both
+    prefixes because it really does analyze mult tables.
+
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **1068
     passed**, pyroma 10/10, bandit, vulture, pymarkdown). The full local chain
     (`opus_main_test.sh`: 30-bundle import into a fresh MySQL schema, then the Django
     suite under the 100% gate) ran end to end with exit code 0: the import logged **zero

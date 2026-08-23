@@ -493,7 +493,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                                                              table_schemas[table_name],
                                                              metadata)
                 if table_name not in table_rows:
-                    table_rows[new_table_name] = []
+                    table_rows[table_name] = []
                 table_rows[table_name].append(row)
 
             # Handle obs_files
@@ -567,7 +567,10 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
             pdsf = pdsfile.pds4file.Pds4File.from_filespec(filespec, fix_case=True)
     except ValueError:
         import_util.log_nonrepeating_error(f'Failed to convert filespec "{filespec}"')
-        return
+        # The caller extends its row list with the result, so a failed conversion
+        # has to yield an empty list rather than None. The error is logged and the
+        # index import continues, which is what the caller expects.
+        return rows
 
     products = pdsf.opus_products()
     if '' in products:

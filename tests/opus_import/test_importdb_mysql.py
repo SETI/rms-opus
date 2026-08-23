@@ -9,11 +9,16 @@ parameter rather than interpolated, and the key column left out of the update cl
 
 from typing import Any
 
-import MySQLdb
 import pytest
 
-from opus_import.importdb.mysql import ImportDBMySQL
 from opus_import.importdb.super import ImportDBError, ImportDBSuper
+
+# mysqlclient is a runtime dependency, but `importdb/mysql.py` guards its own import so
+# the package stays importable without it. Skip the whole module rather than failing
+# collection in an environment that does not have the driver.
+MySQLdb = pytest.importorskip('MySQLdb')
+
+from opus_import.importdb.mysql import ImportDBMySQL  # noqa: E402 - follows the skip
 
 
 class _RecordingDB(ImportDBMySQL):

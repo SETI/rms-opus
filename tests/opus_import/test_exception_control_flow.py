@@ -42,6 +42,10 @@ _DB_NAMES = frozenset({
 #: Modules an obs class must not import, because each is a route to the database.
 _DB_MODULES = ('opus_import.importdb', 'opus_import.steps')
 
+#: The same modules as they appear in a relative import, where the package prefix is
+#: absent (`from . import importdb`, `from ..steps import do_import_mult`).
+_DB_TAILS = frozenset({'importdb', 'steps'})
+
 _OBS_DIR = Path(opus_import.obs.__file__).parent
 _OBS_MODULES = sorted(_OBS_DIR.glob('*.py'))
 
@@ -78,9 +82,18 @@ def test_an_obs_module_never_reaches_the_database(path: Path) -> None:
             for alias in node.names:
                 if alias.name.startswith(_DB_MODULES):
                     offenders.append(f'line {node.lineno}: import {alias.name}')
-        elif (isinstance(node, ast.ImportFrom) and node.module is not None
-                and node.module.startswith(_DB_MODULES)):
-            offenders.append(f'line {node.lineno}: from {node.module}')
+        elif isinstance(node, ast.ImportFrom):
+            # A relative import has module=None (`from . import importdb`) or an
+            # unqualified module (`from ..importdb import X`), so match the tail
+            # names too rather than only the fully qualified form.
+            module = node.module or ''
+            imported = [alias.name for alias in node.names]
+            if (module.startswith(_DB_MODULES)
+                    or module.split('.')[0] in _DB_TAILS
+                    or (node.level and any(name in _DB_TAILS for name in imported))):
+                offenders.append(
+                    f'line {node.lineno}: from {"." * node.level}{module} '
+                    f'import {", ".join(imported)}')
 
     assert offenders == [], (
         f'{path.name} reaches the database, which makes the `except Exception:` in '

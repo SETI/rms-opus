@@ -36,14 +36,16 @@ def note_created_import_mult_table(mult_table_name):
 
     _CREATED_IMP_MULT_TABLES.add(mult_table_name)
 
-def _mult_table_column_names(table_name):
-    """Return a list of the columns found in a mult tables. This isn't
-       constant because various *_target_name tables have an extra
-       column used for target name grouping."""
+def _mult_table_column_names():
+    """Return the list of columns every mult table has.
 
-    column_list = ['id', 'value', 'label','disp_order', 'display',
-                   'grouping', 'group_disp_order', 'aliases']
-    return column_list
+       The grouping columns are part of that list rather than being added for the
+       *_target_name tables only, so this is the same for every mult table. The
+       docstring used to say the opposite and the function took a table_name it
+       never read."""
+
+    return ['id', 'value', 'label', 'disp_order', 'display',
+            'grouping', 'group_disp_order', 'aliases']
 
 def _convert_sql_response_to_mult_table(mult_table_name, rows):
     """Given a set of rows from an SQL query of a mult table, convert it into
@@ -117,7 +119,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
             import_util.log_debug(f'Reading from mult table "{ns_mult_table_name}"')
         rows = impglobals.DATABASE.read_rows(use_namespace,
                                              mult_table_name,
-                                             _mult_table_column_names(mult_table_name))
+                                             _mult_table_column_names())
         mult_rows = _convert_sql_response_to_mult_table(mult_table_name, rows)
         _MULT_TABLE_CACHE[mult_table_name] = mult_rows
         return mult_rows
@@ -282,7 +284,7 @@ def copy_mult_from_import_to_permanent():
                                                             'import', table_name)
         import_util.log_debug(f'Copying mult table "{imp_mult_table_name}"')
         # Read the import mult table
-        column_list = _mult_table_column_names(table_name)
+        column_list = _mult_table_column_names()
         rows = impglobals.DATABASE.read_rows('import', table_name, column_list)
         mult_rows = _convert_sql_response_to_mult_table(table_name, rows)
         # Write the permanent table

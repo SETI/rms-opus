@@ -88,13 +88,13 @@ class ObsWavelength(ObsBase):
         wl2 = self.field_obs_wavelength_wavelength2()
         if wl2 is None:
             return None
-        return 10000 / wl2 # cm^-1
+        return MICRONS_PER_CM / wl2 # cm^-1
 
     def field_obs_wavelength_wave_no2(self):
         wl1 = self.field_obs_wavelength_wavelength1()
         if wl1 is None:
             return None
-        return 10000 / wl1 # cm^-1
+        return MICRONS_PER_CM / wl1 # cm^-1
 
     def field_obs_wavelength_wave_no_res1(self):
         return None

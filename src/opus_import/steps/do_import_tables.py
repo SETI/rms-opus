@@ -49,7 +49,7 @@ def delete_bundle_from_obs_tables(bundle_id, namespace):
 
     import_util.log_info(f'Deleting bundle "{bundle_id}" from {namespace} tables')
 
-    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_', 'mult_'])
+    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_'])
     table_names = sorted(table_names)
     q = impglobals.DATABASE.quote_identifier
     where = f'{q("bundle_id")}="{bundle_id}"'
@@ -95,7 +95,7 @@ def delete_opus_id_from_obs_tables(opus_id, namespace):
 
     import_util.log_info(f'Deleting opus_id "{opus_id}" from {namespace} tables')
 
-    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_', 'mult_'])
+    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_'])
     table_names = sorted(table_names)
     q = impglobals.DATABASE.quote_identifier
     where = f'{q("opus_id")}="{opus_id}"'
