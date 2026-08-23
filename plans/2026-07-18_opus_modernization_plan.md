@@ -2311,3 +2311,38 @@ body; never rewrite or delete earlier notes.*
     fixture. `tests/opus_app/test_settings.py` imports the settings module in a subprocess
     against a configuration whose every value is distinct, so a setting wired to the wrong
     key cannot pass by holding a plausible value.
+- **2026-08-23 (orchestrator, after PR-08 merged as `a918b8c8`):** four facts PR-08's
+  executor deliberately kept out of its own notes — they were established after its last
+  push, and adding them would have moved the frozen head and restarted a 35-minute CI run.
+  Recorded here instead, because PR-09 reads these notes and nothing else.
+  1. **The integration coverage baseline moved: 22228 → 22220 statements** (branches
+     unchanged at 1872, still 100%, still 1576 tests). PR-05 and PR-06 both recorded 22228,
+     so **PR-09 will see an unexplained −8 and should not treat it as lost coverage**.
+     Cause: `get_git_version` collapsed from ~24 statements to 1 when it became
+     `importlib.metadata.version("rms-opus")`, and `os`/`subprocess` left `app_utils.py`;
+     the visible delta is only 8 because most of the old function's lines carried
+     `# pragma: no cover` and never counted.
+  2. **`_DB_ENGINES` in `settings.py` is a live Django setting despite the leading
+     underscore.** Django's only filter is `isupper()`, and `'_DB_ENGINES'.isupper()` is
+     `True`, so it appears in `settings` and in `diffsettings`. The consequence is cosmetic
+     and the pre-existing `_HAS_MEMCACHE` has the same property — but **PR-09 owns settings
+     modernization** and should decide whether to lowercase both.
+  3. **PR-09's own tooling now requires `OPUS_CONFIG`.** Its deprecation sweep
+     (`python -W error::DeprecationWarning manage.py check`) and its two-process `_meta`
+     JSON diff both import `opus_app.settings`, which raises `ConfigError` when the variable
+     is unset. Use `OPUS_CONFIG=tests/fixtures/opus_ci.toml`. PR-08's own notes name
+     PR-14/18/21 as the fixture's consumers but **not** PR-09.
+  4. **The generator-verification technique is reusable and PR-22 should reuse it.** Extract
+     the control-character guard, the `toml_escape` helper and the heredoc from the shell
+     script, execute them under `bash` with a controlled environment, then load the output
+     through `opus_config.load_config`. That is how PR-08 proved the escaping, the
+     control-character rejection and the `0600` file mode against *shipped* code rather than
+     a copy. PR-22 rewrites this entire deploy chain.
+  - **PR-08's CodeRabbit gate was explicitly waived by rfrench (2026-08-23)**, not met:
+    CodeRabbit was rate-limited and its last review predated the head commit by 38 minutes,
+    so it never reviewed the control-character guard or the atomic-write fix. Everything
+    else was green (full CI on the frozen head, a local integration chain at 1576 tests /
+    100% coverage, two adversarial passes, zero unresolved threads) and both unreviewed
+    fixes were the ones CodeRabbit itself requested, verified independently by the
+    orchestrator. **This is a documented one-off waiver, not a precedent** — the gate still
+    stands for later PRs.
