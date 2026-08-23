@@ -9,9 +9,7 @@ description = "OPUS: the Outer Planets Unified Search tool for the PDS Ring-Moon
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "django>=4.2,<5",
-  "django-storages",
-  "hurry.filesize",
+  "django>=5.2,<6",
   "jinja2",
   "markupsafe",
   "mistune",
