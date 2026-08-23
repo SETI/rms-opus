@@ -2265,6 +2265,27 @@ body; never rewrite or delete earlier notes.*
     password, leaving the calling shell's umask unchanged.
   - **PR-07 residue cleared:** the stale line-3 comment in
     `scripts/models/create_opus_models.sh` is deleted. Nothing else in that script changed.
+  - **Two process lessons from this PR's review, for every later executor.**
+    (1) **A green CodeRabbit check does not mean CodeRabbit reviewed the code.** Its check
+    reported `pass` here while its actual state was "Review rate limited", and its last real
+    review predated the head commit by two pushes. Combined with executor replies saying
+    "fixed in <sha>", the PR looked finished when two real defects were still open — a
+    credential-exposure window and a generator that could emit TOML its own loader rejects.
+    **Check the timestamp of CodeRabbit's latest review against the head commit** before
+    treating the §4a gate as met; a `pass` with no review newer than the last push is
+    hollow. (2) **A finding answered is not a finding closed.** Both of those defects came
+    from CodeRabbit re-examining fixes the executor had already declared complete: escaping
+    `\` and `"` looked like "the escaping finding, fixed", and `chmod 600` after the write
+    looked like "the permissions finding, fixed". Re-read a fix against the *whole* property
+    the finding was about, not against the sentence the finding used.
+  - **Notes audit (done after CodeRabbit disproved the `Logger.warn` claim above).** Every
+    remaining numeric or behavioral assertion in this block was re-checked by measurement
+    rather than by re-reading: the 29 names PR-05 recorded map to exactly 28 entries in
+    `tests/opus_app/test_settings.py` with only `RMS_OPUS_PATH` absent; `opus_import.cli`
+    reads exactly twelve settings (`config.*` references, de-duplicated); and
+    `/tmp/opus_ci_opus_log.txt` really is created by `django.setup()` under the CI fixture,
+    which is what justifies keeping every opened path directly under `/tmp`. No further
+    inaccuracy was found.
   - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest 940 passed,
     pyroma 10/10, bandit, vulture, pymarkdown). Both generators were checked by rendering
     their `opus.toml` heredoc with representative variables and loading the result: the test
