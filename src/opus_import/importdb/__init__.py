@@ -1,5 +1,5 @@
 from opus_import.importdb.mysql import ImportDBMySQL
-from opus_import.importdb.super import ImportDBException
+from opus_import.importdb.super import ImportDBError
 
 # from importdb.postgresql import ImportDBPostgreSQL
 
@@ -20,4 +20,4 @@ def get_db(db_brand, db_hostname, db_name, db_schema,
     #                               logger=logger, read_only=read_only)
     if logger:
         logger.log('fatal', f'Unknown database brand "{db_brand}"')
-    raise ImportDBException('Unknown database brand '+db_brand)
+    raise ImportDBError('Unknown database brand '+db_brand)

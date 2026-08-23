@@ -460,7 +460,7 @@ def main():
                                        logger=impglobals.LOGGER,
                                        import_prefix=config.import_.table_temp_prefix,
                                        read_only=impglobals.ARGUMENTS.read_only)
-        except importdb.ImportDBException:
+        except importdb.ImportDBError:
             sys.exit(-1)
 
         impglobals.DATABASE.log_sql = impglobals.ARGUMENTS.log_sql
@@ -553,12 +553,11 @@ def main():
 
         impglobals.LOGGER.close()
 
-    # ImportDBException derives from BaseException (importdb/super.py), so it must be
-    # named explicitly: this top-level handler exists to log every import failure, and
-    # the import pipeline raises ImportDBException on any DB error. SystemExit and
+    # This top-level handler exists to log every import failure, including the
+    # ImportDBError the pipeline raises on any DB error. SystemExit and
     # KeyboardInterrupt are intentionally left to propagate (the old bare `except:`
     # wrongly swallowed them).
-    except (Exception, importdb.ImportDBException):
+    except Exception:
         msg = 'Import failed with exception'
         if not impglobals.ARGUMENTS.log_suppress_traceback:
             msg += ':\n' + traceback.format_exc()

@@ -1,8 +1,8 @@
 import warnings
 
 
-class ImportDBException(BaseException):
-    pass
+class ImportDBError(Exception):
+    """Raised when a database operation fails; always aborts the import."""
 
 class ImportDBSuper:
     def __init__(self, db_hostname, db_name, db_schema, db_user, db_password,
