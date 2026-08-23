@@ -1,9 +1,9 @@
 """Tests for the import pipeline's command-line surface.
 
-The pipeline used to be a script whose whole body, including the settings it read from
-``opus_secrets.py``, ran at import time. These tests pin what replaced it: a parser that
-can be built without side effects, and an entry point that reads no settings until it has
-arguments to act on.
+The pipeline used to be a script whose whole body, including the settings it read at
+import time, ran on import. These tests pin what replaced it: a parser that can be built
+without side effects, and an entry point that reads no settings until it has arguments to
+act on.
 """
 
 import os
@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 import opus_import.__main__
-from opus_config._secrets_compat import OPUS_SECRETS_ENV_VAR
+from opus_config import OPUS_CONFIG_ENV_VAR
 from opus_import import cli
 
 
@@ -68,18 +68,18 @@ def _run_without_settings(directory: Path, *arguments: str) -> subprocess.Comple
     workdir = directory / 'no_settings_here'
     workdir.mkdir()
     env = dict(os.environ)
-    env.pop(OPUS_SECRETS_ENV_VAR, None)
+    env.pop(OPUS_CONFIG_ENV_VAR, None)
     return subprocess.run([sys.executable, '-m', 'opus_import', *arguments],
                           capture_output=True, text=True, cwd=workdir, env=env,
                           check=False)
 
 
-def test_help_works_without_a_secrets_file(tmp_path: Path) -> None:
+def test_help_works_without_a_configuration_file(tmp_path: Path) -> None:
     """``--help`` runs with no settings anywhere, which the old script could not do.
 
     The settings arrived through a module-level wildcard import that ran before argparse,
-    so asking for usage on a machine with no ``opus_secrets.py`` failed. Runs in a
-    subprocess because the check is about what the process needs at startup.
+    so asking for usage on a machine with no settings file failed. Runs in a subprocess
+    because the check is about what the process needs at startup.
     """
     result = _run_without_settings(tmp_path, '--help')
     assert result.returncode == 0, result.stderr
@@ -87,9 +87,9 @@ def test_help_works_without_a_secrets_file(tmp_path: Path) -> None:
     assert '--do-it-all' in result.stdout
 
 
-def test_running_without_settings_reports_the_missing_file(tmp_path: Path) -> None:
-    """Asking for real work without settings names the file and the variable to set."""
+def test_running_without_settings_reports_the_missing_variable(tmp_path: Path) -> None:
+    """Asking for real work without settings names the variable that has to be set."""
     result = _run_without_settings(tmp_path, '--validate-perm')
     assert result.returncode != 0
-    assert 'opus_secrets.py' in result.stderr
-    assert OPUS_SECRETS_ENV_VAR in result.stderr
+    assert OPUS_CONFIG_ENV_VAR in result.stderr
+    assert 'ConfigError' in result.stderr

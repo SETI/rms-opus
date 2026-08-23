@@ -22,4 +22,4 @@ The dictionary import uses the 'value' field in the 'subterm' field to signify t
 
 The index for the dictionary table is unique on the three fields: term + context + subterm.  Note that where there is no subterm, the default value is ""  <not null, as a null field cannot be used as part of an index>.
 
-To import data into the dictionary, copy secrets_template.py into config.py and update the parameters for the DB login, username, etc. and set up the paths, as required.  Python 3.6 compliant.
+The dictionary import is a step of the OPUS import pipeline (`python -m opus_import --import-dictionary`), so it uses the database in the `[database]` table of the OPUS configuration file named by `OPUS_CONFIG`; it needs no settings of its own, because `pdsdd.full` and `contexts.csv` ship inside the `opus_import` package.

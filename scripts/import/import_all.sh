@@ -1,7 +1,11 @@
 #!/bin/bash
 #
 # Run this from the root of the repository, with rms-opus installed in the active
-# environment. The settings come from $OPUS_SECRETS, or from ./opus_secrets.py.
+# environment, with OPUS_CONFIG naming the OPUS configuration file.
+# The import runs under nohup, so a missing configuration would otherwise surface
+# in nohup.out after the operator has already confirmed the erase.
+: "${OPUS_CONFIG:?OPUS_CONFIG must name the OPUS configuration file}"
+
 if [ $# -lt 2 ];
 then
     echo 'Usage: scripts/import/import_all.sh <production_database_name> "-u<username> -p<password> -h <hostname>" <other_params>'
@@ -17,7 +21,10 @@ echo "***** About to import ALL PDS DATA into a new database *****"
 echo "************************************************************"
 echo
 echo "The current production database is:"
-grep "^DB_SCHEMA_NAME" /opus/src/rms-opus/opus_secrets.py
+# Deliberately the production installation's file rather than $OPUS_CONFIG: this is
+# the database being compared against the one named in $1, which is a different
+# installation. Reading $OPUS_CONFIG would print the same name twice.
+grep "^schema" /opus/src/rms-opus/opus.toml
 echo
 echo "About to ERASE and import to this database:" $1
 echo "with these SQL parameters:" $2

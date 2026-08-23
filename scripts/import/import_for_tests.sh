@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Run this from the root of the repository, with rms-opus installed in the active
-# environment. The settings come from $OPUS_SECRETS, or from ./opus_secrets.py.
+# environment, with OPUS_CONFIG naming the OPUS configuration file.
 set -e
 
 echo "*************************************************************"
@@ -9,7 +9,7 @@ echo "***** About to import TEST PDS DATA into a new database *****"
 echo "*************************************************************"
 echo
 echo "About to ERASE and import to this database:"
-grep "^DB_SCHEMA_NAME" "${OPUS_SECRETS:-opus_secrets.py}"
+grep "^schema" "${OPUS_CONFIG:?OPUS_CONFIG must name the OPUS configuration file}"
 echo "Note this should be the test-style name"
 echo -n ">>> Type YES to continue: "
 read yn

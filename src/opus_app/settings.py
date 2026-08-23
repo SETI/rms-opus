@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from opus_config._secrets_compat import load_secrets
+from opus_config import get_config
 
 # First check to see if we have the memcache package installed
 _HAS_MEMCACHE = False
@@ -30,67 +30,64 @@ BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 BASE_DIR = Path(__file__).resolve().parent
 
 ################################################################################
-# Settings supplied by the installation's opus_secrets.py.
+# Settings supplied by the installation's configuration file, which the
+# OPUS_CONFIG environment variable names.
 #
 # Every name the application reads is assigned explicitly below, so nothing
-# enters this namespace unannounced. PR-08 replaces this block with the TOML
-# loader in opus_config and deletes the compatibility shim.
+# enters this namespace unannounced. The configuration file has no default
+# location: importing this module without OPUS_CONFIG set raises ConfigError
+# rather than starting the site against another installation's settings.
 ################################################################################
 
-_secrets = load_secrets()
+_config = get_config()
 
 # Django core.
-SECRET_KEY = _secrets.SECRET_KEY
-DEBUG = _secrets.DEBUG
-ALLOWED_HOSTS = _secrets.ALLOWED_HOSTS
-# Only the deployed-server secrets file defines STATIC_ROOT; the automated-test
-# one does not, because collectstatic never runs there. None is Django's own
-# default.
-STATIC_ROOT = getattr(_secrets, 'STATIC_ROOT', None)
+SECRET_KEY = _config.django.secret_key
+DEBUG = _config.django.debug
+ALLOWED_HOSTS = list(_config.django.allowed_hosts)
+# Only a deployed server sets static_root, because collectstatic never runs on a
+# development or test installation. None is Django's own default.
+STATIC_ROOT = _config.paths.static_root
 
-# Database. (The engine is hardcoded to MySQL until PR-08 selects it from
-# DB_BRAND.)
-DB_HOST_NAME = _secrets.DB_HOST_NAME
-DB_SCHEMA_NAME = _secrets.DB_SCHEMA_NAME
-DB_USER = _secrets.DB_USER
-DB_PASSWORD = _secrets.DB_PASSWORD
+# Database. The engine follows the configured brand (see _DB_ENGINES below), so
+# the web application and the import pipeline cannot disagree about which
+# database they are talking to.
+DB_HOST_NAME = _config.database.host
+DB_SCHEMA_NAME = _config.database.schema
+DB_USER = _config.database.user
+DB_PASSWORD = _config.database.password
 
 # Roots of the PDS3 and PDS4 holdings served to users.
-PDS3_DATA_DIR = _secrets.PDS3_DATA_DIR
-PDS4_DATA_DIR = _secrets.PDS4_DATA_DIR
-
-# Where rms-opus is checked out. Read only by
-# opus_app.apps.tools.app_utils.get_git_version,
-# which PR-08 rewrites in terms of importlib.metadata.
-RMS_OPUS_PATH = _secrets.RMS_OPUS_PATH
+PDS3_DATA_DIR = _config.paths.pds3_holdings
+PDS4_DATA_DIR = _config.paths.pds4_holdings
 
 # Static files and public URLs.
-OPUS_STATIC_ROOT = _secrets.OPUS_STATIC_ROOT
-CACHE_SERVER_PREFIX = _secrets.CACHE_SERVER_PREFIX
-PUBLIC_OPUS_URL = _secrets.PUBLIC_OPUS_URL
-PRODUCT_HTTP_PATH = _secrets.PRODUCT_HTTP_PATH
-VIEWMASTER_ROOT_PATH = _secrets.VIEWMASTER_ROOT_PATH
+OPUS_STATIC_ROOT = _config.paths.opus_static_root
+CACHE_SERVER_PREFIX = _config.django.cache_server_prefix
+PUBLIC_OPUS_URL = _config.django.public_url
+PRODUCT_HTTP_PATH = _config.django.product_http_path
+VIEWMASTER_ROOT_PATH = _config.django.viewmaster_url
 
 # Cart downloads.
-TAR_FILE_PATH = _secrets.TAR_FILE_PATH
-MANIFEST_FILE_PATH = _secrets.MANIFEST_FILE_PATH
-TAR_FILE_URL_PATH = _secrets.TAR_FILE_URL_PATH
+TAR_FILE_PATH = _config.paths.tar_dir
+MANIFEST_FILE_PATH = _config.paths.manifest_dir
+TAR_FILE_URL_PATH = _config.django.tar_file_url
 
 # Site content maintained outside the repository.
-OPUS_LAST_BLOG_UPDATE_FILE = _secrets.OPUS_LAST_BLOG_UPDATE_FILE
-OPUS_NOTIFICATION_FILE = _secrets.OPUS_NOTIFICATION_FILE
+OPUS_LAST_BLOG_UPDATE_FILE = _config.paths.last_blog_update_file
+OPUS_NOTIFICATION_FILE = _config.paths.notification_file
 
 # Logging.
-OPUS_LOG_FILE = _secrets.OPUS_LOG_FILE
-OPUS_LOG_FILE_LEVEL = _secrets.OPUS_LOG_FILE_LEVEL
-OPUS_LOG_CONSOLE_LEVEL = _secrets.OPUS_LOG_CONSOLE_LEVEL
-OPUS_LOG_DJANGO_LEVEL = _secrets.OPUS_LOG_DJANGO_LEVEL
-OPUS_LOG_API_CALLS = _secrets.OPUS_LOG_API_CALLS
+OPUS_LOG_FILE = _config.paths.opus_log_file
+OPUS_LOG_FILE_LEVEL = _config.django.log_file_level
+OPUS_LOG_CONSOLE_LEVEL = _config.django.log_console_level
+OPUS_LOG_DJANGO_LEVEL = _config.django.log_django_level
+OPUS_LOG_API_CALLS = _config.django.log_api_calls
 
 # Fault injection (see opus_app.apps.tools.app_utils).
-OPUS_FAKE_API_DELAYS = _secrets.OPUS_FAKE_API_DELAYS
-OPUS_FAKE_SERVER_ERROR404_PROBABILITY = _secrets.OPUS_FAKE_SERVER_ERROR404_PROBABILITY
-OPUS_FAKE_SERVER_ERROR500_PROBABILITY = _secrets.OPUS_FAKE_SERVER_ERROR500_PROBABILITY
+OPUS_FAKE_API_DELAYS = _config.django.fake_api_delays
+OPUS_FAKE_SERVER_ERROR404_PROBABILITY = _config.django.fake_error404_probability
+OPUS_FAKE_SERVER_ERROR500_PROBABILITY = _config.django.fake_error500_probability
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
@@ -340,11 +337,20 @@ LOGGING = {
 
 os.environ['REUSE_DB'] = "1"  # for test runner
 
+# Only MySQL is implemented; the PostgreSQL entry is the same placeholder as
+# opus_import.importdb.postgresql, kept so that adding the backend is a
+# configuration change rather than a settings change. The loader accepts no other
+# brand, so this lookup cannot fail for a valid configuration.
+_DB_ENGINES = {
+    'MySQL': 'django.db.backends.mysql',
+    'PostgreSQL': 'django.db.backends.postgresql',
+}
+
 DATABASES = {
     'default': {
         'NAME': DB_SCHEMA_NAME,  # local database name
         'HOST': DB_HOST_NAME,
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': _DB_ENGINES[_config.database.brand],
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}

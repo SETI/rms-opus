@@ -219,7 +219,7 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
 # assigned to PR-17. They are not burned down by the PR that moved the tree
 # here, because reformatting and renaming on that scale is PR-17's work.
 # E722/F403/F405 are absent from these globs deliberately: this tree contains no
-# bare `except:`, and settings.py reads the secrets file through opus_config
+# bare `except:`, and settings.py reads the configuration file through opus_config
 # rather than a star import.
 #
 # The log analyzer carries E501 alone: 153 long lines that PR-17 (which owns
@@ -263,10 +263,11 @@ targets = ["src", "integration_tests", "manage.py"]
 # each justified below. PR-17 shrinks these to individually-justified `# nosec`
 # lines; PR-09 removes the `.extra()` sources (B610) and PR-12 formalizes SQL
 # assembly (B608). B324 (weak MD5) was fixed in-code via usedforsecurity=False.
+# B105 (hardcoded_password_string) has left this list: its only hit was the 'XXX'
+# placeholder in the dictionary app's secrets template, which the TOML
+# configuration replaced, and the check passes unskipped.
 skips = [
   "B101",  # assert_used: asserts are internal invariants, not input validation.
-  "B105",  # hardcoded_password_string: the only hit is the 'XXX' placeholder in
-           # a secrets *template* (removed in PR-08); not a real credential.
   "B110",  # try_except_pass: legacy best-effort cleanup paths.
   "B113",  # request_without_timeout: internal log-analyzer API client.
   "B301",  # pickle: shelve/pickle over the tool's own locally-produced cache data.
