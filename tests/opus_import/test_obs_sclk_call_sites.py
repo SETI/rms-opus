@@ -1,9 +1,11 @@
 """The spacecraft-clock call sites that needed more than a mechanical rewrite.
 
-Twenty of the 23 ``field_obs_mission_<mission>_spacecraft_clock_count*`` methods were
-identical modulo the mission name, and `test_obs_sclk` covers the helper they all now
-call. **Three** call sites were not that shape and had to be reshaped by hand when the
-try/except moved into the helper:
+**Eighteen** of the 23 ``field_obs_mission_<mission>_spacecraft_clock_count*`` methods
+held a try/except identical modulo the mission name, and `test_obs_sclk` covers the
+helper they all now call. Of the remaining five, two are COCIRS_56xxx's, which differ
+only in logging at warning level (`test_obs_sclk` covers that through the helper's
+``log_func``), and **three** call sites had to be reshaped by hand when the try/except
+moved into the helper:
 
 * COVIMS_8xxx count2 computed ``parse_cassini_sclk(sc)+1`` *inside* the try, so the
   ``+1`` had to move after the helper's None check;
