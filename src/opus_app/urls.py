@@ -21,13 +21,7 @@ base_urlpatterns = [
     re_path(r'^', include('opus_app.apps.cart.urls')),
 ]
 
-dictionary_urlpatterns = [
-    re_path(r'^', include('opus_app.apps.dictionary.urls'))
-]
-
 urlpatterns = [
     re_path('^', include(base_urlpatterns)),
     re_path(f'^{settings.BASE_PATH}/', include(base_urlpatterns)),  # dev
-    re_path('^dictionary/', include(dictionary_urlpatterns)),
-    re_path('^__dictionary/', include(dictionary_urlpatterns)),
 ]

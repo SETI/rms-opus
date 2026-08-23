@@ -32,8 +32,6 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from opus_app.apps.cart.models import Cart
-from opus_app.apps.dictionary.models import Definitions
-from opus_app.apps.dictionary.views import get_def_for_tooltip
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.results.views import get_triggered_tables
 from opus_app.apps.search.forms import SearchForm
@@ -59,6 +57,7 @@ from opus_app.apps.tools.app_utils import (
     throw_random_http404_error,
 )
 from opus_app.apps.tools.db_utils import lookup_pretty_value_for_mult
+from opus_app.apps.tools.dictionary import Definitions, get_def_for_tooltip
 from opus_app.apps.tools.file_utils import (
     get_displayed_browse_products,
     get_pds_preview_images,
