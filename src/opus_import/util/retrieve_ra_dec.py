@@ -160,62 +160,70 @@ STARS = {
     'ZET_PUP':              (None,  'OTHER',      'Zet Pup'),
 }
 
-session = requests.Session()
-
 radec_pat = re.compile(r'Coordinates.ICRS,ep=J2000,eq=2000.: '
                        r'(\d+) (\d+) (\d+.\d+|\d+) +(\+|-)(\d+) (\d+) (\d+.\d+|\d+)')
 simbad_pat = re.compile(r'Object ([\*\+\. a-zA-Z0-9]+) ---')
 name_pat = re.compile(r'NAME (\w+)')
 
-for key in STARS:
-    star_id = key.replace('_', ' ')
-    url = 'http://simbad.u-strasbg.fr/simbad/sim-id'
-    if star_id == 'LMC 303':
-        star_id = '@3114237'
-    params = {
-        'output.format': 'ASCII',
-        'Ident': star_id.lower()
-    }
-    r = session.get(url, params=params)
-    match = radec_pat.search(r.text)
-    if match is None:
-        print('FAIL', star_id)
-        continue
-    ra_h = int(match.group(1))
-    ra_m = int(match.group(2))
-    ra_s = float(match.group(3))
-    dec_sign = match.group(4)
-    dec_d = int(match.group(5))
-    dec_m = int(match.group(6))
-    dec_s = float(match.group(7))
 
-    # simbad_match = simbad_pat.search(r.text)
-    # if simbad_match is None:
-    #     print('FAIL', key)
-    #     print(r.text[:200])
-    #     continue
-    # simbad = simbad_match.group(1)
-    # if simbad.startswith('V*'):
-    #     simbad = simbad[2:]
-    # if simbad.startswith('*'):
-    #     simbad = simbad[1:]
-    # simbad = simbad.strip().strip(' ').replace(' ', '_')
-    # simbad = simbad.upper()
-    # if simbad[2:4] == '._':
-    #     simbad = simbad.replace('.', '')
-    # if simbad != key:
-    #     print(simbad_match.group(1))
-    #     print('OFFICIAL', simbad, 'US', key)
-    #
-    # name_match = name_pat.search(r.text)
-    # if name_match is not None:
-    #     our_name = ''
-    #     if '(' in STARS[key][2]:
-    #         our_name = STARS[key][2][STARS[key][2].index('(')+1:-1]
-    #     print(key, our_name, '/', name_match.group(1))
+def main():
+    """Print the STAR_RA_DEC table, looking each star up in SIMBAD."""
 
-    ra = (ra_h + ra_m/60. + ra_s/60./60.) * 360. / 24.
-    dec = dec_d + dec_m/60. + dec_s/60./60.
-    if dec_sign == '-':
-        dec = -dec
-    print('    {:<24}({:13.9f}, {:13.9f}),'.format(f"'{key}':", ra, dec))
+    session = requests.Session()
+
+    for key in STARS:
+        star_id = key.replace('_', ' ')
+        url = 'https://simbad.u-strasbg.fr/simbad/sim-id'
+        if star_id == 'LMC 303':
+            star_id = '@3114237'
+        params = {
+            'output.format': 'ASCII',
+            'Ident': star_id.lower()
+        }
+        r = session.get(url, params=params)
+        match = radec_pat.search(r.text)
+        if match is None:
+            print('FAIL', star_id)
+            continue
+        ra_h = int(match.group(1))
+        ra_m = int(match.group(2))
+        ra_s = float(match.group(3))
+        dec_sign = match.group(4)
+        dec_d = int(match.group(5))
+        dec_m = int(match.group(6))
+        dec_s = float(match.group(7))
+
+        # simbad_match = simbad_pat.search(r.text)
+        # if simbad_match is None:
+        #     print('FAIL', key)
+        #     print(r.text[:200])
+        #     continue
+        # simbad = simbad_match.group(1)
+        # if simbad.startswith('V*'):
+        #     simbad = simbad[2:]
+        # if simbad.startswith('*'):
+        #     simbad = simbad[1:]
+        # simbad = simbad.strip().strip(' ').replace(' ', '_')
+        # simbad = simbad.upper()
+        # if simbad[2:4] == '._':
+        #     simbad = simbad.replace('.', '')
+        # if simbad != key:
+        #     print(simbad_match.group(1))
+        #     print('OFFICIAL', simbad, 'US', key)
+        #
+        # name_match = name_pat.search(r.text)
+        # if name_match is not None:
+        #     our_name = ''
+        #     if '(' in STARS[key][2]:
+        #         our_name = STARS[key][2][STARS[key][2].index('(')+1:-1]
+        #     print(key, our_name, '/', name_match.group(1))
+
+        ra = (ra_h + ra_m/60. + ra_s/60./60.) * 360. / 24.
+        dec = dec_d + dec_m/60. + dec_s/60./60.
+        if dec_sign == '-':
+            dec = -dec
+        print('    {:<24}({:13.9f}, {:13.9f}),'.format(f"'{key}':", ra, dec))
+
+
+if __name__ == '__main__':
+    main()
