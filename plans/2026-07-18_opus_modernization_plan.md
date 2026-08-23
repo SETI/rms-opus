@@ -2833,3 +2833,20 @@ body; never rewrite or delete earlier notes.*
     `(Exception, ImportDBException)` tuple in `cli.py`, which is now plain
     `except Exception` as the plan directs; "~18" SCLK blocks was 23; and
     `config_targets.py` was 1,003 lines as stated.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **1047
+    passed**, pyroma 10/10, bandit, vulture, pymarkdown). The full local chain
+    (`opus_main_test.sh`: 30-bundle import into a fresh MySQL schema, then the Django
+    suite under the 100% gate) ran end to end with exit code 0: the import logged **zero
+    ERROR lines**, and the suite reported **`Ran 1576 tests` / `OK` /
+    `TOTAL 22220 stmts, 1876 branches, 100%`** with **zero golden-fixture diffs**
+    (`git status integration_tests/test_api/responses` empty afterwards). Those are
+    PR-09's post-merge figures unchanged, which is the point: this PR restructures the
+    import pipeline and must move none of them. Beyond the suites, three targeted
+    differential checks were run rather than argued, each described in the bullets above:
+    the function-by-function split comparison against the pre-split file, the 456-probe
+    SCLK sweep across the pre- and post-consolidation trees, and a real-MySQL (8.0.46)
+    comparison filling two tables built from the packaged `mult_template` schema — one
+    through the old row-by-row `upsert_row`, one through the new batched `upsert_rows` —
+    from the same three row sets (2500 inserts, an overwrite of 1800, then 10 further
+    inserts, exercising the insert path, the ON DUPLICATE KEY UPDATE path and the
+    1000-row packet split), ending with 2510 rows identical column for column.
