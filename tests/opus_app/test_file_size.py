@@ -12,6 +12,8 @@ The module deliberately imports nothing from Django, so these run without the ap
 registry or a configuration file.
 """
 
+import random
+
 import pytest
 
 from opus_app.apps.tools.file_size import nice_file_size
@@ -57,21 +59,56 @@ def test_matches_the_package_it_replaced(size_bytes: int, expected: str) -> None
     assert nice_file_size(size_bytes) == expected
 
 
-def test_agrees_with_float_division_for_every_reachable_size() -> None:
-    """Below 2**53 bytes the replacement and `hurry.filesize` cannot disagree.
+def hurry_filesize_size(size_bytes: int) -> str:
+    """Transcription of `hurry.filesize.size` with its default `traditional` system.
 
-    This is the property that makes the swap safe, and it is exact rather than
-    sampled. `hurry.filesize` computed `int(bytes / factor)` through a float. Any
-    integer below 2**53 is exactly representable as a double, and dividing it by a
-    power of two only adjusts the exponent, so the quotient is exact and `int()`
-    truncates it to the same value `//` computes. 2**53 bytes is 8 PiB; the
-    largest download OPUS will assemble is capped at 50 GiB by
-    MAX_CUM_DOWNLOAD_SIZE, five orders of magnitude below that.
+    The oracle for the sweep below. It is written the way the package wrote it,
+    including the float division and the reliance on the loop variable surviving
+    the loop, so that it can disagree with the implementation under test.
+
+    Parameters:
+        size_bytes: A number of bytes.
+
+    Returns:
+        The string the removed package returned for that count.
     """
+    system = [(1024 ** 5, 'P'), (1024 ** 4, 'T'), (1024 ** 3, 'G'),
+              (1024 ** 2, 'M'), (1024 ** 1, 'K'), (1024 ** 0, 'B')]
+    # B007 is suppressed below because `suffix` IS used — after the loop, not
+    # inside it. Both loop variables are read on the return line, which is how
+    # the original decided the unit: it let the bindings survive the loop, so
+    # falling off the end (a count below one kilobyte) leaves the last pair,
+    # (1, 'B'), in scope. Renaming as ruff suggests would break the
+    # transcription, and restructuring to avoid the leak would stop this being a
+    # faithful copy of the code under comparison.
+    for factor, suffix in system:  # noqa: B007
+        if size_bytes >= factor:
+            break
+    return str(int(size_bytes / factor)) + suffix
+
+
+def test_matches_the_transcribed_package_across_every_reachable_size() -> None:
+    """Sweep `nice_file_size` against the old algorithm over the whole usable range.
+
+    The parity table above pins hand-picked values; this drives both
+    implementations over ~25,000 counts, so a regression anywhere in the ladder is
+    caught rather than only at the values someone thought to list.
+
+    The range is capped at 2**53 because that is where the two provably cannot
+    disagree: any integer below 2**53 is exactly representable as a double, and
+    dividing it by a power of two only adjusts the exponent, so `int(x / factor)`
+    truncates the same exact quotient `//` computes. 2**53 bytes is 8 PiB, and
+    MAX_CUM_DOWNLOAD_SIZE caps an OPUS download at 50 GiB — five orders of
+    magnitude below it. Above 2**53 they do diverge, which the next test pins.
+    """
+    rng = random.Random(20260823)
+    counts = list(range(0, 5000))
     for exponent in range(0, 6):
         factor = 1024 ** exponent
-        for size_bytes in (0, 1, 1023, factor, factor + 1, 2 ** 53 - 1):
-            assert int(size_bytes / factor) == size_bytes // factor
+        counts += [factor - 1, factor, factor + 1, 2 * factor, 1023 * factor]
+    counts += [rng.randrange(0, 2 ** 53) for _ in range(20000)]
+    for size_bytes in counts:
+        assert nice_file_size(size_bytes) == hurry_filesize_size(size_bytes)
 
 
 @pytest.mark.parametrize('size_bytes', [2 ** 60 - 2, 2 ** 60 - 1])

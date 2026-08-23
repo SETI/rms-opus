@@ -152,10 +152,13 @@ STORAGES = {
 # UserSearches, TableNames, Partables and the generated ZZ* duplicates — for
 # which Django synthesizes `id`. Do NOT read it as "contrib only".
 #
-# It stays AutoField. Those OPUS tables are created by the import pipeline, not
-# by a migration, with 32-bit AUTO_INCREMENT `id` columns; BigAutoField would
-# make Django's idea of the column disagree with the column, and would generate
-# migrations altering the contrib tables on the deployed servers for no benefit.
+# It stays AutoField. Every one of those tables already exists with a 32-bit
+# AUTO_INCREMENT `id` column — some created by the import pipeline (cart,
+# param_info, user_searches, table_names, partables, definitions, contexts) and
+# the rest by `migrate` (the contrib tables, which the generated ZZ* models also
+# map). BigAutoField would make Django's idea of the column disagree with the
+# column, and would generate migrations altering the contrib tables on the
+# deployed servers for no benefit.
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 MIDDLEWARE = [
