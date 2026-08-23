@@ -127,7 +127,7 @@ def create_import_contexts_table():
             filereader = csv.reader(csvfile)
             for row in filereader:
                 if len(row) != 3:
-                    logger.log('error', 'Bad row in "{ctxfile}": {row}')
+                    logger.log('error', f'Bad row in "{ctx_file}": {row}')
                     return False
                 name, description, parent = row
                 new_row = {
