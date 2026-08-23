@@ -1,26 +1,28 @@
-import os
 from pathlib import Path
 
 from opus_config import get_config
 
+# Module-level helpers in this file are lower-case on purpose. Django treats every
+# upper-case name here as a setting, and its only test is str.isupper(), which a
+# leading underscore does not defeat: '_HAS_MEMCACHE'.isupper() is True, so the
+# earlier spelling published these two internals as settings and listed them in
+# `manage.py diffsettings`.
+
 # First check to see if we have the memcache package installed
-_HAS_MEMCACHE = False
+_has_memcache = False
 try: # pragma: no cover
     import pymemcache
-    _HAS_MEMCACHE = True
+    _has_memcache = True
 except ImportError: # pragma: no cover
     pass
 
 # Now check to see if memcached is actually running
-if _HAS_MEMCACHE:
+if _has_memcache:
     try:
-        memcache_client = pymemcache.client.base.Client(('127.0.0.1', 11211))
-        memcache_client.set('__test_key__', 'test_val')
+        _memcache_client = pymemcache.client.base.Client(('127.0.0.1', 11211))
+        _memcache_client.set('__test_key__', 'test_val')
     except ConnectionRefusedError:
-        _HAS_MEMCACHE = False
-
-# Leave for future debugging
-# print('memcache', _HAS_MEMCACHE)
+        _has_memcache = False
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
 
@@ -111,15 +113,17 @@ TIME_ZONE = 'America/Los_Angeles'
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
-SITE_ID = 1
+# Datetimes are stored and handled in UTC. This is Django's own default from 5.0
+# onwards and is stated here rather than inherited, because the value decides how
+# every DateTimeField in the database is interpreted. Nothing in the web
+# application reads or writes one through the ORM today — the columns are filled
+# by the import pipeline and by the cart's raw SQL — so the setting is a
+# statement of intent for code added later.
+USE_TZ = True
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = True
-
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale
-USE_L10N = True
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -127,9 +131,30 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-ADMIN_MEDIA_PREFIX = ''
+# File and static-file storage backends. These are Django's own defaults, named
+# explicitly because STORAGES replaced the removed DEFAULT_FILE_STORAGE and
+# STATICFILES_STORAGE settings and is the only supported way to change them.
+# staticfiles deliberately stays on the plain backend rather than a manifest one:
+# OPUS's asset URLs are cache-busted by the ?version= suffix that
+# apps.tools.app_utils supplies, and a manifest backend would require every
+# template- and JavaScript-referenced asset to survive collectstatic first.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 
-MIDDLEWARE = (
+# Every model OPUS defines names its own primary key (the tables are created by
+# the import pipeline, not by migrations), so this governs only the contrib
+# tables that `migrate` creates. It stays AutoField: those tables exist on the
+# deployed servers with 32-bit auto-increment keys, and BigAutoField would
+# generate migrations that alter them for no benefit.
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+MIDDLEWARE = [
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -139,9 +164,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'opus_app.apps.tools.opus_middleware.StripWhitespaceMiddleware',
-    # prod remove:
-    #'debug_toolbar.middleware.DebugToolbarMiddleware',
-)
+]
 
 ROOT_URLCONF = 'opus_app.urls'
 
@@ -180,18 +203,15 @@ TEMPLATES = [
     },
 ]
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.sites',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'django.contrib.admindocs',
     'django.forms',
-    'storages',
     # Django derives each app label from the last component of these paths, so
     # the labels are 'search', 'paraminfo', 'metadata', ...
     'opus_app.apps.search',
@@ -202,18 +222,9 @@ INSTALLED_APPS = (
     'opus_app.apps.ui',
     'opus_app.apps.cart',
     'opus_app.apps.tools',
-    'rest_framework',
-)
+]
 
-REST_FRAMEWORK = {
-    'TEST_REQUEST_RENDERER_CLASSES': (
-        'rest_framework.renderers.MultiPartRenderer',
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.TemplateHTMLRenderer'
-    )
-}
-
-if _HAS_MEMCACHE: # pragma: no cover
+if _has_memcache: # pragma: no cover
     CACHES = {
         "default": {
             "BACKEND":"django.core.cache.backends.memcached.PyMemcacheCache",
@@ -231,19 +242,11 @@ else:
 
 CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
-INTERNAL_IPS = ('127.0.0.1',)
-
-DEBUG_TOOLBAR_CONFIG = { 'INTERCEPT_REDIRECTS': False }
-
-DEBUG_TOOLBAR_PANELS = (
-    'debug_toolbar.panels.version.VersionDebugPanel',
-    'debug_toolbar.panels.timer.TimerDebugPanel',
-    'debug_toolbar.panels.headers.HeaderDebugPanel',
-    'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
-    'debug_toolbar.panels.sql.SQLDebugPanel',
-    'debug_toolbar.panels.cache.CacheDebugPanel',
-    'debug_toolbar.panels.logger.LoggingPanel',
-)
+# Kept although django-debug-toolbar, whose configuration used to sit beside it,
+# is long gone: this is a Django setting in its own right, and it is what lets
+# django.template.context_processors.debug expose `debug` and `sql_queries` to a
+# template when DEBUG is on and the request comes from this machine.
+INTERNAL_IPS = ['127.0.0.1']
 
 
 LOGGING = {
@@ -329,13 +332,11 @@ LOGGING = {
 }
 
 
-os.environ['REUSE_DB'] = "1"  # for test runner
-
 # Only MySQL is implemented; the PostgreSQL entry is the same placeholder as
 # opus_import.importdb.postgresql, kept so that adding the backend is a
 # configuration change rather than a settings change. The loader accepts no other
 # brand, so this lookup cannot fail for a valid configuration.
-_DB_ENGINES = {
+_db_engines = {
     'MySQL': 'django.db.backends.mysql',
     'PostgreSQL': 'django.db.backends.postgresql',
 }
@@ -344,7 +345,7 @@ DATABASES = {
     'default': {
         'NAME': DB_SCHEMA_NAME,  # local database name
         'HOST': DB_HOST_NAME,
-        'ENGINE': _DB_ENGINES[_config.database.brand],
+        'ENGINE': _db_engines[_config.database.brand],
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
@@ -450,8 +451,6 @@ DOWNLOAD_FORMATS = {
     'tar': ('application/x-tar', 'w', 'r'),
     'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
 }
-
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # We don't want to have these characters in HTML class or ID for customized tooltips.
 INVALID_CLASS_CHAR = r'~!@$%^&*()+=,./;:"?><[]\{}|`# '
