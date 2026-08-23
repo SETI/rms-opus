@@ -7,7 +7,6 @@
 
 import numpy as np
 
-import opus_support
 from opus_import.obs.obs_volume_galileo_common import ObsVolumeGalileoCommon
 
 # GOSSI is 10.16 microRad / pixel and 800x800
@@ -260,21 +259,11 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
 
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
-        try:
-            sc_cvt = opus_support.parse_galileo_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Galileo SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_galileo_sclk(sc)
 
     def field_obs_mission_galileo_spacecraft_clock_count2(self):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
-        try:
-            sc_cvt = opus_support.parse_galileo_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Galileo SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_galileo_sclk(sc)
 
 
     ##############################################

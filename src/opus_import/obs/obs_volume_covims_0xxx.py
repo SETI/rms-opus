@@ -6,7 +6,6 @@
 # occultations.
 ################################################################################
 
-import opus_support
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
@@ -221,20 +220,13 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     def field_obs_mission_cassini_spacecraft_clock_count1(self):
         sc = '1/' + self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_cassini_sclk(sc)
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self):
         sc = '1/' + self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
+        sc_cvt = self._parse_cassini_sclk(sc)
+        if sc_cvt is None:
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()

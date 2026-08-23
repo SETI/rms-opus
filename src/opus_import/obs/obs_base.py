@@ -417,6 +417,33 @@ class ObsBase:
         return stop_time_sec
 
 
+    # Helper for spacecraft clock fields
+
+    def _parse_sclk(self, parse_func, sclk, mission_name, log_func=None):
+        """Parse a spacecraft clock count, reporting a bad one instead of raising.
+
+        Every mission's spacecraft_clock_count field function needs the same
+        error handling, so the mission common classes wrap this in a
+        `_parse_<mission>_sclk` helper and the field functions call that.
+
+        parse_func      The opus_support parser for this mission's SCLK format.
+        sclk            The SCLK string to parse.
+        mission_name    The mission's display name, for the error message.
+        log_func        How to report a bad SCLK; defaults to
+                        `_log_nonrepeating_error`.
+
+        Returns the converted SCLK, or None if it could not be parsed. None is
+        unambiguous: the opus_support parsers all return a number or raise.
+        """
+        try:
+            return parse_func(sclk)
+        except Exception as e:
+            if log_func is None:
+                log_func = self._log_nonrepeating_error
+            log_func(f'Unable to parse {mission_name} SCLK "{sclk}": {e}')
+            return None
+
+
     ### Error logging ###
 
     def _log_unknown_target_name(self, target_name):

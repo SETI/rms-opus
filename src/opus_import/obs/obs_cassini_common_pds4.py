@@ -8,7 +8,6 @@
 # using the attributes deduced from the OBSERVATION_ID).
 ################################################################################
 
-import opus_support
 from opus_import.obs.obs_cassini_common import ObsCassiniCommon
 from opus_import.obs.obs_common_pds4 import ObsCommonPDS4
 
@@ -31,22 +30,14 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         raw = self._index_col('cassini:spacecraft_clock_start_count')
         if raw is None:
             return None
-        try:
-            return opus_support.parse_cassini_sclk(str(raw).strip())
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Unable to parse Cassini SCLK "{raw}": {e}')
-            return None
+        return self._parse_cassini_sclk(str(raw).strip())
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self):
         raw = self._index_col('cassini:spacecraft_clock_stop_count')
         if raw is None:
             return None
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(str(raw).strip())
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Unable to parse Cassini SCLK "{raw}": {e}')
+        sc_cvt = self._parse_cassini_sclk(str(raw).strip())
+        if sc_cvt is None:
             return None
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
