@@ -259,8 +259,12 @@ exclude_dirs = [
 targets = ["src", "integration_tests", "manage.py"]
 # Burn-down skip list (plan PR-01): category-level skips for existing patterns,
 # each justified below. PR-17 shrinks these to individually-justified `# nosec`
-# lines; PR-09 removes the `.extra()` sources (B610) and PR-12 formalizes SQL
-# assembly (B608). B324 (weak MD5) was fixed in-code via usedforsecurity=False.
+# lines and PR-12 formalizes SQL assembly (B608). B324 (weak MD5) was fixed
+# in-code via usedforsecurity=False.
+# B610 was assigned to PR-09, which stop-and-reported instead of removing it;
+# see the B610 entry and the 2026-08-23 PR-09 Execution note in
+# plans/2026-07-18_opus_modernization_plan.md. Its owner is unassigned pending
+# the orchestrator's decision.
 # B105 (hardcoded_password_string) has left this list: its only hit was the 'XXX'
 # placeholder in the dictionary app's secrets template, which the TOML
 # configuration replaced, and the check passes unskipped.
@@ -277,7 +281,12 @@ skips = [
   "B607",  # start_process_with_partial_path: same internal invocations.
   "B608",  # hardcoded_sql: values are always %s-parameterized and identifiers are
            # validated; SQL assembly is formalized through a builder in PR-12.
-  "B610",  # django_extra_used: the .extra() calls are removed in PR-09.
+  "B610",  # django_extra_used: four QuerySet.extra() calls join a search to the
+           # dynamically-named cache table its results live in. The ORM cannot
+           # name a table that has no model, so every replacement is either
+           # RawSQL — bandit B611, which this list does NOT skip — or raw cursor
+           # SQL, which is B608 and belongs to PR-12. PR-09 stop-and-reported
+           # rather than choose; see its Execution note.
   "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
 ]
 

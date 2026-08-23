@@ -2346,3 +2346,197 @@ body; never rewrite or delete earlier notes.*
     fixes were the ones CodeRabbit itself requested, verified independently by the
     orchestrator. **This is a documented one-off waiver, not a precedent** — the gate still
     stands for later PRs.
+- **2026-08-23 (PR-09 executed):** the web application runs on Django 5.2, the Django
+  `dictionary` app is gone, and `settings.py` carries no setting Django has retired.
+  Facts later PRs rely on:
+  - **The versions.** `pyproject` requires `django>=5.2,<6` exactly as the plan specifies.
+    `requirements.in` — the pinned stack the self-hosted runner and the deployed servers
+    install — says `django == 5.2.*` rather than mirroring that bound with `5.*`, because
+    5.3 will not be an LTS and the decisions table chose **Django 5.2 LTS**, not "whatever
+    5.x is current". `requirements.txt` resolves to **django==5.2.17** and was regenerated
+    with `pip-compile requirements.in`, the command its own header records — *not* the
+    `-U --unsafe-package …` form the comment at the top of `requirements.in` documents,
+    which additionally drops the `xattr` pin and belongs to PR-22's dependency work. The
+    resulting diff is django, django-storages, hurry-filesize and the generator's Python
+    line, and nothing else.
+  - **The `_meta` JSON diff came back empty, and here is exactly what was compared.** The
+    plan's check is "two processes, one per Django version, no database". Run as three
+    dumps of `apps.get_models(include_auto_created=True, include_swapped=True)`:
+    **A** = the pre-upgrade tree (`7ad01207`) under **Django 4.2.27**, **B** = the *same
+    tree, untouched* under **Django 5.2.17**, **C** = the finished PR-09 tree under 5.2.17.
+    **A vs B is byte-identical across all 245 models** — that is the plan's regression
+    check, and it is empty, so Django 5.2 changes no field mapping under the unchanged
+    generated `search/models.py`. A vs C differs in exactly three keys, all intended and
+    each verified: `dictionary.Contexts`/`dictionary.Definitions` become
+    `tools.Contexts`/`tools.Definitions` (identical field for field, only `app_label`
+    moved — asserted, not eyeballed), and `sites.Site` disappears with
+    `django.contrib.sites`. No other model differs in any recorded attribute.
+  - **Two traps in writing such a dump, for whoever repeats it at the next upgrade.**
+    (1) **Do not key the dump by `db_table`.** Fourteen tables are mapped by *two* model
+    classes, because the generated `search/models.py` still carries the `ZZ*` duplicates
+    whose removal was deferred with PR-07 (`auth.Group` and `search.ZZAuthGroup` both map
+    `auth_group`; likewise `django_admin_log`, `auth_permission`, `auth_group_permissions`,
+    `auth_user_groups`, `auth_user_user_permissions`, `auth_user`, `django_site`,
+    `django_content_type`, `django_session`, `cart`, `contexts`, `definitions`,
+    `param_info`). Key by `_meta.label`, which is unique. (2) **Do not record
+    `field.db_type(connection)`.** It reads as the most direct expression of the mapping,
+    but under 5.2 the MySQL backend's data-types table needs the server version, so it
+    opens a connection — which this check forbids — and fails with an access-denied error
+    against the CI fixture's dummy credentials. It worked under 4.2, so the trap only
+    appears on the *second* dump. `field.get_internal_type()` is the connection-free
+    equivalent and is what the dump records. Record a callable default by identity, too:
+    `get_default()` on `DateTimeField(default=timezone.now)` returns the current time and
+    would make every dump differ from every other one.
+  - **The deprecation sweep is clean, and it needs one filter to be readable.**
+    `OPUS_CONFIG=tests/fixtures/opus_ci.toml python -W error::DeprecationWarning
+    -W error::PendingDeprecationWarning -W "ignore:'setParseAction' deprecated - use
+    'set_parse_action':DeprecationWarning" manage.py check` reports **only the pre-existing
+    `urls.W005`** ('admin' namespace isn't unique) that PR-05 and PR-08 both recorded, and
+    no deprecation at all — before *and* after this PR's changes. Without that third `-W`
+    the sweep dies inside `import julian`, on the third-party pyparsing deprecation that
+    `[tool.pytest.ini_options] filterwarnings` already carries an entry for.
+  - **`USE_TZ` is now `True`, and the upgrade would have flipped it either way.** Django's
+    own default changed from `False` (4.2) to `True` (5.0+), and this project never set it,
+    so 5.2 turns it on whether or not it is written down; it is now stated explicitly. The
+    reason this is safe was established by audit rather than assumed: **no code in
+    `src/opus_app` reads or writes a `DateTimeField` through the ORM.** Every such column
+    (`cart.timestamp`, `param_info.timestamp`, `definitions.timestamp`,
+    `contexts.timestamp`, the whole generated set) is written by the import pipeline or by
+    the cart's raw `connection.cursor()` SQL, and the only `datetime` calls in the Django
+    app build a download filename and an About-page date string. `cart/models.py` even
+    says "this is not being used". A later PR that starts using the ORM for one of these
+    columns inherits UTC semantics against columns the import pipeline wrote as naive
+    local time — that is the trap this note exists for.
+  - **`STORAGES` is set to Django's own two backends, and `staticfiles` is deliberately
+    NOT a manifest backend.** OPUS cache-busts asset URLs with its own `?version=` suffix
+    from `app_utils`, and `ManifestStaticFilesStorage` would require every asset named in a
+    template or in JavaScript to survive `collectstatic` and appear in the manifest, or
+    raise at request time. (The plan's warning about the dictionary favicon route was a
+    symptom of the same thing; that route is deleted regardless.)
+  - **Two settings-file internals were lower-cased, and the reason generalizes.**
+    `_HAS_MEMCACHE` -> `_has_memcache` and `_DB_ENGINES` -> `_db_engines`. Django's only
+    test for "is this name a setting" is `str.isupper()`, which a leading underscore does
+    not defeat (`'_DB_ENGINES'.isupper()` is `True`), so both were real settings and
+    appeared in `diffsettings`. **Anything in `settings.py` that is not meant to be a
+    setting must be lower-case.**
+  - **What left `settings.py`, so nobody hunts for it.** `SITE_ID` and
+    `django.contrib.sites` (nothing imports `Site`; `django_site` still has a model —
+    `search.ZZDjangoSite` — and plan §1 never listed it among the contrib tables `migrate`
+    owns); `USE_L10N` (Django 5.0 removed it outright — it is absent from `global_settings`
+    on 5.2, so the assignment configured nothing); `ADMIN_MEDIA_PREFIX`; 
+    `django.contrib.admindocs` (installed but its URLs were never routed); `storages`;
+    `rest_framework` and the `REST_FRAMEWORK` block; `DEBUG_TOOLBAR_CONFIG` and
+    `DEBUG_TOOLBAR_PANELS` (naming panel classes from a pre-1.0 django-debug-toolbar) and
+    the commented-out toolbar middleware; and `os.environ['REUSE_DB']`, a django-nose
+    setting nothing has read for years, which was the only reason `settings.py` imported
+    `os`. `INTERNAL_IPS` **stays** — it sat among the toolbar settings but is a Django
+    setting in its own right, controlling what `context_processors.debug` exposes.
+    `MIDDLEWARE`, `INSTALLED_APPS` and `INTERNAL_IPS` are lists now; the OPUS-application
+    tuples further down (`SLUGS_NOT_IN_DB`, `RANGE_QTYPES`, …) are deliberately untouched,
+    being application constants rather than Django settings.
+  - **`djangorestframework` stays a dev extra and the integration suite still needs it.**
+    Removing `rest_framework` from `INSTALLED_APPS` does not break
+    `rest_framework.test.RequestsClient`, which the eight `integration_tests/test_api/*`
+    modules use: it is a `requests.Session` subclass, it never consults
+    `TEST_REQUEST_RENDERER_CLASSES` (which is all the deleted `REST_FRAMEWORK` block set),
+    and it was constructed successfully with the app uninstalled to prove it. PR-05's note
+    that a clean-venv wheel cannot start the app for want of `rest_framework` is now
+    **obsolete** — that was the standing assumption's expiry date, and it has passed.
+  - **The dictionary app is gone; its two models and the tooltip lookup are
+    `src/opus_app/apps/tools/dictionary.py`.** `Definitions`, `Contexts` and
+    `get_def_for_tooltip` are imported from there by `paraminfo/models.py`, `ui/views.py`
+    and `cart/views.py`. The models' `app_label` is now **`tools`**, derived from the
+    module's package the way Django derives every label; they are registered during
+    `apps.populate()`'s model-import phase because `paraminfo.models` imports the module,
+    and `apps.get_models()` lists them straight after `django.setup()` (measured). The
+    `definitions`/`contexts` tables, and `do_dictionary.py`'s `--import-dictionary` step
+    that fills them, are untouched.
+  - **The favicon route was deleted, not relocated,** as the plan directs, and its three
+    stated grounds were re-verified against the tree before deleting: the app's urls were
+    included only under `^dictionary/` and `^__dictionary/`, the redirect target
+    `<STATIC_URL>favicon.ico` does not exist (the assets are `img/favicon.ico` and
+    `img/faviconPDS.ico`), and nothing reverses the `'favicon'` name.
+  - **Three static assets went with the app, each checked for other consumers first:**
+    `static/js/dictionary.js` (its two endpoints `/__dictionary/search.json` and
+    `/__dictionary/list.json` were removed in PR-02, it binds to markup only
+    `dictionary.html` had, and the `String.prototype.replacei` extension it installs is
+    used nowhere else — `toTitleCase`, which it calls, comes from `stringUtils.js` and
+    stays), `static/css/dictionary.css`, and **`static/css/slidingPanel.css`**, whose only
+    reference anywhere in the repository was the dictionary header template. The
+    `<script src=…js/dictionary.js>` tag left `ui/base.html`; **no golden fixture captures
+    that script block** (grep for any of its filenames across
+    `integration_tests/test_api/responses/` returns nothing), so the API surface is
+    unchanged. Two earlier analyses had independently reached the same conclusion —
+    `critiques/2025-11-25_css_html_modernization_report.md` calls `dictionary.css` "not
+    used" and flags slidingPanel.css as probably dictionary-related.
+    `integration_tests/apps_db_tests/test_dictionary.py` is deleted too: two comment
+    lines, no tests, no statements.
+  - **`django-storages` was removed as a dependency — an executor judgment call, flagged
+    here because the plan does not name it.** Nothing in the repository imports
+    `storages`; its whole footprint was the bare `'storages'` entry in `INSTALLED_APPS`.
+    Adopting the `STORAGES` setting in the same PR made an unused third-party storage
+    backend conspicuous rather than merely idle. If a later PR wants django-storages
+    (e.g. to serve `static_media/` from S3), re-adding it is one line in each of
+    `pyproject.toml` and `requirements.in`.
+  - **`hurry.filesize` is replaced by `opus_app/apps/tools/file_size.py`, and parity was
+    measured rather than argued.** `nice_file_size` reproduces the package's default
+    "traditional" system. **420,035 byte counts** — every value from 0 to 70,000, every
+    unit boundary and its neighbours, and dense random sampling up to 4 EiB — produce
+    byte-identical strings, with **exactly two exceptions, at 2\*\*60-1 and 2\*\*60-2**,
+    where `hurry`'s `int(bytes / factor)` rounds up through the float and answers
+    "1024P" for a size that has not reached 1024 PiB; integer division answers the
+    truthful "1023P". `tests/opus_app/test_file_size.py` pins both the parity table and
+    that divergence. **The loop is shaped the way it is for the coverage gate:** a count
+    below one kilobyte falls out of the loop instead of matching a final table row,
+    because the golden fixtures only ever exercise `0B`, `…K` and `…M` — never a gigabyte
+    — and a final `(1024**0, 'B')` row would have left the fall-through `return`
+    unexecuted under the integration suite's 100% **branch** gate.
+  - **The `multilines_template_tags` monkeypatch is kept, verified on Django 5.2.17, and
+    is not reached the way it looks.** It defines no `register`, so it is **not a loadable
+    template library** and `{% load multilines_template_tags %}` would fail — no template
+    does it, and the engine's library list does not contain it. It works purely as an
+    *import side effect*: setting up the DjangoTemplates engine walks the `templatetags`
+    package of every installed app and imports every module in it, keeping only those with
+    a `register`. Three things were measured on 5.2.17 and are what a future upgrade must
+    re-check: `template.base.tag_re` is still a plain `re.Pattern`; `Lexer.tokenize` still
+    resolves `tag_re` as a module global at call time, so rebinding the attribute takes
+    effect; and after engine setup `tag_re.flags` has gained `re.DOTALL` and the template
+    `A{{\n  x\n}}B` renders as `AXB`, which it does not without the patch. The file now
+    carries the pinned version and this reasoning.
+  - **STOP-AND-REPORT: the `.extra()` / bandit-B610 clause was not executed.** Two places
+    assign it to this PR — §7's risk row ("`extra()` rewritten then") and PR-01's bandit
+    comment ("PR-09 removes the `.extra()` sources (B610)") — but neither the PR-09 section
+    of the plan body nor the orchestrator's brief mentions it, and the instruction cannot
+    be followed without an unratified design decision. The findings:
+    1. **The stated motivation is stale.** §7 lists `extra()` among "Django 5.2 surprises".
+       It is not one: `QuerySet.extra()` is fully supported in Django 5.2, carries no
+       deprecation, and the deprecation sweep above is clean with all four call sites in
+       place. Nothing about the upgrade forces this change.
+    2. **There are exactly four sites** (`metadata/views.py:537,541,549` and
+       `results/views.py:1854` — §7's "534-545" is mechanical drift). All four do the same
+       thing: `.extra(where=[...], tables=[<cache table>])`, joining a search to the
+       **dynamically named** per-search cache table (`get_user_query_table` returns a name
+       like `cache_<n>`; the table is created by raw DDL and **has no model**).
+    3. **The ORM cannot express it.** With no model for the table, the only replacements
+       are (a) `filter(<col>__in=RawSQL('SELECT id FROM <table>'))`, which bandit flags as
+       **B611 `django_rawsql_used` — a check the skip list does not contain**, so it trades
+       one finding for a new one and additionally changes an inner join into a semi-join,
+       a generated-SQL change on the search tool's hot path that cannot be measured here
+       (`perf_test/` is out of scope for this plan); or (b) rewriting the call sites onto
+       `connection.cursor()` raw SQL, which keeps the SQL shape but is **B608**, the very
+       category the plan assigns to **PR-12's SQL builder**, and moves the aggregates off
+       the ORM's value-conversion path.
+    Measured: `bandit -t B610,B611` over `src integration_tests manage.py` reports
+    **4 B610 and 0 B611** today. The `B610` skip therefore **stays**, with its pyproject
+    comment rewritten from "removed in PR-09" (which would have been a false statement in
+    the merged tree) to a statement of these facts. **Its owner is unassigned pending the
+    orchestrator's decision** — the natural home is PR-12, which already owns formalizing
+    SQL assembly and would rewrite these four sites with the same builder. PR-17's
+    "shrink the skip list" exit criterion is unaffected in kind, but it cannot retire
+    `B610` unless someone does.
+  - **Pre-existing staleness noticed but not fixed (candidate for PR-21's documentation
+    work).** `src/opus_app/apps/README.md` describes apps that do not exist — `guide`,
+    `downloads` and `metrics` — and omits `help` and `paraminfo`. This PR only removed its
+    `## dictionary` section and folded that content into `## tools`; correcting the rest is
+    documentation work, not settings work, and would have widened this diff for no
+    behavioral reason.
