@@ -1541,14 +1541,17 @@ def get_search_results_chunk(request, use_cart=None,
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
         # just full of NULLs.
-        add_obs_table_joins(from_source, tables)
+        # Sorted so the generated SQL and its debug log are the same from one
+        # process to the next: these are sets, and set iteration order depends on
+        # PYTHONHASHSEED. The join order carries no meaning either way.
+        add_obs_table_joins(from_source, sorted(tables))
 
         # Now JOIN in all the mult_ tables.
         for (_mult_table, is_multigroup, _table, _field_name) in mult_tables:
             # We can't have a MULTIGROUP here because those fields are simply
             # added as columns above to be mapped later
             assert not is_multigroup
-        add_mult_table_joins(from_source, mult_tables)
+        add_mult_table_joins(from_source, sorted(mult_tables))
 
         # But the cache table is an INNER JOIN because we only want opus_ids
         # that appear in the cache table to cause result rows
@@ -1586,13 +1589,14 @@ def get_search_results_chunk(request, use_cart=None,
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
         # just full of NULLs.
-        add_obs_table_joins(from_source, tables | order_obs_tables)
+        add_obs_table_joins(from_source, sorted(tables | order_obs_tables))
 
         # Now JOIN in all the mult_ tables.
         # If is_multigroup is True, this must have been from order_mult_tables.
         # This is OK, because a multigroup field will never show up in mult_tables
         # (see above), so this field will only be used for sorting.
-        add_mult_table_joins(from_source, mult_tables | order_mult_tables)
+        add_mult_table_joins(from_source,
+                             sorted(mult_tables | order_mult_tables))
 
         # But the cart table is an INNER JOIN because we only want
         # opus_ids that appear in the cart table to cause result rows

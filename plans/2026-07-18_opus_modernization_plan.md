@@ -3092,10 +3092,13 @@ body; never rewrite or delete earlier notes.*
     a project dev dependency, and ruff implements none of E12x): no new finding outside
     pycodestyle's own default-ignore set, and several pre-existing ones removed.
 
-- **2026-08-24 (PR-12 executed):** the Django app assembles no SQL of its own — every
-  statement is built by `opus_app.apps.tools.sql_builder` — and the import backend
-  validates every identifier and parameterizes every value. `QuerySet.extra()` is gone
-  from the repository. Facts later PRs rely on:
+- **2026-08-24 (PR-12 executed):** the Django app assembles no SQL text of its own —
+  every *raw SQL* statement it issues is built by `opus_app.apps.tools.sql_builder` —
+  and the import backend validates every identifier and parameterizes every value.
+  (The app of course still issues ORM queries, which Django compiles itself; one former
+  `.extra()` site became an ORM filter rather than a builder call, so "every statement"
+  would overstate it.) `QuerySet.extra()` is gone from the repository. Facts later PRs
+  rely on:
   - **The builder is `src/opus_app/apps/tools/sql_builder.py` and it is the only module
     allowed to turn Python values into SQL text.** Call sites describe structure --
     `Select` with `add_column`/`add_from`/`add_join`/`add_where`/`add_group_by`/
@@ -3138,13 +3141,15 @@ body; never rewrite or delete earlier notes.*
     comparison against a value as `col <op> %s`, and has purpose-specific renderers for
     `JSON_CONTAINS(x,%s)` and `JSON_EXTRACT(x, "$[0]")` whose spacing differs because
     the code being replaced differed. **Only 15 of those ~150 expected strings changed,
-    and every one differs from its predecessor by identifier quoting alone** -- the
-    ORDER BY terms and the longitude expression were the two places that interpolated a
-    bare `cat.name`. Each rewrite was checked mechanically, not by eye: old and new are
-    equal after removing backticks and folding case. (The longitude expression also
-    picked up the authoritative lower-case spelling from `param_info`, where it had been
-    using the caller's `J2000_longitude`; MySQL column names are case-insensitive, so
-    that is the same column.)
+    and every one differs from its predecessor by identifier quoting and, in the
+    longitude cases, identifier *case*** -- the ORDER BY terms and the longitude
+    expression were the two places that interpolated a bare `cat.name`. Each rewrite was
+    checked mechanically, not by eye, and the check is stated exactly because it is
+    weaker than "quoting alone": old and new are equal **after removing backticks and
+    folding case**, which is what makes it tolerant of the case change. The 8 longitude
+    expectations picked up the authoritative lower-case spelling from `param_info`,
+    where the old code had used the caller's `J2000_longitude`; MySQL column names are
+    case-insensitive, so it is the same column. The other 7 are quoting only.
   - **The grep-defined scope, and the four hits that remain.** The plan's acceptance grep
     over `src/opus_app/apps` matched **255 lines in the 5 files the plan names** and
     nothing else. It now returns **4 lines, all false positives**: `MAX_SELECTIONS_ALLOWED`
@@ -3232,6 +3237,52 @@ body; never rewrite or delete earlier notes.*
     unconfirmed and the `VALUES(col)` form is unchanged.** The instruction stands, and
     its owner is whoever holds it after PR-22 establishes the server version -- it is not
     a PR-12 omission.
+  - **Pre-existing defect, NOT fixed here, disposition with the orchestrator:
+    `_edit_cart_range`'s `removerange` DELETE is not scoped to the session.** Found by
+    CodeRabbit on this PR. `DELETE cart FROM cart INNER JOIN <user_query_table> ON
+    <uqt>.id=cart.obs_general_id WHERE <uqt>.sort_order BETWEEN <min> AND <max>` names
+    no `session_id`, so it deletes the matching rows of **every** session's cart, not
+    just the caller's. Verified byte-for-byte pre-existing: `origin/rewrite`'s
+    `cart/views.py:1419-1425` builds the identical statement and its `sql_where`
+    (line 1322) is the sort_order range alone. PR-12 reproduced it faithfully, which is
+    what a behavior-preserving refactor required. **Both entry paths are exposed, not
+    just the shared-cache one:** with `view=browse` the join source is the shared
+    `cache_<n>` table, and with `view=cart` it is a per-session temporary table whose
+    *rows* are this session's cart -- but the DELETE joins `cart` on `obs_general_id`
+    alone in either case, so another session's row for the same observation matches too.
+    `restrict_to_cart` does not apply here at all: it governs the `addrange` /
+    `removerange`-with-recyclebin branch, while this DELETE is the `recycle_bin == 0`
+    branch. The session-scoped sibling `_remove_from_cart_table` (`DELETE FROM cart WHERE
+    session_id=%s AND opus_id IN %s`) shows the intended shape. **Adding
+    `cart.session_id = %s` would change no golden fixture**: the suite drives one session
+    per test (no test file outside the new `test_sql_builder.py` even mentions
+    `session_id`), so every row the statement matches today already belongs to the
+    session under test. This is cross-session data loss, so the fix-here / own-PR /
+    issue call was escalated rather than taken by the executor.
+  - **Pre-existing, NOT a defect: the MULTIGROUP mult-counts query aliases its
+    `JSON_TABLE` with the base table's own name.** Also raised by CodeRabbit. The
+    statement is `FROM `T` JOIN JSON_TABLE(`T`.`col`, …) `T``, unchanged in shape from
+    `origin/rewrite:metadata/views.py:279-285` (PR-12 only re-spelled `JOIN` as
+    `INNER JOIN`). **Measured on MySQL 8.0.46 rather than argued: it is accepted and
+    returns exactly the same rows as the same query with a distinct alias.** There is no
+    ambiguity to resolve because the two relations share no column name -- `_mult_val_`
+    exists only in the derived table and the JSON column only in the base table. It is
+    also not untested: `metadata/views.py` is at 100% **branch** coverage, so both arms
+    of the `form_type == 'MULTIGROUP'` test execute against a real server and produce
+    golden fixtures. A distinct alias would read better and is a candidate for PR-17;
+    nothing is broken.
+  - **Pre-existing, NOT fixed: two callers ignore `create_order_by_terms`'s
+    `(None, None, None)`.** `results/views.py` and `cart/views.py` unpack the triple and
+    use it without checking, so an unresolvable order slug becomes a `TypeError` instead
+    of the intended error response; `construct_query_string` does check. Pre-existing and
+    **not widened by the rename**: `origin/rewrite:results/views.py:1565` called
+    `create_order_by_sql` and used its results the same way, failing with a `TypeError`
+    on the same input. It is also close to unreachable, because `parse_order_slug`
+    resolves every slug through `get_param_info_by_slug` first and returns `(None, None)`
+    itself if one fails -- which trips `create_order_by_terms`'s `assert order_params`
+    before the `(None, None, None)` path can be reached. **Candidate for PR-13**, which
+    owns the 400-vs-404 error-handling rules and is where "this should be a 400, not a
+    crash" belongs.
   - **Pre-existing defect found and deliberately NOT fixed: `e.args[1]` in
     `importdb/mysql.py`'s sixteen `except MySQLdb.Error` handlers.** A `MySQLdb.Error`
     raised by the *driver* rather than the server can carry a single argument --

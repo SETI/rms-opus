@@ -201,6 +201,34 @@ def test_update_row_parameterizes_the_set_values_and_the_where(
     ]
 
 
+def test_upsert_row_omits_the_update_clause_for_a_key_only_row(
+        db: _RecordingDB) -> None:
+    """With nothing but the key there is nothing to assign, so no dangling clause.
+
+    The same rule `upsert_rows` follows. It is not reachable through the pipeline,
+    which no longer calls `upsert_row` at all, but the method is part of the
+    `ImportDBSuper` backend interface and an empty assignment list is a syntax
+    error, so the two siblings should not disagree about it.
+    """
+    db.upsert_row('import', 'mult_x', 'id', {'id': 0})
+
+    cmd, params = db.executed[0]
+    assert 'ON DUPLICATE KEY UPDATE' not in cmd
+    assert cmd == 'INSERT INTO `imp_mult_x` (`id`) VALUES(%s)'
+    assert params == [0]
+
+
+def test_upsert_row_assigns_every_column_except_the_key(db: _RecordingDB) -> None:
+    """The ordinary case still updates the non-key columns, values bound twice."""
+    db.upsert_row('import', 'mult_x', 'id', {'id': 0, 'value': 'a'})
+
+    cmd, params = db.executed[0]
+    assert cmd == ('INSERT INTO `imp_mult_x` (`id`,`value`) VALUES(%s,%s) '
+                   'ON DUPLICATE KEY UPDATE `value`=%s')
+    # The row's values, then the values the update clause re-binds.
+    assert params == [0, 'a', 'a']
+
+
 class _FailingDB(_RecordingDB):
     """An ImportDBMySQL whose every statement fails the way the server would."""
 

@@ -634,8 +634,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
                f'({self._quoted_column_list(sorted_column_names)}) '
-               f'VALUES({placeholders}) '
-               'ON DUPLICATE KEY UPDATE ' + ','.join(assign_list))
+               f'VALUES({placeholders})')
+        if assign_list:
+            # A row of nothing but the key has nothing to assign, and an empty
+            # assignment list is a syntax error. `upsert_rows` already guards
+            # this; the two are otherwise the same statement.
+            cmd += ' ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
 
         try:
             self._execute(cmd, param_list+dup_param_list, mutates=True)
