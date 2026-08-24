@@ -2932,3 +2932,144 @@ body; never rewrite or delete earlier notes.*
     from the same three row sets (2500 inserts, an overwrite of 1800, then 10 further
     inserts, exercising the insert path, the ON DUPLICATE KEY UPDATE path and the
     1000-row packet split), ending with 2510 rows identical column for column.
+
+- **2026-08-23 (PR-11 executed):** `opus_import.impglobals` is deleted; one
+  `ImportContext` carries the import run's state and is passed by hand. Facts later PRs
+  rely on:
+  - **The context is `opus_import.context.ImportContext`, built once in `cli.main`.**
+    It is a plain (non-frozen) dataclass; `cli.main` parses the arguments into a local
+    `args`, builds the `pdslogger.PdsLogger` into a local `logger`, constructs
+    `ImportContext(args=args, logger=logger)`, and assigns `ctx.db` once `importdb.get_db`
+    returns. `cli.main` keeps using its two locals for its own reads; every layer below it
+    reads `ctx.args` / `ctx.logger` / `ctx.db`. The old globals map one-for-one onto
+    fields: `DATABASE`→`db`, `LOGGER`→`logger`, `ARGUMENTS`→`args`,
+    `PYTHON_WARNING_LIST`→`python_warning_list`,
+    `LOGGED_IMPORT_ERRORS`/`LOGGED_IMPORT_WARNINGS`→`logged_import_errors`/
+    `logged_import_warnings`, `IMPORT_HAS_BAD_DATA`→`import_has_bad_data`,
+    `MAX_TABLE_ID_CACHE`→`max_table_id_cache`, `CURRENT_BUNDLE_ID`→`current_bundle_id`,
+    `CURRENT_INDEX_ROW_NUMBER`→`current_index_row_number`,
+    `CURRENT_PRIMARY_FILESPEC`→`current_primary_filespec`,
+    `TRY_CART_LATER`→`try_cart_later`.
+  - **`ctx` is the first parameter of every function that needs pipeline state.**
+    **58** module-level functions in `src/opus_import` now take `ctx` first, called from
+    **162** sites — **134 cross-module** (through a module attribute or a `from ... import`
+    name) plus **28 same-module** unqualified calls. Every one of the 162 passes the bare
+    name `ctx`; **none passes `self._ctx`**, because obs code reaches logging as
+    `self._ctx.log.<method>` rather than by calling a `ctx`-first function. (A later
+    re-measurement that counts only cross-module calls gets 134 and one that counts
+    everything gets 162; neither is stale.) Obs classes take the context as their first
+    constructor argument (`ObsBase.__init__(self, ctx, bundle=None, metadata=None,
+    ignore_errors=False)`, no default, so no obs object can exist without one) and store
+    `self._ctx`; all 52 obs subclass `__init__`s already forwarded `*args, **kwargs` to
+    `super().__init__`, so no subclass signature changed. The two **production**
+    construction sites are `steps/do_import_index.import_one_index` and
+    `steps/do_import_tables.create_tables_for_import`; the suite constructs obs objects
+    at four more sites across three files (`tests/opus_import/test_obs_sclk.py`,
+    `test_obs_sclk_call_sites.py`, and `test_import_context.py` twice), so a later
+    change to the constructor has **six** call sites to fix, not two.
+  - **Logging has two spellings and one implementation.** `ImportLog`, reached as
+    `ctx.log`, holds the position prefix (`[<bundle> index row <n> "<filespec>"] `) and
+    the once-per-run deduplication, and exposes `error`/`warning`/`info`/`debug`/
+    `nonrepeating_error`/`nonrepeating_warning`/`unknown_target_name`. The obs classes use
+    that spelling through their `_log_*` wrappers; the step modules keep calling
+    `import_util.log_error(ctx, msg)` and friends, which are now one-line delegations to
+    `ctx.log.*`. **Whoever annotates or reworks logging (PR-13/#512, PR-15) should keep
+    both spellings or retire the `import_util` one deliberately** — the plan's PR-11
+    threading pattern names both.
+  - **The three mult caches are context fields, and PR-10's three accessor functions are
+    gone.** `ctx.mult_table_cache` and `ctx.modified_mult_tables` are cleared per bundle
+    by `do_import.import_one_bundle`; `ctx.created_import_mult_tables` is cleared once per
+    run by `do_import.do_import_steps` and mutated by
+    `do_import_tables.create_tables_for_import` (which now does
+    `ctx.created_import_mult_tables.add(...)` in place of
+    `do_import_mult.note_created_import_mult_table`). `reset_bundle_mult_cache`,
+    `reset_created_import_mult_tables` and `note_created_import_mult_table` are deleted:
+    they existed only because a `global` cannot name another module's binding.
+    **`_MODIFIED_MULT_TABLES` is now a set** (`ctx.modified_mult_tables`) as PR-10's note
+    permitted: on `27232d79` it was written at `do_import_mult.py:90,113,251` as
+    `[name] = table_column` and read only at `:262` through `sorted(...)`, so no value was
+    ever consumed.
+  - **PR-10's obs/database invariant still holds, and its test still passes — but know
+    what the test does and does not see.** Obs classes hold a context that *has* a `db`
+    field, so the wall between obs code and the database is a rule now rather than an
+    impossibility. **`'db'` was therefore added to the sweep's `_DB_NAMES`**, which is
+    what keeps the rule enforced: `tests/opus_import/test_exception_control_flow.py`
+    rejects any `ast.Attribute` in an obs module whose name is a database operation *or*
+    `db`, so both `self._ctx.db.insert_rows(...)` and the bare `self._ctx.db` fail it
+    (verified by mutating an obs module with each and watching the sweep fail). The
+    obsolete `'DATABASE'` entry is kept deliberately — a module reintroducing a global of
+    that name would be doing exactly what the sweep exists to catch. If a later PR ever
+    needs obs code to touch the database, `import_run_field_function` must re-raise
+    `ImportDBError` first — the reason is unchanged and is in that test's docstring.
+  - **Two dead functions in `import_util` were threaded, not deleted, and they are a
+    deletion candidate.** `table_name_param_info` and `table_name_partables` have no
+    caller anywhere in `src/`, `tests/`, `integration_tests/` or `scripts/`, and could
+    never have had one: both read `impglobals.DATABASES`, an attribute `impglobals.py`
+    never defined (the global was `DATABASE`), so either would have raised
+    `AttributeError` on its first call. They read `ctx.db` now, which is what the name
+    meant. **Candidate deletion for PR-15 or PR-17**; nothing depends on them.
+  - **`--import-ignore-errors` never reaches the obs classes, and now could.**
+    `ObsBase.__init__`'s `ignore_errors` parameter is passed by no construction site on
+    `27232d79` or after it, so `self._ignore_errors` is always False and the two branches
+    that read it -- `obs_base.py:338` (fake a target id instead of failing) and
+    `obs_cassini_common_pds3.py:64` -- are unreachable. The flag itself works where
+    `do_import` reads it (`ctx.args.import_ignore_errors`, two sites). Now that obs
+    classes hold the context, the fix is to read
+    `self._ctx.args.import_ignore_errors` and drop the parameter, but that *changes
+    behavior* and so was not done here. **Candidate for PR-15 or PR-17.**
+  - **Small deliberate deletions, each verified dead.** `impglobals.ANNOUNCED_IMPORT_WARNINGS`
+    and `ANNOUNCED_IMPORT_ERRORS` were assigned in `do_import.import_one_bundle` and read
+    nowhere in the repository — **write-only, which is what made them dead**; both
+    assignments are gone. (Being undeclared is *not* what made them dead:
+    `impglobals.py` declared 11 names at `27232d79` and `CURRENT_PRIMARY_FILESPEC` was
+    not among them although two sites **read** it and five write it — undeclared but
+    thoroughly alive. Three of the module's names were created by assignment from
+    outside it, so its declaration list was never a complete inventory.) `log_nonrepeating_error` set `IMPORT_HAS_BAD_DATA = True` a
+    second time after `log_error` had already set it; the duplicate is gone.
+    `obs_general.py` carried two commented-out lines calling `impglobals.LOGGER`, which
+    would have named a deleted module; they are removed rather than rewritten.
+    `yield_import_bundle_ids` lost its `arguments` parameter — both call sites passed
+    exactly `impglobals.ARGUMENTS`, so it reads `ctx.args`. `cli.main`'s
+    `impglobals.PYTHON_WARNING_LIST = []` is gone too: the context is built with an
+    empty list a few lines earlier. And `do_dictionary`'s `ctx_schema`/`ctx_file` locals
+    are renamed `contexts_schema`/`contexts_file`: they mean the PDS **contexts** table
+    and file, and once the module gained a `ctx` parameter one function body held both
+    senses of "ctx" at once. The renames touch no message text — the two messages that
+    embed the name (`do_dictionary.py:130` and `:140`) interpolate the `Path`, not the
+    variable name.
+  - **The Python-warning list is rebound, not mutated, so nothing may hold a reference to
+    it.** `import_util.log_accumulated_warnings` reports the accumulated warnings and then
+    does `ctx.python_warning_list = []`. `cli._make_warning_handler(ctx)` therefore returns
+    a closure over the *context*, not over the list, and reads
+    `ctx.python_warning_list` on each call. A handler that had captured the list would go
+    on appending to the discarded one and every warning after the first report would be
+    lost. `tests/opus_import/test_import_context.py` pins this.
+  - **Import tests get a context from `tests/opus_import/conftest.py`.** `make_context(**overrides)`
+    returns an `ImportContext` with an empty `argparse.Namespace` and a `RecordingLogger`
+    (also exported there) whose `messages_at(level)` returns what was logged. Later PRs
+    writing `opus_import` tests should use these rather than building a context by hand.
+  - **Verification evidence.** `scripts/run-all-checks.sh -c` clean (ruff, pytest
+    **1103 passed** — PR-10's 1068 plus 35 new context tests — pyroma 10/10, bandit,
+    vulture). The full local chain (`scripts/automated_tests/opus_main_test.sh`:
+    30-bundle import into a fresh MySQL schema, then the Django suite under the 100%
+    gate) ran end to end with exit code 0: the import logged **zero ERROR lines**, and
+    the suite reported **`Ran 1576 tests` / `OK` /
+    `TOTAL 22220 stmts, 1876 branches, 100%`** with **zero golden-fixture diffs** —
+    PR-10's post-merge figures unchanged, which is the point for a PR that rewrites how
+    every layer reaches its state. Two static sweeps were run over the whole package
+    rather than argued: a call-arity check (90 modules, 78 module-level functions; no
+    call short or long of its definition) and a first-argument check (58 ctx-taking
+    functions, all 162 call sites passing the bare name `ctx`). The new tests were
+    mutation-checked: closing the warning handler over the list, dropping the
+    `import_has_bad_data` assignment, removing the deduplication, changing the position
+    prefix wording, sharing a mult cache between contexts, never marking a mult table
+    modified, never consulting the mult cache, leaving a written-out table in
+    `created_import_mult_tables`, and clearing the per-run set per bundle each fail the
+    tests written to catch them — as do a bare `self._ctx.db` and a
+    `self._ctx.db.insert_rows(...)` planted in an obs module, against the strengthened
+    sweep. Continuation-line indentation was compared file by file against `27232d79`
+    by running `python -m pycodestyle --select=E12,E131 --max-line-length=100` over the
+    changed files on both trees and diffing the per-file counts (`pycodestyle` installed
+    into a scratch venv for the comparison and removed again; it is deliberately **not**
+    a project dev dependency, and ruff implements none of E12x): no new finding outside
+    pycodestyle's own default-ignore set, and several pre-existing ones removed.
