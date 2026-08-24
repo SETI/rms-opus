@@ -6,6 +6,7 @@
 # NHxxLO_xxxx.
 ################################################################################
 
+from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_new_horizons_common import ObsVolumeNewHorizonsCommon
 
 
@@ -111,7 +112,7 @@ class ObsVolumeNHxxLOXxxx(ObsVolumeNewHorizonsCommon):
         return self.field_obs_general_observation_duration()
 
     def field_obs_type_image_levels(self):
-        return 4096
+        return TWELVE_BIT_IMAGE_LEVELS
 
     def field_obs_type_image_greater_pixel_size(self):
         return 1024

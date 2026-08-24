@@ -11,7 +11,7 @@ def update_mult_info():
     db = impglobals.DATABASE
     logger = impglobals.LOGGER
 
-    # Find all the permament mult_ tables
+    # Find all the permanent mult_ tables
     table_names = db.table_names('perm', prefix='mult_')
 
     for table_name in table_names:

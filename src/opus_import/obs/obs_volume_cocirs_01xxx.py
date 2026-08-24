@@ -6,9 +6,9 @@
 # COCIRS_[01]xxx.
 ################################################################################
 
-import opus_support
 from opus_import import import_util
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
 
 class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
@@ -97,27 +97,27 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         wave_no2 = self._supp_index_col('MAXIMUM_WAVENUMBER')
         if wave_no2 is None:
             return None
-        return 10000. / wave_no2
+        return MICRONS_PER_CM / wave_no2
 
     def field_obs_wavelength_wavelength2(self):
         wave_no1 = self._supp_index_col('MINIMUM_WAVENUMBER')
         if wave_no1 is None:
             return None
-        return 10000. / wave_no1
+        return MICRONS_PER_CM / wave_no1
 
     def field_obs_wavelength_wave_res1(self):
         wnr = self._supp_index_col('BAND_BIN_WIDTH')
         wn2 = self._supp_index_col('MAXIMUM_WAVENUMBER')
         if wnr is None or wn2 is None:
             return None
-        return 10000.*wnr/(wn2*wn2)
+        return MICRONS_PER_CM*wnr/(wn2*wn2)
 
     def field_obs_wavelength_wave_res2(self):
         wnr = self._supp_index_col('BAND_BIN_WIDTH')
         wn1 = self._supp_index_col('MINIMUM_WAVENUMBER')
         if wnr is None or wn1 is None:
             return None
-        return 10000.*wnr/(wn1*wn1)
+        return MICRONS_PER_CM*wnr/(wn1*wn1)
 
     def field_obs_wavelength_wave_no1(self):
         return self._supp_index_col('MINIMUM_WAVENUMBER')
@@ -393,24 +393,17 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
             self._log_nonrepeating_error(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_cassini_sclk(sc)
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self):
         sc = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = self._fix_cassini_sclk(sc)
         if not sc.startswith('1/'):
             self._log_nonrepeating_error(
-                f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
+                f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
             return None
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
+        sc_cvt = self._parse_cassini_sclk(sc)
+        if sc_cvt is None:
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()

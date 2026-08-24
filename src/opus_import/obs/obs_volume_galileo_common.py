@@ -5,12 +5,20 @@
 # common and obs_mission_galileo tables.
 ################################################################################
 
+import opus_support
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsVolumeGalileoCommon(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def _parse_galileo_sclk(self, sclk):
+        """Parse a Galileo SCLK, reporting a bad one instead of raising.
+
+        Returns the converted SCLK, or None if it could not be parsed.
+        """
+        return self._parse_sclk(opus_support.parse_galileo_sclk, sclk, 'Galileo')
 
 
     #############################################

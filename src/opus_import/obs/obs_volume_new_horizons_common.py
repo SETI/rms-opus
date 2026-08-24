@@ -22,6 +22,14 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def _parse_new_horizons_sclk(self, sclk):
+        """Parse a New Horizons SCLK, reporting a bad one instead of raising.
+
+        Returns the converted SCLK, or None if it could not be parsed.
+        """
+        return self._parse_sclk(opus_support.parse_new_horizons_sclk, sclk,
+                                'New Horizons')
+
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -78,14 +86,7 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
 
         sc = str(partition) + '/' + start_time
 
-        try:
-            sc_cvt = opus_support.parse_new_horizons_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Unable to parse New Horizons SCLK "{sc}": {e}')
-            return None
-
-        return sc_cvt
+        return self._parse_new_horizons_sclk(sc)
 
     def field_obs_mission_new_horizons_spacecraft_clock_count2(self):
         partition = self._supp_index_col('SPACECRAFT_CLOCK_COUNT_PARTITION')
@@ -93,11 +94,8 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
 
         sc = str(partition) + '/' + stop_time
 
-        try:
-            sc_cvt = opus_support.parse_new_horizons_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Unable to parse New Horizons SCLK "{sc}": {e}')
+        sc_cvt = self._parse_new_horizons_sclk(sc)
+        if sc_cvt is None:
             return None
 
         sc1 = self.field_obs_mission_new_horizons_spacecraft_clock_count1()

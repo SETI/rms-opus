@@ -7,6 +7,7 @@
 # combines them all together.
 ################################################################################
 
+from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
@@ -42,7 +43,7 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     def field_obs_type_image_levels(self):
         if not self._is_image():
             return None
-        return 4096 # WFPC2 Inst Handbook, Sec 2.8
+        return TWELVE_BIT_IMAGE_LEVELS # WFPC2 Inst Handbook, Sec 2.8
 
 
     ###################################

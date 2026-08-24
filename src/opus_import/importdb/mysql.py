@@ -4,7 +4,7 @@ try:
 except ImportError:
     MYSQLDB_AVAILABLE = False
 
-from opus_import.importdb.super import ImportDBException, ImportDBSuper
+from opus_import.importdb.super import ImportDBError, ImportDBSuper
 
 ERR_UNKNOWN_DATABASE = 1049
 
@@ -44,7 +44,7 @@ class ImportDBMySQL(ImportDBSuper):
                     self.logger.log('fatal',
                             'Unable to connect to MySQL server '
                            +f'"{self.db_hostname}": {e.args[1]}')
-                raise ImportDBException(e) from e
+                raise ImportDBError(e) from e
 
             if self.logger:
                 self.logger.log('info',
@@ -65,7 +65,7 @@ class ImportDBMySQL(ImportDBSuper):
                             self.logger.log('fatal',
                             f'Unable to create new database "{self.db_schema}"'+
                             f': {e.args[1]}')
-                        raise ImportDBException(e) from e
+                        raise ImportDBError(e) from e
                     if self.logger:
                         self.logger.log('warning',
                                 f'  Created new database "{self.db_schema}"')
@@ -78,13 +78,13 @@ class ImportDBMySQL(ImportDBSuper):
                             self.logger.log('fatal',
                                 'Unable to use new database '+
                                 f'"{self.db_schema}": {e.args[1]}')
-                        raise ImportDBException(e) from e
+                        raise ImportDBError(e) from e
                 else:
                     if self.logger:
                         self.logger.log('fatal',
                             'Unable to use existing database '+
                             f'"{self.db_schema}": {e.args[1]}')
-                    raise ImportDBException(e) from e
+                    raise ImportDBError(e) from e
 
         if self.logger:
             self.logger.log('info',
@@ -120,7 +120,7 @@ class ImportDBMySQL(ImportDBSuper):
                 if self.logger:
                     self.logger.log('fatal',
                         f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
-                raise ImportDBException(e) from e
+                raise ImportDBError(e) from e
 
         super()._exit()
 
@@ -142,7 +142,7 @@ class ImportDBMySQL(ImportDBSuper):
             if self.logger:
                 self.logger.log('fatal',
                     f'Failed in {func_name}: {e.args[1]}')
-            raise ImportDBException(e) from e
+            raise ImportDBError(e) from e
 
     def quote_identifier(self, s):
         return '`' + s + '`'
@@ -273,7 +273,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 if self.logger:
                     self.logger.log('fatal',
             f'Attempted to drop table "{table_name}" that doesn\'t exist')
-                raise ImportDBException()
+                raise ImportDBError()
         else:
             try:
                 cmd = f'DROP TABLE `{table_name}`'
@@ -282,7 +282,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 if self.logger:
                     self.logger.log('fatal',
                         f'Failed in drop_table on "{table_name}": {e.args[1]}')
-                raise ImportDBException(e) from e
+                raise ImportDBError(e) from e
 
             if self.logger:
                 if self.read_only:
@@ -439,7 +439,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to create table "{table_name}": {e.args[1]}')
-            raise ImportDBException(e) from e
+            raise ImportDBError(e) from e
 
         if self.logger:
             if self.read_only:
@@ -471,7 +471,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to analyze table "{table_name}": {e.args[1]}')
-            raise ImportDBException(e) from e
+            raise ImportDBError(e) from e
 
         if self.logger:
             if self.read_only:
@@ -509,12 +509,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to insert row into "{table_name}": {e.args[1]}')
-            raise ImportDBException(e) from e
+            raise ImportDBError(e) from e
 
         super()._exit()
 
     def insert_rows(self, namespace, raw_table_name, rows):
-        """Insert multiple rows as one transation.
+        """Insert multiple rows as one transaction.
 
         All rows must have the same columns!"""
 
@@ -566,7 +566,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 if self.logger:
                     self.logger.log('fatal',
                     f'Failed to insert row into "{table_name}": {e.args[1]}')
-                raise ImportDBException(e) from e
+                raise ImportDBError(e) from e
 
         super()._exit()
 
@@ -600,7 +600,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to update row in "{table_name}": {e.args[1]}')
-            raise ImportDBException(e) from e
+            raise ImportDBError(e) from e
 
         super()._exit()
 
@@ -642,15 +642,73 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             if self.logger:
                 self.logger.log('fatal',
                         f'Failed to insert row into "{table_name}": {e.args[1]}')
-            raise ImportDBException(e) from e
+            raise ImportDBError(e) from e
 
         super()._exit()
 
-    def upsert_rows(self, namespace, table_name, key_name, rows):
+    def upsert_rows(self, namespace, raw_table_name, key_name, rows):
+        """Insert or update multiple rows, a packet of rows per statement.
+
+        Rows do not have to share a column set; rows that do are batched
+        together, in the order they were given."""
+
+        if len(rows) == 0:
+            return
+
         super()._enter('upsert_rows')
 
+        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+
+        # Group by column set so that every row in one statement contributes the
+        # same VALUES tuple. In practice all the rows of a mult table match.
+        groups = {}
         for row in rows:
-            self.upsert_row(namespace, table_name, key_name, row)
+            groups.setdefault(tuple(sorted(row.keys())), []).append(row)
+
+        packet_size = 1000 # Limit number of rows at a time - MySQL barfs
+
+        for sorted_column_names, group_rows in groups.items():
+            quoted_columns = ','.join(['`'+s+'`' for s in sorted_column_names])
+            # ON DUPLICATE KEY UPDATE has to name each row's new value indirectly,
+            # because one statement carries many rows. VALUES(col) is deprecated as
+            # of MySQL 8.0.20 in favor of a row alias, but the alias form needs
+            # 8.0.19+ and the deployed servers' version has not been confirmed, so
+            # this keeps the floor where Django already puts it.
+            assign_list = ','.join(['`'+c+'`=VALUES(`'+c+'`)'
+                                    for c in sorted_column_names if c != key_name])
+
+            num_packets = ((len(group_rows)-1) // packet_size) + 1
+            for packet_num in range(num_packets):
+                start_row = packet_size * packet_num
+                end_row = min(len(group_rows), packet_size * (packet_num+1))
+
+                value_tuples = []
+                param_list = []
+                for row in group_rows[start_row:end_row]:
+                    val_list = []
+                    for column_name in sorted_column_names:
+                        val = row[column_name]
+                        if val is None:
+                            val_list.append('NULL')
+                        elif isinstance(val, str):
+                            val_list.append('%s')
+                            param_list.append(val)
+                        else:
+                            val_list.append(str(val))
+                    value_tuples.append('(' + ','.join(val_list) + ')')
+
+                cmd = f'INSERT INTO `{table_name}` ({quoted_columns}) VALUES'
+                cmd += ','.join(value_tuples)
+                if assign_list:
+                    cmd += ' ON DUPLICATE KEY UPDATE ' + assign_list
+
+                try:
+                    self._execute(cmd, param_list, mutates=True)
+                except MySQLdb.Error as e:
+                    if self.logger:
+                        self.logger.log('fatal',
+                                f'Failed to insert row into "{table_name}": {e.args[1]}')
+                    raise ImportDBError(e) from e
 
         super()._exit()
 
@@ -662,7 +720,15 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         cmd = f"DELETE FROM `{table_name}`"
         if where:
             cmd += f" WHERE {where}"
-        self._execute(cmd, mutates=True)
+
+        try:
+            self._execute(cmd, mutates=True)
+        except MySQLdb.Error as e:
+            if self.logger:
+                self.logger.log('fatal',
+                        f'Failed to delete rows from "{table_name}": {e.args[1]}')
+            raise ImportDBError(e) from e
+
         self._exit()
 
     def copy_rows_between_namespaces(self, src_namespace, dest_namespace,
@@ -678,7 +744,16 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         cmd += f"FROM `{src_table_name}`"
         if where:
             cmd += f" WHERE {where}"
-        self._execute(cmd, mutates=True)
+
+        try:
+            self._execute(cmd, mutates=True)
+        except MySQLdb.Error as e:
+            if self.logger:
+                self.logger.log('fatal',
+                        f'Failed to copy rows from "{src_table_name}" to '
+                        f'"{dest_table_name}": {e.args[1]}')
+            raise ImportDBError(e) from e
+
         self._exit()
 
     def general_select(self, cmd):

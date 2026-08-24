@@ -6,8 +6,17 @@
 # COISS_[12]xxx.
 ################################################################################
 
-import opus_support
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
+
+# The ISS CCDs are 1024x1024, and the on-chip summation modes read them out at half
+# and quarter resolution in each direction. Images are always square, so this is both
+# the greater and the lesser pixel size.
+_INSTRUMENT_MODE_PIXEL_SIZE = {
+    'FULL': 1024,
+    'SUM2': 512,
+    'SUM4': 256,
+}
 
 
 class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
@@ -108,19 +117,15 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         return self.field_obs_general_observation_duration()
 
     def field_obs_type_image_levels(self):
-        return 4096
+        return TWELVE_BIT_IMAGE_LEVELS
 
     def field_obs_type_image_greater_pixel_size(self):
         # For COISS, this is both greater and lesser pixel size
         inst_mode = self._index_col('INSTRUMENT_MODE_ID')
-        if inst_mode == 'FULL':
-            return 1024
-        if inst_mode == 'SUM2':
-            return 512
-        if inst_mode == 'SUM4':
-            return 256
-        self._log_nonrepeating_error(f'Unknown INSTRUMENT_MODE_ID "{inst_mode}"')
-        return None
+        if inst_mode not in _INSTRUMENT_MODE_PIXEL_SIZE:
+            self._log_nonrepeating_error(f'Unknown INSTRUMENT_MODE_ID "{inst_mode}"')
+            return None
+        return _INSTRUMENT_MODE_PIXEL_SIZE[inst_mode]
 
     def field_obs_type_image_lesser_pixel_size(self):
         return self.field_obs_type_image_greater_pixel_size()
@@ -174,22 +179,15 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         count = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = str(partition) + '/' + str(count)
         sc = self._fix_cassini_sclk(sc)
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_cassini_sclk(sc)
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self):
         partition = self._index_col('SPACECRAFT_CLOCK_CNT_PARTITION')
         count = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = str(partition) + '/' + str(count)
         sc = self._fix_cassini_sclk(sc)
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
+        sc_cvt = self._parse_cassini_sclk(sc)
+        if sc_cvt is None:
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()

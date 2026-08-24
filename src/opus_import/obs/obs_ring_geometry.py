@@ -7,23 +7,25 @@
 
 from opus_import.obs.obs_base import ObsBase
 
+# The longitude, in degrees, of each planet's ring-plane ascending node measured
+# from the J2000 prime meridian. Adding the offset converts a J2000-referenced
+# longitude to an ascending-node-referenced one; subtracting it converts back.
+# A planet with no entry has no ring-plane longitude system here.
+_ASCENDING_NODE_OFFSET_DEG = {
+    'JUP':   -1.942979,
+    'SAT': -130.589560,
+    'URA': -167.311270,
+    'NEP':   16.853049,
+    'PLU': -223.030000,
+}
+
 
 class ObsRingGeometry(ObsBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def _ascending_node_offset(self, planet):
-        if planet == 'JUP':
-            return -1.942979
-        if planet == 'SAT':
-            return -130.589560
-        if planet == 'URA':
-            return -167.311270
-        if planet == 'NEP':
-            return 16.853049
-        if planet == 'PLU':
-            return -223.030000
-        return None
+        return _ASCENDING_NODE_OFFSET_DEG.get(planet)
 
     def _j2000_to_ascending(self, long):
         if long is None:

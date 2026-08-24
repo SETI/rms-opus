@@ -328,6 +328,18 @@ class ObsCassiniCommon(ObsBase):
     def _coiss_target_desc_mapping(self):
         return _COISS_TARGET_DESC_MAPPING
 
+    def _parse_cassini_sclk(self, sclk, log_func=None):
+        """Parse a Cassini SCLK, reporting a bad one instead of raising.
+
+        log_func defaults to `_log_nonrepeating_error`. COCIRS_56xxx passes
+        `_log_nonrepeating_warning` instead: an unparseable SCLK there has always
+        been a warning rather than an error.
+
+        Returns the converted SCLK, or None if it could not be parsed.
+        """
+        return self._parse_sclk(opus_support.parse_cassini_sclk, sclk, 'Cassini',
+                                log_func)
+
     def _cassini_valid_obs_name(self, obs_name):
         r"""Check a Cassini observation name to see if it is parsable. Such a
         name will have four parts separated by _:

@@ -6,7 +6,6 @@
 # occultations.
 ################################################################################
 
-import opus_support
 from opus_import.obs.obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIMSOccCommon
 
 
@@ -70,12 +69,7 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
         # of the decimal can be > 255, so we just round down
         if '.' in sc:
             sc = sc.split('.')[0] + '.000'
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_cassini_sclk(sc)
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self):
         sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
@@ -85,11 +79,10 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
         # of the decimal can be > 255, so we just round up
         if '.' in sc:
             sc = sc.split('.')[0] + '.000'
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)+1 # Round up
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
+        sc_cvt = self._parse_cassini_sclk(sc)
+        if sc_cvt is None:
             return None
+        sc_cvt += 1 # Round up
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:

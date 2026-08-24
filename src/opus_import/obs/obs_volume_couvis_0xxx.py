@@ -7,8 +7,8 @@
 
 import os
 
-import opus_support
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
+from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 
 
 class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
@@ -198,7 +198,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     def field_obs_type_image_levels(self):
         if not self._is_image():
             return None
-        return 65536
+        return SIXTEEN_BIT_IMAGE_LEVELS
 
     def _pixel_size_helper(self):
         if not self._is_image():
@@ -340,12 +340,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             self._log_nonrepeating_error(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_cassini_sclk(sc)
 
     # There is no SPACECRAFT_CLOCK_STOP_COUNT for COUVIS so we have to compute it.
     # This works because Cassini SCLK is in units of seconds.

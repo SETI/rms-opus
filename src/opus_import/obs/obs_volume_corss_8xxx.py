@@ -6,7 +6,6 @@
 # table).
 ################################################################################
 
-import opus_support
 from opus_import.obs.obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
 
 # TODOPDS4 Verify that these are correct
@@ -149,22 +148,15 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
         if count == 'UNK':
             return None
         sc = '1/' + str(count)
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        return self._parse_cassini_sclk(sc)
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self):
         count = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         if count == 'UNK':
             return None
         sc = '1/' + str(count)
-        try:
-            sc_cvt = opus_support.parse_cassini_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(f'Unable to parse Cassini SCLK "{sc}": {e}')
+        sc_cvt = self._parse_cassini_sclk(sc)
+        if sc_cvt is None:
             return None
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
