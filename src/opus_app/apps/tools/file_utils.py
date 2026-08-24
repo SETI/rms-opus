@@ -14,6 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
 
 from opus_app.apps.search.models import ObsGeneral
+from opus_app.apps.tools import sql_builder
 
 log = logging.getLogger(__name__)
 
@@ -63,29 +64,23 @@ def get_pds_products(opus_id_list,
     results = {} # Dict of opus_ids
 
     cursor = connection.cursor()
-    q = connection.ops.quote_name
 
-    values = []
-    sql = 'SELECT '
-    sql += q('obs_files')+'.'+q('opus_id')+', '
-    sql += q('obs_files')+'.'+q('version_name')+', '
-    sql += q('obs_files')+'.'+q('category')+', '
-    sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('short_name')+', '
-    sql += q('obs_files')+'.'+q('full_name')+', '
-    sql += q('obs_files')+'.'+q('size')+', '
-    sql += q('obs_files')+'.'+q('pds_version')
+    def obs_files_column(name):
+        return sql_builder.column(name, 'obs_files')
+
+    select = sql_builder.Select()
+    for column_name in ('opus_id', 'version_name', 'category', 'sort_order',
+                        'short_name', 'full_name', 'size', 'pds_version'):
+        select.add_column(obs_files_column(column_name))
     if loc_type == 'path' or loc_type == 'raw':
-        sql += ', '+q('obs_files')+'.'+q('logical_path')
+        select.add_column(obs_files_column('logical_path'))
     if loc_type == 'url' or loc_type == 'raw':
-        sql += ', '+q('obs_files')+'.'+q('url')
+        select.add_column(obs_files_column('url'))
     if loc_type == 'raw':
-        sql += ', '+q('obs_files')+'.'+q('checksum')
+        select.add_column(obs_files_column('checksum'))
 
-    sql += ' FROM '+q('obs_files')
-    sql += ' WHERE '
+    select.add_from('obs_files')
     if product_types != ['all']:
-        sql += '('
         # Because we didn't store @version in the database, when multiple versions (or
         # product types) are passed in, we need to query the database by both short name
         # and version name for each product type in the product_types list. The query
@@ -94,35 +89,41 @@ def get_pds_products(opus_id_list,
         # (obs_files.short_name='coiss_calib' AND obs_files.version_name='1') OR
         # (obs_files.short_name='coiss_raw' AND obs_files.version_name='Current') OR
         # ...
-        for i, p in enumerate(product_types):
+        product_type_conditions = []
+        for p in product_types:
             # Check and see if the product type has a version specified (look for '@')
             if '@' in p:
                 prod_type, _, version = p.partition('@')
                 if version.lower() == 'current':
                     version = 'Current'
-                sql += '('+q('obs_files')+'.'+q('short_name')+'=%s'
-                values.append(prod_type)
+                condition = sql_builder.binary_op(obs_files_column('short_name'),
+                                                  '=', sql_builder.value(prod_type))
                 if version.lower() != 'all':
-                    sql +=' AND '+q('obs_files')+'.'+q('version_name')+'=%s)'
-                    values.append(version)
-                else:
-                    sql += ')'
+                    condition = sql_builder.join_exprs(
+                        [condition,
+                         sql_builder.binary_op(obs_files_column('version_name'), '=',
+                                               sql_builder.value(version))], 'AND')
             else:
                 # When there is no modifier "@" in types, we will display "Current"
                 # version of the files. This will match the behavior of api/download
-                sql += '('+q('obs_files')+'.'+q('short_name')+'=%s AND '
-                values.append(p)
-                sql += q('obs_files')+'.'+q('version_name')+'="Current")'
-            sql += ' OR ' if i != len(product_types)-1 else ') AND '
-    sql += q('obs_files')+'.'+q('opus_id')+' IN %s'
-    values.append(opus_id_list)
-    sql += ' ORDER BY '
-    sql += q('obs_files')+'.'+q('opus_id')+', '
-    sql += q('obs_files')+'.'+q('version_number')+' DESC, '
-    sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('product_order')+', '
-    sql += q('obs_files')+'.'+q('id') # Keep individual files in original order
+                condition = sql_builder.join_exprs(
+                    [sql_builder.binary_op(obs_files_column('short_name'), '=',
+                                           sql_builder.value(p)),
+                     sql_builder.binary_op(obs_files_column('version_name'), '=',
+                                           sql_builder.value('Current'))], 'AND')
+            product_type_conditions.append(sql_builder.parenthesize(condition))
+        select.add_where(sql_builder.parenthesize(
+            sql_builder.join_exprs(product_type_conditions, 'OR')))
+    select.add_where(sql_builder.in_sequence(obs_files_column('opus_id'),
+                                             opus_id_list))
+    select.add_order_by(obs_files_column('opus_id'))
+    select.add_order_by(obs_files_column('version_number'), descending=True)
+    select.add_order_by(obs_files_column('sort_order'))
+    select.add_order_by(obs_files_column('product_order'))
+    # Keep individual files in original order
+    select.add_order_by(obs_files_column('id'))
 
+    sql, values = select.build()
     log.debug('get_pds_products SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 

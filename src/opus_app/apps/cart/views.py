@@ -37,11 +37,14 @@ from opus_app.apps.results.views import (
 )
 from opus_app.apps.search.models import ObsGeneral
 from opus_app.apps.search.views import (
-    create_order_by_sql,
+    add_mult_table_joins,
+    add_obs_table_joins,
+    create_order_by_terms,
     get_user_query_table,
     parse_order_slug,
     url_to_search_params,
 )
+from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_DOWNLOAD,
     HTTP404_BAD_OR_MISSING_RANGE,
@@ -71,6 +74,9 @@ from opus_app.apps.tools.file_size import nice_file_size
 from opus_app.apps.tools.file_utils import get_pds_products
 
 log = logging.getLogger(__name__)
+
+#: The cart table's columns, in the order every write to it supplies them.
+_CART_COLUMNS = ('session_id', 'obs_general_id', 'opus_id', 'recycled')
 
 
 ################################################################################
@@ -512,11 +518,15 @@ def api_reset_session(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    sql = 'DELETE FROM '+connection.ops.quote_name('cart')
-    sql += ' WHERE session_id=%s'
-    values = [session_id]
+    conditions = [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
+                                        '=', sql_builder.value(session_id))]
     if recycle_bin:
-        sql += ' AND recycled=1'
+        # Only empty the recycle bin, leaving the rest of the cart alone.
+        conditions.append(
+            sql_builder.binary_op(sql_builder.column('recycled', 'cart'), '=',
+                                  sql_builder.value(1)))
+    sql, values = sql_builder.delete_from(
+        'cart', sql_builder.join_exprs(conditions, 'AND'))
     log.debug('api_reset_session SQL: %s %s', sql, values)
     cursor = connection.cursor()
     cursor.execute(sql, values)
@@ -852,31 +862,43 @@ def _get_download_info(product_types, session_id):
             }
     """
     cursor = connection.cursor()
-    q = connection.ops.quote_name
 
-    values = []
-    sql = 'SELECT DISTINCT '
+    def cart_join_condition():
+        """Return the condition tying obs_files rows to their cart entries."""
+        return sql_builder.columns_equal(
+            sql_builder.column('obs_general_id', 'cart'),
+            sql_builder.column('obs_general_id', 'obs_files'))
+
+    def in_this_cart():
+        """Return the condition restricting the cart to this session."""
+        return sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
+                                     '=', sql_builder.value(session_id))
+
+    def not_recycled():
+        """Return the condition excluding the recycle bin."""
+        return sql_builder.binary_op(sql_builder.column('recycled', 'cart'),
+                                     '=', sql_builder.value(0))
 
     # Retrieve the distinct list of product types for all observations,
     # including the ones in the recycle bin.  This is used to allow the items
     # in the cart to be added/removed from the recycle bin and update the
     # download data panel without redrawing the cart page on every edit.
-    sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
-    sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
-    sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
-    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
-    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')+', '
-    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')+', '
-    sql += q('obs_files')+'.'+q('version_number')+' AS '+q('ver_num')
-    sql += 'FROM '+q('obs_files')+' '
-    sql += 'INNER JOIN '+q('cart')+' ON '
-    sql += q('cart')+'.'+q('obs_general_id')+'='
-    sql += q('obs_files')+'.'+q('obs_general_id')+' '
-    sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
-    values.append(session_id)
+    select = sql_builder.Select(distinct=True)
+    for column_name, alias in (('category', 'cat'), ('sort_order', 'sort'),
+                               ('short_name', 'short'), ('full_name', 'full'),
+                               ('default_checked', 'checked'),
+                               ('version_name', 'ver'),
+                               ('version_number', 'ver_num')):
+        select.add_column(sql_builder.column(column_name, 'obs_files'),
+                          alias=alias)
+    select.add_from('obs_files').add_join('INNER', 'cart',
+                                          cart_join_condition())
+    select.add_where(in_this_cart())
     # Put "Current" version on top of others
-    sql += 'ORDER BY '+q('sort')+', '+q('ver_num')+' DESC '
+    select.add_order_by(sql_builder.column('sort'))
+    select.add_order_by(sql_builder.column('ver_num'), descending=True)
 
+    sql, values = select.build()
     log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
     cursor.execute(sql, values)
 
@@ -960,78 +982,77 @@ def _get_download_info(product_types, session_id):
 # GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name,
 #          obs_files.version_name, obs_files.full_name, obs_files.default_checked
 # ORDER BY sort_order;
-    values = []
-    sql = 'SELECT '
+    # Nested SELECT #2: the distinct files in the cart, so that a file shared by
+    # two observations is only counted and sized once.
+    distinct_files = sql_builder.Select(distinct=True)
+    for column_name in ('short_name', 'version_name', 'logical_path', 'size'):
+        distinct_files.add_column(sql_builder.column(column_name, 'obs_files'))
+    distinct_files.add_from('obs_files').add_join('INNER', 'cart',
+                                                  cart_join_condition())
+    distinct_files.add_where(in_this_cart())
+    distinct_files.add_where(not_recycled())
+
+    # Nested SELECT #1: the total size of those files per product type.
+    sizes_by_product = sql_builder.Select()
+    sizes_by_product.add_column(sql_builder.column('short_name', 't1'))
+    sizes_by_product.add_column(sql_builder.column('version_name', 't1'))
+    sizes_by_product.add_column(sql_builder.sum_of(sql_builder.column('size',
+                                                                      't1')),
+                                alias='download_size')
+    sizes_by_product.add_from(sql_builder.Subquery(distinct_files, 't1'))
+    sizes_by_product.add_group_by(sql_builder.column('short_name', 't1'))
+    sizes_by_product.add_group_by(sql_builder.column('version_name', 't1'))
+
+    select = sql_builder.Select()
 
     # For a given short_name, the category, sort_order, and full_name are
     # always the same. Thus we can group by all four and it's the same as
     # grouping by just short_name. We need them all here to return to the user.
-    sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
-    sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
-    sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
-    sql += q('obs_files')+'.'+q('version_name')+' AS '+q('ver')+', '
-    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
-    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')+', '
+    for column_name, alias in (('category', 'cat'), ('sort_order', 'sort'),
+                               ('short_name', 'short'), ('version_name', 'ver'),
+                               ('full_name', 'full'),
+                               ('default_checked', 'checked')):
+        select.add_column(sql_builder.column(column_name, 'obs_files'),
+                          alias=alias)
 
     # download_size is the total sizes of all distinct filenames
     # Note there is only one download_size per short_name, so when we add
     # download_size to the GROUP BY later, we aren't actually aggregating
     # anything.
-    sql += q('t2')+'.'+q('download_size')+' AS '+q('download_size')+', '
+    select.add_column(sql_builder.column('download_size', 't2'),
+                      alias='download_size')
 
     # download_count is the number of distinct filenames
-    sql += 'COUNT(DISTINCT '+q('obs_files')+'.'+q('logical_path')+') AS '
-    sql += q('download_count')+', '
+    select.add_column(
+        sql_builder.count_distinct(sql_builder.column('logical_path',
+                                                      'obs_files')),
+        alias='download_count')
 
     # product_count is the number of distinct OPUS_IDs in each group
-    sql += 'COUNT(DISTINCT '+q('obs_files')+'.'+q('obs_general_id')+') AS '
-    sql += q('product_count')+' '
+    select.add_column(
+        sql_builder.count_distinct(sql_builder.column('obs_general_id',
+                                                      'obs_files')),
+        alias='product_count')
 
-    sql += 'FROM '
+    # The per-product-type totals are cross-joined with the cart's files and
+    # matched up in the WHERE clause below, which is what pairs each row with
+    # its own product type's total size.
+    select.add_from(sql_builder.Subquery(sizes_by_product, 't2'))
+    select.add_from('obs_files').add_join('INNER', 'cart', cart_join_condition())
+    select.add_where(in_this_cart())
+    select.add_where(not_recycled())
+    select.add_where(sql_builder.columns_equal(
+        sql_builder.column('short_name', 'obs_files'),
+        sql_builder.column('short_name', 't2')))
+    select.add_where(sql_builder.columns_equal(
+        sql_builder.column('version_name', 'obs_files'),
+        sql_builder.column('version_name', 't2')))
 
-    # Nested SELECT #1
-    sql += '(SELECT '+q('t1')+'.'+q('short_name')+', '
-    sql += q('t1')+'.'+q('version_name')+', '
-    sql += 'SUM('+q('t1')+'.'+q('size')+') AS '+q('download_size')+' '
-    sql += 'FROM '
+    for alias in ('cat', 'sort', 'short', 'ver', 'full', 'checked'):
+        select.add_group_by(sql_builder.column(alias))
+    select.add_order_by(sql_builder.column('sort'))
 
-    # Nested SELECT #2
-    sql += '(SELECT DISTINCT '+q('obs_files')+'.'+q('short_name')+', '
-    sql += q('obs_files')+'.'+q('version_name')+', '
-    sql += q('obs_files')+'.'+q('logical_path')+', '
-    sql += q('obs_files')+'.'+q('size')+' '
-    sql += 'FROM '+q('obs_files')+' '
-    sql += 'INNER JOIN '+q('cart')+' ON '
-    sql += q('cart')+'.'+q('obs_general_id')+'='
-    sql += q('obs_files')+'.'+q('obs_general_id')+' '
-    sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
-    values.append(session_id)
-    sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
-    sql += ') AS '+q('t1')+' '
-    # End of nested SELECT #2
-
-    # Back to nested SELECT #1
-    sql += 'GROUP BY '+q('t1')+'.'+q('short_name')+', '
-    sql += q('t1')+'.'+q('version_name')
-    sql += ') AS '+q('t2')+', '
-    # End of nested SELECT #1
-
-    sql += q('obs_files')+' '
-    sql += 'INNER JOIN '+q('cart')+' ON '
-    sql += q('cart')+'.'+q('obs_general_id')+'='
-    sql += q('obs_files')+'.'+q('obs_general_id')+' '
-    sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
-    values.append(session_id)
-    sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
-    sql += 'AND '+q('obs_files')+'.'+q('short_name')+'='
-    sql += q('t2')+'.'+q('short_name')+' '
-    sql += 'AND '+q('obs_files')+'.'+q('version_name')+'='
-    sql += q('t2')+'.'+q('version_name')+' '
-
-    sql += 'GROUP BY '+q('cat')+', '+q('sort')+', '
-    sql += q('short')+', '+q('ver')+', '+q('full')+', '+q('checked')+' '
-    sql += 'ORDER BY '+q('sort')
-
+    sql, values = select.build()
     log.debug('_get_download_info SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
@@ -1139,10 +1160,7 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
     # If the observation is already in the cart but in the recycle bin, this
     # will override that entry and set the recycled field to 0.
     values = [(session_id, obs_id, opus_id, 0) for opus_id, obs_id in general_res]
-    q = connection.ops.quote_name
-    sql = 'REPLACE INTO '+q('cart')+' ('+q('session_id')+','
-    sql += q('obs_general_id')+','+q('opus_id')+','+q('recycled')+')'
-    sql += ' VALUES (%s, %s, %s, %s)'
+    sql = sql_builder.replace_into_values('cart', _CART_COLUMNS)
     log.debug('_add_to_cart_table SQL: %s %s', sql, values)
     cursor.executemany(sql, values)
 
@@ -1159,7 +1177,6 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
     if not isinstance(opus_id_list, (list, tuple)): # pragma: no cover -
         # We currently never pass in a list
         opus_id_list = [opus_id_list]
-    q = connection.ops.quote_name
     if recycle_bin:
         # If the recycle_bin flag is set, then this updates the existing entries
         # in the cart table to set recycled=1.
@@ -1172,16 +1189,18 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
                     +'nothing removed from cart')
         values = [(session_id, obs_general_id, opus_id, 1)
                   for opus_id, obs_general_id in res]
-        sql = 'REPLACE INTO '+q('cart')+' ('+q('session_id')+','
-        sql += q('obs_general_id')+','+q('opus_id')+','+q('recycled')+')'
-        sql += ' VALUES (%s, %s, %s, %s)'
+        sql = sql_builder.replace_into_values('cart', _CART_COLUMNS)
         log.debug('_remove_from_cart_table SQL: %s %s', sql, values)
         cursor.executemany(sql, values)
     else:
         # Otherwise we remove the entries completely.
-        values = (session_id, list(opus_id_list))
-        sql = 'DELETE FROM '+q('cart')
-        sql += ' WHERE session_id=%s AND opus_id IN %s'
+        sql, values = sql_builder.delete_from(
+            'cart',
+            sql_builder.join_exprs(
+                [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
+                                       '=', sql_builder.value(session_id)),
+                 sql_builder.in_sequence(sql_builder.column('opus_id', 'cart'),
+                                         list(opus_id_list))], 'AND'))
         log.debug('_remove_from_cart_table SQL: %s %s', sql, values)
         cursor.execute(sql, values)
     return False
@@ -1203,8 +1222,6 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         exit_api_call(api_code, ret)
         raise ret
 
-    q = connection.ops.quote_name
-
     temp_table_name = None
 
     if request.GET.get('view', 'browse') == 'cart':
@@ -1212,9 +1229,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         # so we have to do it ourselves here
         all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
         order_params, order_descending_params = parse_order_slug(all_order)
-        (order_sql, order_mult_tables,
-         order_obs_tables) = create_order_by_sql(order_params,
-                                                 order_descending_params)
+        (order_terms, order_mult_tables,
+         order_obs_tables) = create_order_by_terms(order_params,
+                                                   order_descending_params)
 
         cursor = connection.cursor()
 
@@ -1225,37 +1242,28 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         pid_sfx = str(os.getpid())
         time1 = time.time()
         time_sfx = (f'{time1:.6f}').replace('.', '_')
-        params = []
         temp_table_name = 'temp_'+session_id+'_'+pid_sfx+'_'+time_sfx
-        temp_sql = 'CREATE TEMPORARY TABLE '+q(temp_table_name)
-        temp_sql += '(sort_order INT NOT NULL AUTO_INCREMENT, '
-        temp_sql += 'PRIMARY KEY(sort_order), id INT UNSIGNED, '
-        temp_sql += 'UNIQUE KEY(id)) SELECT '
-        temp_sql += q('obs_general')+'.'+q('id')
+        temp_select = sql_builder.Select()
+        temp_select.add_column(sql_builder.column('id', 'obs_general'))
+        temp_from = temp_select.add_from('obs_general')
         # Now JOIN all the obs_ tables together
-        temp_sql += ' FROM '+q('obs_general')
-        for table in sorted(order_obs_tables):
-            if table == 'obs_general':
-                continue
-            temp_sql += ' LEFT JOIN '+q(table)+' ON '+q('obs_general')+'.'+q('id')
-            temp_sql += '='+q(table)+'.'+q('obs_general_id')
+        add_obs_table_joins(temp_from, sorted(order_obs_tables))
         # And JOIN all the mult_ tables together
-        for mult_table, is_multigroup, category, field_name in sorted(order_mult_tables):
-            temp_sql += ' LEFT JOIN '+q(mult_table)+' ON '
-            if is_multigroup:
-                temp_sql += 'JSON_EXTRACT('
-            temp_sql += q(category)+'.'+q(field_name)
-            if is_multigroup:
-                # For a MULTIGROUP field, we just sort on the first value
-                temp_sql += ', "$[0]")'
-            temp_sql += '='+q(mult_table)+'.'+q('id')
-        temp_sql += ' INNER JOIN '+q('cart')
-        temp_sql += ' ON '+q('obs_general')+'.'+q('id')+'='
-        temp_sql += q('cart')+'.'+q('obs_general_id')
-        temp_sql += ' AND '
-        temp_sql += q('cart')+'.'+q('session_id')+'=%s'
-        params.append(session_id)
-        temp_sql += order_sql
+        add_mult_table_joins(temp_from, sorted(order_mult_tables))
+        temp_from.add_join(
+            'INNER', 'cart',
+            sql_builder.join_exprs(
+                [sql_builder.columns_equal(
+                    sql_builder.column('id', 'obs_general'),
+                    sql_builder.column('obs_general_id', 'cart')),
+                 sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
+                                       '=', sql_builder.value(session_id))],
+                'AND'))
+        for order_column, descending in order_terms:
+            temp_select.add_order_by(order_column, descending=descending)
+        temp_sql, params = sql_builder.create_table_as_select(
+            temp_table_name, temp_select,
+            column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS, temporary=True)
         try:
             cursor.execute(temp_sql, params)
             if throw_random_http500_error(): # pragma: no cover - internal debugging
@@ -1295,16 +1303,23 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
 
     cursor = connection.cursor()
 
+    def cache_table_join_condition():
+        return sql_builder.columns_equal(
+            sql_builder.column('id', user_query_table),
+            sql_builder.column('id', 'obs_general'))
+
     sort_orders = []
     for opus_id in ids:
-        sql = 'SELECT '+q('sort_order')+' FROM '+q('obs_general')
+        sort_order_select = sql_builder.Select()
+        sort_order_select.add_column(sql_builder.column('sort_order'))
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
-        sql += ' INNER JOIN '+q(user_query_table)+' ON '
-        sql += q(user_query_table)+'.'+q('id')+'='
-        sql += q('obs_general')+'.'+q('id')
-        sql += ' WHERE '+q('obs_general')+'.'+q('opus_id')+'=%s'
-        values = [opus_id]
+        sort_order_select.add_from('obs_general').add_join(
+            'INNER', user_query_table, cache_table_join_condition())
+        sort_order_select.add_where(sql_builder.binary_op(
+            sql_builder.column('opus_id', 'obs_general'), '=',
+            sql_builder.value(opus_id)))
+        sql, values = sort_order_select.build()
         log.debug('_edit_cart_range SQL: %s %s', sql, values)
         cursor.execute(sql, values)
         results = cursor.fetchall()
@@ -1319,36 +1334,41 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
                         +'using the supplied search criteria')
         sort_orders.append(results[0][0])
 
-    sql_where  = ' WHERE '
-    sql_where += q(user_query_table)+'.'+q('sort_order')
-    sql_where += ' >= '+str(min(sort_orders))+' AND '
-    sql_where += q(user_query_table)+'.'+q('sort_order')
-    sql_where += ' <= '+str(max(sort_orders))
+    sort_order_column = sql_builder.column('sort_order', user_query_table)
+    range_condition = sql_builder.join_exprs(
+        [sql_builder.binary_op(sort_order_column, '>=',
+                               sql_builder.value(min(sort_orders))),
+         sql_builder.binary_op(sort_order_column, '<=',
+                               sql_builder.value(max(sort_orders)))], 'AND')
+
+    def range_from_source(restrict_to_cart):
+        """Return the FROM clause selecting the observations in the range."""
+        from_source = sql_builder.FromSource('obs_general')
+        # INNER JOIN because we only want rows that exist in the
+        # user_query_table
+        from_source.add_join('INNER', user_query_table,
+                             cache_table_join_condition())
+        if restrict_to_cart:
+            # Restrict to observations already in this session's cart
+            from_source.add_join(
+                'INNER', 'cart',
+                sql_builder.join_exprs(
+                    [sql_builder.binary_op(
+                        sql_builder.column('session_id', 'cart'), '=',
+                        sql_builder.value(session_id)),
+                     sql_builder.columns_equal(
+                         sql_builder.column('obs_general_id', 'cart'),
+                         sql_builder.column('id', 'obs_general'))], 'AND'))
+        return from_source
 
     if action == 'addrange' or (action == 'removerange' and recycle_bin):
         num_cart_and_recycle = (Cart.objects
                                 .filter(session_id__exact=session_id)
                                 .count())
 
-        sql_from_params = []
-        sql_from = ' FROM '+q('obs_general')
-        # INNER JOIN because we only want rows that exist in the
-        # user_query_table
-        sql_from += ' INNER JOIN '+q(user_query_table)+' ON '
-        sql_from += q(user_query_table)+'.'+q('id')+'='
-        sql_from += q('obs_general')+'.'+q('id')
-
-        # Optionally restrict to observations already in the cart
-        sql_incart_params = []
-        sql_incart = ''
-        sql_incart += ' INNER JOIN '+q('cart')+' ON '
-        sql_incart += q('cart')+'.'+q('session_id')+'=%s AND '
-        sql_incart_params.append(session_id)
-        sql_incart += q('cart')+'.'+q('obs_general_id')+'='
-        sql_incart += q('obs_general')+'.'+q('id')
-        if action == 'removerange':
-            sql_from += sql_incart
-            sql_from_params += sql_incart_params
+        # removerange with recyclebin=1 only flips the recycled flag on rows that
+        # are already in the cart, so its statements are restricted to those.
+        restrict_to_cart = (action == 'removerange')
 
         if not recycle_bin:
             # We don't want to check the maximum when moving items to or from
@@ -1359,9 +1379,13 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             assert not recycle_bin
 
             # Count the number of observations we're going to add
-            sql = 'SELECT COUNT(*)'+sql_from+sql_where
+            count_select = sql_builder.Select()
+            count_select.add_column(sql_builder.count_star())
+            count_select.add_from_source(range_from_source(restrict_to_cart))
+            count_select.add_where(range_condition)
+            sql, count_params = count_select.build()
             try:
-                cursor.execute(sql, sql_from_params)
+                cursor.execute(sql, count_params)
                 num_new = cursor.fetchone()[0]
                 if throw_random_http500_error(): # pragma: no cover - internal debugging
                     raise DatabaseError('random')
@@ -1371,10 +1395,17 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
                 ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
                 return ret
 
-            # Subtract the number of observations that are already in the cart
-            sql = 'SELECT COUNT(*)'+sql_from+sql_incart+sql_where
+            # Subtract the number of observations that are already in the cart.
+            # We are on the addrange path here (asserted above), so the FROM
+            # clause is not already restricted to the cart and this adds that
+            # restriction on top of it.
+            dup_select = sql_builder.Select()
+            dup_select.add_column(sql_builder.count_star())
+            dup_select.add_from_source(range_from_source(restrict_to_cart=True))
+            dup_select.add_where(range_condition)
+            sql, dup_params = dup_select.build()
             try:
-                cursor.execute(sql, sql_from_params+sql_incart_params)
+                cursor.execute(sql, dup_params)
                 num_old = cursor.fetchone()[0]
                 if throw_random_http500_error(): # pragma: no cover - internal debugging
                     raise DatabaseError('random')
@@ -1394,48 +1425,44 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
                         +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
                         +'allowed. None of the observations were added.')
 
-        sql_params = []
-        sql = 'REPLACE INTO '+q('cart')+' ('
-        sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')
-        sql += ','+q('recycled')+')'
-        sql += ' SELECT %s,'
-        sql += q('obs_general')+'.'+q('id')+','
-        sql_params.append(session_id)
         # We always set recycled to "0" on addrange. If an observation is
         # already in the cart, it won't be changed. If it's in the recycle bin,
         # then it will have recycled set to 0. The recycle_bin parameter is
         # ignored.
-        sql += q('obs_general')+'.'+q('opus_id')
-        if action == 'addrange':
-            sql += ',0'
-        else:
-            # removerange with recyclebin=1 just means to set the recycled flag.
-            # In this case sql_from will be restricted to items already in the
-            # cart.
-            sql += ',1'
-        sql += sql_from
-        sql_params += sql_from_params
+        #
+        # removerange with recyclebin=1 just means to set the recycled flag. In
+        # that case the FROM clause is restricted to items already in the cart.
+        recycled = 0 if action == 'addrange' else 1
+        edit_select = sql_builder.Select()
+        edit_select.add_column(sql_builder.value(session_id))
+        edit_select.add_column(sql_builder.column('id', 'obs_general'))
+        edit_select.add_column(sql_builder.column('opus_id', 'obs_general'))
+        edit_select.add_column(sql_builder.value(recycled))
+        edit_select.add_from_source(range_from_source(restrict_to_cart))
+        edit_select.add_where(range_condition)
+        sql, sql_params = sql_builder.replace_into_select('cart', _CART_COLUMNS,
+                                                          edit_select)
 
     elif action == 'removerange': # recycle_bin == 0
-        sql_params = []
-        sql = 'DELETE '
-        sql += q('cart')+' FROM '+q('cart')+' INNER JOIN '
-        sql += q(user_query_table)+' ON '
-        sql += q(user_query_table)+'.'+q('id')+'='
-        sql += q('cart')+'.'+q('obs_general_id')
+        delete_from_source = sql_builder.FromSource('cart')
+        delete_from_source.add_join(
+            'INNER', user_query_table,
+            sql_builder.columns_equal(
+                sql_builder.column('id', user_query_table),
+                sql_builder.column('obs_general_id', 'cart')))
+        sql, sql_params = sql_builder.delete_joined('cart', delete_from_source,
+                                                    range_condition)
     else: # pragma: no cover - error catchall
         log.error('_edit_cart_range: Unknown action %s: %s', action,
                   request.GET)
         ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
         return ret
 
-    sql += sql_where
-
     log.debug('_edit_cart_range SQL: %s %s', sql, sql_params)
     cursor.execute(sql, sql_params)
 
     if temp_table_name:
-        sql = 'DROP TABLE '+q(temp_table_name)
+        sql = sql_builder.drop_table(temp_table_name)
         try:
             cursor.execute(sql)
             if throw_random_http500_error(): # pragma: no cover - internal debugging
@@ -1454,8 +1481,6 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
     cursor = connection.cursor()
     view = request.GET.get('view', 'browse')
     if view == 'browse':
-        q = connection.ops.quote_name
-
         # We ignore recycle_bin here because it doesn't mean anything
         count, user_query_table, err = get_result_count_helper(request, api_code)
         if err is not None: # pragma: no cover - database errors
@@ -1467,14 +1492,19 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 
         # Subtract off the number of observations already in the cart or
         # recycle bin because adding them back won't change the count.
-        sql = 'SELECT COUNT(*) FROM '+q('cart')
+        dup_select = sql_builder.Select()
+        dup_select.add_column(sql_builder.count_star())
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
-        sql += ' INNER JOIN '+q(user_query_table)+' ON '
-        sql += q(user_query_table)+'.'+q('id')+'='
-        sql += q('cart')+'.'+q('obs_general_id')
-        sql += ' WHERE session_id=%s'
-        values = [session_id]
+        dup_select.add_from('cart').add_join(
+            'INNER', user_query_table,
+            sql_builder.columns_equal(
+                sql_builder.column('id', user_query_table),
+                sql_builder.column('obs_general_id', 'cart')))
+        dup_select.add_where(sql_builder.binary_op(
+            sql_builder.column('session_id', 'cart'), '=',
+            sql_builder.value(session_id)))
+        sql, values = dup_select.build()
         try:
             cursor.execute(sql, values)
             num_dup = cursor.fetchone()[0]
@@ -1493,19 +1523,21 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
                     +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
                     +'allowed. None of the observations were added.')
 
-        values = [session_id]
-        sql = 'REPLACE INTO '+q('cart')+' ('
-        sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')
-        sql += ','+q('recycled')+')'
-        sql += ' SELECT %s,'
-        sql += q('obs_general')+'.'+q('id')+','+q('obs_general')+'.'+q('opus_id')
+        addall_select = sql_builder.Select()
+        addall_select.add_column(sql_builder.value(session_id))
+        addall_select.add_column(sql_builder.column('id', 'obs_general'))
+        addall_select.add_column(sql_builder.column('opus_id', 'obs_general'))
         # Always set recycled=0
-        sql += ',0'
-        sql += ' FROM '+q('obs_general')
+        addall_select.add_column(sql_builder.value(0))
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
-        sql += ' INNER JOIN '+q(user_query_table)+' ON '
-        sql += q(user_query_table)+'.'+q('id')+'='+q('obs_general')+'.'+q('id')
+        addall_select.add_from('obs_general').add_join(
+            'INNER', user_query_table,
+            sql_builder.columns_equal(
+                sql_builder.column('id', user_query_table),
+                sql_builder.column('id', 'obs_general')))
+        sql, values = sql_builder.replace_into_select('cart', _CART_COLUMNS,
+                                                      addall_select)
 
         log.debug('_edit_cart_addall SQL: %s %s', sql, values)
         cursor.execute(sql, values)
@@ -1515,9 +1547,10 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
         # column. Admittedly view=cart&recyclebin=0 is silly, but we still
         # allow it and just don't do anything.
         if recycle_bin:
-            values = [session_id]
-            q = connection.ops.quote_name
-            sql = 'UPDATE '+q('cart')+' SET recycled=0 WHERE session_id=%s'
+            sql, values = sql_builder.update(
+                'cart', [('recycled', 0)],
+                sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
+                                      '=', sql_builder.value(session_id)))
             log.debug('_edit_cart_addall SQL: %s %s', sql, values)
             cursor.execute(sql, values)
 

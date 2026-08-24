@@ -46,12 +46,16 @@ from opus_app.apps.metadata.views import get_cart_count, get_result_count_helper
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import Partables, TableNames
 from opus_app.apps.search.views import (
-    create_order_by_sql,
+    add_mult_table_joins,
+    add_obs_table_joins,
+    create_order_by_terms,
     get_param_info_by_slug,
     get_user_query_table,
     parse_order_slug,
+    search_cache_join_condition,
     url_to_search_params,
 )
+from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_LIMIT,
     HTTP404_BAD_OFFSET,
@@ -1123,24 +1127,13 @@ def api_get_product_types_for_opus_id(request, opus_id):
         raise ret
 
     cursor = connection.cursor()
-    q = connection.ops.quote_name
 
-    values = []
-    sql = 'SELECT DISTINCT '
-    sql += q('obs_files')+'.'+q('category')+', '
-    sql += q('obs_files')+'.'+q('short_name')+', '
-    sql += q('obs_files')+'.'+q('full_name')+', '
-    sql += q('obs_files')+'.'+q('version_number')+', '
-    sql += q('obs_files')+'.'+q('version_name')+', '
-    sql += q('obs_files')+'.'+q('sort_order')
-    sql += ' FROM '+q('obs_files')
-    sql += ' WHERE '
-    sql += q('obs_files')+'.'+q('opus_id')+' = %s'
-    values.append(opus_id)
-    sql += ' ORDER BY '
-    sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('version_number')+' DESC'
+    select, _from_source = _product_types_select()
+    select.add_where(sql_builder.binary_op(
+        sql_builder.column('opus_id', 'obs_files'), '=',
+        sql_builder.value(opus_id)))
 
+    sql, values = select.build()
     log.debug('get_product_types_for_opus_id SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
@@ -1199,25 +1192,16 @@ def api_get_product_types_for_search(request):
         return cached_val
 
     cursor = connection.cursor()
-    q = connection.ops.quote_name
 
-    values = []
-    sql = 'SELECT DISTINCT '
-    sql += q('obs_files')+'.'+q('category')+', '
-    sql += q('obs_files')+'.'+q('short_name')+', '
-    sql += q('obs_files')+'.'+q('full_name')+', '
-    sql += q('obs_files')+'.'+q('version_number')+', '
-    sql += q('obs_files')+'.'+q('version_name')+', '
-    sql += q('obs_files')+'.'+q('sort_order')
-    sql += ' FROM '+q('obs_files')
+    select, from_source = _product_types_select()
     if selections:
-        sql += ' INNER JOIN '+q(user_query_table)
-        sql += ' ON '+q('obs_files')+'.'+q('obs_general_id')+'='
-        sql += q(user_query_table)+'.'+q('id')
-    sql += ' ORDER BY '
-    sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('version_number')+' DESC'
+        from_source.add_join(
+            'INNER', user_query_table,
+            sql_builder.columns_equal(
+                sql_builder.column('obs_general_id', 'obs_files'),
+                sql_builder.column('id', user_query_table)))
 
+    sql, values = select.build()
     log.debug('get_product_types_for_search SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
@@ -1240,6 +1224,37 @@ def api_get_product_types_for_search(request):
 # SUPPORT ROUTINES
 #
 ################################################################################
+
+def _results_column_select(column_names):
+    """Return a Select over the requested "table.column" names, in order.
+
+    The result rows are unpacked positionally by the caller, so the column order
+    is the caller's `column_names` order and nothing may reorder it.
+    """
+    select = sql_builder.Select()
+    for qualified_name in column_names:
+        table_name, _, column_name = qualified_name.partition('.')
+        select.add_column(sql_builder.column(column_name, table_name))
+    return select
+
+
+def _product_types_select():
+    """Return the (Select, FromSource) shared by the two product_types endpoints.
+
+    Both list the distinct product types found in obs_files, ordered so that the
+    "Current" version of a product comes before its older versions; they differ
+    only in how they narrow the rows down.
+    """
+    select = sql_builder.Select(distinct=True)
+    for column_name in ('category', 'short_name', 'full_name', 'version_number',
+                        'version_name', 'sort_order'):
+        select.add_column(sql_builder.column(column_name, 'obs_files'))
+    from_source = select.add_from('obs_files')
+    select.add_order_by(sql_builder.column('sort_order', 'obs_files'))
+    select.add_order_by(sql_builder.column('version_number', 'obs_files'),
+                        descending=True)
+    return select, from_source
+
 
 def get_search_results_chunk_error_handler(error, api_code):
     if error[0] == 404: # pragma: no cover - 500 won't happen during testing
@@ -1457,11 +1472,8 @@ def get_search_results_chunk(request, use_cart=None,
         log.error('get_search_results_chunk: Bad offset %s', str(offset))
         return error_return(404, HTTP404_BAD_OFFSET(offset, request))
 
-    q = connection.ops.quote_name
-
     temp_table_name = None
     drop_temp_table = False
-    params = []
     if not use_cart:
         # This is for a search query
 
@@ -1498,12 +1510,15 @@ def get_search_results_chunk(request, use_cart=None,
         time_sfx = (f'{time1:.6f}').replace('.', '_')
         temp_table_name = 'temp_'+user_query_table
         temp_table_name += '_'+pid_sfx+'_'+time_sfx
-        temp_sql = 'CREATE TEMPORARY TABLE '
-        temp_sql += q(temp_table_name)
-        temp_sql += ' SELECT sort_order, id FROM '+q(user_query_table)
-        temp_sql += ' ORDER BY sort_order'
-        temp_sql += ' LIMIT '+str(limit)
-        temp_sql += ' OFFSET '+str(offset)
+        temp_select = sql_builder.Select()
+        temp_select.add_column(sql_builder.column('sort_order'))
+        temp_select.add_column(sql_builder.column('id'))
+        temp_select.add_from(user_query_table)
+        temp_select.add_order_by(sql_builder.column('sort_order'))
+        temp_select.limit(limit)
+        temp_select.offset(offset)
+        temp_sql, _temp_params = sql_builder.create_table_as_select(
+            temp_table_name, temp_select, temporary=True)
         cursor = connection.cursor()
         try:
             cursor.execute(temp_sql)
@@ -1516,107 +1531,91 @@ def get_search_results_chunk(request, use_cart=None,
         log.debug('get_search_results_chunk SQL (%.2f secs): %s',
                   time.time()-time1, temp_sql)
 
-        sql = 'SELECT '
-        sql += ','.join([q(x.split('.')[0])+'.'+
-                         q(x.split('.')[1])
-                         for x in column_names])
-        sql += ' FROM '+q('obs_general')
+        select = _results_column_select(column_names)
+        from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
         # just full of NULLs.
-        for table in tables:
-            if table == 'obs_general':
-                continue
-            sql += ' LEFT JOIN '+q(table)
-            sql += ' ON '+q('obs_general')+'.'+q('id')+'='
-            sql += q(table)+'.'+q('obs_general_id')
+        add_obs_table_joins(from_source, tables)
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, is_multigroup, table, field_name) in mult_tables:
+        for (_mult_table, is_multigroup, _table, _field_name) in mult_tables:
             # We can't have a MULTIGROUP here because those fields are simply
             # added as columns above to be mapped later
             assert not is_multigroup
-            sql += ' LEFT JOIN '+q(mult_table)
-            sql += ' ON '+q(table)+'.'+q(field_name)+'='
-            sql += q(mult_table)+'.'+q('id')
+        add_mult_table_joins(from_source, mult_tables)
 
         # But the cache table is an INNER JOIN because we only want opus_ids
         # that appear in the cache table to cause result rows
-        sql += ' INNER JOIN '+q(temp_table_name)
-        sql += ' ON '+q('obs_general')+'.'+q('id')+'='
-        sql += q(temp_table_name)+'.'+q('id')
+        from_source.add_join(
+            'INNER', temp_table_name,
+            sql_builder.columns_equal(
+                sql_builder.column('id', 'obs_general'),
+                sql_builder.column('id', temp_table_name)))
 
         # Maybe join in the cart table if we need cart_state
         if return_cart_states:
-            sql += ' LEFT JOIN '+q('cart')
-            sql += ' ON '+q('obs_general')+'.'+q('id')+'='
-            sql += q('cart')+'.'+q('obs_general_id')
-            sql += ' AND '
-            sql += q('session_id')+'=%s'
-            params.append(session_id)
+            from_source.add_join(
+                'LEFT', 'cart',
+                sql_builder.join_exprs(
+                    [sql_builder.columns_equal(
+                        sql_builder.column('id', 'obs_general'),
+                        sql_builder.column('obs_general_id', 'cart')),
+                     sql_builder.binary_op(sql_builder.column('session_id',
+                                                              'cart'),
+                                           '=',
+                                           sql_builder.value(session_id))],
+                    'AND'))
 
-        sql += ' ORDER BY '
-        sql += q(temp_table_name)+'.sort_order'
+        select.add_order_by(sql_builder.column('sort_order', temp_table_name))
     else:
         # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
-        (order_sql, order_mult_tables,
-         order_obs_tables) = create_order_by_sql(order_params,
-                                                 order_descending_params)
+        (order_terms, order_mult_tables,
+         order_obs_tables) = create_order_by_terms(order_params,
+                                                   order_descending_params)
 
-        sql = 'SELECT '
-        sql += ','.join([q(x.split('.')[0])+'.'+
-                         q(x.split('.')[1])
-                         for x in column_names])
-        sql += ' FROM '+q('obs_general')
+        select = _results_column_select(column_names)
+        from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
         # just full of NULLs.
-        for table in tables | order_obs_tables:
-            if table == 'obs_general':
-                continue
-            sql += ' LEFT JOIN '+q(table)
-            sql += ' ON '+q('obs_general')+'.'+q('id')+'='
-            sql += q(table)+'.'+q('obs_general_id')
+        add_obs_table_joins(from_source, tables | order_obs_tables)
 
         # Now JOIN in all the mult_ tables.
-        for (mult_table, is_multigroup, table, field_name) in (
-                mult_tables | order_mult_tables):
-            # If is_multigroup is True, this must have been from order_mult_tables.
-            # This is OK, because a multigroup field will never show up in mult_tables
-            # (see above), so this field will only be used for sorting.
-            sql += ' LEFT JOIN '+q(mult_table)
-            sql += ' ON '
-            if is_multigroup:
-                sql += 'JSON_EXTRACT('
-            sql += q(table)+'.'+q(field_name)
-            if is_multigroup:
-                # For a MULTIGROUP field, we just sort on the first value
-                sql += ', "$[0]")'
-            sql += '='+q(mult_table)+'.'+q('id')
+        # If is_multigroup is True, this must have been from order_mult_tables.
+        # This is OK, because a multigroup field will never show up in mult_tables
+        # (see above), so this field will only be used for sorting.
+        add_mult_table_joins(from_source, mult_tables | order_mult_tables)
 
         # But the cart table is an INNER JOIN because we only want
         # opus_ids that appear in the cart table to cause result rows
-        sql += ' INNER JOIN '+q('cart')
-        sql += ' ON '+q('obs_general')+'.'+q('id')+'='
-        sql += q('cart')+'.'+q('obs_general_id')
-        sql += ' AND '
-        sql += q('cart')+'.'+q('session_id')+'=%s'
-        params.append(session_id)
+        cart_conditions = [
+            sql_builder.columns_equal(
+                sql_builder.column('id', 'obs_general'),
+                sql_builder.column('obs_general_id', 'cart')),
+            sql_builder.binary_op(sql_builder.column('session_id', 'cart'), '=',
+                                  sql_builder.value(session_id))]
         if ignore_recycle_bin:
-            sql += ' AND '
-            sql += q('cart')+'.'+q('recycled')+'=0'
+            cart_conditions.append(
+                sql_builder.binary_op(sql_builder.column('recycled', 'cart'),
+                                      '=', sql_builder.value(0)))
+        from_source.add_join('INNER', 'cart',
+                             sql_builder.join_exprs(cart_conditions, 'AND'))
 
         # Note we don't need to add in a special cart JOIN here for
         # return_cart_states, because we're already joining in the
         # cart table.
 
         # Finally add in the sort order
-        sql += order_sql
-        sql += ' LIMIT '+str(limit)
-        sql += ' OFFSET '+str(offset)
+        for order_column, descending in order_terms:
+            select.add_order_by(order_column, descending=descending)
+        select.limit(limit)
+        select.offset(offset)
+
+    sql, params = select.build()
 
     time1 = time.time()
 
@@ -1640,7 +1639,7 @@ def get_search_results_chunk(request, use_cart=None,
               time.time()-time1, sql)
 
     if drop_temp_table:
-        sql = 'DROP TABLE '+q(temp_table_name)
+        sql = sql_builder.drop_table(temp_table_name)
         try:
             cursor.execute(sql)
             if throw_random_http500_error(): # pragma: no cover - internal debugging
@@ -1837,25 +1836,29 @@ def get_triggered_tables(selections, extras, api_code=None):
             if trigger_tab + trigger_col in queries:
                 results = queries[trigger_tab + trigger_col]
             else:
+                # We are joining the search's cache table, which has no model,
+                # so this is raw SQL rather than an ORM query. The model is
+                # still what resolves the trigger column's name, because a field
+                # declared with db_column is not named by its column.
                 trigger_model = apps.get_model('search',
                                                ''.join(trigger_tab.title()
                                                        .split('_')))
-                results = trigger_model.objects
-                if trigger_tab == 'obs_general': # pragma: no cover -
-                    # currently there are no triggers on anything except
-                    # obs_general and surface geometry (which is handled
-                    # separately above).
-                    where = connection.ops.quote_name(trigger_tab) + '.id='
-                    where += user_query_table + '.id'
-                else: # pragma: no cover
-                    where = connection.ops.quote_name(trigger_tab)
-                    where += '.obs_general_id='
-                    where += connection.ops.quote_name(user_query_table) + '.id'
-                results = results.extra(where=[where], tables=[user_query_table])
-                results = results.distinct().values(trigger_col)
+                trigger_column = trigger_model._meta.get_field(trigger_col).column
+                select = sql_builder.Select(distinct=True)
+                select.add_column(sql_builder.column(trigger_column, trigger_tab))
+                select.add_from(trigger_tab)
+                select.add_from(user_query_table)
+                select.add_where(search_cache_join_condition(trigger_tab,
+                                                             user_query_table))
+                sql, sql_params = select.build()
+                log.debug('get_triggered_tables SQL: %s *** PARAMS %s',
+                          sql, str(sql_params))
+                cursor = connection.cursor()
+                cursor.execute(sql, sql_params)
+                results = [row[0] for row in cursor.fetchall()]
                 queries.setdefault(trigger_tab + trigger_col, results)
 
-            if len(results) == 1 and str(results[0][trigger_col]) == trigger_val:
+            if len(results) == 1 and str(results[0]) == trigger_val:
                 triggered_tables.append(partable_name)
 
     # Now hack in the proper ordering of tables
