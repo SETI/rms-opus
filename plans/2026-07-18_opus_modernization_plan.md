@@ -2968,8 +2968,9 @@ body; never rewrite or delete earlier notes.*
     `test_obs_sclk_call_sites.py`, and `test_import_context.py` twice), so a later
     change to the constructor has **six** call sites to fix, not two.
   - **Logging has two spellings and one implementation.** `ImportLog`, reached as
-    `ctx.log`, holds the position prefix (`[<bundle> index row <n> "<filespec>"] `) and
-    the once-per-run deduplication, and exposes `error`/`warning`/`info`/`debug`/
+    `ctx.log`, holds the position prefix (`[<bundle> index row <n> "<filespec>"]`,
+    followed by a space) and the once-per-run deduplication, and exposes
+    `error`/`warning`/`info`/`debug`/
     `nonrepeating_error`/`nonrepeating_warning`/`unknown_target_name`. The obs classes use
     that spelling through their `_log_*` wrappers; the step modules keep calling
     `import_util.log_error(ctx, msg)` and friends, which are now one-line delegations to
@@ -3001,6 +3002,23 @@ body; never rewrite or delete earlier notes.*
     that name would be doing exactly what the sweep exists to catch. If a later PR ever
     needs obs code to touch the database, `import_run_field_function` must re-raise
     `ImportDBError` first — the reason is unchanged and is in that test's docstring.
+  - **`import_one_bundle`'s illegal-PDS-version branch skips its cleanup — pre-existing,
+    deliberately NOT fixed here.** Found by two independent reviewers of this PR.
+    `steps/do_import.py`'s `else` branch (`BUNDLE_INFO has illegal PDS version`) logs and
+    returns False without the `ctx.logger.close()` and `ctx.current_bundle_id = None`
+    that its four sibling error returns both do. Two consequences if it ever fires: the
+    logger section opened at the top of the function stays open, so every later
+    `close()` in `do_import_steps` and `cli.main` closes the wrong section for the rest
+    of the run; and the failed bundle id stays on the context, so `ImportLog._position`
+    prefixes every later message from every step with it. **It is byte-identical at
+    `27232d79`** (same statements, `impglobals` spelling) — PR-11 only re-spelled the two
+    lines around it — and it is **unreachable today**: `pds_version` comes from the
+    checked-in `config_bundle_info.BUNDLE_INFO`, whose 29 entries are 25 threes and 4
+    fours, so only a hand-edit introducing a third value could reach it. Deferred per
+    §4a rather than fixed, because fixing a pre-existing defect inside a
+    behavior-neutral re-threading PR is exactly what that rule forbids without the
+    orchestrator's authorization (the PR-10 precedent). **Candidate for PR-15 or
+    PR-17**, and cheap: two lines, matching the siblings.
   - **Two dead functions in `import_util` were threaded, not deleted, and they are a
     deletion candidate.** `table_name_param_info` and `table_name_partables` have no
     caller anywhere in `src/`, `tests/`, `integration_tests/` or `scripts/`, and could
