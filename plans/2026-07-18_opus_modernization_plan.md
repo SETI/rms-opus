@@ -3108,9 +3108,13 @@ body; never rewrite or delete earlier notes.*
     backtick *inside* one, so validation is the actual defence, and several identifiers
     here are computed at runtime -- `cache_<n>`, `temp_<session>_<pid>_<time>`, and
     column names read from `param_info`); every value becomes `%s`; and parameters come
-    out in placeholder order because the clauses render in a fixed order. **The one
-    deliberate exception is `LIMIT`/`OFFSET`**, which are `isinstance`-checked ints
-    rendered literally -- a placeholder there would be a value the driver quotes.
+    out in placeholder order because the clauses render in a fixed order. **There are
+    exactly two deliberate exceptions to "values are parameters", not one:**
+    `LIMIT`/`OFFSET` and the `MAX_EXECUTION_TIME` optimizer hint. Both are numbers that
+    shape the statement rather than data it operates on, MySQL accepts a placeholder in
+    neither position (a hint is a comment), and both are `isinstance`-checked ints
+    rendered literally. `create_table_from_select_sql` is a third raw-text path, for the
+    one caller that receives its SELECT already rendered; it takes no values.
   - **The rendering conventions are not cosmetic — they were chosen to keep the SQL
     byte-identical where the suite pins it.** `integration_tests/apps_db_tests/
     test_search.py` asserts the exact SQL text of `construct_query_string`,
@@ -3177,7 +3181,7 @@ body; never rewrite or delete earlier notes.*
     inner-join shape `RawSQL` would have turned into a semi-join; the fourth
     (`metadata/views.py:549`) became `filter(**{f'{param1}__isnull': True, ...})`.
     **`B608` stays skipped** and its pyproject comment now states facts instead of a
-    plan reference: **16 findings in 8 files before, 12 in 4 after**
+    plan reference: **16 findings in 7 files before, 12 in 4 after**
     (`tools/sql_builder.py`, `importdb/mysql.py`, `importdb/super.py`, and two
     identifier-only queries in `steps/do_validate.py`), **none of them in a view**.
     PR-17 turns those into per-line `# nosec`.
@@ -3231,11 +3235,15 @@ body; never rewrite or delete earlier notes.*
     suite that gate reads. **PR-18, which creates the holdings-free Django suite, is the
     right place to move them**; until then a change to the builder is not covered by the
     GitHub-hosted run.
-  - **One `# pragma: no cover` disappeared and one dead assignment went with it.**
-    `api_string_search_choices`'s `if param_category == 'obs_general'` branch (marked
-    "not possible -- there are currently no string fields in obs_general") is now inside
-    `search_cache_join_condition`, whose obs_general arm *is* exercised, by the mult
-    counts; the fact it recorded is preserved as a comment at the call site. The dead
+  - **Three `# pragma: no cover` markers disappeared and one dead assignment went with
+    them.** Two were the arms of `results.get_triggered_tables`'s where-clause and one
+    was `api_string_search_choices`'s `if param_category == 'obs_general'`; all three
+    branches are now inside `search_cache_join_condition`, whose obs_general arm *is*
+    exercised, by the mult counts. **The facts those markers recorded are preserved as
+    comments at both call sites** -- that there are currently no string fields in
+    obs_general, and that no partable triggers on anything except obs_general and
+    surface geometry -- because they are the reason those arms were untestable, which
+    the pragma alone no longer says. The dead
     `results = table_model.objects.values(...).annotate(Count(...))` in
     `api_get_mult_counts` -- assigned, never read, overwritten by `cursor.fetchall()` --
     was dropped, and `Count` left `metadata/views.py`'s imports with it.

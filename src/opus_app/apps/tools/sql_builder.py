@@ -32,8 +32,13 @@ by inspection:
   the column names that come from the ``param_info`` table.
 * **Values are always parameters.** Anything that is data is rendered as ``%s``
   and collected into a parameter list; the module never formats a value into SQL
-  text. The one exception is ``LIMIT``/``OFFSET``, which take a Python ``int`` that
-  is checked with ``isinstance`` and rendered literally -- see :meth:`Select.limit`.
+  text. There are exactly **two** exceptions, and both are numbers that shape the
+  statement rather than data it operates on, so both are checked with
+  ``isinstance(..., int)`` before being rendered literally: ``LIMIT``/``OFFSET``
+  (see :meth:`Select.limit`) and the ``MAX_EXECUTION_TIME`` optimizer hint (see
+  :meth:`Select.__init__`). MySQL will not accept a placeholder in either position.
+  A third raw-text path exists for one caller -- see
+  :func:`create_table_from_select_sql` -- and takes no values at all.
 * **Parameters come out in placeholder order.** A statement is rendered in a fixed
   clause order and each clause contributes its parameters at the point its
   placeholders appear, so a caller cannot get the ordering wrong by appending a
@@ -401,7 +406,9 @@ class Select:
             distinct: True to emit SELECT DISTINCT.
             max_execution_time: Milliseconds, or None. When given, emits MySQL's
                 `MAX_EXECUTION_TIME` optimizer hint, which makes the server abort
-                the query itself rather than leaving the user waiting.
+                the query itself rather than leaving the user waiting. A hint is
+                a comment, so it cannot take a placeholder; the value is checked
+                to be an `int` and rendered literally, exactly as `limit` is.
         """
         self._distinct = distinct
         if max_execution_time is not None and not isinstance(max_execution_time, int):

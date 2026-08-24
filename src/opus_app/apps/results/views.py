@@ -1517,8 +1517,12 @@ def get_search_results_chunk(request, use_cart=None,
         temp_select.add_order_by(sql_builder.column('sort_order'))
         temp_select.limit(limit)
         temp_select.offset(offset)
-        temp_sql, _temp_params = sql_builder.create_table_as_select(
+        temp_sql, temp_params = sql_builder.create_table_as_select(
             temp_table_name, temp_select, temporary=True)
+        # This SELECT has no WHERE, so it carries no parameters. Assert that
+        # rather than discarding the list, so a condition added here later
+        # cannot lose its values silently.
+        assert not temp_params
         cursor = connection.cursor()
         try:
             cursor.execute(temp_sql)
@@ -1840,6 +1844,12 @@ def get_triggered_tables(selections, extras, api_code=None):
                 # so this is raw SQL rather than an ORM query. The model is
                 # still what resolves the trigger column's name, because a field
                 # declared with db_column is not named by its column.
+                #
+                # Currently there are no triggers on anything except obs_general
+                # and surface geometry (which is handled separately above), so
+                # only the obs_general arm of the join condition is reachable
+                # from here -- both arms of the equivalent branch used to be
+                # marked "# pragma: no cover" for that reason.
                 trigger_model = apps.get_model('search',
                                                ''.join(trigger_tab.title()
                                                        .split('_')))

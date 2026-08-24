@@ -286,7 +286,7 @@ skips = [
            # steps/do_validate.py. Both modules validate every identifier
            # against ^[A-Za-z0-9_]+$ and render every value as a %s parameter,
            # which is exactly what the check cannot see. Measured over the same
-           # targets: 16 findings in 8 files before PR-12, 12 in 4 after, none
+           # targets: 16 findings in 7 files before PR-12, 12 in 4 after, none
            # in a view. PR-17 turns these into per-line `# nosec`.
   "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
 ]
