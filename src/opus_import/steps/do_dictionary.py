@@ -10,15 +10,15 @@ from importlib.resources import as_file
 
 import pdsparser
 
-from opus_import import impglobals, import_util
+from opus_import import import_util
 
 
-def create_import_definitions_table():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def create_import_definitions_table(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Creating new import definitions table')
-    def_schema = import_util.read_schema_for_table('definitions')
+    def_schema = import_util.read_schema_for_table(ctx, 'definitions')
     # Start from scratch
     db.create_table('import', 'definitions', def_schema, ignore_if_exists=False)
 
@@ -66,7 +66,7 @@ def create_import_definitions_table():
     for schema_file in json_list:
         file_name = os.path.splitext(schema_file.name)[0]
         logger.log('info', f'Importing {file_name}')
-        schema = import_util.read_schema_for_table(file_name)
+        schema = import_util.read_schema_for_table(ctx, file_name)
         for column in schema:
             for suffix in ('', '_results'):
                 if 'definition'+suffix in column:
@@ -111,23 +111,23 @@ def create_import_definitions_table():
 
     return True
 
-def create_import_contexts_table():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def create_import_contexts_table(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Creating new import contexts table')
-    ctx_schema = import_util.read_schema_for_table('contexts')
+    contexts_schema = import_util.read_schema_for_table(ctx, 'contexts')
     # Start from scratch
-    db.create_table('import', 'contexts', ctx_schema, ignore_if_exists=False)
+    db.create_table('import', 'contexts', contexts_schema, ignore_if_exists=False)
 
-    ctx_file = import_util.DICTIONARY_DATA_DIR / 'contexts.csv'
+    contexts_file = import_util.DICTIONARY_DATA_DIR / 'contexts.csv'
     rows = []
     try:
-        with ctx_file.open(encoding='utf-8') as csvfile:
+        with contexts_file.open(encoding='utf-8') as csvfile:
             filereader = csv.reader(csvfile)
             for row in filereader:
                 if len(row) != 3:
-                    logger.log('error', f'Bad row in "{ctx_file}": {row}')
+                    logger.log('error', f'Bad row in "{contexts_file}": {row}')
                     return False
                 name, description, parent = row
                 new_row = {
@@ -137,7 +137,7 @@ def create_import_contexts_table():
                 }
                 rows.append(new_row)
     except OSError as e:
-        logger.log('error', f'Failed to read {ctx_file}: {e.strerror}')
+        logger.log('error', f'Failed to read {contexts_file}: {e.strerror}')
         return False
 
     db.insert_rows('import', 'contexts', rows)
@@ -145,32 +145,32 @@ def create_import_contexts_table():
     return True
 
 
-def copy_dictionary_from_import_to_permanent():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def copy_dictionary_from_import_to_permanent(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Copying contexts table from import to permanent')
     # Start from scratch
-    ctx_schema = import_util.read_schema_for_table('contexts')
+    contexts_schema = import_util.read_schema_for_table(ctx, 'contexts')
     db.drop_table('perm', 'definitions')
     db.drop_table('perm', 'contexts')
-    db.create_table('perm', 'contexts', ctx_schema, ignore_if_exists=False)
+    db.create_table('perm', 'contexts', contexts_schema, ignore_if_exists=False)
 
     db.copy_rows_between_namespaces('import', 'perm', 'contexts')
 
     logger.log('info', 'Copying definitions table from import to permanent')
     # Start from scratch
-    def_schema = import_util.read_schema_for_table('definitions')
+    def_schema = import_util.read_schema_for_table(ctx, 'definitions')
     db.create_table('perm', 'definitions', def_schema, ignore_if_exists=False)
 
     db.copy_rows_between_namespaces('import', 'perm', 'definitions')
 
-def do_dictionary():
+def do_dictionary(ctx):
     # Contexts has to come first because of a foreign key
-    impglobals.DATABASE.drop_table('import', 'definitions')
-    impglobals.DATABASE.drop_table('import', 'contexts')
-    if (create_import_contexts_table() and
-        create_import_definitions_table()):
-        copy_dictionary_from_import_to_permanent()
-    impglobals.DATABASE.drop_table('import', 'definitions')
-    impglobals.DATABASE.drop_table('import', 'contexts')
+    ctx.db.drop_table('import', 'definitions')
+    ctx.db.drop_table('import', 'contexts')
+    if (create_import_contexts_table(ctx) and
+        create_import_definitions_table(ctx)):
+        copy_dictionary_from_import_to_permanent(ctx)
+    ctx.db.drop_table('import', 'definitions')
+    ctx.db.drop_table('import', 'contexts')

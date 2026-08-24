@@ -7,8 +7,7 @@
 
 import re
 
-from opus_import import config_bundle_info, config_data, impglobals, import_util
-from opus_import.steps import do_import_mult
+from opus_import import config_bundle_info, config_data, import_util
 
 
 def lookup_vol_info(bundle_id):
@@ -18,118 +17,118 @@ def lookup_vol_info(bundle_id):
     return None
 
 
-def delete_all_obs_mult_tables(namespace):
+def delete_all_obs_mult_tables(ctx, namespace):
     """Delete ALL import or permanent obs_ and mult_ tables."""
 
-    table_names = impglobals.DATABASE.table_names(namespace,
-                                                  prefix=['obs_', 'mult_', 'cart'])
+    table_names = ctx.db.table_names(namespace,
+                                     prefix=['obs_', 'mult_', 'cart'])
     table_names = sorted(table_names)
     # This has to happen in four phases to handle foreign key contraints:
     # 1. All obs_ tables except obs_general
     for table_name in table_names:
         if (table_name.startswith('obs_') and table_name != 'obs_general'):
-            impglobals.DATABASE.drop_table(namespace, table_name)
+            ctx.db.drop_table(namespace, table_name)
 
     # 2. cart
     if 'cart' in table_names:
-        impglobals.DATABASE.drop_table(namespace, 'cart')
+        ctx.db.drop_table(namespace, 'cart')
 
     # 3. obs_general
     if 'obs_general' in table_names:
-        impglobals.DATABASE.drop_table(namespace, 'obs_general')
+        ctx.db.drop_table(namespace, 'obs_general')
 
     # 4. All mult_YYY tables
     for table_name in table_names:
         if table_name.startswith('mult_'):
-            impglobals.DATABASE.drop_table(namespace, table_name)
+            ctx.db.drop_table(namespace, table_name)
 
 
-def delete_bundle_from_obs_tables(bundle_id, namespace):
+def delete_bundle_from_obs_tables(ctx, bundle_id, namespace):
     """Delete a single bundle from all import or permanent obs tables."""
 
-    import_util.log_info(f'Deleting bundle "{bundle_id}" from {namespace} tables')
+    import_util.log_info(ctx, f'Deleting bundle "{bundle_id}" from {namespace} tables')
 
-    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_'])
+    table_names = ctx.db.table_names(namespace, prefix=['obs_'])
     table_names = sorted(table_names)
-    q = impglobals.DATABASE.quote_identifier
+    q = ctx.db.quote_identifier
     where = f'{q("bundle_id")}="{bundle_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
     for table_name in table_names:
         if (table_name.startswith('obs_') and table_name != 'obs_general'):
-            impglobals.DATABASE.delete_rows(namespace, table_name, where)
+            ctx.db.delete_rows(namespace, table_name, where)
 
     # 2. obs_general
     if 'obs_general' in table_names:
-        impglobals.DATABASE.delete_rows(namespace, 'obs_general', where)
+        ctx.db.delete_rows(namespace, 'obs_general', where)
 
 
-def find_duplicate_opus_ids():
+def find_duplicate_opus_ids(ctx):
     """Find opus_ids that exist in both import and permanent tables.
        This can only happen in real life if the same opus_id appears in
        two different bundles, since normally we delete and entire bundle
        before getting here. Sadly this really happens with GOSSI."""
 
-    if (not impglobals.DATABASE.table_exists('import', 'obs_general') or
-        not impglobals.DATABASE.table_exists('perm', 'obs_general')):
+    if (not ctx.db.table_exists('import', 'obs_general') or
+        not ctx.db.table_exists('perm', 'obs_general')):
         return []
 
-    imp_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-                                                            'import', 'obs_general')
-    perm_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-                                                            'perm', 'obs_general')
+    imp_obs_general_table_name = ctx.db.convert_raw_to_namespace('import',
+                                                                 'obs_general')
+    perm_obs_general_table_name = ctx.db.convert_raw_to_namespace('perm',
+                                                                  'obs_general')
 
-    q = impglobals.DATABASE.quote_identifier
+    q = ctx.db.quote_identifier
     cmd = f"""
         og.{q('opus_id')} FROM
         {q(perm_obs_general_table_name)} og,
         {q(imp_obs_general_table_name)} iog WHERE
         og.{q('opus_id')} = iog.{q('opus_id')}"""
-    res = impglobals.DATABASE.general_select(cmd)
+    res = ctx.db.general_select(cmd)
     return [x[0] for x in res]
 
 
-def delete_opus_id_from_obs_tables(opus_id, namespace):
+def delete_opus_id_from_obs_tables(ctx, opus_id, namespace):
     """Delete a single opus_id from all import or permanent obs tables."""
 
-    import_util.log_info(f'Deleting opus_id "{opus_id}" from {namespace} tables')
+    import_util.log_info(ctx, f'Deleting opus_id "{opus_id}" from {namespace} tables')
 
-    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_'])
+    table_names = ctx.db.table_names(namespace, prefix=['obs_'])
     table_names = sorted(table_names)
-    q = impglobals.DATABASE.quote_identifier
+    q = ctx.db.quote_identifier
     where = f'{q("opus_id")}="{opus_id}"'
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
     for table_name in table_names:
         if (table_name.startswith('obs_') and table_name != 'obs_general'):
-            impglobals.DATABASE.delete_rows(namespace, table_name, where)
+            ctx.db.delete_rows(namespace, table_name, where)
 
     # 2. obs_general
     if 'obs_general' in table_names:
-        impglobals.DATABASE.delete_rows(namespace, 'obs_general', where)
+        ctx.db.delete_rows(namespace, 'obs_general', where)
 
 
-def delete_duplicate_opus_id_from_perm_tables():
+def delete_duplicate_opus_id_from_perm_tables(ctx):
     """Find duplicate opus_ids and delete them from the permanent obs tables."""
-    opus_ids = find_duplicate_opus_ids()
+    opus_ids = find_duplicate_opus_ids(ctx)
     for opus_id in opus_ids:
-        delete_opus_id_from_obs_tables(opus_id, 'perm')
+        delete_opus_id_from_obs_tables(ctx, opus_id, 'perm')
 
 
-def create_tables_for_import(bundle_id, namespace):
+def create_tables_for_import(ctx, bundle_id, namespace):
     """Create the import or permanent obs_ tables and all the mult tables they
        reference. This does NOT create the target-specific obs_surface_geometry
        tables because we don't yet know what target names we have."""
 
     vol_info = lookup_vol_info(bundle_id)
-    instrument_obj = vol_info['instrument_class'](bundle=bundle_id)
+    instrument_obj = vol_info['instrument_class'](ctx, bundle=bundle_id)
     mission_id = instrument_obj.mission_id
     instrument_id = instrument_obj.instrument_id
     mission_name = config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
 
-    mult_table_schema = import_util.read_schema_for_table('mult_template')
+    mult_table_schema = import_util.read_schema_for_table(ctx, 'mult_template')
 
     table_schemas = {}
     table_names_in_order = []
@@ -145,9 +144,9 @@ def create_tables_for_import(bundle_id, namespace):
             # later when we finally create and insert into the correct table for
             # each target.
             table_schema = import_util.read_schema_for_table(
-                                                'obs_surface_geometry_target')
+                                            ctx, 'obs_surface_geometry_target')
         else:
-            table_schema = import_util.read_schema_for_table(table_name)
+            table_schema = import_util.read_schema_for_table(ctx, table_name)
         if table_schema is None:
             continue
 
@@ -170,83 +169,80 @@ def create_tables_for_import(bundle_id, namespace):
             if pi_form_type in config_data.GROUP_FORM_TYPES:
                 mult_name = import_util.table_name_mult(table_name, field_name)
                 schema = mult_table_schema
-                if (impglobals.DATABASE.create_table(namespace, mult_name, schema) and
+                if (ctx.db.create_table(namespace, mult_name, schema) and
                     namespace == 'import'):
-                    do_import_mult.note_created_import_mult_table(mult_name)
+                    ctx.created_import_mult_tables.add(mult_name)
 
-        impglobals.DATABASE.create_table(namespace, table_name, table_schema)
+        ctx.db.create_table(namespace, table_name, table_schema)
 
     return table_schemas, table_names_in_order
 
 
-def copy_bundle_from_import_to_permanent(bundle_id):
+def copy_bundle_from_import_to_permanent(ctx, bundle_id):
     """Copy a single bundle from all import obs tables to the corresponding
        permanent tables. Create the permanent obs tables if they don't already
        exist. As usual, we have to treat the obs_surface_geometry__<T> tables
        specially."""
 
-    import_util.log_info(f'Copying bundle "{bundle_id}" from import to permanent')
+    import_util.log_info(ctx, f'Copying bundle "{bundle_id}" from import to permanent')
 
-    q = impglobals.DATABASE.quote_identifier
+    q = ctx.db.quote_identifier
 
-    _table_schemas, table_names_in_order = create_tables_for_import(bundle_id,
-                                                                   namespace='perm')
+    _table_schemas, table_names_in_order = create_tables_for_import(
+                                                    ctx, bundle_id, namespace='perm')
     for table_name in table_names_in_order:
         if table_name.startswith('obs_surface_geometry__'):
             continue
-        import_util.log_debug(f'Copying table "{table_name}"')
+        import_util.log_debug(ctx, f'Copying table "{table_name}"')
         where = f'{q("bundle_id")}="{bundle_id}"'
-        impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
-                                                         table_name,
-                                                         where=where)
+        ctx.db.copy_rows_between_namespaces('import', 'perm', table_name,
+                                            where=where)
 
     # For obs_surface_geometry__<T> we don't even know the target names at
     # this point, so we actually have to look at the table names in the database
     # to see what to copy! Also the tables may not have been created yet.
 
-    surface_geo_table_names = impglobals.DATABASE.table_names(
-                                            'import',
-                                            prefix='obs_surface_geometry__')
+    surface_geo_table_names = ctx.db.table_names(
+                                    'import', prefix='obs_surface_geometry__')
     for table_name in sorted(surface_geo_table_names):
         target_name = table_name.replace('obs_surface_geometry__', '')
-        if not impglobals.DATABASE.table_exists('perm', table_name):
+        if not ctx.db.table_exists('perm', table_name):
             table_schema = import_util.read_schema_for_table(
-                                            'obs_surface_geometry_target',
+                                            ctx, 'obs_surface_geometry_target',
                                             replace=[
                ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
                ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))])
-            impglobals.DATABASE.create_table('perm', table_name, table_schema)
-        import_util.log_debug(f'Copying table "{table_name}"')
+            ctx.db.create_table('perm', table_name, table_schema)
+        import_util.log_debug(ctx, f'Copying table "{table_name}"')
         where = f'{q("bundle_id")}="{bundle_id}"'
-        impglobals.DATABASE.copy_rows_between_namespaces('import', 'perm',
-                                                         table_name,
-                                                         where=where)
+        ctx.db.copy_rows_between_namespaces('import', 'perm', table_name,
+                                            where=where)
 
-def read_existing_import_opus_id():
+def read_existing_import_opus_id(ctx):
     """Return a list of all opus_id used in the import tables. Used to check
        for duplicates during import."""
-    import_util.log_debug('Collecting previous import opus_ids')
+    import_util.log_debug(ctx, 'Collecting previous import opus_ids')
 
-    imp_obs_general_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-                                                        'import', 'obs_general')
-    if (not impglobals.DATABASE.table_exists('import', 'obs_general') and
-        impglobals.ARGUMENTS.read_only):
+    imp_obs_general_table_name = ctx.db.convert_raw_to_namespace('import',
+                                                                 'obs_general')
+    if (not ctx.db.table_exists('import', 'obs_general') and
+        ctx.args.read_only):
         # It's OK if we don't have this table in read-only mode, because perhaps
         # nobody ever created it before.
         return []
 
-    q = impglobals.DATABASE.quote_identifier
-    rows = impglobals.DATABASE.general_select(
+    q = ctx.db.quote_identifier
+    rows = ctx.db.general_select(
         f'{q("opus_id")} FROM {q(imp_obs_general_table_name)}')
 
     return [x[0] for x in rows]
 
 
-def analyze_all_tables(namespace):
+def analyze_all_tables(ctx, namespace):
     """Analyze ALL import or permanent (as specified by namespace)
     obs_ and mult_ tables."""
 
-    table_names = impglobals.DATABASE.table_names(namespace, prefix=['obs_', 'mult_'])
+    table_names = ctx.db.table_names(namespace, prefix=['obs_', 'mult_'])
     table_names = sorted(table_names)
     for table_name in table_names:
-        impglobals.DATABASE.analyze_table(namespace, table_name)
+        ctx.db.analyze_table(namespace, table_name)

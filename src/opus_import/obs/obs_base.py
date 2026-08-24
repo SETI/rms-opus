@@ -11,9 +11,13 @@ from opus_import import config_targets, import_util
 
 
 class ObsBase:
-    def __init__(self, bundle=None, metadata=None, ignore_errors=False):
+    def __init__(self, ctx, bundle=None, metadata=None, ignore_errors=False):
         """Initialize an ObsBase object.
 
+        ctx             The ImportContext for this import run. An obs class uses it
+                        only to log; it never reaches the database through it, which
+                        is what lets import_run_field_function treat a field function's
+                        exception as a bad field rather than an aborted import.
         bundle          The PDS3 volume ("COISS_2116") or PDS4 bundle.
         metadata        The collection of metadata available for this observation.
                         This includes rows from the various index as well as additional
@@ -27,6 +31,7 @@ class ObsBase:
                         target name) and fakes data so that the import can
                         complete, even though the answer will be wrong.
         """
+        self._ctx            = ctx
         self._bundle         = bundle
         self._metadata       = metadata
         self._ignore_errors  = ignore_errors
@@ -447,13 +452,13 @@ class ObsBase:
     ### Error logging ###
 
     def _log_unknown_target_name(self, target_name):
-        import_util.log_unknown_target_name(target_name)
+        self._ctx.log.unknown_target_name(target_name)
 
     def _log_warning(self, *args, **kwargs):
-        import_util.log_warning(*args, **kwargs)
+        self._ctx.log.warning(*args, **kwargs)
 
     def _log_nonrepeating_warning(self, *args, **kwargs):
-        import_util.log_nonrepeating_warning(*args, **kwargs)
+        self._ctx.log.nonrepeating_warning(*args, **kwargs)
 
     def _log_nonrepeating_error(self, *args, **kwargs):
-        import_util.log_nonrepeating_error(*args, **kwargs)
+        self._ctx.log.nonrepeating_error(*args, **kwargs)

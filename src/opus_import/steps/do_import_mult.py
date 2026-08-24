@@ -7,34 +7,8 @@
 ################################################################################
 
 import opus_support
-from opus_import import impglobals, import_util
+from opus_import import import_util
 
-# We cache the contents of mult_ tables we've touched so we don't have to keep
-# reading them from the database.
-# We initialize them here because do_partables needs these to have values
-# and they are normally only set during a bundle import.
-_MULT_TABLE_CACHE = {}
-_CREATED_IMP_MULT_TABLES = set()
-_MODIFIED_MULT_TABLES = {}
-
-
-def reset_bundle_mult_cache():
-    """Discard the cached mult tables at the start of importing a new bundle."""
-
-    global _MULT_TABLE_CACHE, _MODIFIED_MULT_TABLES
-    _MULT_TABLE_CACHE = {}
-    _MODIFIED_MULT_TABLES = {}
-
-def reset_created_import_mult_tables():
-    """Start over tracking which import mult tables were created empty this run."""
-
-    global _CREATED_IMP_MULT_TABLES
-    _CREATED_IMP_MULT_TABLES = set()
-
-def note_created_import_mult_table(mult_table_name):
-    """Record that an import mult table was just created, and is still empty."""
-
-    _CREATED_IMP_MULT_TABLES.add(mult_table_name)
 
 def _mult_table_column_names():
     """Return the list of columns every mult table has.
@@ -74,20 +48,21 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
         mult_rows.append(row_dict)
     return mult_rows
 
-def read_or_create_mult_table(mult_table_name, table_column):
+def read_or_create_mult_table(ctx, mult_table_name, table_column):
     """Given a mult table name, either read the table from the database or
        return the cached version if we previously read it."""
 
-    if mult_table_name in _MULT_TABLE_CACHE:
-        return _MULT_TABLE_CACHE[mult_table_name]
+    if mult_table_name in ctx.mult_table_cache:
+        return ctx.mult_table_cache[mult_table_name]
 
     if 'mult_options' in table_column:
-        if not impglobals.ARGUMENTS.import_suppress_mult_messages:
-            import_util.log_debug(f'Using preprogrammed mult table "{mult_table_name}"')
+        if not ctx.args.import_suppress_mult_messages:
+            import_util.log_debug(
+                ctx, f'Using preprogrammed mult table "{mult_table_name}"')
         mult_rows = _convert_sql_response_to_mult_table(mult_table_name,
                                                         table_column['mult_options'])
-        _MULT_TABLE_CACHE[mult_table_name] = mult_rows
-        _MODIFIED_MULT_TABLES[mult_table_name] = table_column
+        ctx.mult_table_cache[mult_table_name] = mult_rows
+        ctx.modified_mult_tables.add(mult_table_name)
         return mult_rows
 
     # If there is already an import version of the table, it means this is a
@@ -99,40 +74,39 @@ def read_or_create_mult_table(mult_table_name, table_column):
     # And if there's no table to be found anyway, create a new one.
     use_namespace = None
 
-    if (mult_table_name not in _CREATED_IMP_MULT_TABLES and
-        impglobals.DATABASE.table_exists('import', mult_table_name)):
+    if (mult_table_name not in ctx.created_import_mult_tables and
+        ctx.db.table_exists('import', mult_table_name)):
         # Previous import table available
         use_namespace = 'import'
 
-    elif impglobals.DATABASE.table_exists('perm', mult_table_name):
+    elif ctx.db.table_exists('perm', mult_table_name):
         use_namespace = 'perm'
         # If we just created an import version but are reading the permanent
         # version, we have to write out the import version before doing
         # anything else too
-        if mult_table_name in _CREATED_IMP_MULT_TABLES:
-            _MODIFIED_MULT_TABLES[mult_table_name] = table_column
+        if mult_table_name in ctx.created_import_mult_tables:
+            ctx.modified_mult_tables.add(mult_table_name)
 
     if use_namespace is not None:
         ns_mult_table_name = (
-            impglobals.DATABASE.convert_raw_to_namespace(use_namespace, mult_table_name))
-        if not impglobals.ARGUMENTS.import_suppress_mult_messages:
-            import_util.log_debug(f'Reading from mult table "{ns_mult_table_name}"')
-        rows = impglobals.DATABASE.read_rows(use_namespace,
-                                             mult_table_name,
-                                             _mult_table_column_names())
+            ctx.db.convert_raw_to_namespace(use_namespace, mult_table_name))
+        if not ctx.args.import_suppress_mult_messages:
+            import_util.log_debug(ctx, f'Reading from mult table "{ns_mult_table_name}"')
+        rows = ctx.db.read_rows(use_namespace, mult_table_name,
+                                _mult_table_column_names())
         mult_rows = _convert_sql_response_to_mult_table(mult_table_name, rows)
-        _MULT_TABLE_CACHE[mult_table_name] = mult_rows
+        ctx.mult_table_cache[mult_table_name] = mult_rows
         return mult_rows
 
     rows = []
-    _MULT_TABLE_CACHE[mult_table_name] = rows
+    ctx.mult_table_cache[mult_table_name] = rows
     return rows
 
 
-def mult_table_lookup_id(table_name, field_name, table_column, val):
+def mult_table_lookup_id(ctx, table_name, field_name, table_column, val):
     """Lookup the id for a single value in the cached version of a mult table."""
     mult_table_name = import_util.table_name_mult(table_name, field_name)
-    mult_table = read_or_create_mult_table(mult_table_name, table_column)
+    mult_table = read_or_create_mult_table(ctx, mult_table_name, table_column)
     if val is not None:
         val = str(val)
     for entry in mult_table:
@@ -142,12 +116,13 @@ def mult_table_lookup_id(table_name, field_name, table_column, val):
     return None
 
 
-def update_mult_table(table_name, field_name, table_column, val, label, aliases=None,
-                      disp='Y', disp_order=None, grouping=None, group_disp_order=None):
+def update_mult_table(ctx, table_name, field_name, table_column, val, label,
+                      aliases=None, disp='Y', disp_order=None, grouping=None,
+                      group_disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
-    mult_table = read_or_create_mult_table(mult_table_name, table_column)
+    mult_table = read_or_create_mult_table(ctx, mult_table_name, table_column)
     if val is not None:
         val = str(val)
     for entry in mult_table:
@@ -157,6 +132,7 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
 
     if 'mult_options' in table_column:
         import_util.log_nonrepeating_error(
+            ctx,
             f'Unable to add value "{val}" to preprogrammed mult table '
             f'"{mult_table_name}"')
         return 0
@@ -210,6 +186,7 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
                 disp_order = f'{parse_func(str(val)):030.9f}'
             except Exception as e:
                 import_util.log_nonrepeating_error(
+                    ctx,
                     f'Unable to parse "{label}" for unit type '
                     f'"{form_type_unit_id}": {e}')
                 disp_order = label
@@ -248,44 +225,44 @@ def update_mult_table(table_name, field_name, table_column, val, label, aliases=
     }
     mult_table.append(new_entry)
 
-    _MODIFIED_MULT_TABLES[mult_table_name] = table_column
-    if not impglobals.ARGUMENTS.import_suppress_mult_messages:
-        import_util.log_info(f'Added new value "{val}" ("{label}") to mult table '+
+    ctx.modified_mult_tables.add(mult_table_name)
+    if not ctx.args.import_suppress_mult_messages:
+        import_util.log_info(ctx, f'Added new value "{val}" ("{label}") to mult table '+
                              f'"{mult_table_name}"')
 
     return next_id
 
 
-def dump_import_mult_tables():
+def dump_import_mult_tables(ctx):
     """Dump all of the cached import mult tables into the database."""
 
-    for mult_table_name in sorted(_MODIFIED_MULT_TABLES):
-        rows = _MULT_TABLE_CACHE[mult_table_name]
+    for mult_table_name in sorted(ctx.modified_mult_tables):
+        rows = ctx.mult_table_cache[mult_table_name]
         # Insert or update all the rows
-        imp_mult_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-                                                        'import', mult_table_name)
-        import_util.log_debug(f'Writing mult table "{imp_mult_table_name}"')
-        impglobals.DATABASE.upsert_rows('import', mult_table_name, 'id', rows)
+        imp_mult_table_name = ctx.db.convert_raw_to_namespace('import',
+                                                              mult_table_name)
+        import_util.log_debug(ctx, f'Writing mult table "{imp_mult_table_name}"')
+        ctx.db.upsert_rows('import', mult_table_name, 'id', rows)
         # If we wrote out a mult table, that means we didn't just create it
-        # empty anymore, so remove it from _CREATED_IMP_MULT_TABLES.
-        if mult_table_name in _CREATED_IMP_MULT_TABLES:
-            _CREATED_IMP_MULT_TABLES.remove(mult_table_name)
+        # empty anymore, so remove it from ctx.created_import_mult_tables.
+        if mult_table_name in ctx.created_import_mult_tables:
+            ctx.created_import_mult_tables.remove(mult_table_name)
 
 
-def copy_mult_from_import_to_permanent():
+def copy_mult_from_import_to_permanent(ctx):
     """Copy ALL mult tables from import to permanent. We have to do all tables,
        not just the ones that have changed, because tables might have changed
        during previous import runs or previous bundles and we don't have a
        record of that."""
 
-    table_names = impglobals.DATABASE.table_names('import', prefix='mult_')
+    table_names = ctx.db.table_names('import', prefix='mult_')
     for table_name in table_names:
-        imp_mult_table_name = impglobals.DATABASE.convert_raw_to_namespace(
-                                                            'import', table_name)
-        import_util.log_debug(f'Copying mult table "{imp_mult_table_name}"')
+        imp_mult_table_name = ctx.db.convert_raw_to_namespace('import',
+                                                              table_name)
+        import_util.log_debug(ctx, f'Copying mult table "{imp_mult_table_name}"')
         # Read the import mult table
         column_list = _mult_table_column_names()
-        rows = impglobals.DATABASE.read_rows('import', table_name, column_list)
+        rows = ctx.db.read_rows('import', table_name, column_list)
         mult_rows = _convert_sql_response_to_mult_table(table_name, rows)
         # Write the permanent table
-        impglobals.DATABASE.upsert_rows('perm', table_name, 'id', mult_rows)
+        ctx.db.upsert_rows('perm', table_name, 'id', mult_rows)

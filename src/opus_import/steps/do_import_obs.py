@@ -9,11 +9,11 @@
 import json
 import traceback
 
-from opus_import import config_data, impglobals, import_util
+from opus_import import config_data, import_util
 from opus_import.steps import do_import_mult
 
 
-def import_observation_table(instrument_obj,
+def import_observation_table(ctx, instrument_obj,
                              table_name,
                              table_schema,
                              metadata):
@@ -46,6 +46,7 @@ def import_observation_table(instrument_obj,
         data_source = table_column.get('data_source', None)
         if not data_source:
             import_util.log_nonrepeating_warning(
+                ctx,
                 f'No data source for column "{field_name}" in table '+
                 f'"{table_name}"')
             column_val_list = []
@@ -65,7 +66,7 @@ def import_observation_table(instrument_obj,
                 column_val_list = [import_util.safe_column(obs_general_row, 'id')]
 
             elif data_source == 'COMPUTE':
-                ok, ret = import_run_field_function(instrument_obj,
+                ok, ret = import_run_field_function(ctx, instrument_obj,
                                                     table_name,
                                                     table_schema,
                                                     metadata,
@@ -99,15 +100,16 @@ def import_observation_table(instrument_obj,
                 column_val_list = [instrument_obj.compute_d_longitude_field()]
 
             elif data_source == 'MAX_ID':
-                if table_name not in impglobals.MAX_TABLE_ID_CACHE:
-                    impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                        import_util.find_max_table_id(table_name))
-                impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                    impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
-                column_val_list = [impglobals.MAX_TABLE_ID_CACHE[table_name]]
+                if table_name not in ctx.max_table_id_cache:
+                    ctx.max_table_id_cache[table_name] = (
+                        import_util.find_max_table_id(ctx, table_name))
+                ctx.max_table_id_cache[table_name] = (
+                    ctx.max_table_id_cache[table_name]+1)
+                column_val_list = [ctx.max_table_id_cache[table_name]]
 
             else:
                 import_util.log_nonrepeating_error(
+                    ctx,
                     f'Unknown data_source type "{data_source}" for '+
                     f'"{field_name}" in table "{table_name}"')
 
@@ -124,6 +126,7 @@ def import_observation_table(instrument_obj,
                 notnull = table_column.get('field_notnull', False)
                 if notnull:
                     import_util.log_nonrepeating_error(
+                        ctx,
                         f'Column "{field_name}" in table "{table_name}" '+
                         'has NULL value but NOT NULL is set')
             else:
@@ -142,6 +145,7 @@ def import_observation_table(instrument_obj,
                         column_val = None
                     else:
                         import_util.log_nonrepeating_error(
+                            ctx,
                             f'Column "{field_name}" in table "{table_name}" '+
                             f'has FLAG type but value "{column_val}" is not '+
                             'a valid flag value')
@@ -150,12 +154,14 @@ def import_observation_table(instrument_obj,
                     field_size = int(field_type[4:])
                     if not isinstance(column_val, str):
                         import_util.log_nonrepeating_error(
+                            ctx,
                             f'Column "{field_name}" in table "{table_name}" '+
                             f'has CHAR type but value "{column_val}" is of '+
                             f'type "{type(column_val)}"')
                         column_val = ''
                     elif len(column_val) > field_size:
                         import_util.log_nonrepeating_error(
+                            ctx,
                             f'Column "{field_name}" in table "{table_name}" '+
                             f'has CHAR size {field_size} but value '+
                             f'"{column_val}" is too long')
@@ -169,6 +175,7 @@ def import_observation_table(instrument_obj,
                             the_val = float(column_val)
                         except ValueError:
                             import_util.log_nonrepeating_error(
+                                ctx,
                                 f'Column "{field_name}" in table '+
                                 f'"{table_name}" has REAL type but '+
                                 f'"{column_val}" is not a float')
@@ -178,6 +185,7 @@ def import_observation_table(instrument_obj,
                             the_val = int(column_val)
                         except ValueError:
                             import_util.log_nonrepeating_error(
+                                ctx,
                                 f'Column "{field_name}" in table '+
                                 f'"{table_name}" has INT type but '+
                                 f'"{column_val}" is not an int')
@@ -189,6 +197,7 @@ def import_observation_table(instrument_obj,
                         if the_val in val_sentinel:
                             column_val = None
                             import_util.log_nonrepeating_error(
+                                ctx,
                                 f'Caught sentinel value {the_val} for column '+
                                 f'"{field_name}" that was missed'+
                                 ' by the PDS label!')
@@ -203,12 +212,12 @@ def import_observation_table(instrument_obj,
                                        f'"{table_name}" has minimum value '+
                                        f'{val_min} but {column_val} is too small -'+
                                        ' substituting NULL')
-                                import_util.log_debug(msg)
+                                import_util.log_debug(ctx, msg)
                             else:
                                 msg = (f'Column "{field_name}" in table '+
                                        f'"{table_name}" has minimum value '+
                                        f'{val_min} but {column_val} is too small')
-                                import_util.log_nonrepeating_error(msg)
+                                import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
                         if val_max is not None and the_val > val_max:
                             if val_use_null:
@@ -216,12 +225,12 @@ def import_observation_table(instrument_obj,
                                        f'"{table_name}" has maximum value {val_max}'+
                                        f' but {column_val} is too large - '+
                                        'substituting NULL')
-                                import_util.log_debug(msg)
+                                import_util.log_debug(ctx, msg)
                             else:
                                 msg = (f'Column "{field_name}" in table '+
                                        f'"{table_name}" has maximum value '+
                                        f'{val_max} but {column_val} is too large')
-                                import_util.log_nonrepeating_error(msg)
+                                import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
 
             ### CHECK TO SEE IF THERE IS AN ASSOCIATED MULT_ TABLE ###
@@ -236,6 +245,7 @@ def import_observation_table(instrument_obj,
                 mult_label = None
                 if mult_label_list is None:
                     import_util.log_nonrepeating_error(
+                        ctx,
                         f'Fatal error processing column "{field_name}" in '
                         f'table "{table_name}" - bad data type returned for mult'
                     )
@@ -253,7 +263,7 @@ def import_observation_table(instrument_obj,
                             mult_label = mult_label.title()
 
                 column_val = do_import_mult.update_mult_table(
-                              table_name, field_name, table_column,
+                              ctx, table_name, field_name, table_column,
                               column_val, mult_label,
                               aliases_list[column_val_num],
                               disp_list[column_val_num],
@@ -277,7 +287,7 @@ def import_observation_table(instrument_obj,
         else:
             new_row[field_name] = row_val[0] # Only a single value
 
-    if not impglobals.ARGUMENTS.import_ignore_geo_mismatch:
+    if not ctx.args.import_ignore_geo_mismatch:
         if table_name == 'obs_ring_geometry':
             instrument_obj.validate_ring_geo_fields(new_row, metadata)
         elif table_name.startswith('obs_surface_geometry__'):
@@ -285,7 +295,7 @@ def import_observation_table(instrument_obj,
 
     return new_row
 
-def import_run_field_function(instrument_obj,
+def import_run_field_function(ctx, instrument_obj,
                               table_name, table_schema, metadata,
                               field_name):
     """Call the Python function used to populate a single field in a table."""
@@ -296,6 +306,7 @@ def import_run_field_function(instrument_obj,
         not callable(func := getattr(instrument_obj, func_name))):
         class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
+            ctx,
             f'Unknown table field func "{class_name}::{func_name}"')
         return (False, None)
     try:
@@ -304,6 +315,7 @@ def import_run_field_function(instrument_obj,
         tb = traceback.format_exc()
         class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
+            ctx,
             f'Execution of field function {class_name}::{func_name} failed with '
             f'exception:\n{tb}')
         return False, None

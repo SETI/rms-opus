@@ -4,15 +4,15 @@
 # Generate and maintain the table_names table.
 ################################################################################
 
-from opus_import import config_data, impglobals, import_util
+from opus_import import config_data, import_util
 
 
-def create_import_table_names_table():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def create_import_table_names_table(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Creating new import table_names table')
-    table_names_schema = import_util.read_schema_for_table('table_names')
+    table_names_schema = import_util.read_schema_for_table(ctx, 'table_names')
     # Start from scratch
     db.drop_table('import', 'table_names')
     db.create_table('import', 'table_names', table_names_schema,
@@ -37,7 +37,7 @@ def create_import_table_names_table():
     rows.append(entry)
 
     # Then various random tables
-    if impglobals.DATABASE.table_exists('perm', 'obs_pds'):
+    if ctx.db.table_exists('perm', 'obs_pds'):
         entry = {
             'table_name': 'obs_pds',
             'label':      'PDS Constraints',
@@ -47,7 +47,7 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    if impglobals.DATABASE.table_exists('perm', 'obs_type_image'):
+    if ctx.db.table_exists('perm', 'obs_type_image'):
         entry = {
             'table_name': 'obs_type_image',
             'label':      'Image Constraints',
@@ -57,7 +57,7 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    if impglobals.DATABASE.table_exists('perm', 'obs_wavelength'):
+    if ctx.db.table_exists('perm', 'obs_wavelength'):
         entry = {
             'table_name': 'obs_wavelength',
             'label':      'Wavelength Constraints',
@@ -67,7 +67,7 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    if impglobals.DATABASE.table_exists('perm', 'obs_profile'):
+    if ctx.db.table_exists('perm', 'obs_profile'):
         entry = {
             'table_name': 'obs_profile',
             'label':      'Occultation/Reflectance Profiles Constraints',
@@ -77,7 +77,7 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    if impglobals.DATABASE.table_exists('perm', 'obs_surface_geometry_name'):
+    if ctx.db.table_exists('perm', 'obs_surface_geometry_name'):
         entry = {
             'table_name': 'obs_surface_geometry_name',
             'label':      'Surface Geometry Constraints',
@@ -87,7 +87,7 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    if impglobals.DATABASE.table_exists('perm', 'obs_surface_geometry'):
+    if ctx.db.table_exists('perm', 'obs_surface_geometry'):
         entry = {
             'table_name': 'obs_surface_geometry',
             'label':      'Surface Geometry Constraints',
@@ -97,9 +97,9 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    surface_geo_table_names = impglobals.DATABASE.table_names(
-                                            'perm',
-                                            prefix='obs_surface_geometry__')
+    surface_geo_table_names = ctx.db.table_names(
+                                    'perm',
+                                    prefix='obs_surface_geometry__')
     for table_name in sorted(surface_geo_table_names):
         target_name = table_name.replace('obs_surface_geometry__', '')
         target_name = import_util.decode_target_name(target_name).title()
@@ -112,7 +112,7 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    if impglobals.DATABASE.table_exists('perm', 'obs_ring_geometry'):
+    if ctx.db.table_exists('perm', 'obs_ring_geometry'):
         entry = {
             'table_name': 'obs_ring_geometry',
             'label':      'Ring Geometry Constraints',
@@ -127,7 +127,7 @@ def create_import_table_names_table():
         config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
         table_name = 'obs_mission_'+config_data.MISSION_ID_TO_MISSION_TABLE_SFX[
                                                             mission_id]
-        if impglobals.DATABASE.table_exists('perm', table_name):
+        if ctx.db.table_exists('perm', table_name):
             entry = {
                 'table_name': table_name,
                 'label':      (config_data.MISSION_ID_TO_MISSION_NAME[mission_id] +
@@ -146,7 +146,7 @@ def create_import_table_names_table():
             # tables, but instead put everything in the mission tables
             display = 'N'
         table_name = 'obs_instrument_'+instrument_id.lower()
-        if impglobals.DATABASE.table_exists('perm', table_name):
+        if ctx.db.table_exists('perm', table_name):
             entry = {
                 'table_name': table_name,
                 'label':      (config_data.INSTRUMENT_ID_TO_INSTRUMENT_NAME[
@@ -160,13 +160,13 @@ def create_import_table_names_table():
 
     db.insert_rows('import', 'table_names', rows)
 
-def copy_table_names_from_import_to_permanent():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def copy_table_names_from_import_to_permanent(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Copying table_names table from import to permanent')
     # Start from scratch
-    table_names_schema = import_util.read_schema_for_table('table_names')
+    table_names_schema = import_util.read_schema_for_table(ctx, 'table_names')
     db.drop_table('perm', 'table_names')
     db.create_table('perm', 'table_names', table_names_schema,
                     ignore_if_exists=False)
@@ -174,7 +174,7 @@ def copy_table_names_from_import_to_permanent():
     db.copy_rows_between_namespaces('import', 'perm', 'table_names')
 
 
-def do_table_names():
-    create_import_table_names_table()
-    copy_table_names_from_import_to_permanent()
-    impglobals.DATABASE.drop_table('import', 'table_names')
+def do_table_names(ctx):
+    create_import_table_names_table(ctx)
+    copy_table_names_from_import_to_permanent(ctx)
+    ctx.db.drop_table('import', 'table_names')

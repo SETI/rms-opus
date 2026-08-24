@@ -22,7 +22,7 @@ import pdsparser
 import pdstable
 
 from opus_config import get_config
-from opus_import import config_data, config_targets, impglobals, instruments
+from opus_import import config_data, config_targets, instruments
 
 # Data that ships inside the package, located through importlib.resources rather than
 # from __file__ or the working directory so that it is found in an installed wheel too:
@@ -60,13 +60,13 @@ _NHXXMV_BUNDLES = [
     'NHKEMV_1001',
 ]
 
-def yield_import_bundle_ids(arguments):
+def yield_import_bundle_ids(ctx):
     bundle_descs = []
     exclude_list = []
-    if arguments.exclude_bundles:
-        exclude_list = arguments.exclude_bundles.split(',')
-    if arguments.bundles:
-        for bundles in arguments.bundles:
+    if ctx.args.exclude_bundles:
+        exclude_list = ctx.args.exclude_bundles.split(',')
+    if ctx.args.bundles:
+        for bundles in ctx.args.bundles:
             orig_bundle_descs = bundles.split(',')
             for desc in orig_bundle_descs:
                 if desc.upper() == 'ALL':
@@ -181,23 +181,24 @@ def yield_import_bundle_ids(arguments):
                 except (KeyError, ValueError):
                     any_invalid = True
                     msg = f'Bad bundle descriptor {bundle_desc}'
-                    if not impglobals.ARGUMENTS.log_suppress_traceback:
+                    if not ctx.args.log_suppress_traceback:
                         msg += ':\n\n'
                         msg += ('*' * 80) + '\nPDS3:\n\n'
                         msg += tb_pds3
                         msg += '\n' + ('*' * 80) + '\nPDS4:\n\n'
                         msg += traceback.format_exc()
-                    impglobals.LOGGER.log('fatal', msg)
+                    ctx.logger.log('fatal', msg)
             if good_bundle:
                 if (not bundle_pdsfile.is_bundle_dir and
                     not bundle_pdsfile.is_bundleset_dir):
                     any_invalid = True
-                    impglobals.LOGGER.log('fatal',
+                    ctx.logger.log(
+                        'fatal',
                         f'Bundle descriptor not a bundle or bundleset: {bundle_desc}')
                 if not bundle_pdsfile.exists:
                     any_invalid = True
-                    impglobals.LOGGER.log('fatal',
-                        f'Bundle descriptor not found: {bundle_desc}')
+                    ctx.logger.log('fatal',
+                                   f'Bundle descriptor not found: {bundle_desc}')
 
         if any_invalid:
             sys.exit(-1)
@@ -223,26 +224,25 @@ def yield_import_bundle_ids(arguments):
         # Now actually return the bundle_ids
         for bundle_id in new_bundledescs:
             if bundle_id in exclude_list:
-                impglobals.LOGGER.log('info',
-                           f'Excluding bundle: {bundle_id}')
+                ctx.logger.log('info', f'Excluding bundle: {bundle_id}')
                 continue
             if bundle_id.find('.') != -1:
                 continue # Sometimes a bad tar file gets stuck in the dir
             yield bundle_id
 
-def log_accumulated_warnings(title):
-    if len(impglobals.PYTHON_WARNING_LIST) > 0:
-        log_error(f'Warnings found during {title}:')
-        for w in impglobals.PYTHON_WARNING_LIST:
-            log_error('  '+w)
-        impglobals.PYTHON_WARNING_LIST = []
-        impglobals.IMPORT_HAS_BAD_DATA = True
+def log_accumulated_warnings(ctx, title):
+    if len(ctx.python_warning_list) > 0:
+        log_error(ctx, f'Warnings found during {title}:')
+        for w in ctx.python_warning_list:
+            log_error(ctx, '  '+w)
+        ctx.python_warning_list = []
+        ctx.import_has_bad_data = True
         return True
     return False
 
-def safe_pdstable_read(filename, pds_version):
+def safe_pdstable_read(ctx, filename, pds_version):
     if pds_version == 3:
-        return safe_pdstable_read_pds3(filename)
+        return safe_pdstable_read_pds3(ctx, filename)
 
     # TODOPDS4 For now, PDS4 index files do not have labels. They are just
     # CSV files. So we read the CSV file and determine the column names from
@@ -282,7 +282,7 @@ def safe_pdstable_read(filename, pds_version):
 
     return rows, None  # TODOPDS4 There is no label for now
 
-def safe_pdstable_read_pds3(filename):
+def safe_pdstable_read_pds3(ctx, filename):
     preprocess_label_func = None
     preprocess_table_func = None
     # for (set_search, set_preprocess_label,
@@ -311,12 +311,12 @@ def safe_pdstable_read_pds3(filename):
         raise
     except Exception:
         msg = f'Exception during reading of "{filename}"'
-        if not impglobals.ARGUMENTS.log_suppress_traceback:
+        if not ctx.args.log_suppress_traceback:
             msg += ':\n' + traceback.format_exc()
-        log_error(msg)
+        log_error(ctx, msg)
         return None, None
 
-    if log_accumulated_warnings(f'table import of {filename}'):
+    if log_accumulated_warnings(ctx, f'table import of {filename}'):
         return None, None
 
     rows = table.dicts_by_row()
@@ -361,12 +361,16 @@ def table_name_obs_instrument(inst_name):
 def table_name_mult(table_name, field_name):
     return 'mult_'+table_name.lower()+'_'+field_name.lower()
 
-def table_name_param_info(namespace):
-    return impglobals.DATABASES.convert_raw_to_namespace(namespace,
-                                                         'param_info')
+# These two have no caller anywhere in the repository, and could never have had one:
+# both read `impglobals.DATABASES`, an attribute that never existed (the global was
+# `DATABASE`), so either would have raised AttributeError on its first call. They are
+# threaded rather than deleted because deleting unused code belongs to the dead-code PR,
+# and the context spelling is what the name obviously meant.
+def table_name_param_info(ctx, namespace):
+    return ctx.db.convert_raw_to_namespace(namespace, 'param_info')
 
-def table_name_partables(namespace):
-    return impglobals.DATABASES.convert_raw_to_namespace(namespace, 'partables')
+def table_name_partables(ctx, namespace):
+    return ctx.db.convert_raw_to_namespace(namespace, 'partables')
 
 def encode_target_name(target_name):
     target_name = target_name.lower()
@@ -408,7 +412,7 @@ def table_schema_files(pattern):
                    if entry.is_file() and fnmatch.fnmatch(entry.name, pattern)),
                   key=lambda entry: entry.name)
 
-def read_schema_for_table(table_name, replace=None):
+def read_schema_for_table(ctx, table_name, replace=None):
     table_name = table_name.replace(get_config().import_.table_temp_prefix, '').lower()
     if table_name.startswith('obs_surface_geometry__'):
         assert not replace
@@ -426,18 +430,16 @@ def read_schema_for_table(table_name, replace=None):
                 contents = contents.replace(r[0], r[1])
         return json.loads(contents)
     except json.decoder.JSONDecodeError:
-        log_debug(f'Was reading table "{table_name}"')
+        log_debug(ctx, f'Was reading table "{table_name}"')
         raise
 
-def find_max_table_id(table_name):
+def find_max_table_id(ctx, table_name):
     max1 = -1
     max2 = -1
-    if impglobals.DATABASE.table_exists('import', table_name):
-        max1 = impglobals.DATABASE.find_column_max('import',
-                                                   table_name, 'id')
-    if impglobals.DATABASE.table_exists('perm', table_name):
-        max2 = impglobals.DATABASE.find_column_max('perm',
-                                                   table_name, 'id')
+    if ctx.db.table_exists('import', table_name):
+        max1 = ctx.db.find_column_max('import', table_name, 'id')
+    if ctx.db.table_exists('perm', table_name):
+        max2 = ctx.db.find_column_max('perm', table_name, 'id')
     if max1 is None and max2 is None:
         return -1
     if max1 is None:
@@ -498,46 +500,29 @@ class NoDupLogger:
     def fatal(self, msg, *args, **kwargs):
         self._log_once(self._LOGGED_FATAL, self._logger.fatal, msg, args, kwargs)
 
-def _format_bundle_line():
-    ret = ''
-    if impglobals.CURRENT_BUNDLE_ID is not None:
-        ret = impglobals.CURRENT_BUNDLE_ID
-        if impglobals.CURRENT_INDEX_ROW_NUMBER is not None:
-            ret += ' index row '+str(impglobals.CURRENT_INDEX_ROW_NUMBER)
-        if impglobals.CURRENT_PRIMARY_FILESPEC is not None:
-            ret += f' "{impglobals.CURRENT_PRIMARY_FILESPEC}"'
-    if ret != '':
-        ret = '[' + ret + '] '
-    return ret
+# The step modules log through these; the obs classes reach the same operations as
+# `self._ctx.log.<name>`. Both spellings are one implementation, on `ImportLog`.
 
-def log_error(msg, *args):
-    impglobals.LOGGER.log('error', _format_bundle_line()+msg, *args)
-    impglobals.IMPORT_HAS_BAD_DATA = True
+def log_error(ctx, msg, *args):
+    ctx.log.error(msg, *args)
 
-def log_warning(msg, *args):
-    impglobals.LOGGER.log('warning', _format_bundle_line()+msg, *args)
+def log_warning(ctx, msg, *args):
+    ctx.log.warning(msg, *args)
 
-def log_info(msg, *args):
-    impglobals.LOGGER.log('info', _format_bundle_line()+msg, *args)
+def log_info(ctx, msg, *args):
+    ctx.log.info(msg, *args)
 
-def log_debug(msg, *args):
-    impglobals.LOGGER.log('debug', _format_bundle_line()+msg, *args)
+def log_debug(ctx, msg, *args):
+    ctx.log.debug(msg, *args)
 
-def log_nonrepeating_error(msg):
-    if msg not in impglobals.LOGGED_IMPORT_ERRORS:
-        impglobals.LOGGED_IMPORT_ERRORS.append(msg)
-        log_error(msg)
-        impglobals.IMPORT_HAS_BAD_DATA = True
+def log_nonrepeating_error(ctx, msg):
+    ctx.log.nonrepeating_error(msg)
 
-def log_nonrepeating_warning(msg):
-    if msg not in impglobals.LOGGED_IMPORT_WARNINGS:
-        impglobals.LOGGED_IMPORT_WARNINGS.append(msg)
-        log_warning(msg)
+def log_nonrepeating_warning(ctx, msg):
+    ctx.log.nonrepeating_warning(msg)
 
-def log_unknown_target_name(target_name):
-    msg = (f'Unknown TARGET_NAME "{target_name}" - edit '
-           'config_targets/target_name_info.py')
-    log_nonrepeating_error(msg)
+def log_unknown_target_name(ctx, target_name):
+    ctx.log.unknown_target_name(target_name)
 
 
 ################################################################################

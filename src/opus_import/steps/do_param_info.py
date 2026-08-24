@@ -7,15 +7,15 @@
 import json
 
 import opus_support
-from opus_import import impglobals, import_util
+from opus_import import import_util
 
 
-def create_import_param_info_table():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def create_import_param_info_table(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Creating new import param_info table')
-    pi_schema = import_util.read_schema_for_table('param_info')
+    pi_schema = import_util.read_schema_for_table(ctx, 'param_info')
     # Start from scratch
     db.drop_table('import', 'param_info')
     db.create_table('import', 'param_info', pi_schema, ignore_if_exists=False)
@@ -35,7 +35,7 @@ def create_import_param_info_table():
 
     rows = []
     for table_name in table_names:
-        table_schema = import_util.read_schema_for_table(table_name)
+        table_schema = import_util.read_schema_for_table(ctx, table_name)
         if table_schema is None:
             logger.log('error',
                        f'Unable to read table schema for "{table_name}"')
@@ -96,20 +96,20 @@ def create_import_param_info_table():
 
     return True
 
-def copy_param_info_from_import_to_permanent():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def copy_param_info_from_import_to_permanent(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Copying param_info table from import to permanent')
     # Start from scratch
-    pi_schema = import_util.read_schema_for_table('param_info')
+    pi_schema = import_util.read_schema_for_table(ctx, 'param_info')
     db.drop_table('perm', 'param_info')
     db.create_table('perm', 'param_info', pi_schema, ignore_if_exists=False)
 
     db.copy_rows_between_namespaces('import', 'perm', 'param_info')
 
 
-def do_param_info():
-    if create_import_param_info_table():
-        copy_param_info_from_import_to_permanent()
-    impglobals.DATABASE.drop_table('import', 'param_info')
+def do_param_info(ctx):
+    if create_import_param_info_table(ctx):
+        copy_param_info_from_import_to_permanent(ctx)
+    ctx.db.drop_table('import', 'param_info')

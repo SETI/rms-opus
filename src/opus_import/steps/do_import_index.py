@@ -9,28 +9,29 @@ import csv
 
 import pdsfile
 
-from opus_import import impglobals, import_util
+from opus_import import import_util
 from opus_import.steps import do_import_mult, do_import_obs, do_import_tables
 
 
-def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
+def import_one_index(ctx, bundle_id, vol_info, index_paths, bundle_label_path):
     """Import the observations given a single primary index file."""
     instrument_class = vol_info['instrument_class']
     pds_version = vol_info['pds_version']
 
-    obs_rows, obs_label_dict = import_util.safe_pdstable_read(bundle_label_path,
+    obs_rows, obs_label_dict = import_util.safe_pdstable_read(ctx, bundle_label_path,
                                                               pds_version)
     if not obs_rows:
-        import_util.log_error(f'Read failed: "{bundle_label_path}"')
+        import_util.log_error(ctx, f'Read failed: "{bundle_label_path}"')
         return False
 
-    import_util.log_info(f'OBSERVATIONS: {len(obs_rows)} in {bundle_label_path}')
+    import_util.log_info(ctx, f'OBSERVATIONS: {len(obs_rows)} in {bundle_label_path}')
 
     metadata = {'phase_name': None,
                 'temporal_camera': vol_info['temporal_camera']}
 
     # Instantiate the appropriate class that knows how to import this instrument
     instrument_obj = instrument_class(
+        ctx,
         bundle=bundle_id,
         metadata=metadata
     )
@@ -70,8 +71,9 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 try:
                     deriv_filespec = pdsfile.pds4file.Pds4File.from_opus_id(opus_id).abspath
                 except ValueError:
-                    impglobals.CURRENT_INDEX_ROW_NUMBER = row_no+1
+                    ctx.current_index_row_number = row_no+1
                     import_util.log_nonrepeating_warning(
+                        ctx,
                         f'Unable to convert OPUS ID "{opus_id}" to filespec')
             if deriv_filespec is not None:
                 for row_no in row_nos:
@@ -83,24 +85,26 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                         # Found it!
                         if good_row is not None:
                             import_util.log_nonrepeating_error(
+                                ctx,
                                 f'Found multiple rows that map from the same opus_id '
                                 f'{opus_id}: {good_row} and {row_no}')
                         good_row = row_no
             if good_row is None:
-                impglobals.CURRENT_INDEX_ROW_NUMBER = row_nos[0]+1
+                ctx.current_index_row_number = row_nos[0]+1
                 # This isn't always an error because sometimes we actually do have
                 # an opud_id that can't be properly reverse-mapped, like
                 # vg-pps-2-u-occ-1986-024-betper-lambda-i
                 import_util.log_nonrepeating_warning(
+                    ctx,
                     f'No row found that reverse matches opus_id {opus_id}')
             else:
                 valid_rows[good_row] = True
-                import_util.log_info('Resolving OPUS ID ambiguity:')
+                import_util.log_info(ctx, 'Resolving OPUS ID ambiguity:')
                 for row_no in row_nos:
                     orig_filespec = instrument_obj.primary_filespec_from_index_row(
                                                     obs_rows[row_no], convert_lbl=True)
                     sfx = ' (chosen)' if row_no == good_row else ''
-                    import_util.log_info('  '+orig_filespec+sfx)
+                    import_util.log_info(ctx, '  '+orig_filespec+sfx)
 
         old_obs_rows = obs_rows
         obs_rows = []
@@ -108,9 +112,11 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
             if valid_rows[row_no]:
                 obs_rows.append(row)
             else:
-                impglobals.CURRENT_INDEX_ROW_NUMBER = row_no+1
-                import_util.log_info('Dropping index row '+
-                                     instrument_obj.primary_filespec_from_index_row(row))
+                ctx.current_index_row_number = row_no+1
+                import_util.log_info(
+                    ctx,
+                    'Dropping index row '+
+                    instrument_obj.primary_filespec_from_index_row(row))
 
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
@@ -186,8 +192,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                             assoc_rows.append(row_dict)
                 else:
                     (assoc_rows,
-                     assoc_label_dict) = import_util.safe_pdstable_read(assoc_label_path,
-                                                                        pds_version)
+                     assoc_label_dict) = import_util.safe_pdstable_read(
+                                            ctx, assoc_label_path, pds_version)
 
                 if assoc_rows is None:
                     # No need to report an error here because safe_pdstable_read
@@ -209,6 +215,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 # through and cross-reference it with the primary index based on the
                 # primary filespec.
                 import_util.log_info(
+                        ctx,
                         f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
                 assoc_dict = metadata.get(assoc_type, {})
                 if assoc_type in ('ring_geo', 'surface_geo', 'sky_geo', 'inventory'):
@@ -241,6 +248,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                             key2 = row.get('TARGET_NAME', row.get('BODY_NAME', None))
                             if key2 is None:
                                 import_util.log_nonrepeating_error(
+                                    ctx,
                                     f'{assoc_label_path} is missing TARGET_NAME or BODY_NAME field')
                                 break
                             if key not in assoc_dict:
@@ -263,8 +271,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type+'_label'] = assoc_label_dict
 
-    table_schemas, table_names_in_order = do_import_tables.create_tables_for_import(bundle_id,
-                                                                                    'import')
+    table_schemas, table_names_in_order = do_import_tables.create_tables_for_import(
+                                                            ctx, bundle_id, 'import')
 
     # It's time to actually compute the values that will go in the database!
     # Start with the obs_general table, because other tables reference
@@ -277,8 +285,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
         table_rows[table_name] = []
 
     # Also look for duplicates in the existing import tables
-    if impglobals.ARGUMENTS.import_check_duplicate_id:
-        used_opus_id_prev_vol = do_import_tables.read_existing_import_opus_id()
+    if ctx.args.import_check_duplicate_id:
+        used_opus_id_prev_vol = do_import_tables.read_existing_import_opus_id(ctx)
     else:
         used_opus_id_prev_vol = set()
 
@@ -294,11 +302,11 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
         metadata['phase_name'] = None
         obs_general_row = None
         obs_pds_row = None
-        impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
+        ctx.current_index_row_number = index_row_num+1
 
         # Sometimes the primary_filespec is taken from the supplemental index, which we
         # don't have yet, so we can't look it up until later.
-        impglobals.CURRENT_PRIMARY_FILESPEC = None
+        ctx.current_primary_filespec = None
 
         # For supplemental_index and logging
         # Note we don't use primary_filespec_from_index_row here because that doesn't
@@ -306,7 +314,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
         # row information.
         primary_filespec = instrument_obj.primary_filespec
         primary_filespec = instrument_obj.convert_filespec_from_lbl(primary_filespec)
-        impglobals.CURRENT_PRIMARY_FILESPEC = primary_filespec
+        ctx.current_primary_filespec = primary_filespec
         primary_filespec = primary_filespec.upper()
         if 'supp_index' in metadata:
             supp_index = metadata['supp_index']
@@ -314,6 +322,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 metadata['supp_index_row'] = supp_index[primary_filespec]
             else:
                 import_util.log_nonrepeating_warning(
+                    ctx,
                     f'FILESPEC "{primary_filespec}" is missing supplemental data')
                 metadata['supp_index_row'] = None
 
@@ -335,15 +344,17 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 ring_geo = metadata['ring_geo'].get(primary_filespec_phase, None)
                 metadata['ring_geo_row'] = ring_geo
                 if (ring_geo is None and
-                    impglobals.ARGUMENTS.import_report_missing_ring_geo):
+                    ctx.args.import_report_missing_ring_geo):
                     import_util.log_warning(
+                        ctx,
                         f'RING GEO metadata missing for "{primary_filespec_phase}"')
             if 'sky_geo' in metadata:
                 sky_geo = metadata['sky_geo'].get(primary_filespec_phase, None)
                 metadata['sky_geo_row'] = sky_geo
                 if (sky_geo is None and
-                    impglobals.ARGUMENTS.import_report_missing_sky_geo):
+                    ctx.args.import_report_missing_sky_geo):
                     import_util.log_warning(
+                        ctx,
                         f'SKY GEO metadata missing for "{primary_filespec_phase}"')
             if 'surface_geo' in metadata:
                 body_geo = metadata['surface_geo'].get(primary_filespec_phase)
@@ -362,7 +373,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 if table_name not in table_schemas:
                     # Table not relevant for this product
                     continue
-                row = do_import_obs.import_observation_table(instrument_obj,
+                row = do_import_obs.import_observation_table(ctx, instrument_obj,
                                                              table_name,
                                                              table_schemas[table_name],
                                                              metadata)
@@ -381,7 +392,8 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                         # In the case where we copied them to the perm tables
                         # and cleared them out, a future check during the copy
                         # process will catch the duplicates.
-                        do_import_tables.delete_opus_id_from_obs_tables(opus_id, 'import')
+                        do_import_tables.delete_opus_id_from_obs_tables(
+                                                            ctx, opus_id, 'import')
                 table_rows[table_name].append(row)
                 metadata[table_name+'_row'] = row
 
@@ -420,13 +432,14 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                                                                 target_name]
                         metadata['surface_geo_target_name'] = target_name
 
-                        row = do_import_obs.import_observation_table(instrument_obj,
+                        row = do_import_obs.import_observation_table(ctx, instrument_obj,
                                                                      new_table_name,
                                                                      table_schemas[table_name],
                                                                      metadata)
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             import_util.log_debug(
+                              ctx,
                               f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(row)
 
@@ -458,13 +471,14 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                         metadata['surface_geo_row'] = None
                         metadata['surface_geo_target_name'] = target_name
 
-                        row = do_import_obs.import_observation_table(instrument_obj,
+                        row = do_import_obs.import_observation_table(ctx, instrument_obj,
                                                                      new_table_name,
                                                                      table_schemas[table_name],
                                                                      metadata)
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             import_util.log_debug(
+                              ctx,
                               f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(row)
 
@@ -488,7 +502,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                 # This is used to populate the surface geo target_list
                 # field
 
-                row = do_import_obs.import_observation_table(instrument_obj,
+                row = do_import_obs.import_observation_table(ctx, instrument_obj,
                                                              table_name,
                                                              table_schemas[table_name],
                                                              metadata)
@@ -505,6 +519,7 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
                     # Deal with obs_files only
                     continue
                 rows = get_opus_products_rows_for_filespec(
+                                ctx,
                                 vol_info['pds_version'],
                                 obs_pds_row['primary_filespec'],
                                 obs_general_row['id'],
@@ -518,45 +533,45 @@ def import_one_index(bundle_id, vol_info, index_paths, bundle_label_path):
     ### DONE COMPUTING ROW CONTENTS - CREATE MULTS AND DUMP TO DB ###
     #################################################################
 
-    impglobals.CURRENT_INDEX_ROW_NUMBER = None
-    impglobals.CURRENT_PRIMARY_FILESPEC = None
+    ctx.current_index_row_number = None
+    ctx.current_primary_filespec = None
 
     # Now that we have all the values, we have to dump out the mult tables
     # because they are referenced as foreign keys
-    do_import_mult.dump_import_mult_tables()
+    do_import_mult.dump_import_mult_tables(ctx)
 
     # Now dump out the obs tables, in order, because at least obs_general
     # is referenced by foreign keys.
     for table_name in table_names_in_order:
         if table_name.find('<TARGET>') == -1:
-            imp_name = impglobals.DATABASE.convert_raw_to_namespace('import', table_name)
-            import_util.log_debug(f'Inserting into obs table "{imp_name}"')
-            impglobals.DATABASE.insert_rows('import', table_name, table_rows[table_name])
+            imp_name = ctx.db.convert_raw_to_namespace('import', table_name)
+            import_util.log_debug(ctx, f'Inserting into obs table "{imp_name}"')
+            ctx.db.insert_rows('import', table_name, table_rows[table_name])
         else:
             for target_name in sorted(used_targets):
                 new_table_name = table_name.replace(
                             '<TARGET>',
                             import_util.table_name_for_sfc_target(target_name))
-                imp_name = impglobals.DATABASE.convert_raw_to_namespace('import',
-                                                                        new_table_name)
-                import_util.log_debug(f'Inserting into obs table "{imp_name}"')
+                imp_name = ctx.db.convert_raw_to_namespace('import', new_table_name)
+                import_util.log_debug(ctx, f'Inserting into obs table "{imp_name}"')
                 surface_geo_schema = import_util.read_schema_for_table(
-                                            'obs_surface_geometry_target',
-                                            replace=[
-                    ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
-                    ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))])
+                    ctx, 'obs_surface_geometry_target',
+                    replace=[
+                        ('<TARGET>',
+                         import_util.table_name_for_sfc_target(target_name)),
+                        ('<SLUGTARGET>',
+                         import_util.slug_name_for_sfc_target(target_name))])
                 # We can finally get around to creating the
                 # obs_surface_geometry_<T> tables now that we know what targets
                 # we have
-                impglobals.DATABASE.create_table('import', new_table_name,
-                                                 surface_geo_schema)
-                impglobals.DATABASE.insert_rows('import', new_table_name,
-                                                table_rows[new_table_name])
+                ctx.db.create_table('import', new_table_name, surface_geo_schema)
+                ctx.db.insert_rows('import', new_table_name,
+                                   table_rows[new_table_name])
 
     return True # SUCCESS!
 
 
-def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
+def get_opus_products_rows_for_filespec(ctx, pds_version, filespec, obs_general_id,
                                         opus_id, bundle_id, instrument_id):
     rows = []
 
@@ -566,7 +581,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
         else:
             pdsf = pdsfile.pds4file.Pds4File.from_filespec(filespec, fix_case=True)
     except ValueError:
-        import_util.log_nonrepeating_error(f'Failed to convert filespec "{filespec}"')
+        import_util.log_nonrepeating_error(ctx, f'Failed to convert filespec "{filespec}"')
         # The caller extends its row list with the result, so a failed conversion
         # has to yield an empty list rather than None. The error is logged and the
         # index import continues, which is what the caller expects.
@@ -575,8 +590,9 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
     products = pdsf.opus_products()
     if '' in products:
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
-        if impglobals.ARGUMENTS.import_report_empty_products:
+        if ctx.args.import_report_empty_products:
             import_util.log_nonrepeating_warning(
+                ctx,
                 f'Empty opus_product key for files: {file_list_str}')
         del products['']
     # Keep a running list of all products by type, sorted by version
@@ -612,7 +628,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
         # when the current index product type is skip.
         current_rows = []
         for sublist in list_of_sublists:
-            if (not impglobals.ARGUMENTS.import_dont_use_row_files and
+            if (not ctx.args.import_dont_use_row_files and
                 skip_current_product_type):
                 current_rows = []
                 break
@@ -633,7 +649,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                 # about missing pickle files in _indexshelf-metadata, so for now we will
                 # assume the selection is always in the index file and create a row for
                 # it in db. Will fix this when pickle files in indexshelf is ready.
-                if (not impglobals.ARGUMENTS.import_dont_use_row_files and
+                if (not ctx.args.import_dont_use_row_files and
                     file.is_index and pds_version == 3):
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
@@ -648,6 +664,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                         # selection is partially matched, we skip this
                         # product_type
                         import_util.log_warning(
+                            ctx,
                             f'{e} - {selection} is partially matched and ' +
                             'does not exist in the table.')
                         skip_current_product_type = True
@@ -657,6 +674,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                       '_hstfiles.tab' in logical_path):
                     # if an index file has no files in shelves/index
                     import_util.log_nonrepeating_warning(
+                        ctx,
                         f'Volume "{bundle_id}" is missing row files under '+
                         f'shelves/index for {logical_path}')
 
@@ -668,6 +686,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                         and not isinstance(file, pdsfile.pds4file.Pds4File)):
                     # TODOPDS4 ^^^
                     import_util.log_nonrepeating_warning(
+                        ctx,
                         'Missing corresponding ' +
                         f'shelves/info for {file.abspath}')
                     continue
@@ -679,12 +698,12 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                 width = file.width or None
                 height = file.height or None
 
-                if 'obs_files' not in impglobals.MAX_TABLE_ID_CACHE:
-                    impglobals.MAX_TABLE_ID_CACHE['obs_files'] = (
-                        import_util.find_max_table_id('obs_files'))
-                impglobals.MAX_TABLE_ID_CACHE['obs_files'] = (
-                    impglobals.MAX_TABLE_ID_CACHE['obs_files']+1)
-                table_id = impglobals.MAX_TABLE_ID_CACHE['obs_files']
+                if 'obs_files' not in ctx.max_table_id_cache:
+                    ctx.max_table_id_cache['obs_files'] = (
+                        import_util.find_max_table_id(ctx, 'obs_files'))
+                ctx.max_table_id_cache['obs_files'] = (
+                    ctx.max_table_id_cache['obs_files']+1)
+                table_id = ctx.max_table_id_cache['obs_files']
 
                 row = {'id': table_id,
                        'obs_general_id': obs_general_id,
@@ -710,6 +729,7 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
                 current_rows.append(row)
                 if size == 0:
                     import_util.log_nonrepeating_warning(
+                        ctx,
                         f'File has zero size: {opus_id} {logical_path}')
 
             if skip_current_product_type:
@@ -719,14 +739,15 @@ def get_opus_products_rows_for_filespec(pds_version, filespec, obs_general_id,
 
     return rows
 
-def remove_opus_id_from_tables(table_rows, opus_id):
+def remove_opus_id_from_tables(ctx, table_rows, opus_id):
     for table_name in table_rows:
         rows = table_rows[table_name]
         i = 0
         while i < len(rows):
             if ('opus_id' in rows[i] and
                 rows[i]['opus_id'] == opus_id):
-                import_util.log_debug(f'Removing "{opus_id}" from unwritten table '
+                import_util.log_debug(ctx,
+                                      f'Removing "{opus_id}" from unwritten table '
                                       f'"{table_name}"')
                 del rows[i]
                 continue # There might be more than one in obs_surface_geometry
