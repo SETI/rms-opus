@@ -52,4 +52,5 @@ def update_mult_info(ctx):
             }
 
             db.update_row('perm', table_name, row_dict,
-                          'id='+str(id_num))
+                          f'{db.quote_identifier("id")}=%s',
+                          where_params=[id_num])

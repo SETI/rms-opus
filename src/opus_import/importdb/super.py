@@ -87,7 +87,7 @@ class ImportDBSuper:
                     cur.execute(cmd, param_list)
                     self.conn.commit()
 
-    def _execute_and_fetchall(self, cmd, func_name, cur=None):
+    def _execute_and_fetchall(self, cmd, func_name, param_list=None):
         raise NotImplementedError(
             'ImportDBSuper::_execute_and_fetchall must be overridden')
 
@@ -152,7 +152,18 @@ class ImportDBSuper:
     def analyze_table(self, namespace, raw_table_name):
         raise NotImplementedError('ImportDBSuper::analyze_table must be overridden')
 
-    def read_rows(self, namespace, raw_table_name, column_names, where=None):
+    def read_rows(self, namespace, raw_table_name, column_names, where=None,
+                  where_params=None):
+        """Return the given columns of the rows the WHERE clause selects.
+
+        Parameters:
+            namespace: 'import', 'perm' or 'all'.
+            raw_table_name: The table, without its namespace prefix.
+            column_names: The columns to read, quoted and validated here.
+            where: The WHERE clause, or None for every row. Any value it
+                compares against must be a `%s` placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+        """
         self._enter('read_rows')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
@@ -160,10 +171,12 @@ class ImportDBSuper:
         q = self.quote_identifier
         columns = ','.join([q(c) for c in column_names])
 
-        cmd = f"SELECT {columns} FROM {q(table_name)}"
+        cmd = f'SELECT {columns} FROM {q(table_name)}'
         if where:
-            cmd += f" WHERE {where}"
-        res = self._execute_and_fetchall(cmd, 'read_rows')
+            cmd += f' WHERE {where}'
+        res = self._execute_and_fetchall(cmd, 'read_rows',
+                                         list(where_params) if where_params
+                                         else None)
         self._exit()
         return res
 
@@ -173,7 +186,8 @@ class ImportDBSuper:
     def insert_rows(self, namespace, raw_table_name, rows):
         raise NotImplementedError('ImportDBSuper::insert_rows must be overridden')
 
-    def update_row(self, namespace, raw_table_name, row, where):
+    def update_row(self, namespace, raw_table_name, row, where,
+                   where_params=None):
         raise NotImplementedError('ImportDBSuper::update_row must be overridden')
 
     def upsert_row(self, namespace, raw_table_name, key_name, row):
@@ -182,15 +196,16 @@ class ImportDBSuper:
     def upsert_rows(self, namespace, raw_table_name, key_name, rows):
         raise NotImplementedError('ImportDBSuper::upsert_rows must be overridden')
 
-    def delete_rows(self, namespace, table_name, where):
+    def delete_rows(self, namespace, table_name, where, where_params=None):
         raise NotImplementedError('ImportDBSuper::delete_rows must be overridden')
 
     def copy_rows_between_namespaces(self, src_namespace, dest_namespace,
-                                     raw_table_name, where=None):
+                                     raw_table_name, where=None,
+                                     where_params=None):
         raise NotImplementedError('ImportDBSuper::copy_rows_between_namespaces '
                                   'must be overridden')
 
-    def general_select(self, cmd):
+    def general_select(self, cmd, param_list=None):
         raise NotImplementedError('ImportDBSuper::general_select must be overridden')
 
     def find_column_max(self, namespace, table_name, column_name):
