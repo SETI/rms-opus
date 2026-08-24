@@ -3091,3 +3091,171 @@ body; never rewrite or delete earlier notes.*
     into a scratch venv for the comparison and removed again; it is deliberately **not**
     a project dev dependency, and ruff implements none of E12x): no new finding outside
     pycodestyle's own default-ignore set, and several pre-existing ones removed.
+
+- **2026-08-24 (PR-12 executed):** the Django app assembles no SQL of its own — every
+  statement is built by `opus_app.apps.tools.sql_builder` — and the import backend
+  validates every identifier and parameterizes every value. `QuerySet.extra()` is gone
+  from the repository. Facts later PRs rely on:
+  - **The builder is `src/opus_app/apps/tools/sql_builder.py` and it is the only module
+    allowed to turn Python values into SQL text.** Call sites describe structure --
+    `Select` with `add_column`/`add_from`/`add_join`/`add_where`/`add_group_by`/
+    `add_order_by`/`limit`/`offset`, plus `create_table_as_select`, `drop_table`,
+    `count_rows`, `delete_from`, `delete_joined`, `replace_into_values`,
+    `replace_into_select` and `update` -- and it renders them. Three properties hold
+    uniformly and are what the module exists for: identifiers go through
+    `quote_identifier`, which **rejects anything outside `^[A-Za-z0-9_]+$`** before
+    `connection.ops.quote_name` sees it (backticks quote a name but do not escape a
+    backtick *inside* one, so validation is the actual defence, and several identifiers
+    here are computed at runtime -- `cache_<n>`, `temp_<session>_<pid>_<time>`, and
+    column names read from `param_info`); every value becomes `%s`; and parameters come
+    out in placeholder order because the clauses render in a fixed order. **The one
+    deliberate exception is `LIMIT`/`OFFSET`**, which are `isinstance`-checked ints
+    rendered literally -- a placeholder there would be a value the driver quotes.
+  - **The rendering conventions are not cosmetic — they were chosen to keep the SQL
+    byte-identical where the suite pins it.** `integration_tests/apps_db_tests/
+    test_search.py` asserts the exact SQL text of `construct_query_string`,
+    `get_range_query`, `get_longitude_query` and `get_string_query` in ~150 tests, which
+    made those tests a mechanical equivalence oracle for this refactor. The builder
+    therefore separates list items with a bare comma, renders a column-to-column
+    equality as `a=b` (`columns_equal`, which also **refuses to take a parameter** --
+    that is what makes a join condition structurally incapable of carrying data) and a
+    comparison against a value as `col <op> %s`, and has purpose-specific renderers for
+    `JSON_CONTAINS(x,%s)` and `JSON_EXTRACT(x, "$[0]")` whose spacing differs because
+    the code being replaced differed. **Only 15 of those ~150 expected strings changed,
+    and every one differs from its predecessor by identifier quoting alone** -- the
+    ORDER BY terms and the longitude expression were the two places that interpolated a
+    bare `cat.name`. Each rewrite was checked mechanically, not by eye: old and new are
+    equal after removing backticks and folding case. (The longitude expression also
+    picked up the authoritative lower-case spelling from `param_info`, where it had been
+    using the caller's `J2000_longitude`; MySQL column names are case-insensitive, so
+    that is the same column.)
+  - **The grep-defined scope, and the four hits that remain.** The plan's acceptance grep
+    over `src/opus_app/apps` matched **255 lines in the 5 files the plan names** and
+    nothing else. It now returns **4 lines, all false positives**: `MAX_SELECTIONS_ALLOWED`
+    contains the substring `SELECT`, and those four f-strings build a user-facing "too
+    many observations" message in `cart/views.py`. `connection.ops.quote_name` appears
+    nowhere under `src/opus_app` outside the builder. **40 construction sites were
+    refactored**, which is **33 complete statements** (1 in `tools/file_utils.py`, 4 in
+    `metadata/views.py`, 7 in `results/views.py`, 5 in `search/views.py`, 16 in
+    `cart/views.py`) plus the **6 clause/term families in `search/views.py`** that feed
+    them (the GROUP `IN (…)` and MULTIGROUP `JSON_CONTAINS` clauses, the string, range
+    and longitude clause builders, and the ORDER BY terms) and the **1 site converted to
+    the ORM** (`metadata/views.py:549`). Do not expect the statement count to equal the
+    number of `build()` calls: `results.get_search_results_chunk`'s two branches build
+    two different statements through one shared `build()`. The plan's exemption for
+    constant literal statements was used exactly once, for `_valid_regex`'s
+    `SELECT REGEXP_LIKE("x", %s)`.
+  - **Three helpers moved into `search/views.py` and are shared by several call sites
+    each.** `search_cache_join_condition(table_name, cache_table_name)` (obs_general
+    joins the cache table on `id`, every other obs_ table on `obs_general_id`),
+    `add_obs_table_joins(from_source, obs_tables)` and
+    `add_mult_table_joins(from_source, mult_tables)`. The mult helper takes the
+    `(mult_table, is_multigroup, category, field_name)` tuples the rest of the app
+    already passes around. **Neither join helper sorts its input** -- `construct_query_string`
+    and the cart's range editor pass `sorted(...)` and `results/views.py` passes the raw
+    set, exactly as before, so join order is unchanged.
+  - **`create_order_by_sql` is now `create_order_by_terms` and returns data, not SQL.**
+    It returns `([(expr, descending), ...], mult_tables, obs_tables)`; callers feed the
+    pairs to `Select.add_order_by`. The rename is not cosmetic: a function called
+    `..._sql` that returns builder expressions would invite the next executor to
+    concatenate it. Its three callers are `construct_query_string`,
+    `results.get_search_results_chunk` and `cart._edit_cart_range`. **No test referenced
+    the old name.**
+  - **`get_string_query`/`get_range_query`/`get_longitude_query` return an
+    `sql_builder.Expr`,** which is a `NamedTuple` of `(sql, params)`. That is why
+    test_search.py's `sql, params = get_range_query(...)` lines and its
+    `assertEqual(sql, '...')` / `assertEqual(params, [...])` assertions needed no change
+    at all: an `Expr` unpacks like the tuple it replaced, its `.sql` is a plain `str` and
+    its `.params` a plain `list`. The failure convention is unchanged -- those functions
+    still return the plain pair `(None, None)`, which is why the call sites that unpack
+    before checking rebuild an `Expr` from the halves.
+  - **All four `QuerySet.extra()` calls are gone, and the `B610` skip is out of
+    pyproject.** Measured with `bandit -t B610,B611` over `src integration_tests
+    manage.py`: **4 B610 and 0 B611 before, 0 and 0 after**. The three that joined the
+    dynamically named cache table (`metadata/views.py:537,541` and
+    `results/views.py:1854`) are builder-generated cursor SQL now, which keeps the
+    inner-join shape `RawSQL` would have turned into a semi-join; the fourth
+    (`metadata/views.py:549`) became `filter(**{f'{param1}__isnull': True, ...})`.
+    **`B608` stays skipped** and its pyproject comment now states facts instead of a
+    plan reference: **16 findings in 8 files before, 12 in 4 after**
+    (`tools/sql_builder.py`, `importdb/mysql.py`, `importdb/super.py`, and two
+    identifier-only queries in `steps/do_validate.py`), **none of them in a view**.
+    PR-17 turns those into per-line `# nosec`.
+  - **Two ORM-to-cursor conversions resolve a column name through the model, not by
+    assuming.** `metadata.api_get_range_endpoints` and `results.get_triggered_tables`
+    previously named *model fields* (`Min(param1)`, `.values(trigger_col)`); raw SQL
+    needs the *column*, and the two differ for a field declared with `db_column`. Both
+    now use `model._meta.get_field(name).column`. Verified that this matters in
+    principle but not in practice today: `search/models.py` has **246 `db_column`
+    arguments and every one of them is on a foreign key** (`obs_general_id`, `opus_id`,
+    `context`), and **no range parameter sits on a datetime or decimal column** (checked
+    across `table_schemas/*.json`: zero columns with a time/date field type and a `RANGE`
+    form type, and zero `DecimalField` in the generated models), so the aggregates return
+    the same Python numbers off the cursor as they did off the ORM.
+  - **The import backend validates identifiers and parameterizes every value.**
+    `ImportDBMySQL.quote_identifier` now raises `ImportDBError` for anything outside
+    `^[A-Za-z0-9_]+$`, and every backticked f-string in `importdb/mysql.py` goes through
+    it (`USE`, `CREATE DATABASE`, `DROP`/`ANALYZE`/`CREATE TABLE` including its key and
+    foreign-key clauses, every DML statement, `find_column_max`). **`str(val)` is gone**:
+    `insert_row`, `insert_rows`, `update_row`, `upsert_row` and `upsert_rows` render
+    *every* value as `%s` -- previously only `str` values were parameters and numbers,
+    booleans and `None` were formatted into the statement text. The two
+    `INFORMATION_SCHEMA` queries in `table_names`/`table_info` pass the schema and table
+    name as parameters. **`where` clauses now carry their own parameters:** `read_rows`,
+    `delete_rows`, `copy_rows_between_namespaces` and `update_row` take a `where_params=`,
+    and `general_select`/`_execute_and_fetchall` take a `param_list`. Where there are
+    none the argument stays `None` rather than `[]`, because MySQLdb treats an empty
+    sequence as "interpolate" and would then choke on a literal `%`. The callers that
+    were interpolating a value -- `steps/do_import_tables.py` (four `bundle_id`/`opus_id`
+    clauses), `steps/do_update_mult_info.py` (`id=`) and `steps/do_validate.py` (two
+    `CATEGORY_NAME='...' AND NAME='...'` lookups) -- pass parameters now. `do_validate`
+    also had four bare identifiers (`display`, `form_type`, `opus_id`) that are quoted now.
+  - **PR-10 left PR-12 a conditional instruction that could not be discharged.** Its note
+    says PR-12 "should switch to the [`AS new`] alias once PR-22 confirms the deployed
+    server version" in `upsert_rows`. **PR-22 has not run, so the version is still
+    unconfirmed and the `VALUES(col)` form is unchanged.** The instruction stands, and
+    its owner is whoever holds it after PR-22 establishes the server version -- it is not
+    a PR-12 omission.
+  - **Pre-existing defect found and deliberately NOT fixed: `e.args[1]` in
+    `importdb/mysql.py`'s sixteen `except MySQLdb.Error` handlers.** A `MySQLdb.Error`
+    raised by the *driver* rather than the server can carry a single argument --
+    `ProgrammingError('not enough arguments for format string')` is the one this PR
+    tripped over -- and `e.args[1]` then raises `IndexError` from inside the handler,
+    replacing the real diagnostic with a traceback that points at the logging line. It
+    cost a debugging cycle here. The fix is `e.args[1] if len(e.args) > 1 else e`, times
+    sixteen; it is unrelated to SQL assembly and would have widened this diff.
+    **Candidate for PR-15 or PR-17.**
+  - **The builder's tests live in `integration_tests/apps_db_tests/test_sql_builder.py`,
+    not in `tests/`.** They need no database, but the 100% branch gate measures
+    `src/opus_app/apps/*`, so every branch of the builder has to be exercised by the
+    suite that gate reads. **PR-18, which creates the holdings-free Django suite, is the
+    right place to move them**; until then a change to the builder is not covered by the
+    GitHub-hosted run.
+  - **One `# pragma: no cover` disappeared and one dead assignment went with it.**
+    `api_string_search_choices`'s `if param_category == 'obs_general'` branch (marked
+    "not possible -- there are currently no string fields in obs_general") is now inside
+    `search_cache_join_condition`, whose obs_general arm *is* exercised, by the mult
+    counts; the fact it recorded is preserved as a comment at the call site. The dead
+    `results = table_model.objects.values(...).annotate(Count(...))` in
+    `api_get_mult_counts` -- assigned, never read, overwritten by `cursor.fetchall()` --
+    was dropped, and `Count` left `metadata/views.py`'s imports with it.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **1118
+    passed** -- PR-11's 1103 plus 15 new import-backend tests -- pyroma 10/10, bandit,
+    vulture, pymarkdown). The full local chain (`opus_main_test.sh`: 30-bundle import
+    into a fresh MySQL schema, then the Django suite under the 100% gate) ran end to end
+    with exit code 0: the import logged **zero ERROR lines**, and the suite reported
+    **`Ran 1618 tests` / `OK` / `TOTAL 22276 stmts, 1890 branches, 100%`** with **zero
+    missing statements, zero partial branches** and **zero golden-fixture diffs**
+    (`git status integration_tests/test_api/responses` empty afterwards). Byte-identical
+    golden responses, including result ordering, are this PR's acceptance criterion and
+    that run is what demonstrates them. Against PR-11's baseline the test count is
+    **+42** (the builder's own tests) and the statement count **+56**, of which
+    `sql_builder.py` contributes **239 statements and 60 branches, all covered**; the
+    balance is the sites shrinking as they moved onto the builder, minus the dead
+    assignment above. **Do not read the +56 as lost or gained coverage** -- the gate is
+    100% on both sides of it.
+    Two further checks were run rather than argued: `bandit -t B610,B611` on the
+    pre-PR tree (`git archive eeb962ed`) and on this one, giving the 4->0 / 0->0 figures
+    above; and the mechanical proof that each of the 15 rewritten SQL expectations is a
+    pure quoting change (normalize = strip backticks, fold case; the rewrite script
+    refused to substitute otherwise).
