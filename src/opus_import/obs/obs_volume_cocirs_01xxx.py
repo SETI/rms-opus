@@ -6,7 +6,6 @@
 # COCIRS_[01]xxx.
 ################################################################################
 
-from opus_import import import_util
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
@@ -43,11 +42,11 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         # each target.
         if self._is_ring_map_projection():
             if self._index_col('PRIMARY_BODY_NAME') != 'SATURN':
-                import_util.log_nonrepeating_error(
+                self._log_nonrepeating_error(
                     'Ring observation but PRIMARY_BODY_NAME != "SATURN"')
                 return ()
             if self._index_col('TARGET_NAME') != 'S_RINGS':
-                import_util.log_nonrepeating_error(
+                self._log_nonrepeating_error(
                     'Ring observation but TARGET_NAME != "S_RINGS"')
                 return ()
             return ('SATURN',)

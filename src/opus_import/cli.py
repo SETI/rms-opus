@@ -19,8 +19,9 @@ import pdslogger
 from pdsfile import Pds3File, Pds4File
 
 from opus_config import get_config
-from opus_import import impglobals, import_util, importdb
+from opus_import import import_util, importdb
 from opus_import.config_data import GROUP_FORM_TYPES
+from opus_import.context import ImportContext
 from opus_import.steps import (
     do_cart,
     do_dictionary,
@@ -38,8 +39,21 @@ pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
 LOGNAME = 'opus_import.main'
 
 
-def _new_warning_handler(message, category, filename, lineno, file, line):
-    impglobals.PYTHON_WARNING_LIST.append(str(message))
+def _make_warning_handler(ctx):
+    """Return a `warnings.showwarning` that collects warnings on the context.
+
+    Parameters:
+        ctx: The context to collect the warnings on.
+
+    Returns:
+        A handler with `warnings.showwarning`'s signature. It reads the list off
+        the context on every call rather than closing over it, because reporting
+        the accumulated warnings replaces the list with a fresh one.
+    """
+    def handler(message, category, filename, lineno, file, line):
+        ctx.python_warning_list.append(str(message))
+
+    return handler
 
 
 def _create_argument_parser():
@@ -331,42 +345,42 @@ def main():
     """
     command_list = sys.argv[1:]
 
-    impglobals.ARGUMENTS = _create_argument_parser().parse_args(command_list)
+    args = _create_argument_parser().parse_args(command_list)
 
-    if impglobals.ARGUMENTS.do_it_all:
-        impglobals.ARGUMENTS.drop_old_import_tables = True
-        impglobals.ARGUMENTS.do_import = True
-        impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
-        impglobals.ARGUMENTS.drop_new_import_tables = True
-        impglobals.ARGUMENTS.analyze_permanent_tables = True
-        impglobals.ARGUMENTS.create_param_info = True
-        impglobals.ARGUMENTS.create_partables = True
-        impglobals.ARGUMENTS.create_table_names = True
-        impglobals.ARGUMENTS.create_cart = True
-        impglobals.ARGUMENTS.drop_cache_tables = True
+    if args.do_it_all:
+        args.drop_old_import_tables = True
+        args.do_import = True
+        args.copy_import_to_permanent_tables = True
+        args.drop_new_import_tables = True
+        args.analyze_permanent_tables = True
+        args.create_param_info = True
+        args.create_partables = True
+        args.create_table_names = True
+        args.create_cart = True
+        args.drop_cache_tables = True
 
-    if impglobals.ARGUMENTS.do_all_import:
-        impglobals.ARGUMENTS.drop_old_import_tables = True
-        impglobals.ARGUMENTS.do_import = True
-        impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
-        impglobals.ARGUMENTS.drop_new_import_tables = True
+    if args.do_all_import:
+        args.drop_old_import_tables = True
+        args.do_import = True
+        args.copy_import_to_permanent_tables = True
+        args.drop_new_import_tables = True
 
-    if impglobals.ARGUMENTS.do_import_finalization:
-        impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
-        impglobals.ARGUMENTS.drop_new_import_tables = True
-        impglobals.ARGUMENTS.analyze_permanent_tables = True
-        impglobals.ARGUMENTS.create_param_info = True
-        impglobals.ARGUMENTS.create_partables = True
-        impglobals.ARGUMENTS.create_table_names = True
-        impglobals.ARGUMENTS.create_cart = True
-        impglobals.ARGUMENTS.drop_cache_tables = True
+    if args.do_import_finalization:
+        args.copy_import_to_permanent_tables = True
+        args.drop_new_import_tables = True
+        args.analyze_permanent_tables = True
+        args.create_param_info = True
+        args.create_partables = True
+        args.create_table_names = True
+        args.create_cart = True
+        args.drop_cache_tables = True
 
-    if impglobals.ARGUMENTS.cleanup_aux_tables:
-        impglobals.ARGUMENTS.create_param_info = True
-        impglobals.ARGUMENTS.create_partables = True
-        impglobals.ARGUMENTS.create_table_names = True
-        impglobals.ARGUMENTS.create_cart = True
-        impglobals.ARGUMENTS.drop_cache_tables = True
+    if args.cleanup_aux_tables:
+        args.create_param_info = True
+        args.create_partables = True
+        args.create_table_names = True
+        args.create_cart = True
+        args.drop_cache_tables = True
 
     ################################################################################
     # LOGGING INITIALIZATION
@@ -376,9 +390,10 @@ def main():
     # works without a configuration file.
     config = get_config()
 
-    impglobals.LOGGER = pdslogger.PdsLogger(LOGNAME,
-                limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                        'debug': impglobals.ARGUMENTS.log_debug_limit})
+    logger = pdslogger.PdsLogger(LOGNAME,
+                                 limits={'info': args.log_info_limit,
+                                         'debug': args.log_debug_limit})
+    ctx = ImportContext(args=args, logger=logger)
 
     info_logfile = os.path.abspath(config.import_.log_file)
     debug_logfile = os.path.abspath(config.import_.debug_log_file)
@@ -388,19 +403,17 @@ def main():
     debug_handler = pdslogger.file_handler(debug_logfile, level=logging.DEBUG,
                                            rotation='ymdhms')
 
-    impglobals.LOGGER.add_handler(info_handler)
-    impglobals.LOGGER.add_handler(debug_handler)
-    impglobals.LOGGER.add_handler(pdslogger.stdout_handler)
+    logger.add_handler(info_handler)
+    logger.add_handler(debug_handler)
+    logger.add_handler(pdslogger.stdout_handler)
 
     handler = pdslogger.warning_handler(config.paths.import_log_dir, rotation='none')
-    impglobals.LOGGER.add_handler(handler)
+    logger.add_handler(handler)
 
     handler = pdslogger.error_handler(config.paths.import_log_dir, rotation='none')
-    impglobals.LOGGER.add_handler(handler)
+    logger.add_handler(handler)
 
-    impglobals.PYTHON_WARNING_LIST = []
-
-    warnings.showwarning = _new_warning_handler
+    warnings.showwarning = _make_warning_handler(ctx)
 
     ################################################################################
     #
@@ -408,62 +421,62 @@ def main():
     #
     ################################################################################
 
-    if (impglobals.ARGUMENTS.drop_permanent_tables !=
-        impglobals.ARGUMENTS.scorched_earth):
-        impglobals.LOGGER.log('fatal',
+    if (args.drop_permanent_tables !=
+        args.scorched_earth):
+        logger.log('fatal',
             '--drop-permanent-tables and --scorched-earth must be used together')
         sys.exit(-1)
 
     our_schema_name = config.database.schema
-    if impglobals.ARGUMENTS.override_db_schema:
-        our_schema_name = impglobals.ARGUMENTS.override_db_schema
+    if args.override_db_schema:
+        our_schema_name = args.override_db_schema
 
     try: # Top-level exception handling so we always log what's going on
         # Start the profiling
-        if impglobals.ARGUMENTS.profile:
+        if args.profile:
             pr = cProfile.Profile()
             pr.enable()
 
-        impglobals.LOGGER.open(
+        logger.open(
                 'Performing all requested import functions',
-                limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                        'debug': impglobals.ARGUMENTS.log_debug_limit})
+                limits={'info': args.log_info_limit,
+                        'debug': args.log_debug_limit})
 
-        if not impglobals.ARGUMENTS.dont_use_shelves_only:
+        if not args.dont_use_shelves_only:
             Pds3File.use_shelves_only()
             # TODO: uncomment this and the Pds4File line below when PDS4 shelves
             # files are used
             # Pds4File.use_shelves_only()
             Pds3File.require_shelves(True)
             # Pds4File.require_shelves(True)
-        if impglobals.ARGUMENTS.override_pds3_data_dir:
-            Pds3File.preload(impglobals.ARGUMENTS.override_pds3_data_dir)
+        if args.override_pds3_data_dir:
+            Pds3File.preload(args.override_pds3_data_dir)
         else:
             Pds3File.preload(config.paths.pds3_holdings)
-        if impglobals.ARGUMENTS.override_pds4_data_dir:
-            Pds4File.preload(impglobals.ARGUMENTS.override_pds4_data_dir)
+        if args.override_pds4_data_dir:
+            Pds4File.preload(args.override_pds4_data_dir)
         else:
             Pds4File.preload(config.paths.pds4_holdings)
 
         # We do this after the preload because we don't want to see all the preload
         # debug messages.
-        if not impglobals.ARGUMENTS.no_log_pdsfile:
-            Pds3File.set_logger(import_util.NoDupLogger(impglobals.LOGGER))
-            Pds4File.set_logger(import_util.NoDupLogger(impglobals.LOGGER))
+        if not args.no_log_pdsfile:
+            Pds3File.set_logger(import_util.NoDupLogger(logger))
+            Pds4File.set_logger(import_util.NoDupLogger(logger))
 
         try:
-            impglobals.DATABASE = importdb.get_db(
-                                       config.database.brand, config.database.host,
-                                       config.database.database, our_schema_name,
-                                       config.database.user, config.database.password,
-                                       mult_form_types=GROUP_FORM_TYPES,
-                                       logger=impglobals.LOGGER,
-                                       import_prefix=config.import_.table_temp_prefix,
-                                       read_only=impglobals.ARGUMENTS.read_only)
+            ctx.db = importdb.get_db(
+                            config.database.brand, config.database.host,
+                            config.database.database, our_schema_name,
+                            config.database.user, config.database.password,
+                            mult_form_types=GROUP_FORM_TYPES,
+                            logger=logger,
+                            import_prefix=config.import_.table_temp_prefix,
+                            read_only=args.read_only)
         except importdb.ImportDBError:
             sys.exit(-1)
 
-        impglobals.DATABASE.log_sql = impglobals.ARGUMENTS.log_sql
+        ctx.db.log_sql = args.log_sql
 
         # This MUST be done before the permanent tables are created, because there
         # could be entries in the cart table that point at the permanent
@@ -472,86 +485,86 @@ def main():
         # Note, however, that do_import_steps() might actually delete ALL permanent
         # tables with --scorched-earth, which means our effort here will be wasted,
         # so don't bother in that case.
-        if ((impglobals.ARGUMENTS.drop_cache_tables or
-             impglobals.ARGUMENTS.create_cart) and
-             not impglobals.ARGUMENTS.drop_permanent_tables):
-            impglobals.LOGGER.open(
+        if ((args.drop_cache_tables or
+             args.create_cart) and
+             not args.drop_permanent_tables):
+            logger.open(
                 'Cleaning up OPUS/Django tables',
-                limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                        'debug': impglobals.ARGUMENTS.log_debug_limit})
+                limits={'info': args.log_info_limit,
+                        'debug': args.log_debug_limit})
 
-            if impglobals.ARGUMENTS.create_cart:
-                do_cart.create_cart()
-            if impglobals.ARGUMENTS.drop_cache_tables:
-                do_django.drop_cache_tables()
+            if args.create_cart:
+                do_cart.create_cart(ctx)
+            if args.drop_cache_tables:
+                do_django.drop_cache_tables(ctx)
 
-            impglobals.LOGGER.close()
+            logger.close()
 
-        if not do_import.do_import_steps():
+        if not do_import.do_import_steps(ctx):
             sys.exit(-1)
 
         # This MUST be done after the permanent tables are created, since they
         # are used to determine what goes into the param_info table.
 
-        if (impglobals.ARGUMENTS.create_param_info or
-            impglobals.ARGUMENTS.create_partables or
-            impglobals.ARGUMENTS.create_table_names):
-            impglobals.LOGGER.open(
+        if (args.create_param_info or
+            args.create_partables or
+            args.create_table_names):
+            logger.open(
                     'Creating auxiliary tables',
-                    limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                            'debug': impglobals.ARGUMENTS.log_debug_limit})
+                    limits={'info': args.log_info_limit,
+                            'debug': args.log_debug_limit})
 
-            if impglobals.ARGUMENTS.create_param_info:
-                do_param_info.do_param_info()
-            if impglobals.ARGUMENTS.create_partables:
-                do_partables.do_partables()
-            if impglobals.ARGUMENTS.create_table_names:
-                do_table_names.do_table_names()
+            if args.create_param_info:
+                do_param_info.do_param_info(ctx)
+            if args.create_partables:
+                do_partables.do_partables(ctx)
+            if args.create_table_names:
+                do_table_names.do_table_names(ctx)
 
-            impglobals.LOGGER.close()
+            logger.close()
 
-        if impglobals.ARGUMENTS.update_mult_info:
-            impglobals.LOGGER.open(
+        if args.update_mult_info:
+            logger.open(
                 'Updating preprogrammed mult tables',
-                limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                        'debug': impglobals.ARGUMENTS.log_debug_limit})
+                limits={'info': args.log_info_limit,
+                        'debug': args.log_debug_limit})
 
-            do_update_mult_info.update_mult_info()
+            do_update_mult_info.update_mult_info(ctx)
 
-            impglobals.LOGGER.close()
+            logger.close()
 
-        if impglobals.ARGUMENTS.validate_perm:
-            do_validate.do_validate('perm')
+        if args.validate_perm:
+            do_validate.do_validate(ctx, 'perm')
 
-        if (impglobals.ARGUMENTS.create_cart and
-            impglobals.TRY_CART_LATER):
-            impglobals.LOGGER.open(
+        if (args.create_cart and
+            ctx.try_cart_later):
+            logger.open(
                 'Trying to create cart table a second time',
-                limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                        'debug': impglobals.ARGUMENTS.log_debug_limit})
+                limits={'info': args.log_info_limit,
+                        'debug': args.log_debug_limit})
 
-            do_cart.create_cart()
+            do_cart.create_cart(ctx)
 
-            impglobals.LOGGER.close()
+            logger.close()
 
-        if impglobals.ARGUMENTS.import_dictionary:
-            impglobals.LOGGER.open(
+        if args.import_dictionary:
+            logger.open(
                 'Importing dictionary',
-                limits={'info': impglobals.ARGUMENTS.log_info_limit,
-                        'debug': impglobals.ARGUMENTS.log_debug_limit})
-            do_dictionary.do_dictionary()
-            impglobals.LOGGER.close()
+                limits={'info': args.log_info_limit,
+                        'debug': args.log_debug_limit})
+            do_dictionary.do_dictionary(ctx)
+            logger.close()
 
-        if impglobals.ARGUMENTS.profile:
+        if args.profile:
             pr.disable()
             s = io.StringIO()
             sortby = 'cumulative'
             ps = pstats.Stats(pr, stream=s).strip_dirs().sort_stats(sortby)
             ps.print_stats()
             ps.print_callers()
-            impglobals.LOGGER.info('Profile results:\n%s', s.getvalue())
+            logger.info('Profile results:\n%s', s.getvalue())
 
-        impglobals.LOGGER.close()
+        logger.close()
 
     # This top-level handler exists to log every import failure, including the
     # ImportDBError the pipeline raises on any DB error. SystemExit and
@@ -559,7 +572,7 @@ def main():
     # wrongly swallowed them).
     except Exception:
         msg = 'Import failed with exception'
-        if not impglobals.ARGUMENTS.log_suppress_traceback:
+        if not args.log_suppress_traceback:
             msg += ':\n' + traceback.format_exc()
-        impglobals.LOGGER.log('fatal', msg)
+        logger.log('fatal', msg)
         sys.exit(-1)

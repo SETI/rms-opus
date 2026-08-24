@@ -17,6 +17,11 @@ Today no field function can: nothing under `opus_import.obs` touches the databas
 all. That is what the sweep below asserts. **If it fails, do not relax it** -- revisit
 `import_run_field_function`, which must re-raise `ImportDBError` (or catch something
 narrower) before any obs class is allowed to talk to the database.
+
+Obs classes hold an `ImportContext`, and a context has an open database on it, so the
+separation is a rule rather than an impossibility. The sweep is what enforces the rule:
+`db` is one of the names it rejects, so both the attribute and any operation reached
+through it are caught.
 """
 
 import ast
@@ -27,9 +32,13 @@ import pytest
 import opus_import.obs
 from opus_import.importdb import ImportDBError
 
-#: Every operation on `ImportDBSuper` that can raise `ImportDBError`, plus the
-#: attribute the pipeline reaches the database through.
+#: Every operation on `ImportDBSuper` that can raise `ImportDBError`, plus the attributes
+#: the pipeline reaches the database through: `ImportContext.db` today, and the
+#: `impglobals.DATABASE` global it replaced. `DATABASE` is kept because a module that
+#: reintroduced a global of that name would be doing the very thing this sweep exists to
+#: catch, whichever spelling it used.
 _DB_NAMES = frozenset({
+    'db',
     'DATABASE',
     '_execute', '_execute_and_fetchall',
     'analyze_table', 'convert_namespace_to_raw', 'convert_raw_to_namespace',

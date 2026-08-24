@@ -8,8 +8,6 @@
 import json
 import os
 
-from opus_import import impglobals  # It would be nice to have a better way to pass in cmd line args
-
 
 class ObsGeneral:
 
@@ -73,7 +71,7 @@ class ObsGeneral:
 
         if viewset:
             browse_data = viewset.to_dict()
-            if not impglobals.ARGUMENTS.import_ignore_missing_images:
+            if not self._ctx.args.import_ignore_missing_images:
                 if not viewset.thumbnail:
                     self._log_nonrepeating_warning(
                         f'Missing thumbnail browse/diagram image for "{filespec}"')
@@ -87,9 +85,7 @@ class ObsGeneral:
                     self._log_nonrepeating_warning(
                         f'Missing full_size browse/diagram image for "{filespec}"')
         else:
-            if impglobals.ARGUMENTS.import_fake_images:
-                # impglobals.LOGGER.log('debug',
-                #                 f'Faking browse/diagram images for "{filespec}"')
+            if self._ctx.args.import_fake_images:
                 base_path = os.path.splitext(pdsf.logical_path)[0]
                 if base_path.find('CIRS') != -1:
                     base_path = base_path.replace('volumes', 'diagrams')
@@ -115,7 +111,7 @@ class ObsGeneral:
                 }
             else:
                 browse_data = {'viewables': []}
-                if not impglobals.ARGUMENTS.import_ignore_missing_images:
+                if not self._ctx.args.import_ignore_missing_images:
                     self._log_nonrepeating_warning(
                        f'Missing all browse/diagram images for "{self.primary_filespec}"')
 

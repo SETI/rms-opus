@@ -4,7 +4,7 @@
 # Generate and maintain the partables table.
 ################################################################################
 
-from opus_import import config_data, impglobals, import_util
+from opus_import import config_data, import_util
 from opus_import.steps.do_import_mult import mult_table_lookup_id
 
 
@@ -14,12 +14,12 @@ def _lookup_table_column(table_schema, column_name):
             return table_column
     return None
 
-def create_import_partables_table():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def create_import_partables_table(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Creating new import partables table')
-    partables_schema = import_util.read_schema_for_table('partables')
+    partables_schema = import_util.read_schema_for_table(ctx, 'partables')
     # Start from scratch
     db.drop_table('import', 'partables')
     db.create_table('import', 'partables', partables_schema,
@@ -31,13 +31,13 @@ def create_import_partables_table():
     # For obs_general, we care about mission_id, inst_host_id, instrument_id,
     # and type_id.
 
-    obs_general_schema = import_util.read_schema_for_table('obs_general')
+    obs_general_schema = import_util.read_schema_for_table(ctx, 'obs_general')
 
     rows = []
 
     mission_id_column = _lookup_table_column(obs_general_schema, 'mission_id')
     for mission_id in sorted(config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
-        mission_id_val = mult_table_lookup_id('obs_general', 'mission_id',
+        mission_id_val = mult_table_lookup_id(ctx, 'obs_general', 'mission_id',
                                               mission_id_column, mission_id)
         entry = {
             'trigger_tab': 'obs_general',
@@ -49,7 +49,7 @@ def create_import_partables_table():
 
     instrument_id_column = _lookup_table_column(obs_general_schema, 'instrument_id')
     for instrument_id in sorted(config_data.INSTRUMENT_ID_TO_MISSION_ID.keys()):
-        instrument_id_val = mult_table_lookup_id('obs_general', 'instrument_id',
+        instrument_id_val = mult_table_lookup_id(ctx, 'obs_general', 'instrument_id',
                                                  instrument_id_column, instrument_id)
         partable = import_util.table_name_obs_instrument(instrument_id)
         if instrument_id[:3] == 'HST':
@@ -66,7 +66,7 @@ def create_import_partables_table():
 
     inst_host_id_column = _lookup_table_column(obs_general_schema, 'inst_host_id')
     for inst_host_id in sorted(config_data.INST_HOST_ID_TO_MISSION_ID.keys()):
-        inst_host_id_val = mult_table_lookup_id('obs_general', 'inst_host_id',
+        inst_host_id_val = mult_table_lookup_id(ctx, 'obs_general', 'inst_host_id',
                                                 inst_host_id_column, inst_host_id)
         entry = {
             'trigger_tab': 'obs_general',
@@ -89,7 +89,7 @@ def create_import_partables_table():
     # }
     # rows.append(entry)
 
-    surface_geo_table_names = impglobals.DATABASE.table_names(
+    surface_geo_table_names = ctx.db.table_names(
                                             'perm',
                                             prefix='obs_surface_geometry__')
     for table_name in sorted(surface_geo_table_names):
@@ -110,20 +110,20 @@ def create_import_partables_table():
 
     db.insert_rows('import', 'partables', rows)
 
-def copy_partables_from_import_to_permanent():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def copy_partables_from_import_to_permanent(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('info', 'Copying partables table from import to permanent')
     # Start from scratch
-    partables_schema = import_util.read_schema_for_table('partables')
+    partables_schema = import_util.read_schema_for_table(ctx, 'partables')
     db.drop_table('perm', 'partables')
     db.create_table('perm', 'partables', partables_schema, ignore_if_exists=False)
 
     db.copy_rows_between_namespaces('import', 'perm', 'partables')
 
 
-def do_partables():
-    create_import_partables_table()
-    copy_partables_from_import_to_permanent()
-    impglobals.DATABASE.drop_table('import', 'partables')
+def do_partables(ctx):
+    create_import_partables_table(ctx)
+    copy_partables_from_import_to_permanent(ctx)
+    ctx.db.drop_table('import', 'partables')

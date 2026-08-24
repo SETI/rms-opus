@@ -4,18 +4,16 @@
 # Perform various validations on the database.
 ################################################################################
 
-from opus_import import impglobals
 
-
-def validate_param_info(namespace):
+def validate_param_info(ctx, namespace):
     # Every column in every obs_ table should have an entry in the param_info
     # table except for id and obs_general_id.
     # Exceptions are:
     #   bundle_id in tables other than obs_pds
     #   instrument_id in tables other than obs_general
 
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('debug', 'Validating param_info table')
 
@@ -86,14 +84,14 @@ NAME='{field_name}'"""
     f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate slug')
 
 
-def validate_nulls(namespace):
+def validate_nulls(ctx, namespace):
     # Look for columns in OBS tables that don't contain nulls and yet the
     # column is marked as NULLS-OK and suggest the column type be changed.
     # We ignore obs_surface_geometry__ tables because they all come from a
     # single template so are harder to analyze.
 
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('debug', 'Validating non-NULL columns')
 
@@ -122,12 +120,12 @@ count(*) FROM {q(full_obs_table_name)} WHERE {q(field_name)} is NULL"""
     '- suggest changing column attributes')
 
 
-def validate_min_max_order(namespace):
+def validate_min_max_order(ctx, namespace):
     # Look for pairs of columns X1/X2 and check to make sure that X1 <= X2 in
     # all non-NULL cases.
 
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('debug', 'Validating MIN/MAX columns')
 
@@ -180,13 +178,13 @@ opus_id FROM {q(full_obs_table_name)} WHERE {q(field_name2)} < {q(field_name1)}"
     f'{field_name2} for some OPUS IDs; first 100: ' + ' '.join(opus_ids[:100]))
 
 
-def validate_filter_wavelength_consistency(namespace):
+def validate_filter_wavelength_consistency(ctx, namespace):
     # For each mission and instrument, then for each filter, look at the
     # wavelength table and see if the wl1 and wl2 fields contain only a single
     # value.
 
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+    db = ctx.db
+    logger = ctx.logger
 
     logger.log('debug', 'Validating filter/wavelength consistency')
 
@@ -244,13 +242,13 @@ LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
             +f' values for {full_obs_table_name} filter "{pretty_filter}": '
             +f'{row[col]} and {row[col+1]}')
 
-def do_validate(namespace='perm'):
-    impglobals.LOGGER.open(
+def do_validate(ctx, namespace='perm'):
+    ctx.logger.open(
             'Performing database validation', limits={'info': -1, 'debug': -1})
 
-    validate_param_info(namespace)
-    validate_nulls(namespace)
-    validate_min_max_order(namespace)
-    validate_filter_wavelength_consistency(namespace)
+    validate_param_info(ctx, namespace)
+    validate_nulls(ctx, namespace)
+    validate_min_max_order(ctx, namespace)
+    validate_filter_wavelength_consistency(ctx, namespace)
 
-    impglobals.LOGGER.close()
+    ctx.logger.close()

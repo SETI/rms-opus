@@ -35,6 +35,8 @@ from opus_import.obs.obs_volume_cocirs_01xxx import ObsVolumeCOCIRS01xxx
 from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
 from opus_import.obs.obs_volume_covims_8xxx import ObsVolumeCOVIMS8xxx
 
+from .conftest import make_context
+
 GOOD_SCLK = '1/1294561143.125'
 BAD_SCLK = '1/zzz'
 
@@ -45,7 +47,7 @@ def _obs(cls: type, columns: dict[str, Any]) -> tuple[Any, list[str]]:
     Returns the object and the list its logging is captured into.
     """
     obs = cls.__new__(cls)
-    ObsBase.__init__(obs)
+    ObsBase.__init__(obs, make_context())
     logged: list[str] = []
 
     def column(col: str, idx: Any = None) -> Any:

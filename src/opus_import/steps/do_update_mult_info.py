@@ -4,12 +4,12 @@
 # Update the details of preprogrammed mult tables.
 ################################################################################
 
-from opus_import import impglobals, import_util
+from opus_import import import_util
 
 
-def update_mult_info():
-    db = impglobals.DATABASE
-    logger = impglobals.LOGGER
+def update_mult_info(ctx):
+    db = ctx.db
+    logger = ctx.logger
 
     # Find all the permanent mult_ tables
     table_names = db.table_names('perm', prefix='mult_')
@@ -21,7 +21,7 @@ def update_mult_info():
         for n_splits in range(3, 6):
             # Covers mult_obs_general to mult_obs_mission_new_horizons
             trial_name = '_'.join(splits[1:n_splits])
-            table_schema = import_util.read_schema_for_table(trial_name)
+            table_schema = import_util.read_schema_for_table(ctx, trial_name)
             if table_schema is not None:
                 break
         if table_schema is None:

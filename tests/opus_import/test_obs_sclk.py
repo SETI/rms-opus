@@ -21,6 +21,8 @@ from opus_import.obs.obs_volume_galileo_common import ObsVolumeGalileoCommon
 from opus_import.obs.obs_volume_new_horizons_common import ObsVolumeNewHorizonsCommon
 from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
 
+from .conftest import make_context
+
 #: (mission common class, helper name, opus_support parser, display name, a valid SCLK)
 MISSIONS = [
     (ObsCassiniCommon, '_parse_cassini_sclk', opus_support.parse_cassini_sclk,
@@ -41,7 +43,7 @@ BAD_SCLK = 'not a spacecraft clock'
 
 def _recording_obs(cls: type, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, list[str]]:
     """Build an obs object whose error and warning logging is captured, not emitted."""
-    obs = cls()
+    obs = cls(make_context())
     logged: list[str] = []
     monkeypatch.setattr(obs, '_log_nonrepeating_error',
                         lambda msg: logged.append(f'error: {msg}'))

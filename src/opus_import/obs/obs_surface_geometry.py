@@ -5,7 +5,6 @@
 # obs_surface_geometry table.
 ################################################################################
 
-from opus_import import impglobals
 from opus_import.obs.obs_base import ObsBase
 
 
@@ -45,7 +44,7 @@ class ObsSurfaceGeometry(ObsBase):
             new_target_list.append(target_info[2])
         ret = ','.join(sorted(new_target_list))
 
-        if impglobals.ARGUMENTS.import_report_inventory_mismatch:
+        if self._ctx.args.import_report_inventory_mismatch:
             used_targets = self._metadata['used_surface_geo_targets']
             used_target_list = []
             for target_name in used_targets:
