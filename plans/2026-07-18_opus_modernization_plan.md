@@ -3111,10 +3111,22 @@ body; never rewrite or delete earlier notes.*
     out in placeholder order because the clauses render in a fixed order. **There are
     exactly two deliberate exceptions to "values are parameters", not one:**
     `LIMIT`/`OFFSET` and the `MAX_EXECUTION_TIME` optimizer hint. Both are numbers that
-    shape the statement rather than data it operates on, MySQL accepts a placeholder in
-    neither position (a hint is a comment), and both are `isinstance`-checked ints
-    rendered literally. `create_table_from_select_sql` is a third raw-text path, for the
-    one caller that receives its SELECT already rendered; it takes no values.
+    shape the statement rather than data it operates on, and both are
+    `isinstance`-checked ints rendered literally. **Be precise about why, because the
+    obvious reason is wrong and an earlier draft of this bullet asserted it:** MySQL
+    *does* accept a placeholder in `LIMIT` (`PREPARE s FROM 'SELECT 1 LIMIT ?'` prepares
+    and executes), and `cursor.execute('SELECT 1 LIMIT %s', (1,))` succeeds through
+    mysqlclient -- measured on MySQL 8.0.46 with mysqlclient 2.2.7. What fails is
+    `LIMIT %s` with a **string**: mysqlclient interpolates client-side and quotes
+    anything that is not a number, giving `LIMIT '1'` and error 1064. So the `%s` is not
+    the defence there; the `isinstance` check is, and rendering the int literally makes
+    that explicit rather than depending on the driver's type handling. The hint is a
+    different case: an optimizer hint is a **comment**, and the server never scans a
+    comment for placeholders (`PREPARE` on a hint containing `?` yields a statement with
+    zero parameters, so `EXECUTE ... USING` fails with 1210) -- it only appears to work
+    through mysqlclient because that driver `%`-formats the whole query text, comments
+    included. `create_table_from_select_sql` is a third raw-text path, for the one caller
+    that receives its SELECT already rendered; it takes no values.
   - **The rendering conventions are not cosmetic — they were chosen to keep the SQL
     byte-identical where the suite pins it.** `integration_tests/apps_db_tests/
     test_search.py` asserts the exact SQL text of `construct_query_string`,

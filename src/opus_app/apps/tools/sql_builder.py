@@ -36,9 +36,16 @@ by inspection:
   statement rather than data it operates on, so both are checked with
   ``isinstance(..., int)`` before being rendered literally: ``LIMIT``/``OFFSET``
   (see :meth:`Select.limit`) and the ``MAX_EXECUTION_TIME`` optimizer hint (see
-  :meth:`Select.__init__`). MySQL will not accept a placeholder in either position.
-  A third raw-text path exists for one caller -- see
+  :meth:`Select.__init__`). A third raw-text path exists for one caller -- see
   :func:`create_table_from_select_sql` -- and takes no values at all.
+
+  Note that "MySQL will not accept a placeholder there" would be the wrong reason,
+  at least for ``LIMIT``: the server takes one, and so does mysqlclient given an
+  ``int``. What mysqlclient does *not* take is a ``LIMIT`` parameter that is not a
+  number, because it interpolates client-side and quotes anything else, producing
+  ``LIMIT '1'`` and a syntax error. The ``isinstance`` check is therefore the actual
+  guarantee, and rendering the value literally states that rather than leaning on
+  the driver's type handling.
 * **Parameters come out in placeholder order.** A statement is rendered in a fixed
   clause order and each clause contributes its parameters at the point its
   placeholders appear, so a caller cannot get the ordering wrong by appending a
@@ -406,9 +413,13 @@ class Select:
             distinct: True to emit SELECT DISTINCT.
             max_execution_time: Milliseconds, or None. When given, emits MySQL's
                 `MAX_EXECUTION_TIME` optimizer hint, which makes the server abort
-                the query itself rather than leaving the user waiting. A hint is
-                a comment, so it cannot take a placeholder; the value is checked
-                to be an `int` and rendered literally, exactly as `limit` is.
+                the query itself rather than leaving the user waiting. A hint is a
+                *comment*, and the server never scans a comment for placeholders --
+                preparing one that contains `?` yields a statement with zero
+                parameters -- so the value is checked to be an `int` and rendered
+                literally, exactly as `limit` is. (mysqlclient would interpolate a
+                `%s` here, because it formats the whole query text, comments
+                included; that would be relying on an accident of the driver.)
         """
         self._distinct = distinct
         if max_execution_time is not None and not isinstance(max_execution_time, int):
