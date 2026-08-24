@@ -3237,28 +3237,39 @@ body; never rewrite or delete earlier notes.*
     unconfirmed and the `VALUES(col)` form is unchanged.** The instruction stands, and
     its owner is whoever holds it after PR-22 establishes the server version -- it is not
     a PR-12 omission.
-  - **Pre-existing defect, NOT fixed here, disposition with the orchestrator:
-    `_edit_cart_range`'s `removerange` DELETE is not scoped to the session.** Found by
-    CodeRabbit on this PR. `DELETE cart FROM cart INNER JOIN <user_query_table> ON
-    <uqt>.id=cart.obs_general_id WHERE <uqt>.sort_order BETWEEN <min> AND <max>` names
-    no `session_id`, so it deletes the matching rows of **every** session's cart, not
-    just the caller's. Verified byte-for-byte pre-existing: `origin/rewrite`'s
-    `cart/views.py:1419-1425` builds the identical statement and its `sql_where`
-    (line 1322) is the sort_order range alone. PR-12 reproduced it faithfully, which is
-    what a behavior-preserving refactor required. **Both entry paths are exposed, not
-    just the shared-cache one:** with `view=browse` the join source is the shared
-    `cache_<n>` table, and with `view=cart` it is a per-session temporary table whose
-    *rows* are this session's cart -- but the DELETE joins `cart` on `obs_general_id`
-    alone in either case, so another session's row for the same observation matches too.
-    `restrict_to_cart` does not apply here at all: it governs the `addrange` /
-    `removerange`-with-recyclebin branch, while this DELETE is the `recycle_bin == 0`
-    branch. The session-scoped sibling `_remove_from_cart_table` (`DELETE FROM cart WHERE
-    session_id=%s AND opus_id IN %s`) shows the intended shape. **Adding
-    `cart.session_id = %s` would change no golden fixture**: the suite drives one session
-    per test (no test file outside the new `test_sql_builder.py` even mentions
-    `session_id`), so every row the statement matches today already belongs to the
-    session under test. This is cross-session data loss, so the fix-here / own-PR /
-    issue call was escalated rather than taken by the executor.
+  - **PR-12a (new, assigned by the orchestrator on 2026-08-24): `_edit_cart_range`'s
+    `removerange` DELETE is not scoped to the session, and deletes other users' cart
+    rows.** Found by CodeRabbit on PR-12; given its own PR on the **PR-03a precedent**
+    (rev 7.5), because PR-12's contract is byte-identical golden responses and this fix
+    is deliberately *not* byte-identical in effect. Everything a fresh executor needs:
+    1. **The statement.** `cart/views.py`, the `elif action == 'removerange':` branch of
+       `_edit_cart_range` (the `recycle_bin == 0` path): `DELETE cart FROM cart INNER
+       JOIN <user_query_table> ON <uqt>.id=cart.obs_general_id WHERE <uqt>.sort_order
+       >= <min> AND <uqt>.sort_order <= <max>`. It names no `session_id`, so it deletes
+       the matching rows of **every** session's cart, not just the caller's.
+    2. **It is pre-existing, not PR-12's doing.** `origin/rewrite:cart/views.py:1419-1425`
+       builds the identical un-scoped statement and its `sql_where` (line 1322) is the
+       sort_order range alone. PR-12 reproduced it faithfully through the builder, which
+       is what a behavior-preserving refactor required.
+    3. **Both entry paths are exposed.** With `view=browse` the join source is the shared
+       `cache_<n>` table; with `view=cart` it is a per-session temporary table
+       (`temp_<session>_<pid>_<time>`) whose *rows* are this session's cart. That narrows
+       which observations fall in range but **does not close the hole**, because the
+       DELETE joins `cart` on `obs_general_id` alone in either case, so another session's
+       row for the same observation still matches. `restrict_to_cart` is not on this path
+       at all -- it governs the `addrange` / `removerange`-with-recyclebin branch.
+    4. **The intended shape** is the session-scoped sibling `_remove_from_cart_table`:
+       `DELETE FROM cart WHERE session_id=%s AND opus_id IN %s`. Adding
+       `cart.session_id = %s` to the range DELETE's WHERE is the fix; `sql_builder`'s
+       `delete_joined` already takes the condition, so it is one added `binary_op`.
+    5. **No existing fixture covers it, which is why it needs its own PR.** The suite
+       drives one session per test -- no test file outside PR-12's new
+       `test_sql_builder.py` even mentions `session_id` -- so every row the statement
+       matches today already belongs to the session under test, and the fix would be
+       **inert against every golden fixture**. **PR-12a therefore owes a new
+       multi-session test**: two sessions with overlapping cart contents, a removerange
+       on one, and an assertion that the other session's cart is untouched. Without it
+       the change is unverified.
   - **Pre-existing, NOT a defect: the MULTIGROUP mult-counts query aliases its
     `JSON_TABLE` with the base table's own name.** Also raised by CodeRabbit. The
     statement is `FROM `T` JOIN JSON_TABLE(`T`.`col`, …) `T``, unchanged in shape from
@@ -3292,6 +3303,19 @@ body; never rewrite or delete earlier notes.*
     cost a debugging cycle here. The fix is `e.args[1] if len(e.args) > 1 else e`, times
     sixteen; it is unrelated to SQL assembly and would have widened this diff.
     **Candidate for PR-15 or PR-17.**
+  - **`upsert_row` still has no caller, and PR-12 fixed a latent syntax error in it
+    anyway.** PR-10 recorded that the pipeline moved to the batched `upsert_rows`;
+    re-verified here, the name appears nowhere in `src/`, `tests/`, `integration_tests/`
+    or `scripts/` outside its own definition, the `ImportDBSuper` abstract stub, and a
+    name list in `test_exception_control_flow.py`. CodeRabbit found that it emitted a
+    dangling `ON DUPLICATE KEY UPDATE` for a row consisting of nothing but the key --
+    a syntax error -- where `upsert_rows` five lines below already guarded the same
+    case. It is guarded now, with two tests driving it, because this PR rewrote that
+    exact statement and shipping a known syntax-error path in a just-rewritten function
+    is not defensible; the tests keep it from being dead defensive code. **Whoever
+    deletes dead code in PR-15 or PR-17 should decide whether `upsert_row` survives at
+    all** -- it is reachable only as part of the backend interface that
+    `importdb/postgresql.py` would one day implement.
   - **The builder's tests live in `integration_tests/apps_db_tests/test_sql_builder.py`,
     not in `tests/`.** They need no database, but the 100% branch gate measures
     `src/opus_app/apps/*`, so every branch of the builder has to be exercised by the
