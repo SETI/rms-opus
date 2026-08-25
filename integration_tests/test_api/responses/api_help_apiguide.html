@@ -20,6 +20,7 @@
 </li>
 <li><a href="#apicalls">API Calls</a><ul>
 <li><a href="#returnformats">Return Formats</a></li>
+<li><a href="#errorresponses">Error Responses</a></li>
 <li><a href="#gettingmetadata">Getting Metadata</a><ul>
 <li><a href="#datafmt"><code>api/data.[fmt]</code> - Return Metadata from a Search</a></li>
 <li><a href="#metadatafmt"><code>api/metadata/[opusid].[fmt]</code> - Return Metadata for an OPUS ID</a></li>
@@ -212,6 +213,16 @@
 <li><strong>zip</strong>: Return all data as a ZIP file.</li>
 </ul>
 <p>Not all API calls provide results in all formats. The formats supported are listed with each call.</p>
+<hr />
+<h2 id="errorresponses">Error Responses</h2>
+
+<p>When a request cannot be answered, OPUS returns an HTML page describing what went wrong together with one of these HTTP status codes:</p>
+<ul>
+<li><strong>400 Bad Request</strong>: Something the request itself supplied was wrong - an unknown metadata field, a value that could not be parsed, an unsupported unit or query type, or a required parameter that was missing. The returned page names the field or value at fault. The same request will always fail the same way; it has to be corrected.</li>
+<li><strong>404 Not Found</strong>: The URL named something that does not exist - an entry point OPUS does not provide, or an OPUS ID (or legacy RING OBS ID) in the URL path that matches no observation.</li>
+<li><strong>500 Internal Server Error</strong>: OPUS failed while answering a request that was otherwise valid. Retrying may succeed; a failure that persists is worth reporting.</li>
+</ul>
+<p>Requests that supply a bad field, value, unit, or query type answer with 400 rather than the 404 that earlier versions of OPUS returned for every kind of error. Client code that treats 404 as &quot;my request was wrong&quot; should be updated to look at both codes; a 404 now means only that the URL itself named nothing.</p>
 <hr />
 <h2 id="gettingmetadata">Getting Metadata</h2>
 
