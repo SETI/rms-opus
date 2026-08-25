@@ -3675,6 +3675,16 @@ body; never rewrite or delete earlier notes.*
     pdslogger's own `exception` level with `force=True`, not at the `fatal` level these
     sites use. `src/opus_log_analyzer`, `src/opus_support` and `src/opus_config` have no
     except-handler logging at all.
+  - **Every log line in `src/` now names its own function.** A separate sweep
+    compared each log message's `name:` prefix against its enclosing function across
+    the whole of `src/`: **eleven mismatched before this PR and none do after**. Seven
+    were corrected incidentally by the handlers the decorator rewrote (including
+    `api_init_detail_page`'s and `api_string_search_choices`'s above); the other four
+    were fixed on their own account in functions this PR did not otherwise touch
+    (`api_get_range_endpoints` x2 said `get_range_endpoints`, `labels_for_slugs` said
+    `api_get_data_and_images` - one of its several callers - and `get_string_query`
+    said `_get_string_query`, a name that no longer exists). The sweep is worth
+    re-running after any later PR that moves logging code.
   - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
     note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
     no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,

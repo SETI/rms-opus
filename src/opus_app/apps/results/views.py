@@ -1785,7 +1785,7 @@ def labels_for_slugs(slugs, units=True):
         pi, desired_units = get_param_info_by_slug(slug, 'col',
                                                    allow_units_override=True)
         if not pi:
-            log.error('api_get_data_and_images: Could not find param_info '
+            log.error('labels_for_slugs: Could not find param_info '
                       +'for %s', slug)
             return None
 

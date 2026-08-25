@@ -1502,7 +1502,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
             clause = sql_builder.binary_op(param_column, 'RLIKE',
                                            sql_builder.value(value))
         else: # pragma: no cover - protecting against future bugs
-            log.error('_get_string_query: Unknown qtype "%s" '
+            log.error('get_string_query: Unknown qtype "%s" '
                       +'for "%s" '
                       +'*** Selections %s *** Qtypes %s ***',
                       qtype, param_qualified_name, str(selections), str(qtypes))
