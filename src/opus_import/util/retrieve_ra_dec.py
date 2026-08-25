@@ -2,7 +2,7 @@
 
 Run as ``python -m opus_import.util.retrieve_ra_dec`` when a star is added or a
 coordinate is questioned: the output is the body of
-`opus_import.config_targets.star_ra_dec`\'s table, which is checked in rather than
+`opus_import.config_targets.star_ra_dec`'s table, which is checked in rather than
 fetched, so that an import needs no network access.
 
 Importing this module does nothing. Running it issues one HTTP request per star, several

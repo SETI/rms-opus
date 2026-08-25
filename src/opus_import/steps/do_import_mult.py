@@ -35,10 +35,8 @@ MultRow = dict[str, Any]
 def _mult_table_column_names() -> list[str]:
     """Return the list of columns every mult table has.
 
-       The grouping columns are part of that list rather than being added for the
-       *_target_name tables only, so this is the same for every mult table. The
-       docstring used to say the opposite and the function took a table_name it
-       never read.
+    Every mult table has the same columns, the grouping pair included; they are not
+    added for the ``*_target_name`` tables alone.
 
     Returns:
         The column names, in the order the tables are read and written in.
@@ -206,7 +204,9 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
         field_name: The column.
         table_column: The definition of that column.
         val: The value to find or add. It is stored as a string.
-        label: How the value is shown to users. None becomes ``'N/A'``.
+        label: How the value is shown to users. It is rendered with ``str``, so None
+            becomes ``'None'`` and sorts with the other absent-value labels; a caller
+            that wants ``'N/A'`` passes it.
         aliases: Other spellings a search should accept for this value.
         disp: ``'Y'`` to show the value in the search form, ``'N'`` to hide it.
         disp_order: The sort key, or None to derive one as described above.

@@ -38,7 +38,12 @@ DBRow = dict[str, Any]
 """One row to write, keyed by column name."""
 
 SchemaColumn = dict[str, Any]
-"""One column's definition, as read from a packaged ``table_schemas`` JSON file."""
+"""One column's definition.
+
+A schema read from a packaged ``table_schemas`` JSON file is a list of these, and
+`ImportDBSuper.table_info` returns the same shape built from what the server says the
+table currently holds.
+"""
 
 ResultRow = tuple[Any, ...]
 """One row of a query result, in the order the query named its columns."""
@@ -270,6 +275,16 @@ class ImportDBSuper:
         def _warning_handler(message: Warning | str, category: type[Warning],
                              filename: str, lineno: int, file: TextIO | None,
                              line: str | None) -> None:
+            """Append one warning's text to the captured list.
+
+            Parameters:
+                message: The warning, or its text.
+                category: The warning class. Not recorded.
+                filename: Where the warning was raised. Not recorded.
+                lineno: The line it was raised on. Not recorded.
+                file: Where the standard handler would have written it. Unused.
+                line: The source line, if the caller supplied one. Not recorded.
+            """
             warning_list.append(str(message))
         return _warning_handler
 

@@ -60,6 +60,16 @@ def _make_warning_handler(ctx: ImportContext) -> Callable[..., None]:
     """
     def handler(message: Warning | str, category: type[Warning], filename: str,
                 lineno: int, file: TextIO | None, line: str | None) -> None:
+        """Record one warning's text on the context, discarding everything else.
+
+        Parameters:
+            message: The warning, or its text.
+            category: The warning class. Not recorded.
+            filename: Where the warning was raised. Not recorded.
+            lineno: The line it was raised on. Not recorded.
+            file: Where the standard handler would have written it. Unused.
+            line: The source line, if the caller supplied one. Not recorded.
+        """
         ctx.python_warning_list.append(str(message))
 
     return handler

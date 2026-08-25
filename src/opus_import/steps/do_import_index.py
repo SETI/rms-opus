@@ -31,7 +31,7 @@ from opus_import import import_util
 from opus_import.steps import do_import_mult, do_import_obs, do_import_tables
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
 
     from opus_import.context import ImportContext
 
@@ -329,12 +329,12 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any
     # order. Later come things like type_id, wavelength, and ring_geo. Finally
     # take care of surface geometry, which has to be done once for each target
     # in the image, so is handled separately.
-    table_rows: dict[str, list[Any]] = {}
+    table_rows: dict[str, list[dict[str, Any]]] = {}
     for table_name in table_names_in_order:
         table_rows[table_name] = []
 
     # Also look for duplicates in the existing import tables
-    used_opus_id_prev_vol: Sequence[str] | set[str]
+    used_opus_id_prev_vol: Collection[str]
     if ctx.args.import_check_duplicate_id:
         used_opus_id_prev_vol = do_import_tables.read_existing_import_opus_id(ctx)
     else:
@@ -429,8 +429,8 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any
                                                              table_schemas[table_name],
                                                              metadata)
                 # A missing row means a mult column returned something that is not a
-                # mult specification, which has already been reported; no table can be
-                # filled from it.
+                # mult specification, which has already been reported. No table can be
+                # filled from one, so every call site below narrows it the same way.
                 assert obs_row is not None
                 if table_name == 'obs_pds':
                     obs_pds_row = obs_row
@@ -492,6 +492,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any
                                                        new_table_name,
                                                        table_schemas[table_name],
                                                        metadata)
+                        assert obs_row is not None
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             import_util.log_debug(
@@ -532,6 +533,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any
                                                        new_table_name,
                                                        table_schemas[table_name],
                                                        metadata)
+                        assert obs_row is not None
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             import_util.log_debug(
@@ -564,6 +566,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any
                                                              table_name,
                                                              table_schemas[table_name],
                                                              metadata)
+                assert obs_row is not None
                 if table_name not in table_rows:
                     table_rows[table_name] = []
                 table_rows[table_name].append(obs_row)

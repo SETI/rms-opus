@@ -1,6 +1,7 @@
 """Build the ``table_names`` table, which orders the Details tab's sections.
 
-One row per permanent ``obs_`` table that exists: the table's name, the heading the web
+One row per permanent ``obs_`` table that exists, plus ``obs_general``, which is written
+unconditionally because every observation has one: the table's name, the heading the web
 application shows above it, and whether it is shown at all. The rows are written in the
 order they should appear, and ``disp_order`` counts up as they are appended, so the
 order of the code below is the order a user sees.
@@ -19,11 +20,13 @@ if TYPE_CHECKING:
 def create_import_table_names_table(ctx: ImportContext) -> None:
     """Fill the import ``table_names`` table from the permanent tables that exist.
 
-    The general, PDS, image, wavelength, profile and geometry tables come first in that
-    fixed order, then one row per surface geometry target in alphabetical order, then
-    the mission tables and the instrument tables. The HST instrument tables are written
-    with ``display`` set to ``'N'``: HST puts its columns in the mission table, so its
-    instrument tables would be empty sections.
+    ``obs_general`` comes first and is written whether or not the table is there; then
+    the PDS, image, wavelength, profile, surface geometry name and surface geometry
+    tables, each only if it exists; then one row per surface geometry target in
+    alphabetical order; then ring geometry; then the mission tables and the instrument
+    tables. The HST instrument tables are written with ``display`` set to ``'N'``: HST
+    puts its columns in the mission table, so its instrument tables would be empty
+    sections.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.

@@ -3,7 +3,7 @@
 A TARGET_NAME in a PDS label that this table does not describe is reported as an error
 and the observation is imported without a target, which is why adding an instrument
 usually means adding entries here.
-`opus_import.config_targets.target_name_mapping` folds an instrument\'s own spelling onto
+`opus_import.config_targets.target_name_mapping` folds an instrument's own spelling onto
 one of these names first.
 
 A target class added here has to be added to the enum field and the ``mult_options`` in

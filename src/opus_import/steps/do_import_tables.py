@@ -212,7 +212,9 @@ def create_tables_for_import(ctx: ImportContext, bundle_id: str,
     db = ctx.db
     assert db is not None
     vol_info = lookup_vol_info(bundle_id)
-    # The caller established that OPUS knows this bundle before creating its tables.
+    # Every caller has already established that OPUS knows this bundle: the import
+    # path checks it, and the two copy paths take their ids from rows the import
+    # wrote. Without an entry there is no instrument class and no table to create.
     assert vol_info is not None
     instrument_obj = vol_info['instrument_class'](ctx, bundle=bundle_id)
     mission_id = instrument_obj.mission_id

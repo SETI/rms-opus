@@ -4191,3 +4191,122 @@ body; never rewrite or delete earlier notes.*
     diffs** (`git status integration_tests/test_api/responses` empty afterwards).
     Against PR-13's 22136 statements / 1876 branches the deltas are exactly the
     `opus_support` figures above: +25 statements and +4 branches, all covered.
+- **2026-08-25 (PR-15 executed):** every module of `opus_import` except the `obs`
+  hierarchy is annotated and carries Google-style docstrings, the package ships
+  `py.typed`, and the type burn-down entry has narrowed from `opus_import.*` to
+  `opus_import.obs.*`. Facts later PRs rely on:
+  - **What the burn-down entry means now, and what PR-16 removes.** The source entry is
+    `opus_import.obs.*`, which mypy matches against the `opus_import.obs` package itself
+    as well as its modules. **`tests.opus_import.*` stays silenced alongside it, and
+    PR-16 must remove both together**, because a test that constructs an obs class
+    cannot be strict-clean while that hierarchy is unannotated -- `disallow_untyped_calls`
+    reports the call **in the caller's file**, which no override on `opus_import.obs.*`
+    can reach. That last point governs more than the tests: it is why the `steps`
+    modules annotate the obs instances they are handed as `Any` (see below), and it is
+    the general rule for calling into a silenced package from an annotated one.
+  - **`ImportContext.db` is `ImportDBSuper | None`, and that shapes the whole diff.**
+    `opus_import.cli` builds the context and connects afterwards, so every function that
+    uses the database narrows it with an `assert ctx.db is not None` (or asserts the
+    local the function already bound). Regenerate the set with
+    `grep -rn "assert ctx\.db is not None\|assert db is not None" src/opus_import`.
+    **A later PR that wants to be rid of them should change the field, not the
+    assertions**: making `db` non-optional, or reaching it through an accessor that
+    raises, is a design change to `ImportContext` and to every call site, which is more
+    than an annotation PR should decide. The same pattern covers
+    `import_util.read_schema_for_table`, which returns None for a table with no packaged
+    schema: a read of a schema that ships with the package asserts it was found.
+  - **The obs instances the steps hold are annotated `Any`, deliberately, and PR-16
+    should retype them.** `do_import_obs` and `do_import_index` take an obs class
+    instance and call its methods; naming the real class today would make every one of
+    those calls a `no-untyped-call` error in the step's own file, for the reason above.
+    They are `Any` until the hierarchy is annotated. **PR-16 is the PR that can change
+    them**, and the run that finds them is deleting the `opus_import.obs.*` override and
+    reading what the checker says about the `steps` modules.
+  - **`ImportDBSuper` gained the type aliases the pipeline names.** `Namespace` is
+    `Literal['import', 'perm', 'all']`, so a mistyped namespace is now a type error
+    rather than a `NotImplementedError` at run time; `DBRow`, `SchemaColumn` and
+    `ResultRow` name a row to write, a column definition read from a packaged JSON
+    schema, and a row of a query result. `import_util` adds `IndexRow` and
+    `TableSchema`. Later PRs should import these rather than re-spelling
+    `dict[str, Any]`. `ImportDBSuper.conn` is a bare class-level `Any` annotation, which
+    creates no attribute: the base class uses only `cursor()` and `commit()` and cannot
+    name a brand's connection type, and opening the connection is the subclass's job.
+  - **`table_names` returns a `Collection[str]`, and for one call shape it returns the
+    cache itself.** `table_names('all')` with no prefix returns the live `_table_names`
+    set that `drop_table` and `create_table` maintain; every other shape returns a new
+    list. A caller must not mutate the result. The return type is `Collection` rather
+    than a union because the contract is iteration, membership and length, in no
+    particular order -- callers that need an order already call `sorted()`.
+  - **MySQLdb is type-checked against typeshed stubs, not silenced.**
+    `types-mysqlclient` is in the dev extras, and mypy's own message is what found it:
+    "Library stubs not installed for X" means typeshed has them, while "missing library
+    stubs or py.typed marker" means nothing exists. The rule the `ignore_missing_imports`
+    comment now states, and which every later annotation PR should apply before adding an
+    entry: a package typeshed has stubs for gets its `types-*` distribution in the dev
+    extras; only a package with no stubs anywhere gets an entry. Read the current list
+    from `pyproject.toml` rather than from here.
+  - **Four public signatures changed, and the audit that found them is worth
+    repeating.** Comparing every public callable in `opus_import` between `f17422e4` and
+    this tree -- parameter name, kind, declaration position and required-ness -- reports
+    **1466 public callables on both sides and exactly four changed signatures**, which
+    is the whole list:
+    `ImportDBMySQL.__init__` takes named parameters instead of `*args, **kwargs`, and
+    `ImportDBSuper.table_info`, `delete_rows` and `find_column_max` rename their second
+    parameter `table_name` to `raw_table_name` (matching what the MySQL override has
+    always called it, and what the value is; these three are abstract stubs that only
+    raise, so no call reaches them, and nothing in the repository passes any of these by
+    keyword). Two private signatures changed as well: `ImportDBMySQL._execute` for the
+    same reason as `__init__`, and `do_import_mult._convert_sql_response_to_mult_table`
+    dropped a parameter it never read. **A rename is invisible to a grep for positional
+    calls**, which is why the audit compares names rather than counting call sites; the
+    script lives in the PR description's testing evidence and takes two trees.
+  - **`ImportDBMySQL.__init__`'s `engine` keyword could not survive that change, and
+    nothing was lost.** The branch read `kwargs['engine']` *after* calling
+    `ImportDBSuper.__init__(*args, **kwargs)`, which has no `engine` parameter and would
+    have raised `TypeError` first. `default_engine` was therefore always `'INNODB'` and
+    still is.
+  - **Three pre-existing faults were fixed because honest annotation exposed them; each
+    is small and each is a real behavior change on a path the integration suite does not
+    reach.**
+    1. `import_util.safe_pdstable_read` returned a bare list, not a pair, when a PDS4
+       index CSV held no data rows. Both callers unpack a pair, so an empty PDS4 index
+       raised `ValueError` on the unpack. It returns `(rows, None)` now, which reaches
+       the callers' existing "read failed" branch.
+    2. Two `self.logger.log(...)` calls in `ImportDBMySQL.__init__` were unguarded while
+       every other logging site in the file is guarded. `logger=None` is a supported
+       state -- PR-02's warning-handler flag exists for it, and
+       `tests/opus_import/test_importdb_mysql.py` constructs with it -- so those two
+       lines would have raised `AttributeError`. They are guarded now.
+    3. `do_import_obs.import_observation_table` left `column_val_list` as None when a
+       table schema named a `data_source` it does not implement, logged the error, and
+       then raised `TypeError` a few lines further on. An assertion now fails at the
+       fault rather than past it.
+  - **`opus_import` is measured by the unit gate, not the integration one.** The
+    integration workflow's 100% gate includes `src/opus_app/apps/*`,
+    `integration_tests/test_api/*` and `src/opus_support/*`
+    (`integration_tests/.coveragerc`), so the assertions and
+    declarations this PR adds under `src/opus_import` do not appear in its totals and
+    cannot move it. They are in the scope of the unit gate PR-19 introduces -- worth
+    knowing before that gate is set, since an assertion on an invariant is a statement
+    no test can fail.
+  - **Docstring conventions this package now follows, so PR-16 and PR-17 match.** A
+    module docstring says what the module's table or step is *for* and why its work
+    happens where it does in the sequence, not what its functions are. `Returns:`
+    describes the failure value as well as the success one, because most of this
+    pipeline reports rather than raises: a step that logs an error and returns False is
+    the norm, and the docstring has to say which it does. `Raises:` on an abstract stub
+    names the `NotImplementedError` it raises, since that is its whole behavior.
+  - **Verification evidence.** `scripts/run-all-checks.sh -c` clean (ruff, the type check
+    over `src integration_tests tests manage.py` -- 209 source files -- pytest **1124
+    passed**, unchanged from PR-14 since this PR adds no test, pyroma 10/10, bandit,
+    vulture). A built wheel carries `opus_import/py.typed` alongside the two markers
+    PR-14 shipped, with the table schemas and dictionary data unchanged.
+    The full local chain (`opus_main_test.sh`: 30-bundle import into a fresh MySQL
+    schema, then the Django suite under the 100% gate) ran end to end with exit code 0:
+    **`Ran 1643 tests` / `OK` / `TOTAL 22161 stmts, 1880 branches, 100%`**, zero missing
+    statements, zero partial branches, and **zero golden-fixture diffs**. Those are
+    PR-14's numbers unchanged, which is the point: this PR adds statements only under
+    `src/opus_import`, which that gate does not include, so the *right* result here is
+    for the coverage totals not to move at all. What the run does prove is the import
+    itself -- the assertions and the three fixes above survive a real 30-bundle import
+    with no ERRORS.log entries.

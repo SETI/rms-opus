@@ -299,7 +299,7 @@ def log_accumulated_warnings(ctx: ImportContext, title: str) -> bool:
 def safe_pdstable_read(ctx: ImportContext, filename: str,
                        pds_version: int) -> tuple[list[IndexRow] | None,
                                                   dict[str, Any] | None]:
-    """Read a PDS index table, reporting a bad one instead of aborting the run.
+    """Read a PDS index table.
 
     Parameters:
         ctx: The import run's context, for the arguments and the logger.
@@ -308,10 +308,15 @@ def safe_pdstable_read(ctx: ImportContext, filename: str,
         pds_version: 3 or 4.
 
     Returns:
-        The rows and the label, or ``(None, None)`` if the file could not be read or
-        reading it raised warnings. A PDS4 file has no label, so the second element is
+        The rows and the label. A PDS4 file has no label, so the second element is
         always None; its column values are strings unless every value in the column
         parses as an int, or as a float, in which case the whole column is converted.
+        For PDS3 a file that could not be read gives ``(None, None)`` rather than
+        raising, and the reason is logged.
+
+    Raises:
+        OSError: If a PDS4 CSV cannot be opened. Only the PDS3 path reports a bad file
+            instead of raising.
     """
     if pds_version == 3:
         return safe_pdstable_read_pds3(ctx, filename)
