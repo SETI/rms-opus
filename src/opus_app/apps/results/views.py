@@ -1469,9 +1469,9 @@ def get_search_results_chunk(request, use_cart=None,
     else:
         # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
-        # An unresolvable order slug is bad user input, not an internal failure:
-        # unchecked, the None propagates into create_order_by_terms and comes
-        # back out as a TypeError.
+        # An unresolvable order slug is bad user input, not an internal failure.
+        # Unchecked, the None reaches create_order_by_terms and trips its
+        # `assert order_params`, so the caller sees an AssertionError.
         if order_params is None:
             log.error('get_search_results_chunk: Could not parse order "%s"',
                       all_order)

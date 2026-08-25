@@ -17,7 +17,13 @@ import time
 from urllib.parse import quote
 
 from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import (
+    BadRequest,
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    PermissionDenied,
+    SuspiciousOperation,
+)
 from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template import loader
 
@@ -170,7 +176,8 @@ class Http400Error(Exception):
     """Raised by an API handler when the request itself is malformed.
 
     The `api_view` decorator turns it into an HTTP 400 response whose body is the
-    OPUS error page, with `str(exception)` as the page's explanation.
+    OPUS error page, explained by the message the exception was constructed with
+    (or by the class name, when it was constructed without one).
 
     Raise it for anything the caller supplied that is missing, unparseable, or
     unknown - a bad slug, a non-numeric limit, an unknown unit - as opposed to
@@ -181,6 +188,14 @@ class Http400Error(Exception):
 
 #: The error page rendered for an HTTP 400, alongside Django's own `404.html`.
 _HTTP400_TEMPLATE_NAME = '400.html'
+
+#: Exceptions Django's own handler turns into a specific response, which the
+#: decorator must therefore not absorb into a generic 500. `SuspiciousOperation`
+#: also reaches the `django.security.*` logger, which the operator relies on:
+#: `HttpRequest.build_absolute_uri` raises its `DisallowedHost` subclass on a
+#: spoofed Host header, so this is reachable, not theoretical.
+_DJANGO_HANDLED_EXCEPTIONS = (Http404, BadRequest, PermissionDenied,
+                              SuspiciousOperation)
 
 
 def _request_path(r):
@@ -277,8 +292,10 @@ def api_view(handler):
     * turns any other unhandled exception into an HTTP 500 response, logged with
       its traceback.
 
-    `Http404` is re-raised for Django's own handler to render, so a 404 keeps
-    both the status and the body it has always had.
+    An exception Django's own handler answers specifically - `Http404`,
+    `BadRequest`, `PermissionDenied`, `SuspiciousOperation` - is re-raised rather
+    than absorbed, so a 404 keeps both the status and the body it has always had
+    and a suspicious request still reaches the `django.security.*` logger.
 
     The handler is called with the request and the URL's own keyword arguments.
     A handler that needs the API call number - to pass on to the search helpers,
@@ -304,7 +321,7 @@ def api_view(handler):
             ret = _injected_fault_response(request)
             if ret is None:
                 ret = handler(request, *args, **kwargs)
-        except Http404 as exc:
+        except _DJANGO_HANDLED_EXCEPTIONS as exc:
             exit_api_call(api_code, exc)
             raise
         except Http400Error as exc:

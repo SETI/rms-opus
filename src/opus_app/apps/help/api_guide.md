@@ -249,10 +249,10 @@ Not all API calls provide results in all formats. The formats supported are list
 When a request cannot be answered, OPUS returns an HTML page describing what went wrong together with one of these HTTP status codes:
 
 * **400 Bad Request**: Something the request itself supplied was wrong - an unknown metadata field, a value that could not be parsed, an unsupported unit or query type, or a required parameter that was missing. The returned page names the field or value at fault. The same request will always fail the same way; it has to be corrected.
-* **404 Not Found**: The URL named something that does not exist - an entry point OPUS does not provide, or an OPUS ID (or legacy RING OBS ID) in the URL path that matches no observation.
+* **404 Not Found**: Usually the URL named something that does not exist - an entry point OPUS does not provide, or an OPUS ID (or legacy RING OBS ID) in the URL path that matches no observation. A few server-side failures also answer 404 rather than 500, for historical reasons.
 * **500 Internal Server Error**: OPUS failed while answering a request that was otherwise valid. Retrying may succeed; a failure that persists is worth reporting.
 
-Requests that supply a bad field, value, unit, or query type answer with 400 rather than the 404 that earlier versions of OPUS returned for every kind of error. Client code that treats 404 as "my request was wrong" should be updated to look at both codes; a 404 now means only that the URL itself named nothing.
+Requests that supply a bad field, value, unit, or query type answer with 400 rather than the 404 that earlier versions of OPUS returned for every kind of error. Client code that treats 404 as "my request was wrong" should be updated to look at 400 for that.
 
 ---
 

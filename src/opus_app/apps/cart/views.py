@@ -338,9 +338,19 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
     try:
         recycle_bin = int(recycle_bin)
     except (TypeError, ValueError):
+        # int() on the str-or-int this can hold raises only these two; the
+        # catch-all this replaces was needed by the fault injection that used to
+        # raise from inside the try, and a broader catch would report a genuine
+        # bug here as bad user input.
+        #
         # %r (not %s) so CR/LF in recycle_bin -- still the raw request string
-        # when int() raised -- cannot forge extra log lines (error_analyzer
-        # parses these logs line-anchored).
+        # when int() raised -- cannot forge extra log lines (error_analyzer parses
+        # these logs line-anchored). The same hazard remains wherever a bare
+        # request-supplied scalar is logged with %s; sweeping those is unassigned
+        # work, recorded in the plan's Execution notes rather than done here,
+        # because it is not part of #512. (%s of request.GET itself is already
+        # safe: QueryDict's str() is its repr(), which escapes control
+        # characters in the values.)
         log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin,
                   request.GET)
         raise Http400Error(HTTP400_BAD_RECYCLEBIN(recycle_bin,
@@ -1156,9 +1166,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         # so we have to do it ourselves here
         all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
         order_params, order_descending_params = parse_order_slug(all_order)
-        # An unresolvable order slug is bad user input, not an internal failure:
-        # unchecked, the None propagates into create_order_by_terms and comes
-        # back out as a TypeError.
+        # An unresolvable order slug is bad user input, not an internal failure.
+        # Unchecked, the None reaches create_order_by_terms and trips its
+        # `assert order_params`, so the caller sees an AssertionError.
         if order_params is None:
             log.error('_edit_cart_range: Could not parse order "%s"', all_order)
             raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))

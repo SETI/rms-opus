@@ -301,7 +301,8 @@ def api_get_widget(request, **kwargs):
         form += html
         return form
 
-    slug = strip_numeric_suffix(kwargs['slug'])
+    requested_slug = kwargs['slug']
+    slug = strip_numeric_suffix(requested_slug)
     form = ''
 
     param_info = get_param_info_by_slug(slug, 'widget')
@@ -309,7 +310,9 @@ def api_get_widget(request, **kwargs):
         log.error(
             'api_get_widget: Could not find param_info entry for slug %s',
             str(slug))
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))
+        # The error names what the caller typed, not the suffix-stripped form
+        # the lookup used, so "badslug1" is not reported as "badslug".
+        raise Http400Error(HTTP400_UNKNOWN_SLUG(requested_slug, request))
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)

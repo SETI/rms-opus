@@ -611,7 +611,9 @@ def api_get_fields(request, fmt, slug=None):
     try:
         collapse = int(collapse) != 0
     except ValueError as err:
-        log.error('api_get_fields: Bad value for collapse "%s"', collapse)
+        # %r for the same reason api_edit_cart uses it on recyclebin: this is
+        # still the raw request string when int() raised.
+        log.error('api_get_fields: Bad value for collapse %r', collapse)
         raise Http400Error(HTTP400_BAD_COLLAPSE(collapse, request)) from err
 
     return get_fields_info(fmt, request, slug=slug, collapse=collapse)

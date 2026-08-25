@@ -14,6 +14,13 @@ What is worth pinning here, and why:
   that decides what an OPUS API call returns when it goes wrong, so the mapping
   from `Http404` / `Http400Error` / any other exception to 404 / 400 / 500 is the
   whole contract.
+* **That the API-call record is closed on every one of those paths.** The
+  hand-written pairs this decorator replaces could not guarantee it, and a record
+  that is never closed leaks an entry in `_API_START_TIMES` for the life of the
+  process.
+* **That an exception Django answers itself is not absorbed.** A `DisallowedHost`
+  turned into a generic 500 would lose both the 400 Django gives it and the
+  `django.security.*` record an operator watches for.
 * **That an unhandled exception is logged with its traceback.** A 500 whose only
   record is "something failed" is what issue #512 is about; the traceback is the
   point of catching it centrally rather than letting it reach Django.
@@ -29,9 +36,11 @@ import logging
 from unittest import TestCase
 
 from django.conf import settings
+from django.core.exceptions import BadRequest, PermissionDenied, SuspiciousOperation
 from django.http import Http404, HttpResponse
 from django.test import RequestFactory
 
+from opus_app.apps.tools import app_utils
 from opus_app.apps.tools.app_utils import (
     HTTP400_BAD_LIMIT,
     Http400Error,
@@ -98,10 +107,9 @@ class ApiViewTests(TestCase):
 
         handler(self._request())
         handler(self._request())
-        self.assertEqual(2, len(seen))
-        # The API call number increments once per call and is never None.
-        self.assertTrue(all(isinstance(code, int) for code in seen))
-        self.assertEqual(seen[0]+1, seen[1])
+        # The API call number increments by exactly one per call, which is what
+        # makes it usable for correlating a slow query with its request.
+        self.assertEqual([seen[0], seen[0]+1], seen)
 
     def test__api_view_omits_api_code_when_not_asked(self):
         "[test_api_view.py] api_view: a handler with no api_code parameter"
@@ -190,8 +198,9 @@ class ApiViewTests(TestCase):
 
         @api_view
         def handler(request):
-            ran.append(True)  # pragma: no cover - the injection prevents this
-            return HttpResponse('ok')  # pragma: no cover - ditto
+            # Never reached: the injection replaces the call.
+            ran.append(True)
+            return HttpResponse('ok')
 
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 1
         with self.assertRaisesRegex(Http404, 'Fake HTTP404 error'):
@@ -204,8 +213,9 @@ class ApiViewTests(TestCase):
 
         @api_view
         def handler(request):
-            ran.append(True)  # pragma: no cover - the injection prevents this
-            return HttpResponse('ok')  # pragma: no cover - ditto
+            # Never reached: the injection replaces the call.
+            ran.append(True)
+            return HttpResponse('ok')
 
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 1
         response = handler(self._request())
@@ -217,7 +227,7 @@ class ApiViewTests(TestCase):
         "[test_api_view.py] api_view: injection with OPUS_LOG_API_CALLS enabled"
         @api_view
         def handler(request):
-            return HttpResponse('ok')  # pragma: no cover - injection prevents it
+            return HttpResponse('ok')  # Never reached.
 
         settings.OPUS_LOG_API_CALLS = 'error'
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 1
@@ -236,8 +246,94 @@ class ApiViewTests(TestCase):
         @api_view
         def api_something(request):
             "A docstring Sphinx would have to find."
-            return HttpResponse('ok')  # pragma: no cover - never called here
+            return HttpResponse('ok')  # Never called.
 
         self.assertEqual('api_something', api_something.__name__)
         self.assertEqual('A docstring Sphinx would have to find.',
                          api_something.__doc__)
+
+    def test__api_view_reraises_what_django_answers_itself(self):
+        "[test_api_view.py] api_view: SuspiciousOperation and friends are not absorbed"
+        # Django turns each of these into a specific response of its own, and
+        # SuspiciousOperation also reaches the django.security.* logger; a generic
+        # 500 here would lose both. DisallowedHost, which
+        # HttpRequest.build_absolute_uri raises on a spoofed Host header, is a
+        # SuspiciousOperation, so this is the reachable case.
+        for exception_class in (BadRequest, PermissionDenied, SuspiciousOperation):
+            with self.subTest(exception_class=exception_class.__name__):
+                @api_view
+                def handler(request, raises=exception_class):
+                    raise raises('nope')
+
+                with self.assertRaises(exception_class):
+                    handler(self._request())
+
+    def test__api_view_closes_the_api_call_record_on_every_path(self):
+        "[test_api_view.py] api_view: no path leaves an entry in _API_START_TIMES"
+        @api_view
+        def ok_handler(request):
+            return HttpResponse('ok')
+
+        @api_view
+        def http404_handler(request):
+            raise Http404('gone')
+
+        @api_view
+        def http400_handler(request):
+            raise Http400Error('bad')
+
+        @api_view
+        def boom_handler(request):
+            raise RuntimeError('boom')
+
+        app_utils._API_START_TIMES.clear()
+        ok_handler(self._request())
+        with self.assertRaises(Http404):
+            http404_handler(self._request())
+        http400_handler(self._request())
+        boom_handler(self._request())
+        # Every one of the four exits recorded its call, so nothing is left open.
+        # The hand-written pairs this replaces could not promise that: a raise
+        # past exit_api_call leaked the entry for the life of the process.
+        self.assertEqual({}, app_utils._API_START_TIMES)
+
+    def test__exit_api_call_does_not_decode_a_binary_body(self):
+        "[test_api_view.py] exit_api_call: an archive is not decoded to log 240 chars"
+        settings.OPUS_LOG_API_CALLS = 'error'
+
+        @api_view
+        def handler(request):
+            return HttpResponse(b'PK\x03\x04\xff\xfe not text',
+                                content_type='application/zip')
+
+        logging.disable(logging.NOTSET)
+        try:
+            with self.assertLogs('opus_app.apps.tools.app_utils',
+                                 level='ERROR') as captured:
+                handler(self._request())
+        finally:
+            logging.disable(logging.CRITICAL)
+        messages = [record.getMessage() for record in captured.records]
+        exit_lines = [m for m in messages if 'EXIT' in m]
+        self.assertEqual(1, len(exit_lines))
+        self.assertIn('(Binary content not displayed)', exit_lines[0])
+
+    def test__exit_api_call_still_logs_a_text_body(self):
+        "[test_api_view.py] exit_api_call: a JSON body is still shown"
+        settings.OPUS_LOG_API_CALLS = 'error'
+
+        @api_view
+        def handler(request):
+            return HttpResponse('{"a": 1}', content_type='application/json')
+
+        logging.disable(logging.NOTSET)
+        try:
+            with self.assertLogs('opus_app.apps.tools.app_utils',
+                                 level='ERROR') as captured:
+                handler(self._request())
+        finally:
+            logging.disable(logging.CRITICAL)
+        exit_lines = [record.getMessage() for record in captured.records
+                      if 'EXIT' in record.getMessage()]
+        self.assertEqual(1, len(exit_lines))
+        self.assertIn('{"a": 1}', exit_lines[0])
