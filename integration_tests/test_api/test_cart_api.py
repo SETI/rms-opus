@@ -24,9 +24,11 @@ from .api_test_helper import ApiTestHelper
 
 # The two sessions the cross-session removerange tests drive, supplied with the
 # __sessionid override that get_session_id documents for exactly this purpose.
-# They are letters, digits and underscores only, and short: view=cart builds a
-# temporary table named temp_<session>_<pid>_<time>, and MySQL limits an
-# identifier to 64 characters.
+# Both tests reuse this one pair, which is safe because the suite is serial and
+# each test empties both carts before it starts. The ids must be short and made
+# of letters, digits and underscores only, because view=cart interpolates one
+# into a temp_<session>_<pid>_<time> table name that MySQL caps at 64 characters
+# -- too short to hold a test method name.
 _CROSS_SESSION_A = 'cross_session_a'
 _CROSS_SESSION_B = 'cross_session_b'
 _CROSS_SESSION_IDS = (_CROSS_SESSION_A, _CROSS_SESSION_B)
@@ -1884,18 +1886,15 @@ class ApiCartTests(TestCase, ApiTestHelper):
             #######################################################################
 
     # Every other test in this file drives one session, so none of them can tell
-    # a cart statement that is scoped to the caller from one that is not. These
-    # two can: removerange reaches the cart through a join on obs_general_id,
-    # which another session's row for the same observation matches just as well,
-    # so only the session_id restriction keeps a range removal from emptying
-    # every other user's cart. Both of _edit_cart_range's entry paths are
-    # covered because the sort order they build differs but the DELETE does not.
+    # a cart statement that is scoped to the caller from one that is not. Both of
+    # _edit_cart_range's entry paths are covered because they build the sort order
+    # differently but share the DELETE.
 
-    def _clear_cross_session_carts(self):
+    def _clear_cross_session_carts(self) -> None:
         """Delete every cart row belonging to the two cross-session sessions."""
         Cart.objects.filter(session_id__in=_CROSS_SESSION_IDS).delete()
 
-    def _fill_cross_session_cart(self, session_id):
+    def _fill_cross_session_cart(self, session_id: str) -> None:
         """Empty one session's cart and put the whole shared range back in it.
 
         Parameters:
@@ -1911,7 +1910,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
                     'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def _fill_both_cross_session_carts(self):
+    def _fill_both_cross_session_carts(self) -> None:
         """Give both cross-session sessions the same cart contents."""
         # Registered before anything is added so the rows go away even if an
         # assertion below fails. Nothing else in the suite uses these session
@@ -1921,14 +1920,14 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._fill_cross_session_cart(_CROSS_SESSION_A)
         self._fill_cross_session_cart(_CROSS_SESSION_B)
 
-    def _assert_session_b_cart_intact(self):
+    def _assert_session_b_cart_intact(self) -> None:
         """Assert session B still holds everything it put in its cart."""
         url = f'/__cart/status.json?reqno=456&__sessionid={_CROSS_SESSION_B}'
         expected = {'recycled_count': 0, 'count': _CROSS_SESSION_RANGE_COUNT,
                     'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_other_session(self):
+    def test__api_cart_removerange_other_session(self) -> None:
         "[test_cart_api.py] /__cart/removerange: leaves another session's cart alone"
         self._fill_both_cross_session_carts()
         url = ('/__cart/removerange.json?bundleid=COVIMS_0006'
@@ -1938,7 +1937,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         self._assert_session_b_cart_intact()
 
-    def test__api_cart_removerange_other_session_cart(self):
+    def test__api_cart_removerange_other_session_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: leaves another session's cart alone cart"
         self._fill_both_cross_session_carts()
         # A subrange, so this also shows the DELETE still removes exactly the
