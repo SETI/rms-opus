@@ -3989,6 +3989,29 @@ body; never rewrite or delete earlier notes.*
     unchanged at 86); and an assertion that fires converts whatever the offending call
     used to raise into an `AssertionError`, which is a real behavior change and has to
     be measured rather than assumed -- see the differential probe below.
+  - **One public signature changed, deliberately, and it is the only one.**
+    `format_dms_hms` was
+    `(val, unit_id=None, unit=None, numerical_format=None, keep_trailing_zeros=False)`
+    and is now `(val, *, unit_id=None, unit, numerical_format, keep_trailing_zeros=False)`:
+    the declaration order is untouched, every argument but `val` is keyword-only, and
+    **`unit` and `numerical_format` are required**. The body has always required both --
+    it indexes the format and asserts on the unit -- so their `None` defaults could
+    never produce a result, and honest annotation is what exposed that. The
+    no-back-compat policy in `.cursor/rules/python.mdc` permits this: the plan's
+    compatibility waiver covers the **public web API only**, and `opus_support` is an
+    internal package with no stability guarantee. **Nothing in the repository breaks**,
+    because the only dispatcher (`units.py`'s `format_unit_value`) passes every argument
+    by keyword and `get_single_format_function` returns None for every unit_id that uses
+    this formatter -- but an out-of-tree positional caller would now get a `TypeError`,
+    so it is recorded here rather than left to be discovered.
+    **Audited for siblings, because one incidental signature change usually means a
+    habit:** comparing `inspect.signature` for every name in `opus_support.__all__`
+    between `ada9df1d` and this tree -- kind, declaration position, and whether each
+    parameter is required -- reports **41 public functions on both sides and exactly one
+    changed signature, this one**. No parameter was renamed anywhere, which is the
+    change that would break a keyword caller silently, and no other function acquired a
+    `*`, a required parameter or a reordering. Re-run that comparison after any later
+    annotation PR; a rename is invisible to a positional-call audit.
   - **The `opus_support` coverage baseline moved: 560 -> 585 statements and 258 -> 262
     branches**, still **100% of both, with zero missed statements and zero partial
     branches**. Both numbers are measured, running `tests/opus_support` under
@@ -4105,6 +4128,20 @@ body; never rewrite or delete earlier notes.*
     prints `error: INTERNAL ERROR ... Error constructing plugin instance of
     NewSemanalDjangoPlugin` and nothing more, unless `--show-traceback` is passed, which
     reveals the underlying `opus_config.config.ConfigError`.
+  - **Deferred to PR-20, not dismissed: no workflow in this repository pins an action.**
+    CodeRabbit raised it on PR-14's two touched lines; all twelve `uses:` references
+    across the four workflows are mutable tags (`actions/checkout@v6`,
+    `actions/setup-python@v6`, `codecov/codecov-action@v5`,
+    `pypa/gh-action-pypi-publish@release/v1`). Pinning the two lines one PR happens to
+    touch would leave ten unpinned and the convention inconsistent, so it belongs to
+    **PR-20**, which consolidates the integration workflow and is the PR with every
+    workflow open at once. **Why it is worth more here than the usual advice:** a moved
+    tag runs unreviewed third-party code with the job's credentials, and this repository
+    runs a **self-hosted runner**, so that code would execute on the maintainer's own
+    hardware rather than a disposable cloud VM. The same review flagged two siblings of
+    the same shape and scope -- no `permissions:` block on either workflow or job, and
+    no `persist-credentials: false` on the checkouts -- which PR-20 should take together
+    with the pinning.
   - **The checker's own cache needs no `.gitignore` entry** -- it writes
     `.mypy_cache/.gitignore` containing `*`, so the directory ignores itself.
   - **Plan drift, noted and proceeded with** (it changes no instruction's meaning):

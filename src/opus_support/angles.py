@@ -233,13 +233,19 @@ def _parse_dms_hms(s: str, conversion_factor: float = 1, allow_dms: bool = True,
     return ret
 
 
-def format_dms_hms(val: float, *, unit: str, numerical_format: str,
-                   unit_id: str | None = None,
+def format_dms_hms(val: float, *, unit_id: str | None = None, unit: str,
+                   numerical_format: str,
                    keep_trailing_zeros: bool = False) -> str:
     """Format a number as DMS or HMS or a single number as appropriate.
 
+    Every argument but `val` is keyword-only, and `unit` and `numerical_format` are
+    required: the body indexes the format and asserts on the unit, so the defaults
+    of None they used to carry could never produce a result.
+
     Parameters:
         val: The angle in degrees, or in hours when `unit` asks for hours.
+        unit_id: The id of the unit system. It is part of the signature every
+            formatter in this package shares and is not used here.
         unit: What to write the angle as: "degrees", "radians" or "hours" for a
             plain number, "dms" for degrees, minutes and seconds, or "hms" for
             hours, minutes and seconds. Anything else fails an assertion.
@@ -247,8 +253,6 @@ def format_dms_hms(val: float, *, unit: str, numerical_format: str,
             places the angle would carry in degrees. The number is adjusted for
             whichever unit is being written, since a second of arc is a fixed
             fraction of a degree.
-        unit_id: The id of the unit system. It is part of the signature every
-            formatter in this package shares and is not used here.
         keep_trailing_zeros: True to keep the zeros at the end of a decimal
             fraction, which are otherwise dropped along with a decimal point left
             with nothing after it.
