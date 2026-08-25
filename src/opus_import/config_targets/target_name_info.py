@@ -1,9 +1,16 @@
-################################################################################
-# config_targets/target_name_info.py
-#
-# Describe every supported target: the planet it belongs to, its target class,
-# and the name OPUS displays for it.
-################################################################################
+"""Every target OPUS knows: its planet, its class, and the name shown for it.
+
+A TARGET_NAME in a PDS label that this table does not describe is reported as an error
+and the observation is imported without a target, which is why adding an instrument
+usually means adding entries here.
+`opus_import.config_targets.target_name_mapping` folds an instrument\'s own spelling onto
+one of these names first.
+
+A target class added here has to be added to the enum field and the ``mult_options`` in
+``obs_general.json`` as well, or the import will reject the value it stores.
+"""
+
+from __future__ import annotations
 
 # Map each possible target name to:
 #   1. Planet name it is associated with, or None if not associated with a
@@ -12,7 +19,7 @@
 #   3. Pretty name
 # Note that if you add a new target class here, you also have to update the
 # enum field and mult_options in obs_general.json
-TARGET_NAME_INFO = {
+TARGET_NAME_INFO: dict[str, tuple[str | None, str, str]] = {
     'NONE':                 (None,  'OTHER',        'None'),
     'UNKNOWN':              (None,  'OTHER',        'Unknown'),
     'OTHER':                (None,  'OTHER',        'Other'),

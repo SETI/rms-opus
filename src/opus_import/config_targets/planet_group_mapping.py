@@ -1,11 +1,13 @@
-################################################################################
-# config_targets/planet_group_mapping.py
-#
-# Group the targets by planet for display, and give each group its position
-# in the displayed order.
-################################################################################
+"""How the search form groups targets by planet, and in what order.
 
-PLANET_GROUP_MAPPING = {
+`opus_import.config_targets.target_name_info` says which group each target belongs to;
+this says what the group is called and where it sits in the list. The entry keyed by None
+is the group a target with no planet falls into.
+"""
+
+from __future__ import annotations
+
+PLANET_GROUP_MAPPING: dict[str | None, dict[str, str]] = {
     'MER':   {'label': 'Mercury', 'disp_order': '010'},
     'VEN':   {'label': 'Venus',   'disp_order': '020'},
     'EAR':   {'label': 'Earth',   'disp_order': '030'},

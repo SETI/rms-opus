@@ -1,9 +1,12 @@
-################################################################################
-# config_bundle_info.py
-#
-# Defines the BUNDLE_INFO structure, which gives information about how to
-# import each bundle/volume.
-################################################################################
+"""How to import each kind of bundle, keyed by a pattern matching the bundle id.
+
+`BUNDLE_INFO` is what makes a bundle importable at all: an id that matches no entry is
+one OPUS does not know, and an entry whose ``instrument_class`` is None names a bundle
+OPUS knows and deliberately ignores. `opus_import.steps.do_import_tables.lookup_vol_info`
+is how the pipeline reads it.
+"""
+
+from typing import Any
 
 # flake8: noqa
 
@@ -57,7 +60,7 @@ from opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import Ob
 #   - instrument_class: The Python class, imported above, that will handle the
 #       import.
 
-BUNDLE_INFO = [
+BUNDLE_INFO: list[tuple[str, dict[str, Any]]] = [
 
     ####################
     ### PDS3 VOLUMES ###
