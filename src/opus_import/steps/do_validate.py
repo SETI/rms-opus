@@ -20,15 +20,20 @@ if TYPE_CHECKING:
 
 
 def validate_param_info(ctx: ImportContext, namespace: Namespace) -> None:
-    """Check that ``param_info`` describes every user-visible column exactly once.
+    """Report user-visible columns that ``param_info`` does not describe.
 
     Every column of every ``obs_`` table needs a ``param_info`` row, apart from the ones
     users never search or see: ``id``, ``timestamp``, ``obs_general_id``, the ``d_``
     (delta) columns and any column that has one, the ``mult_`` id columns, ``opus_id``
     outside ``obs_general``, ``bundle_id`` outside ``obs_pds``, ``instrument_id``
-    outside ``obs_general``, and everything in ``obs_files``. The rows themselves are
-    then checked for a duplicated ``disp_order`` within one category among the displayed
-    parameters, and for a duplicated slug anywhere.
+    outside ``obs_general``, and everything in ``obs_files``. A column with no row is
+    reported; a column with more than one is not, since the check tests only for
+    absence.
+
+    The rows are then scanned for a ``disp_order`` repeated within one category among
+    the displayed parameters, and for a repeated slug. Both scans use a subquery that
+    skips its first match, so they report a value shared by three or more rows and stay
+    silent about one shared by exactly two.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.

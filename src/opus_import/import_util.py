@@ -2,8 +2,9 @@
 
 Five unrelated groups of helper live here:
 
-* expanding the bundle descriptors given on the command line into bundle ids, and reading
-  a PDS index table without letting a malformed one abort the run;
+* expanding the bundle descriptors given on the command line into bundle ids, and
+  reading a PDS index table -- where a bad PDS3 label is reported and turned into a
+  ``(None, None)`` result, while the PDS4 reader has no such handling and propagates;
 * naming things -- the ``obs_``/``mult_`` table for a mission, instrument or surface
   geometry target, and the encoded and slug forms of a target name;
 * reading the packaged ``table_schemas`` JSON that defines every OPUS table;

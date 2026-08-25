@@ -357,13 +357,13 @@ def main() -> None:
     read only once the arguments parse, so ``--help`` works without one.
 
     Raises:
-        SystemExit: With a non-zero status in exactly four cases, each logged first:
-            ``--drop-permanent-tables`` given without ``--scorched-earth`` or the
-            reverse, the database connection failing, the observation import failing,
-            and any exception reaching the top-level handler. **Every other step reports
-            failure through the log and leaves the status zero** -- a failed dictionary
-            import, a failed auxiliary-table build and every validation error included --
-            so the exit status is not a summary of whether the run was clean.
+        SystemExit: With a non-zero status, logged first, when the arguments are
+            contradictory, a bundle descriptor is bad, the database connection fails,
+            the observation import fails, or an exception reaches the top-level handler.
+            **A non-zero status means the run stopped, not that a zero status means it
+            was clean:** several steps report failure through the log and leave the
+            status zero, a failed dictionary import and every validation error among
+            them. Read ``ERRORS.log`` to judge whether a run was clean.
     """
     command_list = sys.argv[1:]
 

@@ -1,8 +1,13 @@
 """The MySQL implementation of the import pipeline's database interface.
 
 `ImportDBMySQL` is the one brand `opus_import.importdb.get_db` can return. It renders the
-OPUS table schemas as MySQL DDL, quotes every identifier with backticks after validating
-it, and passes every value as a bound parameter.
+OPUS table schemas as MySQL DDL and builds the statements that read and write rows.
+
+Every identifier it emits is validated against a strict pattern and then backtick-quoted,
+and the row statements bind their values as parameters rather than formatting them into
+the text. The DDL is the exception: `ImportDBMySQL.create_table` formats a column's
+default and its enum option list straight into the statement, which is safe only because
+those come from the table schemas packaged with `opus_import` and never from input.
 
 The driver is imported defensively, so that the module still imports without
 ``mysqlclient`` installed and a package-wide sweep -- Sphinx autodoc, or a test

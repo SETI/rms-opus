@@ -72,8 +72,9 @@ class ImportDBSuper:
             assigned here, because opening it is the subclass's job and there is no
             connection before that.
         log_sql: True to log every statement and its parameters at debug level.
-        tables_created: The tables created through this instance, in creation order, so
-            a caller can post-process exactly the tables an import run made.
+        tables_created: The tables created through this instance, in creation order,
+            so a caller can post-process the ones an import run made. A read-only run
+            records the tables it would have created.
     """
 
     # Any DB-API 2.0 connection; the base class uses only `cursor()` and `commit()`, and
@@ -171,9 +172,6 @@ class ImportDBSuper:
         Returns:
             The prefixed name for ``'import'``, and the unchanged name otherwise or when
             no import prefix is configured.
-
-        Raises:
-            NotImplementedError: If the namespace is not one of the three.
         """
         if self.import_prefix is None:
             return raw_table_name
@@ -193,9 +191,6 @@ class ImportDBSuper:
         Returns:
             The name with the import prefix removed for ``'import'``, and the unchanged
             name otherwise or when no import prefix is configured.
-
-        Raises:
-            NotImplementedError: If the namespace is not one of the three.
         """
         if self.import_prefix is None:
             return table_name

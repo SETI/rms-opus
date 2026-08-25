@@ -1,11 +1,12 @@
 """Create, delete and copy the ``obs_`` tables an import writes into.
 
 The tables are dropped and rebuilt rather than updated, both in the import namespace at
-the start of a run and in the permanent one when the run is copied over. Three
-constraints fix the order everything here happens in: every other ``obs_`` table has a
-foreign key onto ``obs_general``, ``cart`` has one too, and the ``mult_`` tables are
-referenced by the ``obs_`` tables. So a teardown goes other tables, then ``cart``, then
-``obs_general``, then the ``mult_`` tables, and a build goes the other way.
+the start of a run and in the permanent one when the run is copied over. What fixes the
+order is that the other ``obs_`` tables and ``cart`` carry foreign keys onto
+``obs_general``, so a teardown goes other tables, then ``cart``, then ``obs_general``,
+then the ``mult_`` tables, and a build goes the other way. The ``mult_`` tables come
+last on teardown and first on build by the same convention the import follows -- an
+``obs_`` row holds a ``mult_`` row id -- but no database constraint enforces that one.
 
 The ``obs_surface_geometry__<TARGET>`` tables are the exception throughout: there is one
 per target an observation mentions, so which of them exist is not known until the
@@ -192,10 +193,11 @@ def create_tables_for_import(ctx: ImportContext, bundle_id: str,
                              ) -> tuple[dict[str, TableSchema], list[str]]:
     """Create the tables one bundle needs, and return the schemas that describe them.
 
-    Every table `opus_import.config_data` lists is created, with the mission and
-    instrument placeholders filled in for this bundle, along with each ``mult_`` table
-    the columns of those tables reference. A table with no packaged schema is skipped,
-    which is how a bundle ends up with only the tables its instrument has columns in.
+    Each table `opus_import.config_data` lists is created if a packaged schema defines
+    it, with the mission and instrument placeholders filled in for this bundle, along
+    with the ``mult_`` tables the columns of those tables reference. A table with no
+    schema is skipped, which is how a bundle ends up with only the tables its instrument
+    has columns in.
 
     The ``obs_surface_geometry__<TARGET>`` tables are deliberately **not** created: the
     target names are not known until the observations have been read. Its template

@@ -15,8 +15,11 @@ to mention, and ``obs_files`` is deferred past even those, because it needs the
 ``obs_general`` and ``obs_pds`` rows and contributes many rows per observation rather
 than one.
 
-Nothing is written to the database until every row has been computed, since the mult
-tables the rows reference by foreign key have to be written first.
+Nothing is written to the database until every row has been computed. The ``mult_``
+tables go out first, because an ``obs_`` row stores the row id a value was given in its
+``mult_`` table and that row has to exist to be looked up -- by convention rather than by
+a database constraint, since a ``mult_idx`` column carries a plain index and no foreign
+key.
 
 These are the per-index internals of `opus_import.steps.do_import`, not a step of their
 own.
@@ -49,9 +52,10 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
     per target per observation, so its rows are collected per target; the others have at
     most one row per observation.
 
-    Where a bundle's index has more than one row for an observation, the rows are
-    resolved down to the one whose filespec round-trips through the OPUS id, and the
-    others are dropped with a log message. Where an index row produces more than one
+    A bundle whose `BundleInfo` sets ``validate_index_rows`` has its rows resolved when
+    an observation has more than one: the one whose filespec round-trips through the
+    OPUS id is kept and the others are dropped with a log message. Without that flag
+    every row is imported as it stands. Where an index row produces more than one
     observation, the row is processed once per phase.
 
     Parameters:
@@ -604,12 +608,13 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
     ctx.current_index_row_number = None
     ctx.current_primary_filespec = None
 
-    # Now that we have all the values, we have to dump out the mult tables
-    # because they are referenced as foreign keys
+    # The mult tables go first: an obs_ row holds the id its value was given in the
+    # mult_ table, so that row has to be there to be looked up. Nothing enforces it --
+    # a mult_idx column is a plain index, not a foreign key.
     do_import_mult.dump_import_mult_tables(ctx)
 
-    # Now dump out the obs tables, in order, because at least obs_general
-    # is referenced by foreign keys.
+    # Now dump out the obs tables, in order: obs_general really is a foreign-key target
+    # for the other obs_ tables (on id and on opus_id), so it has to exist first.
     db = ctx.db
     assert db is not None
     for table_name in table_names_in_order:

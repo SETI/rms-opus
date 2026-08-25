@@ -1,12 +1,21 @@
-"""Print the star coordinate table by looking every star up in SIMBAD.
+"""Look up star coordinates in SIMBAD and print them in the checked-in table's format.
 
-Run as ``python -m opus_import.util.retrieve_ra_dec`` when a star is added or a
-coordinate is questioned: the output is the body of
-`opus_import.config_targets.star_ra_dec`'s table, which is checked in rather than
-fetched, so that an import needs no network access.
+`opus_import.config_targets.star_ra_dec` holds the coordinates the import actually uses.
+They are checked in rather than fetched, so that an import needs no network access, and
+this tool is how a coordinate is obtained when a star is added or an existing value is
+questioned.
 
-Importing this module does nothing. Running it issues one HTTP request per star, several
-hundred of them.
+**Merge the output into that table; never paste it over the table.** The `STARS` list
+below is not the table's key set -- the table holds entries this list does not, so
+replacing the table wholesale would delete them. ``BET_ARI`` and the ``UCAC2_*`` block
+are examples; compare the two key sets before touching anything::
+
+    from opus_import.config_targets.star_ra_dec import STAR_RA_DEC
+    from opus_import.util.retrieve_ra_dec import STARS
+    sorted(set(STAR_RA_DEC) - set(STARS))   # entries only the table has
+
+Importing this module does nothing. Running it issues one HTTP request per entry in
+`STARS`.
 """
 
 from __future__ import annotations

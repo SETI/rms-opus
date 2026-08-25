@@ -1,7 +1,9 @@
 """The J2000 right ascension and declination of every star OPUS knows about.
 
 Both are in degrees. The table is checked in rather than looked up, so an import needs no
-network access; `opus_import.util.retrieve_ra_dec` regenerates it from SIMBAD.
+network access. `opus_import.util.retrieve_ra_dec` looks coordinates up in SIMBAD and
+prints them in this format, but it works from its own list of stars, which does not cover
+every entry here -- **merge its output in rather than replacing this table with it.**
 """
 
 from __future__ import annotations

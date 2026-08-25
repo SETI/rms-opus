@@ -1,10 +1,14 @@
 """Build the ``table_names`` table, which orders the Details tab's sections.
 
-One row per permanent ``obs_`` table that exists, plus ``obs_general``, which is written
-unconditionally because every observation has one: the table's name, the heading the web
-application shows above it, and whether it is shown at all. The rows are written in the
-order they should appear, and ``disp_order`` counts up as they are appended, so the
-order of the code below is the order a user sees.
+A row carries a table's name, the heading the web application shows above it, and
+whether it is shown at all. The rows are written in the order they should appear, and
+``disp_order`` counts up as they are appended, so the order of the code below is the
+order a user sees.
+
+**The set of tables is written out by hand here, not derived from the schemas**, so a
+table added to `opus_import.config_data` needs a row adding here too or it will have no
+section. ``obs_files`` is deliberately absent: it holds one row per file rather than per
+observation and users never search it.
 """
 
 from __future__ import annotations

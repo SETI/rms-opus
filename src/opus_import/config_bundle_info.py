@@ -67,9 +67,10 @@ class BundleInfo(TypedDict):
         pds_version: 3 or 4.
         primary_index: The primary index file names, with ``<BUNDLE>`` standing for the
             bundle id, or None for a bundle OPUS does not import.
-        validate_index_rows: True to keep only the one index row per observation whose
-            filespec survives a round trip through the OPUS id. Bundles whose index
-            carries several rows per observation need it.
+        validate_index_rows: True to resolve an observation that has several index
+            rows down to the one whose filespec survives a round trip through the OPUS
+            id. An observation with a single row is kept without that check. Bundles
+            whose index carries several rows per observation need this.
         temporal_camera: True if one observation can span enough time for a gridless
             geometry value to differ between its start and its end, which is what
             decides whether such a pair is allowed to disagree.
