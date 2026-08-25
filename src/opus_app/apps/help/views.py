@@ -37,10 +37,8 @@ from opus_app.apps.metadata.views import get_fields_info
 from opus_app.apps.search.models import MultObsGeneralInstrumentId, ObsGeneral
 from opus_app.apps.tools.app_utils import (
     HTTP404_NO_REQUEST,
-    enter_api_call,
-    exit_api_call,
+    api_view,
     get_git_version,
-    throw_random_http404_error,
 )
 
 log = logging.getLogger(__name__)
@@ -53,6 +51,7 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @never_cache
+@api_view
 def api_about(request, fmt):
     """Renders the about page.
 
@@ -60,13 +59,8 @@ def api_about(request, fmt):
 
     Format: __help/about.(?P<fmt>html|pdf)
     """
-    api_code = enter_api_call('api_about', request)
-
-    if (not request or request.GET is None or request.META is None
-        or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST(f'/__help/about.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not request or request.GET is None or request.META is None:
+        raise Http404(HTTP404_NO_REQUEST(f'/__help/about.{fmt}'))
 
     git_id = get_git_version()
     database_schema = settings.DB_SCHEMA_NAME
@@ -79,12 +73,12 @@ def api_about(request, fmt):
         'hostname': hostname
     }
 
-    ret = _render_html_or_pdf(request, 'help/about.html', fmt, 'about',
-                              'About OPUS', context)
-    exit_api_call(api_code, ret)
-    return ret
+    return _render_html_or_pdf(request, 'help/about.html', fmt, 'about',
+                               'About OPUS', context)
+
 
 @never_cache
+@api_view
 def api_bundles(request, fmt):
     """Renders the bundles page.
 
@@ -92,13 +86,8 @@ def api_bundles(request, fmt):
 
     Format: __help/bundles.(?P<fmt>html|pdf)
     """
-    api_code = enter_api_call('api_bundles', request)
-
-    if (not request or request.GET is None or request.META is None
-        or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST(f'/__help/bundles.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not request or request.GET is None or request.META is None:
+        raise Http404(HTTP404_NO_REQUEST(f'/__help/bundles.{fmt}'))
 
     all_bundles = {}
     for d in (ObsGeneral.objects.values('instrument_id','bundle_id')
@@ -111,13 +100,13 @@ def api_bundles(request, fmt):
         all_bundles[k] = ', '.join(all_bundles[k])
 
     context = {'all_bundles': all_bundles}
-    ret = _render_html_or_pdf(request, 'help/bundles.html', fmt, 'bundles',
-                              'Bundles/Volumes Available for Searching with OPUS',
-                              context)
-    exit_api_call(api_code, ret)
-    return ret
+    return _render_html_or_pdf(
+                    request, 'help/bundles.html', fmt, 'bundles',
+                    'Bundles/Volumes Available for Searching with OPUS', context)
+
 
 @never_cache
+@api_view
 def api_faq(request, fmt):
     """Renders the faq page.
 
@@ -125,13 +114,8 @@ def api_faq(request, fmt):
 
     Format: __help/faq.(?P<fmt>html|pdf)
     """
-    api_code = enter_api_call('api_faq', request)
-
-    if (not request or request.GET is None or request.META is None
-        or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST(f'/__help/faq.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not request or request.GET is None or request.META is None:
+        raise Http404(HTTP404_NO_REQUEST(f'/__help/faq.{fmt}'))
 
     path = os.path.dirname(os.path.abspath(__file__))
     faq_content_file = 'faq.yaml'
@@ -142,20 +126,18 @@ def api_faq(request, fmt):
         except yaml.YAMLError as exc: # pragma: no cover -
             # This can only happen if there is a problem with the YAML in the
             # FAQ.YAML file
-            log.error('api_faq error: %s', str(exc))
-            exit_api_call(api_code, None)
+            log.exception('api_faq: Unable to parse %s', faq_content_file)
             raise Http404 from exc
 
     context = {'faq': faq,
                'allow_collapse': fmt == 'html'}
-    ret = _render_html_or_pdf(request, 'help/faq.html', fmt, 'faq',
-                              'Frequently Asked Questions (FAQ) About OPUS',
-                              context)
+    return _render_html_or_pdf(
+                    request, 'help/faq.html', fmt, 'faq',
+                    'Frequently Asked Questions (FAQ) About OPUS', context)
 
-    exit_api_call(api_code, ret)
-    return ret
 
 @never_cache
+@api_view
 def api_gettingstarted(request, fmt):
     """Renders the getting started page.
 
@@ -163,22 +145,16 @@ def api_gettingstarted(request, fmt):
 
     Format: __help/gettingstarted.(?P<fmt>html|pdf)
     """
-    api_code = enter_api_call('api_gettingstarted', request)
+    if not request or request.GET is None or request.META is None:
+        raise Http404(HTTP404_NO_REQUEST(f'/__help/gettingstarted.{fmt}'))
 
-    if (not request or request.GET is None or request.META is None
-        or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST(f'/__help/gettingstarted.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+    return _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
+                               'getting_started',
+                               'Getting Started with OPUS')
 
-    ret = _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
-                              'getting_started',
-                              'Getting Started with OPUS')
-
-    exit_api_call(api_code, ret)
-    return ret
 
 @never_cache
+@api_view
 def api_splash(request):
     """Renders the splash page.
 
@@ -186,19 +162,14 @@ def api_splash(request):
 
     Format: __help/splash.html
     """
-    api_code = enter_api_call('api_splash', request)
+    if not request or request.GET is None or request.META is None:
+        raise Http404(HTTP404_NO_REQUEST('/__help/splash.html'))
 
-    if (not request or request.GET is None or request.META is None
-        or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST('/__help/splash.html'))
-        exit_api_call(api_code, ret)
-        raise ret
+    return render(request, 'help/splash.html')
 
-    ret = render(request, 'help/splash.html')
-    exit_api_call(api_code, ret)
-    return ret
 
 @never_cache
+@api_view
 def api_citing_opus(request, fmt):
     """Renders the citing opus page.
 
@@ -206,13 +177,8 @@ def api_citing_opus(request, fmt):
 
     Format: __help/citing.(?P<fmt>html|pdf)
     """
-    api_code = enter_api_call('api_citing_opus', request)
-
-    if (not request or request.GET is None or request.META is None
-        or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST(f'/__help/citing.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not request or request.GET is None or request.META is None:
+        raise Http404(HTTP404_NO_REQUEST(f'/__help/citing.{fmt}'))
 
     opus_search_url = request.GET.get('searchurl', None)
     opus_state_url = request.GET.get('stateurl', None)
@@ -243,15 +209,13 @@ def api_citing_opus(request, fmt):
                'opus_search_qr': opus_search_qr_str,
                'opus_state_url': opus_state_url,
                'opus_state_qr': opus_state_qr_str}
-    ret = _render_html_or_pdf(request, 'help/citing.html', fmt, 'citing',
-                              'How to Cite OPUS',
-                              context)
-
-    exit_api_call(api_code, ret)
-    return ret
+    return _render_html_or_pdf(request, 'help/citing.html', fmt, 'citing',
+                               'How to Cite OPUS',
+                               context)
 
 
 @never_cache
+@api_view
 def api_api_guide(request, fmt):
     """Renders the API guide.
 
@@ -259,13 +223,8 @@ def api_api_guide(request, fmt):
 
     To edit guide content edit api_guide.md
     """
-    api_code = enter_api_call('api_api_guide', request)
-
-    if (not request or request.GET is None or request.META is None
-        or throw_random_http404_error()):
-        ret = Http404(HTTP404_NO_REQUEST(f'/__help/apiguide.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not request or request.GET is None or request.META is None:
+        raise Http404(HTTP404_NO_REQUEST(f'/__help/apiguide.{fmt}'))
 
     uri = HttpRequest.build_absolute_uri(request)
     prefix = '/'.join(uri.split('/')[:3])
@@ -298,7 +257,7 @@ def api_api_guide(request, fmt):
         guide = guide.replace('<thead>', '<thead class="thead-dark">')
         guide = guide.replace('<td>', '<td class="op-table-padding">')
 
-    fields_dict = get_fields_info('raw', request, api_code, collapse=True)
+    fields_dict = get_fields_info('raw', request, collapse=True)
     fields = []
     for _cat, cat_data in fields_dict.items():
         for _field_name, field in cat_data.items():
@@ -314,11 +273,8 @@ def api_api_guide(request, fmt):
 
     context = {'guide': guide,
                'fields': fields}
-    ret = _render_html_or_pdf(request, template_name, fmt, 'api_guide',
-                              None, context)
-
-    exit_api_call(api_code, ret)
-    return ret
+    return _render_html_or_pdf(request, template_name, fmt, 'api_guide',
+                               None, context)
 
 
 def _render_html_or_pdf(request, template, fmt, filename, title, context=None):

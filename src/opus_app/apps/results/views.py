@@ -57,34 +57,32 @@ from opus_app.apps.search.views import (
 )
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
-    HTTP404_BAD_LIMIT,
-    HTTP404_BAD_OFFSET,
-    HTTP404_BAD_OR_MISSING_REQNO,
-    HTTP404_BAD_PAGENO,
-    HTTP404_BAD_STARTOBS,
-    HTTP404_MISSING_OPUS_ID,
+    HTTP400_BAD_LIMIT,
+    HTTP400_BAD_OFFSET,
+    HTTP400_BAD_OR_MISSING_REQNO,
+    HTTP400_BAD_PAGENO,
+    HTTP400_BAD_STARTOBS,
+    HTTP400_MISSING_OPUS_ID,
+    HTTP400_SEARCH_PARAMS_INVALID,
+    HTTP400_UNKNOWN_CATEGORY,
+    HTTP400_UNKNOWN_SLUG,
     HTTP404_NO_REQUEST,
-    HTTP404_SEARCH_PARAMS_INVALID,
-    HTTP404_UNKNOWN_CATEGORY,
     HTTP404_UNKNOWN_FORMAT,
     HTTP404_UNKNOWN_OPUS_ID,
     HTTP404_UNKNOWN_RING_OBS_ID,
-    HTTP404_UNKNOWN_SLUG,
     HTTP500_DATABASE_ERROR,
     HTTP500_INTERNAL_ERROR,
     HTTP500_SEARCH_CACHE_FAILED,
+    Http400Error,
+    api_view,
     cols_to_slug_list,
     convert_ring_obs_id_to_opus_id,
     csv_response,
     download_filename,
-    enter_api_call,
-    exit_api_call,
     get_mult_name,
     get_reqno,
     get_session_id,
     json_response,
-    throw_random_http404_error,
-    throw_random_http500_error,
 )
 from opus_app.apps.tools.db_utils import (
     lookup_pretty_value_for_mult,
@@ -104,7 +102,8 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @never_cache
-def api_get_data_and_images(request):
+@api_view
+def api_get_data_and_images(request, *, api_code):
     """Return a page of data and images for a given search.
 
     This is a PRIVATE API.
@@ -158,12 +157,8 @@ def api_get_data_and_images(request):
          'reqno':               reqno
         }
     """
-    api_code = enter_api_call('api_get_data_and_images', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST('/__api/dataimages.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST('/__api/dataimages.json'))
 
     session_id = get_session_id(request)
 
@@ -176,7 +171,7 @@ def api_get_data_and_images(request):
                                        return_cart_states=True,
                                        api_code=api_code)
     if error is not None:
-        return get_search_results_chunk_error_handler(error, api_code)
+        return get_search_results_chunk_error_handler(error)
 
     preview_jsons = [json.loads(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
@@ -214,21 +209,16 @@ def api_get_data_and_images(request):
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
     labels_no_units = labels_for_slugs(cols_to_slug_list(cols), units=False)
-    if (labels is None or labels_no_units is None or
-        throw_random_http404_error()): # pragma: no cover -
+    if labels is None or labels_no_units is None: # pragma: no cover -
         # Bad slugs will have already been caught in get_search_results_chunk
-        ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
 
     order_slugs = cols_to_slug_list(order)
     order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
     order_labels = labels_for_slugs(order_slugs_pure, units=False)
-    if order_labels is None or throw_random_http404_error(): # pragma: no cover -
+    if order_labels is None: # pragma: no cover -
         # Bad slugs will have already been caught in get_search_results_chunk
-        ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
 
     order_list = []
     for _idx, (slug, label) in enumerate(zip(order_slugs, order_labels, strict=False)):
@@ -249,15 +239,12 @@ def api_get_data_and_images(request):
     else:
         count, _, err = get_result_count_helper(request, api_code)
         if err is not None: # pragma: no cover - database error
-            exit_api_call(api_code, err)
             return err
 
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http404_error():
+    if reqno is None:
         log.error('api_get_data_and_images: Missing or badly formatted reqno')
-        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
 
     data = {'page':             new_page,
             'limit':            limit,
@@ -275,13 +262,12 @@ def api_get_data_and_images(request):
     if start_obs is not None:
         data['start_obs'] = start_obs
 
-    ret = json_response(data)
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response(data)
 
 
 @never_cache
-def api_get_data(request, fmt):
+@api_view
+def api_get_data(request, fmt, *, api_code):
     """Return a page of data for a given search.
 
     This is a PUBLIC API.
@@ -337,22 +323,16 @@ def api_get_data(request, fmt):
             </tr>
         </table>
     """
-    api_code = enter_api_call('api_get_data', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/data.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST(f'/api/data.{fmt}'))
 
     session_id = get_session_id(request)
 
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
-    if labels is None or throw_random_http404_error():
-        ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if labels is None:
+        raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
 
     (page_no, start_obs, limit,
      page, order, _aux, error) = get_search_results_chunk(request,
@@ -360,7 +340,7 @@ def api_get_data(request, fmt):
                                                          return_opusids=True,
                                                          api_code=api_code)
     if error is not None:
-        return get_search_results_chunk_error_handler(error, api_code)
+        return get_search_results_chunk_error_handler(error)
 
     if request.GET.get('view', 'browse') == 'cart':
         # This part of the API isn't documented for the public but is used in
@@ -370,7 +350,6 @@ def api_get_data(request, fmt):
     else:
         result_count, _, err = get_result_count_helper(request, api_code)
         if err is not None: # pragma: no cover - database error
-            exit_api_call(api_code, err)
             return err
 
     data = {}
@@ -400,16 +379,14 @@ def api_get_data(request, fmt):
         ret = json_response(data)
     else: # pragma: no cover - error catchall
         log.error('api_get_data: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
 
-    exit_api_call(api_code, ret)
     return ret
 
 
 @never_cache
-def api_get_metadata(request, opus_id, fmt):
+@api_view
+def api_get_metadata(request, opus_id, fmt, *, api_code):
     r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PUBLIC API.
@@ -431,10 +408,11 @@ def api_get_metadata(request, opus_id, fmt):
 
     HTML and CSV return fully qualified labels.
     """
-    return get_metadata(request, opus_id, fmt, 'api_get_metadata', False)
+    return get_metadata(request, opus_id, fmt, False, api_code)
 
 
-def api_get_metadata_internal(request, opus_id, fmt):
+@api_view
+def api_get_metadata_internal(request, opus_id, fmt, *, api_code):
     r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PRIVATE API.
@@ -471,30 +449,23 @@ def api_get_metadata_internal(request, opus_id, fmt):
     an externally-formatted HTML that is acceptable to outside users without
     exposing internal details.
     """
-    return get_metadata(request, opus_id, fmt, 'api_get_metadata_internal', True)
+    return get_metadata(request, opus_id, fmt, True, api_code)
 
-def get_metadata(request, opus_id, fmt, api_name, internal):
-    api_code = enter_api_call(api_name, request)
+def get_metadata(request, opus_id, fmt, internal, api_code):
     if not request or request.GET is None or request.META is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
         # don't care.
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/metadata/{opus_id}.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST(f'/api/metadata/{opus_id}.{fmt}'))
 
     if not opus_id: # pragma: no cover - configuration error
-        ret = Http404(HTTP404_MISSING_OPUS_ID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_MISSING_OPUS_ID(request))
 
     # Backwards compatibility
     orig_opus_id = opus_id
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id or throw_random_http404_error():
-        ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not opus_id:
+        raise Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
 
     cols = request.GET.get('cols', False)
     if cols or cols == '':
@@ -502,30 +473,21 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
                                      fmt,
                                      internal,
                                      api_code)
-        if ret is None or throw_random_http404_error(): # pragma: no cover -
+        if ret is None: # pragma: no cover -
             # _get_metadata_by_slugs can't return None
-            ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
-            exit_api_call(api_code, ret)
-            raise ret
-        exit_api_call(api_code, ret)
+            raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
         return ret
 
     # Make sure it's a valid OPUS ID
     try:
         results = query_table_for_opus_id('obs_general', opus_id)
-        if throw_random_http500_error(): # pragma: no cover - internal debugging
-            raise LookupError
     except LookupError: # pragma: no cover - configuration error
-        log.error('api_get_metadata: Could not find data model for obs_general')
-        ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
-        exit_api_call(api_code, ret)
-        return ret
-    if len(results) == 0 or throw_random_http404_error():
+        log.exception('get_metadata: Could not find data model for obs_general')
+        return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+    if len(results) == 0:
         log.error('get_metadata: Error searching for opus_id "%s"',
                   opus_id)
-        ret = Http404(HTTP404_UNKNOWN_OPUS_ID(opus_id, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_UNKNOWN_OPUS_ID(opus_id, request))
 
     cats = request.GET.get('cats', False)
     url_cols = request.GET.get('url_cols', False)
@@ -550,12 +512,10 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
                        TableNames.objects.filter(table_name__in=cat_list,
                                                  display='Y'))
                                          .order_by('disp_order'))
-        if len(all_tables) != len(cat_list) or throw_random_http404_error():
+        if len(all_tables) != len(cat_list):
             log.error('get_metadata: Unknown category name in "%s"',
                       cats)
-            ret = Http404(HTTP404_UNKNOWN_CATEGORY(request))
-            exit_api_call(api_code, ret)
-            raise ret
+            raise Http400Error(HTTP400_UNKNOWN_CATEGORY(request))
 
     # Now find all params and their values in each of these tables
     for table in all_tables:
@@ -589,14 +549,10 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
-                if throw_random_http500_error(): # pragma: no cover - internal debugging
-                    raise LookupError
             except LookupError: # pragma: no cover - configuration error
-                log.error('api_get_metadata: Could not find data model for '
-                          +'category %s', model_name)
-                ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
-                exit_api_call(api_code, ret)
-                return ret
+                log.exception('get_metadata: Could not find data model for '
+                              +'category %s', model_name)
+                return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
 
             result_vals = results.values(*all_param_names)
             if not result_vals:
@@ -702,16 +658,14 @@ def get_metadata(request, opus_id, fmt, api_name, internal):
         ret = json_response(data)
     else: # pragma: no cover - error catchall
         log.error('get_metadata: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
 
-    exit_api_call(api_code, ret)
     return ret
 
 
 @never_cache
-def api_get_images_by_size(request, size, fmt):
+@api_view
+def api_get_images_by_size(request, size, fmt, *, api_code):
     """Return all images of a particular size for a given search.
 
     This is a PUBLIC API.
@@ -725,15 +679,11 @@ def api_get_images_by_size(request, size, fmt):
 
     Can return JSON, HTML, or CSV.
     """
-    api_code = enter_api_call('api_get_images_by_size', request)
-
-    ret = _api_get_images(request, fmt, api_code, size, True, None)
-
-    exit_api_call(api_code, ret)
-    return ret
+    return _api_get_images(request, fmt, api_code, size, True, None)
 
 @never_cache
-def api_get_images(request, fmt):
+@api_view
+def api_get_images(request, fmt, *, api_code):
     """Return all images of all sizes for a given search.
 
     This is a PUBLIC API.
@@ -746,15 +696,11 @@ def api_get_images(request, fmt):
 
     Can return JSON or CSV.
     """
-    api_code = enter_api_call('api_get_images', request)
-
-    ret = _api_get_images(request, fmt, api_code, None, True, None)
-
-    exit_api_call(api_code, ret)
-    return ret
+    return _api_get_images(request, fmt, api_code, None, True, None)
 
 @never_cache
-def api_get_image(request, opus_id, size, fmt):
+@api_view
+def api_get_image(request, opus_id, size, fmt, *, api_code):
     r"""Return info about a preview image for the given opus_id and size.
 
     This is a PUBLIC API.
@@ -764,29 +710,20 @@ def api_get_image(request, opus_id, size, fmt):
 
     Can return JSON, HTML, or CSV.
     """
-    api_code = enter_api_call('api_get_image', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/image/{size}/{opus_id}.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST(f'/api/image/{size}/{opus_id}.{fmt}'))
 
     request.GET = request.GET.copy()
     request.GET['opusid'] = opus_id
     request.GET['qtype-opusid'] = 'matches'
-    ret = _api_get_images(request, fmt, api_code, size, False, opus_id)
-
-    exit_api_call(api_code, ret)
-    return ret
+    return _api_get_images(request, fmt, api_code, size, False, opus_id)
 
 def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
     if not request or request.GET is None or request.META is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
         # don't care.
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/images/{size}.{fmt}'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST(f'/api/images/{size}.{fmt}'))
 
     (page_no, start_obs, limit,
      page, order, aux, error) = get_search_results_chunk(
@@ -796,7 +733,7 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
                                        return_ringobsids=True,
                                        api_code=api_code)
     if error is not None:
-        return get_search_results_chunk_error_handler(error, api_code)
+        return get_search_results_chunk_error_handler(error)
 
     preview_jsons = [json.loads(x[1]) for x in page]
     opus_ids = aux['opus_ids']
@@ -857,7 +794,6 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
     if include_search:
         result_count, _, err = get_result_count_helper(request, api_code)
         if err is not None: # pragma: no cover - database error
-            exit_api_call(api_code, err)
             return err
 
         if page_no is not None:
@@ -898,16 +834,15 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
     elif fmt == 'json':
         ret = json_response(data)
     else: # pragma: no cover - error catchall
-        log.error('api_get_images_by_size: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        log.error('_api_get_images: Unknown format "%s"', fmt)
+        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
 
     return ret
 
 
 @never_cache
-def api_get_files(request, opus_id=None):
+@api_view
+def api_get_files(request, opus_id=None, *, api_code):
     r"""Return all files for a given opus_id or search results.
 
     This is a PUBLIC API.
@@ -922,12 +857,8 @@ def api_get_files(request, opus_id=None):
 
     Only returns JSON.
     """
-    api_code = enter_api_call('api_get_files', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/files/{opus_id}.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST(f'/api/files/{opus_id}.json'))
 
     product_types = request.GET.get('types', 'all')
 
@@ -936,10 +867,8 @@ def api_get_files(request, opus_id=None):
         # Backwards compatibility
         orig_opus_id = opus_id
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-        if not opus_id or throw_random_http404_error():
-            ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
-            exit_api_call(api_code, ret)
-            raise ret
+        if not opus_id:
+            raise Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
         opus_ids = [opus_id]
     else:
         # No opus_id passed, get files from search results
@@ -951,7 +880,7 @@ def api_get_files(request, opus_id=None):
                                                 return_opusids=True,
                                                 api_code=api_code)
         if error is not None:
-            return get_search_results_chunk_error_handler(error, api_code)
+            return get_search_results_chunk_error_handler(error)
 
         opus_ids = aux['opus_ids']
 
@@ -977,7 +906,6 @@ def api_get_files(request, opus_id=None):
     if opus_id is None:
         result_count, _, err = get_result_count_helper(request, api_code)
         if err is not None: # pragma: no cover - database error
-            exit_api_call(api_code, err)
             return err
 
         if page_no is not None:
@@ -991,12 +919,11 @@ def api_get_files(request, opus_id=None):
     data['data'] = current_ret
     data['versions'] = versioned_ret
 
-    ret = json_response(data)
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response(data)
 
 
 @never_cache
+@api_view
 def api_get_categories_for_opus_id(request, opus_id):
     r"""Return a JSON list of all categories (tables) this opus_id appears in.
 
@@ -1004,25 +931,17 @@ def api_get_categories_for_opus_id(request, opus_id):
 
     Format: [__]api/categories/(?P<opus_id>[-\w]+).json
     """
-    api_code = enter_api_call('api_get_categories_for_opus_id', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/categories/{opus_id}.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST(f'/api/categories/{opus_id}.json'))
 
     if not opus_id: # pragma: no cover - configuration error
-        ret = Http404(HTTP404_MISSING_OPUS_ID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_MISSING_OPUS_ID(request))
 
     # Backwards compatibility
     orig_opus_id = opus_id
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id or throw_random_http404_error():
-        ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not opus_id:
+        raise Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
 
     all_categories = []
     table_info = (TableNames.objects.all().values('table_name', 'label')
@@ -1038,21 +957,20 @@ def api_get_categories_for_opus_id(request, opus_id):
         try:
             results = query_table_for_opus_id(table_name, opus_id)
         except LookupError: # pragma: no cover - configuration error
-            log.error('api_get_categories_for_opus_id: Unable to find table '
-                      +'%s', table_name)
+            log.exception('api_get_categories_for_opus_id: Unable to find '
+                          +'table %s', table_name)
             continue
         results = results.values('opus_id')
         if results:
             cat = {'table_name': table_name, 'label': tbl['label']}
             all_categories.append(cat)
 
-    ret = json_response(all_categories)
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response(all_categories)
 
 
 @never_cache
-def api_get_categories_for_search(request):
+@api_view
+def api_get_categories_for_search(request, *, api_code):
     """Return a JSON list of all categories (tables) triggered by this search.
 
     This is a PUBLIC API.
@@ -1061,20 +979,14 @@ def api_get_categories_for_search(request):
 
     Arguments: Normal search arguments
     """
-    api_code = enter_api_call('api_get_categories_for_search', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST('/api/categories.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST('/api/categories.json'))
 
     (selections, extras) = url_to_search_params(request.GET)
-    if selections is None or throw_random_http404_error():
+    if selections is None:
         log.error('api_get_categories_for_search: Could not find selections for'
                   +' request %s', str(request.GET))
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
 
     if not selections:
         triggered_tables = settings.BASE_TABLES[:]  # Copy
@@ -1093,12 +1005,11 @@ def api_get_categories_for_search(request):
     labels = (TableNames.objects.filter(table_name__in=triggered_tables)
               .values('table_name','label').order_by('disp_order'))
 
-    ret = json_response(list(labels))
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response(list(labels))
 
 
 @never_cache
+@api_view
 def api_get_product_types_for_opus_id(request, opus_id):
     r"""Return a JSON list of all product types available for this opus_id.
 
@@ -1106,25 +1017,17 @@ def api_get_product_types_for_opus_id(request, opus_id):
 
     Format: api/product_types/(?P<opus_id>[-\w]+).json
     """
-    api_code = enter_api_call('api_get_product_types_for_opus_id', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST(f'/api/product_types/{opus_id}.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST(f'/api/product_types/{opus_id}.json'))
 
     if not opus_id: # pragma: no cover - configuration error
-        ret = Http404(HTTP404_MISSING_OPUS_ID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_MISSING_OPUS_ID(request))
 
     # Backwards compatibility
     orig_opus_id = opus_id
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id or throw_random_http404_error():
-        ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if not opus_id:
+        raise Http404(HTTP404_UNKNOWN_RING_OBS_ID(orig_opus_id, request))
 
     cursor = connection.cursor()
 
@@ -1143,14 +1046,13 @@ def api_get_product_types_for_opus_id(request, opus_id):
                       'description': x[2],
                       'version_number': x[3],
                       'version_name': x[4]} for x in results]
-    ret = json_response(product_types)
 
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response(product_types)
 
 
 @never_cache
-def api_get_product_types_for_search(request):
+@api_view
+def api_get_product_types_for_search(request, *, api_code):
     """Return a JSON list of all product types available for this search.
 
     This is a PUBLIC API.
@@ -1159,36 +1061,26 @@ def api_get_product_types_for_search(request):
 
     Arguments: Normal search arguments
     """
-    api_code = enter_api_call('api_get_product_types_for_search', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST('/api/product_types.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST('/api/product_types.json'))
 
     (selections, extras) = url_to_search_params(request.GET)
-    if selections is None or throw_random_http404_error():
+    if selections is None:
         log.error('api_get_product_types_for_search: Could not find selections '
                   +'for request %s', str(request.GET))
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
 
     user_query_table = get_user_query_table(selections, extras, api_code)
-    if (not user_query_table or
-        throw_random_http500_error()): # pragma: no cover - internal debugging
+    if not user_query_table: # pragma: no cover - internal or database failure
         log.error('api_get_product_types_for_search: get_user_query_table '
                   +'failed *** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
-        exit_api_call(api_code, ret)
-        return ret
+        return HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
 
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  + ':product_types:' + user_query_table)
     cached_val = cache.get(cache_key)
     if cached_val is not None:
-        exit_api_call(api_code, cached_val)
         return cached_val
 
     cursor = connection.cursor()
@@ -1215,7 +1107,6 @@ def api_get_product_types_for_search(request):
 
     cache.set(cache_key, ret)
 
-    exit_api_call(api_code, ret)
     return ret
 
 
@@ -1256,16 +1147,26 @@ def _product_types_select():
     return select, from_source
 
 
-def get_search_results_chunk_error_handler(error, api_code):
-    if error[0] == 404: # pragma: no cover - 500 won't happen during testing
-        ret = Http404(error[1])
-        exit_api_call(api_code, ret)
-        raise ret
-    else: # pragma: no cover
+def get_search_results_chunk_error_handler(error):
+    """Turn a `get_search_results_chunk` error tuple into an error response.
+
+    Parameters:
+        error: The `(status, message)` pair the chunk reader returned. It is 400
+            for a malformed request and 500 for a database or internal failure;
+            it is never 404, because nothing the reader looks at comes from the
+            URL path.
+
+    Returns:
+        An `HttpResponse` with status 500, for the 500 case.
+
+    Raises:
+        Http400Error: When the request itself was malformed.
+    """
+    if error[0] == 400:
+        raise Http400Error(error[1])
+    else: # pragma: no cover - 500 won't happen during testing
         assert error[0] == 500
-        ret = HttpResponseServerError(error[1])
-        exit_api_call(api_code, ret)
-        return ret
+        return HttpResponseServerError(error[1])
 
 def get_search_results_chunk(request, use_cart=None,
                              ignore_recycle_bin=False,
@@ -1322,10 +1223,10 @@ def get_search_results_chunk(request, use_cart=None,
         aux_dict            A dictionary that may contain keys as specified
                             above.
         error               A tuple (response_code, string) if something went
-                            wrong. If response_code is 404, then the caller
-                            should raise an Http404 exception. If it is 500,
-                            then the caller should return
-                            HttpResponseServerError.
+                            wrong, to be handed to
+                            get_search_results_chunk_error_handler. The code is
+                            400 when the request itself was malformed and 500 on
+                            a database or internal failure.
     """
     def error_return(s, e): return (None, None, None, None, None, None, (s,e))
 
@@ -1344,16 +1245,13 @@ def get_search_results_chunk(request, use_cart=None,
     else:
         try:
             limit = int(limit)
-            if throw_random_http404_error(): # pragma: no cover - internal testing
-                raise ValueError
         except ValueError:
             log.error('get_search_results_chunk: Unable to parse limit %s',
                       limit)
-            return error_return(404, HTTP404_BAD_LIMIT(limit, request))
-        if (limit < 0 or limit > settings.SQL_MAX_LIMIT or
-            throw_random_http404_error()):
+            return error_return(400, HTTP400_BAD_LIMIT(limit, request))
+        if limit < 0 or limit > settings.SQL_MAX_LIMIT:
             log.error('get_search_results_chunk: Bad limit %s', str(limit))
-            return error_return(404, HTTP404_BAD_LIMIT(limit, request))
+            return error_return(400, HTTP400_BAD_LIMIT(limit, request))
 
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
@@ -1372,9 +1270,9 @@ def get_search_results_chunk(request, use_cart=None,
         # Allow the caller to specify desired units for the retrieved metadata
         pi, desired_units = get_param_info_by_slug(slug, 'col',
                                                    allow_units_override=True)
-        if not pi or throw_random_http404_error():
+        if not pi:
             log.error('get_search_results_chunk: Slug "%s" not found', slug)
-            return error_return(404, HTTP404_UNKNOWN_SLUG(slug, request))
+            return error_return(400, HTTP400_UNKNOWN_SLUG(slug, request))
         column = pi.param_qualified_name()
         table = pi.category_name
         if column.endswith('.opus_id'):
@@ -1447,30 +1345,25 @@ def get_search_results_chunk(request, use_cart=None,
         if start_obs is not None:
             try:
                 start_obs = int(start_obs)
-                if throw_random_http404_error(): # pragma: no cover - internal debugging
-                    raise ValueError
             except ValueError:
                 log.error('get_search_results_chunk: Unable to parse '
                           +'startobs "%s"', start_obs)
-                return error_return(404, HTTP404_BAD_STARTOBS(start_obs, request))
+                return error_return(400, HTTP400_BAD_STARTOBS(start_obs, request))
             offset = start_obs-1
         else:
             try:
                 page_no = int(page_no)
-                if throw_random_http404_error(): # pragma: no cover - internal debugging
-                    raise ValueError
             except ValueError:
                 log.error('get_search_results_chunk: Unable to parse page_no "%s"',
                           page_no)
-                return error_return(404, HTTP404_BAD_PAGENO(page_no, request))
+                return error_return(400, HTTP400_BAD_PAGENO(page_no, request))
             offset = (page_no-1)*page_size
     else:
         offset = start_obs-1
 
-    if (offset < 0 or offset > settings.SQL_MAX_LIMIT or
-        throw_random_http404_error()):
+    if offset < 0 or offset > settings.SQL_MAX_LIMIT:
         log.error('get_search_results_chunk: Bad offset %s', str(offset))
-        return error_return(404, HTTP404_BAD_OFFSET(offset, request))
+        return error_return(400, HTTP400_BAD_OFFSET(offset, request))
 
     temp_table_name = None
     drop_temp_table = False
@@ -1486,14 +1379,14 @@ def get_search_results_chunk(request, use_cart=None,
             extras = {'qtypes': {'obs_general.opus_id': ['matches']}}
         else:
             (selections, extras) = url_to_search_params(request.GET)
-        if selections is None or throw_random_http404_error():
+        if selections is None:
             log.error('get_search_results_chunk: Could not find selections for'
                       +' request %s', str(request.GET))
-            return error_return(404, HTTP404_SEARCH_PARAMS_INVALID(request))
+            return error_return(400, HTTP400_SEARCH_PARAMS_INVALID(request))
 
         user_query_table = get_user_query_table(selections, extras,
                                                 api_code=api_code)
-        if not user_query_table or throw_random_http500_error(): # pragma: no cover -
+        if not user_query_table: # pragma: no cover -
             # internal or database failure
             log.error('get_search_results_chunk: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
@@ -1526,11 +1419,8 @@ def get_search_results_chunk(request, use_cart=None,
         cursor = connection.cursor()
         try:
             cursor.execute(temp_sql)
-            if throw_random_http500_error(): # pragma: no cover - internal debugging
-                raise DatabaseError
-        except DatabaseError as e: # pragma: no cover - database error
-            log.error('get_search_results_chunk: "%s" returned %s',
-                      temp_sql, str(e))
+        except DatabaseError: # pragma: no cover - database error
+            log.exception('get_search_results_chunk: "%s" failed', temp_sql)
             return error_return(500, HTTP500_DATABASE_ERROR(request))
         log.debug('get_search_results_chunk SQL (%.2f secs): %s',
                   time.time()-time1, temp_sql)
@@ -1579,9 +1469,23 @@ def get_search_results_chunk(request, use_cart=None,
     else:
         # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
+        # An unresolvable order slug is bad user input, not an internal failure:
+        # unchecked, the None propagates into create_order_by_terms and comes
+        # back out as a TypeError.
+        if order_params is None:
+            log.error('get_search_results_chunk: Could not parse order "%s"',
+                      all_order)
+            return error_return(400, HTTP400_UNKNOWN_SLUG(None, request))
         (order_terms, order_mult_tables,
          order_obs_tables) = create_order_by_terms(order_params,
                                                    order_descending_params)
+        if order_terms is None: # pragma: no cover -
+            # parse_order_slug resolves every slug through the same ParamInfo
+            # lookup, so it fails first; this guard is here because the function
+            # documents the return, not because a route reaches it.
+            log.error('get_search_results_chunk: Could not build order terms '
+                      +'for "%s"', all_order)
+            return error_return(400, HTTP400_UNKNOWN_SLUG(None, request))
 
         select = _results_column_select(column_names)
         from_source = select.add_from('obs_general')
@@ -1630,11 +1534,9 @@ def get_search_results_chunk(request, use_cart=None,
     cursor = connection.cursor()
     try:
         cursor.execute(sql, params)
-        if throw_random_http500_error(): # pragma: no cover - internal debugging
-            raise DatabaseError
-    except DatabaseError as e: # pragma: no cover - database error
-        log.error('get_search_results_chunk: "%s" + "%s" returned %s',
-                  sql, params, str(e))
+    except DatabaseError: # pragma: no cover - database error
+        log.exception('get_search_results_chunk: "%s" + "%s" failed',
+                      sql, params)
         return error_return(500, HTTP500_DATABASE_ERROR(request))
     results = []
     more = True
@@ -1650,11 +1552,8 @@ def get_search_results_chunk(request, use_cart=None,
         sql = sql_builder.drop_table(temp_table_name)
         try:
             cursor.execute(sql)
-            if throw_random_http500_error(): # pragma: no cover - internal debugging
-                raise DatabaseError
-        except DatabaseError as e: # pragma: no cover - database error
-            log.error('get_search_results_chunk: "%s" returned %s',
-                      sql, str(e))
+        except DatabaseError: # pragma: no cover - database error
+            log.exception('get_search_results_chunk: "%s" failed', sql)
             return error_return(500, HTTP500_DATABASE_ERROR(request))
 
     if return_opusids:
@@ -1731,24 +1630,19 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
                                                      limit=1,
                                                      api_code=api_code)
     if error is not None:
-        return get_search_results_chunk_error_handler(error, api_code)
+        return get_search_results_chunk_error_handler(error)
 
-    if len(page) != 1 or throw_random_http404_error(): # pragma: no cover -
-        # internal debugging or internal error
+    if len(page) != 1: # pragma: no cover - internal error
         log.error('_get_metadata_by_slugs: Error searching for opus_id "%s"',
                   opus_id)
-        ret = Http404(HTTP404_UNKNOWN_OPUS_ID(opus_id, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_UNKNOWN_OPUS_ID(opus_id, request))
 
     slug_list = cols_to_slug_list(cols)
     labels = labels_for_slugs(slug_list)
-    if labels is None or throw_random_http404_error(): # pragma: no cover -
-        # internal debugging; labels None should be impossible since it will
-        # be caught by get_search_results_chunk
-        ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if labels is None: # pragma: no cover -
+        # labels None should be impossible since it will be caught by
+        # get_search_results_chunk
+        raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
 
     if fmt == 'csv':
         csv_filename = download_filename(opus_id, 'metadata')
@@ -1791,9 +1685,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, internal, api_code):
         return data
     else: # pragma: no cover - error catchall
         log.error('_get_metadata_by_slugs: Unknown format "%s"', fmt)
-        ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
 
 
 def get_triggered_tables(selections, extras, api_code=None):
