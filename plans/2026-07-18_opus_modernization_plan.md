@@ -3414,3 +3414,77 @@ body; never rewrite or delete earlier notes.*
     broken inline code spans to fenced `sql` blocks). No source file was touched by it, so
     nothing a later PR builds on went unreviewed. Every earlier head of PR-12 was fully
     reviewed and every finding answered.
+
+- **2026-08-25 (PR-12a: scope the cart `removerange` DELETE to the session):**
+  - **The five-item PR-12 hand-off bullet was verified against the tree, not re-derived,
+    and every item held.** The one correction is a path: it cites
+    `origin/rewrite:cart/views.py:1419-1425`, and no such path exists on `rewrite` --
+    PR-05 moved the Django app, so the file is `src/opus_app/apps/cart/views.py` and
+    `1419-1425` is its line range at `eeb962ed` (the tree PR-12 started from). The same
+    statement is at `origin/main:opus/application/apps/cart/views.py:1409-1415`, with its
+    range-only `sql_where` at line 1313. Mechanical drift, not a contradiction.
+  - **The fix is one condition, exactly the shape item 4 predicted.** The
+    `removerange`/`recycle_bin == 0` branch now builds
+    `join_exprs([binary_op(column('session_id', 'cart'), '=', value(session_id)),
+    range_condition], 'AND')` and passes that to `delete_joined` in place of
+    `range_condition`. `join_exprs` adds no parentheses and every term is ANDed, so there
+    is no precedence question; the parameters render in statement order,
+    `[session_id, min_sort_order, max_sort_order]`.
+  - **The rest of `_edit_cart_range` has no second instance, checked statement by
+    statement.** The `view=cart` temp-table SELECT, the `restrict_to_cart` FROM clause
+    (shared by the addrange count, the duplicate count and the
+    `removerange`-with-recyclebin edit), the `Cart.objects.filter(session_id__exact=...)`
+    count and the `REPLACE INTO cart ... SELECT` all name `session_id` already. The
+    `REPLACE INTO` cannot reach another session's row even though `REPLACE` deletes on any
+    unique-key conflict: `cart`'s only unique constraint besides the autoincrement primary
+    key is `UNIQUE (session_id, obs_general_id)`
+    (`src/opus_import/table_schemas/cart.json`), and the statement supplies the caller's
+    `session_id` as a literal column value. The `sort_order` lookup SELECT and the
+    `DROP TABLE` touch no cart rows at all.
+  - **A multi-session test needed no new machinery: `__sessionid` already exists.**
+    `app_utils.get_session_id` reads a `__sessionid=<S>` query parameter ahead of the
+    Django session and documents it as an override "for internal testing purposes", and
+    `settings.SLUGS_NOT_IN_DB` already lists it so `url_to_search_params` skips it and both
+    sessions land on the same search cache table. It had **no user anywhere in the repo**
+    before this PR (the only other mentions are the definition, that settings tuple, and
+    `opus_log_analyzer/opus/slug.py`). Later PRs wanting a cross-session test should reach
+    for it rather than juggling cookie jars. Two constraints on the value: it must match
+    `^[A-Za-z0-9_]+$` and stay short, because `view=cart` interpolates it into a temporary
+    table named `temp_<session>_<pid>_<time>` that `sql_builder.quote_identifier` validates
+    and MySQL caps at 64 characters.
+  - **The regression tests are in `integration_tests/test_api/test_cart_api.py`, one per
+    entry path**, both driving `cross_session_a` and `cross_session_b` with the same
+    17-observation COVIMS_0006 range and asserting the second session's cart is intact
+    afterwards. They cannot false-green through a cache: `metadata.get_cart_count` counts
+    with the ORM on every call and `api_cart_status` is `@never_cache`. Their cart rows are
+    removed in an `addCleanup` registered before anything is added.
+  - **The two tests were confirmed to fail against the pre-fix statement, not assumed
+    to.** With only `src/opus_app/apps/cart/views.py` reverted to its pre-fix content and
+    the tests unchanged, both fail, and they fail as cross-session data loss rather than
+    as some incidental mismatch: session B, which issued no request that should touch its
+    cart, went from 17 observations to **0** on the `view=browse` path and to **10** on
+    the `view=cart` path -- the second losing exactly the 7 that session A removed from
+    its own cart. That is also the empirical proof of item 3 of the PR-12 bullet (both
+    entry paths exposed), which until now was an argument.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest **1120
+    passed**, pyroma 10/10, bandit, vulture, pymarkdown). The holdings-free unit count is
+    **unchanged** by this PR, which touches only `src/opus_app` and `integration_tests/`;
+    1120 is also what `rewrite` at `d9f07ebf` measures with this PR's two files stashed.
+    (The PR-12 notes record 1118 for that suite. Recorded as an observation, not a
+    correction: PR-12's baseline run was not reproduced here.) The integration chain was
+    run as its three stages rather than through `opus_main_test.sh`, so the database could
+    be kept and the pre-fix comparison run against it: `opus_setup_environment.sh`, then
+    `opus_import_test_database.sh` (the 30-bundle import into a fresh MySQL schema,
+    **zero ERROR lines**, `--validate-perm` clean, exit 0), then `run_coverage.sh` with
+    the same `OPUS_CONFIG` and `COVERAGE_RCFILE` that `opus_run_unittests_coverage.sh`
+    exports. That reported `pytest tests/opus_support` **818 passed**, then
+    **`Ran 1620 tests` / `OK` / `TOTAL 22313 stmts, 1890 branches, 100%`** with **zero
+    missing statements and zero partial branches**, and **zero golden-fixture diffs**
+    (`git status integration_tests/test_api/responses` empty afterwards) -- which is the
+    acceptance criterion, since the fix is inert against every one-session fixture.
+    Against PR-12's recorded figures the test count is **+2** (this PR's two tests) and
+    the branch count is **identical**; the two changed files account for **+36
+    statements** and **+0 branches**, measured by parsing both versions of each with the
+    gate's own `exclude_lines`, so the same file set at `d9f07ebf` measures 22277. PR-12
+    recorded 22276, one below that; the report's 51 per-file rows sum exactly to 22313 on
+    this tree, so the one-statement gap is in the comparison, not in this run.
