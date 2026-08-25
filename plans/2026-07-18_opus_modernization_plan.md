@@ -4344,17 +4344,26 @@ body; never rewrite or delete earlier notes.*
        still says "Always skip `id` for tables other than obs_general"; the loop beneath
        it has no such check, and `id` is populated from the schema's `MAX_ID` data source
        like any other column.
-  - **`--update-mult-info` has never worked, and a later PR should decide what to do
-    about it.** `do_update_mult_info` unpacks six values out of each `mult_options`
-    entry; every one of the entries in the packaged table schemas carries seven, so the
-    step raises `ValueError` at the first table that has any. It is byte-identical at
-    `f17422e4` and older, nothing else calls it, and the option is not implied by
-    `--do-it-all`, which is why no import run has ever reached it. Regenerate the
-    measurement rather than trusting a count: parse every `mult_options` list in
-    `src/opus_import/table_schemas/*.json` and compare its element length against the
-    unpack. This PR documents the fault in the module and in a `Raises:` section rather
-    than fixing it, because deciding what the seventh value means to this step is
-    behavior work, not annotation work.
+  - **`--update-mult-info` has never worked, and PR-16 owns fixing it** (assigned by the
+    orchestrator 2026-08-25; the matching line goes into PR-16's plan-body section after
+    this merges). `do_update_mult_info` unpacks **six** values out of each
+    `mult_options` entry, and **every entry in the packaged table schemas carries
+    seven** -- measured across `src/opus_import/table_schemas/*.json`: **410 entries in
+    15 files, all of length 7**, zero of any other length. The step therefore raises
+    `ValueError` at the first table that has a `mult_options` column, before updating
+    anything.
+    **Why it has stayed invisible:** nothing else calls it, and ``--do-it-all`` does not
+    imply ``--update-mult-info``, so no ordinary import run reaches it -- the local
+    30-bundle chain included. **It is pre-existing, not introduced here:** the unpack is
+    byte-identical at `f17422e4`.
+    **Why PR-16:** it owns the obs/mult hierarchy and the `MultField` TypedDict that
+    matches `ObsBase._create_mult()`, so what the seventh value is and what this step
+    should do with it are its questions to answer.
+    **Regenerate the measurement rather than trusting the numbers above** -- parse every
+    `mult_options` list in the packaged schemas and compare each entry's length against
+    the unpack; a schema edit moves it. This PR documents the fault in the module
+    docstring and in a `Raises:` section and changes no behavior, because deciding what
+    the seventh value means is behavior work, not annotation work.
   - **Two behaviors that surprise on reading, both documented in the code now, both
     worth knowing before wiring anything to them:**
     1. **A clean exit status does not mean a clean run.** `opus_import.cli.main` exits
