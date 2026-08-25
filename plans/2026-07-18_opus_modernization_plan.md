@@ -3638,6 +3638,11 @@ body; never rewrite or delete earlier notes.*
     before calling and answer 400 under rule 2; the `(None, None, None)` guard is kept
     behind them with a `# pragma: no cover` explaining why no route reaches it.
     `?view=cart&order=<bad>` is the reachable spelling and both branches have a test.
+    **Both tests were confirmed to fail against the pre-fix code rather than assumed
+    to:** with only the two guards removed and the tests unchanged, both fail with
+    `AssertionError: 400 != 500` - the `assert order_params` escaping to the
+    decorator's catch-all, which is also the measurement behind the AssertionError
+    claim above.
   - **The named `math.isfinite` bug is fixed, AND the sweep the plan asked for found a
     second live instance one module away.** `units.parse_unit_value` now converts the
     `OverflowError` that `math.isfinite()` raises on an int too large for a float into
