@@ -5,6 +5,8 @@ options are grouped into database selection, the import steps to perform (each m
 one ``opus_import.steps`` module), bundle selection, and logging.
 """
 
+from __future__ import annotations
+
 import argparse
 import cProfile
 import io
@@ -14,6 +16,7 @@ import pstats
 import sys
 import traceback
 import warnings
+from typing import TYPE_CHECKING
 
 import pdslogger
 from pdsfile import Pds3File, Pds4File
@@ -34,10 +37,14 @@ from opus_import.steps import (
     do_validate,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import TextIO
+
 LOGNAME = 'opus_import.main'
 
 
-def _make_warning_handler(ctx):
+def _make_warning_handler(ctx: ImportContext) -> Callable[..., None]:
     """Return a `warnings.showwarning` that collects warnings on the context.
 
     Parameters:
@@ -46,15 +53,19 @@ def _make_warning_handler(ctx):
     Returns:
         A handler with `warnings.showwarning`'s signature. It reads the list off
         the context on every call rather than closing over it, because reporting
-        the accumulated warnings replaces the list with a fresh one.
+        the accumulated warnings replaces the list with a fresh one. The return type
+        leaves the parameter list open because the two sides of that assignment
+        disagree about it: the warnings machinery always passes six arguments, while
+        the standard library's own handler makes the last two optional.
     """
-    def handler(message, category, filename, lineno, file, line):
+    def handler(message: Warning | str, category: type[Warning], filename: str,
+                lineno: int, file: TextIO | None, line: str | None) -> None:
         ctx.python_warning_list.append(str(message))
 
     return handler
 
 
-def _create_argument_parser():
+def _create_argument_parser() -> argparse.ArgumentParser:
     """Build the pipeline's argument parser.
 
     Returns:
@@ -329,7 +340,7 @@ def _create_argument_parser():
     return parser
 
 
-def main():
+def main() -> None:
     """Run the import steps requested on the command line.
 
     Every step is driven by its own option; ``--do-it-all`` and its siblings simply turn

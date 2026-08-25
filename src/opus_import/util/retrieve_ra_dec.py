@@ -1,8 +1,21 @@
+"""Print the star coordinate table by looking every star up in SIMBAD.
+
+Run as ``python -m opus_import.util.retrieve_ra_dec`` when a star is added or a
+coordinate is questioned: the output is the body of
+`opus_import.config_targets.star_ra_dec`\'s table, which is checked in rather than
+fetched, so that an import needs no network access.
+
+Importing this module does nothing. Running it issues one HTTP request per star, several
+hundred of them.
+"""
+
+from __future__ import annotations
+
 import re
 
 import requests
 
-STARS = {
+STARS: dict[str, tuple[str | None, str, str]] = {
     '126_TAU':              (None,  'OTHER',      '126 Tau'),
     '13_LYR':               (None,  'OTHER',      '13 Lyr (R Lyr)'),
     '26_TAU':               (None,  'OTHER',      '26 Tau'),
@@ -170,9 +183,17 @@ name_pat = re.compile(r'NAME (\w+)')
 SIMBAD_TIMEOUT = (10, 60)
 
 
-def main():
-    """Print the STAR_RA_DEC table, looking each star up in SIMBAD."""
+def main() -> None:
+    """Print the STAR_RA_DEC table, looking each star up in SIMBAD.
 
+    One request per star, through a single session. A star SIMBAD does not resolve, or
+    resolves without J2000 coordinates, prints ``FAIL`` and its identifier instead of a
+    table row, so the run finishes and names what it could not find.
+
+    Raises:
+        requests.RequestException: If a lookup fails at the transport level, including
+            the timeout that keeps one unresponsive request from stalling the run.
+    """
     session = requests.Session()
 
     for key in STARS:

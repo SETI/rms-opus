@@ -1,14 +1,24 @@
-# This utility takes a PDS index label file and dumps out the definitions of
-# each field in a nice format suitable for use in JSON.
+"""Print a PDS index label's field definitions in the form a table schema wants.
+
+Run as ``python -m opus_import.util.dump_pds_definitions <label>`` while adding an
+instrument: the output is the ``"definition"`` entries for the packaged
+``table_schemas`` JSON, with each label's prose reflowed onto one line.
+"""
+
+from __future__ import annotations
+
 import re
 import sys
 
 import pdsparser
 
 
-def main():
-    """Dump the field definitions of the PDS index label named by the argument."""
+def main() -> None:
+    """Dump the field definitions of the PDS index label named by the argument.
 
+    Raises:
+        ValueError: If the label holds no table object under a name this recognizes.
+    """
     label_path = sys.argv[1]
 
     label = pdsparser.PdsLabel.from_file(label_path).as_dict()
