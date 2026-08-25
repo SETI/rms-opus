@@ -584,7 +584,9 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
     # A format given in the URL path is constrained by the route's own pattern, so
     # the only value that can fail here is the one from the query string.
     if fmt not in settings.DOWNLOAD_FORMATS:
-        log.error('api_create_download: Unknown download format "%s"', fmt)
+        # %r for the same reason api_edit_cart uses it on recyclebin: fmt is a
+        # request-supplied string on the path that can fail.
+        log.error('api_create_download: Unknown download format %r', fmt)
         raise Http400Error(HTTP400_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, request))
 
     archive_root = download_filename(opus_id, file_type)
@@ -1170,7 +1172,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         # Unchecked, the None reaches create_order_by_terms and trips its
         # `assert order_params`, so the caller sees an AssertionError.
         if order_params is None:
-            log.error('_edit_cart_range: Could not parse order "%s"', all_order)
+            log.error('_edit_cart_range: Could not parse order %r', all_order)
             raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
         (order_terms, order_mult_tables,
          order_obs_tables) = create_order_by_terms(order_params,
@@ -1179,7 +1181,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             # parse_order_slug resolves every slug through the same ParamInfo
             # lookup, so it fails first; this guard is here because the function
             # documents the return, not because a route reaches it.
-            log.error('_edit_cart_range: Could not build order terms for "%s"',
+            log.error('_edit_cart_range: Could not build order terms for %r',
                       all_order)
             raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
 

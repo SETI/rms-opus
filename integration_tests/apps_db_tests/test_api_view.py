@@ -18,9 +18,10 @@ What is worth pinning here, and why:
   hand-written pairs this decorator replaces could not guarantee it, and a record
   that is never closed leaks an entry in `_API_START_TIMES` for the life of the
   process.
-* **That an exception Django answers itself is not absorbed.** A `DisallowedHost`
-  turned into a generic 500 would lose both the 400 Django gives it and the
-  `django.security.*` record an operator watches for.
+* **That an exception Django answers itself is not absorbed.** Turning one into a
+  generic 500 would lose both the response Django gives it and, for a
+  `SuspiciousOperation`, the `django.security.*` record an operator watches for.
+  Nothing in the app raises one today, so this is what keeps the guard honest.
 * **That an unhandled exception is logged with its traceback.** A 500 whose only
   record is "something failed" is what issue #512 is about; the traceback is the
   point of catching it centrally rather than letting it reach Django.
@@ -256,9 +257,10 @@ class ApiViewTests(TestCase):
         "[test_api_view.py] api_view: SuspiciousOperation and friends are not absorbed"
         # Django turns each of these into a specific response of its own, and
         # SuspiciousOperation also reaches the django.security.* logger; a generic
-        # 500 here would lose both. DisallowedHost, which
-        # HttpRequest.build_absolute_uri raises on a spoofed Host header, is a
-        # SuspiciousOperation, so this is the reachable case.
+        # 500 here would lose both. No handler in the app raises one today -
+        # build_absolute_uri's DisallowedHost looks like a live case but
+        # CommonMiddleware rejects a spoofed Host before any view runs - so this
+        # test is what stops the guard from silently rotting.
         for exception_class in (BadRequest, PermissionDenied, SuspiciousOperation):
             with self.subTest(exception_class=exception_class.__name__):
                 @api_view

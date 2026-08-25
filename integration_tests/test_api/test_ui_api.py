@@ -233,6 +233,16 @@ class ApiUITests(TestCase, ApiTestHelper):
                                HTTP400_UNKNOWN_SLUG('badslug',
                                                     '/__widget/badslug.html'))
 
+    def test__api_widget_bad_numeric_suffix(self):
+        "[test_ui_api.py] /__widget: bad slug with a numeric suffix"
+        # The widget lookup strips a trailing 1 or 2 before searching, so the
+        # error has to name the slug the caller typed rather than the stripped
+        # form it looked up.
+        url = '/__widget/badslug1.html'
+        self._run_status_equal(url, 400,
+                               HTTP400_UNKNOWN_SLUG('badslug1',
+                                                    '/__widget/badslug1.html'))
+
 
             ###########################################
             ######### /__initdetail API TESTS #########

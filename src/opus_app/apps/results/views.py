@@ -1473,7 +1473,7 @@ def get_search_results_chunk(request, use_cart=None,
         # Unchecked, the None reaches create_order_by_terms and trips its
         # `assert order_params`, so the caller sees an AssertionError.
         if order_params is None:
-            log.error('get_search_results_chunk: Could not parse order "%s"',
+            log.error('get_search_results_chunk: Could not parse order %r',
                       all_order)
             return error_return(400, HTTP400_UNKNOWN_SLUG(None, request))
         (order_terms, order_mult_tables,
@@ -1484,7 +1484,7 @@ def get_search_results_chunk(request, use_cart=None,
             # lookup, so it fails first; this guard is here because the function
             # documents the return, not because a route reaches it.
             log.error('get_search_results_chunk: Could not build order terms '
-                      +'for "%s"', all_order)
+                      +'for %r', all_order)
             return error_return(400, HTTP400_UNKNOWN_SLUG(None, request))
 
         select = _results_column_select(column_names)

@@ -307,11 +307,12 @@ def api_get_widget(request, **kwargs):
 
     param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
-        log.error(
-            'api_get_widget: Could not find param_info entry for slug %s',
-            str(slug))
-        # The error names what the caller typed, not the suffix-stripped form
-        # the lookup used, so "badslug1" is not reported as "badslug".
+        # Both the log and the error page name what the caller typed, not the
+        # suffix-stripped form the lookup used, so "badslug1" is not reported as
+        # "badslug" in either place. %r so a control character in the slug cannot
+        # forge a log line.
+        log.error('api_get_widget: Could not find param_info entry for slug %r',
+                  requested_slug)
         raise Http400Error(HTTP400_UNKNOWN_SLUG(requested_slug, request))
 
     (form_type, form_type_format,

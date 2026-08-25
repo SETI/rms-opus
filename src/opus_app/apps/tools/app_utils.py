@@ -190,10 +190,15 @@ class Http400Error(Exception):
 _HTTP400_TEMPLATE_NAME = '400.html'
 
 #: Exceptions Django's own handler turns into a specific response, which the
-#: decorator must therefore not absorb into a generic 500. `SuspiciousOperation`
-#: also reaches the `django.security.*` logger, which the operator relies on:
-#: `HttpRequest.build_absolute_uri` raises its `DisallowedHost` subclass on a
-#: spoofed Host header, so this is reachable, not theoretical.
+#: decorator must therefore not absorb into a generic 500 - `SuspiciousOperation`
+#: also reaches the `django.security.*` logger an operator watches. Nothing under
+#: `src/opus_app` raises any of them today, and the one path that looked live is
+#: not: `HttpRequest.build_absolute_uri` raises `DisallowedHost` on a spoofed Host
+#: header, but `CommonMiddleware.process_request` calls `get_host()` first and
+#: rejects the request before any view runs. This is therefore a guard against a
+#: later handler raising one, not a fix for a reachable case. `MultiPartParserError`
+#: is deliberately absent: Django handles it too, but OPUS reads no request body,
+#: so nothing can produce it.
 _DJANGO_HANDLED_EXCEPTIONS = (Http404, BadRequest, PermissionDenied,
                               SuspiciousOperation)
 

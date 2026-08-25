@@ -3533,15 +3533,22 @@ body; never rewrite or delete earlier notes.*
     paths, which the hand-written pairs could not guarantee), consults the
     fault-injection knobs **before** the handler runs, converts an `Http400Error`
     raised anywhere below it into a 400, and converts any other unhandled exception
-    into a 500 logged with `log.exception`. **The four exceptions Django answers
-    itself are re-raised, not absorbed** - `Http404`, `BadRequest`,
-    `PermissionDenied` and `SuspiciousOperation`, listed in
-    `_DJANGO_HANDLED_EXCEPTIONS`. That is not defensive: `HttpRequest.
-    build_absolute_uri`, which `help.api_api_guide` calls, raises `DisallowedHost`
-    (a `SuspiciousOperation`) on a spoofed Host header, and absorbing it would cost
-    both Django's 400 and the `django.security.*` record an operator watches. A
-    later PR adding a Django exception with its own handler must add it to that
-    tuple. **38 handlers are decorated**;
+    into a 500 logged with `log.exception`. **The exceptions Django answers itself
+    are re-raised, not absorbed** - `Http404`, `BadRequest`, `PermissionDenied` and
+    `SuspiciousOperation`, listed in `_DJANGO_HANDLED_EXCEPTIONS` - because
+    absorbing one costs both the response Django gives it and, for a
+    `SuspiciousOperation`, the `django.security.*` record an operator watches.
+    **This is a guard, not a fix for a live case, and an earlier draft of this note
+    said the opposite.** `HttpRequest.build_absolute_uri`, which
+    `help.api_api_guide` calls, does raise `DisallowedHost` on a spoofed Host
+    header - but `CommonMiddleware.process_request` calls `get_host()` first and
+    rejects the request before any view runs, and the two middlewares ahead of it
+    (`UpdateCacheMiddleware`, `GZipMiddleware`) define no `process_request`
+    (measured). Nothing under `src/opus_app` raises any of the four itself.
+    `MultiPartParserError`, which Django also handles, is deliberately **not** in
+    the tuple: OPUS reads no request body (`request.POST`/`FILES`/`body` appear
+    nowhere), so nothing can produce it. A later PR that gives a handler one of
+    these must keep the tuple in step. **38 handlers are decorated**;
     the three `*_internal` delegators (`api_get_result_count_internal`,
     `api_get_mult_counts_internal`, `api_get_range_endpoints_internal`) are **not**,
     because they call the already-decorated public handler and a second decoration
@@ -3641,7 +3648,9 @@ body; never rewrite or delete earlier notes.*
     a bare `raise Http404` whose page said only "Http404"; it now raises
     `Http400Error(HTTP400_UNKNOWN_SLUG(...))` and names the slug **the caller typed**,
     not the suffix-stripped form the lookup used, so `__widget/badslug1.html` is not
-    reported as "badslug". Every other changed site keeps its message verbatim. The
+    reported as "badslug" - in the log line either, and
+    `test__api_widget_bad_numeric_suffix` pins it. Every other changed site keeps its
+    message verbatim. The
     two remaining message-less 404s (`help.api_faq`'s unparseable `faq.yaml`,
     `metadata.api_get_range_endpoints`'s failed cache-table creation) were left
     exactly as they were - which is also why the API guide says a 404 is *usually*,
@@ -3716,14 +3725,17 @@ body; never rewrite or delete earlier notes.*
     injection is not #512 (which is only about `logging.exception`/`exc_info`) and no
     plan section assigns it, so widening PR-13 to it would have been improvisation.
     The comment is restored rather than deleted, with what this PR measured. **The
-    exposure is smaller than it reads:** `QueryDict.__str__` *is* its `__repr__`, so
-    `'%s' % request.GET` already renders the values through `repr()` and escapes any
-    CR/LF in them (measured on Django 5.2.17). The hazard is only a **bare
-    request-supplied scalar** interpolated with `%s` - `download_str`, `recycle_str`,
-    `limit`, `startobs`, `page`, `units`, `cats`, `order`, an individual `cols` slug -
-    of which there are on the order of two dozen across the app. The one new line of
-    that shape this PR adds (`api_get_fields`' `collapse`) uses `%r`. **Owner:
-    unassigned - orchestrator's call.**
+    exposure is smaller than it reads:** `QueryDict` defines `__repr__` and inherits
+    `object.__str__`, which delegates to it, so `'%s' % request.GET` already renders
+    the values through `repr()` and escapes any CR/LF in them (measured on Django
+    5.2.17). The hazard is only a **bare request-supplied scalar** interpolated with
+    `%s` - `download_str`, `recycle_str`, `limit`, `startobs`, `page`, `units`,
+    `cats`, an individual `cols` slug - of which there are on the order of two dozen
+    across the app. **Every log line this PR adds or rewrites that names such a
+    scalar uses `%r`**, so the count of them does not grow here: `api_get_fields`'
+    `collapse`, `api_create_download`'s `fmt`, the four order-slug guards' `all_order`
+    and `api_get_widget`'s slug. **Owner of the rest: unassigned - orchestrator's
+    call.**
   - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
     note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
     no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,
@@ -3769,7 +3781,7 @@ body; never rewrite or delete earlier notes.*
     import into a fresh MySQL schema, then `opus_run_unittests_coverage.sh`) ran end
     to end **twice** - once mid-work and once from scratch on the final tree - and
     on the second run the import logged **zero ERROR lines** (`ERRORS.log` 0 bytes)
-    and the suite reported **`Ran 1640 tests` / `OK` / `TOTAL 22133 stmts, 1876
+    and the suite reported **`Ran 1641 tests` / `OK` / `TOTAL 22136 stmts, 1876
     branches, 100%`** with **zero missing statements and zero partial branches**, and
     `opus_check_coverage.sh` passed. **Exactly one golden-response fixture changed** -
     `api_help_apiguide.html`, whose entire diff is the API guide's new "Error
@@ -3777,16 +3789,17 @@ body; never rewrite or delete earlier notes.*
     byte-identical, which is the point: the status-code changes are all on error
     paths, which the `responses/` files never capture.
   - **The baselines this PR moves, accounted for file by file.** Against PR-12a's
-    1620 tests / 22313 statements / 1890 branches: **+20 tests** (18 in the new
-    `test_api_view.py`, 2 for the order-slug guards), **-180 statements** and
+    1620 tests / 22313 statements / 1890 branches: **+21 tests** (18 in the new
+    `test_api_view.py`, 2 for the order-slug guards, 1 for the widget slug),
+    **-177 statements** and
     **-14 branches**. Computed with coverage's own `PythonParser` under the gate's
     own `exclude_lines`, at `101bc511` and at this tree: `cart/views.py` 674->619,
     `results/views.py` 783->728, `metadata/views.py` 372->336, `help/views.py`
     162->134, `search/views.py` 818->792, `ui/views.py` 887->864,
     `tools/app_utils.py` 162->188, `opus_support/units.py` 174->178,
     `opus_support/time_parsing.py` 53->56, `test_cart_api.py` 2454->2460,
-    `test_results_api.py` 509->512, `test_ui_api.py` 1903->1904 - which sums to
-    exactly -180. **The statement count falls because the decorator absorbs three
+    `test_results_api.py` 509->512, `test_ui_api.py` 1903->1907 - which sums to
+    exactly -177. **The statement count falls because the decorator absorbs three
     statements per error site, not because anything stopped being covered**: the
     gate is 100% on both sides of it. The branch delta decomposes the same way:
     `app_utils.py` -18 (the message helpers lost their `if not isinstance(r, str)`
