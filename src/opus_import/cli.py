@@ -34,8 +34,6 @@ from opus_import.steps import (
     do_validate,
 )
 
-pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
-
 LOGNAME = 'opus_import.main'
 
 

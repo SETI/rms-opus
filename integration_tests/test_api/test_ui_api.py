@@ -9,6 +9,11 @@ from django.conf import settings
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
+from opus_app.apps.tools.app_utils import (
+    HTTP400_BAD_OR_MISSING_REQNO,
+    HTTP400_UNKNOWN_SLUG,
+)
+
 from .api_test_helper import ApiTestHelper
 
 
@@ -96,7 +101,8 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_menu_default_no_reqno(self):
         "[test_ui_api.py] /__menu: no reqno"
         url = '/__menu.json'
-        self._run_status_equal(url, 404)
+        self._run_status_equal(url, 400,
+                               HTTP400_BAD_OR_MISSING_REQNO('/__menu.json'))
 
     def test__api_menu_search_time(self):
         "[test_ui_api.py] /__menu: search time"
@@ -126,7 +132,9 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_metadata_selector_no_reqno(self):
         "[test_ui_api.py] /__metadata_selector: no reqno"
         url = '/__metadata_selector.json'
-        self._run_status_equal(url, 404)
+        self._run_status_equal(url, 400,
+                               HTTP400_BAD_OR_MISSING_REQNO(
+                                            '/__metadata_selector.json'))
 
     def test__api_metadata_selector_no_cols(self):
         "[test_ui_api.py] /__metadata_selector: no cols"
@@ -221,7 +229,19 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_widget_bad(self):
         "[test_ui_api.py] /__widget: bad slug"
         url = '/__widget/badslug.html'
-        self._run_status_equal(url, 404)
+        self._run_status_equal(url, 400,
+                               HTTP400_UNKNOWN_SLUG('badslug',
+                                                    '/__widget/badslug.html'))
+
+    def test__api_widget_bad_numeric_suffix(self):
+        "[test_ui_api.py] /__widget: bad slug with a numeric suffix"
+        # The widget lookup strips a trailing 1 or 2 before searching, so the
+        # error has to name the slug the caller typed rather than the stripped
+        # form it looked up.
+        url = '/__widget/badslug1.html'
+        self._run_status_equal(url, 400,
+                               HTTP400_UNKNOWN_SLUG('badslug1',
+                                                    '/__widget/badslug1.html'))
 
 
             ###########################################

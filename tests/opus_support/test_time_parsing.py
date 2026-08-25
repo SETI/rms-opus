@@ -107,6 +107,21 @@ def test_parse_time_rejects_out_of_range_date() -> None:
     assert str(excinfo.value) == ''
 
 
+@pytest.mark.parametrize('unit', ['jed', 'mjd', 'mjed'])
+def test_parse_time_rejects_an_epoch_too_large_to_convert(unit: str) -> None:
+    """An epoch too large for the conversion is rejected, not raised through.
+
+    ``julian`` accepts a Julian date far outside its own supported range and only
+    fails when converting it, with an ``OverflowError`` rather than a
+    ``ValueError``. Anything but a ``ValueError`` escapes the caller's guard and
+    reaches the user as an internal error rather than as a rejected value.
+    """
+    with pytest.raises(ValueError) as excinfo:
+        parse_time('9' * 30, unit=unit)
+    assert str(excinfo.value) == f'Invalid time syntax: {unit.upper()}{"9" * 30}'
+    assert isinstance(excinfo.value.__cause__, OverflowError)
+
+
 @pytest.mark.parametrize(('formatter', 'iso', 'expected'), [
     (format_time_ymd, '2015-05-03T10:12:34.123', '2015-05-03T10:12:34.123'),
     (format_time_ydoy, '2015-122T10:12:34.123', '2015-122T10:12:34.123'),

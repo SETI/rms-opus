@@ -42,19 +42,19 @@ from opus_app.apps.search.views import (
     url_to_search_params,
 )
 from opus_app.apps.tools.app_utils import (
-    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP400_BAD_OR_MISSING_REQNO,
+    HTTP400_UNKNOWN_SLUG,
     HTTP404_NO_REQUEST,
+    Http400Error,
+    api_view,
     cols_to_slug_list,
     convert_ring_obs_id_to_opus_id,
-    enter_api_call,
-    exit_api_call,
     get_git_version,
     get_mult_name,
     get_reqno,
     get_session_id,
     json_response,
     strip_numeric_suffix,
-    throw_random_http404_error,
 )
 from opus_app.apps.tools.db_utils import lookup_pretty_value_for_mult
 from opus_app.apps.tools.dictionary import Definitions, get_def_for_tooltip
@@ -96,6 +96,7 @@ class main_site(TemplateView): # pragma: no cover - only accessed from browser
         return context
 
 @never_cache
+@api_view
 def api_notifications(request):
     """Return the HTML for any pending notifications and the date of the last
        blog update.
@@ -110,11 +111,8 @@ def api_notifications(request):
          'notification_mdate': '<file mod str>'    (ie: 1614648616.5189033)
         }
     """
-    api_code = enter_api_call('api_notifications', request)
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST('/__notifications.json'))
 
     lastupdate = None
     try:
@@ -140,20 +138,22 @@ def api_notifications(request):
             try:
                 notification_modify = os.path.getmtime(settings.OPUS_NOTIFICATION_FILE)
             except OSError: # pragma: no cover - filesystem error
-                log.error('api_notification: Failed to read the modify date of '
-                          'file "%s"', settings.OPUS_NOTIFICATION_FILE)
+                # The file was opened a few lines above, so a failure to stat it
+                # is not the ordinary "no notification today" case the enclosing
+                # FileNotFoundError handler covers.
+                log.exception('api_notifications: Failed to read the modify '
+                              'date of file "%s"',
+                              settings.OPUS_NOTIFICATION_FILE)
     except FileNotFoundError:
         log.debug('api_notifications: Failed to read file "%s"',
                   settings.OPUS_NOTIFICATION_FILE)
 
-    ret = json_response({'lastupdate': lastupdate,
-                         'notification': notification,
-                         'notification_mdate': notification_modify})
-
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response({'lastupdate': lastupdate,
+                          'notification': notification,
+                          'notification_mdate': notification_modify})
 
 
+@api_view
 def api_get_menu(request):
     """Return the left side menu of the search page.
 
@@ -163,26 +163,21 @@ def api_get_menu(request):
     Arguments: reqno=<reqno>
                Normal search arguments
     """
-    api_code = enter_api_call('api_get_menu', request)
-
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http404_error():
+    if reqno is None:
         log.error('api_get_menu: Missing or badly formatted reqno')
-        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO('/__menu.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO('/__menu.json'))
 
     menu_context = _get_menu_labels(request, 'search')
     menu_context['which'] = 'search' # Used to create DOM IDs
     menu_template = get_template('ui/menu.html')
     html = menu_template.render(menu_context)
-    ret = json_response({'html': html, 'reqno': reqno})
 
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response({'html': html, 'reqno': reqno})
 
 
 @never_cache
+@api_view
 def api_get_metadata_selector(request):
     """Create the metadata selector list.
 
@@ -192,8 +187,6 @@ def api_get_metadata_selector(request):
     Arguments: reqno=<reqno>
                Normal search arguments
     """
-    api_code = enter_api_call('api_get_metadata_selector', request)
-
     col_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     col_slugs = cols_to_slug_list(col_slugs)
     col_slugs = list(filter(None, col_slugs)) # Eliminate empty slugs
@@ -228,11 +221,10 @@ def api_get_metadata_selector(request):
                 search_slugs_info.append(pi)
 
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http404_error():
-        log.error('api_get_menu: Missing or badly formatted reqno')
-        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO('/__metadata_selector.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+    if reqno is None:
+        log.error('api_get_metadata_selector: Missing or badly formatted reqno')
+        raise Http400Error(
+                    HTTP400_BAD_OR_MISSING_REQNO('/__metadata_selector.json'))
 
     menu_context = _get_menu_labels(request, 'selector', search_slugs_info)
 
@@ -242,13 +234,13 @@ def api_get_metadata_selector(request):
     add_field_menu_template = get_template('ui/add_field.html')
     html = menu_template.render(menu_context)
     add_field_html = add_field_menu_template.render(menu_context)
-    ret = json_response({'html': html, 'add_field_html': add_field_html, 'reqno': reqno})
 
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response({'html': html, 'add_field_html': add_field_html,
+                          'reqno': reqno})
 
 
 @never_cache
+@api_view
 def api_get_widget(request, **kwargs):
     """Create a search widget and return its HTML.
 
@@ -309,18 +301,19 @@ def api_get_widget(request, **kwargs):
         form += html
         return form
 
-    api_code = enter_api_call('api_get_widget', request, kwargs)
-
-    slug = strip_numeric_suffix(kwargs['slug'])
+    requested_slug = kwargs['slug']
+    slug = strip_numeric_suffix(requested_slug)
     form = ''
 
     param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
-        log.error(
-            'api_get_widget: Could not find param_info entry for slug %s',
-            str(slug))
-        exit_api_call(api_code, Http404)
-        raise Http404
+        # Both the log and the error page name what the caller typed, not the
+        # suffix-stripped form the lookup used, so "badslug1" is not reported as
+        # "badslug" in either place. %r so a control character in the slug cannot
+        # forge a log line.
+        log.error('api_get_widget: Could not find param_info entry for slug %r',
+                  requested_slug)
+        raise Http400Error(HTTP400_UNKNOWN_SLUG(requested_slug, request))
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
@@ -592,13 +585,11 @@ def api_get_widget(request, **kwargs):
         "selections": current_selections,
     }
 
-    ret = render(request, template, context)
-
-    exit_api_call(api_code, ret)
-    return ret
+    return render(request, template, context)
 
 
 @never_cache
+@api_view
 def api_init_detail_page(request, **kwargs):
     r"""Render the top part of the Details tab.
 
@@ -614,15 +605,12 @@ def api_init_detail_page(request, **kwargs):
     The detail page calls other views via AJAX:
         results.get_metadata()
     """
-    api_code = enter_api_call('api_get_data', request, kwargs)
-
     opus_id = kwargs['opus_id']
 
     try:
         obs_general = ObsGeneral.objects.get(opus_id=opus_id)
     except ObjectDoesNotExist as err:
         # This OPUS ID isn't even in the database!
-        exit_api_call(api_code, None)
         raise Http404 from err
     instrument_id = lookup_pretty_value_for_mult(
         get_param_info_by_slug('instrumentid', 'col'),
@@ -736,12 +724,12 @@ def api_init_detail_page(request, **kwargs):
         'instrument_id': instrument_id,
         'cart': cart
     }
-    ret = render(request, 'ui/detail.html', context)
-    exit_api_call(api_code, ret)
-    return ret
+
+    return render(request, 'ui/detail.html', context)
 
 
 @never_cache
+@api_view
 def api_normalize_url(request):
     """Given a top-level OPUS URL, normalize it to modern format and return.
 
@@ -766,12 +754,8 @@ def api_normalize_url(request):
             return pi.body_qualified_label()
         return escape(old_slug) # pragma: no cover
 
-    api_code = enter_api_call('api_normalize_url', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
 
     original_slugs = dict(list(request.GET.items())) # Make it mutable
 
@@ -1572,15 +1556,13 @@ def api_normalize_url(request):
     if url_was_empty or final_msg == '':
         final_msg = None
 
-    ret = json_response({'new_url': '&'.join(new_url_list),
-                         'new_slugs': new_url_dict_list,
-                         'msg': final_msg})
-
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response({'new_url': '&'.join(new_url_list),
+                          'new_slugs': new_url_dict_list,
+                          'msg': final_msg})
 
 
 @never_cache
+@api_view
 def api_dummy(request, *args, **kwargs):
     """This API does nothing and is used for network performance testing.
 
@@ -1591,12 +1573,7 @@ def api_dummy(request, *args, **kwargs):
     JSON return:
         {}
     """
-    api_code = enter_api_call('api_dummy', request)
-
-    ret = json_response({})
-
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response({})
 
 
 ################################################################################

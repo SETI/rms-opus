@@ -45,7 +45,15 @@ def parse_time(iso, unit=None, **kwargs):
         raise ValueError(f'Invalid time syntax: {iso}') from None
     if time_type not in ('UTC', 'TDB'):
         raise ValueError(f'Invalid time system {time_type} when parsing {iso}')
-    ret = julian.tai_from_day(day) + sec
+    # julian parses a Julian date far outside its own supported range without
+    # complaint and only fails on the conversion, with whatever exception the
+    # arithmetic happens to raise - an OverflowError for a day number too large
+    # for a C long. Every rejection here must be a ValueError or it escapes the
+    # caller's guard, so the conversion is part of the parse.
+    try:
+        ret = julian.tai_from_day(day) + sec
+    except Exception as err:
+        raise ValueError(f'Invalid time syntax: {iso}') from err
     if ret < MIN_TIME or ret > MAX_TIME:
         raise ValueError
     return float(ret)

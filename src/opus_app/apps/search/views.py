@@ -32,22 +32,20 @@ from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import UserSearches
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
-    HTTP404_BAD_LIMIT,
-    HTTP404_BAD_OR_MISSING_REQNO,
+    HTTP400_BAD_LIMIT,
+    HTTP400_BAD_OR_MISSING_REQNO,
+    HTTP400_SEARCH_PARAMS_INVALID,
+    HTTP400_UNKNOWN_SLUG,
     HTTP404_NO_REQUEST,
-    HTTP404_SEARCH_PARAMS_INVALID,
-    HTTP404_UNKNOWN_SLUG,
     HTTP500_DATABASE_ERROR,
     HTTP500_SEARCH_CACHE_FAILED,
-    enter_api_call,
-    exit_api_call,
+    Http400Error,
+    api_view,
     get_mult_name,
     get_reqno,
     json_response,
     sort_dictionary,
     strip_numeric_suffix,
-    throw_random_http404_error,
-    throw_random_http500_error,
 )
 from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
 from opus_support import (
@@ -69,6 +67,7 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
+@api_view
 def api_normalize_input(request):
     """Validate and normalize slug values.
 
@@ -86,37 +85,28 @@ def api_normalize_input(request):
         {"slug1": "normalizedval1", "slug2": "normalizedval2",
          "reqno": N}
     """
-    api_code = enter_api_call('api_normalize_input', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST('/__api/normalizeinput.json'))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http404(HTTP404_NO_REQUEST('/__api/normalizeinput.json'))
     (selections, _extras) = url_to_search_params(request.GET,
                                                 allow_errors=True,
                                                 return_slugs=True,
                                                 pretty_results=True)
-    if selections is None or throw_random_http404_error():
+    if selections is None:
         log.error('api_normalize_input: Could not find selections for'
                   +' request %s', str(request.GET))
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
 
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http404_error():
+    if reqno is None:
         log.error('api_normalize_input: Missing or badly formatted reqno')
-        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
     selections['reqno'] = reqno
 
-    ret = json_response(selections)
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response(selections)
 
 
-def api_string_search_choices(request, slug):
+@api_view
+def api_string_search_choices(request, slug, *, api_code):
     """Return valid choices for a string search given other search criteria.
 
     This is a PRIVATE API.
@@ -147,28 +137,20 @@ def api_string_search_choices(request, slug):
     truncated_results is true if the the number of results exceeded the
     specified limit. Only the limit number will be returned.
     """
-    api_code = enter_api_call('api_string_search_choices', request)
-
     if not request or request.GET is None or request.META is None:
-        ret = Http404(HTTP404_NO_REQUEST(
+        raise Http404(HTTP404_NO_REQUEST(
                                 f'/__api/stringsearchchoices/{slug}.json'))
-        exit_api_call(api_code, ret)
-        raise ret
 
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http404_error():
-        log.error('api_normalize_input: Missing or badly formatted reqno')
-        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if reqno is None:
+        log.error('api_string_search_choices: Missing or badly formatted reqno')
+        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
 
     param_info = get_param_info_by_slug(slug, 'search')
-    if not param_info or throw_random_http404_error():
+    if not param_info:
         log.error('api_string_search_choices: unknown slug "%s"',
                   slug)
-        ret = Http404(HTTP404_UNKNOWN_SLUG(slug, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))
 
     param_qualified_name = param_info.param_qualified_name()
     param_category = param_info.category_name
@@ -189,12 +171,10 @@ def api_string_search_choices(request, slug):
     # search term later and catch the bad regex below.
     (selections, extras) = url_to_search_params(request.GET,
                                                 allow_regex_errors=True)
-    if selections is None or throw_random_http404_error():
+    if selections is None:
         log.error('api_string_search_choices: Could not find selections for'
                   +' request %s', str(request.GET))
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -215,49 +195,37 @@ def api_string_search_choices(request, slug):
     # Must do this here before deleting the slug from selections below
     like_query, like_params = get_string_query(selections, param_qualified_name,
                                                query_qtype_list)
-    if like_query is None or throw_random_http500_error():
+    if like_query is None:
         # This is usually caused by a bad regex
         result = {'choices': [],
                   'full_search': True,
                   'truncated_results': False}
         result['reqno'] = reqno
-        ret = json_response(result)
-        exit_api_call(api_code, ret)
-        return ret
+        return json_response(result)
 
     partial_query = selections[param_qualified_name][0]
     del selections[param_qualified_name]
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
-    if not user_query_table or throw_random_http500_error(): # pragma: no cover -
-        # internal debugging
+    if not user_query_table: # pragma: no cover - internal or database failure
         log.error('api_string_search_choices: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
-        exit_api_call(api_code, ret)
-        return ret
+        return HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
 
     limit = request.GET.get('limit', settings.DEFAULT_STRINGCHOICE_LIMIT)
     try:
         limit = int(limit)
-        if throw_random_http404_error(): # pragma: no cover - internal debugging
-            raise ValueError
     except ValueError as err:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
-        ret = Http404(HTTP404_BAD_LIMIT(limit, request))
-        exit_api_call(api_code, ret)
-        raise ret from err
+        raise Http400Error(HTTP400_BAD_LIMIT(limit, request)) from err
 
-    if (limit < 1 or limit > settings.SQL_MAX_LIMIT or
-        throw_random_http404_error()):
+    if limit < 1 or limit > settings.SQL_MAX_LIMIT:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
-        ret = Http404(HTTP404_BAD_LIMIT(limit, request))
-        exit_api_call(api_code, ret)
-        raise ret
+        raise Http400Error(HTTP400_BAD_LIMIT(limit, request))
 
     # We do this because the user may have included characters that aren't
     # allowed in a cache key
@@ -275,9 +243,7 @@ def api_string_search_choices(request, slug):
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         cached_val['reqno'] = reqno
-        ret = json_response(cached_val)
-        exit_api_call(api_code, ret)
-        return ret
+        return json_response(cached_val)
 
     param_column = sql_builder.column(param_name, param_category)
 
@@ -290,12 +256,9 @@ def api_string_search_choices(request, slug):
     cursor = connection.cursor()
     cursor.execute(sql)
     results = cursor.fetchall()
-    if (len(results) != 1 or len(results[0]) != 1 or
-        throw_random_http500_error()): # pragma: no cover - internal debugging
+    if len(results) != 1 or len(results[0]) != 1: # pragma: no cover - database error
         log.error('api_string_search_choices: SQL failure: %s', sql)
-        ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
-        exit_api_call(api_code, ret)
-        return ret
+        return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
 
     final_results = None
     truncated_results = False
@@ -326,16 +289,11 @@ def api_string_search_choices(request, slug):
 
         try:
             cursor.execute(sql, tuple(sql_params))
-            if throw_random_http500_error(): # pragma: no cover - internal debugging
-                raise DatabaseError('random')
         except DatabaseError as e:
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
                 # database error
-                log.error('api_string_search_choices: "%s" returned %s',
-                          sql, str(e))
-                ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
-                exit_api_call(api_code, ret)
-                return ret
+                log.exception('api_string_search_choices: "%s" failed', sql)
+                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
             do_simple_search = True
 
     if do_simple_search:
@@ -356,16 +314,11 @@ def api_string_search_choices(request, slug):
 
         try:
             cursor.execute(sql, tuple(sql_params))
-            if throw_random_http500_error(): # pragma: no cover - internal debugging
-                raise DatabaseError('random')
         except DatabaseError as e: # pragma: no cover - database error
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
                 # database error
-                log.error('api_string_search_choices: "%s" returned %s',
-                          sql, str(e))
-                ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
-                exit_api_call(api_code, ret)
-                return ret
+                log.exception('api_string_search_choices: "%s" failed', sql)
+                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
             final_results = []
 
     if final_results is None: # pragma: no cover - can't trigger during testing
@@ -404,9 +357,7 @@ def api_string_search_choices(request, slug):
               'truncated_results': truncated_results}
     cache.set(cache_key, result)
     result['reqno'] = reqno
-    ret = json_response(result)
-    exit_api_call(api_code, ret)
-    return ret
+    return json_response(result)
 
 
 ################################################################################
@@ -1037,8 +988,8 @@ def get_user_query_table(selections, extras, api_code=None):
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS: # pragma: no cover - ditto
             cache.set(cache_key, cache_table_name)
             return cache_table_name
-        log.error('get_user_query_table: "%s" with params "%s" failed with '
-                  +'%s', create_sql, str(tuple(params)), str(e))
+        log.exception('get_user_query_table: "%s" with params "%s" failed',
+                      create_sql, str(tuple(params)))
         return None
     log.debug('API %s (%.3f) get_user_query_table: %s *** PARAMS %s',
               str(api_code), time.time()-time1, create_sql, str(params))
@@ -1147,13 +1098,13 @@ def set_user_search_number(selections, extras):
                                         units_hash=units_hash,
                                         order_hash=order_hash)
         s = s[0]
-        log.error('set_user_search_number: Multiple entries in user_searches'
-                  +' for *** Selections %s *** Qtypes %s *** Units %s '
-                  +' *** Order %s',
-                  str(selections_json),
-                  str(qtypes_json),
-                  str(units_json),
-                  str(order_json))
+        log.exception('set_user_search_number: Multiple entries in user_searches'
+                      +' for *** Selections %s *** Qtypes %s *** Units %s '
+                      +' *** Order %s',
+                      str(selections_json),
+                      str(qtypes_json),
+                      str(units_json),
+                      str(order_json))
 
     cache.set(cache_key, s.id)
     return s.id, new_entry
@@ -1551,7 +1502,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
             clause = sql_builder.binary_op(param_column, 'RLIKE',
                                            sql_builder.value(value))
         else: # pragma: no cover - protecting against future bugs
-            log.error('_get_string_query: Unknown qtype "%s" '
+            log.error('get_string_query: Unknown qtype %r '
                       +'for "%s" '
                       +'*** Selections %s *** Qtypes %s ***',
                       qtype, param_qualified_name, str(selections), str(qtypes))
