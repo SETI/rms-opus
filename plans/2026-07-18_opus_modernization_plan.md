@@ -3729,38 +3729,32 @@ body; never rewrite or delete earlier notes.*
     logging PR". PR-13 is that PR and **did not do the sweep**, deliberately: log
     injection is not #512 (which is only about `logging.exception`/`exc_info`) and no
     plan section assigns it, so widening PR-13 to it would have been improvisation.
-    The comment is restored rather than deleted, with what this PR measured. **What
-    is NOT exposed:** `MultiValueDict` defines `__repr__` and `QueryDict` inherits it
-    along with `object.__str__`, which delegates to it, so `'%s' % request.GET`
-    already renders the values through `repr()` and escapes any CR/LF in them
-    (measured on Django 5.2.17). The same holds for the other mappings and lists
-    these messages carry (`selections`, `qtypes`, SQL parameter lists). **What is
-    exposed** is a bare **scalar** interpolated with `%s`.
+    The comment is restored rather than deleted, with what this PR measured.
 
-    **Do not trust a hand-written list of those sites - three review passes each
-    found the previous pass's list wrong.** Regenerate it:
+    **What is NOT exposed:** `MultiValueDict` defines `__repr__` and `QueryDict`
+    inherits it along with `object.__str__`, which delegates to it, so
+    `'%s' % request.GET` already renders the values through `repr()` and escapes any
+    CR/LF in them (measured on Django 5.2.17). The same holds for the other mappings
+    and lists these messages carry - `str(dict)`, `str(list)` and `json.dumps` all
+    escape. **What is exposed** is a bare **scalar** interpolated with `%s`.
 
-    ```
-    grep -rnE "log\.(debug|info|warning|error|exception|critical)\(" src/opus_app
-    ```
+    **Two properties of this PR were verified by independent review and are the only
+    things here a later PR should rely on:** every log line it *adds or rewrites*
+    that names a request-supplied scalar uses `%r`, and none of the log calls it
+    touched that still use `%s` on a scalar names request-supplied data.
 
-    then keep the calls whose message contains `%s` against a bare name. An AST
-    version of that filter reports **105 calls** in `src/opus_app` today. It
-    deliberately over-reports: most of those scalars are SQL text, a `db_table` name
-    or a `param_qualified_name` and can hold no request text at all. The cheap fix is
-    `%r` everywhere rather than a per-site argument, which is why the worklist is
-    stated as the over-approximation.
-
-    **This PR's own contribution to that number is negative.** Every log line it adds
-    or rewrites that names a *request-supplied* scalar uses `%r`: the six it adds
-    (`api_get_fields`' `collapse`, `api_create_download`'s `fmt`, the four order-slug
-    guards' `all_order`) plus eight it rewrote (`api_get_widget`'s slug,
-    `api_reset_session`'s `download_str`, `_api_get_images`' `fmt`,
-    `api_get_range_endpoints`' slug and `units`, `get_string_query`'s `qtype`, and
-    `convert_ring_obs_id_to_opus_id`'s `ring_obs_id` twice). Of the 19 log calls this
-    PR touched that still use `%s` on a scalar, **none** is request-supplied - they
-    are SQL text, JSON blobs, `db_table`/model names and pdsfile-derived paths.
-    **Owner of the remainder: unassigned - orchestrator's call.**
+    **This bullet deliberately carries no list or count of the remaining sites, and a
+    later PR must not add one.** Five successive review passes each found the
+    previous pass's enumeration wrong - wrong count, wrong commit, a missing entry,
+    an unreproducible total - because the set has no stable hand-maintainable
+    definition. Regenerate it instead, and treat any `%s`-based filter as a
+    **lower** bound: it cannot see a scalar wrapped in `str(...)` (which is how
+    `api_get_range_endpoints` hid two of them until this PR), and it cannot see one
+    concatenated into the message with `+`, as at `ui/views.py`'s
+    `log.error('api_normalize_url: Failed to handle slug "'+slug+'"')`, which is a
+    live caller-supplied slug this PR did not touch. The cheap fix is `%r`
+    everywhere rather than a per-site argument about whether a given scalar can hold
+    request text. **Owner: unassigned - orchestrator's call.**
   - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
     note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
     no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,
