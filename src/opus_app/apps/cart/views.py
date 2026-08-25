@@ -471,7 +471,7 @@ def api_reset_session(request):
     except ValueError:
         download = None
     if download not in (0, 1):
-        log.error('api_reset_session: Badly formatted download %s', download_str)
+        log.error('api_reset_session: Badly formatted download %r', download_str)
         raise Http400Error(HTTP400_BAD_DOWNLOAD(download_str, request))
 
     conditions = [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),

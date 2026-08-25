@@ -392,15 +392,15 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
     param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
         log.error('api_get_range_endpoints: Could not find param_info entry '
-                  +'for slug %s', str(slug))
+                  +'for slug %r', slug)
         raise Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
     units = request.GET.get('units', get_default_unit(form_type_unit_id))
     if form_type_unit_id and not is_valid_unit(form_type_unit_id, units):
-        log.error('api_get_range_endpoints: Bad units "%s" for '
-                  +'slug %s', str(units), str(slug))
+        log.error('api_get_range_endpoints: Bad units %r for '
+                  +'slug %r', units, slug)
         raise Http400Error(HTTP400_UNKNOWN_UNITS(units, slug, request))
 
     param_name = param_info.name # Just name

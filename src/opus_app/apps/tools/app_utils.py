@@ -193,7 +193,7 @@ _HTTP400_TEMPLATE_NAME = '400.html'
 #: decorator must therefore not absorb into a generic 500 - `SuspiciousOperation`
 #: also reaches the `django.security.*` logger an operator watches.
 #:
-#: `Http404` is the live one: the handlers raise it ~50 times and it is how every
+#: `Http404` is the live one: the handlers raise it 49 times and it is how every
 #: 404 in the API is produced. The other three are guards. No handler raises them
 #: today, and the one path that looked live is not: `HttpRequest.build_absolute_uri`
 #: raises `DisallowedHost` on a spoofed Host header, but
@@ -363,10 +363,10 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id, force_ring_obs_id_fmt=False):
     try:
         return ObsGeneral.objects.get(ring_obs_id=ring_obs_id).opus_id
     except ObjectDoesNotExist:
-        log.error('No matching RING_OBS_ID for "%s"', ring_obs_id)
+        log.error('No matching RING_OBS_ID for %r', ring_obs_id)
         return None
     except MultipleObjectsReturned: # pragma: no cover - import error
-        log.exception('More than one matching RING_OBS_ID for "%s"', ring_obs_id)
+        log.exception('More than one matching RING_OBS_ID for %r', ring_obs_id)
         return (ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)
                 .first().opus_id)
 

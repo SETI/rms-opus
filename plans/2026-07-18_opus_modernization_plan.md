@@ -3539,8 +3539,9 @@ body; never rewrite or delete earlier notes.*
     absorbing one costs both the response Django gives it and, for a
     `SuspiciousOperation`, the `django.security.*` record an operator watches.
     **`Http404` is the live member and the other three are guards**, a distinction
-    two earlier drafts of this note got wrong in opposite directions: the handlers
-    `raise Http404` 50 times and it is how every 404 in the API is produced, while
+    two earlier drafts of this note got wrong in opposite directions: `raise Http404`
+    appears 50 times in `src/opus_app` (49 in the handlers, plus the decorator's own
+    fault injector) and it is how every 404 in the API is produced, while
     no handler raises `BadRequest`, `PermissionDenied` or `SuspiciousOperation`
     today. The one path that looked live is not:
     `HttpRequest.build_absolute_uri`, which `help.api_api_guide` calls, does raise
@@ -3728,28 +3729,38 @@ body; never rewrite or delete earlier notes.*
     logging PR". PR-13 is that PR and **did not do the sweep**, deliberately: log
     injection is not #512 (which is only about `logging.exception`/`exc_info`) and no
     plan section assigns it, so widening PR-13 to it would have been improvisation.
-    The comment is restored rather than deleted, with what this PR measured. **The
-    exposure is smaller than it reads:** `MultiValueDict` defines `__repr__` and
-    `QueryDict` inherits it along with `object.__str__`, which delegates to it, so
-    `'%s' % request.GET` already renders the values through `repr()` and escapes any
-    CR/LF in them (measured on Django 5.2.17). The hazard is only a **bare
-    request-supplied scalar** interpolated with `%s` - `download_str`, `recycle_str`,
-    `limit`, `startobs`, `page`, `units`, `cats`, `order`, an individual `cols` slug -
-    of which there are on the order of two dozen across the app. **Every log line
-    this PR *adds* that names such a scalar uses `%r`** - `api_get_fields`'
-    `collapse`, `api_create_download`'s `fmt` and the four order-slug guards'
-    `all_order` - as does `api_get_widget`'s slug, which the PR rewrote. **The count
-    does not grow here, but it does not shrink either:** five *other* lines the PR
-    rewrote for unrelated reasons still use `%s` on a scalar -
-    `api_reset_session`'s `download_str` and `_api_get_images`' `fmt` (rewritten in
-    `bbebbfa6`, which renamed the function they name), and
-    `api_get_range_endpoints`' slug and `units` and `get_string_query`'s `qtype`
-    (rewritten in `996e6bb2`, the log-name corrections). Converting those is part of
-    the same unassigned sweep, not a separate item. So is `parse_order_slug`'s
-    `order`, which this PR never touched and which is the one place the raw
-    `?order=` value is still logged with `%s` (`create_order_by_terms`' `order_slug`
-    reads similarly but is a qualified name built from `ParamInfo`, not request
-    text). **Owner: unassigned - orchestrator's call.**
+    The comment is restored rather than deleted, with what this PR measured. **What
+    is NOT exposed:** `MultiValueDict` defines `__repr__` and `QueryDict` inherits it
+    along with `object.__str__`, which delegates to it, so `'%s' % request.GET`
+    already renders the values through `repr()` and escapes any CR/LF in them
+    (measured on Django 5.2.17). The same holds for the other mappings and lists
+    these messages carry (`selections`, `qtypes`, SQL parameter lists). **What is
+    exposed** is a bare **scalar** interpolated with `%s`.
+
+    **Do not trust a hand-written list of those sites - three review passes each
+    found the previous pass's list wrong.** Regenerate it:
+
+    ```
+    grep -rnE "log\.(debug|info|warning|error|exception|critical)\(" src/opus_app
+    ```
+
+    then keep the calls whose message contains `%s` against a bare name. An AST
+    version of that filter reports **105 calls** in `src/opus_app` today. It
+    deliberately over-reports: most of those scalars are SQL text, a `db_table` name
+    or a `param_qualified_name` and can hold no request text at all. The cheap fix is
+    `%r` everywhere rather than a per-site argument, which is why the worklist is
+    stated as the over-approximation.
+
+    **This PR's own contribution to that number is negative.** Every log line it adds
+    or rewrites that names a *request-supplied* scalar uses `%r`: the six it adds
+    (`api_get_fields`' `collapse`, `api_create_download`'s `fmt`, the four order-slug
+    guards' `all_order`) plus eight it rewrote (`api_get_widget`'s slug,
+    `api_reset_session`'s `download_str`, `_api_get_images`' `fmt`,
+    `api_get_range_endpoints`' slug and `units`, `get_string_query`'s `qtype`, and
+    `convert_ring_obs_id_to_opus_id`'s `ring_obs_id` twice). Of the 19 log calls this
+    PR touched that still use `%s` on a scalar, **none** is request-supplied - they
+    are SQL text, JSON blobs, `db_table`/model names and pdsfile-derived paths.
+    **Owner of the remainder: unassigned - orchestrator's call.**
   - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
     note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
     no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,

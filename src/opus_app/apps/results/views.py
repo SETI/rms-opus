@@ -834,7 +834,7 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
     elif fmt == 'json':
         ret = json_response(data)
     else: # pragma: no cover - error catchall
-        log.error('_api_get_images: Unknown format "%s"', fmt)
+        log.error('_api_get_images: Unknown format %r', fmt)
         raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
 
     return ret
@@ -1786,7 +1786,7 @@ def labels_for_slugs(slugs, units=True):
                                                    allow_units_override=True)
         if not pi:
             log.error('labels_for_slugs: Could not find param_info '
-                      +'for %s', slug)
+                      +'for %r', slug)
             return None
 
         # append units if pi_units has unit stored
