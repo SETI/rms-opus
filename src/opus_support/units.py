@@ -635,7 +635,16 @@ def parse_unit_value(s, numerical_format, unit_id, unit):
                     s = s[:-len(trial_suffix)]
                     break
         ret = parse_func(s) # Parse the int or float
-        if not math.isfinite(ret):
+        # math.isfinite() raises OverflowError - not ValueError - on an int too
+        # large to convert to a float, and every rejection from this parser must
+        # be a ValueError or it escapes the caller's guard. A 400-digit numeric
+        # value reaches this from any integer-formatted field, so the overflow is
+        # reachable input, not a theoretical case.
+        try:
+            value_is_finite = math.isfinite(ret)
+        except OverflowError as err:
+            raise ValueError from err
+        if not value_is_finite:
             raise ValueError
         if force_unit is not None:
             ret = convert_to_default_unit(ret, unit_id, force_unit)

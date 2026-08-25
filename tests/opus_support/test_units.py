@@ -356,6 +356,20 @@ def test_parse_unit_value_rejects_infinity() -> None:
     assert str(excinfo.value) == ''
 
 
+def test_parse_unit_value_rejects_an_int_too_large_for_a_float() -> None:
+    """An integer too large to convert to a float is rejected, not raised through.
+
+    ``math.isfinite`` raises ``OverflowError`` rather than returning False for such
+    an integer, and an ``OverflowError`` escaping this parser reaches the caller as
+    an internal error rather than as a rejected value. The rejection carries the
+    same empty message as every other rejection here.
+    """
+    with pytest.raises(ValueError) as excinfo:
+        parse_unit_value('1' * 400, 'd', None, None)
+    assert str(excinfo.value) == ''
+    assert isinstance(excinfo.value.__cause__, OverflowError)
+
+
 def test_parse_unit_value_uses_unit_parse_function() -> None:
     """A unit that declares a parse function delegates to it."""
     assert parse_unit_value('2019-01-05T10:39:23.000', None, 'datetime',
