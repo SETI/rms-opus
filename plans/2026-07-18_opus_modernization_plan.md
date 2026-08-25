@@ -4394,6 +4394,45 @@ body; never rewrite or delete earlier notes.*
     cannot move it. They are in the scope of the unit gate PR-19 introduces -- worth
     knowing before that gate is set, since an assertion on an invariant is a statement
     no test can fail.
+  - **Read this before writing docstrings for PR-16 or PR-17: one class of defect cost
+    this PR three review rounds, and it is a generator rather than a scatter.** The code
+    was clean from the first pass; **every** finding in rounds two and three was a
+    docstring or comment that said something false about the code, and two of them were
+    in the commits written to *fix* the round before. Both later PRs are
+    annotation-and-docstring PRs over code nobody has described before, so they will
+    meet the same generator.
+    **The three shapes it takes:**
+    1. **An exhaustiveness claim, which is the worst of them, because making a claim
+       more precise makes it falsifiable.** "Exactly four cases exit non-zero" was
+       written to replace a vaguer claim and was wrong twice over -- it missed the
+       `sys.exit` in `yield_import_bundle_ids`, which `main`'s `except Exception:`
+       deliberately does not catch. Trigger words: *exactly, every, all, always, never,
+       only, one per, no other*.
+    2. **Prose that inherits a wrong comment already in the code.** Two new module
+       docstrings said the `obs_` rows reference the `mult_` tables "by foreign key",
+       restating a pre-existing comment. There is no such foreign key: across the
+       packaged schemas the only foreign-key targets are `obs_general.id`,
+       `obs_general.opus_id` and `contexts.name`. A `mult_idx` column carries a plain
+       index. **Fix the seeding comment too, or the next executor inherits it again.**
+    3. **A claim about a workflow nobody has run.** `retrieve_ra_dec`'s docstring said it
+       regenerates `star_ra_dec`'s table; its own star list is smaller than the table, so
+       following that instruction deletes the entries only the table has. An instruction
+       that destroys data is worse than a merely inaccurate sentence, and no reviewer
+       will catch it by reading -- only by running the comparison.
+    **The two rules that close it, applied by the author rather than by another
+    reviewer** (a reviewer finds the next instance; a rule ends the class):
+    * **No quantified or exhaustive claim survives unless the count was run and can be
+      stated.** Either back it with a measurement or drop the quantifier. "A failed step
+      can exit non-zero" needs no audit; "exactly four cases do" needs a count.
+    * **Prefer the narrower claim, and prefer deleting to weakening.** A docstring that
+      says less than the code does is safe forever; one that says more is a defect
+      waiting for a reader. A sentence that adds nothing should be cut -- an absent
+      sentence cannot be wrong.
+    **What actually established truth here was counting, not reading**: 410
+    `mult_options` entries all of arity seven, 46 foreign-key columns with zero `mult_`
+    targets, 190 stars in the table against 155 in the tool. Where a claim is countable,
+    count it exhaustively; a sample proves nothing. Verifying is cheap and reliable,
+    claiming is neither.
   - **Docstring conventions this package now follows, so PR-16 and PR-17 match.** A
     module docstring says what the module's table or step is *for* and why its work
     happens where it does in the sequence, not what its functions are. `Returns:`
