@@ -6,26 +6,41 @@ converts that number back to the mission's canonical clock string, so the pair
 round-trips within the resolution of the clock's smallest field.
 """
 
+from collections.abc import Sequence
+
 ################################################################################
 # General routines for handling a spacecraft clock where:
 #   - there are two or more fields
 #   - the clock partition is always one
 ################################################################################
 
-def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
+def _parse_multi_field_sclk(sclk: str, ndigits: int, sep: str,
+                            modvals: int | Sequence[int], scname: str) -> float:
     """Convert a multi-field clock string to a numeric value.
 
-    Input:
-        sclk        the spacecraft clock string.
-        ndigits     the maximum number of digits in the leading field.
-        sep         the character that separates the fields, typically a colon
-                    or a period.
-        modvals     For a 2-field sclk, the modulus value of the second field.
-                    For a general sclk, a list containing the modulus value of
-                    each field from 2 onward.
-        scname      name of the spacecraft, used for error messages.
+    Parameters:
+        sclk: The spacecraft clock string. It may carry a leading partition number
+            and a slash, and it may leave out any trailing field.
+        ndigits: The maximum number of digits in the leading field.
+        sep: The character that separates the fields, typically a colon or a period.
+        modvals: For a 2-field sclk, the modulus value of the second field. For a
+            general sclk, a list containing the modulus value of each field from 2
+            onward.
+        scname: Name of the spacecraft, used for error messages.
+
+    Returns:
+        The clock count in units of the leading field, with every later field
+        contributing its fraction of that unit.
+
+    Raises:
+        ValueError: If the string carries more than one slash, states a partition
+            number other than one, holds more fields than `modvals` describes, holds
+            a field that is not a whole number, holds a later field with more digits
+            than its modulus allows or outside the range its modulus allows, or
+            holds a leading field that is negative or longer than `ndigits`. Every
+            message names the spacecraft and the offending string.
     """
-    if not isinstance(modvals, (list, tuple)):
+    if isinstance(modvals, int):
         modvals = [modvals]
 
     # Check the partition number before ignoring it
@@ -61,7 +76,7 @@ def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
         parts[idx] = parts[idx] + '0' * (modval_len - len(parts[idx]))
 
     # Make sure all fields are integers
-    ints = []
+    ints: list[int] = []
     for part in parts:
         try:
             ints.append(int(part))
@@ -72,7 +87,7 @@ def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
     if ints[0] < 0 or len(parts[0]) > ndigits:
         raise ValueError(f'{scname} clock leading field has too many digits: {sclk}')
 
-    result = 0
+    result: float = 0
     for idx in range(nfields-1, 0, -1):
         modval = modvals[idx-1]
         if not 0 <= ints[idx] < modval:
@@ -82,21 +97,27 @@ def _parse_multi_field_sclk(sclk, ndigits, sep, modvals, scname):
 
     return result + ints[0]
 
-def _format_multi_field_sclk(value, ndigits, sep, modvals, scname):
+def _format_multi_field_sclk(value: float, ndigits: int, sep: str,
+                             modvals: int | Sequence[int], scname: str) -> str:
     """Convert a number into a valid spacecraft clock string.
 
-    Input:
-        sclk        the spacecraft clock string.
-        ndigits     the number of digits in the leading field. Leading zeros
-                    will be used for padding
-        sep         the character that separates the fields, typically a colon
-                    or a period.
-        modvals     For a 2-field sclk, the modulus value of the second field.
-                    For a general sclk, a list containing the modulus value of
-                    each field from 2 onward.
-        scname      name of the spacecraft, used for error messages.
+    Parameters:
+        value: The clock count in units of the leading field.
+        ndigits: The number of digits in the leading field. Leading zeros will be
+            used for padding.
+        sep: The character that separates the fields, typically a colon or a period.
+        modvals: For a 2-field sclk, the modulus value of the second field. For a
+            general sclk, a list containing the modulus value of each field from 2
+            onward.
+        scname: Name of the spacecraft. It is part of the signature every clock
+            conversion in this module shares and is not used here.
+
+    Returns:
+        The clock string, with every field zero-padded to its full width and the
+        final field rounded rather than truncated. A rounded final field that
+        reaches its modulus carries into the field before it.
     """
-    if not isinstance(modvals, (list, tuple)):
+    if isinstance(modvals, int):
         modvals = [modvals]
 
     # Extract fields
@@ -151,13 +172,39 @@ def _format_multi_field_sclk(value, ndigits, sep, modvals, scname):
 # parsing, and allowing any missing fields to be set to zero.
 ################################################################################
 
-def parse_galileo_sclk(sclk, **kwargs):
-    """Convert a Galileo clock string to a numeric value."""
+def parse_galileo_sclk(sclk: str, **kwargs: object) -> float:
+    """Convert a Galileo clock string to a numeric value.
+
+    Parameters:
+        sclk: The clock string, in either the PDS3 label form ``xxxxxxxx.mm`` or the
+            SPICE kernel form ``xxxxxxxx:mm:n:o``, optionally preceded by the
+            partition number and a slash. Any trailing field may be left out.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The clock count in units of the leading field.
+
+    Raises:
+        ValueError: If the string is not a Galileo clock. The partition must be one,
+            the leading field may have at most eight digits, and the three later
+            fields are limited to 0-90, 0-9 and 0-7.
+    """
     sclk = sclk.replace('.', ':')
     return _parse_multi_field_sclk(sclk, 8, ':', (91, 10, 8), 'Galileo')
 
-def format_galileo_sclk(value, **kwargs):
-    """Convert a number into a valid Galileo clock string."""
+def format_galileo_sclk(value: float, **kwargs: object) -> str:
+    """Convert a number into a valid Galileo clock string.
+
+    Parameters:
+        value: The clock count in units of the leading field.
+        **kwargs: Accepted and ignored, so that every formatter in this package can
+            be called through one uniform dispatch.
+
+    Returns:
+        The clock string in the SPICE kernel form ``xxxxxxxx:mm:n:o``, with the
+        leading field zero-padded to eight digits.
+    """
     return _format_multi_field_sclk(value, 8, ':', (91, 10, 8), 'Galileo')
 
 
@@ -174,8 +221,24 @@ def format_galileo_sclk(value, **kwargs):
 # count does not roll over between partitions.
 ################################################################################
 
-def parse_new_horizons_sclk(sclk, **kwargs):
-    """Convert a New Horizons clock string to a numeric value."""
+def parse_new_horizons_sclk(sclk: str, **kwargs: object) -> float:
+    """Convert a New Horizons clock string to a numeric value.
+
+    Parameters:
+        sclk: The clock string ``xxxxxxxxxx:yyyyy``, optionally preceded by the
+            partition number and a slash. The second field may be left out.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The clock count in units of the leading field.
+
+    Raises:
+        ValueError: If the string is not a New Horizons clock. The leading field may
+            have at most ten digits and the second is limited to 0-49999. A stated
+            partition number must be 1 or 3 and must match the count: partition 1
+            ends and partition 3 begins at a count of 150000000.
+    """
     original_sclk = sclk
 
     # Check for partition number
@@ -196,8 +259,18 @@ def parse_new_horizons_sclk(sclk, **kwargs):
 
     return value
 
-def format_new_horizons_sclk(value, **kwargs):
-    """Convert a number into a valid New Horizons clock string."""
+def format_new_horizons_sclk(value: float, **kwargs: object) -> str:
+    """Convert a number into a valid New Horizons clock string.
+
+    Parameters:
+        value: The clock count in units of the leading field.
+        **kwargs: Accepted and ignored, so that every formatter in this package can
+            be called through one uniform dispatch.
+
+    Returns:
+        The clock string ``xxxxxxxxxx:yyyyy``, with the leading field zero-padded to
+        ten digits. No partition number is included.
+    """
     return _format_multi_field_sclk(value, 10, ':', 50000, 'New Horizons')
 
 
@@ -212,12 +285,37 @@ def format_new_horizons_sclk(value, **kwargs):
 # separator is always a dot.
 ################################################################################
 
-def parse_cassini_sclk(sclk, **kwargs):
-    """Convert a Cassini clock string to a numeric value."""
+def parse_cassini_sclk(sclk: str, **kwargs: object) -> float:
+    """Convert a Cassini clock string to a numeric value.
+
+    Parameters:
+        sclk: The clock string ``xxxxxxxxxx.yyy``, optionally preceded by the
+            partition number and a slash. The second field may be left out.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The clock count in units of the leading field.
+
+    Raises:
+        ValueError: If the string is not a Cassini clock. The partition must be one,
+            the leading field may have at most ten digits, and the second field is
+            limited to 0-255.
+    """
     return _parse_multi_field_sclk(sclk, 10, '.', 256, 'Cassini')
 
-def format_cassini_sclk(value, **kwargs):
-    """Convert a number into a valid Cassini clock string."""
+def format_cassini_sclk(value: float, **kwargs: object) -> str:
+    """Convert a number into a valid Cassini clock string.
+
+    Parameters:
+        value: The clock count in units of the leading field.
+        **kwargs: Accepted and ignored, so that every formatter in this package can
+            be called through one uniform dispatch.
+
+    Returns:
+        The clock string ``xxxxxxxxxx.yyy``, with the leading field zero-padded to
+        ten digits. No partition number is included.
+    """
     return _format_multi_field_sclk(value, 10, '.', 256, 'Cassini')
 
 
@@ -243,21 +341,41 @@ def format_cassini_sclk(value, **kwargs):
 # minutes have been appended with no separator.
 ################################################################################
 
-VOYAGER_PLANET_NAMES = {5:'Jupiter', 6:'Saturn', 7:'Uranus', 8:'Neptune'}
-VOYAGER_PLANET_PARTITIONS = {5:2, 6:2, 7:3, 8:4}
+VOYAGER_PLANET_NAMES: dict[int, str] = {5:'Jupiter', 6:'Saturn', 7:'Uranus',
+                                        8:'Neptune'}
+VOYAGER_PLANET_PARTITIONS: dict[int, int] = {5:2, 6:2, 7:3, 8:4}
 
-def parse_voyager_sclk(sclk, planet=None, **kwargs):
+def parse_voyager_sclk(sclk: str, planet: int | None = None,
+                       **kwargs: object) -> float:
     """Convert a Voyager clock string (FDS) to a numeric value.
 
     Typically, a partition number is not specified for FDS counts. However, if
     it is, it must be compatible with the planetary flyby. The partition number
     is 2 for Jupiter and Saturn, 3 for Uranus, and 4 for Neptune.
 
-    If the planet is not specified (planet = None), then any partition value in
-    the range 2-4 is allowed and its value is ignored. If the planet is given as
-    input (5 for Jupiter, 6 for Saturn, 7 for Uranus, 8 for Neptune), then an
-    explicitly stated partition number must be compatible with the associated
-    planetary flyby.
+    Parameters:
+        sclk: The FDS count, its three fields separated by colons or by periods and
+            optionally preceded by the partition number and a slash. A trailing
+            field may be left out, and a six- or seven-digit number with no
+            separator at all is read as the hours and minutes run together, which is
+            how a Voyager image name spells it.
+        planet: The flyby the count belongs to -- 5 for Jupiter, 6 for Saturn, 7 for
+            Uranus, 8 for Neptune -- which a stated partition number must match. If
+            None, any partition number from 2 to 4 is allowed and its value is
+            ignored.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The count in units of FDS hours, the minutes and seconds fields
+        contributing their fraction of an hour.
+
+    Raises:
+        ValueError: If the string is not an FDS count -- more than one slash, a
+            partition number that is not a whole number, out of the range 2 to 4, or
+            incompatible with `planet`, more than three fields, a field that is not
+            a whole number, or a field outside its range. The ranges are 0-65535
+            hours, 0-59 minutes and 1-800 seconds.
     """
     assert planet in (None, 5, 6, 7, 8), f'Invalid planet value: {planet}'
 
@@ -303,7 +421,7 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
         parts[2] = parts[2] + '0' * (3 - len(parts[2]))
 
     # Make sure field are integers
-    ints = []
+    ints: list[int] = []
     try:
         for part in parts:
             ints.append(int(part))
@@ -332,8 +450,27 @@ def parse_voyager_sclk(sclk, planet=None, **kwargs):
     # Return in units of FDS hours
     return ints[0] + (ints[1] + (ints[2]-1) / 800.) / 60.
 
-def format_voyager_sclk(value, sep=':', fields=3, **kwargs):
-    """Convert a number in units of FDS hours to valid Voyager clock string."""
+def format_voyager_sclk(value: float, sep: str = ':', fields: int = 3,
+                        **kwargs: object) -> str:
+    """Convert a number in units of FDS hours to valid Voyager clock string.
+
+    Parameters:
+        value: The count in units of FDS hours.
+        sep: The character to separate the fields with, either a colon or a period.
+        fields: 3 to write hours, minutes and seconds, or 2 to write hours and
+            minutes with the minutes rounded.
+        **kwargs: Accepted and ignored, so that every formatter in this package can
+            be called through one uniform dispatch.
+
+    Returns:
+        The FDS count with its hours zero-padded to five digits, its minutes to two
+        and, when `fields` is 3, its seconds to three. No partition number is
+        included.
+
+    Raises:
+        ValueError: If the count, once its fields are rounded, needs more than 65535
+            hours.
+    """
     assert sep in (':', '.'), f'Separator must be ":" or ".": {sep}'
     assert fields in (2,3), f'Fields must be 2 or 3: {fields}'
 
