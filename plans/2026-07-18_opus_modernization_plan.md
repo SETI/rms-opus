@@ -3093,11 +3093,15 @@ body; never rewrite or delete earlier notes.*
     pycodestyle's own default-ignore set, and several pre-existing ones removed.
 
 - **2026-08-24 (PR-12 executed):** the Django app assembles no SQL text of its own —
-  every *raw SQL* statement it issues is built by `opus_app.apps.tools.sql_builder` —
-  and the import backend validates every identifier and parameterizes every value.
-  (The app of course still issues ORM queries, which Django compiles itself; one former
-  `.extra()` site became an ORM filter rather than a builder call, so "every statement"
-  would overstate it.) `QuerySet.extra()` is gone from the repository. Facts later PRs
+  every *dynamically assembled* raw SQL statement it issues is built by
+  `opus_app.apps.tools.sql_builder` — and the import backend validates every identifier
+  and parameterizes every value. (Two things are outside that claim, both deliberately.
+  The app of course still issues ORM queries, which Django compiles itself, and one
+  former `.extra()` site became an ORM filter rather than a builder call. And the PR-12
+  acceptance criterion above exempts constant literal statements carrying only `%s`
+  placeholders; that exemption was used exactly once, for `_valid_regex`'s
+  `SELECT REGEXP_LIKE("x", %s)`. So "every statement" would overstate it in two
+  different directions.) `QuerySet.extra()` is gone from the repository. Facts later PRs
   rely on:
   - **The builder is `src/opus_app/apps/tools/sql_builder.py` and it is the only module
     allowed to turn Python values into SQL text.** Call sites describe structure --
@@ -3243,10 +3247,17 @@ body; never rewrite or delete earlier notes.*
     (rev 7.5), because PR-12's contract is byte-identical golden responses and this fix
     is deliberately *not* byte-identical in effect. Everything a fresh executor needs:
     1. **The statement.** `cart/views.py`, the `elif action == 'removerange':` branch of
-       `_edit_cart_range` (the `recycle_bin == 0` path): `DELETE cart FROM cart INNER
-       JOIN <user_query_table> ON <uqt>.id=cart.obs_general_id WHERE <uqt>.sort_order
-       >= <min> AND <uqt>.sort_order <= <max>`. It names no `session_id`, so it deletes
-       the matching rows of **every** session's cart, not just the caller's.
+       `_edit_cart_range` (the `recycle_bin == 0` path):
+
+       ```sql
+       DELETE cart FROM cart
+         INNER JOIN <user_query_table> ON <user_query_table>.id = cart.obs_general_id
+         WHERE <user_query_table>.sort_order >= <min>
+           AND <user_query_table>.sort_order <= <max>
+       ```
+
+       It names no `session_id`, so it deletes the matching rows of **every** session's
+       cart, not just the caller's.
     2. **It is pre-existing, not PR-12's doing.** `origin/rewrite:cart/views.py:1419-1425`
        builds the identical un-scoped statement and its `sql_where` (line 1322) is the
        sort_order range alone. PR-12 reproduced it faithfully through the builder, which
@@ -3272,7 +3283,13 @@ body; never rewrite or delete earlier notes.*
        the change is unverified.
   - **Pre-existing, NOT a defect: the MULTIGROUP mult-counts query aliases its
     `JSON_TABLE` with the base table's own name.** Also raised by CodeRabbit. The
-    statement is `FROM `T` JOIN JSON_TABLE(`T`.`col`, …) `T``, unchanged in shape from
+    statement is:
+
+    ```sql
+    FROM `T` JOIN JSON_TABLE(`T`.`col`, …) `T`
+    ```
+
+    unchanged in shape from
     `origin/rewrite:metadata/views.py:279-285` (PR-12 only re-spelled `JOIN` as
     `INNER JOIN`). **Measured on MySQL 8.0.46 rather than argued: it is accepted and
     returns exactly the same rows as the same query with a distinct alias.** There is no
