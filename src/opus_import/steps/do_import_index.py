@@ -259,6 +259,18 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                     # will have already done so
                     return False
 
+                if len(assoc_rows) == 0:
+                    # An empty associated index used to abort the bundle from the
+                    # tuple unpack in safe_pdstable_read, which raised before this
+                    # caller could see it. It now reads as a successful read of a file
+                    # with no rows -- the same result the PDS3 path has always given --
+                    # so say so at error level rather than importing the whole bundle
+                    # short of this metadata in silence.
+                    import_util.log_error(
+                        ctx,
+                        f'No rows in associated index "{assoc_label_path}" - every '
+                        'observation in this bundle will import without its metadata')
+
                 if 'RING_SUMMARY' in basename_upper:
                     assoc_type = 'ring_geo'
                 elif 'SKY_SUMMARY' in basename_upper:

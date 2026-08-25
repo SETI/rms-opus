@@ -4366,18 +4366,50 @@ body; never rewrite or delete earlier notes.*
     the seventh value means is behavior work, not annotation work.
   - **Two behaviors that surprise on reading, both documented in the code now, both
     worth knowing before wiring anything to them:**
-    1. **A clean exit status does not mean a clean run.** `opus_import.cli.main` exits
-       non-zero in exactly four cases: contradictory `--drop-permanent-tables` /
-       `--scorched-earth`, the database connection failing, `do_import_steps` returning
-       False, and an exception reaching the top-level handler. A failed dictionary
-       import, a failed `param_info`, `partables` or `table_names` build, `create_cart`
-       giving up on its second attempt, and every `do_validate` error all log and leave
-       the status zero. PR-22's acceptance check reads `ERRORS.log`, which is the right
-       thing to read; do not replace it with `$?`.
+    1. **A clean exit status does not mean a clean run.** A non-zero status from
+       `opus_import.cli.main` means the run stopped: contradictory
+       `--drop-permanent-tables` / `--scorched-earth`, a bad bundle descriptor, the
+       database connection failing, `do_import_steps` returning False, and an exception
+       reaching the top-level handler all produce one. **Do not read that list as
+       complete** -- an earlier revision of this bullet called it "exactly four cases"
+       and was wrong, and `sys.exit` is reachable from more than one module. What
+       matters in the other direction is firmer and is the part to rely on: **several
+       steps report failure through the log and leave the status zero**, a failed
+       dictionary import, a failed `param_info` / `partables` / `table_names` build,
+       `create_cart` giving up on its second attempt, and every `do_validate` error
+       among them. PR-22's acceptance check reads `ERRORS.log`, which is the right thing
+       to read; do not replace it with `$?`.
     2. **An out-of-range value can be discarded silently.** `do_import_obs` logs an
        error and NULLs a value outside its declared range, *except* for a column
        carrying `val_set_invalid_to_null`, where it logs at debug instead. Such a column
        loses out-of-range values without the run failing or the error log mentioning it.
+  - **The dictionary replacement is not atomic, and a failure part-way leaves the web
+    application without a dictionary** (raised by CodeRabbit on PR-15; recorded, not
+    fixed -- staging the tables and swapping them is a redesign of the dictionary
+    import, not annotation work). `do_dictionary.copy_dictionary_from_import_to_permanent`
+    drops the permanent `definitions` and `contexts` tables and then re-creates and
+    refills them, and `drop_table` commits through `_execute` rather than running inside
+    a transaction with the rest. So an error, a lost connection or a kill between the
+    drop and the final copy leaves the permanent dictionary absent or half-filled, with
+    no path back except re-running `--import-dictionary`. It is pre-existing and
+    unrelated to anything PR-15 changed.
+  - **The table-name cache asymmetry is real but unreachable today; here is the
+    reachability, so nobody re-derives it.** (Also raised independently by CodeRabbit on
+    PR-15, which is why it is written up rather than left as a one-liner.)
+    `ImportDBMySQL.create_table` adds the new name to `self._table_names` only inside
+    `if self.logger:` **and** only in its non-read-only branch, while `drop_table`
+    removes a name gated on neither. The damaging outcome -- a later `table_exists`
+    saying False for a table the server has, so the import re-issues a CREATE and fails
+    with "table already exists" -- needs the cache update skipped **and** real DDL to
+    execute. Neither trigger delivers that combination today: `get_db` is called from
+    exactly one place, `cli.py`'s `ctx.db = importdb.get_db(...)`, which always passes a
+    real `logger`, and nothing else in `src`, `scripts`, `tests` or `integration_tests`
+    constructs the backend; while `--read-only` does skip the cache update, it also
+    skips every mutating statement, so the divergence only makes the simulated output
+    wrong. **Regenerate that rather than trusting it** -- `grep -rn "get_db(" src
+    scripts tests integration_tests` is the whole call set. Fixing it is two lines
+    (move the cache update out of the logging branch), and it should happen the moment
+    anything constructs the backend without a logger.
   - **`table_info` returns its cache, and one caller sorts it in place.**
     `ImportDBMySQL.table_info` hands back the cached list object rather than a copy, and
     `do_validate.validate_min_max_order` sorts it by field name, so every later call for
@@ -4403,10 +4435,17 @@ body; never rewrite or delete earlier notes.*
     meet the same generator.
     **The three shapes it takes:**
     1. **An exhaustiveness claim, which is the worst of them, because making a claim
-       more precise makes it falsifiable.** "Exactly four cases exit non-zero" was
-       written to replace a vaguer claim and was wrong twice over -- it missed the
-       `sys.exit` in `yield_import_bundle_ids`, which `main`'s `except Exception:`
-       deliberately does not catch. Trigger words: *exactly, every, all, always, never,
+       more precise makes it falsifiable.** **The exemplar is "`main` exits non-zero in
+       exactly four cases", and it is worth following because it cost three separate
+       rounds.** It began as an overbroad claim ("any step fails"); round two replaced
+       it with the precise-and-wrong "exactly four", which missed the `sys.exit` in
+       `yield_import_bundle_ids` that `main`'s `except Exception:` deliberately does not
+       catch; round three caught that in the docstring; and CodeRabbit then found the
+       original claim still standing in one Execution-notes bullet while its correction
+       stood in another, so the notes contradicted themselves. **A quantifier is not
+       fixed by being counted more carefully -- it is fixed by not being a quantifier.**
+       The statement now says what a non-zero status means and explicitly refuses to
+       present its list as complete. Trigger words: *exactly, every, all, always, never,
        only, one per, no other*.
     2. **Prose that inherits a wrong comment already in the code.** Two new module
        docstrings said the `obs_` rows reference the `mult_` tables "by foreign key",

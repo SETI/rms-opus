@@ -166,9 +166,14 @@ def import_observation_table(ctx: ImportContext, instrument_obj: Any,
 
         ### VALIDATE THE COLUMN VALUE ###
 
-        # Every branch above but the unknown-data_source one, which has already logged
-        # the schema fault, produces a list.
-        assert column_val_list is not None
+        if column_val_list is None:
+            # Only the unknown-data_source branch above leaves this unset, and it has
+            # already logged the schema fault. Raising here rather than asserting keeps
+            # the diagnostic under `python -O`, and this is control flow -- whether the
+            # variable got a value at all -- not an internal invariant.
+            raise ValueError(
+                f'No value computed for column "{field_name}" in table "{table_name}": '
+                f'unknown data_source "{data_source}"')
 
         # For a mult_list field, the column_val_list contains a list of column_vals.
         # Otherwise it contains a list with a single entry for the single value.
