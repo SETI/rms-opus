@@ -70,6 +70,9 @@ dev = [
   # django-stubs types the Django app. Its plugin reads the settings module, so every
   # job that runs mypy needs OPUS_CONFIG set.
   "django-stubs[compatible-mypy]>=5.1",
+  # typeshed's stubs for mysqlclient, so the MySQL import backend is really checked
+  # rather than silenced by an ignore_missing_imports entry.
+  "types-mysqlclient",
   "pymarkdownlnt>=0.9.35",
   "pytest>=7.0",
   "pytest-cov>=4.0",
@@ -203,11 +206,13 @@ exclude = [
 django_settings_module = "opus_app.settings"
 
 # Third-party packages that ship neither annotations nor a typeshed stub package.
-# Only the ones imported by annotated code need to be here; the rest are reported
-# inside modules the burn-down below silences, and each annotation PR adds the ones
-# its tree imports.
+# Where typeshed has one, the stub distribution goes in the dev extras instead and the
+# package does not belong here -- that is a real check rather than a silenced one.
+# Only the packages imported by annotated code need an entry; the rest are reported
+# inside modules the burn-down below silences, so each annotation PR adds whatever the
+# checker then reports as import-untyped or import-not-found for the tree it annotates.
 [[tool.mypy.overrides]]
-module = ["julian.*"]
+module = ["julian.*", "pdsfile.*", "pdslogger.*", "pdsparser.*", "pdstable.*"]
 ignore_missing_imports = true
 
 # Type burn-down list. `strict = true` applies to the whole repository; these
@@ -216,23 +221,24 @@ ignore_missing_imports = true
 # per-file-ignores table above, and PR-17's exit criterion is that this list is empty
 # as well. There is no repository-wide exclusion: everything outside these packages
 # is checked strictly today.
-#     opus_import              - annotated in PR-15 (core) and PR-16 (obs hierarchy)
+#     opus_import.obs          - annotated in PR-16; the rest of opus_import is
+#                                annotated, which is why this names the subpackage
 #     opus_app                 - annotated in PR-17
 #     opus_log_analyzer        - partly annotated already; completed in PR-17
 #     integration_tests        - PR-17, like the rest: the plan body gives that PR
-#                                every temporary override. It is by far the largest
-#                                entry (4488 of the 9798 errors below, in 21 files),
-#                                so PR-17 should know the size before it starts. It
-#                                is listed here rather than left out of the checked
-#                                paths, because a path that is never passed to the
-#                                checker is an exclusion nothing can see.
+#                                every temporary override. It is listed here rather
+#                                than left out of the checked paths, because a path
+#                                that is never passed to the checker is an exclusion
+#                                nothing can see.
 # A package's tests are silenced with it where they need it, since a test's
-# annotations follow the signatures of the code it drives. Every entry below is
-# load-bearing; tests/opus_log_analyzer is the one test package that needs no entry,
-# because it is already clean.
+# annotations follow the signatures of the code it drives. tests/opus_import stays
+# silenced with opus_import.obs because the tests that drive an obs class cannot be
+# clean until that hierarchy is annotated; PR-16 removes the two together.
+# To measure what an entry is holding back, delete it and run the checker. Do not
+# record the number here: it moves with every intervening PR.
 [[tool.mypy.overrides]]
 module = [
-  "opus_import.*",
+  "opus_import.obs.*",
   "tests.opus_import.*",
   "opus_app.*",
   "tests.opus_app.*",
