@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
+from opus_app.apps.cart.models import Cart
 from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_DOWNLOAD,
     HTTP404_BAD_OR_MISSING_RANGE,
@@ -20,6 +21,20 @@ from opus_app.apps.tools.app_utils import (
 )
 
 from .api_test_helper import ApiTestHelper
+
+# The two sessions the cross-session removerange tests drive, supplied with the
+# __sessionid override that get_session_id documents for exactly this purpose.
+# They are letters, digits and underscores only, and short: view=cart builds a
+# temporary table named temp_<session>_<pid>_<time>, and MySQL limits an
+# identifier to 64 characters.
+_CROSS_SESSION_A = 'cross_session_a'
+_CROSS_SESSION_B = 'cross_session_b'
+_CROSS_SESSION_IDS = (_CROSS_SESSION_A, _CROSS_SESSION_B)
+
+# A COVIMS_0006 range holding 17 observations -- the same range, and the same
+# count, as the single-session removerange tests use.
+_CROSS_SESSION_RANGE = 'co-vims-v1488642557_ir,co-vims-v1488646261_ir'
+_CROSS_SESSION_RANGE_COUNT = 17
 
 
 class ApiCartTests(TestCase, ApiTestHelper):
@@ -1862,6 +1877,78 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?&view=cart&order=-target,time1,opusid&range=vg-uvs-2-u-occ-1986-024-sigsgr-delta-e,vg-uvs-2-s-occ-1981-237-delsco-i&reqno=456&recyclebin=1'
         expected = {'recycled_count': 4, 'count': 4, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
+
+
+            #######################################################################
+            ######### /__cart/removerange.json (cross-session): API TESTS #########
+            #######################################################################
+
+    # Every other test in this file drives one session, so none of them can tell
+    # a cart statement that is scoped to the caller from one that is not. These
+    # two can: removerange reaches the cart through a join on obs_general_id,
+    # which another session's row for the same observation matches just as well,
+    # so only the session_id restriction keeps a range removal from emptying
+    # every other user's cart. Both of _edit_cart_range's entry paths are
+    # covered because the sort order they build differs but the DELETE does not.
+
+    def _clear_cross_session_carts(self):
+        """Delete every cart row belonging to the two cross-session sessions."""
+        Cart.objects.filter(session_id__in=_CROSS_SESSION_IDS).delete()
+
+    def _fill_cross_session_cart(self, session_id):
+        """Empty one session's cart and put the whole shared range back in it.
+
+        Parameters:
+            session_id: The session to act as, passed as `__sessionid`.
+        """
+        url = f'/__cart/reset.json?reqno=42&__sessionid={session_id}'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = ('/__cart/addrange.json?bundleid=COVIMS_0006'
+               f'&range={_CROSS_SESSION_RANGE}&reqno=456'
+               f'&__sessionid={session_id}')
+        expected = {'recycled_count': 0, 'count': _CROSS_SESSION_RANGE_COUNT,
+                    'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def _fill_both_cross_session_carts(self):
+        """Give both cross-session sessions the same cart contents."""
+        # Registered before anything is added so the rows go away even if an
+        # assertion below fails. Nothing else in the suite uses these session
+        # ids, but they would otherwise outlive the run in a database that is
+        # kept rather than dropped.
+        self.addCleanup(self._clear_cross_session_carts)
+        self._fill_cross_session_cart(_CROSS_SESSION_A)
+        self._fill_cross_session_cart(_CROSS_SESSION_B)
+
+    def _assert_session_b_cart_intact(self):
+        """Assert session B still holds everything it put in its cart."""
+        url = f'/__cart/status.json?reqno=456&__sessionid={_CROSS_SESSION_B}'
+        expected = {'recycled_count': 0, 'count': _CROSS_SESSION_RANGE_COUNT,
+                    'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_removerange_other_session(self):
+        "[test_cart_api.py] /__cart/removerange: leaves another session's cart alone"
+        self._fill_both_cross_session_carts()
+        url = ('/__cart/removerange.json?bundleid=COVIMS_0006'
+               f'&range={_CROSS_SESSION_RANGE}&reqno=456'
+               f'&__sessionid={_CROSS_SESSION_A}')
+        expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        self._assert_session_b_cart_intact()
+
+    def test__api_cart_removerange_other_session_cart(self):
+        "[test_cart_api.py] /__cart/removerange: leaves another session's cart alone cart"
+        self._fill_both_cross_session_carts()
+        # A subrange, so this also shows the DELETE still removes exactly the
+        # observations it should from the session that asked for it.
+        url = ('/__cart/removerange.json?view=cart'
+               '&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis'
+               f'&reqno=456&__sessionid={_CROSS_SESSION_A}')
+        expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        self._assert_session_b_cart_intact()
 
 
             ##################################################
