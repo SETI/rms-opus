@@ -3436,11 +3436,14 @@ body; never rewrite or delete earlier notes.*
     (`range_from_source(restrict_to_cart=True)`), the `removerange`-with-recyclebin edit
     (same FROM clause, since `restrict_to_cart = (action == 'removerange')`), the
     `Cart.objects.filter(session_id__exact=...)` count, and the `REPLACE INTO cart ...
-    SELECT`. Naming nothing because they never join `cart` at all, so they have nothing to
-    scope: the `sort_order` lookup SELECT, the `DROP TABLE`, and the two addrange
-    statements -- the addrange count and the addrange `edit_select` both pass
-    `restrict_to_cart=False`, which is what `restrict_to_cart` evaluates to on that path.
-    Do not go looking for a `session_id` in the addrange count; there is correctly none.
+    SELECT`. Joining no `cart` at all, and so having nothing to scope: the `sort_order`
+    lookup SELECT, the `DROP TABLE`, and the two addrange FROM clauses -- the addrange
+    count and the addrange `edit_select`'s FROM both pass `restrict_to_cart=False`, which
+    is what `restrict_to_cart` evaluates to on that path. Note that `edit_select` appears
+    in both lists and is one statement, not two: its FROM clause is unrestricted on the
+    addrange path, but the statement it feeds is the `REPLACE INTO` above, which is scoped
+    by the literal `session_id` it inserts. Do not go looking for a `session_id` in the
+    addrange count; there is correctly none.
     The `REPLACE INTO` cannot reach another session's row even though `REPLACE` deletes on
     any unique-key conflict: `cart`'s only unique constraint besides the autoincrement
     primary key is `UNIQUE (session_id, obs_general_id)`
@@ -3474,8 +3477,9 @@ body; never rewrite or delete earlier notes.*
   - **PR-12's recorded baselines are two commits stale; the merged baseline is 1120 unit
     tests and 22277 integration statements, not 1118 and 22276.** Every later PR that
     compares its counts against the PR-12 notes needs this or it will chase two phantom
-    deltas. PR-12 wrote its figures at `cfb84284` and never re-measured them, but two of
-    its own later commits changed the tree. `fbe4b81a` ("address the CodeRabbit review")
+    deltas. PR-12 wrote its figures at `cfb84284` and never re-measured them, and two of
+    the three source-touching commits that follow it moved the counts. `fbe4b81a`
+    ("address the CodeRabbit review")
     added exactly two functions to `tests/opus_import/test_importdb_mysql.py`
     (`test_upsert_row_omits_the_update_clause_for_a_key_only_row` and
     `test_upsert_row_assigns_every_column_except_the_key`), giving 1118 + 2 = **1120**.
@@ -3508,9 +3512,12 @@ body; never rewrite or delete earlier notes.*
     2419 -> 2454), with the branch count **identical at 1890**. The report's 51 per-file
     rows sum exactly to 22313.
   - **The integration database is full of other sessions' cart rows, which is why the
-    bug was invisible and is worth knowing before writing any cart test.** After a full
-    suite run the `cart` table holds **21,483 rows across 143 distinct sessions** -- the
-    suite's tests mint a Django session each and never clean up. So the pre-fix DELETE was
+    bug was invisible and is worth knowing before writing any cart test.** Each full suite
+    run leaves **21,483 cart rows across 143 distinct sessions** behind -- the suite's
+    tests mint a Django session each and never clean up -- and the accumulation is exactly
+    linear, since a second run against the same schema took it to 42,966 rows across 286
+    sessions. (The per-run figures are the ones to compare against; a CI run always starts
+    from a freshly imported schema.) So the pre-fix DELETE was
     destroying other sessions' rows on essentially every `removerange` in the suite, and
     not one golden fixture noticed, because each fixture only ever asserts on its own
     session's counts. That is the concrete form of item 5's claim that no existing fixture
