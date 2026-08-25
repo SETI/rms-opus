@@ -3533,8 +3533,15 @@ body; never rewrite or delete earlier notes.*
     paths, which the hand-written pairs could not guarantee), consults the
     fault-injection knobs **before** the handler runs, converts an `Http400Error`
     raised anywhere below it into a 400, and converts any other unhandled exception
-    into a 500 logged with `log.exception`. `Http404` is deliberately re-raised so
-    Django's own handler renders it exactly as before. **38 handlers are decorated**;
+    into a 500 logged with `log.exception`. **The four exceptions Django answers
+    itself are re-raised, not absorbed** - `Http404`, `BadRequest`,
+    `PermissionDenied` and `SuspiciousOperation`, listed in
+    `_DJANGO_HANDLED_EXCEPTIONS`. That is not defensive: `HttpRequest.
+    build_absolute_uri`, which `help.api_api_guide` calls, raises `DisallowedHost`
+    (a `SuspiciousOperation`) on a spoofed Host header, and absorbing it would cost
+    both Django's 400 and the `django.security.*` record an operator watches. A
+    later PR adding a Django exception with its own handler must add it to that
+    tuple. **38 handlers are decorated**;
     the three `*_internal` delegators (`api_get_result_count_internal`,
     `api_get_mult_counts_internal`, `api_get_range_endpoints_internal`) are **not**,
     because they call the already-decorated public handler and a second decoration
@@ -3548,7 +3555,9 @@ body; never rewrite or delete earlier notes.*
     `api_code` collides with it the moment a caller passes the URL arguments
     positionally, which `integration_tests/apps_db_tests/test_cart.py` does. That
     collision is a `TypeError` on every request to the route and no lint catches it.
-  - **`enter_api_call`/`exit_api_call` now have exactly one caller each** and the
+  - **`enter_api_call` and `exit_api_call` are called from exactly one function**
+    (`api_view`'s wrapper; `exit_api_call` from four places inside it, one per exit
+    path) and the
     decorator is the API-call log's whole surface. They were left public rather than
     renamed `_`-private, deliberately: they are the unit the log's behavior is
     described in. **`exit_api_call` no longer decodes a non-text response body** - it
@@ -3585,9 +3594,16 @@ body; never rewrite or delete earlier notes.*
     route regex already constrains; every site is an unreachable catchall), and the
     two message-less internal 404s at 404.
   - **The resulting counts, measured from the tree rather than tallied by hand:**
-    **138 error sites** in `src/opus_app/apps/*/views.py`, of which **60 answer 400**
-    (all 60 were 404 before), **49 stay 404** and **29 stay 500**. No site moved in the
-    other direction and no 500 became a 400 or vice versa. The 400 sites are:
+    **138 error sites** in `src/opus_app/apps/*/views.py`, of which **60 answer 400**,
+    **49 stay 404** and **29 stay 500**. **56 of the 60 were 404 before; the other
+    four are new sites** - the `order_params`/`order_terms` guards in
+    `get_search_results_chunk` and `_edit_cart_range` - whose inputs used to raise
+    `AssertionError` and would answer 500 through this decorator. Arithmetic at
+    `101bc511`: 94 `Http404(...)` + 7 `error_return(404, ...)` + 4 bare/`from` raises
+    = 105 404-producing sites, against 49 + 60 = 109 here. No site moved in the other
+    direction and the 500 count is identical on both sides (25 `HttpResponseServerError`
+    + 4 `error_return(500, ...)`), so no 500 became a 400 or a 400 a 500. The 400 sites
+    are:
     `BAD_OR_MISSING_REQNO` x12, `UNKNOWN_SLUG` x16, `SEARCH_PARAMS_INVALID` x9,
     `MISSING_OPUS_ID` x4, `BAD_LIMIT` x4, `BAD_DOWNLOAD` x3, `BAD_RECYCLEBIN` x2,
     `BAD_OR_MISSING_RANGE` x2, and one each of `BAD_COLLAPSE`, `BAD_OFFSET`,
@@ -3623,10 +3639,13 @@ body; never rewrite or delete earlier notes.*
     that "simplifies" `Http400Error` into it would silently blank every error page.
   - **The one place a body gained text.** `ui.api_get_widget`'s unknown-slug path was
     a bare `raise Http404` whose page said only "Http404"; it now raises
-    `Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))` and names the slug. Every
-    other changed site keeps its message verbatim. The two remaining message-less
-    404s (`help.api_faq`'s unparseable `faq.yaml`, `metadata.api_get_range_endpoints`'s
-    failed cache-table creation) were left exactly as they were.
+    `Http400Error(HTTP400_UNKNOWN_SLUG(...))` and names the slug **the caller typed**,
+    not the suffix-stripped form the lookup used, so `__widget/badslug1.html` is not
+    reported as "badslug". Every other changed site keeps its message verbatim. The
+    two remaining message-less 404s (`help.api_faq`'s unparseable `faq.yaml`,
+    `metadata.api_get_range_endpoints`'s failed cache-table creation) were left
+    exactly as they were - which is also why the API guide says a 404 is *usually*,
+    not always, the URL naming nothing.
   - **`create_order_by_terms`'s unchecked callers are fixed, and the PR-12 note that
     handed them over names the wrong exception.** That note says an unresolvable order
     slug "becomes a `TypeError`". Measured: `parse_order_slug` returns `(None, None)`
@@ -3690,6 +3709,21 @@ body; never rewrite or delete earlier notes.*
     `api_get_data_and_images` - one of its several callers - and `get_string_query`
     said `_get_string_query`, a name that no longer exists). The sweep is worth
     re-running after any later PR that moves logging code.
+  - **UNASSIGNED, and narrower than the comment that promised it: the
+    `%s`-of-request-data log sweep.** PR-12 left an inline comment in
+    `cart/views.py` saying the pattern "is swept systematically in the Phase C
+    logging PR". PR-13 is that PR and **did not do the sweep**, deliberately: log
+    injection is not #512 (which is only about `logging.exception`/`exc_info`) and no
+    plan section assigns it, so widening PR-13 to it would have been improvisation.
+    The comment is restored rather than deleted, with what this PR measured. **The
+    exposure is smaller than it reads:** `QueryDict.__str__` *is* its `__repr__`, so
+    `'%s' % request.GET` already renders the values through `repr()` and escapes any
+    CR/LF in them (measured on Django 5.2.17). The hazard is only a **bare
+    request-supplied scalar** interpolated with `%s` - `download_str`, `recycle_str`,
+    `limit`, `startobs`, `page`, `units`, `cats`, `order`, an individual `cols` slug -
+    of which there are on the order of two dozen across the app. The one new line of
+    that shape this PR adds (`api_get_fields`' `collapse`) uses `%r`. **Owner:
+    unassigned - orchestrator's call.**
   - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
     note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
     no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,
@@ -3702,14 +3736,16 @@ body; never rewrite or delete earlier notes.*
     name can drift again. Two related log-content changes: the decorator passes the
     URL's keyword arguments to `enter_api_call` for **every** endpoint, where only
     `api_get_widget` and `api_init_detail_page` used to, and
-    `api_string_search_choices`' two `log.error` lines that identified themselves as
-    `api_normalize_input` now name their own function.
+    the one `log.error` line in `api_string_search_choices` that identified itself as
+    `api_normalize_input` now names its own function.
   - **`@api_view` goes inside `@never_cache`**, matching where the hand-written pairs
     sat. Django's `never_cache` calls `_check_request`, which raises `TypeError` for a
     non-`HttpRequest`, so a test that calls a `never_cache`d view with `None` fails
     before reaching the decorator - which is why the existing "no request" tests pass a
-    `RequestFactory` request with `META`/`GET` set to None rather than passing `None`,
-    except for the two search endpoints, which carry no `never_cache`.
+    `RequestFactory` request with `META`/`GET` set to None rather than passing `None`.
+    **Four of the 38 decorated handlers carry no `@never_cache`** and so can be called
+    with `None`: `search.api_normalize_input`, `search.api_string_search_choices`,
+    `ui.api_get_menu` and `results.api_get_metadata_internal`.
   - **The decorator's own tests are `integration_tests/apps_db_tests/test_api_view.py`,
     for the same reason `test_sql_builder.py` is there:** they need no database, but the
     100% branch gate measures `src/opus_app/apps/*`, so every branch of the decorator
@@ -3731,34 +3767,35 @@ body; never rewrite or delete earlier notes.*
     pyroma 10/10, bandit, vulture, pymarkdown). The full local chain
     (`opus_setup_environment.sh`, then `opus_import_test_database.sh`'s 30-bundle
     import into a fresh MySQL schema, then `opus_run_unittests_coverage.sh`) ran end
-    to end: the import logged **zero ERROR lines** (`ERRORS.log` 0 bytes) and the
-    suite reported **`Ran 1636 tests` / `OK` / `TOTAL 22131 stmts, 1876 branches,
-    100%`** with **zero missing statements and zero partial branches**, and
+    to end **twice** - once mid-work and once from scratch on the final tree - and
+    on the second run the import logged **zero ERROR lines** (`ERRORS.log` 0 bytes)
+    and the suite reported **`Ran 1640 tests` / `OK` / `TOTAL 22133 stmts, 1876
+    branches, 100%`** with **zero missing statements and zero partial branches**, and
     `opus_check_coverage.sh` passed. **Exactly one golden-response fixture changed** -
     `api_help_apiguide.html`, whose entire diff is the API guide's new "Error
     Responses" section and its table-of-contents entry. Every other fixture is
     byte-identical, which is the point: the status-code changes are all on error
     paths, which the `responses/` files never capture.
   - **The baselines this PR moves, accounted for file by file.** Against PR-12a's
-    1620 tests / 22313 statements / 1890 branches: **+16 tests** (14 in the new
-    `test_api_view.py`, 2 for the order-slug guards), **-182 statements** and
+    1620 tests / 22313 statements / 1890 branches: **+20 tests** (18 in the new
+    `test_api_view.py`, 2 for the order-slug guards), **-180 statements** and
     **-14 branches**. Computed with coverage's own `PythonParser` under the gate's
     own `exclude_lines`, at `101bc511` and at this tree: `cart/views.py` 674->619,
     `results/views.py` 783->728, `metadata/views.py` 372->336, `help/views.py`
-    162->134, `search/views.py` 818->792, `ui/views.py` 887->863,
-    `tools/app_utils.py` 162->187, `opus_support/units.py` 174->178,
+    162->134, `search/views.py` 818->792, `ui/views.py` 887->864,
+    `tools/app_utils.py` 162->188, `opus_support/units.py` 174->178,
     `opus_support/time_parsing.py` 53->56, `test_cart_api.py` 2454->2460,
     `test_results_api.py` 509->512, `test_ui_api.py` 1903->1904 - which sums to
-    exactly -182. **The statement count falls because the decorator absorbs three
+    exactly -180. **The statement count falls because the decorator absorbs three
     statements per error site, not because anything stopped being covered**: the
     gate is 100% on both sides of it. The branch delta decomposes the same way:
-    `app_utils.py` -18 (the twenty message helpers lost their
-    `if not isinstance(r, str)` branch, against the new branches the decorator and
-    `_request_path` add) and +2 each in `cart/views.py` and `results/views.py` (the
-    two new order-slug guards).
+    `app_utils.py` -18 (the message helpers lost their `if not isinstance(r, str)`
+    branch, against the new branches the decorator and `_request_path` add) and +2
+    each in `cart/views.py` and `results/views.py` (the two new order-slug guards).
   - **`integration_tests/apps_db_tests/*` is not in the 100% gate's include list**
     (`integration_tests/.coveragerc` names `src/opus_app/apps/*`,
-    `integration_tests/test_api/*` and `src/opus_support/*`), so the 14 new
+    `integration_tests/test_api/*` and `src/opus_support/*`), so the 18 new
     decorator tests execute but contribute no statements to the total, exactly as
     PR-12's `test_sql_builder.py` does. Only the two new tests in
-    `integration_tests/test_api/` move the count.
+    `integration_tests/test_api/` move the count. It also means a `# pragma: no
+    cover` inside a file in that directory is inert.
