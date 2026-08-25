@@ -4433,6 +4433,21 @@ body; never rewrite or delete earlier notes.*
     targets, 190 stars in the table against 155 in the tool. Where a claim is countable,
     count it exhaustively; a sample proves nothing. Verifying is cheap and reliable,
     claiming is neither.
+    **Run the sweep over claims inherited from earlier PRs, not only over prose the
+    current PR wrote.** The mechanical quantifier sweep is what caught the strongest
+    instance of this whole class, and it was not in PR-15's prose at all: PR-12's
+    bandit `B608` skip justification in `pyproject.toml` said both SQL-building modules
+    "render every value as a `%s` parameter" and named **exactly two** exceptions. There
+    is a third -- `ImportDBMySQL.create_table` formats a column's `field_default` and
+    its `field_enum_options` straight into the CREATE TABLE text -- so a **security**
+    justification was overstating its guarantee. That text was approved during PR-12 and
+    survived three adversarial passes and a CodeRabbit review, which is the useful part:
+    **nobody re-derives a security justification once it is written down.** PR-15
+    corrected it (comment-only) rather than leaving it for whichever PR next happens to
+    own the file. **PR-17 inherits it**: it turns these skips into per-line `# nosec`
+    justifications, so it should carry the corrected three-case wording rather than the
+    shorter claim, and should re-derive each skip it converts instead of transcribing
+    it.
   - **Docstring conventions this package now follows, so PR-16 and PR-17 match.** A
     module docstring says what the module's table or step is *for* and why its work
     happens where it does in the sequence, not what its functions are. `Returns:`
