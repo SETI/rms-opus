@@ -1450,8 +1450,20 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             sql_builder.columns_equal(
                 sql_builder.column('id', user_query_table),
                 sql_builder.column('obs_general_id', 'cart')))
+        # The join above matches on obs_general_id alone, and the cart table
+        # holds every session's rows, so the session has to be named here as
+        # well or this deletes the observations in the range from every other
+        # user's cart too. The user_query_table does not supply the restriction:
+        # with view=browse it is the shared search cache table, and even with
+        # view=cart, where it is a temporary table holding only this session's
+        # cart, it only narrows which observations are in range -- another
+        # session's row for one of those same observations still joins.
+        delete_condition = sql_builder.join_exprs(
+            [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
+                                   '=', sql_builder.value(session_id)),
+             range_condition], 'AND')
         sql, sql_params = sql_builder.delete_joined('cart', delete_from_source,
-                                                    range_condition)
+                                                    delete_condition)
     else: # pragma: no cover - error catchall
         log.error('_edit_cart_range: Unknown action %s: %s', action,
                   request.GET)
