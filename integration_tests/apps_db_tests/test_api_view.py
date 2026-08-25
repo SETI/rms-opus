@@ -21,7 +21,9 @@ What is worth pinning here, and why:
 * **That an exception Django answers itself is not absorbed.** Turning one into a
   generic 500 would lose both the response Django gives it and, for a
   `SuspiciousOperation`, the `django.security.*` record an operator watches for.
-  Nothing in the app raises one today, so this is what keeps the guard honest.
+  `Http404` is the live case, raised by handlers throughout the app; the other
+  three are guards no handler reaches today, which is what makes a test for them
+  worth having.
 * **That an unhandled exception is logged with its traceback.** A 500 whose only
   record is "something failed" is what issue #512 is about; the traceback is the
   point of catching it centrally rather than letting it reach Django.

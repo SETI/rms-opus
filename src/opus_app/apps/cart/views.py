@@ -584,8 +584,9 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
     # A format given in the URL path is constrained by the route's own pattern, so
     # the only value that can fail here is the one from the query string.
     if fmt not in settings.DOWNLOAD_FORMATS:
-        # %r for the same reason api_edit_cart uses it on recyclebin: fmt is a
-        # request-supplied string on the path that can fail.
+        # %r for the same reason api_edit_cart uses it on recyclebin: fmt is here
+        # the raw query-string value, and a CR/LF in it must not be able to forge
+        # a log line.
         log.error('api_create_download: Unknown download format %r', fmt)
         raise Http400Error(HTTP400_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, request))
 

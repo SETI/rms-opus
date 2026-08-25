@@ -3538,17 +3538,21 @@ body; never rewrite or delete earlier notes.*
     `SuspiciousOperation`, listed in `_DJANGO_HANDLED_EXCEPTIONS` - because
     absorbing one costs both the response Django gives it and, for a
     `SuspiciousOperation`, the `django.security.*` record an operator watches.
-    **This is a guard, not a fix for a live case, and an earlier draft of this note
-    said the opposite.** `HttpRequest.build_absolute_uri`, which
-    `help.api_api_guide` calls, does raise `DisallowedHost` on a spoofed Host
-    header - but `CommonMiddleware.process_request` calls `get_host()` first and
-    rejects the request before any view runs, and the two middlewares ahead of it
+    **`Http404` is the live member and the other three are guards**, a distinction
+    two earlier drafts of this note got wrong in opposite directions: the handlers
+    `raise Http404` 50 times and it is how every 404 in the API is produced, while
+    no handler raises `BadRequest`, `PermissionDenied` or `SuspiciousOperation`
+    today. The one path that looked live is not:
+    `HttpRequest.build_absolute_uri`, which `help.api_api_guide` calls, does raise
+    `DisallowedHost` on a spoofed Host header, but
+    `CommonMiddleware.process_request` calls `get_host()` first and rejects the
+    request before any view runs, and the two middlewares ahead of it
     (`UpdateCacheMiddleware`, `GZipMiddleware`) define no `process_request`
-    (measured). Nothing under `src/opus_app` raises any of the four itself.
-    `MultiPartParserError`, which Django also handles, is deliberately **not** in
-    the tuple: OPUS reads no request body (`request.POST`/`FILES`/`body` appear
-    nowhere), so nothing can produce it. A later PR that gives a handler one of
-    these must keep the tuple in step. **38 handlers are decorated**;
+    (measured, both). `MultiPartParserError`, the fifth exception
+    `response_for_exception` handles, is deliberately **not** in the tuple: OPUS
+    reads no request body (`request.POST`/`FILES`/`body` appear nowhere), so
+    nothing can produce it. A later PR that gives a handler one of these must keep
+    the tuple in step. **38 handlers are decorated**;
     the three `*_internal` delegators (`api_get_result_count_internal`,
     `api_get_mult_counts_internal`, `api_get_range_endpoints_internal`) are **not**,
     because they call the already-decorated public handler and a second decoration
@@ -3648,9 +3652,9 @@ body; never rewrite or delete earlier notes.*
     a bare `raise Http404` whose page said only "Http404"; it now raises
     `Http400Error(HTTP400_UNKNOWN_SLUG(...))` and names the slug **the caller typed**,
     not the suffix-stripped form the lookup used, so `__widget/badslug1.html` is not
-    reported as "badslug" - in the log line either, and
-    `test__api_widget_bad_numeric_suffix` pins it. Every other changed site keeps its
-    message verbatim. The
+    reported as "badslug". `test__api_widget_bad_numeric_suffix` pins the response
+    body; the log line was changed to match it but nothing asserts log text. Every
+    other changed site keeps its message verbatim. The
     two remaining message-less 404s (`help.api_faq`'s unparseable `faq.yaml`,
     `metadata.api_get_range_endpoints`'s failed cache-table creation) were left
     exactly as they were - which is also why the API guide says a 404 is *usually*,
@@ -3725,17 +3729,27 @@ body; never rewrite or delete earlier notes.*
     injection is not #512 (which is only about `logging.exception`/`exc_info`) and no
     plan section assigns it, so widening PR-13 to it would have been improvisation.
     The comment is restored rather than deleted, with what this PR measured. **The
-    exposure is smaller than it reads:** `QueryDict` defines `__repr__` and inherits
-    `object.__str__`, which delegates to it, so `'%s' % request.GET` already renders
-    the values through `repr()` and escapes any CR/LF in them (measured on Django
-    5.2.17). The hazard is only a **bare request-supplied scalar** interpolated with
-    `%s` - `download_str`, `recycle_str`, `limit`, `startobs`, `page`, `units`,
-    `cats`, an individual `cols` slug - of which there are on the order of two dozen
-    across the app. **Every log line this PR adds or rewrites that names such a
-    scalar uses `%r`**, so the count of them does not grow here: `api_get_fields`'
-    `collapse`, `api_create_download`'s `fmt`, the four order-slug guards' `all_order`
-    and `api_get_widget`'s slug. **Owner of the rest: unassigned - orchestrator's
-    call.**
+    exposure is smaller than it reads:** `MultiValueDict` defines `__repr__` and
+    `QueryDict` inherits it along with `object.__str__`, which delegates to it, so
+    `'%s' % request.GET` already renders the values through `repr()` and escapes any
+    CR/LF in them (measured on Django 5.2.17). The hazard is only a **bare
+    request-supplied scalar** interpolated with `%s` - `download_str`, `recycle_str`,
+    `limit`, `startobs`, `page`, `units`, `cats`, `order`, an individual `cols` slug -
+    of which there are on the order of two dozen across the app. **Every log line
+    this PR *adds* that names such a scalar uses `%r`** - `api_get_fields`'
+    `collapse`, `api_create_download`'s `fmt` and the four order-slug guards'
+    `all_order` - as does `api_get_widget`'s slug, which the PR rewrote. **The count
+    does not grow here, but it does not shrink either:** five *other* lines the PR
+    rewrote for unrelated reasons still use `%s` on a scalar -
+    `api_reset_session`'s `download_str` and `_api_get_images`' `fmt` (rewritten in
+    `bbebbfa6`, which renamed the function they name), and
+    `api_get_range_endpoints`' slug and `units` and `get_string_query`'s `qtype`
+    (rewritten in `996e6bb2`, the log-name corrections). Converting those is part of
+    the same unassigned sweep, not a separate item. So is `parse_order_slug`'s
+    `order`, which this PR never touched and which is the one place the raw
+    `?order=` value is still logged with `%s` (`create_order_by_terms`' `order_slug`
+    reads similarly but is a qualified name built from `ParamInfo`, not request
+    text). **Owner: unassigned - orchestrator's call.**
   - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
     note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
     no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,
@@ -3809,6 +3823,6 @@ body; never rewrite or delete earlier notes.*
     (`integration_tests/.coveragerc` names `src/opus_app/apps/*`,
     `integration_tests/test_api/*` and `src/opus_support/*`), so the 18 new
     decorator tests execute but contribute no statements to the total, exactly as
-    PR-12's `test_sql_builder.py` does. Only the two new tests in
-    `integration_tests/test_api/` move the count. It also means a `# pragma: no
-    cover` inside a file in that directory is inert.
+    PR-12's `test_sql_builder.py` does. Only the three new tests in
+    `integration_tests/test_api/` (two order-slug, one widget slug) move the count.
+    It also means a `# pragma: no cover` inside a file in that directory is inert.
