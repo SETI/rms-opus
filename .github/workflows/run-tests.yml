@@ -27,8 +27,9 @@ jobs:
     name: Run Lint
     runs-on: ubuntu-latest
     # Without this, a hung runner burns GitHub's 6-hour default before failing.
-    # Real runtime is well under a minute; 15 leaves generous headroom.
-    timeout-minutes: 15
+    # The tools themselves run in well under a minute; the apt-get and pip steps
+    # are what take the time, and they are the network-dependent ones.
+    timeout-minutes: 30
     env:
       # Ruff formatting is not enforced until the format-only PR (PR-23); the
       # step below is kept but disabled, mirroring the ENABLE_* toggles in
@@ -40,6 +41,10 @@ jobs:
       # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
       # tests/ is linted and vulture-scanned but never bandit-scanned.
       RUFF_PATHS: "src integration_tests tests manage.py"
+      # The type gate covers every tree the other tools scan. integration_tests/ is
+      # checked but silenced by a burn-down entry, like every tree that is not
+      # annotated yet; PR-17 owns this one. See [tool.mypy] in pyproject.toml.
+      MYPY_PATHS: "src integration_tests tests manage.py"
       BANDIT_PATHS: "src integration_tests manage.py"
       VULTURE_PATHS: "src integration_tests tests manage.py vulture_whitelist.py"
     steps:
@@ -47,20 +52,32 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm derives the version from tags, which a shallow clone
+          # does not fetch; this job installs the package, so it needs them.
+          fetch-depth: 0
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v6
         with:
           python-version: 3.13
 
-      - name: Install lint tools
-        # These tools only parse source, so this job installs them directly
-        # rather than installing the package and its dependencies with
-        # `pip install -e ".[dev]"` (which the test job below does). Tool
-        # configuration still comes from pyproject.toml.
+      - name: Install MySQL client headers
+        # mysqlclient is a runtime dependency and ships no Linux wheel, so the
+        # install below compiles it and needs the MySQL/MariaDB client
+        # development files.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Install package and dev dependencies
+        # mypy's django-stubs plugin imports opus_app.settings, so this job needs
+        # the package and its runtime dependencies rather than the lint tools on
+        # their own. Installing the dev extras also pins every tool in this job to
+        # the same versions scripts/run-all-checks.sh uses locally.
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ruff "bandit[toml]" vulture pymarkdownlnt
+          python -m pip install -e ".[dev]"
 
       - name: Ruff (lint)
         run: |
@@ -78,6 +95,13 @@ jobs:
       - name: Vulture
         run: |
           vulture $VULTURE_PATHS
+
+      - name: Mypy
+        # Strict over the whole repository; the per-package burn-down list that
+        # silences the not-yet-annotated packages lives in [tool.mypy], and PR-17
+        # empties it. OPUS_CONFIG comes from the workflow-level env above.
+        run: |
+          mypy $MYPY_PATHS
 
       - name: PyMarkdown
         run: |

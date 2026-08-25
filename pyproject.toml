@@ -63,7 +63,13 @@ Issues = "https://github.com/SETI/rms-opus/issues"
 dev = [
   "rms-opus",
   "coverage>=7.0",
-  # "mypy>=1.0",  # Enabled in Phase D (PR-14)
+  # mypy carries no bound of its own: django-stubs' `compatible-mypy` extra below
+  # pins it to the range that django-stubs' plugin supports, so the two cannot drift
+  # apart on an unpinned install, and a second bound here would only go stale.
+  "mypy",
+  # django-stubs types the Django app. Its plugin reads the settings module, so every
+  # job that runs mypy needs OPUS_CONFIG set.
+  "django-stubs[compatible-mypy]>=5.1",
   "pymarkdownlnt>=0.9.35",
   "pytest>=7.0",
   "pytest-cov>=4.0",
@@ -164,11 +170,76 @@ fail_under = 90
 [tool.mypy]
 strict = true
 disallow_subclassing_any = false
-exclude = ["perf_test/"]
+plugins = ["mypy_django_plugin.main"]
+# With explicit_package_bases, a module's name is taken from the first package base
+# that contains it: mypy_path's src/ (so src/opus_support/units.py is
+# opus_support.units) or the working directory (so tests/opus_import/test_cli.py is
+# tests.opus_import.test_cli). Both are load-bearing. The per-package test
+# directories carry no __init__.py, so without this a test module would be named
+# after its own file: the two test_package_data.py files would collide as one module
+# name, and the burn-down list below could not name a test package at all. It also
+# means mypy has to run from the repository root, which run-all-checks.sh and the
+# lint job both do.
+mypy_path = "src"
+explicit_package_bases = true
+exclude = [
+  # Out of scope for this plan, like every other tool's configuration.
+  "perf_test/",
+  # Written by setuptools-scm at build time and git-ignored, so it is present only
+  # after an install and would make the checked set depend on that. Nothing imports it.
+  "src/opus_config/_version\\.py$",
+  # Django's own vendored asset script, marked linguist-vendored in
+  # .gitattributes. It is the only Python file under the Django app's served static
+  # assets, and it is named exactly rather than excluding that whole tree, so any
+  # Python placed there later is checked rather than silently skipped. (ruff
+  # excludes the whole assets directory instead.)
+  "src/opus_app/static/admin/js/compress\\.py$",
+]
 
+[tool.django-stubs]
+# django-stubs resolves model and settings types by importing the settings module, so
+# it needs OPUS_CONFIG set. run-all-checks.sh defaults it to tests/fixtures/opus_ci.toml
+# and run-tests.yml sets it for every job.
+django_settings_module = "opus_app.settings"
+
+# Third-party packages that ship neither annotations nor a typeshed stub package.
+# Only the ones imported by annotated code need to be here; the rest are reported
+# inside modules the burn-down below silences, and each annotation PR adds the ones
+# its tree imports.
 [[tool.mypy.overrides]]
-module = "opus_config._version"
+module = ["julian.*"]
 ignore_missing_imports = true
+
+# Type burn-down list. `strict = true` applies to the whole repository; these
+# packages are not annotated yet, so their errors are silenced per module until the
+# PR that annotates them removes the entry. This is the same discipline as the ruff
+# per-file-ignores table above, and PR-17's exit criterion is that this list is empty
+# as well. There is no repository-wide exclusion: everything outside these packages
+# is checked strictly today.
+#     opus_import              - annotated in PR-15 (core) and PR-16 (obs hierarchy)
+#     opus_app                 - annotated in PR-17
+#     opus_log_analyzer        - partly annotated already; completed in PR-17
+#     integration_tests        - PR-17, like the rest: the plan body gives that PR
+#                                every temporary override. It is by far the largest
+#                                entry (4488 of the 9798 errors below, in 21 files),
+#                                so PR-17 should know the size before it starts. It
+#                                is listed here rather than left out of the checked
+#                                paths, because a path that is never passed to the
+#                                checker is an exclusion nothing can see.
+# A package's tests are silenced with it where they need it, since a test's
+# annotations follow the signatures of the code it drives. Every entry below is
+# load-bearing; tests/opus_log_analyzer is the one test package that needs no entry,
+# because it is already clean.
+[[tool.mypy.overrides]]
+module = [
+  "opus_import.*",
+  "tests.opus_import.*",
+  "opus_app.*",
+  "tests.opus_app.*",
+  "opus_log_analyzer.*",
+  "integration_tests.*",
+]
+ignore_errors = true
 
 [tool.ruff]
 target-version = "py312"
