@@ -3522,3 +3522,228 @@ body; never rewrite or delete earlier notes.*
     not one golden fixture noticed, because each fixture only ever asserts on its own
     session's counts. That is the concrete form of item 5's claim that no existing fixture
     can detect this fix. PR-12a's own two tests do clean up after themselves.
+
+- **2026-08-25 (PR-13 executed):** every OPUS API handler is wrapped by one
+  `@api_view` decorator, request errors answer **400** instead of 404, and fault
+  injection fires once per call instead of at a hundred interior points. Facts later
+  PRs rely on:
+  - **The decorator is `opus_app.apps.tools.app_utils.api_view` and it is what every
+    routed handler now looks like.** It calls `enter_api_call(handler.__name__, ...)`
+    on the way in and `exit_api_call` on every way out (including both exception
+    paths, which the hand-written pairs could not guarantee), consults the
+    fault-injection knobs **before** the handler runs, converts an `Http400Error`
+    raised anywhere below it into a 400, and converts any other unhandled exception
+    into a 500 logged with `log.exception`. `Http404` is deliberately re-raised so
+    Django's own handler renders it exactly as before. **38 handlers are decorated**;
+    the three `*_internal` delegators (`api_get_result_count_internal`,
+    `api_get_mult_counts_internal`, `api_get_range_endpoints_internal`) are **not**,
+    because they call the already-decorated public handler and a second decoration
+    would open a second API-call record.
+  - **`api_code` is supplied only to handlers that ask for it, and always by
+    keyword.** `api_view` reads `inspect.signature(handler)` once at decoration time
+    and injects `api_code` into `kwargs` only when the handler declares it (17 of the
+    38 do; the rest never used it). Every such handler declares it **keyword-only**
+    (`..., *, api_code`) and later PRs must keep it that way: `api_create_download`
+    and `api_get_files` take a positional `opus_id` from the URL, and a positional
+    `api_code` collides with it the moment a caller passes the URL arguments
+    positionally, which `integration_tests/apps_db_tests/test_cart.py` does. That
+    collision is a `TypeError` on every request to the route and no lint catches it.
+  - **`enter_api_call`/`exit_api_call` now have exactly one caller each** and the
+    decorator is the API-call log's whole surface. They were left public rather than
+    renamed `_`-private, deliberately: they are the unit the log's behavior is
+    described in. **`exit_api_call` no longer decodes a non-text response body** - it
+    checks `Content-Type` for `text/` or `application/json` and otherwise logs
+    `(Binary content not displayed)`. That replaces `api_create_download`'s hand-rolled
+    `exit_api_call(api_code, '<Encoded zip file>')`, which the decorator cannot express;
+    without it a multi-megabyte archive would be `.decode()`d to log 240 characters.
+  - **Fault injection is one call site, and its body is necessarily different.** The
+    **91** interior `throw_random_http404_error()` / `throw_random_http500_error()`
+    calls are gone (64 x 404, 27 x 500; the plan's "~103" counts every occurrence of
+    the two names in `src/`, which is those 91 calls plus 10 import-list entries and
+    the 2 definitions) and both functions are deleted; `_injected_fault_response` consults
+    `OPUS_FAKE_SERVER_ERROR404_PROBABILITY` and `OPUS_FAKE_SERVER_ERROR500_PROBABILITY`
+    once, before the handler. The **status codes are unchanged** (rule 4), but an
+    injected error can no longer carry the message of the interior site it used to fire
+    at, so it carries new `HTTP404_FAKE_ERROR`/`HTTP500_FAKE_ERROR` text instead.
+    `OPUS_FAKE_API_DELAYS` never was in a handler body - it lives in `exit_api_call`,
+    which the decorator calls - so it needed no move. One latent bug went with the
+    consolidation: the old `throw_random_*` pair logged through
+    `settings.OPUS_LOG_API_CALLS.lower()` with no guard, so firing an injected fault
+    while `log_api_calls = false` raised `AttributeError` on `False.lower()`;
+    `_log_injected_fault` guards it the way `enter_api_call` always did.
+  - **How the 400-vs-404 table was read, because the reading is what the split
+    depends on.** The plan's rule 2 lists "bad/unknown slugs (incl. in
+    `?cols=`/`?order=`/widgets)", and the widget slug arrives in the **URL path**
+    (`__widget/<slug>.html`), so the discriminator is not where the value arrives but
+    what it names: an **opus_id or ringobsid** naming an observation is rules 1 and 3
+    and stays 404; a **slug, unit, qtype, limit, page, range, or any other value the
+    caller supplied** is rule 2 and becomes 400 wherever it appears. Everything no
+    rule covers **keeps the status it has today** - rules 1 and 3 say "(unchanged)"
+    explicitly, and rule 2 is the table's only "changed from 404" clause, so
+    "unchanged" is the default rather than a judgment call. That leaves `NO_REQUEST`
+    (an internal guard, not caller data), `UNKNOWN_FORMAT` (a URL-path component the
+    route regex already constrains; every site is an unreachable catchall), and the
+    two message-less internal 404s at 404.
+  - **The resulting counts, measured from the tree rather than tallied by hand:**
+    **138 error sites** in `src/opus_app/apps/*/views.py`, of which **60 answer 400**
+    (all 60 were 404 before), **49 stay 404** and **29 stay 500**. No site moved in the
+    other direction and no 500 became a 400 or vice versa. The 400 sites are:
+    `BAD_OR_MISSING_REQNO` x12, `UNKNOWN_SLUG` x16, `SEARCH_PARAMS_INVALID` x9,
+    `MISSING_OPUS_ID` x4, `BAD_LIMIT` x4, `BAD_DOWNLOAD` x3, `BAD_RECYCLEBIN` x2,
+    `BAD_OR_MISSING_RANGE` x2, and one each of `BAD_COLLAPSE`, `BAD_OFFSET`,
+    `BAD_PAGENO`, `BAD_STARTOBS`, `UNKNOWN_CATEGORY`, `UNKNOWN_UNITS`,
+    `UNKNOWN_DOWNLOAD_FILE_FORMAT`, plus the pass-through raise in
+    `get_search_results_chunk_error_handler`.
+  - **The message helpers were renamed to match the status they now carry.**
+    Fifteen `HTTP404_*` names became `HTTP400_*` (`BAD_OR_MISSING_REQNO`,
+    `MISSING_OPUS_ID`, `BAD_OR_MISSING_RANGE`, `BAD_DOWNLOAD`, `BAD_RECYCLEBIN`,
+    `BAD_COLLAPSE`, `BAD_LIMIT`, `BAD_STARTOBS`, `BAD_PAGENO`, `BAD_OFFSET`,
+    `SEARCH_PARAMS_INVALID`, `UNKNOWN_SLUG`, `UNKNOWN_UNITS`, `UNKNOWN_CATEGORY`,
+    `UNKNOWN_DOWNLOAD_FILE_FORMAT`); `NO_REQUEST`, `UNKNOWN_FORMAT`,
+    `UNKNOWN_RING_OBS_ID` and `UNKNOWN_OPUS_ID` keep their `HTTP404_` prefix. The
+    golden-response suite imports these names, so the rename is visible in the test
+    diff and is what makes each changed assertion self-annotating. All of them now
+    build their path text through one `_request_path()` helper instead of repeating
+    `if not isinstance(r, str): r = r.path` twenty times; it also accepts `None`,
+    which is what lets the decorator name a request-less call in a 500 body.
+  - **`MISSING_OPUS_ID` is the one helper that serves sites of two different shapes,
+    and all four are rule 2.** `cart.api_edit_cart`'s is a missing `?opusid=` query
+    parameter; the three in `results` guard a URL-path `opus_id` that the route regex
+    `[-\w]+` guarantees is non-empty, so they are structurally unreachable and carry
+    `# pragma: no cover`. "Missing required params" is rule 2's own wording, and a
+    *missing* identifier is not the rule-1 case of one that *names nothing*, so all
+    four are 400. The classification has no observable effect on three of them.
+  - **A 400 renders `src/opus_app/apps/400.html`, a sibling of the existing
+    `404.html`.** `_http400_response` mirrors what Django's `page_not_found` does for
+    `Http404` - it passes `request_path` and `exception` and falls back to the
+    exception's class name when the exception carries no message - because Django's
+    own `bad_request` view deliberately passes no exception content to its template,
+    which would have thrown away every message the plan says the bodies keep.
+    **`django.core.exceptions.BadRequest` is therefore NOT usable here**; a later PR
+    that "simplifies" `Http400Error` into it would silently blank every error page.
+  - **The one place a body gained text.** `ui.api_get_widget`'s unknown-slug path was
+    a bare `raise Http404` whose page said only "Http404"; it now raises
+    `Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))` and names the slug. Every
+    other changed site keeps its message verbatim. The two remaining message-less
+    404s (`help.api_faq`'s unparseable `faq.yaml`, `metadata.api_get_range_endpoints`'s
+    failed cache-table creation) were left exactly as they were.
+  - **`create_order_by_terms`'s unchecked callers are fixed, and the PR-12 note that
+    handed them over names the wrong exception.** That note says an unresolvable order
+    slug "becomes a `TypeError`". Measured: `parse_order_slug` returns `(None, None)`
+    first, so `create_order_by_terms(None, None)` trips its own `assert order_params`
+    and raises **`AssertionError`** - the `TypeError` belongs to the
+    `(None, None, None)` return, which the note itself calls unreachable for the same
+    reason. Both callers (`results.get_search_results_chunk`'s cart branch and
+    `cart._edit_cart_range`'s `view=cart` branch) now test `parse_order_slug`'s result
+    before calling and answer 400 under rule 2; the `(None, None, None)` guard is kept
+    behind them with a `# pragma: no cover` explaining why no route reaches it.
+    `?view=cart&order=<bad>` is the reachable spelling and both branches have a test.
+  - **The named `math.isfinite` bug is fixed, AND the sweep the plan asked for found a
+    second live instance one module away.** `units.parse_unit_value` now converts the
+    `OverflowError` that `math.isfinite()` raises on an int too large for a float into
+    the bare `ValueError` the parser's contract requires. The sweep then found
+    `time_parsing.parse_time`: `julian` accepts a Julian date far outside its own range
+    and fails only in `julian.tai_from_day()`, which sat **outside** the existing
+    `try`, so `?time1=<30 digits>&unit-time=jed|mjd|mjed` raised `OverflowError`
+    through the same guard. Both now raise `ValueError` with the original exception
+    chained as `__cause__`. **Evidence: 4,374,788 probes** (every `unit_id` x every
+    unit x every numeric format declared in the shipped `table_schemas` x ~5,200
+    adversarial inputs, including every decimal magnitude from 1 to 400 digits, plain
+    and JD/JED/MJD/MJED-prefixed) produce **zero non-`ValueError` rejections** from
+    `parse_unit_value`, which is the single entry point `apps/search/views.py` calls.
+    Before the two fixes the same sweep found 33.
+  - **The logging audit's rule, and why `src/opus_import` needed no change.** Applied
+    rule: log with a traceback (`log.exception`) when the handler reports a failure the
+    message it writes does not fully describe - a database or driver error, a
+    data-integrity surprise, an `OSError` on a file that was just opened - and keep
+    plain `log.error` where the caught exception is the expected outcome the message
+    already states in full, such as a value the caller typed that is not an integer or
+    a lookup that legitimately found nothing. **24 logging calls in `src/opus_app`
+    moved from `log.error` to `log.exception`** (measured: the tree had 0
+    `log.exception` calls before this PR and has 25 after, the extra one being the
+    decorator's own). The
+    import pipeline changed **none**, and the reason is mechanical rather than a
+    judgment: an AST sweep of every `except` handler in `src/opus_import` that logs
+    shows all of them either **re-raise** (all sixteen in `importdb/mysql.py`, plus
+    `do_param_info`), so `cli.main`'s top-level handler logs the traceback, or
+    **already embed `traceback.format_exc()`** themselves (`cli.py`'s own top-level
+    handler and the two sites in `import_util.py`, both under
+    `--log-suppress-traceback`). The three exceptions are `steps/do_dictionary.py`'s
+    two `OSError` readers, whose message carries `e.strerror`, and its `KeyError` on a
+    missing `DESCRIPTION`, whose message names the item. Converting any of them to
+    `PdsLogger.exception()` would also **change the log level**: that method logs at
+    pdslogger's own `exception` level with `force=True`, not at the `fatal` level these
+    sites use. `src/opus_log_analyzer`, `src/opus_support` and `src/opus_config` have no
+    except-handler logging at all.
+  - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
+    note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
+    no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,
+    `'%Y-%m-%d %H:%M:%S.%f'`), so the assignment created an attribute nothing read.
+    Nothing replaces it - the microsecond timestamps the import log has always printed
+    are what pdslogger produces.
+  - **`api_init_detail_page` was logging its API calls under the name
+    `api_get_data`** (`enter_api_call('api_get_data', request, kwargs)`, a copy-paste).
+    The decorator takes the name from `handler.__name__`, so that is corrected and no
+    name can drift again. Two related log-content changes: the decorator passes the
+    URL's keyword arguments to `enter_api_call` for **every** endpoint, where only
+    `api_get_widget` and `api_init_detail_page` used to, and
+    `api_string_search_choices`' two `log.error` lines that identified themselves as
+    `api_normalize_input` now name their own function.
+  - **`@api_view` goes inside `@never_cache`**, matching where the hand-written pairs
+    sat. Django's `never_cache` calls `_check_request`, which raises `TypeError` for a
+    non-`HttpRequest`, so a test that calls a `never_cache`d view with `None` fails
+    before reaching the decorator - which is why the existing "no request" tests pass a
+    `RequestFactory` request with `META`/`GET` set to None rather than passing `None`,
+    except for the two search endpoints, which carry no `never_cache`.
+  - **The decorator's own tests are `integration_tests/apps_db_tests/test_api_view.py`,
+    for the same reason `test_sql_builder.py` is there:** they need no database, but the
+    100% branch gate measures `src/opus_app/apps/*`, so every branch of the decorator
+    has to be exercised by the suite that gate reads. **PR-18 should move both files
+    together** when it creates the holdings-free Django suite. Until then a change to
+    the decorator is not covered by the GitHub-hosted run.
+  - **`get_search_results_chunk` never produces a 404 any more**, and
+    `get_search_results_chunk_error_handler` lost its 404 arm accordingly: nothing the
+    chunk reader inspects comes from the URL path, so its error tuples are 400 or 500.
+    A later PR that gives it a path-derived lookup has to add the arm back.
+  - **The API guide gained an "Error Responses" section** (`apps/help/api_guide.md`,
+    linked from its table of contents) documenting 400/404/500 and stating that
+    requests with a bad field, value, unit or query type now answer 400 where earlier
+    versions answered 404. That section is why `api_help_apiguide.html` is one of the
+    regenerated fixtures, and **PR-21 must carry it across to the ReadTheDocs guide**
+    with the rest of the content.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, pytest
+    **1124 passed** - PR-12a's 1120 plus four new `opus_support` rejection tests -
+    pyroma 10/10, bandit, vulture, pymarkdown). The full local chain
+    (`opus_setup_environment.sh`, then `opus_import_test_database.sh`'s 30-bundle
+    import into a fresh MySQL schema, then `opus_run_unittests_coverage.sh`) ran end
+    to end: the import logged **zero ERROR lines** (`ERRORS.log` 0 bytes) and the
+    suite reported **`Ran 1636 tests` / `OK` / `TOTAL 22131 stmts, 1876 branches,
+    100%`** with **zero missing statements and zero partial branches**, and
+    `opus_check_coverage.sh` passed. **Exactly one golden-response fixture changed** -
+    `api_help_apiguide.html`, whose entire diff is the API guide's new "Error
+    Responses" section and its table-of-contents entry. Every other fixture is
+    byte-identical, which is the point: the status-code changes are all on error
+    paths, which the `responses/` files never capture.
+  - **The baselines this PR moves, accounted for file by file.** Against PR-12a's
+    1620 tests / 22313 statements / 1890 branches: **+16 tests** (14 in the new
+    `test_api_view.py`, 2 for the order-slug guards), **-182 statements** and
+    **-14 branches**. Computed with coverage's own `PythonParser` under the gate's
+    own `exclude_lines`, at `101bc511` and at this tree: `cart/views.py` 674->619,
+    `results/views.py` 783->728, `metadata/views.py` 372->336, `help/views.py`
+    162->134, `search/views.py` 818->792, `ui/views.py` 887->863,
+    `tools/app_utils.py` 162->187, `opus_support/units.py` 174->178,
+    `opus_support/time_parsing.py` 53->56, `test_cart_api.py` 2454->2460,
+    `test_results_api.py` 509->512, `test_ui_api.py` 1903->1904 - which sums to
+    exactly -182. **The statement count falls because the decorator absorbs three
+    statements per error site, not because anything stopped being covered**: the
+    gate is 100% on both sides of it. The branch delta decomposes the same way:
+    `app_utils.py` -18 (the twenty message helpers lost their
+    `if not isinstance(r, str)` branch, against the new branches the decorator and
+    `_request_path` add) and +2 each in `cart/views.py` and `results/views.py` (the
+    two new order-slug guards).
+  - **`integration_tests/apps_db_tests/*` is not in the 100% gate's include list**
+    (`integration_tests/.coveragerc` names `src/opus_app/apps/*`,
+    `integration_tests/test_api/*` and `src/opus_support/*`), so the 14 new
+    decorator tests execute but contribute no statements to the total, exactly as
+    PR-12's `test_sql_builder.py` does. Only the two new tests in
+    `integration_tests/test_api/` move the count.
