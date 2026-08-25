@@ -26,6 +26,7 @@ from django.core.exceptions import (
 )
 from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template import loader
+from django.utils.html import escape
 
 from opus_app.apps.search.models import ObsGeneral
 
@@ -496,9 +497,25 @@ def HTTP404_FAKE_ERROR(r):
     return f'Fake HTTP404 error for {_request_path(r)}'
 
 def wrap_http500_string(s):
-    """Wrap an internal-error message the way the Django debug page does."""
-    ret = f'<div id="info">{s}</div>'
-    return ret
+    """Wrap an internal-error message the way the Django debug page does.
+
+    This is the one place in OPUS where an error message becomes raw HTML instead
+    of going through a template, so it is also the one place that has to escape.
+    The messages it wraps name the request path, which the caller controls.
+
+    Escaping here rather than in `_request_path` is deliberate: that helper also
+    feeds the HTTP400_/HTTP404_ builders, whose messages are rendered by
+    `400.html` and Django's `404.html` and are therefore escaped by the template
+    engine - escaping them a second time at the source would show the user
+    `&amp;lt;` where they typed `<`.
+
+    Parameters:
+        s: The message to wrap. Any HTML in it is escaped, not honored.
+
+    Returns:
+        The message wrapped in the div the Django debug page uses.
+    """
+    return f'<div id="info">{escape(s)}</div>'
 
 def HTTP500_SEARCH_CACHE_FAILED(r): # pragma: no cover - database error
     """The search cache table could not be found or created."""

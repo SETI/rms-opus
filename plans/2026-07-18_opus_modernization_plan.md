@@ -3641,6 +3641,27 @@ body; never rewrite or delete earlier notes.*
     `# pragma: no cover`. "Missing required params" is rule 2's own wording, and a
     *missing* identifier is not the rule-1 case of one that *names nothing*, so all
     four are 400. The classification has no observable effect on three of them.
+  - **`wrap_http500_string` escapes, and it is the only error path in the app that
+    has to escape for itself.** Found by CodeRabbit on this PR. The four `HTTP500_*`
+    builders interpolate the request path into raw HTML
+    (`<div id="info">... for {path}</div>`) that goes straight into an
+    `HttpResponseServerError`, with no template between. The defect is **pre-existing
+    in form** - `origin/rewrite:app_utils.py:309-328` builds the same unescaped string
+    - but **this PR widened its reach**, which is why it is fixed here rather than
+    handed off: rule 5 routes *every* unhandled exception through `api_view` into that
+    body, where before it was reached only from a handful of narrow internal paths
+    (visible in the diff as `HTTP500_INTERNAL_ERROR` losing its
+    `# pragma: no cover`).
+    **Escaping lives in `wrap_http500_string`, not in `_request_path`**, and the
+    difference matters: `_request_path` also feeds the `HTTP400_*`/`HTTP404_*`
+    builders, whose messages are rendered by `400.html` and Django's `404.html`, so
+    escaping at the source would double-escape and show a user `&amp;lt;` where they
+    typed `<`. Audited by measurement rather than assumed: the template engine's
+    `autoescape` is on, neither error template uses `|safe`, and both were driven with
+    a `<script>` payload and confirmed to escape it, while all four `HTTP500_*`
+    builders emitted it raw before this change and escaped after.
+    `json_response`/`csv_response` are not HTML and are out of the class.
+    `tests/../test_api_view.py` pins both families.
   - **A 400 renders `src/opus_app/apps/400.html`, a sibling of the existing
     `404.html`.** `_http400_response` mirrors what Django's `page_not_found` does for
     `Http404` - it passes `request_path` and `exception` and falls back to the
@@ -3807,7 +3828,7 @@ body; never rewrite or delete earlier notes.*
     import into a fresh MySQL schema, then `opus_run_unittests_coverage.sh`) ran end
     to end **twice** - once mid-work and once from scratch on the final tree - and
     on the second run the import logged **zero ERROR lines** (`ERRORS.log` 0 bytes)
-    and the suite reported **`Ran 1641 tests` / `OK` / `TOTAL 22136 stmts, 1876
+    and the suite reported **`Ran 1643 tests` / `OK` / `TOTAL 22136 stmts, 1876
     branches, 100%`** with **zero missing statements and zero partial branches**, and
     `opus_check_coverage.sh` passed. **Exactly one golden-response fixture changed** -
     `api_help_apiguide.html`, whose entire diff is the API guide's new "Error
@@ -3815,7 +3836,7 @@ body; never rewrite or delete earlier notes.*
     byte-identical, which is the point: the status-code changes are all on error
     paths, which the `responses/` files never capture.
   - **The baselines this PR moves, accounted for file by file.** Against PR-12a's
-    1620 tests / 22313 statements / 1890 branches: **+21 tests** (18 in the new
+    1620 tests / 22313 statements / 1890 branches: **+23 tests** (20 in the new
     `test_api_view.py`, 2 for the order-slug guards, 1 for the widget slug),
     **-177 statements** and
     **-14 branches**. Computed with coverage's own `PythonParser` under the gate's
@@ -3833,7 +3854,7 @@ body; never rewrite or delete earlier notes.*
     each in `cart/views.py` and `results/views.py` (the two new order-slug guards).
   - **`integration_tests/apps_db_tests/*` is not in the 100% gate's include list**
     (`integration_tests/.coveragerc` names `src/opus_app/apps/*`,
-    `integration_tests/test_api/*` and `src/opus_support/*`), so the 18 new
+    `integration_tests/test_api/*` and `src/opus_support/*`), so the 20 new
     decorator tests execute but contribute no statements to the total, exactly as
     PR-12's `test_sql_builder.py` does. Only the three new tests in
     `integration_tests/test_api/` (two order-slug, one widget slug) move the count.

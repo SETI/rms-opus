@@ -18,6 +18,11 @@ What is worth pinning here, and why:
   hand-written pairs this decorator replaces could not guarantee it, and a record
   that is never closed leaks an entry in `_API_START_TIMES` for the life of the
   process.
+* **That neither error body can be made to carry markup.** The request path and the
+  offending value both reach the page, and the 500 page is built as raw HTML rather
+  than through a template, so it escapes for itself while the 400 page relies on the
+  template engine. Both are pinned, because "escaped somewhere" is the property that
+  matters and the two get it from different places.
 * **That an exception Django answers itself is not absorbed.** Turning one into a
   generic 500 would lose both the response Django gives it and, for a
   `SuspiciousOperation`, the `django.security.*` record an operator watches for.
@@ -183,6 +188,39 @@ class ApiViewTests(TestCase):
         record = captured.records[0]
         self.assertIsNotNone(record.exc_info)
         self.assertIn('handler: Unhandled exception', record.getMessage())
+
+    def test__the_500_body_escapes_the_request_path(self):
+        "[test_api_view.py] api_view: a hostile request path cannot inject HTML"
+        # The 500 body is the one error page OPUS builds as raw HTML rather than
+        # through a template, so it is the one that has to escape for itself. The
+        # path is caller-controlled and lands in the message verbatim.
+        @api_view
+        def handler(request):
+            raise RuntimeError('boom')
+
+        response = handler(self._request('/api/data<script>alert(1)</script>.json'))
+        body = response.content.decode()
+        self.assertEqual(500, response.status_code)
+        self.assertNotIn('<script>', body)
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', body)
+        # The div the Django debug page uses is still real markup, not escaped.
+        self.assertIn('<div id="info">', body)
+
+    def test__the_400_body_escapes_the_message(self):
+        "[test_api_view.py] api_view: a hostile value cannot inject HTML into a 400"
+        # The 400 page renders through 400.html, so the template engine escapes it.
+        # This pins that the escaping happens somewhere, not where: an unescaped
+        # 400 would be the same defect as an unescaped 500.
+        @api_view
+        def handler(request):
+            raise Http400Error(HTTP400_BAD_LIMIT('<script>alert(1)</script>',
+                                                 request))
+
+        response = handler(self._request('/api/data.json'))
+        body = response.content.decode()
+        self.assertEqual(400, response.status_code)
+        self.assertNotIn('<script>', body)
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', body)
 
     def test__api_view_handles_a_missing_request(self):
         "[test_api_view.py] api_view: a handler called with no request at all"
