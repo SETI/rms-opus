@@ -3754,7 +3754,14 @@ body; never rewrite or delete earlier notes.*
     `log.error('api_normalize_url: Failed to handle slug "'+slug+'"')`, which is a
     live caller-supplied slug this PR did not touch. The cheap fix is `%r`
     everywhere rather than a per-site argument about whether a given scalar can hold
-    request text. **Owner: unassigned - orchestrator's call.**
+    request text.
+
+    **Owner: PR-17** (rfrench's ruling, 2026-08-25). It is the last mechanical
+    repo-wide pass over the Django app before the tests phase and already shrinks the
+    per-line bandit and vulture exception sets, so the `%r` sweep belongs with that
+    work rather than as another commit here. **PR-17's executor must regenerate the
+    worklist and must never inherit a count** - including from this bullet, which is
+    why it states none.
   - **`pdslogger.TIME_FMT = ...` is deleted from `opus_import/cli.py`**, as PR-04's
     note assigned to this PR. Re-verified against rms-pdslogger 3.2.1: the module has
     no `TIME_FMT` attribute (the real one is the private `_TIME_FMT`,
