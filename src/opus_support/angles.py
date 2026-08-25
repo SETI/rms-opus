@@ -17,8 +17,24 @@ from opus_support._numeric_text import _clean_numeric_field, _strip_trailing_zer
 # ANGLE CONVERSION
 ################################################################################
 
-def parse_dms_hms(s, conversion_factor=1, **kwargs):
+def parse_dms_hms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse DMS, HMS, or single number, but "x x x" defaults to DMS.
+
+    Parameters:
+        s: The angle, written either with the letters or symbols naming its fields
+            ("23d 30m 36s", "23h 30m 36s"), as a space-separated triple ("23 30 36"),
+            or as a plain number.
+        conversion_factor: The number of the caller's units in one degree, which the
+            angle is divided by once it is in degrees. It is 1 for an angle in
+            degrees and the number of degrees in a radian for one in radians. A
+            plain number is taken to be in the caller's units already and is left
+            alone.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The angle in the caller's units. A triple with no letters is read as
+        degrees, minutes and seconds.
 
     Raises:
         ValueError: If the string is not a value this parser accepts, always with an
@@ -27,8 +43,21 @@ def parse_dms_hms(s, conversion_factor=1, **kwargs):
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='dms')
 
-def parse_hms_dms(s, conversion_factor=1, **kwargs):
+def parse_hms_dms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse DMS, HMS, or single number, but "x x x" defaults to HMS.
+
+    Parameters:
+        s: The angle, written either with the letters or symbols naming its fields
+            ("23d 30m 36s", "23h 30m 36s"), as a space-separated triple ("23 30 36"),
+            or as a plain number.
+        conversion_factor: The number of the caller's units in one degree, which the
+            angle is divided by once it is in degrees.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The angle in the caller's units. A triple with no letters is read as hours,
+        minutes and seconds, and so is a plain number, which is multiplied by 15.
 
     Raises:
         ValueError: If the string is not a value this parser accepts, always with an
@@ -37,8 +66,20 @@ def parse_hms_dms(s, conversion_factor=1, **kwargs):
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='hms')
 
-def parse_dms(s, conversion_factor=1, **kwargs):
+def parse_dms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse a DMS string or single number.
+
+    Parameters:
+        s: The angle, written with the letters or symbols naming its fields
+            ("23d 30m 36s"), as a space-separated triple ("23 30 36"), or as a plain
+            number. An angle written in hours is rejected.
+        conversion_factor: The number of the caller's units in one degree, which the
+            angle is divided by once it is in degrees.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The angle in the caller's units.
 
     Raises:
         ValueError: If the string is not a value this parser accepts, always with an
@@ -47,8 +88,21 @@ def parse_dms(s, conversion_factor=1, **kwargs):
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=False,
                           default='dms')
 
-def parse_hms(s, conversion_factor=1, **kwargs):
+def parse_hms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse an HMS string or single number.
+
+    Parameters:
+        s: The angle, written with the letters or symbols naming its fields
+            ("23h 30m 36s"), as a space-separated triple ("23 30 36"), or as a plain
+            number. An angle written in degrees is rejected.
+        conversion_factor: The number of the caller's units in one degree, which the
+            angle is divided by once it is in degrees.
+        **kwargs: Accepted and ignored, so that every parser in this package can be
+            called through one uniform dispatch.
+
+    Returns:
+        The angle in the caller's units. A triple and a plain number are both read
+        as hours and multiplied by 15.
 
     Raises:
         ValueError: If the string is not a value this parser accepts, always with an
@@ -57,9 +111,21 @@ def parse_hms(s, conversion_factor=1, **kwargs):
     return _parse_dms_hms(s, conversion_factor, allow_dms=False, allow_hms=True,
                           default='hms')
 
-def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
-                   default='dms'):
+def _parse_dms_hms(s: str, conversion_factor: float = 1, allow_dms: bool = True,
+                   allow_hms: bool = True, default: str = 'dms') -> float:
     """Parse a DMS or HMS or "x x x" or plain number.
+
+    Parameters:
+        s: The angle as the caller typed it.
+        conversion_factor: The number of the caller's units in one degree, which the
+            angle is divided by once it is in degrees.
+        allow_dms: True to accept an angle written in degrees.
+        allow_hms: True to accept an angle written in hours.
+        default: "dms" or "hms", naming what a space-separated triple with no
+            letters, and a plain number, are read as.
+
+    Returns:
+        The angle in the caller's units.
 
     Raises:
         ValueError: If the string is not a value this parser accepts. Whichever of the
@@ -81,7 +147,7 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
     # deg symbol => d
     s = s.replace(chr(176), 'd')
 
-    format_types = []
+    format_types: list[tuple[str, int]] = []
     if allow_dms:
         format_types.append(('d', 1))
     if allow_hms:
@@ -101,7 +167,7 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
             second = match[8]
             force_dh_int = False
             force_m_int = False
-            val = 0
+            val: float = 0
             if second:
                 second = second.strip('s')
                 # Only "second" can have a fractional part if it's provided
@@ -167,9 +233,35 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
     return ret
 
 
-def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
-                   keep_trailing_zeros=False):
-    """Format a number as DMS or HMS or a single number as appropriate."""
+def format_dms_hms(val: float, *, unit_id: str | None = None, unit: str,
+                   numerical_format: str,
+                   keep_trailing_zeros: bool = False) -> str:
+    """Format a number as DMS or HMS or a single number as appropriate.
+
+    Every argument but `val` is keyword-only, and `unit` and `numerical_format` are
+    required: the body indexes the format and asserts on the unit, so the defaults
+    of None they used to carry could never produce a result.
+
+    Parameters:
+        val: The angle in degrees, or in hours when `unit` asks for hours.
+        unit_id: The id of the unit system. It is part of the signature every
+            formatter in this package shares and is not used here.
+        unit: What to write the angle as: "degrees", "radians" or "hours" for a
+            plain number, "dms" for degrees, minutes and seconds, or "hms" for
+            hours, minutes and seconds. Anything else fails an assertion.
+        numerical_format: A format of the form ".<n>f" giving the number of decimal
+            places the angle would carry in degrees. The number is adjusted for
+            whichever unit is being written, since a second of arc is a fixed
+            fraction of a degree.
+        keep_trailing_zeros: True to keep the zeros at the end of a decimal
+            fraction, which are otherwise dropped along with a decimal point left
+            with nothing after it.
+
+    Returns:
+        The formatted angle. A plain number switches to exponential notation at 1e8;
+        a DMS or HMS value is written as "<d>d <mm>m <ss.sss>s" with a leading minus
+        sign for a negative angle.
+    """
     if unit == 'hours' or unit == 'hms':
         # Just do the normal numeric formatting, but divide by 15 first to be
         # in units of hours

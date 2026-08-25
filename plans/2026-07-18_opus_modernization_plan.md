@@ -3904,3 +3904,290 @@ body; never rewrite or delete earlier notes.*
     PR-12's `test_sql_builder.py` does. Only the three new tests in
     `integration_tests/test_api/` (two order-slug, one widget slug) move the count.
     It also means a `# pragma: no cover` inside a file in that directory is inert.
+- **2026-08-25 (PR-14 executed):** the type checker runs strict over the repository,
+  `opus_support` and `opus_config` are annotated and ship `py.typed`, and the
+  not-yet-annotated packages sit on a per-module burn-down list. Facts later PRs rely on:
+  - **The type gate's shape.** `[tool.mypy]` keeps `strict = true` and
+    `disallow_subclassing_any = false` from PR-01 and adds `plugins =
+    ["mypy_django_plugin.main"]`, `mypy_path = "src"` and
+    `explicit_package_bases = true`, plus `[tool.django-stubs] django_settings_module
+    = "opus_app.settings"`. **`explicit_package_bases` is load-bearing, not cosmetic:**
+    a module's name comes from the first package base containing it -- `src` from
+    `mypy_path`, or the working directory. The per-package test directories carry no
+    `__init__.py`, so without it every test module would be named after its own file,
+    `tests/opus_import/test_package_data.py` and
+    `tests/opus_log_analyzer/test_package_data.py` would collide as one module name, and
+    the burn-down entries below could not name a test package at all. Verified by
+    deleting the two `tests.*` entries and re-running: **71 errors in 10 files**, which
+    is only possible if their module names really are `tests.<pkg>.<mod>`. It also means
+    the checker has to run from the repository root, which both callers do.
+  - **Which paths are checked.** `src integration_tests tests manage.py` -- every tree
+    ruff scans -- set in two places a later PR must keep in step: `MYPY_PATHS` in
+    `run-tests.yml`'s lint job and `OPUS_MYPY_PATHS` in `run-all-checks.sh`. Nothing is
+    excluded by omission: a path that is never passed to the checker produces no error
+    and appears in no table, which is a *less* visible exclusion than an override, so
+    `integration_tests/` is checked and silenced by an entry in the list below.
+  - **The burn-down list, and what it costs PR-17.** `[[tool.mypy.overrides]]
+    ignore_errors = true` covers `opus_import.*` + `tests.opus_import.*` (PR-15/PR-16)
+    and `opus_app.*` + `tests.opus_app.*`, `opus_log_analyzer.*` and
+    `integration_tests.*` (all PR-17, because the plan body gives PR-17 *every*
+    temporary override). A package's tests are silenced with it where they need it,
+    because a test's annotations follow the signatures of the code it drives;
+    **`tests/opus_log_analyzer` needs no entry** -- it is already clean, and an inert
+    entry is exactly the kind of thing PR-17 would keep by accident. **PR-17's exit
+    criterion now has a second table to empty** alongside
+    `[tool.ruff.lint.per-file-ignores]`, and **`integration_tests.*` is 4488 of the
+    9798 errors below, in 21 files** -- by far the largest single entry, and the one
+    worth deciding about before starting: PR-18 keeps those suites as
+    `unittest.TestCase` subclasses (its DB-lifecycle rule is fixed, not
+    executor-chosen) and PR-20 consolidates the workflow, so nothing later rewrites
+    their signatures for PR-17 to wait on. `.cursor/rules/python.mdc` bans
+    `ignore_errors = True`; this list is the plan's sanctioned exception, on the same
+    burn-down discipline as the ruff table, and it is a per-module list rather than a
+    repository-wide exclusion.
+  - **Measured at this PR, so a later executor knows what it is walking into:** with the
+    burn-down list deleted entirely, the strict check over
+    `src integration_tests tests manage.py` reports **9798 errors in 137 files**, which
+    is also the proof that every entry is load-bearing. Grouped by the entry that
+    silences them: `opus_import.*` 3860 (79 files), `integration_tests.*` 4488 (21
+    files), `opus_app.*` 1361 (18 files), `tests.opus_import.*` 68 (9 files),
+    `opus_log_analyzer.*` 18 (9 files), `tests.opus_app.*` 3 (1 file). Do not carry the
+    numbers forward -- re-measure by deleting the relevant override; they move with
+    every intervening PR, and they move a great deal with the django-stubs plugin
+    (delete it as well and `src/opus_app` alone goes from 1361 to **10953**).
+  - **`src/opus_log_analyzer` is nearly clean and PR-17 owns finishing it.** PR-06
+    recorded that this tree arrives already annotated. It does, but not strictly.
+    **Regenerate the worklist rather than inheriting one** -- delete the
+    `opus_log_analyzer.*` override and run the checker; at this PR it reported 18
+    errors, most of them ordinary annotation work (functions with no annotation and the
+    calls to them, a `Shelf` with no type argument, `pytz` having no stubs installed, a
+    `str` assigned into a `Markup`, a dict-comprehension key that may be None, and the
+    `# type: ignore` PR-06 recorded on the dynamically imported configuration class,
+    which is now unused). **Two kinds among them need judgment rather than annotation,
+    and those are the ones worth knowing in advance:** wherever `ipaddress.ip_address`
+    or `ip_network` returns an IPv4-or-IPv6 union and the code declares only the IPv4
+    half, resolving it means deciding what the analyzer should do with an IPv6 address;
+    and the `comparison-overlap` at `log_parser.py:66` says an equality test can never
+    be true. Both are **behavior** questions, and rev 7.14 puts log-analyzer behavior
+    out of scope, so PR-17 must annotate around them (a narrow `# type: ignore[...]`
+    with a justification) rather than change what they do; if either turns out to be a
+    real defect it belongs in a GitHub issue alongside #1449-#1452, not in PR-17.
+    PR-14's "folded into the same strict config" was read as configuration work (PR-06
+    already deleted the private `mypy.ini`; `[tool.mypy]` now governs the tree), not as
+    making the tree clean here, because PR-17's own section assigns "log-analyzer engine
+    and OPUS config classes" to PR-17 by name.
+  - **Third-party stubs: state the rule, not a list.** `[[tool.mypy.overrides]]
+    ignore_missing_imports = true` currently names only `julian.*`, because that is the
+    one stubless package an *annotated* module imports. Measured: delete that override
+    and the check reports exactly one error, `time_parsing.py:9`. Every other stubless
+    import is reported inside a module the burn-down silences. **When an annotation PR
+    removes an override, it must add whatever the checker then reports as
+    `import-untyped` or `import-not-found` for that tree** -- that run is the generating
+    rule. A `py.typed`-presence scan is only an approximation in both directions: it
+    misses a package typed by a separate stub distribution (`django` is, via
+    django-stubs) and it cannot see which imports are actually reached.
+  - **`Any` leaking out of a stubless package trips `warn_return_any`, which `strict`
+    enables.** Returning a value straight from an untyped library is an error
+    ("Returning Any from function declared to return X"). `time_parsing.py` shows the
+    pattern used here: assign to an annotated local and return that, rather than
+    `cast`. Every later annotation PR will hit this constantly -- `pdstable`, `pdsfile`,
+    `pdslogger` and `MySQLdb` are all stubless.
+  - **Narrowing: assert what the checker cannot follow, but fix a single-parameter
+    constraint in the signature.** Where an earlier statement already establishes that
+    an `X | None` value is not None but the checker cannot see it, this PR asserts the
+    invariant on its own line with the reason in a comment. Every such assertion in
+    this package is in `units.py`; regenerate the set with
+    `grep -n "^ *assert " src/opus_support/units.py` (the other asserts in the package
+    are pre-existing value checks). They come in two shapes, and both are invariants no
+    annotation can carry: one **narrows a parameter**, either against another parameter
+    ("`unit` is required whenever `unit_id` is given" -- both really are `str | None`
+    when the other is None) or after it has been reassigned from `get_default_unit`;
+    the other **narrows a local** that another function in this package returned, where
+    a callee's contract guarantees it. **A constraint on a single parameter is
+    neither, and must not be asserted**: `format_dms_hms` requires a `numerical_format`
+    and a `unit`, so those two are required keyword-only parameters. An earlier draft
+    of this PR annotated them `str | None` and asserted them non-None, which was both
+    self-contradictory (the annotation blessed the None the assertion rejected) and the
+    single largest source of behavior change in the PR -- 966 of what were then 2332
+    differing probes. **Three consequences a later PR must respect:** ruff's `PT018`
+    rejects
+    `assert a is not None and b is not None`, so each assertion is written separately;
+    every assertion is a statement inside a package the integration gate measures at
+    **100%**, so it must sit on a path the suite reaches (they cost statements but no
+    branch points -- `units.py` goes 178 -> 201 statements with its branch count
+    unchanged at 86); and an assertion that fires converts whatever the offending call
+    used to raise into an `AssertionError`, which is a real behavior change and has to
+    be measured rather than assumed -- see the differential probe below.
+  - **One public signature changed, deliberately, and it is the only one.**
+    `format_dms_hms` was
+    `(val, unit_id=None, unit=None, numerical_format=None, keep_trailing_zeros=False)`
+    and is now `(val, *, unit_id=None, unit, numerical_format, keep_trailing_zeros=False)`:
+    the declaration order is untouched, every argument but `val` is keyword-only, and
+    **`unit` and `numerical_format` are required**. The body has always required both --
+    it indexes the format and asserts on the unit -- so their `None` defaults could
+    never produce a result, and honest annotation is what exposed that. The
+    no-back-compat policy in `.cursor/rules/python.mdc` permits this: the plan's
+    compatibility waiver covers the **public web API only**, and `opus_support` is an
+    internal package with no stability guarantee. **Nothing in the repository breaks**,
+    because the only dispatcher (`units.py`'s `format_unit_value`) passes every argument
+    by keyword and `get_single_format_function` returns None for every unit_id that uses
+    this formatter -- but an out-of-tree positional caller would now get a `TypeError`,
+    so it is recorded here rather than left to be discovered.
+    **Audited for siblings, because one incidental signature change usually means a
+    habit:** comparing `inspect.signature` for every name in `opus_support.__all__`
+    between `ada9df1d` and this tree -- kind, declaration position, and whether each
+    parameter is required -- reports **41 public functions on both sides and exactly one
+    changed signature, this one**. No parameter was renamed anywhere, which is the
+    change that would break a keyword caller silently, and no other function acquired a
+    `*`, a required parameter or a reordering. Re-run that comparison after any later
+    annotation PR; a rename is invisible to a positional-call audit.
+  - **The `opus_support` coverage baseline moved: 560 -> 585 statements and 258 -> 262
+    branches**, still **100% of both, with zero missed statements and zero partial
+    branches**. Both numbers are measured, running `tests/opus_support` under
+    `integration_tests/.coveragerc` against the `ada9df1d` tree and against this one.
+    Per file (statements, branches): `angles.py` 123/58 -> 123/58, `orbits.py` 24/6 ->
+    22/10, `sclk.py` 159/86 -> 160/86, `time_parsing.py` 56/16 -> 59/16, `units.py`
+    178/86 -> 201/86; `__init__.py` and `_numeric_text.py` are unchanged. Everything
+    `units.py` gains is declaration or narrowing -- the type aliases, the `UnitInfo`
+    TypedDict and its keys, their two imports, and the narrowing assertions with the
+    one local one of them needed -- and none of it adds a branch, which is why the
+    branch column does not move. `orbits.py` loses two statements and gains four branch
+    arcs because its two
+    `try`/`except KeyError` lookups became membership tests.
+  - **`UNIT_FORMAT_DB` now has a declared type, and later PRs should read it rather than
+    re-deriving the shape.** `units.py` declares `ParseFunc = Callable[..., float]`,
+    `FormatFunc = Callable[..., str]`, `UnitConversion` (the five-tuple) and a
+    `UnitInfo` TypedDict, and the table is `dict[str, UnitInfo]`. **All four are
+    re-exported from `opus_support` and listed in its `__all__`**, so later PRs import
+    them from the package root like every other public name -- the type of a public
+    constant has to be public itself, or nobody can name it. They are the only names
+    this PR adds to the surface PR-03 recorded; `len(opus_support.__all__)` is how to
+    check it, and `__all__` is also what keeps vulture off the re-exports. The two
+    callable
+    aliases are deliberately `Callable[...]` rather than a Protocol: the parsers and
+    formatters do not share a signature (`parse_cassini_orbit` takes a `str` and returns
+    an `int`, `format_cassini_orbit` takes an `int`), and only the uniform keyword
+    dispatch makes them interchangeable.
+  - **Behavior parity was measured, not argued -- and two of the changes are outside
+    what the probe can see.** Four changes go beyond annotation and docstrings:
+    `orbits.py`'s two dict lookups became membership tests; the two shared SCLK helpers
+    test `isinstance(modvals, int)` where they tested
+    `not isinstance(modvals, (list, tuple))`; `format_dms_hms`'s `unit` and
+    `numerical_format` became required keyword-only parameters; and the narrowing
+    assertions. **Two of those rest on a call-site audit rather than on the probe, and a
+    later PR must not read the probe as evidence for them.** The SCLK helpers are
+    module-private and nothing outside `sclk.py` names them --
+    `grep -rn "_parse_multi_field_sclk\|_format_multi_field_sclk" src tests
+    integration_tests` regenerates the call set -- and every call passes an `int` or a
+    tuple literal, so no probe of the public surface can distinguish the two tests. `format_dms_hms` is reached only through `format_unit_value`'s keyword
+    dispatch and one test, both of which already passed `unit` and `numerical_format` by
+    keyword, so the probe calls it by keyword too and structurally cannot observe the
+    keyword-only change -- its zero differences below say the probe saw nothing, not
+    that a positional caller would be unaffected (there is none; a positional call that
+    worked at `ada9df1d` now raises `TypeError`). For the other two changes, a
+    differential probe drove the `ada9df1d` package and this one through the same
+    **89,431** calls in separate processes and compared value, exception type, exception
+    message and `__cause__`: every `unit_id` x every unit x every numeric format through
+    `parse_unit_value` and through `format_unit_value` in all four
+    `keep_trailing_zeros` x `convert_from_default` combinations, the angle, clock, time
+    and orbit functions called directly with their optional arguments, every lookup
+    helper, `__all__`, and a structural dump of `UNIT_FORMAT_DB`. **48,568 probes
+    returned a value on at least one side and exactly one differs** -- the `__all__`
+    dump, which grew the four type names above -- so no conversion changed and nothing
+    moved between accepting and rejecting. The remaining **1,365** differences are all
+    rejections, in exactly two classes: **1,134** `ValueError` -> `ValueError` with a
+    byte-identical message and only `__cause__` changing (the transition set is exactly
+    `{('KeyError', None)}` -- the orbits conversion and nothing else); and **231**
+    `AttributeError` -> `AssertionError`, every one of them a call to
+    `convert_to_default_unit`, `convert_from_default_unit` or
+    `adjust_format_string_for_units` that supplied a `unit_id` with no `unit`, which
+    those functions' docstrings forbid and which raised
+    `AttributeError: 'NoneType' object has no attribute 'lower'` before. `format_dms_hms`
+    contributes **zero** differences, for the structural reason given above.
+  - **Every PR-03a and PR-10 item handed to PR-14 is done.** `orbits.py`'s two
+    `try`/`except KeyError` dict lookups are membership tests (`python.mdc` section 1),
+    which is the only place this PR changed control flow.
+    `parse_cassini_orbit` is annotated `orbit: str`, and
+    `test_parse_cassini_orbit_rejects_integer` keeps its deliberately ill-typed call
+    behind a narrow `# type: ignore[arg-type]` with the reason in its docstring.
+    `units.py`'s `initalization` typo is fixed.
+  - **`opus_config` needed no code change** -- PR-08 wrote it fully annotated with
+    Google-style docstrings, and it was already strict-clean. The one edit is a
+    documentation correction: the `LOG_LEVELS` comment claimed `Logger.warn` "was
+    removed in Python 3.13", which PR-08's own notes had already disproved but left
+    standing in the source. Re-measured on both interpreters this project supports:
+    `logging.Logger.warn` exists on **3.12.3 and on 3.13.15** and raises
+    `DeprecationWarning` on both, which is the real reason `WARN` is refused, and is
+    what the comment now says.
+  - **`py.typed` markers are in `src/opus_support` and `src/opus_config`**, as PR-03's
+    note directed, and both appear in a built wheel. `[tool.setuptools.package-data]`
+    already globbed for them, so no packaging change was needed. **PR-15/PR-16 add
+    `src/opus_import/py.typed` and PR-17 adds `src/opus_app/py.typed` and
+    `src/opus_log_analyzer/py.typed`** with their annotations -- shipping a marker for a
+    package still on the burn-down list would tell a downstream checker to trust types
+    that are not there.
+  - **The `Run Lint` job is no longer a tools-only job.** django-stubs' plugin imports
+    `opus_app.settings`, so the job now installs the MySQL client headers and
+    `pip install -e ".[dev]"` before running any tool, exactly as the unit-test job
+    does; its checkout gained `fetch-depth: 0` for the same reason the unit-test job
+    carries it (setuptools-scm reads tags, and a shallow clone otherwise installs a
+    `0.1.dev1` distribution with a warning on every run); and its timeout went 15 -> 30
+    minutes. Two consequences: **every tool that job runs now comes from the dev
+    extras**, so a later PR adding a lint tool must add it to
+    `[project.optional-dependencies] dev` rather than to the install step; and the job's
+    runtime is dominated by apt-get and pip, not by the tools -- a cold check of the
+    whole repository is seconds, not minutes (5.7 s over 209 files on the development
+    machine). `mypy` and `django-stubs[compatible-mypy]` are the dev-extra additions,
+    and **`mypy` deliberately carries no version bound of its own**: the
+    `compatible-mypy` extra pins it to the range django-stubs' plugin supports
+    (`>=1.13,<2.4` as of django-stubs 6.1.0), and a second bound alongside it would only
+    go stale.
+  - **The self-hosted workflow is untouched by any of this, and a later PR should not
+    look for a knock-on there.** `run-app-tests.yml` builds its venv from
+    `requirements.txt` and then `pip install -e .` with no extras, so the two
+    dev-extra additions cannot reach it, and the type gate runs only on the
+    GitHub-hosted side. The only file both workflows share an interest in is
+    `pyproject.toml`, and nothing this PR changed there is read at install time except
+    the dev extras.
+  - **`OPUS_CONFIG` was already wired for the type checker and needed no work**,
+    confirming PR-08's hand-off: `run-tests.yml` sets it at the workflow level (so the
+    lint job inherits it) and `run-all-checks.sh` defaults it to
+    `tests/fixtures/opus_ci.toml`. **What an executor actually sees when it is unset is
+    worth knowing, because it names neither the variable nor the configuration:** mypy
+    prints `error: INTERNAL ERROR ... Error constructing plugin instance of
+    NewSemanalDjangoPlugin` and nothing more, unless `--show-traceback` is passed, which
+    reveals the underlying `opus_config.config.ConfigError`.
+  - **Deferred to PR-20, not dismissed: no workflow in this repository pins an action.**
+    CodeRabbit raised it on PR-14's two touched lines; all twelve `uses:` references
+    across the four workflows are mutable tags (`actions/checkout@v6`,
+    `actions/setup-python@v6`, `codecov/codecov-action@v5`,
+    `pypa/gh-action-pypi-publish@release/v1`). Pinning the two lines one PR happens to
+    touch would leave ten unpinned and the convention inconsistent, so it belongs to
+    **PR-20**, which consolidates the integration workflow and is the PR with every
+    workflow open at once. **Why it is worth more here than the usual advice:** a moved
+    tag runs unreviewed third-party code with the job's credentials, and this repository
+    runs a **self-hosted runner**, so that code would execute on the maintainer's own
+    hardware rather than a disposable cloud VM. The same review flagged two siblings of
+    the same shape and scope -- no `permissions:` block on either workflow or job, and
+    no `persist-credentials: false` on the checkouts -- which PR-20 should take together
+    with the pinning.
+  - **The checker's own cache needs no `.gitignore` entry** -- it writes
+    `.mypy_cache/.gitignore` containing `*`, so the directory ignores itself.
+  - **Plan drift, noted and proceeded with** (it changes no instruction's meaning):
+    §5's CI evolution table has no row for PR-14 and first lists mypy under "After
+    PR-19", while the PR-14 section says `ENABLE_MYPY` flips true here and §2's
+    `run-tests.yml` description already lists mypy in the lint job. The specific
+    instruction was followed; **PR-19's executor should not read that table row as
+    meaning it introduces the type gate.**
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, the type check
+    over `src integration_tests tests manage.py` -- 209 source files -- pytest **1124
+    passed**, unchanged from PR-13 since this PR adds no test, pyroma 10/10, bandit,
+    vulture, pymarkdown), and the unit suite and the type check are both green on
+    **Python 3.13** as well as 3.12, matching the CI matrix and the lint job's
+    interpreter. The full local chain (`opus_main_test.sh`: 30-bundle import into a
+    fresh MySQL schema, then the Django suite under the 100% gate) ran end to end with
+    exit code 0: **`Ran 1643 tests` / `OK` / `TOTAL 22161 stmts, 1880 branches, 100%`**
+    with zero missing statements and zero partial branches, and **zero golden-fixture
+    diffs** (`git status integration_tests/test_api/responses` empty afterwards).
+    Against PR-13's 22136 statements / 1876 branches the deltas are exactly the
+    `opus_support` figures above: +25 statements and +4 branches, all covered.

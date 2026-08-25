@@ -66,7 +66,8 @@ DATABASE_BRANDS = ('MySQL', 'PostgreSQL')
 
 #: Logging levels the ``[django]`` level keys accept, as `logging` spells them.
 #: `logging`'s deprecated ``WARN`` alias is deliberately absent: `log_api_calls`
-#: reaches `getattr` on a logger, and ``Logger.warn`` was removed in Python 3.13.
+#: names a method that `getattr` resolves on a logger, and ``Logger.warn`` raises a
+#: DeprecationWarning, which the unit suite turns into an error.
 LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
 
 #: Names of the tables a configuration file must contain, in file order.

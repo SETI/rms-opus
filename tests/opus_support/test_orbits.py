@@ -40,10 +40,15 @@ def test_parse_cassini_orbit_rejects_bad_number(orbit: str) -> None:
 
 
 def test_parse_cassini_orbit_rejects_integer() -> None:
-    """An orbit supplied as a number, not text, is rejected the same way."""
+    """An orbit supplied as a number, not text, is rejected the same way.
+
+    The parser takes text, so this call is deliberately ill-typed: it pins that the
+    raise for an orbit below 3 is reached before anything treats the orbit as a
+    string, which is what makes that raise reachable at all.
+    """
     with pytest.raises(ValueError,
                        match=_exactly('Invalid Cassini orbit 1')):
-        parse_cassini_orbit(1)
+        parse_cassini_orbit(1)  # type: ignore[arg-type]  # ill-typed on purpose
 
 
 @pytest.mark.parametrize('orbit', ['Z', '00Z', 'AB'])

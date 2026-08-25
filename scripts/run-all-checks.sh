@@ -43,7 +43,7 @@
 #   the defaults block below). OPUS flips each default true in its owning PR:
 #     ENABLE_RUFF_CHECK   (default: true)
 #     ENABLE_RUFF_FORMAT  (default: false — until PR-23)
-#     ENABLE_MYPY         (default: false — until Phase D)
+#     ENABLE_MYPY         (default: true)
 #     ENABLE_PYTEST       (default: true)
 #     ENABLE_PYROMA       (default: true)
 #     ENABLE_BANDIT       (default: true)
@@ -89,12 +89,13 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS burn-down state (plan §4): bandit, vulture and pytest are on now;
-# ruff-format waits for PR-23; mypy for Phase D; sphinx for PR-21 (no docs/
-# yet). Each flag flips true in its owning PR.
+# OPUS burn-down state (plan §4): bandit, vulture, mypy and pytest are on now;
+# ruff-format waits for PR-23; sphinx for PR-21 (no docs/ yet). Each flag flips
+# true in its owning PR. mypy runs strict over the whole repository, with the
+# per-package burn-down list in [tool.mypy] that PR-17 empties.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=false}"
-: "${ENABLE_MYPY:=false}"
+: "${ENABLE_MYPY:=true}"
 : "${ENABLE_PYTEST:=true}"
 : "${ENABLE_PYROMA:=true}"
 : "${ENABLE_BANDIT:=true}"
@@ -108,13 +109,17 @@ SCOPE_SPECIFIED=false
 # names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
 # never scans tests.
 : "${OPUS_RUFF_PATHS:=src integration_tests tests manage.py}"
+# mypy covers the same trees; integration_tests/ is checked but silenced by a
+# burn-down entry in [tool.mypy], like every tree that is not annotated yet.
+: "${OPUS_MYPY_PATHS:=src integration_tests tests manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
 : "${OPUS_VULTURE_PATHS:=src integration_tests tests manage.py vulture_whitelist.py}"
 
 # OPUS has no default location for its configuration file, so anything that reads
-# OPUS settings (pytest here, mypy/django-stubs and the Sphinx build later) is
-# given one. The checked-in dummy configuration holds dummy credentials and paths
-# under /tmp; it is relative to PROJECT_ROOT, which every check below runs from.
+# OPUS settings (pytest and mypy's django-stubs plugin here, the Sphinx build
+# later) is given one. The checked-in dummy configuration holds dummy credentials
+# and paths under /tmp; it is relative to PROJECT_ROOT, which every check below
+# runs from.
 # Export an absolute OPUS_CONFIG before invoking this script to check against a
 # real installation's configuration instead.
 : "${OPUS_CONFIG:=tests/fixtures/opus_ci.toml}"
@@ -400,7 +405,10 @@ run_code_checks() {
 
     if [ "$RUN_MYPY" = true ] && [ "$ENABLE_MYPY" = true ]; then
         print_info "Running mypy..."
-        if MYPYPATH=src python -m mypy src tests; then
+        # The source root, the strict settings and the burn-down list all come from
+        # pyproject.toml; the paths match the CI lint job's MYPY_PATHS.
+        # shellcheck disable=SC2086  # word-splitting of the path list is intended
+        if python -m mypy $OPUS_MYPY_PATHS; then
             print_success "Mypy passed"
         else
             print_error "Mypy failed"
