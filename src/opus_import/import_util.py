@@ -1,7 +1,6 @@
 """General utilities the import pipeline's steps and obs classes share.
 
-Four unrelated groups of helper live here, and nothing in the module holds state of its
-own:
+Five unrelated groups of helper live here:
 
 * expanding the bundle descriptors given on the command line into bundle ids, and reading
   a PDS index table without letting a malformed one abort the run;
@@ -9,7 +8,13 @@ own:
   geometry target, and the encoded and slug forms of a target name;
 * reading the packaged ``table_schemas`` JSON that defines every OPUS table;
 * logging, as thin ``log_*`` wrappers over `opus_import.context.ImportLog` so a step can
-  log without reaching through the context.
+  log without reaching through the context, plus `NoDupLogger` for the PdsFile warnings
+  an import run would otherwise produce hundreds of thousands of;
+* a cached time conversion and a path join that is stable across operating systems.
+
+Two of those hold state that outlives a call and is deliberately never cleared:
+`NoDupLogger`'s record of what it has already logged, which is class-level and shared by
+every instance, and `cached_tai_from_iso`'s cache. Nothing else in the module does.
 """
 
 from __future__ import annotations
@@ -23,7 +28,7 @@ import sys
 import traceback
 from functools import lru_cache
 from importlib.resources import files
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import julian
 import numpy as np
@@ -47,7 +52,11 @@ IndexRow = dict[str, Any]
 """One row of a PDS index table, keyed by column name."""
 
 TableSchema = list[dict[str, Any]]
-"""One OPUS table's definition: its columns, in order, as the JSON schema lists them."""
+"""One OPUS table's definition: its columns, in order, as the JSON schema lists them.
+
+An element is the same thing as an `opus_import.importdb.super.SchemaColumn`; the two
+aliases are spelled separately so that neither package has to import the other.
+"""
 
 # Data that ships inside the package, located through importlib.resources rather than
 # from __file__ or the working directory so that it is found in an installed wheel too:
@@ -94,8 +103,10 @@ def yield_import_bundle_ids(ctx: ImportContext) -> Iterator[str]:
     is validated as a PDS3 and then a PDS4 path, each bundleset is expanded into its
     bundles, and anything in ``--exclude-bundles`` is dropped.
 
-    New Horizons bundlesets are yielded newest-first, so that the raw bundle is imported
-    before the calibrated one and the primary filespec ends up on the raw product.
+    A New Horizons bundleset yields its calibrated (``2xxx``) bundle before its raw
+    (``1xxx``) one, reversing the order the bundleset lists them in. The raw bundle is
+    imported second so that it is the one holding the primary filespec, which is what
+    ``pdsfile`` reports for those observations.
 
     Parameters:
         ctx: The import run's context, for the arguments and the logger.
@@ -297,8 +308,8 @@ def log_accumulated_warnings(ctx: ImportContext, title: str) -> bool:
     return False
 
 def safe_pdstable_read(ctx: ImportContext, filename: str,
-                       pds_version: int) -> tuple[list[IndexRow] | None,
-                                                  dict[str, Any] | None]:
+                       pds_version: Literal[3, 4]
+                       ) -> tuple[list[IndexRow] | None, dict[str, Any] | None]:
     """Read a PDS index table.
 
     Parameters:
@@ -419,7 +430,8 @@ def safe_column(row: IndexRow, column_name: str, idx: int | None = None) -> Any:
     """Read a value from a pdstable column accounting for the mask.
 
     Parameters:
-        row: One row of the index table.
+        row: One row keyed by column name -- an index row, or a row the import has
+            already computed.
         column_name: The column to read.
         idx: Which element to read from a column that holds a sequence, or None to read
             the whole column value.

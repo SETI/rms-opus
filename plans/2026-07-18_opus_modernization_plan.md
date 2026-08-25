@@ -4237,8 +4237,14 @@ body; never rewrite or delete earlier notes.*
     rather than a `NotImplementedError` at run time; `DBRow`, `SchemaColumn` and
     `ResultRow` name a row to write, a column definition read from a packaged JSON
     schema, and a row of a query result. `import_util` adds `IndexRow` and
-    `TableSchema`. Later PRs should import these rather than re-spelling
-    `dict[str, Any]`. `ImportDBSuper.conn` is a bare class-level `Any` annotation, which
+    `TableSchema`, and `config_bundle_info` adds a `BundleInfo` TypedDict for the value
+    half of every `BUNDLE_INFO` entry. Later PRs should import these rather than
+    re-spelling `dict[str, Any]`. **`BundleInfo` is worth reading before touching the
+    import path**: it declares `instrument_class` and `primary_index` as optional, which
+    they are for the four entries naming bundles OPUS deliberately ignores, and that is
+    what forces the three sites which use them to narrow first. A plain `dict[str, Any]`
+    let two of those three call an instrument class the annotation admitted could be
+    None. `ImportDBSuper.conn` is a bare class-level `Any` annotation, which
     creates no attribute: the base class uses only `cursor()` and `commit()` and cannot
     name a brand's connection type, and opening the connection is the subclass's job.
   - **`table_names` returns a `Collection[str]`, and for one call shape it returns the
@@ -4338,6 +4344,39 @@ body; never rewrite or delete earlier notes.*
        still says "Always skip `id` for tables other than obs_general"; the loop beneath
        it has no such check, and `id` is populated from the schema's `MAX_ID` data source
        like any other column.
+  - **`--update-mult-info` has never worked, and a later PR should decide what to do
+    about it.** `do_update_mult_info` unpacks six values out of each `mult_options`
+    entry; every one of the entries in the packaged table schemas carries seven, so the
+    step raises `ValueError` at the first table that has any. It is byte-identical at
+    `f17422e4` and older, nothing else calls it, and the option is not implied by
+    `--do-it-all`, which is why no import run has ever reached it. Regenerate the
+    measurement rather than trusting a count: parse every `mult_options` list in
+    `src/opus_import/table_schemas/*.json` and compare its element length against the
+    unpack. This PR documents the fault in the module and in a `Raises:` section rather
+    than fixing it, because deciding what the seventh value means to this step is
+    behavior work, not annotation work.
+  - **Two behaviors that surprise on reading, both documented in the code now, both
+    worth knowing before wiring anything to them:**
+    1. **A clean exit status does not mean a clean run.** `opus_import.cli.main` exits
+       non-zero in exactly four cases: contradictory `--drop-permanent-tables` /
+       `--scorched-earth`, the database connection failing, `do_import_steps` returning
+       False, and an exception reaching the top-level handler. A failed dictionary
+       import, a failed `param_info`, `partables` or `table_names` build, `create_cart`
+       giving up on its second attempt, and every `do_validate` error all log and leave
+       the status zero. PR-22's acceptance check reads `ERRORS.log`, which is the right
+       thing to read; do not replace it with `$?`.
+    2. **An out-of-range value can be discarded silently.** `do_import_obs` logs an
+       error and NULLs a value outside its declared range, *except* for a column
+       carrying `val_set_invalid_to_null`, where it logs at debug instead. Such a column
+       loses out-of-range values without the run failing or the error log mentioning it.
+  - **`table_info` returns its cache, and one caller sorts it in place.**
+    `ImportDBMySQL.table_info` hands back the cached list object rather than a copy, and
+    `do_validate.validate_min_max_order` sorts it by field name, so every later call for
+    that table returns alphabetical order rather than the table's column order its
+    docstring promises. Nothing depends on the order today because `do_validate` is the
+    only caller that reads more than one column, but a later PR that adds one should
+    copy or re-fetch. The sibling `table_names` has the same aliasing shape and carries
+    a warning; this one now does too.
   - **`opus_import` is measured by the unit gate, not the integration one.** The
     integration workflow's 100% gate includes `src/opus_app/apps/*`,
     `integration_tests/test_api/*` and `src/opus_support/*`

@@ -4,9 +4,11 @@
 OPUS table schemas as MySQL DDL, quotes every identifier with backticks after validating
 it, and passes every value as a bound parameter.
 
-The driver is imported defensively: with ``mysqlclient`` absent the module still imports,
-the instance forces itself read-only, and every mutating statement is logged instead of
-run. That is what lets the statement-shape tests run anywhere.
+The driver is imported defensively, so that the module still imports without
+``mysqlclient`` installed and a package-wide sweep -- Sphinx autodoc, or a test
+collection -- does not fail on it. An instance built without the driver forces itself
+read-only and discards every statement rather than running or logging it, so it reports
+no tables and reads no rows; it is not a simulation anything can be driven through.
 """
 
 from __future__ import annotations
@@ -377,7 +379,9 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
             One dictionary per column, in the table's column order, each carrying
             ``field_name``, ``field_default``, ``field_notnull`` and the OPUS
             ``field_type`` the server's own type maps to. A table the server does not
-            have produces no columns rather than an error.
+            have produces no columns rather than an error. This is the cached list
+            itself, so a caller that reorders or edits it changes what every later call
+            returns.
 
         Raises:
             NotImplementedError: If a column has a server type OPUS has no name for.

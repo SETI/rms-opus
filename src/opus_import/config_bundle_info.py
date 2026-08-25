@@ -6,7 +6,7 @@ OPUS knows and deliberately ignores. `opus_import.steps.do_import_tables.lookup_
 is how the pipeline reads it.
 """
 
-from typing import Any
+from typing import Any, Literal, TypedDict
 
 # flake8: noqa
 
@@ -60,7 +60,32 @@ from opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import Ob
 #   - instrument_class: The Python class, imported above, that will handle the
 #       import.
 
-BUNDLE_INFO: list[tuple[str, dict[str, Any]]] = [
+class BundleInfo(TypedDict):
+    """What the import needs to know about one kind of bundle.
+
+    Attributes:
+        pds_version: 3 or 4.
+        primary_index: The primary index file names, with ``<BUNDLE>`` standing for the
+            bundle id, or None for a bundle OPUS does not import.
+        validate_index_rows: True to keep only the one index row per observation whose
+            filespec survives a round trip through the OPUS id. Bundles whose index
+            carries several rows per observation need it.
+        temporal_camera: True if one observation can span enough time for a gridless
+            geometry value to differ between its start and its end, which is what
+            decides whether such a pair is allowed to disagree.
+        instrument_class: The `opus_import.obs` class that imports this bundle, or None
+            for a bundle OPUS knows about and deliberately ignores. It is None exactly
+            when ``primary_index`` is.
+    """
+
+    pds_version: Literal[3, 4]
+    primary_index: tuple[str, ...] | None
+    validate_index_rows: bool
+    temporal_camera: bool
+    instrument_class: type[Any] | None
+
+
+BUNDLE_INFO: list[tuple[str, BundleInfo]] = [
 
     ####################
     ### PDS3 VOLUMES ###

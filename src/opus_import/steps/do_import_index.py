@@ -9,9 +9,11 @@ them.
 
 The second half is the master loop: for each index row, and for each phase of it (Cassini
 VIMS produces both a visible and an infrared observation from one row), every table gets
-a row computed by `opus_import.steps.do_import_obs`. The surface geometry tables come
-last, because which of them exist depends on the targets the observations turned out to
-mention.
+a row computed by `opus_import.steps.do_import_obs`. The surface geometry tables are
+deferred, because which of them exist depends on the targets the observations turned out
+to mention, and ``obs_files`` is deferred past even those, because it needs the
+``obs_general`` and ``obs_pds`` rows and contributes many rows per observation rather
+than one.
 
 Nothing is written to the database until every row has been computed, since the mult
 tables the rows reference by foreign key have to be written first.
@@ -23,7 +25,7 @@ own.
 from __future__ import annotations
 
 import csv
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import pdsfile
 
@@ -33,10 +35,11 @@ from opus_import.steps import do_import_mult, do_import_obs, do_import_tables
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
+    from opus_import.config_bundle_info import BundleInfo
     from opus_import.context import ImportContext
 
 
-def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any],
+def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                      index_paths: Sequence[str],
                      bundle_label_path: str) -> bool:
     """Import every observation described by one primary index file.
@@ -63,6 +66,9 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any
         associated metadata file could not be, both of which are logged.
     """
     instrument_class = vol_info['instrument_class']
+    # `import_one_bundle` returns before calling this for a bundle OPUS ignores, which
+    # is the only kind with no instrument class.
+    assert instrument_class is not None
     pds_version = vol_info['pds_version']
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(ctx, bundle_label_path,
@@ -637,7 +643,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: dict[str, Any
     return True # SUCCESS!
 
 
-def get_opus_products_rows_for_filespec(ctx: ImportContext, pds_version: int,
+def get_opus_products_rows_for_filespec(ctx: ImportContext, pds_version: Literal[3, 4],
                                         filespec: str, obs_general_id: int,
                                         opus_id: str, bundle_id: str,
                                         instrument_id: str) -> list[dict[str, Any]]:
@@ -648,10 +654,10 @@ def get_opus_products_rows_for_filespec(ctx: ImportContext, pds_version: int,
     file that is not the current version is never checked by default.
 
     Two kinds of file are left out. A shared index or summary file that does not list
-    this observation contributes nothing, since it holds no data for it -- for PDS4 that
-    check is skipped, so its index files are always listed. A file whose shelf metadata
-    is missing is left out too, with a warning, because its size and checksum are
-    unknown.
+    this observation contributes nothing, since it holds no data for it; that check runs
+    only for PDS3 and only without ``--import-dont-use-row-files``, so otherwise every
+    index file is listed. A PDS3 file whose shelf metadata is missing is left out too,
+    with a warning, because its size and checksum are unknown.
 
     Parameters:
         ctx: The import run's context, for the arguments, the id caches and the logger.

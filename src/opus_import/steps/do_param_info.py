@@ -34,7 +34,8 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
     Returns:
         True on success. False if a table's schema could not be read, a form type names
         a unit `opus_support` does not know, or a ``pi_ranges`` entry is missing -- each
-        of which is logged as an error, and leaves the import table partly built.
+        of which is logged as an error. The rows are written in one call at the end, so
+        a failure leaves the import table empty rather than partly built.
 
     Raises:
         json.decoder.JSONDecodeError: If ``param_info_ranges.json`` is not valid JSON.

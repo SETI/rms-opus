@@ -7,12 +7,16 @@ walks the schema, obtains each value, checks it against the type and range the s
 declares, replaces an enumerated value with its ``mult_`` table id, and assembles the
 row.
 
-Validation reports rather than raises, so one bad row does not end the run: a value
-outside the declared range, a flag with an unrecognized spelling, and a number that does
-not parse all become NULL and log an error, while a ``char`` column keeps a value of the
-right type by truncating an over-long one and substituting an empty string for one that
-is not a string. The run still fails at the end, because logging an error is what marks
-the import as having produced bad data.
+Validation reports rather than raises, so one bad row does not end the run: a flag with
+an unrecognized spelling and a number that does not parse both become NULL and log an
+error, while a ``char`` column keeps a value of the right type by truncating an
+over-long one and substituting an empty string for one that is not a string. Logging an
+error is what marks the import as having produced bad data, so the run fails at the end.
+
+A value outside the column's declared range is the exception, and which way it goes is
+the schema's choice: it becomes NULL either way, but a column carrying
+``val_set_invalid_to_null`` logs at **debug** rather than error, so out-of-range values
+in that column are discarded silently and the run still succeeds.
 
 These are the per-observation internals of `opus_import.steps.do_import`, not a step of
 their own.

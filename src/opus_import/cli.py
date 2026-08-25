@@ -38,13 +38,14 @@ from opus_import.steps import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from typing import TextIO
+
+    from opus_import.importdb.super import WarningHandler
 
 LOGNAME = 'opus_import.main'
 
 
-def _make_warning_handler(ctx: ImportContext) -> Callable[..., None]:
+def _make_warning_handler(ctx: ImportContext) -> WarningHandler:
     """Return a `warnings.showwarning` that collects warnings on the context.
 
     Parameters:
@@ -53,10 +54,7 @@ def _make_warning_handler(ctx: ImportContext) -> Callable[..., None]:
     Returns:
         A handler with `warnings.showwarning`'s signature. It reads the list off
         the context on every call rather than closing over it, because reporting
-        the accumulated warnings replaces the list with a fresh one. The return type
-        leaves the parameter list open because the two sides of that assignment
-        disagree about it: the warnings machinery always passes six arguments, while
-        the standard library's own handler makes the last two optional.
+        the accumulated warnings replaces the list with a fresh one.
     """
     def handler(message: Warning | str, category: type[Warning], filename: str,
                 lineno: int, file: TextIO | None, line: str | None) -> None:
@@ -359,8 +357,13 @@ def main() -> None:
     read only once the arguments parse, so ``--help`` works without one.
 
     Raises:
-        SystemExit: With a non-zero status if the arguments are contradictory or any
-            step fails; the failure is logged before exiting.
+        SystemExit: With a non-zero status in exactly four cases, each logged first:
+            ``--drop-permanent-tables`` given without ``--scorched-earth`` or the
+            reverse, the database connection failing, the observation import failing,
+            and any exception reaching the top-level handler. **Every other step reports
+            failure through the log and leaves the status zero** -- a failed dictionary
+            import, a failed auxiliary-table build and every validation error included --
+            so the exit status is not a summary of whether the run was clean.
     """
     command_list = sys.argv[1:]
 

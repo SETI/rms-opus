@@ -19,17 +19,18 @@ their own.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from opus_import import config_bundle_info, config_data, import_util
 
 if TYPE_CHECKING:
+    from opus_import.config_bundle_info import BundleInfo
     from opus_import.context import ImportContext
     from opus_import.import_util import TableSchema
     from opus_import.importdb.super import Namespace
 
 
-def lookup_vol_info(bundle_id: str) -> dict[str, Any] | None:
+def lookup_vol_info(bundle_id: str) -> BundleInfo | None:
     """Return what `opus_import.config_bundle_info` says about a bundle.
 
     Parameters:
@@ -216,7 +217,12 @@ def create_tables_for_import(ctx: ImportContext, bundle_id: str,
     # path checks it, and the two copy paths take their ids from rows the import
     # wrote. Without an entry there is no instrument class and no table to create.
     assert vol_info is not None
-    instrument_obj = vol_info['instrument_class'](ctx, bundle=bundle_id)
+    # An entry with no instrument class is one OPUS ignores, and no bundle of that kind
+    # ever reaches this function: the import path skips it, and the two copy paths take
+    # their ids from rows the import wrote.
+    instrument_class = vol_info['instrument_class']
+    assert instrument_class is not None
+    instrument_obj = instrument_class(ctx, bundle=bundle_id)
     mission_id = instrument_obj.mission_id
     instrument_id = instrument_obj.instrument_id
     mission_name = config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]

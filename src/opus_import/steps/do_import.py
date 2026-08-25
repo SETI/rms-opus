@@ -111,8 +111,12 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     ### FIND PRIMARY INDEX FILE(s) ###
     ##################################
 
+    # An entry has a primary index exactly when it has an instrument class, and the
+    # bundles with neither returned above.
+    primary_index = vol_info['primary_index']
+    assert primary_index is not None
     primary_index_names = [
-        x.replace('<BUNDLE>', bundle_id) for x in vol_info['primary_index']]
+        x.replace('<BUNDLE>', bundle_id) for x in primary_index]
 
     # These are the metadata directories
     index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)

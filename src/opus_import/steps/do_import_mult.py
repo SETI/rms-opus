@@ -194,8 +194,9 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
     end of the bundle. When no ``disp_order`` is given, one is made up so that the web
     application's ordering is sensible without every schema having to state it: the
     values are sorted numerically if they all parse as numbers or the column has a unit,
-    ``Yes`` sorts before ``No`` and ``On`` before ``Off``, and ``None``, ``N/A`` and
-    ``NULL`` sort to the end in that order.
+    and ``Yes`` sorts before ``No`` and ``On`` before ``Off``. The absent-value labels
+    sort to the end, ``None`` then ``N/A`` then ``NULL`` -- but only for a column with no
+    unit, since a column that has one sorts them by their own text instead.
 
     Parameters:
         ctx: The import run's context, for the open database, the caches and the
