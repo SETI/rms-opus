@@ -26,7 +26,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, connection
-from django.db.models import Count, Max, Min
+from django.db.models import Max, Min
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
@@ -37,9 +37,11 @@ from opus_app.apps.search.models import TableNames
 from opus_app.apps.search.views import (
     get_param_info_by_slug,
     get_user_query_table,
+    search_cache_join_condition,
     set_user_search_number,
     url_to_search_params,
 )
+from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_COLLAPSE,
     HTTP404_BAD_OR_MISSING_REQNO,
@@ -270,27 +272,31 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
             return ret
 
         cursor = connection.cursor()
-        q = connection.ops.quote_name
 
+        # The database column, not the model field name: the two differ for a
+        # field declared with db_column.
+        param_column = sql_builder.column(
+            table_model._meta.get_field(param_info.name).column, table_name)
+
+        select = sql_builder.Select()
         if param_info.form_type == 'MULTIGROUP':
             # This extracts the list of mult ids from the JSON list and creates a new
             # column with them that is then summarized by count.
-            values = []
-            sql = 'SELECT '+q(table_name)+'.'+q('_mult_val_')
-            sql += ', COUNT(*) AS '
-            sql += q(param_info.name+'__count')+' FROM '
-            sql += q(table_name)+' JOIN JSON_TABLE('+q(table_name)+'.'+q(param_info.name)
-            sql += ', "$[*]" COLUMNS ('+q('_mult_val_')+' TEXT PATH "$")) '
-            sql += q(table_name)
-            group_by = ' GROUP BY '+q(table_name)+'.'+q('_mult_val_')
+            counted_column = sql_builder.column('_mult_val_', table_name)
+            select.add_column(counted_column)
+            select.add_column(sql_builder.count_star(),
+                              alias=param_info.name+'__count')
+            select.add_from(table_name).add_join(
+                'INNER',
+                sql_builder.JSONTable(source_column=param_column,
+                                      value_column='_mult_val_',
+                                      alias=table_name))
         else:
-            results = (table_model.objects.values(param_info.name)
-                       .annotate(Count(param_info.name)))
-            values = []
-            sql = 'SELECT '+q(table_name)+'.'+q(param_info.name)
-            sql += ', COUNT(*) AS '
-            sql += q(param_info.name+'__count')+' FROM '+q(table_name)
-            group_by = ' GROUP BY '+q(table_name)+'.'+q(param_info.name)
+            counted_column = param_column
+            select.add_column(counted_column)
+            select.add_column(sql_builder.count_star(),
+                              alias=param_info.name+'__count')
+            select.add_from(table_name)
 
         user_table = get_user_query_table(selections, extras, api_code=api_code)
 
@@ -305,15 +311,12 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
 
         if selections:
             # selections are constrained so join in the user_table
-            if table_name == 'obs_general':
-                where = q(table_name)+'.'+q('id')+'='+q(user_table)+'.'+q('id')
-            else:
-                where = (q(table_name)+'.'+q('obs_general_id')+'='+
-                         q(user_table)+'.'+q('id'))
-            sql += ', '+q(user_table)+' WHERE '+where
+            select.add_from(user_table)
+            select.add_where(search_cache_join_condition(table_name, user_table))
 
-        sql += group_by
+        select.add_group_by(counted_column)
 
+        sql, values = select.build()
         log.debug('MULT COUNTS SQL: %s *** PARAMS %s', sql, str(values))
 
         cursor.execute(sql, values)
@@ -523,31 +526,53 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     range_endpoints = cache.get(cache_key)
     if range_endpoints is None:
         # We didn't find a cache entry, so calculate the endpoints
-        results = table_model.objects
-
         if selections:
-            # There are selections, so tie the query to user_table
-            if table_name == 'obs_general':
-                where = (connection.ops.quote_name(table_name)+'.id='
-                         +connection.ops.quote_name(user_table)+'.id')
-            else:
-                where = (connection.ops.quote_name(table_name)
-                         +'.'+connection.ops.quote_name('obs_general_id')+'='
-                         +connection.ops.quote_name(user_table)+'.id')
-            range_endpoints = (results.extra(where=[where],
-                               tables=[user_table]).
-                               aggregate(min=Min(param1), max=Max(param2)))
-            where += ' AND ' + param1 + ' IS NULL AND ' + param2 + ' IS NULL'
-            range_endpoints['nulls'] = (results.extra(where=[where],
-                                                      tables=[user_table])
-                                               .count())
+            # There are selections, so tie the query to user_table. The cache
+            # table has no model, so this cross-join and its condition cannot be
+            # expressed through the ORM and are built as raw SQL instead.
+            cache_join = search_cache_join_condition(table_name, user_table)
+            # The database column, not the model field name: the two differ for a
+            # field declared with db_column, and the ORM path below names fields.
+            min_column = sql_builder.column(
+                table_model._meta.get_field(param1).column, table_name)
+            max_column = sql_builder.column(
+                table_model._meta.get_field(param2).column, table_name)
+
+            endpoints_select = sql_builder.Select()
+            endpoints_select.add_column(sql_builder.min_of(min_column))
+            endpoints_select.add_column(sql_builder.max_of(max_column))
+            endpoints_select.add_from(table_name)
+            endpoints_select.add_from(user_table)
+            endpoints_select.add_where(cache_join)
+
+            nulls_select = sql_builder.Select()
+            nulls_select.add_column(sql_builder.count_star())
+            nulls_select.add_from(table_name)
+            nulls_select.add_from(user_table)
+            nulls_select.add_where(cache_join)
+            nulls_select.add_where(sql_builder.is_null(min_column))
+            nulls_select.add_where(sql_builder.is_null(max_column))
+
+            cursor = connection.cursor()
+            sql, params = endpoints_select.build()
+            log.debug('RANGE ENDPOINTS SQL: %s *** PARAMS %s', sql, str(params))
+            cursor.execute(sql, params)
+            (endpoint_min, endpoint_max) = cursor.fetchone()
+            range_endpoints = {'min': endpoint_min, 'max': endpoint_max}
+
+            sql, params = nulls_select.build()
+            log.debug('RANGE ENDPOINTS NULLS SQL: %s *** PARAMS %s', sql, str(params))
+            cursor.execute(sql, params)
+            range_endpoints['nulls'] = cursor.fetchone()[0]
         else:
             # There are no selections, so hit the whole table
+            results = table_model.objects
             range_endpoints = results.all().aggregate(min=Min(param1),
                                                       max=Max(param2))
-            where = param1 + ' IS NULL AND ' + param2 + ' IS NULL'
-            range_endpoints['nulls'] = (results.all().extra(where=[where])
-                                                     .count())
+            # For a single-column range param1 and param2 are the same column, so
+            # this is one condition rather than two.
+            null_filter = {f'{param1}__isnull': True, f'{param2}__isnull': True}
+            range_endpoints['nulls'] = results.all().filter(**null_filter).count()
 
         # The returned range endpoints are converted to the destination
         # unit
@@ -693,7 +718,7 @@ def get_result_count_helper(request, api_code):
     count = cache.get(cache_key)
     if count is None:
         cursor = connection.cursor()
-        sql = 'SELECT COUNT(*) FROM ' + connection.ops.quote_name(table)
+        sql = sql_builder.count_rows(table)
         try:
             cursor.execute(sql)
             count = cursor.fetchone()[0]

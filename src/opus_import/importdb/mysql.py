@@ -1,3 +1,5 @@
+import re
+
 try:
     import MySQLdb
     MYSQLDB_AVAILABLE = True
@@ -7,6 +9,13 @@ except ImportError:
 from opus_import.importdb.super import ImportDBError, ImportDBSuper
 
 ERR_UNKNOWN_DATABASE = 1049
+
+# The only identifier shape OPUS uses: table, column and schema names come from
+# the checked-in table schemas, from the configuration, and from bundle ids, and
+# none of them ever needs a character outside this set. Backticks quote an
+# identifier but do not escape a backtick inside one, so validating the name is
+# what keeps a computed identifier from ending the quoting early.
+_IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
 
 class ImportDBMySQL(ImportDBSuper):
     # Note that for MySQL, we ignore the db_name and only use the schema_name
@@ -52,13 +61,13 @@ class ImportDBMySQL(ImportDBSuper):
                        +f'as "{self.db_user}"')
 
             try:
-                cmd = f'USE `{self.db_schema}`'
+                cmd = f'USE {self.quote_identifier(self.db_schema)}'
                 self._execute(cmd)
             except MySQLdb.Error as e:
                 err_code = e.args[0]
                 if err_code == ERR_UNKNOWN_DATABASE:
                     try:
-                        cmd = f'CREATE DATABASE `{self.db_schema}`'
+                        cmd = f'CREATE DATABASE {self.quote_identifier(self.db_schema)}'
                         self._execute(cmd)
                     except MySQLdb.Error as e:
                         if self.logger:
@@ -71,7 +80,7 @@ class ImportDBMySQL(ImportDBSuper):
                                 f'  Created new database "{self.db_schema}"')
 
                     try:
-                        cmd = f'USE `{self.db_schema}`'
+                        cmd = f'USE {self.quote_identifier(self.db_schema)}'
                         self._execute(cmd)
                     except MySQLdb.Error as e:
                         if self.logger:
@@ -129,13 +138,13 @@ class ImportDBMySQL(ImportDBSuper):
             return
         super()._execute(*args, **kwargs)
 
-    def _execute_and_fetchall(self, cmd, func_name):
+    def _execute_and_fetchall(self, cmd, func_name, param_list=None):
         if not MYSQLDB_AVAILABLE:
             return []
 
         try:
             with self.conn.cursor() as cur:
-                self._execute(cmd, cur=cur)
+                self._execute(cmd, param_list, cur=cur)
                 self.conn.commit()
                 return cur.fetchall()
         except MySQLdb.Error as e:
@@ -145,17 +154,41 @@ class ImportDBMySQL(ImportDBSuper):
             raise ImportDBError(e) from e
 
     def quote_identifier(self, s):
+        """Return `s` backtick-quoted for use as an identifier.
+
+        Raises:
+            ImportDBError: If the name is not made up solely of ASCII letters,
+                digits and underscores.
+        """
+        if not isinstance(s, str) or not _IDENTIFIER_RE.match(s):
+            raise ImportDBError(f'Unsafe SQL identifier: {s!r}')
         return '`' + s + '`'
+
+    def _quoted_column_list(self, column_names):
+        "Return the column names quoted and comma-separated."
+        return ','.join(self.quote_identifier(c) for c in column_names)
+
+    @staticmethod
+    def _row_placeholders(row, column_names, param_list):
+        """Append a row's values to param_list and return their placeholders.
+
+        Every value is a parameter, including None: MySQLdb renders that as NULL,
+        so no value is ever formatted into the statement text.
+        """
+        for column_name in column_names:
+            param_list.append(row[column_name])
+        return ','.join(['%s'] * len(column_names))
 
     def table_names(self, namespace, prefix=None):
         "Return a list of all table names in the schema."
         super()._enter('table_names')
 
         if self._table_names is None:
-            cmd = f"""
+            cmd = """
 SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
-`TABLE_TYPE`='BASE TABLE' AND `TABLE_SCHEMA`='{self.db_schema}'"""
-            res = self._execute_and_fetchall(cmd, 'table_names')
+`TABLE_TYPE`='BASE TABLE' AND `TABLE_SCHEMA`=%s"""
+            res = self._execute_and_fetchall(cmd, 'table_names',
+                                             [self.db_schema])
             # Note: SQL table names are case-insensitive on SOME OSes and this
             # query returns them in whatever case SQL returns them in.
             # But table_exists does a case-insensitive match.
@@ -201,12 +234,13 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"""
+        cmd = """
 SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
 `CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
-FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
-`TABLE_NAME`='{table_name}' ORDER BY `ORDINAL_POSITION`"""
-        rows = self._execute_and_fetchall(cmd, 'table_info')
+FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
+`TABLE_NAME`=%s ORDER BY `ORDINAL_POSITION`"""
+        rows = self._execute_and_fetchall(cmd, 'table_info',
+                                          [self.db_schema, table_name])
 
         column_list = []
 
@@ -276,7 +310,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 raise ImportDBError()
         else:
             try:
-                cmd = f'DROP TABLE `{table_name}`'
+                cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:
                 if self.logger:
@@ -332,7 +366,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
             field_name = column['field_name']
             field_type = column['field_type']
 
-            cmd += f'  `{field_name}` '
+            cmd += f'  {self.quote_identifier(field_name)} '
             if field_type == 'int1':
                 cmd += 'tinyint'
             elif field_type == 'int2':
@@ -413,24 +447,29 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 if key_cmd != '':
                     key_cmd += ',\n'
                 if key_type == 'unique':
-                    key_cmd += f'  UNIQUE KEY `{field_name}` (`{field_name}`)'
+                    quoted_field = self.quote_identifier(field_name)
+                    key_cmd += f'  UNIQUE KEY {quoted_field} ({quoted_field})'
                 elif key_type == 'primary':
-                    key_cmd += f'  PRIMARY KEY (`{field_name}`)'
+                    key_cmd += (f'  PRIMARY KEY '
+                                f'({self.quote_identifier(field_name)})')
                 elif key_type == 'foreign':
                     assert foreign_key
-                    key_cmd += f'  FOREIGN KEY (`{field_name}`)'
+                    key_cmd += (f'  FOREIGN KEY '
+                                f'({self.quote_identifier(field_name)})')
                     key_cmd += ' REFERENCES '
                     f_table = self.convert_raw_to_namespace(namespace,
                                                             foreign_key[0])
-                    key_cmd += f'`{f_table}`'
-                    key_cmd += f'(`{foreign_key[1]}`)'
+                    key_cmd += self.quote_identifier(f_table)
+                    key_cmd += f'({self.quote_identifier(foreign_key[1])})'
                     key_cmd += ' ON DELETE RESTRICT ON UPDATE CASCADE'
                 else:
-                    key_cmd += f'  KEY `{field_name}` (`{field_name}`)'
+                    quoted_field = self.quote_identifier(field_name)
+                    key_cmd += f'  KEY {quoted_field} ({quoted_field})'
 
         if key_cmd != '':
             cmd += ',\n' + key_cmd
-        cmd = f'CREATE TABLE `{table_name}` (\n' + cmd + '\n)'
+        cmd = (f'CREATE TABLE {self.quote_identifier(table_name)} (\n'
+               + cmd + '\n)')
         cmd += f' ENGINE={self.default_engine}\n'
 
         try:
@@ -463,7 +502,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f'ANALYZE TABLE `{table_name}`'
+        cmd = f'ANALYZE TABLE {self.quote_identifier(table_name)}'
 
         try:
             self._execute(cmd, mutates=True)
@@ -487,21 +526,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'INSERT INTO `{table_name}` ('
-        cmd += ','.join(['`'+s+'`' for s in sorted(sorted_column_names)])
-
-        val_list = []
         param_list = []
-        for column_name in sorted_column_names:
-            val = row[column_name]
-            if val is None:
-                val_list.append('NULL')
-            elif isinstance(val, str):
-                param_list.append(val)
-                val_list.append('%s')
-            else:
-                val_list.append(str(val))
-        cmd += ') VALUES(' + ','.join(val_list) + ')'
+        placeholders = self._row_placeholders(row, sorted_column_names,
+                                              param_list)
+        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
+               f'({self._quoted_column_list(sorted_column_names)}) '
+               f'VALUES({placeholders})')
 
         try:
             self._execute(cmd, param_list, mutates=True)
@@ -535,30 +565,19 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                           packet_size * (packet_num+1))
 
             sorted_column_names = sorted(rows[0].keys())
-            cmd = f'INSERT INTO `{table_name}` ('
-            cmd += ','.join(['`'+s+'`' for s in sorted(sorted_column_names)])
 
-            cmd += ') VALUES'
-
-            first_row = True
             param_list = []
+            value_tuples = []
             for row in rows[start_row:end_row]:
-                val_list = []
                 assert sorted_column_names == sorted(row.keys()), \
                         (sorted_column_names, sorted(row.keys()))
-                for column_name in sorted_column_names:
-                    val = row[column_name]
-                    if val is None:
-                        val_list.append('NULL')
-                    elif isinstance(val, str):
-                        val_list.append('%s')
-                        param_list.append(val)
-                    else:
-                        val_list.append(str(val))
-                if not first_row:
-                    cmd += ','
-                first_row = False
-                cmd += '(' + ','.join(val_list) + ')'
+                placeholders = self._row_placeholders(row, sorted_column_names,
+                                                      param_list)
+                value_tuples.append(f'({placeholders})')
+
+            cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
+                   f'({self._quoted_column_list(sorted_column_names)}) VALUES'
+                   + ','.join(value_tuples))
 
             try:
                 self._execute(cmd, param_list, mutates=True)
@@ -570,29 +589,21 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
         super()._exit()
 
-    def update_row(self, namespace, raw_table_name, row, where):
+    def update_row(self, namespace, raw_table_name, row, where,
+                   where_params=None):
         super()._enter('insert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'UPDATE `{table_name}` SET '
-
         set_cmds = []
         param_list = []
         for column_name in sorted_column_names:
-            set_cmd = f'`{column_name}`='
-            val = row[column_name]
-            if val is None:
-                set_cmd += 'NULL'
-            elif isinstance(val, str):
-                set_cmd += '%s'
-                param_list.append(val)
-            else:
-                set_cmd += str(val)
-            set_cmds.append(set_cmd)
-        cmd += ','.join(set_cmds)
-        cmd += ' WHERE '+where
+            set_cmds.append(f'{self.quote_identifier(column_name)}=%s')
+            param_list.append(row[column_name])
+        cmd = (f'UPDATE {self.quote_identifier(table_name)} SET '
+               + ','.join(set_cmds) + f' WHERE {where}')
+        param_list += list(where_params or [])
 
         try:
             self._execute(cmd, param_list, mutates=True)
@@ -610,31 +621,25 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        cmd = f'INSERT INTO `{table_name}` ('
-        cmd += ','.join(['`'+s+'`' for s in sorted(sorted_column_names)])
-
-        val_list = []
-        assign_list = []
         param_list = []
+        placeholders = self._row_placeholders(row, sorted_column_names,
+                                              param_list)
+
+        assign_list = []
         dup_param_list = []
         for column_name in sorted_column_names:
-            val = row[column_name]
-            if val is None:
-                val_list.append('NULL')
-                if column_name != key_name:
-                    assign_list.append('`'+column_name+'`=NULL')
-            elif isinstance(val, str):
-                val_list.append('%s')
-                param_list.append(val)
-                if column_name != key_name:
-                    assign_list.append('`'+column_name+'`=%s')
-                    dup_param_list.append(val)
-            else:
-                val_list.append(str(val))
-                if column_name != key_name:
-                    assign_list.append('`'+column_name + '`=' + str(val))
-        cmd += ') VALUES(' + ','.join(val_list) + ') '
-        cmd += 'ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
+            if column_name != key_name:
+                assign_list.append(f'{self.quote_identifier(column_name)}=%s')
+                dup_param_list.append(row[column_name])
+
+        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
+               f'({self._quoted_column_list(sorted_column_names)}) '
+               f'VALUES({placeholders})')
+        if assign_list:
+            # A row of nothing but the key has nothing to assign, and an empty
+            # assignment list is a syntax error. `upsert_rows` already guards
+            # this; the two are otherwise the same statement.
+            cmd += ' ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
 
         try:
             self._execute(cmd, param_list+dup_param_list, mutates=True)
@@ -668,14 +673,15 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         packet_size = 1000 # Limit number of rows at a time - MySQL barfs
 
         for sorted_column_names, group_rows in groups.items():
-            quoted_columns = ','.join(['`'+s+'`' for s in sorted_column_names])
+            quoted_columns = self._quoted_column_list(sorted_column_names)
             # ON DUPLICATE KEY UPDATE has to name each row's new value indirectly,
             # because one statement carries many rows. VALUES(col) is deprecated as
             # of MySQL 8.0.20 in favor of a row alias, but the alias form needs
             # 8.0.19+ and the deployed servers' version has not been confirmed, so
             # this keeps the floor where Django already puts it.
-            assign_list = ','.join(['`'+c+'`=VALUES(`'+c+'`)'
-                                    for c in sorted_column_names if c != key_name])
+            assign_list = ','.join(
+                f'{self.quote_identifier(c)}=VALUES({self.quote_identifier(c)})'
+                for c in sorted_column_names if c != key_name)
 
             num_packets = ((len(group_rows)-1) // packet_size) + 1
             for packet_num in range(num_packets):
@@ -685,20 +691,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 value_tuples = []
                 param_list = []
                 for row in group_rows[start_row:end_row]:
-                    val_list = []
-                    for column_name in sorted_column_names:
-                        val = row[column_name]
-                        if val is None:
-                            val_list.append('NULL')
-                        elif isinstance(val, str):
-                            val_list.append('%s')
-                            param_list.append(val)
-                        else:
-                            val_list.append(str(val))
-                    value_tuples.append('(' + ','.join(val_list) + ')')
+                    placeholders = self._row_placeholders(row,
+                                                          sorted_column_names,
+                                                          param_list)
+                    value_tuples.append(f'({placeholders})')
 
-                cmd = f'INSERT INTO `{table_name}` ({quoted_columns}) VALUES'
-                cmd += ','.join(value_tuples)
+                cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
+                       f'({quoted_columns}) VALUES'
+                       + ','.join(value_tuples))
                 if assign_list:
                     cmd += ' ON DUPLICATE KEY UPDATE ' + assign_list
 
@@ -712,17 +712,19 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
         super()._exit()
 
-    def delete_rows(self, namespace, raw_table_name, where=None):
+    def delete_rows(self, namespace, raw_table_name, where=None,
+                    where_params=None):
         super()._enter('delete_rows')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"DELETE FROM `{table_name}`"
+        cmd = f'DELETE FROM {self.quote_identifier(table_name)}'
         if where:
-            cmd += f" WHERE {where}"
+            cmd += f' WHERE {where}'
 
         try:
-            self._execute(cmd, mutates=True)
+            self._execute(cmd, list(where_params) if where_params else None,
+                          mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',
@@ -732,7 +734,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         self._exit()
 
     def copy_rows_between_namespaces(self, src_namespace, dest_namespace,
-                                     raw_table_name, where=None):
+                                     raw_table_name, where=None,
+                                     where_params=None):
         super()._enter('copy_rows')
 
         src_table_name = self.convert_raw_to_namespace(src_namespace,
@@ -740,13 +743,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         dest_table_name = self.convert_raw_to_namespace(dest_namespace,
                                                         raw_table_name)
 
-        cmd = f"INSERT INTO `{dest_table_name}` SELECT * "
-        cmd += f"FROM `{src_table_name}`"
+        cmd = (f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '
+               f'FROM {self.quote_identifier(src_table_name)}')
         if where:
-            cmd += f" WHERE {where}"
+            cmd += f' WHERE {where}'
 
         try:
-            self._execute(cmd, mutates=True)
+            self._execute(cmd, list(where_params) if where_params else None,
+                          mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',
@@ -756,10 +760,19 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
         self._exit()
 
-    def general_select(self, cmd):
+    def general_select(self, cmd, param_list=None):
+        """Run `SELECT <cmd>` and return every row.
+
+        Parameters:
+            cmd: Everything after the SELECT keyword. Identifiers in it must be
+                quoted with `quote_identifier`; any value it compares against
+                must be a `%s` placeholder, never text.
+            param_list: The parameters those placeholders consume.
+        """
         super()._enter('cmd')
 
-        res = self._execute_and_fetchall('SELECT '+cmd, 'general_select')
+        res = self._execute_and_fetchall('SELECT '+cmd, 'general_select',
+                                         param_list)
         self._exit()
         return res
 
@@ -768,7 +781,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f"SELECT MAX(`{column_name}`) FROM `{table_name}`"
+        cmd = (f'SELECT MAX({self.quote_identifier(column_name)}) '
+               f'FROM {self.quote_identifier(table_name)}')
         res = self._execute_and_fetchall(cmd, 'find_column_max')
         self._exit()
         return res[0][0]

@@ -46,9 +46,9 @@ def validate_param_info(ctx, namespace):
                 obs_table_name != 'obs_general'):
                 continue
             cmd = f"""
-COUNT(*) FROM {q(pi_table_name)} WHERE CATEGORY_NAME='{obs_table_name}' AND
-NAME='{field_name}'"""
-            res = db.general_select(cmd)
+COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
+{q('name')}=%s"""
+            res = db.general_select(cmd, [obs_table_name, field_name])
             count = res[0][0]
             if count == 0:
                 logger.log('error',
@@ -62,8 +62,8 @@ NAME='{field_name}'"""
     (SELECT 1 FROM {q(pi_table_name)} {q('pi2')} WHERE
         {q('pi1')}.{q('category_name')}={q('pi2')}.{q('category_name')} AND
         {q('pi1')}.{q('disp_order')}={q('pi2')}.{q('disp_order')} AND
-        ({q('pi1')}.display=1 OR {q('pi1')}.{q('display_results')}=1) AND
-        ({q('pi2')}.display=1 OR {q('pi2')}.{q('display_results')}=1) AND
+        ({q('pi1')}.{q('display')}=1 OR {q('pi1')}.{q('display_results')}=1) AND
+        ({q('pi2')}.{q('display')}=1 OR {q('pi2')}.{q('display_results')}=1) AND
         {q('pi1')}.{q('id')}!={q('pi2')}.{q('id')}
         LIMIT 1,1)"""
     res = db.general_select(cmd)
@@ -153,9 +153,9 @@ def validate_min_max_order(ctx, namespace):
 
             # Check param_info to see if this is a longitude field
             cmd = f"""
-form_type FROM {q(pi_table_name)} WHERE CATEGORY_NAME='{obs_table_name}' AND
-NAME='{field_name1}'"""
-            res = db.general_select(cmd)
+{q('form_type')} FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
+{q('name')}=%s"""
+            res = db.general_select(cmd, [obs_table_name, field_name1])
             if len(res) == 0:
                 logger.log('error',
     f'No param_info entry for "{full_obs_table_name}.{field_name1}"')
@@ -169,7 +169,8 @@ NAME='{field_name1}'"""
                 continue
 
             cmd = f"""
-opus_id FROM {q(full_obs_table_name)} WHERE {q(field_name2)} < {q(field_name1)}"""
+{q('opus_id')} FROM {q(full_obs_table_name)} WHERE
+{q(field_name2)} < {q(field_name1)}"""
             res = db.general_select(cmd)
             if len(res):
                 opus_ids = [x[0] for x in res]

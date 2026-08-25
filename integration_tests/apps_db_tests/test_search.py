@@ -2418,7 +2418,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 310.5
-        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s + obs_ring_geometry.d_j2000_longitude'
+        expected = 'ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= %s + `obs_ring_geometry`.`d_j2000_longitude`'
         expected_params = [275.25, 35.25]
         print(expected)
         print(expected_params)
@@ -2461,7 +2461,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 310.5
-        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= obs_ring_geometry.d_j2000_longitude - %s'
+        expected = 'ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= `obs_ring_geometry`.`d_j2000_longitude` - %s'
         expected_params = [275.25, 35.25]
         print(expected)
         print(expected_params)
@@ -2504,7 +2504,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 310.5
-        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s - obs_ring_geometry.d_j2000_longitude'
+        expected = 'ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= %s - `obs_ring_geometry`.`d_j2000_longitude`'
         expected_params = [275.25, 35.25]
         print(expected)
         print(expected_params)
@@ -2533,7 +2533,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 30.5
-        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s + obs_ring_geometry.d_j2000_longitude'
+        expected = 'ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= %s + `obs_ring_geometry`.`d_j2000_longitude`'
         expected_params = [315.25, 75.25]
         print(expected)
         print(expected_params)
@@ -2548,7 +2548,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 30.5
-        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= obs_ring_geometry.d_j2000_longitude - %s'
+        expected = 'ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= `obs_ring_geometry`.`d_j2000_longitude` - %s'
         expected_params = [315.25, 75.25]
         print(expected)
         print(expected_params)
@@ -2563,7 +2563,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 30.5
-        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s - obs_ring_geometry.d_j2000_longitude'
+        expected = 'ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= %s - `obs_ring_geometry`.`d_j2000_longitude`'
         expected_params = [315.25, 75.25]
         print(expected)
         print(expected_params)
@@ -2578,7 +2578,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 310.5
-        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= obs_ring_geometry.d_j2000_longitude - %s'
+        expected = 'ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= `obs_ring_geometry`.`d_j2000_longitude` - %s'
         expected_params = [275.25, 35.25]
         print(expected)
         print(expected_params)
@@ -2607,7 +2607,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 30.5
-        expected = '(ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s - obs_ring_geometry.d_j2000_longitude) OR (ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= obs_ring_geometry.d_j2000_longitude - %s)'
+        expected = '(ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= %s - `obs_ring_geometry`.`d_j2000_longitude`) OR (ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= `obs_ring_geometry`.`d_j2000_longitude` - %s)'
         expected_params = [315.25, 75.25, 325.25, 75.25]
         print(expected)
         print(expected_params)
@@ -3165,7 +3165,7 @@ class searchTests(TestCase):
         print(sql)
         print(params)
         # 240 to 310.5
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_ring_geometry` ON `obs_general`.`id`=`obs_ring_geometry`.`obs_general_id` WHERE ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s + obs_ring_geometry.d_j2000_longitude'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_ring_geometry` ON `obs_general`.`id`=`obs_ring_geometry`.`obs_general_id` WHERE ABS(MOD(%s - `obs_ring_geometry`.`j2000_longitude` + 540., 360.) - 180.) <= %s + `obs_ring_geometry`.`d_j2000_longitude`'
         expected_params = [275.25, 35.25]
         print(expected)
         print(expected_params)
@@ -3348,7 +3348,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_general.time1 ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `obs_general`.`time1` ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -3365,7 +3365,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_general`.`observation_duration` >= %s) AND (`obs_pds`.`bundle_id` LIKE %s) ORDER BY obs_pds.data_set_id DESC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_general`.`observation_duration` >= %s) AND (`obs_pds`.`bundle_id` LIKE %s) ORDER BY `obs_pds`.`data_set_id` DESC'
         expected_params = [20, 'COISS%']
         print(expected)
         print(expected_params)
@@ -3382,7 +3382,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_general.time1 ASC,obs_general.time2 DESC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `obs_general`.`time1` ASC,`obs_general`.`time2` DESC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -3397,7 +3397,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_pds.bundle_id ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `obs_pds`.`bundle_id` ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -3412,7 +3412,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult_obs_instrument_coiss_data_conversion_type` ON `obs_instrument_coiss`.`data_conversion_type`=`mult_obs_instrument_coiss_data_conversion_type`.`id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY mult_obs_instrument_coiss_data_conversion_type.label ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult_obs_instrument_coiss_data_conversion_type` ON `obs_instrument_coiss`.`data_conversion_type`=`mult_obs_instrument_coiss_data_conversion_type`.`id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `mult_obs_instrument_coiss_data_conversion_type`.`label` ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -3465,7 +3465,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `mult_obs_general_target_name` ON JSON_EXTRACT(`obs_general`.`target_name`, "$[0]")=`mult_obs_general_target_name`.`id` ORDER BY mult_obs_general_target_name.label ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `mult_obs_general_target_name` ON JSON_EXTRACT(`obs_general`.`target_name`, "$[0]")=`mult_obs_general_target_name`.`id` ORDER BY `mult_obs_general_target_name`.`label` ASC'
         expected_params = []
         print(expected)
         print(expected_params)

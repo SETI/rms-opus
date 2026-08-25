@@ -30,6 +30,7 @@ from django.http import Http404, HttpResponseServerError
 
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import UserSearches
+from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
     HTTP404_BAD_LIMIT,
     HTTP404_BAD_OR_MISSING_REQNO,
@@ -278,15 +279,13 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         return ret
 
-    quoted_table_name = connection.ops.quote_name(param_category)
-    quoted_param_qualified_name = (quoted_table_name + '.'
-                                   +connection.ops.quote_name(param_name))
+    param_column = sql_builder.column(param_name, param_category)
 
     # Check the size of the cache table to see if we can afford to do a
     # search retricted by the cache table contents. The JOIN of the cache
     # table can be slow if it has too many entries and gives a bad user
     # experience.
-    sql = 'SELECT COUNT(*) FROM '+connection.ops.quote_name(user_query_table)
+    sql = sql_builder.count_rows(user_query_table)
 
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -308,29 +307,22 @@ def api_string_search_choices(request, slug):
 
     if not do_simple_search:
         max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD
-        sql = f'SELECT /*+ MAX_EXECUTION_TIME({max_time}) */'
-        sql += ' DISTINCT ' + quoted_param_qualified_name
-        sql += ' FROM '+quoted_table_name
+        select = sql_builder.Select(distinct=True, max_execution_time=max_time)
+        select.add_column(param_column)
         # The cache table is an INNER JOIN because we only want opus_ids
-        # that appear in the cache table to cause result rows
-        sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
-        sql += ' ON '+quoted_table_name+'.'
-        if param_category == 'obs_general': # pragma: no cover - not possible
-            # There are currently no string fields in obs_general
-            sql += connection.ops.quote_name('id')+'='
-        else:
-            sql += connection.ops.quote_name('obs_general_id')+'='
-        sql += connection.ops.quote_name(user_query_table)+'.'
-        sql += connection.ops.quote_name('id')
+        # that appear in the cache table to cause result rows. The join is on
+        # obs_general_id in practice: there are currently no string fields in
+        # obs_general, so param_category is never obs_general here.
+        select.add_from(param_category).add_join(
+            'INNER', user_query_table,
+            search_cache_join_condition(param_category, user_query_table))
 
-        sql_params = []
         if partial_query:
-            sql += ' WHERE '
-            sql += like_query
-            sql_params += like_params
+            select.add_where(sql_builder.Expr(like_query, like_params))
 
-        sql += ' ORDER BY '+quoted_param_qualified_name
-        sql += ' LIMIT '+str(limit+1)
+        select.add_order_by(param_column)
+        select.limit(limit+1)
+        sql, sql_params = select.build()
 
         try:
             cursor.execute(sql, tuple(sql_params))
@@ -351,18 +343,16 @@ def api_string_search_choices(request, slug):
         # This will give more results than we really want, but will be much
         # faster
         max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
-        sql = f'SELECT /*+ MAX_EXECUTION_TIME({max_time}) */'
-        sql += ' DISTINCT ' + quoted_param_qualified_name
-        sql += ' FROM '+quoted_table_name
+        select = sql_builder.Select(distinct=True, max_execution_time=max_time)
+        select.add_column(param_column)
+        select.add_from(param_category)
 
-        sql_params = []
         if partial_query:
-            sql += ' WHERE '
-            sql += like_query
-            sql_params += like_params
+            select.add_where(sql_builder.Expr(like_query, like_params))
 
-        sql += ' ORDER BY '+quoted_param_qualified_name
-        sql += ' LIMIT '+str(limit+1)
+        select.add_order_by(param_column)
+        select.limit(limit+1)
+        sql, sql_params = select.build()
 
         try:
             cursor.execute(sql, tuple(sql_params))
@@ -1035,12 +1025,9 @@ def get_user_query_table(selections, extras, api_code=None):
         return None
 
     # With this we can create a table that contains the single column
-    create_sql = ('CREATE TABLE '
-                  + connection.ops.quote_name(cache_table_name)
-                  + '(sort_order INT NOT NULL AUTO_INCREMENT, '
-                  + 'PRIMARY KEY(sort_order), id INT UNSIGNED, '
-                  + 'UNIQUE KEY(id)) '
-                  + sql)
+    create_sql = sql_builder.create_table_from_select_sql(
+        cache_table_name, sql,
+        column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS)
     try:
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
@@ -1346,10 +1333,8 @@ def construct_query_string(selections, extras):
                             # which are finished to avoid duplicates
 
     clauses = []
-    clause_params = []
     obs_tables = set()
     mult_tables = set()
-    q = connection.ops.quote_name
 
     # We always have to have obs_general since it's the master keeper of IDs
     obs_tables.add('obs_general')
@@ -1367,7 +1352,6 @@ def construct_query_string(selections, extras):
                       str(selections), str(extras))
             return None, None
         cat_name = param_info.category_name
-        quoted_cat_name = q(cat_name)
 
         if param_qualified_name_no_num in all_qtypes:
             qtypes = all_qtypes[param_qualified_name_no_num]
@@ -1400,24 +1384,17 @@ def construct_query_string(selections, extras):
                           str(mult_values), str(selections), str(extras))
                 return None, None
             if mult_values:
+                mult_column = sql_builder.column(param_info.name, cat_name)
                 if form_type == 'GROUP':
                     # Single-valued mult. We can be efficient by seeing if the field
                     # contents is in the list of search values.
-                    clause = quoted_cat_name+'.'+q(param_info.name)
-                    clause += ' IN ('
-                    clause += ','.join(['%s']*len(mult_values))
-                    clause += ')'
-                    clause_params += mult_values
+                    clause = sql_builder.in_values(mult_column, mult_values)
                 else:
                     # Multi-valued mult (multisel). We have to see if each search value
                     # is in the database field list, so we have to check them one by one.
-                    or_clauses = []
-                    for mult_value in mult_values:
-                        or_clause = 'JSON_CONTAINS('
-                        or_clause += quoted_cat_name+'.'+q(param_info.name)+',%s)'
-                        clause_params.append(str(mult_value))
-                        or_clauses.append(or_clause)
-                    clause = ' OR '.join(or_clauses)
+                    clause = sql_builder.join_exprs(
+                        [sql_builder.json_contains(mult_column, str(mult_value))
+                         for mult_value in mult_values], 'OR')
                 clauses.append(clause)
                 obs_tables.add(cat_name)
 
@@ -1429,9 +1406,6 @@ def construct_query_string(selections, extras):
                 continue
 
             finished_ranges.append(param_qualified_name_no_num)
-
-            clause = None
-            params = None
 
             # Longitude queries
             if form_type == 'LONG':
@@ -1448,8 +1422,7 @@ def construct_query_string(selections, extras):
 
             if clause is None:
                 return None, None
-            clauses.append(clause)
-            clause_params += params
+            clauses.append(sql_builder.Expr(clause, params))
             obs_tables.add(cat_name)
 
         elif form_type == 'STRING':
@@ -1457,8 +1430,7 @@ def construct_query_string(selections, extras):
                                               qtypes)
             if clause is None:
                 return None, None
-            clauses.append(clause)
-            clause_params += params
+            clauses.append(sql_builder.Expr(clause, params))
             obs_tables.add(cat_name)
 
         else: # pragma: no cover - error catchall
@@ -1466,52 +1438,37 @@ def construct_query_string(selections, extras):
                       +'param "%s"', form_type, param_qualified_name)
             return None, None
 
-    # Make the ordering SQL
-    order_sql = ''
+    # Make the ordering terms
+    order_terms = []
     if 'order' in extras:
         order_params, descending_params = extras['order']
 
-        (order_sql, order_mult_tables,
-         order_obs_tables) = create_order_by_sql(order_params,
-                                                 descending_params)
-        if order_sql is None:
+        (order_terms, order_mult_tables,
+         order_obs_tables) = create_order_by_terms(order_params,
+                                                   descending_params)
+        if order_terms is None:
             return None, None
         mult_tables |= order_mult_tables
         obs_tables |= order_obs_tables
 
-    sql = 'SELECT '+q('obs_general')+'.'+q('id')
+    select = sql_builder.Select()
+    select.add_column(sql_builder.column('id', 'obs_general'))
+    from_source = select.add_from('obs_general')
 
     # Now JOIN all the obs_ tables together
-    sql += ' FROM '+q('obs_general')
-    for table in sorted(obs_tables):
-        if table == 'obs_general':
-            continue
-        sql += ' LEFT JOIN '+q(table)+' ON '
-        sql += q('obs_general')+'.'+q('id')+'='
-        sql += q(table)+'.'+q('obs_general_id')
-
+    add_obs_table_joins(from_source, sorted(obs_tables))
     # And JOIN all the mult_ tables together
-    for mult_table, is_multigroup, category, field_name in sorted(mult_tables):
-        sql += ' LEFT JOIN '+q(mult_table)+' ON '
-        if is_multigroup:
-            sql += 'JSON_EXTRACT('
-        sql += q(category)+'.'+q(field_name)
-        if is_multigroup:
-            # For a MULTIGROUP field, we just sort on the first value
-            sql += ', "$[0]")'
-        sql += '='+q(mult_table)+'.'+q('id')
+    add_mult_table_joins(from_source, sorted(mult_tables))
 
     # Add in the WHERE clauses
     if clauses:
-        sql += ' WHERE '
-        if len(clauses) == 1:
-            sql += clauses[0]
-        else:
-            sql += ' AND '.join(['('+c+')' for c in clauses])
+        select.add_where(sql_builder.combine_exprs(clauses, 'AND'))
 
     # Add in the ORDER BY clause
-    sql += order_sql
+    for order_column, descending in order_terms:
+        select.add_order_by(order_column, descending=descending)
 
+    sql, clause_params = select.build()
     log.debug('SEARCH SQL: %s *** PARAMS %s', sql, str(clause_params))
     return sql, clause_params
 
@@ -1537,6 +1494,9 @@ def get_string_query(selections, param_qualified_name, qtypes):
         ends
         matches
         excludes
+
+    Returns an `sql_builder.Expr`, which is a `(sql, params)` pair, or the pair
+    `(None, None)` if the query cannot be built.
     """
     if selections is None or param_qualified_name not in selections:
         return None, None
@@ -1545,10 +1505,8 @@ def get_string_query(selections, param_qualified_name, qtypes):
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
 
     cat_name = param_info.category_name
-    quoted_cat_name = connection.ops.quote_name(cat_name)
     name = param_info.name
-    quoted_param_qualified_name = (quoted_cat_name+'.'
-                                   +connection.ops.quote_name(name))
+    param_column = sql_builder.column(name, cat_name)
 
     if len(qtypes) == 0:
         qtypes = ['contains'] * len(values)
@@ -1561,13 +1519,10 @@ def get_string_query(selections, param_qualified_name, qtypes):
         return None, None
 
     clauses = []
-    params = []
 
     for idx in range(len(values)):
         value = values[idx]
         qtype = qtypes[idx]
-
-        clause = ''
 
         if qtype != 'regex':
             value = value.replace('\\', '\\\\')
@@ -1576,25 +1531,25 @@ def get_string_query(selections, param_qualified_name, qtypes):
                 value = value.replace('_', '\\_')
 
         if qtype == 'contains':
-            clause = quoted_param_qualified_name + ' LIKE %s'
-            params.append('%'+value+'%')
+            clause = sql_builder.binary_op(param_column, 'LIKE',
+                                           sql_builder.value('%'+value+'%'))
         elif qtype == 'begins':
-            clause = quoted_param_qualified_name + ' LIKE %s'
-            params.append(value+'%')
+            clause = sql_builder.binary_op(param_column, 'LIKE',
+                                           sql_builder.value(value+'%'))
         elif qtype == 'ends':
-            clause = quoted_param_qualified_name + ' LIKE %s'
-            params.append('%'+value)
+            clause = sql_builder.binary_op(param_column, 'LIKE',
+                                           sql_builder.value('%'+value))
         elif qtype == 'matches':
-            clause = quoted_param_qualified_name + ' = %s'
-            params.append(value)
+            clause = sql_builder.binary_op(param_column, '=',
+                                           sql_builder.value(value))
         elif qtype == 'excludes':
-            clause = quoted_param_qualified_name + ' NOT LIKE %s'
-            params.append('%'+value+'%')
+            clause = sql_builder.binary_op(param_column, 'NOT LIKE',
+                                           sql_builder.value('%'+value+'%'))
         elif qtype == 'regex':
             if not _valid_regex(value):
                 return None, None
-            clause = quoted_param_qualified_name + ' RLIKE %s'
-            params.append(value)
+            clause = sql_builder.binary_op(param_column, 'RLIKE',
+                                           sql_builder.value(value))
         else: # pragma: no cover - protecting against future bugs
             log.error('_get_string_query: Unknown qtype "%s" '
                       +'for "%s" '
@@ -1603,12 +1558,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
             return None, None
         clauses.append(clause)
 
-    if len(clauses) == 1:
-        clause = clauses[0]
-    else:
-        clause = ' OR '.join(['('+c+')' for c in clauses])
-
-    return clause, params
+    return sql_builder.combine_exprs(clauses, 'OR')
 
 def get_range_query(selections, param_qualified_name, qtypes, units):
     """Builds query for numeric ranges.
@@ -1651,7 +1601,6 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     # But, for constructing the query, if this is a single column range,
     # the param_names are both the same
     cat_name = param_info.category_name
-    quoted_cat_name = connection.ops.quote_name(cat_name)
     name_no_num = strip_numeric_suffix(param_info.name)
     name_min = name_no_num + '1'
     name_max = name_no_num + '2'
@@ -1671,10 +1620,8 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
         # qtypes are meaningless for single column ranges!
         qtypes = ['any'] * len(values_min)
 
-    quoted_param_qualified_name_min = (quoted_cat_name+'.'
-                                       +connection.ops.quote_name(name_min))
-    quoted_param_qualified_name_max = (quoted_cat_name+'.'
-                                       +connection.ops.quote_name(name_max))
+    column_min = sql_builder.column(name_min, cat_name)
+    column_max = sql_builder.column(name_max, cat_name)
 
     if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
         len(values_min) != len(values_max)):
@@ -1686,7 +1633,6 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
         return None, None
 
     clauses = []
-    params = []
 
     for idx in range(len(values_min)):
         unit = units[idx]
@@ -1712,47 +1658,17 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
 
         qtype = qtypes[idx]
 
-        clause = ''
-
+        # Each qtype pairs one side of the user's range with one column: which
+        # column and which direction is all that distinguishes them.
         if qtype == 'all':
             # param_name_min <= value_min AND param_name_max >= value_max
-            if value_min is not None:
-                clause += quoted_param_qualified_name_min + ' <= %s'
-                params.append(value_min)
-            if value_max is not None:
-                if clause:
-                    clause += ' AND '
-                clause += quoted_param_qualified_name_max + ' >= %s'
-                params.append(value_max)
-            if clause:
-                clauses.append(clause)
-
+            sides = ((column_min, '<=', value_min), (column_max, '>=', value_max))
         elif qtype == 'only':
             # param_name_min >= value_min AND param_name_max <= value_max
-            if value_min is not None:
-                clause += quoted_param_qualified_name_min + ' >= %s'
-                params.append(value_min)
-            if value_max is not None:
-                if clause:
-                    clause += ' AND '
-                clause += quoted_param_qualified_name_max + ' <= %s'
-                params.append(value_max)
-            if clause:
-                clauses.append(clause)
-
+            sides = ((column_min, '>=', value_min), (column_max, '<=', value_max))
         elif qtype == 'any' or qtype == '':
             # param_name_min <= value_max AND param_name_max >= value_min
-            if value_min is not None:
-                clause += quoted_param_qualified_name_max + ' >= %s'
-                params.append(value_min)
-            if value_max is not None:
-                if clause:
-                    clause += ' AND '
-                clause += quoted_param_qualified_name_min + ' <= %s'
-                params.append(value_max)
-            if clause:
-                clauses.append(clause)
-
+            sides = ((column_max, '>=', value_min), (column_min, '<=', value_max))
         else:
             log.error('get_range_query: Unknown qtype "%s" '
                       +'for "%s" '
@@ -1761,12 +1677,16 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
                       str(selections), str(qtypes), str(units))
             return None, None
 
-    if len(clauses) == 1:
-        clause = clauses[0]
-    else:
-        clause = ' OR '.join(['('+c+')' for c in clauses])
+        # A side the user left blank contributes nothing, and if both are blank
+        # this entry contributes no clause at all.
+        side_clauses = [sql_builder.binary_op(side_column, operator,
+                                              sql_builder.value(side_value))
+                        for side_column, operator, side_value in sides
+                        if side_value is not None]
+        if side_clauses:
+            clauses.append(sql_builder.join_exprs(side_clauses, 'AND'))
 
-    return clause, params
+    return sql_builder.combine_exprs(clauses, 'OR')
 
 def get_longitude_query(selections, param_qualified_name, qtypes, units):
     """Builds query for longitude ranges.
@@ -1798,9 +1718,9 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     # But, for constructing the query, if this is a single column range,
     # the param_names are both the same
     cat_name = param_info.category_name
-    quoted_cat_name = connection.ops.quote_name(cat_name)
     name_no_num = strip_numeric_suffix(param_info.name)
-    col_d_long = cat_name + '.d_' + name_no_num
+    # The half-width of the observation's own longitude range.
+    column_d_long = sql_builder.column('d_' + name_no_num, cat_name)
 
     (_form_type, _form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
@@ -1822,7 +1742,6 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
         return None, None
 
     clauses = []
-    params = []
 
     for idx in range(len(values_min)):
         unit = units[idx]
@@ -1853,20 +1772,18 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
             # Ignore if nothing to search on
             continue
 
-        clause = ''
-
         if value_min is None or value_max is None:
             # Pretend this is a range query - fake up a new selections and
             # qtypes containing only this one entry
             new_selections = {param_qualified_name_min: [value_min],
                               param_qualified_name_max: [value_max]}
             new_qtypes = [qtype]
-            clause, r_params = get_range_query(new_selections,
-                                               param_qualified_name,
-                                               new_qtypes, None)
-            if clause is None:
+            range_clause, range_params = get_range_query(new_selections,
+                                                         param_qualified_name,
+                                                         new_qtypes, None)
+            if range_clause is None:
                 return None, None
-            params += r_params
+            clause = sql_builder.Expr(range_clause, range_params)
 
         elif is_single_column_range(param_qualified_name):
             # A single column range doesn't have center and d_ fields
@@ -1876,20 +1793,16 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                           qtype, param_qualified_name,
                           str(selections), str(qtypes), str(units))
                 return None, None
-            quoted_param_qualified_name = (quoted_cat_name+'.'
-                                           +connection.ops.quote_name(name_no_num))
-            if value_max >= value_min:
-                # Normal range MIN to MAX
-                clause = quoted_param_qualified_name + ' >= %s AND '
-                clause += quoted_param_qualified_name + ' <= %s'
-                params.append(value_min)
-                params.append(value_max)
-            else:
-                # Wraparound range MIN to 360, 0 to MAX
-                clause = quoted_param_qualified_name + ' >= %s OR '
-                clause += quoted_param_qualified_name + ' <= %s'
-                params.append(value_min)
-                params.append(value_max)
+            param_column = sql_builder.column(name_no_num, cat_name)
+            # Normal range MIN to MAX, or a wraparound range MIN to 360 plus
+            # 0 to MAX, which is the same pair of comparisons under OR.
+            operator = 'AND' if value_max >= value_min else 'OR'
+            clause = sql_builder.join_exprs(
+                [sql_builder.binary_op(param_column, '>=',
+                                       sql_builder.value(value_min)),
+                 sql_builder.binary_op(param_column, '<=',
+                                       sql_builder.value(value_max))],
+                operator)
 
         else:
             # Find the midpoint and dx of the user's range
@@ -1899,21 +1812,23 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                 longit = (value_min + value_max + 360.)/2.
             longit = longit % 360.
             d_long = (longit - value_min) % 360.
-            sep_sql = 'ABS(MOD(%s - ' + param_qualified_name_no_num + ' + 540., 360.) - 180.)'
-            sep_params = [longit]
+            separation = sql_builder.angular_separation(
+                sql_builder.column(name_no_num, cat_name), longit)
 
+            # The observation matches when the two ranges overlap ("any"),
+            # when the observation's range covers the user's ("all"), or when
+            # the user's covers the observation's ("only") - each is the same
+            # comparison of the center separation against a sum or difference
+            # of the two half-widths.
             if qtype == 'any' or qtype == '':
-                clause += sep_sql + ' <= %s + ' + col_d_long
-                params += sep_params
-                params.append(d_long)
+                bound = sql_builder.binary_op(sql_builder.value(d_long), '+',
+                                              column_d_long)
             elif qtype == 'all':
-                clause += sep_sql + ' <= ' + col_d_long + ' - %s'
-                params += sep_params
-                params.append(d_long)
+                bound = sql_builder.binary_op(column_d_long, '-',
+                                              sql_builder.value(d_long))
             elif qtype == 'only':
-                clause += sep_sql + ' <= %s - ' + col_d_long
-                params += sep_params
-                params.append(d_long)
+                bound = sql_builder.binary_op(sql_builder.value(d_long), '-',
+                                              column_d_long)
             else:
                 log.error('get_longitude_query: Unknown qtype "%s" '
                           +'for "%s"'
@@ -1921,19 +1836,79 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                           qtype, param_qualified_name,
                           str(selections), str(qtypes),  str(units))
                 return None, None
+            clause = sql_builder.binary_op(separation, '<=', bound)
 
         clauses.append(clause)
 
-    if len(clauses) == 1:
-        clause = clauses[0]
-    else:
-        clause = ' OR '.join(['('+c+')' for c in clauses])
-
-    return clause, params
+    return sql_builder.combine_exprs(clauses, 'OR')
 
 def get_user_search_table_name(num):
     """ pass cache_no, returns user search table name"""
     return 'cache_' + str(num)
+
+
+def add_obs_table_joins(from_source, obs_tables):
+    """LEFT JOIN each obs_ table onto obs_general.
+
+    The joins are LEFT because an observation that has no row in one of these
+    tables must still appear in the result, with that table's columns NULL.
+
+    Parameters:
+        from_source: The `sql_builder.FromSource` for obs_general.
+        obs_tables: The tables to join, in the order they should appear.
+            obs_general itself is skipped: it is the source, not a join.
+    """
+    for table in obs_tables:
+        if table == 'obs_general':
+            continue
+        from_source.add_join(
+            'LEFT', table,
+            sql_builder.columns_equal(
+                sql_builder.column('id', 'obs_general'),
+                sql_builder.column('obs_general_id', table)))
+
+
+def add_mult_table_joins(from_source, mult_tables):
+    """LEFT JOIN each mult_ table onto the obs_ column that holds its id.
+
+    Parameters:
+        from_source: The `sql_builder.FromSource` to hang the joins on.
+        mult_tables: (mult_table, is_multigroup, category, field_name) tuples, in
+            the order they should appear. A MULTIGROUP column holds a JSON list
+            rather than a single id, so it joins on the list's first element.
+    """
+    for mult_table, is_multigroup, category, field_name in mult_tables:
+        mult_column = sql_builder.column(field_name, category)
+        if is_multigroup:
+            # For a MULTIGROUP field, we just sort on the first value
+            mult_column = sql_builder.json_extract_first(mult_column)
+        from_source.add_join(
+            'LEFT', mult_table,
+            sql_builder.columns_equal(mult_column,
+                                      sql_builder.column('id', mult_table)))
+
+
+def search_cache_join_condition(table_name, cache_table_name):
+    """Return the condition that ties a table's rows to a search's results.
+
+    A search cache table holds one row per matching observation, keyed by
+    obs_general.id. obs_general therefore joins to it on its own primary key,
+    while every other obs_ table joins on the obs_general_id it carries.
+
+    The cache table is created by raw DDL under a name computed at runtime and has
+    no Django model, which is why the queries that need this condition cannot be
+    written with the ORM.
+
+    Parameters:
+        table_name: The obs_ table being tied to the search.
+        cache_table_name: The cache table holding the search results.
+    """
+    if table_name == 'obs_general':
+        own_column = sql_builder.column('id', table_name)
+    else:
+        own_column = sql_builder.column('obs_general_id', table_name)
+    return sql_builder.columns_equal(own_column,
+                                     sql_builder.column('id', cache_table_name))
 
 
 ################################################################################
@@ -2006,35 +1981,36 @@ def parse_order_slug(all_order):
 
     return order_params, order_descending_params
 
-def create_order_by_sql(order_params, descending_params):
-    "Given params and descending lists, make ORDER BY SQL"
+def create_order_by_terms(order_params, descending_params):
+    """Given params and descending lists, make the ORDER BY terms.
+
+    Returns a list of (expression, descending) pairs ready for
+    `sql_builder.Select.add_order_by`, plus the mult_ and obs_ tables the terms
+    require the caller to join in.
+    """
     order_mult_tables = set()
     order_obs_tables = set()
-    order_sql = ''
     assert order_params # There should always be an ordering
-    order_str_list = []
+    order_terms = []
     for i in range(len(order_params)):
         order_slug = order_params[i]
         pi = _get_param_info_by_qualified_name(order_slug)
         if not pi:
-            log.error('create_order_by_sql: Unable to resolve order'
+            log.error('create_order_by_terms: Unable to resolve order'
                       +' slug "%s"', order_slug)
             return None, None, None
         (form_type, _form_type_format,
          _form_type_unit_id) = parse_form_type(pi.form_type)
-        order_param = pi.param_qualified_name()
+        order_column = sql_builder.column(pi.name, pi.category_name)
         order_obs_tables.add(pi.category_name)
         if form_type in settings.MULT_FORM_TYPES:
+            # A mult field holds an id, so it sorts by the human-readable label
+            # in its mult table rather than by the value stored in the row.
             mult_table = get_mult_name(pi.param_qualified_name())
-            order_param = mult_table + '.label'
+            order_column = sql_builder.column('label', mult_table)
             is_multigroup = form_type == 'MULTIGROUP'
             order_mult_tables.add((mult_table, is_multigroup, pi.category_name,
                                    pi.name))
-        if descending_params[i]:
-            order_param += ' DESC'
-        else:
-            order_param += ' ASC'
-        order_str_list.append(order_param)
-    order_sql = ' ORDER BY ' + ','.join(order_str_list)
+        order_terms.append((order_column, descending_params[i]))
 
-    return order_sql, order_mult_tables, order_obs_tables
+    return order_terms, order_mult_tables, order_obs_tables

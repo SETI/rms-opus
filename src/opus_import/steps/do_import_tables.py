@@ -51,17 +51,20 @@ def delete_bundle_from_obs_tables(ctx, bundle_id, namespace):
     table_names = ctx.db.table_names(namespace, prefix=['obs_'])
     table_names = sorted(table_names)
     q = ctx.db.quote_identifier
-    where = f'{q("bundle_id")}="{bundle_id}"'
+    where = f'{q("bundle_id")}=%s'
+    where_params = [bundle_id]
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
     for table_name in table_names:
         if (table_name.startswith('obs_') and table_name != 'obs_general'):
-            ctx.db.delete_rows(namespace, table_name, where)
+            ctx.db.delete_rows(namespace, table_name, where,
+                               where_params=where_params)
 
     # 2. obs_general
     if 'obs_general' in table_names:
-        ctx.db.delete_rows(namespace, 'obs_general', where)
+        ctx.db.delete_rows(namespace, 'obs_general', where,
+                           where_params=where_params)
 
 
 def find_duplicate_opus_ids(ctx):
@@ -97,17 +100,20 @@ def delete_opus_id_from_obs_tables(ctx, opus_id, namespace):
     table_names = ctx.db.table_names(namespace, prefix=['obs_'])
     table_names = sorted(table_names)
     q = ctx.db.quote_identifier
-    where = f'{q("opus_id")}="{opus_id}"'
+    where = f'{q("opus_id")}=%s'
+    where_params = [opus_id]
 
     # This has to happen in two phases to handle foreign key contraints:
     # 1. All tables except obs_general
     for table_name in table_names:
         if (table_name.startswith('obs_') and table_name != 'obs_general'):
-            ctx.db.delete_rows(namespace, table_name, where)
+            ctx.db.delete_rows(namespace, table_name, where,
+                               where_params=where_params)
 
     # 2. obs_general
     if 'obs_general' in table_names:
-        ctx.db.delete_rows(namespace, 'obs_general', where)
+        ctx.db.delete_rows(namespace, 'obs_general', where,
+                           where_params=where_params)
 
 
 def delete_duplicate_opus_id_from_perm_tables(ctx):
@@ -194,9 +200,10 @@ def copy_bundle_from_import_to_permanent(ctx, bundle_id):
         if table_name.startswith('obs_surface_geometry__'):
             continue
         import_util.log_debug(ctx, f'Copying table "{table_name}"')
-        where = f'{q("bundle_id")}="{bundle_id}"'
+        where = f'{q("bundle_id")}=%s'
         ctx.db.copy_rows_between_namespaces('import', 'perm', table_name,
-                                            where=where)
+                                            where=where,
+                                            where_params=[bundle_id])
 
     # For obs_surface_geometry__<T> we don't even know the target names at
     # this point, so we actually have to look at the table names in the database
@@ -214,9 +221,10 @@ def copy_bundle_from_import_to_permanent(ctx, bundle_id):
                ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))])
             ctx.db.create_table('perm', table_name, table_schema)
         import_util.log_debug(ctx, f'Copying table "{table_name}"')
-        where = f'{q("bundle_id")}="{bundle_id}"'
+        where = f'{q("bundle_id")}=%s'
         ctx.db.copy_rows_between_namespaces('import', 'perm', table_name,
-                                            where=where)
+                                            where=where,
+                                            where_params=[bundle_id])
 
 def read_existing_import_opus_id(ctx):
     """Return a list of all opus_id used in the import tables. Used to check
