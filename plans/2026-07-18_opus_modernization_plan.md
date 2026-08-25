@@ -4197,13 +4197,23 @@ body; never rewrite or delete earlier notes.*
   `opus_import.obs.*`. Facts later PRs rely on:
   - **What the burn-down entry means now, and what PR-16 removes.** The source entry is
     `opus_import.obs.*`, which mypy matches against the `opus_import.obs` package itself
-    as well as its modules. **`tests.opus_import.*` stays silenced alongside it, and
-    PR-16 must remove both together**, because a test that constructs an obs class
-    cannot be strict-clean while that hierarchy is unannotated -- `disallow_untyped_calls`
-    reports the call **in the caller's file**, which no override on `opus_import.obs.*`
-    can reach. That last point governs more than the tests: it is why the `steps`
-    modules annotate the obs instances they are handed as `Any` (see below), and it is
-    the general rule for calling into a silenced package from an annotated one.
+    as well as its modules (verified: a `pkg.sub.*` override silences `pkg/sub/__init__.py`
+    too). **`tests.opus_import.*` stays silenced alongside it, and PR-16 must remove both
+    together**, because a test that constructs an obs class cannot be strict-clean while
+    that hierarchy is unannotated -- `disallow_untyped_calls` reports the call **in the
+    caller's file**, which no override on `opus_import.obs.*` can reach. That last point
+    governs more than the tests: it is why `steps/do_import_obs.py` annotates the obs
+    instance it is handed as `Any` (see below), and it is the general rule for calling
+    into a silenced package from an annotated one.
+    **But do not size that entry from the obs coupling alone.** Measured at this PR by
+    deleting the entry: **17 errors in 6 files, of which 7 are the obs `no-untyped-call`
+    kind**. The other 10 are ordinary annotation work in the tests themselves and have
+    nothing to do with the hierarchy -- missing type arguments, an `arg-type`, a
+    `comparison-overlap`, a `call-overload`, an `unused-ignore`, assigning a fake
+    database into an `ImportDBSuper | None`, and `attr-defined` on `opus_import.__main__`'s
+    implicit re-export of `main` (`no_implicit_reexport` is on, so `__main__` needs an
+    `__all__` or an explicit re-export before a test may import `main` from it).
+    Re-measure rather than carrying those numbers forward.
   - **`ImportContext.db` is `ImportDBSuper | None`, and that shapes the whole diff.**
     `opus_import.cli` builds the context and connects afterwards, so every function that
     uses the database narrows it with an `assert ctx.db is not None` (or asserts the
@@ -4255,9 +4265,12 @@ body; never rewrite or delete earlier notes.*
     parameter `table_name` to `raw_table_name` (matching what the MySQL override has
     always called it, and what the value is; these three are abstract stubs that only
     raise, so no call reaches them, and nothing in the repository passes any of these by
-    keyword). Two private signatures changed as well: `ImportDBMySQL._execute` for the
-    same reason as `__init__`, and `do_import_mult._convert_sql_response_to_mult_table`
-    dropped a parameter it never read. **A rename is invisible to a grep for positional
+    keyword). `delete_rows` moved one more thing the audit compares: its `where` went
+    from required to optional, aligning the abstract with the MySQL override that has
+    always defaulted it. Two private signatures changed as well:
+    `ImportDBMySQL._execute` for the same reason as `__init__`, and
+    `do_import_mult._convert_sql_response_to_mult_table` dropped a parameter it never
+    read. **A rename is invisible to a grep for positional
     calls**, which is why the audit compares names rather than counting call sites; the
     script lives in the PR description's testing evidence and takes two trees.
   - **`ImportDBMySQL.__init__`'s `engine` keyword could not survive that change, and
@@ -4270,8 +4283,23 @@ body; never rewrite or delete earlier notes.*
     reach.**
     1. `import_util.safe_pdstable_read` returned a bare list, not a pair, when a PDS4
        index CSV held no data rows. Both callers unpack a pair, so an empty PDS4 index
-       raised `ValueError` on the unpack. It returns `(rows, None)` now, which reaches
-       the callers' existing "read failed" branch.
+       raised `ValueError` on the unpack -- from the unpack itself, before either caller
+       could look at what it got. It returns `(rows, None)` now, which is what the
+       function's contract always said an empty file should give: the file was read
+       successfully, it just has no rows. **The two callers then diverge, and a later PR
+       should know which:** `do_import_index.import_one_index` tests `if not obs_rows:`
+       and reaches its "read failed" branch, so an empty *primary* index fails the bundle
+       as before; the associated-metadata caller tests `if assoc_rows is None:` and does
+       **not**, so an empty *associated* index now proceeds with zero cross-referenced
+       rows. That second outcome is deliberate: it is exactly what the PDS3 path already
+       does for an empty associated table, since `safe_pdstable_read_pds3` returns
+       `table.dicts_by_row()` unconditionally. The fix makes PDS4 agree with PDS3 rather
+       than inventing a behavior. **What it does not answer, and what belongs to a later
+       PR:** whether proceeding silently is *right* for an associated index. Zero
+       cross-referenced rows means every observation in the bundle imports with that
+       metadata missing, and nothing says so beyond the `--import-report-missing-*-geo`
+       options nobody turns on by default. That is an import-validation design question,
+       not an annotation one.
     2. Two `self.logger.log(...)` calls in `ImportDBMySQL.__init__` were unguarded while
        every other logging site in the file is guarded. `logger=None` is a supported
        state -- PR-02's warning-handler flag exists for it, and
@@ -4281,6 +4309,35 @@ body; never rewrite or delete earlier notes.*
        table schema named a `data_source` it does not implement, logged the error, and
        then raised `TypeError` a few lines further on. An assertion now fails at the
        fault rather than past it.
+  - **Four pre-existing faults found while annotating, left for a later PR** (they are
+    outside the lines this PR changed, and fixing them is not annotation work). Each is
+    written out so nobody has to re-derive it:
+    1. **The table-name cache diverges from the server in two situations**
+       (`importdb/mysql.py`). `create_table` adds the new name to `self._table_names`
+       only inside `if self.logger:` **and** only in the non-read-only branch beneath it,
+       while `drop_table` removes the name whenever the table existed, gated on neither.
+       So a `logger=None` instance never records a table it created and its
+       `table_exists` goes on saying False; and a `--read-only` run records every drop it
+       only simulated, so it says False for tables the server still has. The comment on
+       the `create_table` line explains the read-only half deliberately ("Don't pretend
+       the table has been created if it really hasn't"); the `logger` half looks
+       accidental, and the missing symmetry in `drop_table` looks like the real bug.
+    2. **`do_import_obs.import_observation_table` can read an unbound local.**
+       `mult_label_list` and its four siblings are initialized in the `else` branch that
+       runs only when the column has a `data_source`. A column with no `data_source`
+       skips that initialization, so on the first loop iteration the mult branch would
+       raise `NameError` and on any later one it silently reads the *previous* column's
+       lists. Reaching it needs a column with no `data_source` and a GROUP form type,
+       which no packaged schema currently has.
+    3. **`do_import_mult.update_mult_table`'s `if label is None:` is dead code.** It sits
+       after the `label = str(label)` earlier in the same function, so `label` is a
+       string by then and a None argument has already become the string `'None'`. The
+       `'N/A'` users actually see comes from the caller in `do_import_obs`, not from
+       here.
+    4. **A stale comment.** `do_import_obs.import_observation_table`'s header comment
+       still says "Always skip `id` for tables other than obs_general"; the loop beneath
+       it has no such check, and `id` is populated from the schema's `MAX_ID` data source
+       like any other column.
   - **`opus_import` is measured by the unit gate, not the integration one.** The
     integration workflow's 100% gate includes `src/opus_app/apps/*`,
     `integration_tests/test_api/*` and `src/opus_support/*`
