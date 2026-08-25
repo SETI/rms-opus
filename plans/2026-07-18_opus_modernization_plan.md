@@ -963,6 +963,22 @@ config classes). Remove every temporary mypy override — repo is mypy-strict cl
 `[tool.ruff.lint.per-file-ignores]` table is emptied (PR-01's exit criterion), and the
 bandit `# nosec`/skip set and the vulture whitelist are reduced to only irreducible,
 individually-justified entries.
+- **Also owns the `%r` log sweep left over from PR-13** (assigned by the orchestrator
+  2026-08-25, on PR-13's stop-and-report of the question). A bare **scalar** interpolated
+  into a log message with `%s` can carry CR/LF from request data; `%r` escapes it.
+  Mappings and lists are already safe — `QueryDict`/`MultiValueDict`, `str(dict)`,
+  `str(list)` and `json.dumps` all render through `repr()`. PR-13 fixed every log line it
+  added or rewrote and left the rest.
+  **Regenerate the worklist; never inherit a count.** Five successive PR-13 review passes
+  each found the previous pass's hand-written list wrong, which is why its notes carry no
+  list and no total, and why this bullet does not either. Start from
+  `grep -rnE "log\.(debug|info|warning|error|exception|critical)\(" src/opus_app`, keep
+  the calls whose message interpolates a bare scalar, and treat that as a **lower bound**:
+  a `%s`-based filter cannot see a scalar wrapped in `str(...)` or joined with `+` (there
+  is a live example in `api_normalize_url`'s "Failed to handle slug", which names a
+  caller-supplied slug). Most hits are SQL text, `db_table` names or
+  `param_qualified_name` and can hold no request data — `%r` everywhere is cheaper than a
+  per-site argument, which is why the worklist is stated as an over-approximation.
 
 ### Phase E — Test suite
 
