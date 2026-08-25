@@ -1,14 +1,35 @@
-################################################################################
-# do_update_mult_info.py
-#
-# Update the details of preprogrammed mult tables.
-################################################################################
+"""Write the checked-in display details back over the permanent ``mult_`` tables.
+
+A ``mult_`` table holds the enumerated values one column can take, along with how the
+web application should present them. Where a table schema pins those presentation
+details in a ``mult_options`` entry, this step copies them over whatever the import
+wrote, so that editing a schema is enough to change a label or a sort order without
+re-importing.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from opus_import import import_util
 
+if TYPE_CHECKING:
+    from opus_import.context import ImportContext
 
-def update_mult_info(ctx):
+
+def update_mult_info(ctx: ImportContext) -> None:
+    """Update every permanent ``mult_`` table whose schema pins its values.
+
+    The table's name says which schema and which column it belongs to, so the name is
+    split apart and matched against the packaged schemas. A table whose schema or column
+    cannot be found is reported and skipped rather than aborting the run, and a column
+    with no ``mult_options`` entry is left exactly as the import wrote it.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     # Find all the permanent mult_ tables

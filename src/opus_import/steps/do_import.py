@@ -1,10 +1,28 @@
-################################################################################
-# do_import.py
-#
-# This is the actual top-level import process.
-################################################################################
+"""The observation import: read the PDS holdings and fill the import tables.
+
+This is the step behind ``--import`` and the several options that imply it. It also owns
+the work for three options that are not steps of their own -- dropping the permanent
+tables under ``--drop-permanent-tables``, deleting bundles from the import tables under
+``--delete-import-bundles``, and analyzing the permanent tables under
+``--analyze-permanent-tables`` -- because each of them has to happen at a particular
+point in this sequence.
+
+Everything is written to the import namespace first and copied over the permanent tables
+only once the whole run has succeeded, so a failed import cannot leave the web
+application serving half a bundle. An error anywhere aborts before that copy, unless
+``--import-ignore-errors`` says otherwise.
+
+The per-bundle work is split across four modules that are not steps of their own:
+`opus_import.steps.do_import_tables` prepares the tables,
+`opus_import.steps.do_import_index` walks one index file,
+`opus_import.steps.do_import_obs` computes one row, and
+`opus_import.steps.do_import_mult` maintains the enumerated-value tables.
+"""
+
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 import pdsfile
 
@@ -17,13 +35,32 @@ from opus_import.steps import (
     do_import_tables,
 )
 
+if TYPE_CHECKING:
+    from opus_import.context import ImportContext
+
 ################################################################################
 # TOP-LEVEL IMPORT ROUTINES
 ################################################################################
 
-def import_one_bundle(ctx, bundle_id):
-    """Read the PDS data and perform all import functions for one bundle.
-       The results are left in the import namespace."""
+def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
+    """Import one bundle into the import namespace.
+
+    The bundle's primary index files are found by looking through its metadata
+    directories, and for PDS3 its own ``index`` directory as well, for the file names
+    `opus_import.config_bundle_info` says to expect. Every index found in the first
+    directory that has one is imported; later directories are not searched, so a bundle
+    whose indexes are split across directories imports only the first group.
+
+    Parameters:
+        ctx: The import run's context, which is reset to this bundle here.
+        bundle_id: The bundle to import.
+
+    Returns:
+        True if the bundle imported, and also if OPUS deliberately ignores it -- an
+        entry with no instrument class is one OPUS knows about and does not import.
+        False if the bundle is unknown, is not a bundle, has an unsupported PDS version,
+        no index file was found, or an index failed to import.
+    """
     ctx.logger.open(f'Importing {bundle_id}',
                     limits={'info': ctx.args.log_info_limit,
                             'debug': ctx.args.log_debug_limit})
@@ -121,8 +158,27 @@ def import_one_bundle(ctx, bundle_id):
 # THE MAIN IMPORT LOOP
 ################################################################################
 
-def do_import_steps(ctx):
-    "Do all of the steps requested by the user for an import."
+def do_import_steps(ctx: ImportContext) -> bool:
+    """Run the import work the command line asked for, in the one order that is safe.
+
+    The order is fixed by the foreign keys and by what each step needs to already exist:
+    the old import tables are dropped, then the permanent tables if ``--scorched-earth``
+    confirms it, then the bundles are imported, then the permanent tables get the
+    bundles the import produced -- deleted first, then created, then copied -- and
+    finally the import tables are dropped and the permanent ones analyzed.
+
+    The copy to the permanent tables is skipped when the import logged any error, so a
+    run that produced bad data leaves the web application on the previous import.
+    ``--import-ignore-errors`` overrides that, and also keeps the run going past a
+    bundle that failed.
+
+    Parameters:
+        ctx: The import run's context, whose per-run caches are reset here.
+
+    Returns:
+        True if everything asked for succeeded. False if a bundle failed and errors are
+        not being ignored, which is logged.
+    """
     ctx.import_has_bad_data = False
     ctx.max_table_id_cache = {}
     ctx.created_import_mult_tables = set()
@@ -196,15 +252,17 @@ def do_import_steps(ctx):
     # If --copy-import-to-permanent-tables or --delete-permanent-import-bundles
     # are given, delete all bundles that exist in the import tables from the
     # permanent tables.
+    db = ctx.db
+    assert db is not None
     import_bundle_ids = []
     if ((ctx.args.copy_import_to_permanent_tables or
          ctx.args.delete_permanent_import_bundles) and
-        ctx.db.table_exists('import', 'obs_general')):
+        db.table_exists('import', 'obs_general')):
         imp_obs_general_table_name = (
-            ctx.db.convert_raw_to_namespace('import', 'obs_general'))
-        q = ctx.db.quote_identifier
+            db.convert_raw_to_namespace('import', 'obs_general'))
+        q = db.quote_identifier
         import_bundle_ids = [x[0] for x in
-                      ctx.db.general_select(
+                      db.general_select(
     f'DISTINCT {q("bundle_id")} FROM {q(imp_obs_general_table_name)} ORDER BY {q("bundle_id")}')
                      ]
         if not old_perm_tables_dropped:
