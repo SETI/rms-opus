@@ -243,11 +243,13 @@ module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
 ignore_missing_imports = true
 
 # The type burn-down list is gone (plan PR-17, completed by PR-17b): `strict = true`
-# applies to the whole repository and no module is silenced. There is no
-# repository-wide exclusion either, so every tree the checker is pointed at is
-# checked strictly. `exclude` above holds only what is not project source at all --
-# the out-of-scope `perf_test/` directory and two generated or vendored files -- each
-# with its reason.
+# applies to the whole repository and no module is silenced by an `ignore_errors`
+# entry, because that list is empty. **That is the whole of the claim.** Suppression
+# has not vanished from this file and nobody should read it that way: `exclude` above
+# still holds the three paths that are not project source (`perf_test/`,
+# setuptools-scm's `_version.py`, Django's vendored `compress.py`), and the
+# `ignore_missing_imports` override above still covers the seven third-party packages
+# that ship neither annotations nor a typeshed stub. Each is documented where it sits.
 #
 # Nothing belongs here again. A tree that cannot pass the checker yet is not a
 # configuration problem: annotate it in the PR that owns it, or say at the site --
@@ -313,9 +315,10 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
 # Empty, and that is PR-01's exit criterion met (plan PR-17, finished by PR-17b).
-# Every tree in RUFF_PATHS -- src, integration_tests, tests, manage.py -- meets the
-# whole rule set with no per-file exception. What the burn-down held, and where each
-# entry went, so that nothing here has to be re-derived:
+# Every tree in RUFF_PATHS -- src, integration_tests, tests, manage.py -- passes
+# with no *per-file* exception. That is what an empty table means and all it means:
+# the six codes in `extend-ignore` above are still ignored globally and four paths
+# are still in `exclude`. What the burn-down held, and where each entry went:
 #
 #   E722, F403/F405   the bare `except:` and the star imports were refactored away
 #                     by the PRs that owned those trees.

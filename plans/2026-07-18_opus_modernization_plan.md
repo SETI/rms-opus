@@ -5431,17 +5431,31 @@ body; never rewrite or delete earlier notes.*
 - **2026-08-26 (PR-17b executed):** `integration_tests` is annotated, documented and
   PEP 8-named, and **both suppression tables are empty** -- PR-01's exit criterion
   met, and the end of Phase D. Facts later PRs rely on:
-  - **Nothing is silenced any more, and that is the state to keep.** `[tool.mypy]`
-    has no burn-down list and `[tool.ruff.lint.per-file-ignores]` has no rows. The
-    only exclusions left are the things that are not project source: the
-    out-of-scope `perf_test/`, setuptools-scm's generated `_version.py`, and Django's
-    vendored `admin/js/compress.py` -- which mypy and bandit name by exact path, so
-    that any Python placed beside it later is still checked, while **ruff excludes the
-    whole `src/opus_app/static` tree** it sits in. Ruff alone also excludes the
-    generated `search/models.py`. Both tables now carry a comment saying a new entry is not
-    the way to land code that does not pass -- fix it, or suppress the one rule on
-    the one line with the reason, which `warn_unused_ignores` and `RUF100` then keep
-    honest.
+  - **The two burn-down tables are empty. That is the claim, and it is narrower than
+    "nothing is silenced".** `[tool.mypy]` has no `ignore_errors` list and
+    `[tool.ruff.lint.per-file-ignores]` has no rows, so no tree and no file is
+    silenced wholesale. **Everything else in the configuration survives, and PR-18
+    and PR-19 should be able to enumerate it from here without opening
+    `pyproject.toml`:**
+
+    - **mypy** keeps three `exclude` paths -- the out-of-scope `perf_test/`,
+      setuptools-scm's generated `_version.py`, and Django's vendored
+      `admin/js/compress.py` -- plus `ignore_missing_imports` for seven third-party
+      packages (`julian`, `pdfkit`, `pdsfile`, `pdslogger`, `pdsparser`, `pdstable`,
+      `rest_framework`) that ship neither annotations nor a typeshed stub.
+    - **ruff** keeps four `exclude` paths -- `perf_test`, `_version.py`, the whole
+      `src/opus_app/static` tree (not just the one vendored file, which mypy and
+      bandit name by exact path so anything placed beside it stays checked), and the
+      generated `search/models.py` -- plus six codes in the global `extend-ignore`:
+      `PT011`, `SIM105`, `SIM108`, `PT009`, `PT027`, `E501`. **`PT009`/`PT027` and
+      `E501` are deliberate rulings** (rev 7.1 and rev 7.20), not leftovers.
+    - **bandit** keeps the `B101` category skip -- also a rev 7.20 ruling -- and its
+      `exclude_dirs`, which cover `integration_tests/{test_api,test_perf,test_db_data}`
+      but deliberately not `apps_db_tests`.
+
+    Both tables carry a comment saying a new row is not the way to land code that
+    does not pass -- fix it, or suppress the one rule on the one line with the
+    reason, which `warn_unused_ignores` and `RUF100` then keep honest.
   - **What the two entries were holding, measured on this PR's base `71779fc3`.**
     Regenerate rather than inherit: delete the entry and run the tool. Ruff: **164**
     -- 158 `N802`, 6 `N801`. Mypy: **4180 errors in 21 files** -- 1729
@@ -5658,14 +5672,19 @@ body; never rewrite or delete earlier notes.*
     flags: a plain run of that module walks past its own comparison. The dead default
     is pre-existing; its module docstring now says so rather than claiming the public
     server is checked by default.
-  - **Every finding of this PR's review was in its prose, not its code** -- one
-    blocking (a setting wrongly described as undeclared, and given a pointless
-    accessor because of it) and the rest counts and claims in these very notes that
-    were asserted rather than measured. The code changes, the renames, the coverage
-    delta and the base measurements all reproduced exactly under an independent
-    re-measurement. **The pattern to expect on an annotation PR is therefore not a
-    broken test; it is a sentence that was never checked**, and the cheapest guard is
-    to write no sentence whose measurement you cannot name.
+  - **One finding of this PR's review changed code; every other one changed prose.**
+    The blocking finding deleted a function -- the needless
+    `result_counts_against_internal_db` accessor -- and a second changed a signature
+    (`**kwargs: bool` to keyword-only flags); the rest were counts and claims in these
+    very notes, asserted rather than measured. No test broke, no annotation was wrong,
+    and the renames, the coverage delta and the base measurements all reproduced
+    exactly under independent re-measurement. **The pattern to expect on an annotation
+    PR is therefore rarely a broken test; it is a sentence that was never checked** --
+    and the cheapest guard is to write no sentence whose measurement you cannot name.
+    (An earlier version of this bullet said *every* finding was prose, while the
+    bullets a hundred lines above it record the deleted accessor. CodeRabbit found it
+    by reading the two against each other, which is the reconciliation move applied to
+    prose instead of to numbers.)
   - **The rule the orchestrator drew from the above, binding on PR-18 and PR-19,
     which both write a great many claims: before any sentence containing a number, a
     "nothing else", or an "all", you must have the command's output in hand -- and
@@ -5716,3 +5735,20 @@ body; never rewrite or delete earlier notes.*
     reach these tests -- a changed name still fails at once, at the forwarding call.
     And `allow_regex_errors` is declared but passed by no test; it is kept so the
     helper's surface matches the view's rather than because anything drives it.
+  - **You cannot sweep for a claim you have not noticed you are making**, which is the
+    companion to "a correction is a sweep, not an edit". When a change empties a
+    table, the thing to check is **not** "is the table empty" -- that is easy, local
+    and verifiable -- but **"what did I say the empty table means"**, which is a
+    sentence, is scattered, and is nowhere near the table. This PR emptied two
+    suppression tables and then wrote "nothing is silenced any more" into six places
+    across five files, while `ignore_missing_imports`, the `B101` skip and the global
+    `E501` ignore all survived -- two of them ruled deliberately by rev 7.20 hours
+    earlier. **A reader told nothing is silenced does not go looking for what is**,
+    and PR-18 and PR-19 read these notes as their briefing.
+    **The check is a grep for the *concept*, not for the string you happened to
+    edit**, across every file type rather than the one you were in: the six sites were
+    in YAML, TOML, shell and Markdown. A seventh that CodeRabbit missed was a
+    two-line sentence in `run-all-checks.sh` whose *second* line an earlier fix had
+    rewritten, leaving the first half dangling into it -- a broken claim produced by
+    correcting half of one. Grepping the wording found none of them; grepping the
+    concept (`silenced|no tree|no .* exception`) found all seven.
