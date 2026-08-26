@@ -40,9 +40,9 @@ class ObsRingGeometry(ObsBase):
         """Return the longitude offset between a planet's ring-plane node and J2000.
 
         Parameters:
-            planet: The OPUS planet id, as a mult column's value gives it --
-            which is why it is typed as widely as
-            `opus_import.obs.field_types.MultField`'s ``col_val``.
+            planet: The OPUS planet id, as a mult column's value gives it, which is
+                why it is typed as widely as
+                `opus_import.obs.field_types.MultField`'s ``col_val``.
 
         Returns:
             The offset in degrees, or None for a planet with no ring-plane longitude

@@ -39,10 +39,9 @@ class ObsBasePDS3(ObsBase):
         Parameters:
             row: The index row to read.
             convert_lbl: True to run the result through
-            `ObsBase.convert_filespec_from_lbl`.
+                `ObsBase.convert_filespec_from_lbl`.
             add_phase_from_row: True to append the phase this row's ``OPUS_ID`` names,
-            which
-                is what tells COVIMS's two geometry rows per observation apart.
+                which is what tells COVIMS's two geometry rows per observation apart.
             add_phase_from_inst: True to append this instance's own phase instead.
 
         Returns:

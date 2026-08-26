@@ -219,6 +219,9 @@ def test_the_hierarchy_is_actually_being_read() -> None:
     """
     found = _field_methods()
 
+    # Floors, not measurements: they exist only so that a scan returning nothing
+    # cannot pass. What the count should be is not a thing worth pinning here -- adding
+    # a field method is routine, and the checks below are what say whether it is right.
     assert len(found) > 1000, f'only {len(found)} field methods found'
     assert len({module for module, _c, _n, _l, _a in found}) > 40
 
@@ -700,10 +703,9 @@ def _instrument_for(fixture: dict[str, Any]) -> ObsBase:
                               import_ignore_missing_images=False,
                               import_report_inventory_mismatch=False)
     instrument = cls(make_context(args=args), bundle='TEST_BUNDLE', metadata=metadata)
-    # There are no holdings here, so the one thing an obs class asks the file system for
-    # is answered directly. Everything else it reads comes from the metadata above.
     # Replacing a bound method is the point: there are no holdings here, and this is
-    # the one thing an obs class asks the file system for.
+    # the one thing an obs class asks the file system for. Everything else it reads
+    # comes from the metadata above.
     instrument._pdsfile_from_filespec = (  # type: ignore[method-assign]
         lambda filespec: _FakePdsFile())
     return instrument
@@ -975,7 +977,7 @@ def test_the_geometry_row_stands_in_for_a_summary_file() -> None:
     assert row['MINIMUM_RING_RADIUS'] != row['MAXIMUM_RING_RADIUS']
     assert 'MINIMUM_RING_RADIUS_mask' not in row
     assert 'NO_SUCH_GEOMETRY_COLUMN' not in row
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match='NO_SUCH_GEOMETRY_COLUMN'):
         row['NO_SUCH_GEOMETRY_COLUMN']
 
 
@@ -1180,6 +1182,7 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
                 f'{name}:{node.lineno} {cls_name}.{fn.name} returns '
                 f'{ast.unparse(node.value)[:60]}')
 
+    # A floor, for the same reason as in `_field_methods`'s own check.
     assert len(functions) > 50, f'only {len(functions)} IntField functions examined'
     assert unconverted == []
 
