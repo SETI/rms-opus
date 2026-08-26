@@ -169,14 +169,35 @@ def test_every_mult_table_the_schemas_imply_resolves() -> None:
             if head in ('GROUP', 'MULTIGROUP'):
                 implied.append(
                     import_util.table_name_mult(path.stem, column['field_name']))
-    assert len(implied) > 80
+    # Exact, not a floor: a floor cannot see a table dropping out, which is what the
+    # name-splitting fault looked like. Regenerate deliberately when a schema changes.
+    assert len(implied) == 90
 
     db, logger = _run(implied)
 
     assert logger.messages_at('error') == []
-    # A column whose values are not pinned in the schema is left as the import wrote it,
-    # which is most of them; what matters is that none was skipped for being unresolvable.
-    assert len({table for table, _row, _where in db.updates}) > 50
+    # 55 of the 90 pin their values in the schema; the other 35 are left exactly as the
+    # import wrote them, which is the step doing nothing rather than failing.
+    assert len({table for table, _row, _where in db.updates}) == 55
+    assert len(db.updates) == 410
+
+    # Every row, against its schema entry by position -- not just the one table the
+    # test above checks, and not through `MultOption`.
+    expected = {}
+    for path in sorted(_SCHEMA_DIR.glob('obs_*.json')):
+        for column in json.loads(path.read_text(encoding='utf-8')):
+            if not isinstance(column, dict) or not column.get('mult_options'):
+                continue
+            table = import_util.table_name_mult(path.stem, column['field_name'])
+            for option in column['mult_options']:
+                row_id, _value, label, disp_order, display, grouping, gdo = option
+                expected[(table, row_id)] = {
+                    'label': str(label), 'disp_order': disp_order,
+                    'display': display, 'grouping': grouping,
+                    'group_disp_order': gdo}
+    written = {(table, where[0]): row for table, row, where in db.updates}
+
+    assert written == expected
 
 
 def test_an_entry_of_the_wrong_length_stops_the_step(

@@ -35,6 +35,7 @@ import inspect
 import json
 import textwrap
 import typing
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -42,19 +43,18 @@ import numpy as np
 import pytest
 
 import opus_support
-from opus_import import config_data, obs
+from opus_import import config_data, import_util, obs
 from opus_import.config_bundle_info import BUNDLE_INFO
 from opus_import.obs.field_types import MultField, as_int
 from opus_import.obs.obs_base import ObsBase
+from opus_import.steps.do_import_obs import field_function_name
 
 from .conftest import make_context
 
 _OBS_DIR = Path(obs.__file__).parent
 _SCHEMA_DIR = Path(config_data.__file__).parent / 'table_schemas'
+_VALUES_FIXTURE = Path(__file__).parent / 'fixtures' / 'obs_field_values.json'
 
-#: The columns a geometry summary file holds are all floating-point, which is what lets
-#: `_GeometryRow` stand in for one without naming any of them.
-_GEOMETRY_VALUE = 12.5
 
 
 def _alias_for(field_type: str | None, form_type: str | None) -> str | None:
@@ -95,7 +95,10 @@ def _schema_columns() -> dict[str, dict[str, Any]]:
         for column in json.loads(path.read_text(encoding='utf-8')):
             if not isinstance(column, dict) or column.get('field_name') is None:
                 continue
-            columns['field_' + table + '_' + column['field_name']] = column
+            # Through the pipeline's own rule, not a copy of it: changing how
+            # `import_run_field_function` builds the name it looks up changes what this
+            # test checks, which is the point of resolving them against each other.
+            columns[field_function_name(table, column['field_name'])] = column
     return columns
 
 
@@ -108,10 +111,12 @@ def _field_methods() -> list[tuple[str, str, str, int, str | None]]:
         source says the alias, which is what a reader of the module sees.
     """
     found = []
-    for path in sorted(_OBS_DIR.glob('*.py')):
+    for path in sorted(_OBS_DIR.rglob('*.py')):
         tree = ast.parse(path.read_text(encoding='utf-8'), str(path))
         for cls in [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]:
-            for fn in cls.body:
+            # ast.walk, not cls.body: a method defined inside an `if` block is still a
+            # method, and rglob because a subpackage's modules are still modules.
+            for fn in ast.walk(cls):
                 if not isinstance(fn, ast.FunctionDef):
                     continue
                 if not fn.name.startswith('field_obs_'):
@@ -141,19 +146,26 @@ def _declared_annotations() -> dict[str, str]:
 
 
 def _only_raises(method: Any) -> bool:
-    """Whether a method's whole body is a raise, which an abstract stub's is.
+    """Whether a method cannot produce a value, which an abstract stub cannot.
 
     Read from the source rather than by calling it: an obs class's field methods reach
     the index, and a stub is exactly the case where there is nothing to reach.
+
+    Asks whether the method *can return* rather than whether its body is one statement.
+    A stub that logs before raising is still a stub, and a check counting statements
+    would call it covered -- which is one line away from re-opening exactly the hole
+    this closes.
     """
     try:
         tree = ast.parse(textwrap.dedent(inspect.getsource(method)))
     except (OSError, TypeError, SyntaxError):  # pragma: no cover - not a Python method
         return False
-    # tree.body[0] is the FunctionDef just parsed; ast.Module.body is not narrowed.
-    body = [n for n in tree.body[0].body   # type: ignore[attr-defined]
-            if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
-    return len(body) == 1 and isinstance(body[0], ast.Raise)
+    fn = tree.body[0]
+    if not isinstance(fn, ast.FunctionDef):  # pragma: no cover - not a plain method
+        return False
+    returns = any(isinstance(n, ast.Return | ast.Yield) for n in ast.walk(fn))
+    raises = any(isinstance(n, ast.Raise) for n in ast.walk(fn))
+    return raises and not returns
 
 
 def _leaf_classes() -> list[type[ObsBase]]:
@@ -167,7 +179,14 @@ def _leaf_classes() -> list[type[ObsBase]]:
 
 
 def _tables_for(instrument: ObsBase) -> list[str]:
-    """Return the tables an instrument's bundle populates, as the import names them."""
+    """Return the tables an instrument's bundle populates, as the import names them.
+
+    The per-target surface geometry table keeps its real name, ``obs_surface_geometry__``
+    plus a target, rather than being normalized here. Both the schema lookup and the
+    method name are then resolved through the pipeline's own helpers, so the mapping
+    from that name back to ``obs_surface_geometry_target`` is something this test
+    exercises rather than reimplements.
+    """
     inst_id = instrument.instrument_id
     mission_name = config_data.MISSION_ID_TO_MISSION_TABLE_SFX[instrument.mission_id]
     tables = []
@@ -176,13 +195,17 @@ def _tables_for(instrument: ObsBase) -> list[str]:
         if inst_id is not None:
             table = table.replace('<INST>', inst_id.lower())
         table = table.replace('<MISSION>', mission_name.lower())
-        if table.startswith('obs_surface_geometry__'):
-            # Every per-target surface geometry table is built from one template, which
-            # is the table the field methods are named for.
-            table = 'obs_surface_geometry_target'
-        if (_SCHEMA_DIR / (table + '.json')).is_file():
+        table = table.replace('<TARGET>', 'saturn')
+        if _schema_for(table) is not None:
             tables.append(table)
     return tables
+
+
+def _schema_for(table: str) -> list[dict[str, Any]] | None:
+    """Return a table's packaged schema, through the reader the pipeline uses."""
+    schema: list[dict[str, Any]] | None = import_util.read_schema_for_table(
+        make_context(), table)
+    return schema
 
 
 # --- Layer 1: the annotations agree with the schemas ---------------------------------
@@ -240,9 +263,9 @@ def test_every_column_the_import_computes_has_a_field_method() -> None:
         instrument = cls(make_context(), bundle='TEST_BUNDLE')
         for table in _tables_for(instrument):
             for name, column in columns.items():
-                if not name.startswith('field_' + table + '_'):
-                    continue
                 if column.get('data_source') != 'COMPUTE':
+                    continue
+                if name != field_function_name(table, column['field_name']):
                     continue
                 method = getattr(cls, name, None)
                 if method is None:
@@ -397,7 +420,12 @@ class _GeometryRow(dict[str, Any]):
     def __getitem__(self, key: str) -> Any:
         if key not in _GEOMETRY_COLUMNS:
             raise KeyError(key)
-        return _GEOMETRY_VALUE
+        # A value derived from the name, not one shared by every column: with a single
+        # constant, swapping one geometry column for another real one reads back the
+        # same number and nothing downstream can tell. Held between 1 and 90 so that it
+        # is plausible for an angle as well as a radius, and stable across runs and
+        # interpreters, which `hash` is not.
+        return 1.0 + zlib.crc32(key.encode()) % 8900 / 100.0
 
 
 class _FakePdsFile:
@@ -751,12 +779,12 @@ def _is_mult(value: Any) -> bool:
 #: or a field method changes, and read a change as something to explain rather than to
 #: paper over.
 _EXPECTED_RETURNS: dict[str, tuple[int, int]] = {
-    'COISS': (316, 271),
-    'GOSSI': (300, 253),
-    'HSTWFPC2': (308, 237),
-    'NHLORRI': (295, 250),
-    'VGISS': (303, 251),
-    'eso-la_silla.1m04': (285, 235),
+    'COISS': (249, 215),
+    'GOSSI': (233, 197),
+    'HSTWFPC2': (241, 181),
+    'NHLORRI': (228, 194),
+    'VGISS': (236, 195),
+    'eso-la_silla.1m04': (218, 179),
 }
 
 
@@ -784,15 +812,19 @@ def _drive_fixture(instrument_id: str,
     returned = non_null = 0
     for table in _tables_for(instrument):
         for name, column in columns.items():
-            if not name.startswith('field_' + table + '_'):
-                continue
             if column.get('data_source') != 'COMPUTE':
+                continue
+            # Matched through the pipeline's own rule rather than by prefix. A prefix
+            # also matches a longer table's name -- `obs_surface_geometry` is a prefix
+            # of `obs_surface_geometry_name` and of `obs_surface_geometry_target` --
+            # which drove 66 methods twice, each time under the wrong table.
+            if name != field_function_name(table, column['field_name']):
                 continue
             # `_metadata` is `dict | None` on ObsBase; `_instrument_for` always
             # supplies one, which the checker cannot see through the attribute.
             instrument._metadata['table_name'] = table   # type: ignore[index]
             instrument._metadata['field_name'] = (       # type: ignore[index]
-                name[len('field_' + table + '_'):])
+                column['field_name'])
             try:
                 value = getattr(instrument, name)()
             except Exception as exc:
@@ -809,6 +841,75 @@ def _drive_fixture(instrument_id: str,
                                             and value['col_val'] is None):
                 non_null += 1
     return wrong, raised, returned, non_null
+
+
+def _values_for(instrument_id: str) -> dict[str, Any]:
+    """Return every value one mission's class produces, keyed by table and method.
+
+    Returns:
+        One entry per method driven, as a JSON-representable value: a mult dictionary
+        keeps its keys, and anything else is the value itself. Floats are rounded,
+        because the last bits of a division are not what this is pinning.
+    """
+    instrument = _instrument_for(_MISSION_FIXTURES[instrument_id])
+    columns = _schema_columns()
+    values: dict[str, Any] = {}
+    for table in _tables_for(instrument):
+        for name, column in columns.items():
+            if column.get('data_source') != 'COMPUTE':
+                continue
+            if name != field_function_name(table, column['field_name']):
+                continue
+            # `_metadata` is `dict | None` on ObsBase; `_instrument_for` always
+            # supplies one, which the checker cannot see through the attribute.
+            instrument._metadata['table_name'] = table   # type: ignore[index]
+            instrument._metadata['field_name'] = (       # type: ignore[index]
+                column['field_name'])
+            values[f'{table}/{name}'] = _jsonable(getattr(instrument, name)())
+    return values
+
+
+def _jsonable(value: Any) -> Any:
+    """Render a returned value as something JSON can hold, without losing its shape."""
+    if isinstance(value, float):
+        return round(value, 6)
+    if isinstance(value, dict):
+        return {k: _jsonable(v) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [_jsonable(v) for v in value]
+    return value
+
+
+def test_every_value_is_the_one_recorded(request: pytest.FixtureRequest) -> None:
+    """Every field method produces the value it produced when this was recorded.
+
+    The layers above check *types*, and a type check cannot see a unit conversion, a
+    transposed pair, an inverted branch, or a geometry column swapped for a different
+    real one -- all of which keep the type and change the answer. This pins the answers.
+
+    A failure here is not necessarily a defect: a deliberate change to a field method
+    changes what it produces, and the fixture is regenerated. It is a prompt to say
+    which change caused it, which is exactly what nothing else in this file asks.
+
+    Regenerate with::
+
+        OPUS_CONFIG=tests/fixtures/opus_ci.toml pytest \
+            tests/opus_import/test_obs_field_annotations.py --regenerate-obs-values
+
+    and read the resulting diff: every line of it is a change in what the import would
+    store.
+    """
+    actual = {instrument_id: _values_for(instrument_id)
+              for instrument_id in sorted(_MISSION_FIXTURES)}
+    if request.config.getoption('--regenerate-obs-values'):
+        _VALUES_FIXTURE.write_text(
+            json.dumps(actual, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+        pytest.skip(f'regenerated {_VALUES_FIXTURE}')
+    expected = json.loads(_VALUES_FIXTURE.read_text(encoding='utf-8'))
+
+    assert set(actual) == set(expected)
+    for instrument_id in sorted(actual):
+        assert actual[instrument_id] == expected[instrument_id], instrument_id
 
 
 @pytest.mark.parametrize('instrument_id', sorted(_MISSION_FIXTURES))
@@ -869,7 +970,9 @@ def test_the_geometry_row_stands_in_for_a_summary_file() -> None:
     row = _GeometryRow()
 
     assert 'MINIMUM_RING_RADIUS' in row
-    assert row['MINIMUM_RING_RADIUS'] == _GEOMETRY_VALUE
+    assert 1.0 <= row['MINIMUM_RING_RADIUS'] <= 90.0
+    assert row['MINIMUM_RING_RADIUS'] == row['MINIMUM_RING_RADIUS']
+    assert row['MINIMUM_RING_RADIUS'] != row['MAXIMUM_RING_RADIUS']
     assert 'MINIMUM_RING_RADIUS_mask' not in row
     assert 'NO_SUCH_GEOMETRY_COLUMN' not in row
     with pytest.raises(KeyError):

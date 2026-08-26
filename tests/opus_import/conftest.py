@@ -63,3 +63,14 @@ def _opus_config(ci_config_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     process-wide cache is cleared around every test by the root conftest.
     """
     monkeypatch.setenv(OPUS_CONFIG_ENV_VAR, str(ci_config_path))
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add the option that rewrites the obs field-value fixture.
+
+    Parameters:
+        parser: The pytest command-line parser.
+    """
+    parser.addoption('--regenerate-obs-values', action='store_true', default=False,
+                     help='Rewrite tests/opus_import/fixtures/obs_field_values.json '
+                          'from what the obs classes currently produce.')
