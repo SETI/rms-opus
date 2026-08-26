@@ -5181,6 +5181,22 @@ body; never rewrite or delete earlier notes.*
     piped through a `%s` filter now returns nothing, comments included. The 101
     `str(...)`-wrapped arguments were deliberately left wrapped: `str` and `repr`
     agree for the mappings and lists they carry.
+  - **A test does assert log text, which the `%r` sweep found the hard way.**
+    PR-13's notes say the widget-slug log line "was changed to match it but
+    nothing asserts log text" -- true of the golden fixtures, and false of the
+    unit suite PR-13 itself added. `test_api_view.py::
+    test__api_view_logs_an_unhandled_exception_with_its_traceback` asserts the
+    message of `api_view`'s 500 record, so rewriting
+    `log.exception('%s: Unhandled exception', handler.__name__)` to `%r` failed
+    it -- caught by the integration chain, not by the unit suite, because that
+    file is not collected by a bare `pytest`. The sweep was kept and the
+    assertion updated, rather than exempting the one site: `handler.__name__` is
+    a Python identifier and cannot carry CR/LF, so `%r` buys nothing there, but
+    an invariant with no exceptions is checkable in one grep and an invariant
+    with one exception is not. **The general point for a later sweep: search the
+    suites for `assertLogs`/`getMessage`/`caplog` before rewriting log formats.**
+    Only that one assertion was sensitive; the other three in that file match on
+    substrings no placeholder touches.
   - **Defects found while annotating the Django side, none fixed here.** Written
     out so nobody re-derives them. In `cart/views.py`: `_create_csv_file`'s 500
     response is discarded by `api_create_download`, which then fails later with a

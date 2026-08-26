@@ -187,7 +187,9 @@ class ApiViewTests(TestCase):
         self.assertEqual(1, len(captured.records))
         record = captured.records[0]
         self.assertIsNotNone(record.exc_info)
-        self.assertIn('handler: Unhandled exception', record.getMessage())
+        # The handler name is interpolated with %r, like every other value
+        # a log message in this app carries, so it is quoted.
+        self.assertIn("'handler': Unhandled exception", record.getMessage())
 
     def test__the_500_body_escapes_the_request_path(self):
         "[test_api_view.py] api_view: a hostile request path cannot inject HTML"
