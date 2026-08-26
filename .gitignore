@@ -34,3 +34,5 @@ build/
 dist/
 *.egg-info/
 src/opus_config/_version.py
+# Agent isolation worktrees (created by Claude Code; never part of the tree)
+.claude/worktrees/
