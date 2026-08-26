@@ -4648,6 +4648,39 @@ body; never rewrite or delete earlier notes.*
        Discovering the overlap late is the failure mode to prevent -- this one is 1405
        values from 6 leaf classes driven off synthetic metadata, and its scope note is
        in the test's own docstring.
+    2. **A test that re-implements the rule it is checking checks nothing.** Layer 1 had
+       its own copy of how `import_run_field_function` builds a method name, so changing
+       the production rule left every test green. The rule is
+       `opus_import.steps.do_import_obs.field_function_name` now and the test calls it.
+       That change also exposed a fault in the test: matching a method name **by prefix**
+       also matches a longer table's, so `obs_surface_geometry` was claiming the
+       `obs_surface_geometry_name` and `obs_surface_geometry_target` methods and driving
+       66 methods twice under the wrong table.
+    3. **A stub that logs before raising is still a stub.** A check that counts
+       statements calls it covered.
+    4. **An AST scan sees only what it walks, and a partial scan passes.**
+       ``glob('*.py')`` misses a subpackage and ``cls.body`` misses a method nested in an
+       ``if``; both make a definition invisible to every source-level check, and neither
+       announces itself, because the result of under-scanning is a green test. Both were
+       written here, both were fixed, and then **`cls.body` was reintroduced a few
+       hundred lines below the fix, in the same file**, by a scan written afterwards --
+       the floor of `> 50` could not catch it, since a scan seeing a third of the tree
+       still clears 50. The fix that closes the class rather than the instance is
+       `tests/opus_import/_source_scan.py`: the traversal lives in one module the
+       source-reading tests import, so a future scan cannot reintroduce either blind
+       spot without deliberately not using it. **Import the traversal; do not write it
+       again.** Measured when the shared helper went in: the reintroduced `cls.body`
+       scan was missing 0 definitions *today* -- `obs/` is flat and nothing nests a
+       method in an ``if`` -- so this was latent rather than live, which is exactly why
+       it survived review twice. And a floor that a partial scan clears is a weak
+       assertion in general: where a count can be derived from an independent traversal,
+       assert against that instead of a constant, and where it cannot, say in the
+       docstring what the floor does *not* protect against.
+    The behavioral layer found a real defect on its first run, which is the argument for
+    keeping it: `field_obs_instrument_coiss_image_number` declared an integer for an
+    `int4` column and returned the index column verbatim, which COISS_2002's own
+    `index.lbl` declares `CHARACTER`. Only the database's coercion was making the stored
+    value an integer.
   - **Rebase before starting a long run, never during one.** The local integration chain
     is 30-45 minutes, and PR-17 and PR-19 both face it against a `rewrite` that may have
     moved. Rebasing while one is in flight rewrites the working tree under the running
@@ -4672,24 +4705,30 @@ body; never rewrite or delete earlier notes.*
     `opus_main_test.sh` does **not** call `opus_check_coverage.sh` -- it leaves
     `coverage_report.txt` in the repo root and CI checks it in a later step, so a local
     run proving "100%" has to run that script itself.
-    2. **A test that re-implements the rule it is checking checks nothing.** Layer 1 had
-       its own copy of how `import_run_field_function` builds a method name, so changing
-       the production rule left every test green. The rule is
-       `opus_import.steps.do_import_obs.field_function_name` now and the test calls it.
-       That change also exposed a fault in the test: matching a method name **by prefix**
-       also matches a longer table's, so `obs_surface_geometry` was claiming the
-       `obs_surface_geometry_name` and `obs_surface_geometry_target` methods and driving
-       66 methods twice under the wrong table.
-    3. **A stub that logs before raising is still a stub.** A check that counts
-       statements calls it covered.
-    4. **An AST scan sees only what it walks.** ``glob('*.py')`` misses a subpackage and
-       ``cls.body`` misses a method nested in an ``if``; both make a definition invisible
-       to every source-level check.
-    The behavioral layer found a real defect on its first run, which is the argument for
-    keeping it: `field_obs_instrument_coiss_image_number` declared an integer for an
-    `int4` column and returned the index column verbatim, which COISS_2002's own
-    `index.lbl` declares `CHARACTER`. Only the database's coercion was making the stored
-    value an integer.
+  - **Three crash-on-None sites in the obs hierarchy, two fixed here and one class to
+    watch for.** All three predate this PR and share a shape: a value read from a PDS
+    index is concatenated into a string without checking it, and `_index_col` returns
+    None both when the column is absent and when the table's mask marks it missing. The
+    fix in each case is the *established* shape rather than a new one -- `ObsBase.opus_id`
+    and the PDS3 filespec helpers already treat a None filespec as "this observation has
+    no filespec", log it and return None. Fixed: `obs_volume_cocirs_56xxx.primary_filespec`
+    (`self.bundle + '/' + filespec`, `TypeError` and the bundle aborts, triggered by a
+    COCIRS_5xxx/6xxx row whose `SPECTRUM_FILE_SPECIFICATION` is absent or masked) and
+    `obs_volume_covims_0xxx`'s two `spacecraft_clock_count` methods (`'1/' + count`, same
+    mechanism, on a missing `SPACECRAFT_CLOCK_START_COUNT`/`STOP_COUNT`). **The covims one
+    carries a lesson worth more than the fix**: PR-16 added a `if sc is None: log; return`
+    guard to those methods whose message named the missing-count case exactly -- and the
+    guard was unreachable in both directions, because the missing case raises two lines
+    earlier and `_fix_cassini_sclk` returns None only for a None input. A guard that
+    cannot fire is worse than no guard: it tells a reader the case is handled. **Check
+    the raw value, not the derived one.**
+  - **`as_int` raises on a non-integral value rather than truncating.** `int(3.7)` is 3
+    with no error, so a `float` reaching an `IntField` column would have been stored
+    silently rounded -- changed data that passes every downstream check, which is the
+    exact failure this annotation work exists to prevent. It now raises `ValueError`,
+    which `import_run_field_function` reports while leaving the column empty. A string is
+    exempted from the round-trip check because `int` already rejects a non-integral
+    string and `12 != '12'` would otherwise fire on every valid digit string.
   - **Where the aliases live and what they mean.**
     `opus_import/obs/field_types.py` holds `StrField`, `FloatField`, `IntField`, the
     `MultField` TypedDict and `MultFieldRet`. The module is named `field_types` and not
