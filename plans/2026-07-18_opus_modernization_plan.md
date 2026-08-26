@@ -5308,11 +5308,25 @@ body; never rewrite or delete earlier notes.*
     Checked at PR-17a: no fragments present and `COVERAGE_PROCESS_START` unset,
     so nothing is wrong today. CI is safe by construction -- `actions/checkout@v4`
     cleans the workspace each run -- but a local chain is not.
-  - **The integration coverage baseline moves to 22264 statements / 1882
-    branches, 100%**, from PR-13/14/15's 22161 / 1880. The whole delta is this
-    PR's own additions to `src/opus_app/apps/*` (assertions, narrowings, the
-    two-name splits) minus the 32 statements and 24 branches the two new
-    `exclude_lines` entries remove. `Ran 1643 tests` is unchanged.
+  - **The integration coverage baseline moves to 22279 statements / 1884
+    branches, 100%, with `Ran 1645 tests`**, from PR-13/14/15's 22161 / 1880 /
+    1643. Most of the delta is this PR's own additions to
+    `src/opus_app/apps/*` (assertions, narrowings, the two-name splits) minus
+    the 32 statements and 24 branches the two new `exclude_lines` entries
+    remove; the last +15 / +2 / +2 are the two `is None` guards behind the
+    unknown-slug 400 fix, the extracted `_log_api_call_line`, and the two
+    regression tests covering them.
+    *(This bullet first shipped 22264 / 1882 / "1643 unchanged" — measured on
+    `17fe81d7`, true when written and false at the head that shipped. It is the
+    failure mode this same notes section names, committed inside the bullet
+    naming it.* **Reconcile numbers; do not proofread them.** *It was caught by
+    reconciling deltas — +2 tests, +2 branches, +15 statements, each
+    attributable — not by re-reading the sentence, because reconciliation forces
+    every number to be derived twice from independent directions.* **A number you
+    can only obtain by reading it off a report is a number you have not
+    checked.** *That is the practical form of "re-measure on the shipping head":
+    the re-measurement is worthless unless something independent predicts what it
+    should say.)*
   - **A test does assert log text, which the `%r` sweep found the hard way.**
     PR-13's notes say the widget-slug log line "was changed to match it but
     nothing asserts log text" -- true of the golden fixtures, and false of the
