@@ -98,9 +98,6 @@ class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
     def field_obs_instrument_couvis_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_couvis_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_instrument_couvis_observation_type(self):
         return self._create_mult('NONE')
 

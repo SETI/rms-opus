@@ -429,9 +429,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def field_obs_instrument_cocirs_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_cocirs_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_instrument_cocirs_detector_id(self):
         return self._create_mult(self._supp_index_col('DETECTOR_ID'))
 

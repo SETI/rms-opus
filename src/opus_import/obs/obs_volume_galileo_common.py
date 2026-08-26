@@ -31,9 +31,6 @@ class ObsVolumeGalileoCommon(ObsCommonPDS3):
     def field_obs_mission_galileo_bundle_id(self):
         return self.bundle
 
-    def field_obs_mission_galileo_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_mission_galileo_orbit_number(self):
         raise NotImplementedError
 

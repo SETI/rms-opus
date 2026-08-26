@@ -70,9 +70,6 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
     def field_obs_mission_voyager_bundle_id(self):
         return self.bundle
 
-    def field_obs_mission_voyager_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_mission_voyager_ert(self):
         if not self._col_in_index('EARTH_RECEIVED_TIME'):
             return None

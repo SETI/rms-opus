@@ -58,9 +58,6 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
     def field_obs_instrument_coiss_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_coiss_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_instrument_coiss_data_conversion_type(self):
         return self._create_mult(self._index_col('cassini:data_conversion_type'))
 

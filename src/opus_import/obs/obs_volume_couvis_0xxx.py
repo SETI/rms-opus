@@ -364,9 +364,6 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     def field_obs_instrument_couvis_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_couvis_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_instrument_couvis_observation_type(self):
         obstype = self._index_col('OBSERVATION_TYPE')
         if obstype == '' or obstype == 'NULL':

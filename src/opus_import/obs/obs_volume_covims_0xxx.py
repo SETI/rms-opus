@@ -256,9 +256,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     def field_obs_instrument_covims_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_covims_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_instrument_covims_instrument_mode_id(self):
         return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 

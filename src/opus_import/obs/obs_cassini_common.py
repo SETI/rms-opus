@@ -653,9 +653,6 @@ class ObsCassiniCommon(ObsBase):
     def field_obs_instrument_coiss_bundle_id(self):
         return None
 
-    def field_obs_instrument_coiss_instrument_id(self):
-        return None
-
     def field_obs_instrument_coiss_data_conversion_type(self):
         return self._create_mult(None)
 

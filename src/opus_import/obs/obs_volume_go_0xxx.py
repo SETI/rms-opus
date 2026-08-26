@@ -277,9 +277,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     def field_obs_instrument_gossi_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_gossi_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_instrument_gossi_observation_id(self):
         return self._index_col('OBSERVATION_ID')
 

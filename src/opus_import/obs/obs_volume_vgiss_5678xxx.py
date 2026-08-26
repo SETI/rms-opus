@@ -187,9 +187,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def field_obs_instrument_vgiss_bundle_id(self):
         return self.bundle
 
-    def field_obs_instrument_vgiss_instrument_id(self):
-        return self.instrument_id
-
     def field_obs_instrument_vgiss_image_id(self):
         return self._index_col('IMAGE_ID')
 
