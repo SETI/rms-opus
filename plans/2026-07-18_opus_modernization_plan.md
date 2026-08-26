@@ -4622,10 +4622,14 @@ body; never rewrite or delete earlier notes.*
     that column's alias; it also fails on a method no column names, on a computed column
     no leaf class can answer, and on a computed column the table does not cover. Its
     second layer builds one instrument per mission from a metadata fixture and checks
-    the runtime type of every value returned. **The layers were checked by mutation, and
-    a later PR that changes them should re-run that** -- breaking an annotation, adding a
-    method no column names, dropping an annotation, returning the wrong runtime type and
-    renaming a method a column needs are each caught by the test meant to catch them.
+    the runtime type of every value returned. **The layers are checked by mutation, and a later PR that changes them must re-run
+    that rather than reason about it.** The first version of this file passed a
+    mutation set the executor chose and failed four an independent reviewer chose --
+    a field method raising, `ObsBase._index_col` raising, a geometry column renamed to
+    one that does not exist, and a transposition inside `MultOption` all left it green.
+    The set it now survives is in the PR description; the lesson is that **the mutations
+    worth running are the ones you did not think of**, so hand the job to someone who
+    is trying to break it.
     The behavioral layer found a real defect on its first run, which is the argument for
     keeping it: `field_obs_instrument_coiss_image_number` declared an integer for an
     `int4` column and returned the index column verbatim, which COISS_2002's own
@@ -4682,7 +4686,19 @@ body; never rewrite or delete earlier notes.*
     entries in 15 files, all of length seven. The step also writes the grouping pair,
     which the six-value unpack could never reach -- 54 of the 410 entries pin a
     `grouping` and a `group_disp_order`, so an update stopping at `display` left a schema
-    edit half-applied. **`MultOption` is not `MultField`**: the first is a schema entry's
+    edit half-applied.
+    **A second fault in the same step was found only by driving it over every table the
+    schemas imply.** A mult table's name is its observation table's name joined to its
+    column's, and both halves contain underscores, so the split has to be found by
+    trying; the loop took the first split whose *schema* resolved, and since
+    `obs_surface_geometry` and `obs_surface_geometry_name` are both real tables,
+    `mult_obs_surface_geometry_name_target_name` matched at the shorter one and left a
+    column that exists nowhere. The split is now the one where the schema *and* the
+    column both resolve. State the outcome as the measurement rather than as "it works":
+    over the 90 `mult_` tables the packaged schemas imply, **55 updated, 35 left alone
+    because their columns pin no `mult_options`, 0 errors** -- against 55 / 34 / 1
+    before. Contrived table names never exercised this, which is why the test now drives
+    the implied 90. **`MultOption` is not `MultField`**: the first is a schema entry's
     seven-element JSON list, the second is `_create_mult`'s eight-key return dictionary,
     and they use different vocabulary for the same ideas (`value`/`display`/`label`
     against `col_val`/`disp`/`disp_name`).
@@ -4723,9 +4739,16 @@ body; never rewrite or delete earlier notes.*
     have raised `TypeError`. The parameter is declared in the base's position, and every
     call site in the repository passes `row` positionally and everything else by keyword,
     so no call binds differently. 70 callables disappeared and 8 appeared, all of them
-    accounted for by the three deletions and the two abstract stubs above. **Re-run that
-    comparison after any later annotation PR**: a rename is invisible to a grep for
-    positional calls, which is why it compares names.
+    accounted for by the three deletions and by five abstract stubs -- three on
+    `ObsBase` (`_pdsfile_from_filespec`, `_time_from_some_index`,
+    `_time2_from_some_index`) and one each on `ObsVolumeHubbleCommon` and
+    `ObsVolumeVoyagerCommon`. **Re-run that comparison after any later annotation PR**:
+    a rename is invisible to a grep for positional calls, which is why it compares
+    names. **State the inclusion rule alongside any count taken from it** -- an
+    independent reviewer's script counted 1532 rather than 1519 on the same trees,
+    because "public callable" can reasonably include or exclude a NamedTuple's
+    synthesized methods and a property's setter. The three claims that matter
+    (two changed signatures, no rename, 70 removed) reproduced exactly under both.
   - **A mixin that needs a method from a sibling mixin declares it under
     `if TYPE_CHECKING:`.** `ObsRingGeometry` and `ObsCassiniCommon` call
     `obs_general`'s field methods, which their own base does not have. The block adds
@@ -4757,6 +4780,47 @@ body; never rewrite or delete earlier notes.*
     `do_import_obs` asserts the class it was handed mixes the module in; a later PR that
     wants to be rid of those two assertions should move the declarations, not the
     assertions.
+  - **`numpy` does not subclass `int`, and that is why `IntField` needed a coercion
+    rather than a wider union.** ``pdstable`` parses an integer index column with numpy,
+    so what reaches a field method is a `numpy.int64` --  and
+    ``isinstance(numpy.int64(0), int)`` is **False**. The asymmetry is the trap and is
+    worth memorizing: `numpy.float64` **does** subclass `float` and `numpy.str_`
+    **does** subclass `str`, so `FloatField` and `StrField` were true all along and
+    nothing pointed at the one alias that was not. `opus_import.obs.field_types.as_int`
+    is the single place the boundary is enforced; a later PR annotating another package
+    that reads ``pdstable`` should expect the same and reach for the same shape rather
+    than widening an alias to `int | numpy.integer | None`, which would push numpy into
+    the vocabulary every consumer inherits.
+  - **A tool's blind spot is not evidence of absence, and this is a distinct failure
+    mode from the quantifier one.** This PR claimed a scan for repeated blocks
+    "reports nothing else" and a reviewer immediately found a duplicated single line:
+    the scan looked for runs of three or more identical lines and therefore could not
+    see a one-line duplicate. **When you cite a scan, state what it cannot see** -- the
+    same discipline the quantifier rule asks for, applied to the instrument instead of
+    to the count. The related shape, which cost this PR three findings, is a
+    justification that is *wrong* under a conclusion that is *right*: a change correctly
+    described as inert, for a reason that does not hold. It is more dangerous than a
+    plainly false claim, because a reader who spot-checks the outcome finds nothing
+    wrong.
+  - **Two pre-existing defects found while annotating, left for a later PR.** Both are
+    byte-identical at `7691a720`, so neither is this PR's to fix, and each is written
+    out so nobody re-derives it:
+    1. **`ObsVolumeVG2801VGPPS.field_obs_ring_geometry_observer_ring_elevation2` is
+       byte-identical to `...elevation1`**, where the `solar_ring_elevation` pair four
+       lines above it correctly swaps 1 and 2 between the two methods. This looks like a
+       **live data defect rather than dead code**: both methods are dispatched to, so
+       the `obs_ring_geometry` rows of every bundle these classes import carry the same
+       value in `observer_ring_elevation1` and `observer_ring_elevation2` where the
+       other elevation pair carries two. The affected bundles are VG_2801 and VG_2802
+       (`ObsVolumeVG2801VGPPS` and `ObsVolumeVG2802VGUVS`, both through
+       `ObsVolumeVG28xxVGPPSUVS`). Whoever picks it up should start by confirming the
+       stored values against the archive rather than by reading the code, since the
+       symmetry argument alone does not say which of the two is wrong.
+    2. **`ObsVolumeCOCIRS01xxx._is_cassini_at_north` has no caller anywhere in the
+       repository.** Vulture does not flag it, because the whole obs hierarchy is
+       dynamically dispatched. This PR gave it a docstring and a narrowing assertion
+       rather than deleting it, since a helper with no caller is not the same kind of
+       dead as a method the dispatcher can never name.
   - **Verification evidence.** `scripts/run-all-checks.sh -c` clean over 212 source files
     (ruff, the strict type check with both burn-down entries removed, pytest, pyroma,
     bandit, vulture). The unit suite is **1146 passed**, against 1124 at `7691a720` --
