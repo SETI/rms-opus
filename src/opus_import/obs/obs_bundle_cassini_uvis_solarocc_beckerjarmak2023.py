@@ -69,7 +69,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         if occ_dir is None:
             self._log_nonrepeating_error(
                 '"rings:ring_profile_direction" and "rings:time_series_direction" are missing')
-            return None
+            return self._create_mult(None)
         occ_dir = occ_dir.upper()
         if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
             return self._create_mult(occ_dir[0])
