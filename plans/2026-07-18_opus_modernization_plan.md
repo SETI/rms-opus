@@ -5658,3 +5658,45 @@ body; never rewrite or delete earlier notes.*
     re-measurement. **The pattern to expect on an annotation PR is therefore not a
     broken test; it is a sentence that was never checked**, and the cheapest guard is
     to write no sentence whose measurement you cannot name.
+  - **The rule the orchestrator drew from the above, binding on PR-18 and PR-19,
+    which both write a great many claims: before any sentence containing a number, a
+    "nothing else", or an "all", you must have the command's output in hand -- and
+    you must have looked at its exit status. Not the command *run*: the output
+    *read*.**
+    Two distinct failures collapse into that one rule, and the second is the worse
+    of them:
+    1. **A stale measurement was true once.** PR-17a's notes name this: measured
+       correctly, then shipped against a different tree. It is caught by re-measuring
+       on the head you ship.
+    2. **A claim written from a command that crashed was never true at all.** This
+       PR's MRO-equivalence sentence was written from a script that raised an
+       `AssertionError` partway through and printed no per-class result. Nothing was
+       measured; the sentence was an expectation in the grammar of a measurement.
+       Re-measuring on the right head does not catch this, because there was no
+       measurement to re-take. Only reading the output does.
+    The same shape in shell, already recorded at PR-16 and worth repeating here
+    because it is how an unread output *looks* read: **a pipeline's exit status is
+    its last command's**, so `cmd | tail; echo $?` reports on `tail` and prints a
+    green `0` under a wall of errors. Capture with `${PIPESTATUS[0]}`, or do not
+    pipe.
+
+    Two corollaries this PR paid for:
+
+    - **A tool does not immunize its author.** The bullet that listed a third of its
+      residual set and said "and nothing else" was the bullet *about the AST checker
+      built to stop exactly that*. Writing the tool, and describing it accurately,
+      are separate acts.
+    - **Every fix is a re-measurement trigger, not just the last one.** Deleting the
+      needless accessor changed the definition count from 1740 to 1739 and so
+      falsified the docstring total that had been corrected minutes earlier in the
+      same batch. Re-derive after the batch, not during it.
+  - **A suppression that suppresses nothing is invisible to every gate here.** The
+    blocking finding of this PR's review was a `getattr` wrapped around a setting
+    that *is* declared. It does not fail, does not warn, and reads as defensive,
+    while quietly opting the one genuinely checked setting out of its check --
+    `ruff`, `mypy`, `bandit`, `vulture`, the unit suite and the integration suite are
+    all silent on it, by construction. Only a reader asking "why is this here?" finds
+    it. **The check is one command: remove it and see whether anything complains.**
+    Its cause is worth naming too, because it is not carelessness: the inference was
+    "two settings written by the same `manage.py` block must be alike". Plausible,
+    cheap to test, untested.
