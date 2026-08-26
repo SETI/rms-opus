@@ -41,12 +41,15 @@ GOOD_SCLK = '1/1294561143.125'
 BAD_SCLK = '1/zzz'
 
 
-def _obs(cls: type, columns: dict[str, Any]) -> tuple[Any, list[str]]:
+def _obs(cls: type[ObsBase], columns: dict[str, Any]) -> tuple[Any, list[str]]:
     """Build an obs object of `cls` whose column reads come from `columns`.
 
     Returns the object and the list its logging is captured into.
     """
-    obs = cls.__new__(cls)
+    # Deliberately untyped: the helper replaces bound methods on the instance, which
+    # is what lets a real obs class be driven without an index file, and which no
+    # annotation can express.
+    obs: Any = cls.__new__(cls)
     ObsBase.__init__(obs, make_context())
     logged: list[str] = []
 

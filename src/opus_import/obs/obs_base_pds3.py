@@ -5,25 +5,27 @@
 # that are PDS3-specific.
 ################################################################################
 
+from typing import Any, cast
+
 import pdsfile
 
+from opus_import.import_util import IndexRow
+from opus_import.obs.field_types import FloatField
 from opus_import.obs.obs_base import ObsBase
 
 
 class ObsBasePDS3(ObsBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     #############################
     ### Public access methods ###
     #############################
 
     # Warning: This doesn't work for COCIRS. That's OK for now because there is
     # no supplemental metadata for those volumes.
-    def primary_filespec_from_index_row(self, row, convert_lbl=False,
-                                        add_phase_from_row=False,
-                                        add_phase_from_inst=False):
+    def primary_filespec_from_index_row(self, row: IndexRow,
+                                        convert_lbl: bool = False,
+                                        add_phase_from_row: bool = False,
+                                        add_phase_from_inst: bool = False
+                                        ) -> str | None:
         # Given a row from an index file, return the primary_filespec.
         # This routine is as generic as possible, because within a single volume
         # the formats of the primary index, supplemental index, and geo index files
@@ -51,6 +53,7 @@ class ObsBasePDS3(ObsBase):
 
         # In the case of GOSSI and COUVIS, the volume name is already prepended
         # to the filespec
+        assert self.bundle is not None
         ret = filespec.strip('/')
         if not ret.startswith(self.bundle+'/'):
             ret = self.bundle + '/' + filespec.lstrip('/')
@@ -73,14 +76,14 @@ class ObsBasePDS3(ObsBase):
         # this case we have to get the phase name from this instance.
         if add_phase_from_inst and self.phase_name:
             ret += '_'+self.phase_name.lower()
-        return ret
+        return cast(str | None, ret)
 
 
     ###############################
     ### Internal access methods ###
     ###############################
 
-    def _pdsfile_from_filespec(self, filespec):
+    def _pdsfile_from_filespec(self, filespec: str) -> Any:
         # Create a PdsFile object from a primary filespec.
         # The PDS3 filespec is often the .LBL file, but from_filespec doesn't
         # handle .LBL files because ViewMaster needs to distinguish between
@@ -92,19 +95,21 @@ class ObsBasePDS3(ObsBase):
 
     # Helpers for time fields
 
-    def _time_from_index(self, column='START_TIME'):
+    def _time_from_index(self, column: str = 'START_TIME') -> FloatField:
         return self._time_helper('index_row', column)
 
-    def _time_from_supp_index(self, column='START_TIME'):
+    def _time_from_supp_index(self, column: str = 'START_TIME') -> FloatField:
         return self._time_helper('supp_index_row', column)
 
-    def _time2_from_index(self, start_time_sec, column='STOP_TIME'):
+    def _time2_from_index(self, start_time_sec: FloatField,
+                          column: str = 'STOP_TIME') -> FloatField:
         return self._time2_helper('index_row', start_time_sec, column)
 
-    def _time2_from_supp_index(self, start_time_sec, column='STOP_TIME'):
+    def _time2_from_supp_index(self, start_time_sec: FloatField,
+                               column: str = 'STOP_TIME') -> FloatField:
         return self._time2_helper('supp_index_row', start_time_sec, column)
 
-    def _time_from_some_index(self, column='START_TIME'):
+    def _time_from_some_index(self, column: str = 'START_TIME') -> FloatField:
         index = self._col_in_some_index(column)
         if index is None:
             self._log_nonrepeating_error(
@@ -112,7 +117,8 @@ class ObsBasePDS3(ObsBase):
             return None
         return self._time_helper(index, column=column)
 
-    def _time2_from_some_index(self, time1, column='STOP_TIME'):
+    def _time2_from_some_index(self, time1: FloatField,
+                               column: str = 'STOP_TIME') -> FloatField:
         index = self._col_in_some_index_or_label(column)
         if index is None:
             self._log_nonrepeating_error(

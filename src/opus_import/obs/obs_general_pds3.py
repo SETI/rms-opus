@@ -10,10 +10,7 @@ from opus_import.obs.obs_general import ObsGeneral
 
 
 class ObsGeneralPDS3(ObsGeneral, ObsBasePDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _target_name(self):
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
         target_name = self._some_index_or_label_col('TARGET_NAME')
         target_name, target_info = self._get_target_info(target_name)
         if target_info is None:

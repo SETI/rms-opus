@@ -1,9 +1,8 @@
-################################################################################
-# obs_common_pds4.py
-#
-# Defines the ObsCommonPDS4 class, which is a simple class that inherits from
-# all of the classes that are common to all observations.
-################################################################################
+"""The PDS4 half of the hierarchy, assembled: every table a PDS4 observation fills.
+
+The PDS4 counterpart of `opus_import.obs.obs_common_pds3`, combining the same table
+modules with the PDS4 variants of the three that have one.
+"""
 
 from opus_import.obs.obs_general_pds4 import ObsGeneralPDS4
 from opus_import.obs.obs_pds_pds4 import ObsPdsPDS4
@@ -19,5 +18,4 @@ from opus_import.obs.obs_wavelength import ObsWavelength
 class ObsCommonPDS4(ObsGeneralPDS4, ObsPdsPDS4, ObsTypeImage, ObsWavelength,
                     ObsProfilePDS4, ObsRingGeometry, ObsSurfaceGeometry,
                     ObsSurfaceGeometryName, ObsSurfaceGeometryTarget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """Every table module a PDS4 observation needs, combined in one base class."""

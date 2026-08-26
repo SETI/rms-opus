@@ -33,7 +33,7 @@ class _RecordingDB(ImportDBMySQL):
         # Deliberately skips ImportDBMySQL.__init__, which connects to a server.
         ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password',
                                import_prefix='imp_', logger=None)
-        self.executed: list[tuple[str, list[Any]]] = []
+        self.executed: list[tuple[str, list[Any] | None]] = []
 
     def _execute(self, cmd: str, param_list: Any = None, cur: Any = None,
                  mutates: bool = False) -> None:
@@ -91,7 +91,8 @@ def test_upsert_rows_splits_large_row_sets_into_packets(db: _RecordingDB) -> Non
     assert len(db.executed) == 3
     assert [cmd.count('ON DUPLICATE KEY UPDATE') for cmd, _ in db.executed] == [1, 1, 1]
     # Eight columns per row, every one of them a parameter.
-    assert [len(params) // 8 for _cmd, params in db.executed] == [1000, 1000, 500]
+    assert [len(params) // 8 for _cmd, params in db.executed
+            if params is not None] == [1000, 1000, 500]
 
 
 def test_upsert_rows_groups_rows_that_have_different_columns(db: _RecordingDB) -> None:
@@ -243,7 +244,8 @@ class _FailingDB(_RecordingDB):
     ('upsert_rows', ('import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}])),
 ], ids=['delete_rows', 'copy_rows_between_namespaces', 'upsert_rows'])
 def test_a_failed_statement_becomes_an_import_db_error(method: str,
-                                                       args: tuple) -> None:
+                                                       args: tuple[Any, ...]
+                                                       ) -> None:
     """Every mutating method reports a server failure as ImportDBError.
 
     `delete_rows` and `copy_rows_between_namespaces` used to let the raw

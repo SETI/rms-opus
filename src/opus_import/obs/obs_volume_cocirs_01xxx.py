@@ -6,24 +6,26 @@
 # COCIRS_[01]xxx.
 ################################################################################
 
+from collections.abc import Sequence
+from typing import cast
+
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
 
 class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def _get_cube_map_projection(self) -> str:
+        return cast(str, self._index_col('PRODUCT_ID')[-1].lower())
 
-    def _get_cube_map_projection(self):
-        return self._index_col('PRODUCT_ID')[-1].lower()
-
-    def _is_ring_map_projection(self):
+    def _is_ring_map_projection(self) -> bool:
         return self._get_cube_map_projection() == 'r'
 
     # Use north based emission angle to determine if observer is at the north of the
     # ring.
-    def _is_cassini_at_north(self):
+    def _is_cassini_at_north(self) -> bool:
         ea = self.field_obs_ring_geometry_north_based_emission1()
+        assert ea is not None
         return 0 <= ea <= 90
 
 
@@ -32,10 +34,10 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         return 'COCIRS'
 
-    def surface_geo_target_list(self):
+    def surface_geo_target_list(self) -> Sequence[str] | None:
         # If the surface_geo info exists somewhere other than in separate summary
         # files, we can give a list of targets this observation supports here.
         # This instrument's surface geo field methods will then be called on
@@ -52,7 +54,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
             return ('SATURN',)
         return (self._index_col('TARGET_NAME'), )
 
-    def convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec: str) -> str:
         return filespec.replace('.LBL', '.tar.gz')
 
 
@@ -60,19 +62,19 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_ring_obs_id(self):
+    def field_obs_general_ring_obs_id(self) -> StrField:
         return None
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult('SAT')
 
-    def _target_name(self):
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
         return [self._cassini_intended_target_name()]
 
-    def field_obs_general_quantity(self):
+    def field_obs_general_quantity(self) -> MultFieldRet:
         return self._create_mult('THERMAL')
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('SCU') # Spectral Cube
 
 
@@ -80,11 +82,11 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsPds ###
     ############################
 
-    def field_obs_pds_product_id(self):
+    def field_obs_pds_product_id(self) -> StrField:
         # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
-        return self._index_col('FILE_SPECIFICATION_NAME').split('/')[-1]
+        return cast(StrField, self._index_col('FILE_SPECIFICATION_NAME').split('/')[-1])
 
-    def field_obs_pds_product_creation_time(self):
+    def field_obs_pds_product_creation_time(self) -> FloatField:
         return None
 
 
@@ -92,134 +94,138 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_wavelength1(self):
+    def field_obs_wavelength_wavelength1(self) -> FloatField:
         wave_no2 = self._supp_index_col('MAXIMUM_WAVENUMBER')
         if wave_no2 is None:
             return None
-        return MICRONS_PER_CM / wave_no2
+        return cast(FloatField, MICRONS_PER_CM / wave_no2)
 
-    def field_obs_wavelength_wavelength2(self):
+    def field_obs_wavelength_wavelength2(self) -> FloatField:
         wave_no1 = self._supp_index_col('MINIMUM_WAVENUMBER')
         if wave_no1 is None:
             return None
-        return MICRONS_PER_CM / wave_no1
+        return cast(FloatField, MICRONS_PER_CM / wave_no1)
 
-    def field_obs_wavelength_wave_res1(self):
+    def field_obs_wavelength_wave_res1(self) -> FloatField:
         wnr = self._supp_index_col('BAND_BIN_WIDTH')
         wn2 = self._supp_index_col('MAXIMUM_WAVENUMBER')
         if wnr is None or wn2 is None:
             return None
-        return MICRONS_PER_CM*wnr/(wn2*wn2)
+        return cast(FloatField, MICRONS_PER_CM*wnr/(wn2*wn2))
 
-    def field_obs_wavelength_wave_res2(self):
+    def field_obs_wavelength_wave_res2(self) -> FloatField:
         wnr = self._supp_index_col('BAND_BIN_WIDTH')
         wn1 = self._supp_index_col('MINIMUM_WAVENUMBER')
         if wnr is None or wn1 is None:
             return None
-        return MICRONS_PER_CM*wnr/(wn1*wn1)
+        return cast(FloatField, MICRONS_PER_CM*wnr/(wn1*wn1))
 
-    def field_obs_wavelength_wave_no1(self):
-        return self._supp_index_col('MINIMUM_WAVENUMBER')
+    def field_obs_wavelength_wave_no1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MINIMUM_WAVENUMBER'))
 
-    def field_obs_wavelength_wave_no2(self):
-        return self._supp_index_col('MAXIMUM_WAVENUMBER')
+    def field_obs_wavelength_wave_no2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MAXIMUM_WAVENUMBER'))
 
-    def field_obs_wavelength_wave_no_res1(self):
-        return self._supp_index_col('BAND_BIN_WIDTH')
+    def field_obs_wavelength_wave_no_res1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('BAND_BIN_WIDTH'))
 
-    def field_obs_wavelength_wave_no_res2(self):
-        return self._supp_index_col('BAND_BIN_WIDTH')
+    def field_obs_wavelength_wave_no_res2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('BAND_BIN_WIDTH'))
 
-    def field_obs_wavelength_spec_flag(self):
+    def field_obs_wavelength_spec_flag(self) -> MultFieldRet:
         return self._create_mult('Y')
 
-    def field_obs_wavelength_spec_size(self):
-        return self._supp_index_col('BANDS')
+    def field_obs_wavelength_spec_size(self) -> IntField:
+        return cast(IntField, self._supp_index_col('BANDS'))
 
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
 
-    def field_obs_ring_geometry_ring_radius1(self):
+    def field_obs_ring_geometry_ring_radius1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
+        return cast(FloatField, self._index_col('CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD'))
 
-    def field_obs_ring_geometry_ring_radius2(self):
+    def field_obs_ring_geometry_ring_radius2(self) -> FloatField:
         return self.field_obs_ring_geometry_ring_radius1()
 
-    def field_obs_ring_geometry_projected_radial_resolution1(self):
+    def field_obs_ring_geometry_projected_radial_resolution1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:RADIAL_SCALE')
+        return cast(FloatField, self._index_col('CSS:RADIAL_SCALE'))
 
-    def field_obs_ring_geometry_projected_radial_resolution2(self):
+    def field_obs_ring_geometry_projected_radial_resolution2(self) -> FloatField:
         return self.field_obs_ring_geometry_projected_radial_resolution1()
 
-    def field_obs_ring_geometry_ring_center_distance1(self):
+    def field_obs_ring_geometry_ring_center_distance1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE')
+        return cast(FloatField, self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE'))
 
-    def field_obs_ring_geometry_ring_center_distance2(self):
+    def field_obs_ring_geometry_ring_center_distance2(self) -> FloatField:
         return self.field_obs_ring_geometry_ring_center_distance1()
 
-    def field_obs_ring_geometry_j2000_longitude1(self):
+    def field_obs_ring_geometry_j2000_longitude1(self) -> FloatField:
         # Since there's only one longitude, not a range, we don't have to
         # worry about the 0-360 problem.
         return self._ascending_to_j2000(
             self.field_obs_ring_geometry_ascending_longitude1())
 
-    def field_obs_ring_geometry_j2000_longitude2(self):
+    def field_obs_ring_geometry_j2000_longitude2(self) -> FloatField:
         return self.field_obs_ring_geometry_j2000_longitude1()
 
-    def field_obs_ring_geometry_ascending_longitude1(self):
+    def field_obs_ring_geometry_ascending_longitude1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
         # Longitude is degrees EAST from the ascending node! Why?
-        return (self._index_col('CSS:MEAN_RING_BORESIGHT_LONGITUDE_ZPD') + 180.) % 360.
+        return cast(FloatField,
+                    (self._index_col('CSS:MEAN_RING_BORESIGHT_LONGITUDE_ZPD') + 180.) % 360.)
 
-    def field_obs_ring_geometry_ascending_longitude2(self):
+    def field_obs_ring_geometry_ascending_longitude2(self) -> FloatField:
         return self.field_obs_ring_geometry_ascending_longitude1()
 
-    def field_obs_ring_geometry_solar_hour_angle1(self):
+    def field_obs_ring_geometry_solar_hour_angle1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_LOCAL_TIME') * 15.
+        return cast(FloatField,
+                    self._index_col('CSS:MEAN_RING_BORESIGHT_LOCAL_TIME') * 15.)
 
-    def field_obs_ring_geometry_solar_hour_angle2(self):
+    def field_obs_ring_geometry_solar_hour_angle2(self) -> FloatField:
         return self.field_obs_ring_geometry_solar_hour_angle1()
 
-    def field_obs_ring_geometry_solar_ring_elevation1(self):
+    def field_obs_ring_geometry_solar_ring_elevation1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
         # Positive north, negative south
         inc = self.field_obs_ring_geometry_north_based_incidence1()
+        assert inc is not None
         return 90. - inc
 
-    def field_obs_ring_geometry_solar_ring_elevation2(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
         return self.field_obs_ring_geometry_solar_ring_elevation1()
 
-    def field_obs_ring_geometry_observer_ring_elevation1(self):
+    def field_obs_ring_geometry_observer_ring_elevation1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
         # Positive north, negative south
         ea = self.field_obs_ring_geometry_north_based_emission1()
+        assert ea is not None
         return 90. - ea
 
-    def field_obs_ring_geometry_observer_ring_elevation2(self):
+    def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
         return self.field_obs_ring_geometry_observer_ring_elevation1()
 
-    def field_obs_ring_geometry_phase1(self):
+    def field_obs_ring_geometry_phase1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
+        return cast(FloatField, self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE'))
 
-    def field_obs_ring_geometry_phase2(self):
+    def field_obs_ring_geometry_phase2(self) -> FloatField:
         return self.field_obs_ring_geometry_phase1()
 
-    def field_obs_ring_geometry_incidence1(self):
+    def field_obs_ring_geometry_incidence1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
         inc = self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_ZENITH')
@@ -227,14 +233,14 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         if is_ring_north_side_lit is None:
             return None
         elif is_ring_north_side_lit:
-            return inc
+            return cast(FloatField, inc)
         else:
-            return 180. - inc
+            return cast(FloatField, 180. - inc)
 
-    def field_obs_ring_geometry_incidence2(self):
+    def field_obs_ring_geometry_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_incidence1()
 
-    def field_obs_ring_geometry_emission1(self):
+    def field_obs_ring_geometry_emission1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
         ea = self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
@@ -242,29 +248,29 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         if is_ring_north_side_lit is None:
             return None
         elif is_ring_north_side_lit:
-            return ea
+            return cast(FloatField, ea)
         else:
-            return 180. - ea
+            return cast(FloatField, 180. - ea)
 
-    def field_obs_ring_geometry_emission2(self):
+    def field_obs_ring_geometry_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_emission1()
 
-    def field_obs_ring_geometry_north_based_incidence1(self):
+    def field_obs_ring_geometry_north_based_incidence1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
         # This field really is north-based in the index file
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_ZENITH')
+        return cast(FloatField, self._index_col('CSS:MEAN_RING_BORESIGHT_SOLAR_ZENITH'))
 
-    def field_obs_ring_geometry_north_based_incidence2(self):
+    def field_obs_ring_geometry_north_based_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_incidence1()
 
-    def field_obs_ring_geometry_north_based_emission1(self):
+    def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
         # This field really is north-based in the index file
         if not self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE')
+        return cast(FloatField, self._index_col('CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE'))
 
-    def field_obs_ring_geometry_north_based_emission2(self):
+    def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_emission1()
 
     # Because both observer and solar opening angles are body-centered, and we
@@ -276,100 +282,107 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsSurfaceGeometryTarget ###
     ##############################################
 
-    def field_obs_surface_geometry_target_planetocentric_latitude1(self):
+    def field_obs_surface_geometry_target_planetocentric_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_BORESIGHT_LATITUDE_ZPD_PC')
+        return cast(FloatField, self._index_col('CSS:MEAN_BORESIGHT_LATITUDE_ZPD_PC'))
 
-    def field_obs_surface_geometry_target_planetocentric_latitude2(self):
+    def field_obs_surface_geometry_target_planetocentric_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_planetocentric_latitude1()
 
-    def field_obs_surface_geometry_target_planetographic_latitude1(self):
+    def field_obs_surface_geometry_target_planetographic_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_BORESIGHT_LATITUDE_ZPD')
+        return cast(FloatField, self._index_col('CSS:MEAN_BORESIGHT_LATITUDE_ZPD'))
 
-    def field_obs_surface_geometry_target_planetographic_latitude2(self):
+    def field_obs_surface_geometry_target_planetographic_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_planetographic_latitude1()
 
-    def field_obs_surface_geometry_target_iau_west_longitude1(self):
+    def field_obs_surface_geometry_target_iau_west_longitude1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_BORESIGHT_LONGITUDE_ZPD')
+        return cast(FloatField, self._index_col('CSS:MEAN_BORESIGHT_LONGITUDE_ZPD'))
 
-    def field_obs_surface_geometry_target_iau_west_longitude2(self):
+    def field_obs_surface_geometry_target_iau_west_longitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_iau_west_longitude1()
 
-    def field_obs_surface_geometry_target_phase1(self):
+    def field_obs_surface_geometry_target_phase1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_BODY_PHASE_ANGLE')
+        return cast(FloatField, self._index_col('CSS:MEAN_BODY_PHASE_ANGLE'))
 
-    def field_obs_surface_geometry_target_phase2(self):
+    def field_obs_surface_geometry_target_phase2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_phase1()
 
-    def field_obs_surface_geometry_target_emission1(self):
+    def field_obs_surface_geometry_target_emission1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:MEAN_EMISSION_ANGLE_FOV_AVERAGE')
+        return cast(FloatField, self._index_col('CSS:MEAN_EMISSION_ANGLE_FOV_AVERAGE'))
 
-    def field_obs_surface_geometry_target_emission2(self):
+    def field_obs_surface_geometry_target_emission2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_emission1()
 
-    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self):
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE')
+        return cast(FloatField, self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE'))
 
-    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self):
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1()
 
-    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self):
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return self._index_col('PRIMARY_SUB_SOLAR_LATITUDE_MIDDLE')
-        return self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE')
+            return cast(FloatField, self._index_col('PRIMARY_SUB_SOLAR_LATITUDE_MIDDLE'))
+        return cast(FloatField, self._index_col('CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE'))
 
-    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self):
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_solar_planetographic_latitude1()
 
-    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self):
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE')
+        return cast(FloatField,
+                    self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE'))
 
-    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self):
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1()
 
-    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self):
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
-        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE')
+            return cast(FloatField,
+                        self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LATITUDE_MIDDLE'))
+        return cast(FloatField,
+                    self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE'))
 
-    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_observer_planetographic_latitude1()
 
-    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return self._index_col('CSS:PRIMARY_SUB_SOLAR_LONGITUDE_MIDDLE')
-        return self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE')
+            return cast(FloatField,
+                        self._index_col('CSS:PRIMARY_SUB_SOLAR_LONGITUDE_MIDDLE'))
+        return cast(FloatField, self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE'))
 
-    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude1()
 
-    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')
-        return self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE')
+            return cast(FloatField,
+                        self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LONGITUDE_MIDDLE'))
+        return cast(FloatField,
+                    self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE'))
 
-    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude1()
 
-    def field_obs_surface_geometry_target_center_distance1(self):
+    def field_obs_surface_geometry_target_center_distance1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE')
-        return self._index_col('CSS:BODY_SPACECRAFT_RANGE_MIDDLE')
+            return cast(FloatField,
+                        self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE'))
+        return cast(FloatField, self._index_col('CSS:BODY_SPACECRAFT_RANGE_MIDDLE'))
 
-    def field_obs_surface_geometry_target_center_distance2(self):
+    def field_obs_surface_geometry_target_center_distance2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_center_distance1()
 
 
@@ -385,19 +398,19 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     # in the supplemental index. If we end up with the plain index version for some
     # reason, many derived Cassini mission fields will be incorrect.
 
-    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+    def field_obs_mission_cassini_spacecraft_clock_count1(self) -> FloatField:
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        if not sc.startswith('1/'):
+        if sc is None or not sc.startswith('1/'):
             self._log_nonrepeating_error(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         return self._parse_cassini_sclk(sc)
 
-    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+    def field_obs_mission_cassini_spacecraft_clock_count2(self) -> FloatField:
         sc = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        if not sc.startswith('1/'):
+        if sc is None or not sc.startswith('1/'):
             self._log_nonrepeating_error(
                 f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
             return None
@@ -414,7 +427,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
 
         return sc_cvt
 
-    def field_obs_mission_cassini_mission_phase_name(self):
+    def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         mp = self._cassini_normalize_mission_phase_name()
         return self._create_mult(mp)
 
@@ -423,29 +436,29 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     ### FIELD METHODS FOR obs_instrument_cocirs ###
     ###############################################
 
-    def field_obs_instrument_cocirs_opus_id(self):
+    def field_obs_instrument_cocirs_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_instrument_cocirs_bundle_id(self):
+    def field_obs_instrument_cocirs_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_instrument_cocirs_detector_id(self):
+    def field_obs_instrument_cocirs_detector_id(self) -> MultFieldRet:
         return self._create_mult(self._supp_index_col('DETECTOR_ID'))
 
-    def field_obs_instrument_cocirs_instrument_mode_blinking_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_blinking_flag(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_cocirs_instrument_mode_even_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_even_flag(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_cocirs_instrument_mode_odd_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_odd_flag(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_cocirs_instrument_mode_centers_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_centers_flag(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_cocirs_instrument_mode_pairs_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_pairs_flag(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_cocirs_instrument_mode_all_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_all_flag(self) -> MultFieldRet:
         return self._create_mult(None)

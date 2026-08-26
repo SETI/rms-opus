@@ -6,37 +6,35 @@
 ################################################################################
 
 import os
+from typing import cast
 
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 
 
 class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         return 'COUVIS'
 
     @property
-    def primary_filespec(self):
+    def primary_filespec(self) -> str | None:
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
         # to actually find the matching row in the supplemental index dictionary.
         filespec = self._index_col('FILE_NAME')
-        return filespec.lstrip('/')
+        return cast(str | None, filespec.lstrip('/'))
 
-    def convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec: str) -> str:
         return filespec.replace('.LBL', '.DAT')
 
-    def _channel_time_helper(self):
+    def _channel_time_helper(self) -> tuple[str, str]:
         file_name = self._index_col('FILE_NAME')
         last_part = os.path.basename(file_name)
         last_part = last_part.replace('.LBL', '')
@@ -50,7 +48,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
 
         return channel, image_time
 
-    def _is_image(self):
+    def _is_image(self) -> bool:
         channel, _image_time = self._channel_time_helper()
         slit_state = self._index_col('SLIT_STATE')
 
@@ -66,28 +64,28 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             return False
 
         object_type = self._supp_index_col('DATA_OBJECT_TYPE')
-        return object_type != 'SPECTRUM'
+        return cast(bool, object_type != 'SPECTRUM')
 
-    def _integration_duration_helper(self):
+    def _integration_duration_helper(self) -> FloatField:
         dur = self._index_col('INTEGRATION_DURATION')
         if dur is None:
             return None
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP':
             # HSP integration_duration is in milliseconds!
-            return dur/1000
+            return cast(FloatField, dur/1000)
         # EUV and FUV are in seconds! What were they thinking?
-        return dur
+        return cast(FloatField, dur)
 
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def _target_name(self):
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
         return [self._cassini_intended_target_name()]
 
-    def field_obs_general_time2(self):
+    def field_obs_general_time2(self) -> FloatField:
         channel, _image_time = self._channel_time_helper()
         start_time_sec = self.field_obs_general_time1()
         if channel != 'HSP':
@@ -102,36 +100,36 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         if samples is None or integration_duration is None:
             return None
 
-        return start_time_sec + samples*integration_duration
+        return cast(FloatField, start_time_sec + samples*integration_duration)
 
     # We occasionally don't bother to generate ring_geo data for COUVIS, like during
     # cruise, so just use the given RA/DEC from the index if needed. We don't make
     # any effort to figure out the min/max values.
-    def field_obs_general_right_asc1(self):
+    def field_obs_general_right_asc1(self) -> FloatField:
         ra = self._ring_geo_index_col('MINIMUM_RIGHT_ASCENSION')
         if ra is not None:
             return ra
-        return self._index_col('RIGHT_ASCENSION')
+        return cast(FloatField, self._index_col('RIGHT_ASCENSION'))
 
-    def field_obs_general_right_asc2(self):
+    def field_obs_general_right_asc2(self) -> FloatField:
         ra = self._ring_geo_index_col('MAXIMUM_RIGHT_ASCENSION')
         if ra is not None:
             return ra
-        return self._index_col('RIGHT_ASCENSION')
+        return cast(FloatField, self._index_col('RIGHT_ASCENSION'))
 
-    def field_obs_general_declination1(self):
+    def field_obs_general_declination1(self) -> FloatField:
         ra = self._ring_geo_index_col('MINIMUM_DECLINATION')
         if ra is not None:
             return ra
-        return self._index_col('DECLINATION')
+        return cast(FloatField, self._index_col('DECLINATION'))
 
-    def field_obs_general_declination2(self):
+    def field_obs_general_declination2(self) -> FloatField:
         ra = self._ring_geo_index_col('MAXIMUM_DECLINATION')
         if ra is not None:
             return ra
-        return self._index_col('DECLINATION')
+        return cast(FloatField, self._index_col('DECLINATION'))
 
-    def field_obs_general_ring_obs_id(self):
+    def field_obs_general_ring_obs_id(self) -> StrField:
         filename = self._index_col('FILE_NAME').split('/')[-1]
         if filename.startswith('HDAC'):
             image_camera = filename[:4]
@@ -149,10 +147,10 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
 
         return f'{pl_str}_CO_UVIS_{image_time_str}_{image_camera}'
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult(self._cassini_planet_id())
 
-    def field_obs_general_quantity(self):
+    def field_obs_general_quantity(self) -> MultFieldRet:
         if not self._has_supp_index():
             return self._create_mult(None)
         description = self._supp_index_col('DESCRIPTION').upper()
@@ -161,7 +159,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             return self._create_mult('OPDEPTH')
         return self._create_mult('EMISSION')
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
             return self._create_mult('TS') # Time Series
@@ -173,58 +171,56 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsPds ###
     ############################
 
-    def field_obs_pds_note(self):
+    def field_obs_pds_note(self) -> StrField:
         if not self._has_supp_index():
             return None
         description = self._supp_index_col('DESCRIPTION')
         description = description.replace('The purpose of this observation is ', '')
-        return description
+        return cast(StrField, description)
 
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
 
-    def field_obs_type_image_image_type_id(self):
+    def field_obs_type_image_image_type_id(self) -> MultFieldRet:
         if self._is_image():
             return self._create_mult('PUSH')
         return self._create_mult(None)
 
-    def field_obs_type_image_duration(self):
+    def field_obs_type_image_duration(self) -> FloatField:
         if not self._is_image():
             return None
         return self._integration_duration_helper()
 
-    def field_obs_type_image_levels(self):
+    def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
         return SIXTEEN_BIT_IMAGE_LEVELS
 
-    def _pixel_size_helper(self):
+    def _pixel_size_helper(self) -> tuple[IntField, IntField]:
         if not self._is_image():
             return None, None
 
         if not self._has_supp_index():
-            return None
+            return None, None
         line1 = self._supp_index_col('WINDOW_MINIMUM_LINE_NUMBER')
         line2 = self._supp_index_col('WINDOW_MAXIMUM_LINE_NUMBER')
         line_bin = self._supp_index_col('LINE_BINNING_FACTOR')
         samples = self._supp_index_col('LINE_SAMPLES')
         if line1 is None or line2 is None or line_bin is None or samples is None:
-            return None
-        min_ret = min(samples, (line2-line1+1)//line_bin)
-        max_ret = max(samples, (line2-line1+1)//line_bin)
-        if min_ret < 0:
-            min_ret = None
-        if max_ret < 0:
-            max_ret = None
+            return None, None
+        min_val = min(samples, (line2-line1+1)//line_bin)
+        max_val = max(samples, (line2-line1+1)//line_bin)
+        min_ret: IntField = None if min_val < 0 else min_val
+        max_ret: IntField = None if max_val < 0 else max_val
 
         return min_ret, max_ret
 
-    def field_obs_type_image_greater_pixel_size(self):
+    def field_obs_type_image_greater_pixel_size(self) -> IntField:
         return self._pixel_size_helper()[1]
 
-    def field_obs_type_image_lesser_pixel_size(self):
+    def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         return self._pixel_size_helper()[0]
 
 
@@ -232,7 +228,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_wavelength1(self):
+    def field_obs_wavelength_wavelength1(self) -> FloatField:
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP':
             return 0.11
@@ -246,14 +242,14 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             return None
 
         if channel == 'EUV':
-            return 0.0558 + band1 * 0.0000607422
+            return cast(FloatField, 0.0558 + band1 * 0.0000607422)
         if channel == 'FUV':
-            return 0.11 + band1 * 0.000078125
+            return cast(FloatField, 0.11 + band1 * 0.000078125)
 
         self._log_nonrepeating_error(f'wavelength1 has unknown channel type {channel}')
         return None
 
-    def field_obs_wavelength_wavelength2(self):
+    def field_obs_wavelength_wavelength2(self) -> FloatField:
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP':
             return 0.19
@@ -267,23 +263,23 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             return None
 
         if channel == 'EUV':
-            return 0.0558 + (band2+1) * 0.0000607422
+            return cast(FloatField, 0.0558 + (band2+1) * 0.0000607422)
         if channel == 'FUV':
-            return 0.11 + (band2+1) * 0.000078125
+            return cast(FloatField, 0.11 + (band2+1) * 0.000078125)
 
         self._log_nonrepeating_error(f'wavelength2 has unknown channel type {channel}')
         return None
 
-    def field_obs_wavelength_wave_res1(self):
+    def field_obs_wavelength_wave_res1(self) -> FloatField:
         if not self._has_supp_index():
             return None
         channel, _image_time = self._channel_time_helper()
         band_bin = self._supp_index_col('BAND_BINNING_FACTOR')
 
         if channel == 'EUV':
-            return band_bin * 0.0000607422
+            return cast(FloatField, band_bin * 0.0000607422)
         if channel == 'FUV':
-            return band_bin * 0.000078125
+            return cast(FloatField, band_bin * 0.000078125)
 
         wl1 = self.field_obs_wavelength_wavelength1()
         wl2 = self.field_obs_wavelength_wavelength2()
@@ -291,28 +287,28 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             return None
         return wl2 - wl1
 
-    def field_obs_wavelength_wave_res2(self):
+    def field_obs_wavelength_wave_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_res1()
 
-    def field_obs_wavelength_wave_no_res1(self):
+    def field_obs_wavelength_wave_no_res1(self) -> FloatField:
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
             return self._wave_no_res_from_full_bandwidth()
         return self._wave_no_res1_from_wave_res()
 
-    def field_obs_wavelength_wave_no_res2(self):
+    def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
             return self._wave_no_res_from_full_bandwidth()
         return self._wave_no_res2_from_wave_res()
 
-    def field_obs_wavelength_spec_flag(self):
+    def field_obs_wavelength_spec_flag(self) -> MultFieldRet:
         spec_size = self.field_obs_wavelength_spec_size()
         if spec_size is None or spec_size < 1:
             return self._create_mult('N')
         return self._create_mult('Y')
 
-    def field_obs_wavelength_spec_size(self):
+    def field_obs_wavelength_spec_size(self) -> IntField:
         channel, _image_time = self._channel_time_helper()
 
         if channel == 'HSP' or channel == 'HDAC':
@@ -326,17 +322,17 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         if band1 is None or band2 is None or band_bin is None:
             return None
 
-        return (band2 - band1 + 1) // band_bin
+        return cast(IntField, (band2 - band1 + 1) // band_bin)
 
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ##########################################
 
-    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+    def field_obs_mission_cassini_spacecraft_clock_count1(self) -> FloatField:
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        if not sc.startswith('1/'):
+        if sc is None or not sc.startswith('1/'):
             self._log_nonrepeating_error(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
@@ -344,13 +340,16 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
 
     # There is no SPACECRAFT_CLOCK_STOP_COUNT for COUVIS so we have to compute it.
     # This works because Cassini SCLK is in units of seconds.
-    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+    def field_obs_mission_cassini_spacecraft_clock_count2(self) -> FloatField:
         sc_cvt = self.field_obs_mission_cassini_spacecraft_clock_count1()
         time1 = self.field_obs_general_time1()
         time2 = self.field_obs_general_time2()
+        assert sc_cvt is not None
+        assert time1 is not None
+        assert time2 is not None
         return sc_cvt + time2-time1
 
-    def field_obs_mission_cassini_mission_phase_name(self):
+    def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         return self._create_mult(self._cassini_normalize_mission_phase_name())
 
 
@@ -358,60 +357,60 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ### FIELD METHODS FOR obs_instrument_couvis ###
     ###############################################
 
-    def field_obs_instrument_couvis_opus_id(self):
+    def field_obs_instrument_couvis_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_instrument_couvis_bundle_id(self):
+    def field_obs_instrument_couvis_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_instrument_couvis_observation_type(self):
+    def field_obs_instrument_couvis_observation_type(self) -> MultFieldRet:
         obstype = self._index_col('OBSERVATION_TYPE')
         if obstype == '' or obstype == 'NULL':
             obstype = 'NONE'
         return self._create_mult(obstype.upper())
 
-    def field_obs_instrument_couvis_integration_duration(self):
+    def field_obs_instrument_couvis_integration_duration(self) -> FloatField:
         return self._integration_duration_helper()
 
-    def field_obs_instrument_couvis_compression_type(self):
+    def field_obs_instrument_couvis_compression_type(self) -> MultFieldRet:
         return self._create_mult(self._index_col('COMPRESSION_TYPE'))
 
-    def field_obs_instrument_couvis_occultation_port_state(self):
+    def field_obs_instrument_couvis_occultation_port_state(self) -> MultFieldRet:
         occ_state = self._index_col('OCCULTATION_PORT_STATE')
         if occ_state == 'NULL':
             occ_state = 'N/A'
         return self._create_mult(occ_state.upper())
 
-    def field_obs_instrument_couvis_slit_state(self):
+    def field_obs_instrument_couvis_slit_state(self) -> MultFieldRet:
         return self._create_mult(self._index_col('SLIT_STATE'))
 
-    def field_obs_instrument_couvis_test_pulse_state(self):
+    def field_obs_instrument_couvis_test_pulse_state(self) -> MultFieldRet:
         return self._create_mult(self._index_col('TEST_PULSE_STATE'))
 
-    def field_obs_instrument_couvis_dwell_time(self):
+    def field_obs_instrument_couvis_dwell_time(self) -> MultFieldRet:
         return self._create_mult(self._index_col('DWELL_TIME'))
 
-    def field_obs_instrument_couvis_channel(self):
+    def field_obs_instrument_couvis_channel(self) -> MultFieldRet:
         channel, _image_time = self._channel_time_helper()
         return self._create_mult_keep_case(channel)
 
-    def field_obs_instrument_couvis_band1(self):
-        return self._supp_index_col('MINIMUM_BAND_NUMBER')
+    def field_obs_instrument_couvis_band1(self) -> IntField:
+        return cast(IntField, self._supp_index_col('MINIMUM_BAND_NUMBER'))
 
-    def field_obs_instrument_couvis_band2(self):
-        return self._supp_index_col('MAXIMUM_BAND_NUMBER')
+    def field_obs_instrument_couvis_band2(self) -> IntField:
+        return cast(IntField, self._supp_index_col('MAXIMUM_BAND_NUMBER'))
 
-    def field_obs_instrument_couvis_band_bin(self):
-        return self._supp_index_col('BAND_BINNING_FACTOR')
+    def field_obs_instrument_couvis_band_bin(self) -> IntField:
+        return cast(IntField, self._supp_index_col('BAND_BINNING_FACTOR'))
 
-    def field_obs_instrument_couvis_line1(self):
-        return self._supp_index_col('WINDOW_MINIMUM_LINE_NUMBER')
+    def field_obs_instrument_couvis_line1(self) -> IntField:
+        return cast(IntField, self._supp_index_col('WINDOW_MINIMUM_LINE_NUMBER'))
 
-    def field_obs_instrument_couvis_line2(self):
-        return self._supp_index_col('WINDOW_MAXIMUM_LINE_NUMBER')
+    def field_obs_instrument_couvis_line2(self) -> IntField:
+        return cast(IntField, self._supp_index_col('WINDOW_MAXIMUM_LINE_NUMBER'))
 
-    def field_obs_instrument_couvis_line_bin(self):
-        return self._supp_index_col('LINE_BINNING_FACTOR')
+    def field_obs_instrument_couvis_line_bin(self) -> IntField:
+        return cast(IntField, self._supp_index_col('LINE_BINNING_FACTOR'))
 
-    def field_obs_instrument_couvis_samples(self):
-        return self._supp_index_col('LINE_SAMPLES')
+    def field_obs_instrument_couvis_samples(self) -> IntField:
+        return cast(IntField, self._supp_index_col('LINE_SAMPLES'))

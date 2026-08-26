@@ -8,8 +8,11 @@
 import json
 import os
 
+from opus_import.obs.field_types import FloatField, MultField, MultFieldRet, StrField
+from opus_import.obs.obs_base import ObsBase
 
-class ObsGeneral:
+
+class ObsGeneral(ObsBase):
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -17,22 +20,22 @@ class ObsGeneral:
 
     ### Don't override these ###
 
-    def field_obs_general_opus_id(self):
+    def field_obs_general_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_general_bundle_id(self):
+    def field_obs_general_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_general_instrument_id(self):
+    def field_obs_general_instrument_id(self) -> MultFieldRet:
         return self._create_mult(self.instrument_id)
 
-    def field_obs_general_inst_host_id(self):
+    def field_obs_general_inst_host_id(self) -> MultFieldRet:
         return self._create_mult(self.inst_host_id)
 
-    def field_obs_general_mission_id(self):
+    def field_obs_general_mission_id(self) -> MultFieldRet:
         return self._create_mult(self.mission_id)
 
-    def field_obs_general_target_class(self):
+    def field_obs_general_target_class(self) -> list[MultField]:
         # target_class supports multiple target names
         target_names = self._target_name()
         ret_list = []
@@ -50,12 +53,16 @@ class ObsGeneral:
                         used_classes.add(target_info[1])
         return ret_list
 
-    def field_obs_general_primary_filespec(self):
+    def field_obs_general_primary_filespec(self) -> StrField:
         return self.primary_filespec
 
-    def field_obs_general_preview_images(self):
+    def field_obs_general_preview_images(self) -> StrField:
         ### XXX Review this
         filespec = self.primary_filespec
+        if filespec is None:
+            self._log_nonrepeating_warning(
+                'No preview images: this observation has no filespec')
+            return json.dumps({'viewables': []})
         pdsf = self._pdsfile_from_filespec(filespec)
 
         try:
@@ -123,10 +130,10 @@ class ObsGeneral:
     ### ! Might override these ! ###
     ################################
 
-    def _target_name(self):
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
         raise NotImplementedError
 
-    def field_obs_general_target_name(self):
+    def field_obs_general_target_name(self) -> list[MultField]:
         ret = []
         for target_name, target_disp_name in self._target_name():
             if target_name is None:
@@ -139,30 +146,34 @@ class ObsGeneral:
                                              group_disp_order=group_info['disp_order']))
         return ret
 
-    def field_obs_general_time1(self):
+    def field_obs_general_time1(self) -> FloatField:
         return self._time_from_some_index()
 
-    def field_obs_general_time2(self):
+    def field_obs_general_time2(self) -> FloatField:
         return self._time2_from_some_index(self.field_obs_general_time1())
 
-    def field_obs_general_observation_duration(self):
+    def field_obs_general_observation_duration(self) -> FloatField:
         # This is the default behavior, but will be overridden for some
         # instruments
-        return max(self.field_obs_general_time2() - self.field_obs_general_time1(), 0)
+        time1 = self.field_obs_general_time1()
+        time2 = self.field_obs_general_time2()
+        assert time1 is not None
+        assert time2 is not None
+        return max(time2 - time1, 0)
 
-    def field_obs_general_right_asc1(self):
+    def field_obs_general_right_asc1(self) -> FloatField:
         return None
 
-    def field_obs_general_right_asc2(self):
+    def field_obs_general_right_asc2(self) -> FloatField:
         return None
 
-    def field_obs_general_declination1(self):
+    def field_obs_general_declination1(self) -> FloatField:
         return None
 
-    def field_obs_general_declination2(self):
+    def field_obs_general_declination2(self) -> FloatField:
         return None
 
-    def field_obs_general_ring_obs_id(self):
+    def field_obs_general_ring_obs_id(self) -> StrField:
         return None
 
 
@@ -170,11 +181,11 @@ class ObsGeneral:
     ### !!! Must override these !!! ###
     ###################################
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         raise NotImplementedError
 
-    def field_obs_general_quantity(self):
+    def field_obs_general_quantity(self) -> MultFieldRet:
         raise NotImplementedError
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         raise NotImplementedError

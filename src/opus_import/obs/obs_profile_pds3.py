@@ -5,14 +5,12 @@
 # are PDS3-specific.
 ################################################################################
 
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_base_pds3 import ObsBasePDS3
 from opus_import.obs.obs_profile import ObsProfile
 
 
 class ObsProfilePDS3(ObsProfile, ObsBasePDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
@@ -25,32 +23,32 @@ class ObsProfilePDS3(ObsProfile, ObsBasePDS3):
     # we provide a default for all fields and don't require subclasses to
     # override the methods.
 
-    def field_obs_profile_occ_type(self):
+    def field_obs_profile_occ_type(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_profile_occ_dir(self):
+    def field_obs_profile_occ_dir(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_profile_body_occ_flag(self):
+    def field_obs_profile_body_occ_flag(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_profile_temporal_sampling(self):
+    def field_obs_profile_temporal_sampling(self) -> FloatField:
         return None
 
-    def field_obs_profile_quality_score(self):
+    def field_obs_profile_quality_score(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_profile_optical_depth1(self):
+    def field_obs_profile_optical_depth1(self) -> FloatField:
         return None
 
-    def field_obs_profile_optical_depth2(self):
+    def field_obs_profile_optical_depth2(self) -> FloatField:
         return None
 
-    def field_obs_profile_wl_band(self):
+    def field_obs_profile_wl_band(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_profile_source(self):
+    def field_obs_profile_source(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_profile_host(self):
+    def field_obs_profile_host(self) -> MultFieldRet:
         return self._create_mult(None)

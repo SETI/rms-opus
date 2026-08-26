@@ -39,7 +39,8 @@ socket.socket.connect_ex = _no_network
 """
 
 
-def _import_in_subprocess(module: str, argv: list[str]) -> subprocess.CompletedProcess:
+def _import_in_subprocess(module: str, argv: list[str]
+                          ) -> subprocess.CompletedProcess[str]:
     """Import `module` in a fresh interpreter with `argv` and no network access."""
     script = _BLOCK_NETWORK + textwrap.dedent(f"""
         import sys
@@ -69,5 +70,7 @@ def test_a_util_tool_exposes_main_under_a_name_guard(module: str) -> None:
     mod = importlib.import_module(module)
     assert callable(mod.main)
 
+    # An imported module read off the file system always has a __file__.
+    assert mod.__file__ is not None
     source = Path(mod.__file__).read_text(encoding='utf-8')
     assert "if __name__ == '__main__':" in source

@@ -7,16 +7,15 @@
 # combines them all together.
 ################################################################################
 
+from typing import cast
+
+from opus_import.obs.field_types import IntField, MultFieldRet
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-    def _acs_spec_flag(self):
+    def _acs_spec_flag(self) -> tuple[bool, str, str | None]:
         filter1, filter2 = self._decode_filters()
         return (filter1.startswith('G') or filter1.startswith('PR'),
                 filter1, filter2)
@@ -27,7 +26,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         return 'HSTACS'
 
 
@@ -35,12 +34,12 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def _observation_type(self):
+    def _observation_type(self) -> str | None:
         if self._acs_spec_flag()[0]:
             return 'SPI'
         return 'IMG'
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
 
 
@@ -48,7 +47,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
 
-    def field_obs_type_image_levels(self):
+    def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
         return SIXTEEN_BIT_IMAGE_LEVELS # ACS Inst Handbook 25, Sec 3.4.3
@@ -58,12 +57,12 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_spec_flag(self):
+    def field_obs_wavelength_spec_flag(self) -> MultFieldRet:
         if self._acs_spec_flag()[0]:
             return self._create_mult('Y')
         return self._create_mult('N')
 
-    def field_obs_wavelength_spec_size(self):
+    def field_obs_wavelength_spec_size(self) -> IntField:
         spec_flag, filter1, _filter2 = self._acs_spec_flag()
         if not spec_flag:
             return None
@@ -93,16 +92,16 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
             self._log_nonrepeating_error(f'Unknown filter {filter1}')
             return None
 
-        spec_size = bw // wr
+        spec_size = int(bw // wr)
 
         lines = self._index_col('LINES')
         samples = self._index_col('LINE_SAMPLES')
         if lines is None or samples is None:
             return spec_size
 
-        return min(max(lines, samples), spec_size)
+        return cast(IntField, min(max(lines, samples), spec_size))
 
-    def field_obs_wavelength_polarization_type(self):
+    def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         _filter1, filter2 = self._decode_filters()
         if filter2 is not None and filter2.startswith('POL'):
             return self._create_mult('LINEAR')
@@ -113,7 +112,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
 
-    def field_obs_mission_hubble_filter_type(self):
+    def field_obs_mission_hubble_filter_type(self) -> MultFieldRet:
         filter1, filter2 = self._decode_filters()
         # We only care about filter1 since the second is (almost) always a
         # polarizer

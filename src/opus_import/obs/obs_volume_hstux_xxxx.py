@@ -7,21 +7,18 @@
 # combines them all together.
 ################################################################################
 
+from opus_import.obs.field_types import IntField, MultFieldRet
 from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         return 'HSTWFPC2'
 
 
@@ -29,10 +26,10 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def _observation_type(self):
+    def _observation_type(self) -> str | None:
         return 'IMG'
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
 
 
@@ -40,7 +37,7 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
 
-    def field_obs_type_image_levels(self):
+    def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
         return TWELVE_BIT_IMAGE_LEVELS # WFPC2 Inst Handbook, Sec 2.8
@@ -50,13 +47,13 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_spec_flag(self):
+    def field_obs_wavelength_spec_flag(self) -> MultFieldRet:
         return self._create_mult('N')
 
-    def field_obs_wavelength_spec_size(self):
+    def field_obs_wavelength_spec_size(self) -> IntField:
         return None
 
-    def field_obs_wavelength_polarization_type(self):
+    def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         filter_name = self._index_col('FILTER_NAME')
         if filter_name.find('POL') == -1:
             return self._create_mult('NONE')
@@ -67,7 +64,7 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
 
-    def field_obs_mission_hubble_filter_type(self):
+    def field_obs_mission_hubble_filter_type(self) -> MultFieldRet:
         filter1, filter2 = self._decode_filters()
 
         if filter2 is None:
@@ -95,19 +92,19 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
         self._log_nonrepeating_error(f'Unknown filter combination "{filter1}+{filter2}"')
         return self._create_mult(None)
 
-    def field_obs_mission_hubble_pc1_flag(self):
+    def field_obs_mission_hubble_pc1_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('PC1_FLAG'))
 
-    def field_obs_mission_hubble_wf2_flag(self):
+    def field_obs_mission_hubble_wf2_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('WF2_FLAG'))
 
-    def field_obs_mission_hubble_wf3_flag(self):
+    def field_obs_mission_hubble_wf3_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('WF3_FLAG'))
 
-    def field_obs_mission_hubble_wf4_flag(self):
+    def field_obs_mission_hubble_wf4_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('WF4_FLAG'))
 
-    def field_obs_mission_hubble_targeted_detector_id(self):
+    def field_obs_mission_hubble_targeted_detector_id(self) -> MultFieldRet:
         targeted_detector_id = self._index_col('TARGETED_DETECTOR_ID')
         if targeted_detector_id == '':
             self._log_nonrepeating_error('Empty targeted detector ID')

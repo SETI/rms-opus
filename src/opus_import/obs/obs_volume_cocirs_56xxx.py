@@ -6,30 +6,30 @@
 # COCIRS_[56]xxx.
 ################################################################################
 
+from typing import cast
+
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
 
 class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         return 'COCIRS'
 
     @property
-    def primary_filespec(self):
+    def primary_filespec(self) -> str | None:
         # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
         filespec = self._index_col('SPECTRUM_FILE_SPECIFICATION')
-        return self.bundle + '/' + filespec
+        assert self.bundle is not None
+        return cast(str | None, self.bundle + '/' + filespec)
 
-    def convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec: str) -> str:
         return filespec.replace('.LBL', '.IMG')
 
 
@@ -37,7 +37,7 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_ring_obs_id(self):
+    def field_obs_general_ring_obs_id(self) -> StrField:
         instrument_id = self._index_col('DETECTOR_ID')
         filename = self._index_col('SPECTRUM_FILE_SPECIFICATION').split('/')[-1]
         if not filename.startswith('SPEC') or not filename.endswith('.DAT'):
@@ -53,16 +53,16 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
 
         return f'{pl_str}_SPEC_CO_CIRS_{image_num}_{instrument_id}'
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult(self._cassini_planet_id())
 
-    def _target_name(self):
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
         return [self._cassini_intended_target_name()]
 
-    def field_obs_general_quantity(self):
+    def field_obs_general_quantity(self) -> MultFieldRet:
         return self._create_mult('THERMAL')
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('STS') # Spectral Time Series
 
 
@@ -70,11 +70,12 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsPds ###
     ############################
 
-    def field_obs_pds_product_id(self):
+    def field_obs_pds_product_id(self) -> StrField:
         # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
-        return self._index_col('SPECTRUM_FILE_SPECIFICATION').split('/')[-1]
+        return cast(StrField,
+                    self._index_col('SPECTRUM_FILE_SPECIFICATION').split('/')[-1])
 
-    def field_obs_pds_product_creation_time(self):
+    def field_obs_pds_product_creation_time(self) -> FloatField:
         return None
 
 
@@ -82,68 +83,68 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_wavelength1(self):
+    def field_obs_wavelength_wavelength1(self) -> FloatField:
         wave_no2 = self._index_col('MAXIMUM_WAVENUMBER')
         if wave_no2 is None:
             return None
-        return MICRONS_PER_CM / wave_no2
+        return cast(FloatField, MICRONS_PER_CM / wave_no2)
 
-    def field_obs_wavelength_wavelength2(self):
+    def field_obs_wavelength_wavelength2(self) -> FloatField:
         wave_no1 = self._index_col('MINIMUM_WAVENUMBER')
         if wave_no1 is None:
             return None
-        return MICRONS_PER_CM / wave_no1
+        return cast(FloatField, MICRONS_PER_CM / wave_no1)
 
-    def field_obs_wavelength_wave_res1(self):
+    def field_obs_wavelength_wave_res1(self) -> FloatField:
         wnr = self._index_col('WAVENUMBER_RESOLUTION')
         wn2 = self._index_col('MAXIMUM_WAVENUMBER')
         if wnr is None or wn2 is None:
             return None
-        return MICRONS_PER_CM*wnr/(wn2*wn2)
+        return cast(FloatField, MICRONS_PER_CM*wnr/(wn2*wn2))
 
-    def field_obs_wavelength_wave_res2(self):
+    def field_obs_wavelength_wave_res2(self) -> FloatField:
         wnr = self._index_col('WAVENUMBER_RESOLUTION')
         wn1 = self._index_col('MINIMUM_WAVENUMBER')
         if wnr is None or wn1 is None:
             return None
-        return MICRONS_PER_CM*wnr/(wn1*wn1)
+        return cast(FloatField, MICRONS_PER_CM*wnr/(wn1*wn1))
 
-    def field_obs_wavelength_wave_no1(self):
-        return self._index_col('MINIMUM_WAVENUMBER')
+    def field_obs_wavelength_wave_no1(self) -> FloatField:
+        return cast(FloatField, self._index_col('MINIMUM_WAVENUMBER'))
 
-    def field_obs_wavelength_wave_no2(self):
-        return self._index_col('MAXIMUM_WAVENUMBER')
+    def field_obs_wavelength_wave_no2(self) -> FloatField:
+        return cast(FloatField, self._index_col('MAXIMUM_WAVENUMBER'))
 
-    def field_obs_wavelength_wave_no_res1(self):
-        return self._index_col('WAVENUMBER_RESOLUTION')
+    def field_obs_wavelength_wave_no_res1(self) -> FloatField:
+        return cast(FloatField, self._index_col('WAVENUMBER_RESOLUTION'))
 
-    def field_obs_wavelength_wave_no_res2(self):
-        return self._index_col('WAVENUMBER_RESOLUTION')
+    def field_obs_wavelength_wave_no_res2(self) -> FloatField:
+        return cast(FloatField, self._index_col('WAVENUMBER_RESOLUTION'))
 
-    def field_obs_wavelength_spec_flag(self):
+    def field_obs_wavelength_spec_flag(self) -> MultFieldRet:
         return self._create_mult('Y')
 
-    def field_obs_wavelength_spec_size(self):
-        return self._index_col('SPECTRUM_SAMPLES')
+    def field_obs_wavelength_spec_size(self) -> IntField:
+        return cast(IntField, self._index_col('SPECTRUM_SAMPLES'))
 
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ##########################################
 
-    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+    def field_obs_mission_cassini_spacecraft_clock_count1(self) -> FloatField:
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        if not sc.startswith('1/') or sc[2] == ' ':
+        if sc is None or not sc.startswith('1/') or sc[2] == ' ':
             self._log_nonrepeating_warning(
                 f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         return self._parse_cassini_sclk(sc, self._log_nonrepeating_warning)
 
-    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+    def field_obs_mission_cassini_spacecraft_clock_count2(self) -> FloatField:
         sc = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = self._fix_cassini_sclk(sc)
-        if not sc.startswith('1/') or sc[2] == ' ':
+        if sc is None or not sc.startswith('1/') or sc[2] == ' ':
             self._log_nonrepeating_warning(
                 f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
             return None
@@ -160,7 +161,7 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
 
         return sc_cvt
 
-    def field_obs_mission_cassini_mission_phase_name(self):
+    def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         mp = self._cassini_normalize_mission_phase_name()
         return self._create_mult(mp)
 
@@ -169,31 +170,31 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### FIELD METHODS FOR obs_instrument_cocirs ###
     ###############################################
 
-    def field_obs_instrument_cocirs_opus_id(self):
+    def field_obs_instrument_cocirs_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_instrument_cocirs_bundle_id(self):
+    def field_obs_instrument_cocirs_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_instrument_cocirs_detector_id(self):
+    def field_obs_instrument_cocirs_detector_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('DETECTOR_ID'))
 
-    def field_obs_instrument_cocirs_instrument_mode_blinking_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_blinking_flag(self) -> MultFieldRet:
         blinking_flag = self._index_col('INSTRUMENT_MODE_BLINKING_FLAG')
         return self._create_mult(blinking_flag)
 
-    def field_obs_instrument_cocirs_instrument_mode_even_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_even_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INSTRUMENT_MODE_EVEN_FLAG'))
 
-    def field_obs_instrument_cocirs_instrument_mode_odd_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_odd_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INSTRUMENT_MODE_ODD_FLAG'))
 
-    def field_obs_instrument_cocirs_instrument_mode_centers_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_centers_flag(self) -> MultFieldRet:
         center_flag = self._index_col('INSTRUMENT_MODE_CENTERS_FLAG')
         return self._create_mult(center_flag)
 
-    def field_obs_instrument_cocirs_instrument_mode_pairs_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_pairs_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INSTRUMENT_MODE_PAIRS_FLAG'))
 
-    def field_obs_instrument_cocirs_instrument_mode_all_flag(self):
+    def field_obs_instrument_cocirs_instrument_mode_all_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INSTRUMENT_MODE_ALL_FLAG'))

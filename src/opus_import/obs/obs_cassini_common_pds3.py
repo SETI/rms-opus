@@ -5,26 +5,26 @@
 # overrides target names and SCLK counts.
 ################################################################################
 
+from typing import cast
+
 from opus_import import config_targets
+from opus_import.obs.field_types import IntField, MultFieldRet, StrField
 from opus_import.obs.obs_cassini_common import ObsCassiniCommon
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     ################################################################################
     # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
     ################################################################################
-    def _cassini_intended_target_name(self):
+    def _cassini_intended_target_name(self) -> tuple[str | None, str | None]:
         target_name = self._index_col('TARGET_NAME').upper()
         # Note this mapping takes care of the "ATLAS:" case from COUVIS_0053
         if target_name in config_targets.TARGET_NAME_MAPPING:
             target_name = config_targets.TARGET_NAME_MAPPING[target_name]
 
         target_desc = None
+        assert self._metadata is not None
         if 'TARGET_DESC' in self._metadata['index_row']:
             # Only for COISS
             target_desc = self._index_col('TARGET_DESC').upper()
@@ -60,14 +60,14 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
             return target_desc, target_name_info[2]
 
         if target_name not in config_targets.TARGET_NAME_INFO:
-            self._announce_unknown_target_name(target_name)
+            self._log_unknown_target_name(target_name)
             if self._ignore_errors:
                 return 'None', None
             return None, None
         target_info = config_targets.TARGET_NAME_INFO[target_name]
         return target_name, target_info[2]
 
-    def _fix_cassini_sclk(self, count):
+    def _fix_cassini_sclk(self, count: str | None) -> str | None:
         if count is None:
             return None
 
@@ -93,30 +93,30 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     ##############################################################
     ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
     ##############################################################
-    def field_obs_mission_cassini_obs_name(self):
-        return self._some_index_col('OBSERVATION_ID')
+    def field_obs_mission_cassini_obs_name(self) -> StrField:
+        return cast(StrField, self._some_index_col('OBSERVATION_ID'))
 
 
     #######################################################################
     ### OVERRIDE METHODS FOR obs_instrument_coiss FROM ObsCassiniCommon ###
     #######################################################################
 
-    def field_obs_instrument_coiss_opus_id(self):
+    def field_obs_instrument_coiss_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_instrument_coiss_bundle_id(self):
+    def field_obs_instrument_coiss_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_instrument_coiss_data_conversion_type(self):
+    def field_obs_instrument_coiss_data_conversion_type(self) -> MultFieldRet:
         return self._create_mult(self._index_col('DATA_CONVERSION_TYPE'))
 
-    def field_obs_instrument_coiss_compression_type(self):
+    def field_obs_instrument_coiss_compression_type(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INST_CMPRS_TYPE'))
 
-    def field_obs_instrument_coiss_gain_mode_id(self):
+    def field_obs_instrument_coiss_gain_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('GAIN_MODE_ID'))
 
-    def field_obs_instrument_coiss_image_observation_type(self):
+    def field_obs_instrument_coiss_image_observation_type(self) -> MultFieldRet:
         obs_type = self._index_col('IMAGE_OBSERVATION_TYPE')
 
         # Sometimes they have both SCIENCE,OPNAV and OPNAV,SCIENCE so normalize
@@ -146,33 +146,33 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
 
         return self._create_mult(ret)
 
-    def field_obs_instrument_coiss_missing_lines(self):
-        return self._index_col('MISSING_LINES')
+    def field_obs_instrument_coiss_missing_lines(self) -> IntField:
+        return cast(IntField, self._index_col('MISSING_LINES'))
 
-    def field_obs_instrument_coiss_shutter_mode_id(self):
+    def field_obs_instrument_coiss_shutter_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('SHUTTER_MODE_ID'))
 
-    def field_obs_instrument_coiss_shutter_state_id(self):
+    def field_obs_instrument_coiss_shutter_state_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('SHUTTER_STATE_ID'))
 
-    def field_obs_instrument_coiss_image_number(self):
-        return self._index_col('IMAGE_NUMBER')
+    def field_obs_instrument_coiss_image_number(self) -> IntField:
+        return cast(IntField, self._index_col('IMAGE_NUMBER'))
 
-    def field_obs_instrument_coiss_instrument_mode_id(self):
+    def field_obs_instrument_coiss_instrument_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
 
-    def field_obs_instrument_coiss_target_desc(self):
+    def field_obs_instrument_coiss_target_desc(self) -> MultFieldRet:
         target_desc = self._index_col('TARGET_DESC').upper()
         coiss_target_desc_mapping = self._coiss_target_desc_mapping()
         if target_desc in coiss_target_desc_mapping:
             target_desc = coiss_target_desc_mapping[target_desc]
         return self._create_mult(target_desc)
 
-    def field_obs_instrument_coiss_combined_filter(self):
+    def field_obs_instrument_coiss_combined_filter(self) -> MultFieldRet:
         new_filter = self._combined_filter()
         return self._create_mult_keep_case(new_filter)
 
-    def field_obs_instrument_coiss_camera(self):
+    def field_obs_instrument_coiss_camera(self) -> MultFieldRet:
         camera = self._index_col('INSTRUMENT_ID')[3]
         assert camera in ('N', 'W')
         return self._create_mult(camera)

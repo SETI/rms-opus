@@ -5,31 +5,29 @@
 # obs_surface_geometry table.
 ################################################################################
 
+from opus_import.obs.field_types import StrField
 from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometry(ObsBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
     ### Don't override these ###
 
-    def field_obs_surface_geometry_opus_id(self):
+    def field_obs_surface_geometry_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_surface_geometry_bundle_id(self):
+    def field_obs_surface_geometry_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_surface_geometry_instrument_id(self):
+    def field_obs_surface_geometry_instrument_id(self) -> StrField:
         return self.instrument_id
 
-    def field_obs_surface_geometry_target_list(self):
+    def field_obs_surface_geometry_target_list(self) -> StrField:
         # This is the "Multiple Target List" field
+        assert self._metadata is not None
         target_list = self._metadata['inventory_list']
         if target_list is None:
             return None

@@ -7,16 +7,15 @@
 # combines them all together.
 ################################################################################
 
+from typing import cast
+
+from opus_import.obs.field_types import IntField, MultFieldRet
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-    def _nicmos_spec_flag(self):
+    def _nicmos_spec_flag(self) -> tuple[bool, str, str | None]:
         filter1, filter2 = self._decode_filters()
         return filter1.startswith('G'), filter1, filter2
 
@@ -26,7 +25,7 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         return 'HSTNICMOS'
 
 
@@ -34,13 +33,13 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def _observation_type(self):
+    def _observation_type(self) -> str | None:
         if self._nicmos_spec_flag()[0]:
             return 'SPI'
         return 'IMG'
 
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
 
 
@@ -48,7 +47,7 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
 
-    def field_obs_type_image_levels(self):
+    def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
         return SIXTEEN_BIT_IMAGE_LEVELS # NICMOS Inst Handbook, Sec 7.2.1
@@ -58,12 +57,12 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_spec_flag(self):
+    def field_obs_wavelength_spec_flag(self) -> MultFieldRet:
         if self._nicmos_spec_flag()[0]:
             return self._create_mult('Y')
         return self._create_mult('N')
 
-    def field_obs_wavelength_spec_size(self):
+    def field_obs_wavelength_spec_size(self) -> IntField:
         spec_flag, _filter1, filter2 = self._nicmos_spec_flag()
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
@@ -78,12 +77,12 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
         if lines is None and samples is None:
             return None
         if lines is None:
-            return samples
+            return cast(IntField, samples)
         if samples is None:
-            return lines
-        return max(lines, samples)
+            return cast(IntField, lines)
+        return cast(IntField, max(lines, samples))
 
-    def field_obs_wavelength_polarization_type(self):
+    def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         filter_name = self._index_col('FILTER_NAME')
         if filter_name.find('POL') == -1:
             return self._create_mult('NONE')
@@ -94,7 +93,7 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
 
-    def field_obs_mission_hubble_filter_type(self):
+    def field_obs_mission_hubble_filter_type(self) -> MultFieldRet:
         filter1, filter2 = self._decode_filters()
 
         # NICMOS doesn't do filter stacking

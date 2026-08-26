@@ -11,9 +11,12 @@
 ################################################################################
 
 import re
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeGuard, cast
 
 import opus_support
 from opus_import.import_util import cached_tai_from_iso
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
 from opus_import.obs.obs_base import ObsBase
 
 # TODO: This is probably PDS3-only, move it to the PDS3 specific class in the future.
@@ -310,6 +313,11 @@ _COISS_FILTER_WAVELENGTHS = {
 # W/MT3/BL1
 
 class ObsCassiniCommon(ObsBase):
+    if TYPE_CHECKING:
+        # Supplied by ObsGeneral, which every class combining this one also inherits.
+        def field_obs_general_time1(self) -> FloatField: ...
+        def field_obs_general_time2(self) -> FloatField: ...
+
 
     ################################################################################
     # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
@@ -318,17 +326,19 @@ class ObsCassiniCommon(ObsBase):
     # Equinox: 2009-08-11T01:40:08.914
     # After this time, north side of the ring is lit.
     # Before this time, south side of the ring is lit.
-    def _is_ring_north_side_lit(self):
+    def _is_ring_north_side_lit(self) -> bool | None:
         start_time = self.field_obs_general_time1()
         if start_time is None:
             return None
         equinox_time = cached_tai_from_iso('2009-08-11T01:40:08.914')
-        return start_time > equinox_time
+        return cast(bool | None, start_time > equinox_time)
 
-    def _coiss_target_desc_mapping(self):
+    def _coiss_target_desc_mapping(self) -> dict[str, str]:
         return _COISS_TARGET_DESC_MAPPING
 
-    def _parse_cassini_sclk(self, sclk, log_func=None):
+    def _parse_cassini_sclk(self, sclk: str,
+                            log_func: Callable[[str], None] | None = None
+                            ) -> FloatField:
         """Parse a Cassini SCLK, reporting a bad one instead of raising.
 
         log_func defaults to `_log_nonrepeating_error`. COCIRS_56xxx passes
@@ -340,7 +350,7 @@ class ObsCassiniCommon(ObsBase):
         return self._parse_sclk(opus_support.parse_cassini_sclk, sclk, 'Cassini',
                                 log_func)
 
-    def _cassini_valid_obs_name(self, obs_name):
+    def _cassini_valid_obs_name(self, obs_name: str | None) -> TypeGuard[str]:
         r"""Check a Cassini observation name to see if it is parsable. Such a
         name will have four parts separated by _:
 
@@ -403,7 +413,7 @@ class ObsCassiniCommon(ObsBase):
     _JUPITER_TAI = cached_tai_from_iso('2000-262T00:32:38.930')
     _SATURN_TAI = cached_tai_from_iso('2003-138T02:16:18.383')
 
-    def _cassini_planet_id(self):
+    def _cassini_planet_id(self) -> str:
         """Find the planet associated with an observation. This is based on the
         mission phase (as encoded in the observation time so it works with all
         instruments)."""
@@ -414,8 +424,9 @@ class ObsCassiniCommon(ObsBase):
             return 'JUP'
         return 'SAT'
 
-    def _cassini_normalize_mission_phase_name(self):
+    def _cassini_normalize_mission_phase_name(self) -> str | None:
         time1 = self.field_obs_general_time1()
+        assert time1 is not None
         for phase, start_time_sec, stop_time_sec in _CASSINI_PHASE_NAME_MAPPING:
             if start_time_sec <= time1 < stop_time_sec:
                 return phase.upper()
@@ -425,7 +436,9 @@ class ObsCassiniCommon(ObsBase):
     ### HELPER FUNCTIONS USED BY METHODS FOR obs_instrument_coiss ###
     #################################################################
     # See additional notes under _COISS_FILTER_WAVELENGTHS
-    def _coiss_wavelength_helper(self, camera, filter1, filter2):
+    def _coiss_wavelength_helper(self, camera: str | None, filter1: str | None,
+                                 filter2: str | None
+                                 ) -> tuple[FloatField, FloatField, FloatField]:
         key = (camera, filter1, filter2)
         if key in _COISS_FILTER_WAVELENGTHS:
             return _COISS_FILTER_WAVELENGTHS[key]
@@ -445,7 +458,9 @@ class ObsCassiniCommon(ObsBase):
                                       f'{key[0]}/{key[1]}/{key[2]}')
         return None, None, None
 
-    def _combined_filter(self, camera=None, filter1=None, filter2=None):
+    def _combined_filter(self, camera: str | None = None,
+                         filter1: str | None = None,
+                         filter2: str | None = None) -> str:
         if camera is None:
             camera = self._index_col('INSTRUMENT_ID')[3]
 
@@ -471,7 +486,8 @@ class ObsCassiniCommon(ObsBase):
             else:
                 same_or_unknown_wl = (wl1 is None or wl2 is None or wl1 == wl2)
                 if ((same_or_unknown_wl and filter1 > filter2) or
-                    (not same_or_unknown_wl and wl1 > wl2)):
+                    (not same_or_unknown_wl and wl1 is not None and wl2 is not None
+                     and wl1 > wl2)):
                     # Place filters in wavelength order
                     # If wavelengths are the same, make it name order
                     filter1, filter2 = filter2, filter1
@@ -484,42 +500,43 @@ class ObsCassiniCommon(ObsBase):
     #############################
 
     @property
-    def inst_host_id(self):
+    def inst_host_id(self) -> str:
         return 'CO'
 
     @property
-    def mission_id(self):
+    def mission_id(self) -> str:
         return 'CO'
 
     @property
-    def primary_filespec(self):
+    def primary_filespec(self) -> str | None:
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "data/1294561143_1295221348/W1294561143_1.IMG"
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.bundle + '/' + filespec
+        assert self.bundle is not None
+        return cast(str | None, self.bundle + '/' + filespec)
 
 
     #############################################
     ### FIELD METHODS FOR obs_mission_cassini ###
     #############################################
 
-    def field_obs_mission_cassini_opus_id(self):
+    def field_obs_mission_cassini_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_mission_cassini_bundle_id(self):
+    def field_obs_mission_cassini_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_mission_cassini_instrument_id(self):
+    def field_obs_mission_cassini_instrument_id(self) -> StrField:
         return self.instrument_id
 
     # Override this in obs_cassini_common_pds3/4
-    def field_obs_mission_cassini_obs_name(self):
+    def field_obs_mission_cassini_obs_name(self) -> StrField:
         return None
 
-    def _rev_no(self):
+    def _rev_no(self) -> str | None:
         obs_name = self.field_obs_mission_cassini_obs_name()
         if not self._cassini_valid_obs_name(obs_name):
             return None
@@ -529,10 +546,10 @@ class ObsCassiniCommon(ObsBase):
             return None
         return rev_no
 
-    def field_obs_mission_cassini_rev_no(self):
+    def field_obs_mission_cassini_rev_no(self) -> MultFieldRet:
         return self._create_mult_keep_case(self._rev_no())
 
-    def field_obs_mission_cassini_rev_no_int(self):
+    def field_obs_mission_cassini_rev_no_int(self) -> IntField:
         rev_no = self._rev_no()
         if rev_no is None:
             return None
@@ -544,17 +561,18 @@ class ObsCassiniCommon(ObsBase):
             return None
         return rev_no_cvt
 
-    def field_obs_mission_cassini_is_prime(self):
+    def field_obs_mission_cassini_is_prime(self) -> MultFieldRet:
         prime_inst = self._prime_inst_id()
         inst_id = self.instrument_id
 
         # Change COISS to ISS, etc.
+        assert inst_id is not None
         inst_id = inst_id.replace('CO', '')
         if prime_inst == inst_id:
             return self._create_mult('Yes')
         return self._create_mult('No')
 
-    def _prime_inst_id(self):
+    def _prime_inst_id(self) -> str:
         obs_name = self.field_obs_mission_cassini_obs_name()
         if obs_name is None:
             return 'UNK'
@@ -592,22 +610,22 @@ class ObsCassiniCommon(ObsBase):
 
         return prime_inst_id
 
-    def field_obs_mission_cassini_prime_inst_id(self):
+    def field_obs_mission_cassini_prime_inst_id(self) -> MultFieldRet:
         return self._create_mult(self._prime_inst_id())
 
-    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+    def field_obs_mission_cassini_spacecraft_clock_count1(self) -> FloatField:
         return None
 
-    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+    def field_obs_mission_cassini_spacecraft_clock_count2(self) -> FloatField:
         return None
 
-    def field_obs_mission_cassini_ert1(self):
+    def field_obs_mission_cassini_ert1(self) -> FloatField:
         return None
 
-    def field_obs_mission_cassini_ert2(self):
+    def field_obs_mission_cassini_ert2(self) -> FloatField:
         return None
 
-    def field_obs_mission_cassini_cassini_target_code(self):
+    def field_obs_mission_cassini_cassini_target_code(self) -> MultFieldRet:
         obs_name = self.field_obs_mission_cassini_obs_name()
         if obs_name is None:
             return self._create_mult(None)
@@ -621,7 +639,8 @@ class ObsCassiniCommon(ObsBase):
 
         return self._create_mult(None)
 
-    def field_obs_mission_cassini_cassini_target_name(self):
+    def field_obs_mission_cassini_cassini_target_name(self) -> MultFieldRet:
+        assert self._metadata is not None
         if 'TARGET_NAME' not in self._metadata['index_row']: # RSS
             return self._create_mult(None)
         target_name = self._index_col('TARGET_NAME').title()
@@ -630,61 +649,61 @@ class ObsCassiniCommon(ObsBase):
             return self._create_mult(None)
         return self._create_mult_keep_case(target_name)
 
-    def field_obs_mission_cassini_activity_name(self):
+    def field_obs_mission_cassini_activity_name(self) -> StrField:
         obs_name = self.field_obs_mission_cassini_obs_name()
         if not self._cassini_valid_obs_name(obs_name):
             return None
         obs_parts = obs_name.split('_')
         return obs_parts[2][:-3]
 
-    def field_obs_mission_cassini_mission_phase_name(self):
+    def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         raise NotImplementedError
 
-    def field_obs_mission_cassini_sequence_id(self):
+    def field_obs_mission_cassini_sequence_id(self) -> StrField:
         return None
 
     ##############################################
     ### FIELD METHODS FOR obs_instrument_coiss ###
     ##############################################
 
-    def field_obs_instrument_coiss_opus_id(self):
+    def field_obs_instrument_coiss_opus_id(self) -> StrField:
         return None
 
-    def field_obs_instrument_coiss_bundle_id(self):
+    def field_obs_instrument_coiss_bundle_id(self) -> StrField:
         return None
 
-    def field_obs_instrument_coiss_data_conversion_type(self):
+    def field_obs_instrument_coiss_data_conversion_type(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_compression_type(self):
+    def field_obs_instrument_coiss_compression_type(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_gain_mode_id(self):
+    def field_obs_instrument_coiss_gain_mode_id(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_image_observation_type(self):
+    def field_obs_instrument_coiss_image_observation_type(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_missing_lines(self):
+    def field_obs_instrument_coiss_missing_lines(self) -> IntField:
         return None
 
-    def field_obs_instrument_coiss_shutter_mode_id(self):
+    def field_obs_instrument_coiss_shutter_mode_id(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_shutter_state_id(self):
+    def field_obs_instrument_coiss_shutter_state_id(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_image_number(self):
+    def field_obs_instrument_coiss_image_number(self) -> IntField:
         return None
 
-    def field_obs_instrument_coiss_instrument_mode_id(self):
+    def field_obs_instrument_coiss_instrument_mode_id(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_target_desc(self):
+    def field_obs_instrument_coiss_target_desc(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_combined_filter(self):
+    def field_obs_instrument_coiss_combined_filter(self) -> MultFieldRet:
         return self._create_mult(None)
 
-    def field_obs_instrument_coiss_camera(self):
+    def field_obs_instrument_coiss_camera(self) -> MultFieldRet:
         return self._create_mult(None)

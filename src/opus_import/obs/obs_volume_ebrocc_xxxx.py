@@ -6,6 +6,9 @@
 # in a single volume.
 ################################################################################
 
+from typing import cast
+
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 _EBROCC_INST_TO_PDS4_INST = {
@@ -31,16 +34,12 @@ _EBROCC_INST_TO_PDS4_INST = {
 # * Observer elevation = 90 - incidence angle
 
 class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         if self._metadata is None:
             # This happens during the create_tables phase
             return None
@@ -49,24 +48,25 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return _EBROCC_INST_TO_PDS4_INST[inst]
 
     @property
-    def inst_host_id(self):
+    def inst_host_id(self) -> str:
         return 'GB'
 
     @property
-    def mission_id(self):
+    def mission_id(self) -> str:
         return 'GB'
 
     @property
-    def primary_filespec(self):
+    def primary_filespec(self) -> str | None:
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
         # to actually find the matching row in the supplemental index dictionary.
         # Format: "/DATA/ESO1M/ES1_EPD.LBL"
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.bundle + '/' + filespec
+        assert self.bundle is not None
+        return cast(str | None, self.bundle + '/' + filespec)
 
-    def convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec: str) -> str:
         return filespec.replace('.LBL', '.TAB')
 
 
@@ -74,22 +74,22 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_right_asc1(self):
+    def field_obs_general_right_asc1(self) -> FloatField:
         return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[0]
 
-    def field_obs_general_right_asc2(self):
+    def field_obs_general_right_asc2(self) -> FloatField:
         return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[1]
 
-    def field_obs_general_declination1(self):
+    def field_obs_general_declination1(self) -> FloatField:
         return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[2]
 
-    def field_obs_general_declination2(self):
+    def field_obs_general_declination2(self) -> FloatField:
         return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[3]
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult('SAT')
 
-    def _target_name(self):
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
         target_name = self._index_label_col('TARGET_NAME')
 
         if target_name != 'S RINGS':
@@ -102,10 +102,10 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
 
         return [(target_name, target_info[2])]
 
-    def field_obs_general_quantity(self):
+    def field_obs_general_quantity(self) -> MultFieldRet:
         return self._create_mult('OPDEPTH')
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('OCC')
 
 
@@ -113,34 +113,34 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_wavelength1(self):
-        return self._supp_index_col('WAVELENGTH')
+    def field_obs_wavelength_wavelength1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('WAVELENGTH'))
 
-    def field_obs_wavelength_wavelength2(self):
-        return self._supp_index_col('WAVELENGTH')
+    def field_obs_wavelength_wavelength2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('WAVELENGTH'))
 
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
 
-    def field_obs_profile_occ_type(self):
+    def field_obs_profile_occ_type(self) -> MultFieldRet:
         return self._create_mult('STE')
 
-    def field_obs_profile_occ_dir(self):
+    def field_obs_profile_occ_dir(self) -> MultFieldRet:
         occ_dir = self._index_col('OCCULTATION_DIRECTION')
         if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
             return self._create_mult(occ_dir[0])
         self._log_nonrepeating_error(f'Unknown OCCULTATION_DIRECTION "{occ_dir}"')
         return self._create_mult(None)
 
-    def field_obs_profile_body_occ_flag(self):
+    def field_obs_profile_body_occ_flag(self) -> MultFieldRet:
         return self._create_mult(self._supp_index_col('PLANETARY_OCCULTATION_FLAG'))
 
-    def field_obs_profile_quality_score(self):
+    def field_obs_profile_quality_score(self) -> MultFieldRet:
         return self._create_mult('UNASSIGNED')
 
-    def field_obs_profile_wl_band(self):
+    def field_obs_profile_wl_band(self) -> MultFieldRet:
         wl = self._supp_index_col('WAVELENGTH') # microns
         if wl > 0.7:
             return self._create_mult('IR')
@@ -148,14 +148,14 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
             return self._create_mult('VIS')
         return self._create_mult('UV')
 
-    def field_obs_profile_source(self):
+    def field_obs_profile_source(self) -> MultFieldRet:
         target_name, target_info = self._star_name_helper('index_label', 'STAR_NAME')
         if target_info is None:
             return self._create_mult(None)
         return self._create_mult(col_val=target_name, disp_name=target_info[2],
                                  grouping='Stars')
 
-    def field_obs_profile_host(self):
+    def field_obs_profile_host(self) -> MultFieldRet:
         return self._create_mult(self.instrument_id)
 
 
@@ -163,105 +163,105 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
 
-    def field_obs_ring_geometry_ring_radius1(self):
-        return self._supp_index_col('MINIMUM_RING_RADIUS')
+    def field_obs_ring_geometry_ring_radius1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MINIMUM_RING_RADIUS'))
 
-    def field_obs_ring_geometry_ring_radius2(self):
-        return self._supp_index_col('MAXIMUM_RING_RADIUS')
+    def field_obs_ring_geometry_ring_radius2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MAXIMUM_RING_RADIUS'))
 
-    def field_obs_ring_geometry_projected_radial_resolution1(self):
-        return self._supp_index_col('RADIAL_RESOLUTION')
+    def field_obs_ring_geometry_projected_radial_resolution1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('RADIAL_RESOLUTION'))
 
-    def field_obs_ring_geometry_projected_radial_resolution2(self):
+    def field_obs_ring_geometry_projected_radial_resolution2(self) -> FloatField:
         return self.field_obs_ring_geometry_projected_radial_resolution1()
 
-    def field_obs_ring_geometry_solar_ring_elevation1(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')-90.
+    def field_obs_ring_geometry_solar_ring_elevation1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE')-90.)
 
-    def field_obs_ring_geometry_solar_ring_elevation2(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
         return self.field_obs_ring_geometry_solar_ring_elevation1()
 
-    def field_obs_ring_geometry_observer_ring_elevation1(self):
-        return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_observer_ring_elevation1(self) -> FloatField:
+        return cast(FloatField, 90.-self._supp_index_col('INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_observer_ring_elevation2(self):
+    def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
         return self.field_obs_ring_geometry_observer_ring_elevation1()
 
-    def field_obs_ring_geometry_phase1(self):
+    def field_obs_ring_geometry_phase1(self) -> FloatField:
         return 180.
 
-    def field_obs_ring_geometry_phase2(self):
+    def field_obs_ring_geometry_phase2(self) -> FloatField:
         return 180.
 
-    def field_obs_ring_geometry_incidence1(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_incidence1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_incidence2(self):
+    def field_obs_ring_geometry_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_incidence1()
 
-    def field_obs_ring_geometry_emission1(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_emission1(self) -> FloatField:
+        return cast(FloatField, 180.-self._supp_index_col('INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_emission2(self):
+    def field_obs_ring_geometry_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_emission1()
 
-    def field_obs_ring_geometry_north_based_incidence1(self):
-        return 180.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_north_based_incidence1(self) -> FloatField:
+        return cast(FloatField, 180.-self._supp_index_col('INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_north_based_incidence2(self):
+    def field_obs_ring_geometry_north_based_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_incidence1()
 
-    def field_obs_ring_geometry_north_based_emission1(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_north_based_emission2(self):
+    def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_emission1()
 
-    def field_obs_ring_geometry_ring_center_phase1(self):
+    def field_obs_ring_geometry_ring_center_phase1(self) -> FloatField:
         return self.field_obs_ring_geometry_phase1()
 
-    def field_obs_ring_geometry_ring_center_phase2(self):
+    def field_obs_ring_geometry_ring_center_phase2(self) -> FloatField:
         return self.field_obs_ring_geometry_phase2()
 
-    def field_obs_ring_geometry_ring_center_incidence1(self):
+    def field_obs_ring_geometry_ring_center_incidence1(self) -> FloatField:
         return self.field_obs_ring_geometry_incidence1()
 
-    def field_obs_ring_geometry_ring_center_incidence2(self):
+    def field_obs_ring_geometry_ring_center_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_incidence2()
 
-    def field_obs_ring_geometry_ring_center_emission1(self):
+    def field_obs_ring_geometry_ring_center_emission1(self) -> FloatField:
         return self.field_obs_ring_geometry_emission1()
 
-    def field_obs_ring_geometry_ring_center_emission2(self):
+    def field_obs_ring_geometry_ring_center_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_emission2()
 
-    def field_obs_ring_geometry_ring_center_north_based_incidence1(self):
+    def field_obs_ring_geometry_ring_center_north_based_incidence1(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_incidence1()
 
-    def field_obs_ring_geometry_ring_center_north_based_incidence2(self):
+    def field_obs_ring_geometry_ring_center_north_based_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_incidence2()
 
-    def field_obs_ring_geometry_ring_center_north_based_emission1(self):
+    def field_obs_ring_geometry_ring_center_north_based_emission1(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_emission1()
 
-    def field_obs_ring_geometry_ring_center_north_based_emission2(self):
+    def field_obs_ring_geometry_ring_center_north_based_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_north_based_emission2()
 
-    def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return self._supp_index_col('INCIDENCE_ANGLE')-90.
+    def field_obs_ring_geometry_solar_ring_opening_angle1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE')-90.)
 
-    def field_obs_ring_geometry_solar_ring_opening_angle2(self):
+    def field_obs_ring_geometry_solar_ring_opening_angle2(self) -> FloatField:
         return self.field_obs_ring_geometry_solar_ring_opening_angle1()
 
-    def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        return 90.-self._supp_index_col('INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_observer_ring_opening_angle1(self) -> FloatField:
+        return cast(FloatField, 90.-self._supp_index_col('INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_observer_ring_opening_angle2(self):
+    def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()
 
-    def field_obs_ring_geometry_ring_intercept_time1(self):
+    def field_obs_ring_geometry_ring_intercept_time1(self) -> FloatField:
         return self._time_from_index(column='RING_EVENT_START')
 
-    def field_obs_ring_geometry_ring_intercept_time2(self):
+    def field_obs_ring_geometry_ring_intercept_time2(self) -> FloatField:
         return self._time2_from_index(self.field_obs_ring_geometry_ring_intercept_time1(),
                                       'RING_EVENT_STOP')

@@ -1,14 +1,14 @@
-################################################################################
-# obs_general_pds4.py
-#
-# Defines the ObsGeneralPDS4 class, which augments ObsGeneral with methods
-# that are PDS4-specific.
-################################################################################
+"""The PDS4 variant of the ``obs_general`` table module.
+
+`opus_import.obs.obs_general` computes every column that does not depend on the PDS
+version. This class supplies nothing further: a PDS4 bundle's target name and times come
+from the bundle module or from `opus_import.obs.obs_base_pds4`, so the pairing exists to
+put the PDS4 base into the class's own ancestry rather than to add behavior.
+"""
 
 from opus_import.obs.obs_base_pds4 import ObsBasePDS4
 from opus_import.obs.obs_general import ObsGeneral
 
 
 class ObsGeneralPDS4(ObsGeneral, ObsBasePDS4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """The ``obs_general`` columns for a PDS4 observation."""

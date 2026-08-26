@@ -6,6 +6,9 @@
 # COISS_[12]xxx.
 ################################################################################
 
+from typing import cast
+
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
 
@@ -20,19 +23,15 @@ _INSTRUMENT_MODE_PIXEL_SIZE = {
 
 
 class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
         return 'COISS'
 
-    def convert_filespec_from_lbl(self, filespec):
+    def convert_filespec_from_lbl(self, filespec: str) -> str:
         return filespec.replace('.LBL', '.IMG')
 
 
@@ -40,37 +39,37 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_observation_duration(self):
-        return self._index_col('EXPOSURE_DURATION') / 1000
+    def field_obs_general_observation_duration(self) -> FloatField:
+        return cast(FloatField, self._index_col('EXPOSURE_DURATION') / 1000)
 
     # We occasionally don't bother to generate ring_geo data for COISS, like during
     # cruise, so just use the given RA/DEC from the index if needed. We don't make
     # any effort to figure out the min/max values.
-    def field_obs_general_right_asc1(self):
+    def field_obs_general_right_asc1(self) -> FloatField:
         ra = self._ring_geo_index_col('MINIMUM_RIGHT_ASCENSION')
         if ra is not None:
             return ra
-        return self._index_col('RIGHT_ASCENSION')
+        return cast(FloatField, self._index_col('RIGHT_ASCENSION'))
 
-    def field_obs_general_right_asc2(self):
+    def field_obs_general_right_asc2(self) -> FloatField:
         ra = self._ring_geo_index_col('MAXIMUM_RIGHT_ASCENSION')
         if ra is not None:
             return ra
-        return self._index_col('RIGHT_ASCENSION')
+        return cast(FloatField, self._index_col('RIGHT_ASCENSION'))
 
-    def field_obs_general_declination1(self):
+    def field_obs_general_declination1(self) -> FloatField:
         dec = self._ring_geo_index_col('MINIMUM_DECLINATION')
         if dec is not None:
             return dec
-        return self._index_col('DECLINATION')
+        return cast(FloatField, self._index_col('DECLINATION'))
 
-    def field_obs_general_declination2(self):
+    def field_obs_general_declination2(self) -> FloatField:
         dec = self._ring_geo_index_col('MAXIMUM_DECLINATION')
         if dec is not None:
             return dec
-        return self._index_col('DECLINATION')
+        return cast(FloatField, self._index_col('DECLINATION'))
 
-    def field_obs_general_ring_obs_id(self):
+    def field_obs_general_ring_obs_id(self) -> StrField:
         camera = self._index_col('INSTRUMENT_ID')[3]
         assert camera in ('N', 'W')
         filename = self._index_col('FILE_NAME')
@@ -82,19 +81,19 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
             pl_str = planet[0]
         return f'{pl_str}_IMG_CO_ISS_{image_num}_{camera}'
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult(self._cassini_planet_id())
 
-    def _target_name(self):
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
         return [self._cassini_intended_target_name()]
 
-    def field_obs_general_quantity(self):
+    def field_obs_general_quantity(self) -> MultFieldRet:
         filter1, filter2 = self._index_col('FILTER_NAME')
         if filter1.startswith('UV') or filter2.startswith('UV'):
             return self._create_mult('EMISSION')
         return self._create_mult('REFLECT')
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('IMG') # Image
 
 
@@ -102,24 +101,24 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsPds ###
     ############################
 
-    def field_obs_pds_note(self):
-        return self._index_col('DESCRIPTION')
+    def field_obs_pds_note(self) -> StrField:
+        return cast(StrField, self._index_col('DESCRIPTION'))
 
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
 
-    def field_obs_type_image_image_type_id(self):
+    def field_obs_type_image_image_type_id(self) -> MultFieldRet:
         return self._create_mult('FRAM')
 
-    def field_obs_type_image_duration(self):
+    def field_obs_type_image_duration(self) -> FloatField:
         return self.field_obs_general_observation_duration()
 
-    def field_obs_type_image_levels(self):
+    def field_obs_type_image_levels(self) -> IntField:
         return TWELVE_BIT_IMAGE_LEVELS
 
-    def field_obs_type_image_greater_pixel_size(self):
+    def field_obs_type_image_greater_pixel_size(self) -> IntField:
         # For COISS, this is both greater and lesser pixel size
         inst_mode = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mode not in _INSTRUMENT_MODE_PIXEL_SIZE:
@@ -127,7 +126,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
             return None
         return _INSTRUMENT_MODE_PIXEL_SIZE[inst_mode]
 
-    def field_obs_type_image_lesser_pixel_size(self):
+    def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         return self.field_obs_type_image_greater_pixel_size()
 
 
@@ -135,7 +134,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_wavelength1(self):
+    def field_obs_wavelength_wavelength1(self) -> FloatField:
         camera = self._index_col('INSTRUMENT_ID')[3]
         filter1, filter2 = self._index_col('FILTER_NAME')
         central_wl, fwhm, _effective_wl = self._coiss_wavelength_helper(camera, filter1, filter2)
@@ -143,7 +142,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
             return None
         return (central_wl - fwhm/2) / 1000 # microns
 
-    def field_obs_wavelength_wavelength2(self):
+    def field_obs_wavelength_wavelength2(self) -> FloatField:
         camera = self._index_col('INSTRUMENT_ID')[3]
         filter1, filter2 = self._index_col('FILTER_NAME')
         central_wl, fwhm, _effective_wl = self._coiss_wavelength_helper(camera, filter1, filter2)
@@ -151,19 +150,19 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
             return None
         return (central_wl + fwhm/2) / 1000 # microns
 
-    def field_obs_wavelength_wave_res1(self):
+    def field_obs_wavelength_wave_res1(self) -> FloatField:
         return self._wave_res_from_full_bandwidth()
 
-    def field_obs_wavelength_wave_res2(self):
+    def field_obs_wavelength_wave_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_res1()
 
-    def field_obs_wavelength_wave_no_res1(self):
+    def field_obs_wavelength_wave_no_res1(self) -> FloatField:
         return self._wave_no_res_from_full_bandwidth()
 
-    def field_obs_wavelength_wave_no_res2(self):
+    def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
 
-    def field_obs_wavelength_polarization_type(self):
+    def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         the_filter = self._combined_filter()
         if the_filter.find('P') != -1:
             return self._create_mult('LINEAR')
@@ -174,18 +173,18 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ##########################################
 
-    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+    def field_obs_mission_cassini_spacecraft_clock_count1(self) -> FloatField:
         partition = self._index_col('SPACECRAFT_CLOCK_CNT_PARTITION')
         count = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
-        sc = str(partition) + '/' + str(count)
-        sc = self._fix_cassini_sclk(sc)
+        sc = self._fix_cassini_sclk(str(partition) + '/' + str(count))
+        assert sc is not None  # _fix_cassini_sclk returns None only for a None argument
         return self._parse_cassini_sclk(sc)
 
-    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+    def field_obs_mission_cassini_spacecraft_clock_count2(self) -> FloatField:
         partition = self._index_col('SPACECRAFT_CLOCK_CNT_PARTITION')
         count = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
-        sc = str(partition) + '/' + str(count)
-        sc = self._fix_cassini_sclk(sc)
+        sc = self._fix_cassini_sclk(str(partition) + '/' + str(count))
+        assert sc is not None  # _fix_cassini_sclk returns None only for a None argument
         sc_cvt = self._parse_cassini_sclk(sc)
         if sc_cvt is None:
             return None
@@ -206,16 +205,16 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
 
         return sc_cvt
 
-    def field_obs_mission_cassini_ert1(self):
+    def field_obs_mission_cassini_ert1(self) -> FloatField:
         return self._time_from_index(column='EARTH_RECEIVED_START_TIME')
 
-    def field_obs_mission_cassini_ert2(self):
+    def field_obs_mission_cassini_ert2(self) -> FloatField:
         return self._time2_from_index(self.field_obs_mission_cassini_ert1(),
                                       column='EARTH_RECEIVED_STOP_TIME')
 
-    def field_obs_mission_cassini_mission_phase_name(self):
+    def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         mp = self._cassini_normalize_mission_phase_name()
         return self._create_mult(mp)
 
-    def field_obs_mission_cassini_sequence_id(self):
-        return self._index_col('SEQUENCE_ID')
+    def field_obs_mission_cassini_sequence_id(self) -> StrField:
+        return cast(StrField, self._index_col('SEQUENCE_ID'))

@@ -14,6 +14,7 @@ rewrote the very lines they sit on.
 
 import ast
 from pathlib import Path
+from typing import Any, Literal
 
 import pytest
 
@@ -56,7 +57,7 @@ def failing_pdsfile(monkeypatch: pytest.MonkeyPatch) -> ImportContext:
 
 @pytest.mark.parametrize('pds_version', [3, 4])
 def test_a_failed_filespec_conversion_returns_an_empty_list(
-        pds_version: int, failing_pdsfile: ImportContext) -> None:
+        pds_version: Literal[3, 4], failing_pdsfile: ImportContext) -> None:
     """The result must be iterable: the caller extends its row list with it."""
     rows = do_import_index.get_opus_products_rows_for_filespec(
         failing_pdsfile, pds_version, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0',
@@ -71,7 +72,7 @@ def test_a_failed_filespec_conversion_returns_an_empty_list(
 def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
         failing_pdsfile: ImportContext) -> None:
     """Reproduces the caller's exact use, which used to raise TypeError on None."""
-    table_rows: dict[str, list] = {'obs_files': []}
+    table_rows: dict[str, list[Any]] = {'obs_files': []}
 
     rows = do_import_index.get_opus_products_rows_for_filespec(
         failing_pdsfile, 3, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0', 'COISS_2002',
