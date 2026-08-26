@@ -21,7 +21,7 @@ from opus_app.apps.help.views import (
 from ._broken_requests import request_without_get, request_without_meta
 
 
-class helpTests(TestCase):
+class HelpTests(TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None

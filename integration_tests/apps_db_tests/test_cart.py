@@ -20,7 +20,7 @@ from opus_app.apps.cart.views import (
 from ._broken_requests import request_without_get, request_without_meta
 
 
-class cartTests(TestCase):
+class CartTests(TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None

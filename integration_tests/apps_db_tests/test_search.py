@@ -28,7 +28,7 @@ from opus_app.apps.search.views import (
 from ._broken_requests import request_without_get, request_without_meta
 
 
-class searchTests(TestCase):
+class SearchTests(TestCase):
 
     def _empty_user_searches(self) -> None:
         cursor = connection.cursor()
@@ -1548,7 +1548,7 @@ class searchTests(TestCase):
         self.assertEqual(extras['qtypes'], qtypes_expected)
         self.assertEqual(extras['units'], units_expected)
 
-    def test__url_to_search_params_mults_2B(self) -> None:
+    def test__url_to_search_params_mults_2b(self) -> None:
         "[test_search.py] url_to_search_params: mults using %2B to mean plus"
         q = QueryDict('COISSfilter=BL1%2BGRN')
         (selections, extras) = self._search_params(q)
@@ -3338,7 +3338,7 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
-    def test__construct_query_string_mults_planet_instrumentCOISS(self) -> None:
+    def test__construct_query_string_mults_planet_instrument_coiss(self) -> None:
         "[test_search.py] construct_query_string: two mults"
         selections = {'obs_general.planet_id': ['Saturn'],
                       'obs_general.instrument_id': ['COISS']}

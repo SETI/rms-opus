@@ -9,7 +9,7 @@ from django.core.cache import cache
 from opus_app.apps.tools.file_utils import get_pds_products
 
 
-class fileUtilsTests(TestCase):
+class FileUtilsTests(TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None

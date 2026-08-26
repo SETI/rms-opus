@@ -30,7 +30,7 @@ from ._broken_requests import request_without_get, request_without_meta
 cursor = connection.cursor()
 
 
-class resultsTests(TestCase):
+class ResultsTests(TestCase):
 
     def _empty_user_searches(self) -> None:
         cursor = connection.cursor()

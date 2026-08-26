@@ -15,7 +15,7 @@ from opus_app.apps.ui.views import api_normalize_url, api_notifications
 from ._broken_requests import request_without_get, request_without_meta
 
 
-class uiTests(TestCase):
+class UiTests(TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None

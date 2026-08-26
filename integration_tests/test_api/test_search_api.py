@@ -523,7 +523,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                                http400_search_params_invalid(
                                    '/__api/stringsearchchoices/bundleid.json'))
 
-    def test__api_stringsearchchoices_opusid_COISS_2002_regex_good(self) -> None:
+    def test__api_stringsearchchoices_opusid_coiss_2002_regex_good(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: opusid bundleid COISS_2002 regex good"
         url = r'/opus/__api/stringsearchchoices/opusid.json?bundleid=COISS_2002&opusid=co-iss-n14609\d0&qtype-opusid=regex&reqno=123'
         expected = {'choices': ['<b>co-iss-n1460960</b>653',
@@ -540,7 +540,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_opusid_COISS_2002_regex_bad(self) -> None:
+    def test__api_stringsearchchoices_opusid_coiss_2002_regex_bad(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: opusid bundleid COISS_2002 regex bad"
         url = r'/opus/__api/stringsearchchoices/opusid.json?bundleid=COISS_2002&opusid=co-iss-n14609\d0\&qtype-opusid=regex&reqno=123'
         expected = {'choices': [],
@@ -572,7 +572,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                                http400_bad_or_missing_reqno(
                                    '/__api/stringsearchchoices/bundleid.json'))
 
-    def test__api_stringsearchchoices_bundleid_GO_0017(self) -> None:
+    def test__api_stringsearchchoices_bundleid_go_0017(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid GO_0017"
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=GO_0017&reqno=123'
         expected = {'choices': ['<b>GO_0017</b>'],
@@ -580,7 +580,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected, ignore=['full_search'])
 
-    def test__api_stringsearchchoices_bundleid_O_0017(self) -> None:
+    def test__api_stringsearchchoices_bundleid_o_0017(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid O_0017"
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=O_0017&reqno=123'
         expected = {'choices': ['G<b>O_0017</b>'],
@@ -588,7 +588,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected, ignore=['full_search'])
 
-    def test__api_stringsearchchoices_bundleid_COISS_2002(self) -> None:
+    def test__api_stringsearchchoices_bundleid_coiss_2002(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid COISS_2002"
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=COISS_2002&reqno=123'
         expected = {'choices': ['<b>COISS_2002</b>'],
@@ -596,7 +596,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected, ignore=['full_search'])
 
-    def test__api_stringsearchchoices_datasetid_empty_COISS_2002(self) -> None:
+    def test__api_stringsearchchoices_datasetid_empty_coiss_2002(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid empty bundleid COISS_2002"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
@@ -604,7 +604,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_empty2_COISS_2002(self) -> None:
+    def test__api_stringsearchchoices_datasetid_empty2_coiss_2002(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid empty2 bundleid COISS_2002"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
@@ -612,7 +612,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_begin_COISS_2002(self) -> None:
+    def test__api_stringsearchchoices_datasetid_begin_coiss_2002(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S bundleid COISS_2002"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=CO-S&reqno=123'
         expected = {'choices': ['<b>CO-S</b>-ISSNA/ISSWA-2-EDR-V1.0'],
@@ -620,7 +620,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_middle_COISS_2002(self) -> None:
+    def test__api_stringsearchchoices_datasetid_middle_coiss_2002(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid ISSWA bundleid COISS_2002"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=ISSWA&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/<b>ISSWA</b>-2-EDR-V1.0'],
@@ -628,7 +628,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_end_COISS_2002(self) -> None:
+    def test__api_stringsearchchoices_datasetid_end_coiss_2002(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid V1.0 bundleid COISS_2002"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=V1.0&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>'],
@@ -636,7 +636,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_begins_good(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_begins_good(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S bundleid COISS_2002 begins good"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=CO-S&qtype-datasetid=begins&reqno=123'
         expected = {'choices': ['<b>CO-S</b>-ISSNA/ISSWA-2-EDR-V1.0'],
@@ -644,7 +644,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_begins_bad(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_begins_bad(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S bundleid COISS_2002 begins bad"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=O-S&qtype-datasetid=begins&reqno=123'
         expected = {'choices': [],
@@ -652,7 +652,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_contains_good(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_contains_good(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNA bundleid COISS_2002 contains good"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=ISSNA&qtype-datasetid=contains&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
@@ -660,7 +660,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_contains_bad(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_contains_bad(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNAISSWA bundleid COISS_2002 contains bad"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=ISSNAISSWA&qtype-datasetid=contains&reqno=123'
         expected = {'choices': [],
@@ -668,7 +668,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_ends_good(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_ends_good(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid V1.0 bundleid COISS_2002 ends good"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=V1.0&qtype-datasetid=ends&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-<b>V1.0</b>'],
@@ -676,7 +676,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_ends_bad(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_ends_bad(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid O-S bundleid COISS_2002 ends bad"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=O-S&qtype-datasetid=ends&reqno=123'
         expected = {'choices': [],
@@ -684,7 +684,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_matches_good(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_matches_good(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNA bundleid COISS_2002 matches good"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=ISSNA&qtype-datasetid=matches&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
@@ -692,7 +692,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_matches_bad(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_matches_bad(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid ISSNAX bundleid COISS_2002 matches bad"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=ISSNAX&qtype-datasetid=matches&reqno=123'
         expected = {'choices': [],
@@ -700,7 +700,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_good(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_excludes_good(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid V1 bundleid COISS_2002 excludes good"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=V1&qtype-datasetid=excludes&reqno=123'
         expected = {'choices': [],
@@ -708,7 +708,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_excludes_bad(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_excludes_bad(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid V1X bundleid COISS_2002 excludes bad"
         url = '/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=V1X&qtype-datasetid=excludes&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
@@ -716,7 +716,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_regex_good(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_regex_good(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid [A-Z]{3}NA bundleid COISS_2002 regex good"
         url = '/opus/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=[A-Z]{3}NA&qtype-datasetid=regex&reqno=123'
         expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
@@ -724,7 +724,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_datasetid_COISS_2002_regex_bad(self) -> None:
+    def test__api_stringsearchchoices_datasetid_coiss_2002_regex_bad(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: datasetid [A-Z]{3}(NA bundleid COISS_2002 regex bad"
         url = '/opus/__api/stringsearchchoices/datasetid.json?bundleid=COISS_2002&datasetid=[A-Z]{3}(NA&qtype-datasetid=regex&reqno=123'
         expected = {'choices': [],
@@ -732,7 +732,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_productid_14609_COISS_2002(self) -> None:
+    def test__api_stringsearchchoices_productid_14609_coiss_2002(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: productid 14609 bundleid COISS_2002"
         url = '/__api/stringsearchchoices/productid.json?bundleid=COISS_2002&productid=14609&reqno=123'
         expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120', '1_N<b>14609</b>60944.118', '1_N<b>14609</b>60992.120', '1_N<b>14609</b>61026.118', '1_N<b>14609</b>61061.118', '1_N<b>14609</b>61193.118', '1_N<b>14609</b>62279.118', '1_N<b>14609</b>62327.120', '1_N<b>14609</b>62415.121', '1_N<b>14609</b>64003.118', '1_N<b>14609</b>64043.120', '1_N<b>14609</b>65631.118', '1_N<b>14609</b>65679.120', '1_N<b>14609</b>65767.121', '1_N<b>14609</b>66953.122', '1_N<b>14609</b>67168.118', '1_N<b>14609</b>67208.120', '1_N<b>14609</b>67244.118', '1_N<b>14609</b>67292.120', '1_N<b>14609</b>67326.118', '1_N<b>14609</b>67361.118', '1_N<b>14609</b>67493.118', '1_N<b>14609</b>69019.122', '1_N<b>14609</b>69979.122', '1_N<b>14609</b>70939.122', '1_N<b>14609</b>71899.122', '1_N<b>14609</b>73253.122', '1_N<b>14609</b>73468.118', '1_N<b>14609</b>73508.120', '1_N<b>14609</b>73544.118', '1_N<b>14609</b>73592.120', '1_N<b>14609</b>73626.118', '1_N<b>14609</b>73661.118', '1_N<b>14609</b>73793.118', '1_N<b>14609</b>74303.122', '1_N<b>14609</b>74933.122', '1_N<b>14609</b>75548.122', '1_N<b>14609</b>79553.122', '1_N<b>14609</b>79768.118', '1_N<b>14609</b>79808.120', '1_N<b>14609</b>79844.118', '1_N<b>14609</b>79892.120', '1_N<b>14609</b>79926.118', '1_N<b>14609</b>79961.118', '1_N<b>14609</b>80093.118', '1_N<b>14609</b>80638.122', '1_N<b>14609</b>80902.123', '1_N<b>14609</b>80958.125', '1_N<b>14609</b>81222.126', '1_N<b>14609</b>81262.127', '1_N<b>14609</b>81366.128', '1_N<b>14609</b>81733.118', '1_N<b>14609</b>81997.120', '1_N<b>14609</b>82134.118', '1_N<b>14609</b>82398.120', '1_N<b>14609</b>82871.118', '1_N<b>14609</b>83007.120', '1_N<b>14609</b>83208.118', '1_N<b>14609</b>83728.120', '1_N<b>14609</b>84033.118', '1_N<b>14609</b>84297.120', '1_N<b>14609</b>84498.118', '1_N<b>14609</b>84762.120', '1_N<b>14609</b>84899.118', '1_N<b>14609</b>85164.118', '1_N<b>14609</b>85853.122', '1_N<b>14609</b>86068.118', '1_N<b>14609</b>86108.120', '1_N<b>14609</b>86144.118', '1_N<b>14609</b>86192.120', '1_N<b>14609</b>86226.118', '1_N<b>14609</b>86261.118', '1_N<b>14609</b>86393.118', '1_N<b>14609</b>88537.122'],
@@ -740,7 +740,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_productid_14609_COISS_2002_limit76(self) -> None:
+    def test__api_stringsearchchoices_productid_14609_coiss_2002_limit76(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: productid 14609 bundleid COISS_2002 limit 76"
         url = '/__api/stringsearchchoices/productid.json?bundleid=COISS_2002&productid=14609&limit=76&reqno=123'
         expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120', '1_N<b>14609</b>60944.118', '1_N<b>14609</b>60992.120', '1_N<b>14609</b>61026.118', '1_N<b>14609</b>61061.118', '1_N<b>14609</b>61193.118', '1_N<b>14609</b>62279.118', '1_N<b>14609</b>62327.120', '1_N<b>14609</b>62415.121', '1_N<b>14609</b>64003.118', '1_N<b>14609</b>64043.120', '1_N<b>14609</b>65631.118', '1_N<b>14609</b>65679.120', '1_N<b>14609</b>65767.121', '1_N<b>14609</b>66953.122', '1_N<b>14609</b>67168.118', '1_N<b>14609</b>67208.120', '1_N<b>14609</b>67244.118', '1_N<b>14609</b>67292.120', '1_N<b>14609</b>67326.118', '1_N<b>14609</b>67361.118', '1_N<b>14609</b>67493.118', '1_N<b>14609</b>69019.122', '1_N<b>14609</b>69979.122', '1_N<b>14609</b>70939.122', '1_N<b>14609</b>71899.122', '1_N<b>14609</b>73253.122', '1_N<b>14609</b>73468.118', '1_N<b>14609</b>73508.120', '1_N<b>14609</b>73544.118', '1_N<b>14609</b>73592.120', '1_N<b>14609</b>73626.118', '1_N<b>14609</b>73661.118', '1_N<b>14609</b>73793.118', '1_N<b>14609</b>74303.122', '1_N<b>14609</b>74933.122', '1_N<b>14609</b>75548.122', '1_N<b>14609</b>79553.122', '1_N<b>14609</b>79768.118', '1_N<b>14609</b>79808.120', '1_N<b>14609</b>79844.118', '1_N<b>14609</b>79892.120', '1_N<b>14609</b>79926.118', '1_N<b>14609</b>79961.118', '1_N<b>14609</b>80093.118', '1_N<b>14609</b>80638.122', '1_N<b>14609</b>80902.123', '1_N<b>14609</b>80958.125', '1_N<b>14609</b>81222.126', '1_N<b>14609</b>81262.127', '1_N<b>14609</b>81366.128', '1_N<b>14609</b>81733.118', '1_N<b>14609</b>81997.120', '1_N<b>14609</b>82134.118', '1_N<b>14609</b>82398.120', '1_N<b>14609</b>82871.118', '1_N<b>14609</b>83007.120', '1_N<b>14609</b>83208.118', '1_N<b>14609</b>83728.120', '1_N<b>14609</b>84033.118', '1_N<b>14609</b>84297.120', '1_N<b>14609</b>84498.118', '1_N<b>14609</b>84762.120', '1_N<b>14609</b>84899.118', '1_N<b>14609</b>85164.118', '1_N<b>14609</b>85853.122', '1_N<b>14609</b>86068.118', '1_N<b>14609</b>86108.120', '1_N<b>14609</b>86144.118', '1_N<b>14609</b>86192.120', '1_N<b>14609</b>86226.118', '1_N<b>14609</b>86261.118', '1_N<b>14609</b>86393.118', '1_N<b>14609</b>88537.122'],
@@ -748,7 +748,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_productid_14609_COISS_2002_limit75(self) -> None:
+    def test__api_stringsearchchoices_productid_14609_coiss_2002_limit75(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: productid 14609 bundleid COISS_2002 limit 75"
         url = '/__api/stringsearchchoices/productid.json?bundleid=COISS_2002&productid=14609&limit=75&reqno=123'
         expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120', '1_N<b>14609</b>60944.118', '1_N<b>14609</b>60992.120', '1_N<b>14609</b>61026.118', '1_N<b>14609</b>61061.118', '1_N<b>14609</b>61193.118', '1_N<b>14609</b>62279.118', '1_N<b>14609</b>62327.120', '1_N<b>14609</b>62415.121', '1_N<b>14609</b>64003.118', '1_N<b>14609</b>64043.120', '1_N<b>14609</b>65631.118', '1_N<b>14609</b>65679.120', '1_N<b>14609</b>65767.121', '1_N<b>14609</b>66953.122', '1_N<b>14609</b>67168.118', '1_N<b>14609</b>67208.120', '1_N<b>14609</b>67244.118', '1_N<b>14609</b>67292.120', '1_N<b>14609</b>67326.118', '1_N<b>14609</b>67361.118', '1_N<b>14609</b>67493.118', '1_N<b>14609</b>69019.122', '1_N<b>14609</b>69979.122', '1_N<b>14609</b>70939.122', '1_N<b>14609</b>71899.122', '1_N<b>14609</b>73253.122', '1_N<b>14609</b>73468.118', '1_N<b>14609</b>73508.120', '1_N<b>14609</b>73544.118', '1_N<b>14609</b>73592.120', '1_N<b>14609</b>73626.118', '1_N<b>14609</b>73661.118', '1_N<b>14609</b>73793.118', '1_N<b>14609</b>74303.122', '1_N<b>14609</b>74933.122', '1_N<b>14609</b>75548.122', '1_N<b>14609</b>79553.122', '1_N<b>14609</b>79768.118', '1_N<b>14609</b>79808.120', '1_N<b>14609</b>79844.118', '1_N<b>14609</b>79892.120', '1_N<b>14609</b>79926.118', '1_N<b>14609</b>79961.118', '1_N<b>14609</b>80093.118', '1_N<b>14609</b>80638.122', '1_N<b>14609</b>80902.123', '1_N<b>14609</b>80958.125', '1_N<b>14609</b>81222.126', '1_N<b>14609</b>81262.127', '1_N<b>14609</b>81366.128', '1_N<b>14609</b>81733.118', '1_N<b>14609</b>81997.120', '1_N<b>14609</b>82134.118', '1_N<b>14609</b>82398.120', '1_N<b>14609</b>82871.118', '1_N<b>14609</b>83007.120', '1_N<b>14609</b>83208.118', '1_N<b>14609</b>83728.120', '1_N<b>14609</b>84033.118', '1_N<b>14609</b>84297.120', '1_N<b>14609</b>84498.118', '1_N<b>14609</b>84762.120', '1_N<b>14609</b>84899.118', '1_N<b>14609</b>85164.118', '1_N<b>14609</b>85853.122', '1_N<b>14609</b>86068.118', '1_N<b>14609</b>86108.120', '1_N<b>14609</b>86144.118', '1_N<b>14609</b>86192.120', '1_N<b>14609</b>86226.118', '1_N<b>14609</b>86261.118', '1_N<b>14609</b>86393.118'],
@@ -756,7 +756,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': True, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_productid_14609_COISS_2002_limit3(self) -> None:
+    def test__api_stringsearchchoices_productid_14609_coiss_2002_limit3(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: productid 14609 bundleid COISS_2002 limit 3"
         url = '/__api/stringsearchchoices/productid.json?bundleid=COISS_2002&productid=14609&limit=3&reqno=123'
         expected = {'choices': ['1_N<b>14609</b>60653.122', '1_N<b>14609</b>60868.118', '1_N<b>14609</b>60908.120'],
@@ -764,7 +764,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': True, "reqno": 123}
         self._run_json_equal(url, expected)
 
-    def test__api_stringsearchchoices_bundleid_002_COISS(self) -> None:
+    def test__api_stringsearchchoices_bundleid_002_coiss(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COISS"
         # The time constraint eliminates COISS_1002 as a result
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+ISS&time1=2004-02-06T02:07:06.418&reqno=123'
@@ -773,7 +773,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_stringsearchchoices_subset(url, expected)
 
-    def test__api_stringsearchchoices_bundleid_002_COUVIS(self) -> None:
+    def test__api_stringsearchchoices_bundleid_002_couvis(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COUVIS"
         # The time constraint eliminates COUVIS_002x as results
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+UVIS&time2=2007-04-05T03:56:00.537&reqno=123'
@@ -782,7 +782,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_stringsearchchoices_subset(url, expected)
 
-    def test__api_stringsearchchoices_bundleid_002_COISS_bigcache(self) -> None:
+    def test__api_stringsearchchoices_bundleid_002_coiss_bigcache(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COISS bigcache"
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+ISS&reqno=123'
@@ -791,7 +791,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_stringsearchchoices_subset(url, expected)
 
-    def test__api_stringsearchchoices_bundleid_002_COUVIS_bigcache(self) -> None:
+    def test__api_stringsearchchoices_bundleid_002_couvis_bigcache(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COUVIS bigcache"
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
         # The time constraints eliminate COISS_1002 and COUVIS_002x as results
@@ -801,7 +801,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_stringsearchchoices_subset(url, expected)
 
-    def test__api_stringsearchchoices_bundleid_002_COISS_timeout(self) -> None:
+    def test__api_stringsearchchoices_bundleid_002_coiss_timeout(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COISS timeout"
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+ISS&reqno=123'
@@ -810,7 +810,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_stringsearchchoices_subset(url, expected)
 
-    def test__api_stringsearchchoices_bundleid_002_COUVIS_timeout(self) -> None:
+    def test__api_stringsearchchoices_bundleid_002_couvis_timeout(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COUVIS timeout"
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+UVIS&reqno=123'
@@ -819,7 +819,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
                     'truncated_results': False, "reqno": 123}
         self._run_stringsearchchoices_subset(url, expected)
 
-    def test__api_stringsearchchoices_bundleid_O_0017_cache(self) -> None:
+    def test__api_stringsearchchoices_bundleid_o_0017_cache(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid O_0017 cached reqno"
         # Make sure that reqno isn't cached along with the rest of the result
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=O_0017&reqno=5&reqno=123'

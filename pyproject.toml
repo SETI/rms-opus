@@ -310,33 +310,24 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
-# Burn-down list (plan PR-01). PR-17's exit criterion is that this table is
-# empty; PR-17a emptied every row it owns and PR-17b removes the one left.
+# Empty, and that is PR-01's exit criterion met (plan PR-17, finished by PR-17b).
+# Every tree in RUFF_PATHS -- src, integration_tests, tests, manage.py -- meets the
+# whole rule set with no per-file exception. What the burn-down held, and where each
+# entry went, so that nothing here has to be re-derived:
 #
-# Legacy flake8 ignores that needed real refactoring:
-#     E722 - bare `except:`;
-#     F403 - `from module import *`; F405 - name may be undefined from star import;
-#     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
-# E501 left this table for the documented global ignore above rather than being
-# burned down; the reasoning and its measurement are stated there.
+#   E722, F403/F405   the bare `except:` and the star imports were refactored away
+#                     by the PRs that owned those trees.
+#   PT015, B011, B006 `assert False` and the mutable default arguments were fixed in
+#                     PR-02.
+#   E501              retired into the documented global ignore above rather than
+#                     burned down; the reasoning is stated there.
+#   N801, N802        the last row. The live-DB suites' classes and test methods now
+#                     read `CartTests` and `test__api_meta_mults_coiss_2111`; a PDS
+#                     bundle identifier keeps its shape in lower case.
 #
-# `src/opus_app` and `src/opus_log_analyzer` have no row any more: E501 was the
-# only code that fired in the log analyzer and it is globally ignored now, and
-# the Django app's 24 SCREAMING_CASE message helpers and one lower-case view
-# class were renamed.
-#
-# The live-DB suites keep the two naming codes until PR-17b, which annotates
-# them. Their names are unittest test methods and classes carrying PDS bundle
-# identifiers (test__api_meta_mults_COISS_2111), so renaming them belongs with
-# the PR that reads every one of those files rather than as a drive-by here.
-#
-# `src/opus_support`, `src/opus_config`, `src/opus_import`, `tests` and
-# `manage.py` have no row at all: they meet the full rule set.
-"integration_tests/**/*.py" = ["N801", "N802"]
-#
-# The PT015/B011 (`assert False`) and B006 (mutable default argument) sites
-# PR-01 grandfathered here were fixed in PR-02, so their per-file ignores are
-# gone.
+# A new row is not the way to land code that does not pass. Fix the code, or suppress
+# the one rule on the one line with `# noqa: <CODE>` and the reason, which `RUF100`
+# then keeps honest by failing when it stops being needed.
 
 [tool.pymarkdown.plugins.md013]
 # Line length (disable so README/CONTRIBUTING can use longer lines).

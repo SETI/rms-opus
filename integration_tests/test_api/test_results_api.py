@@ -168,7 +168,7 @@ class ApiResultsTests(ApiTestHelper, TestCase):
             ######### /api/data API TESTS #########
             #######################################
 
-    def test__api_data_CASSINIrevno_sort(self) -> None:
+    def test__api_data_cassinirevno_sort(self) -> None:
         "[test_results_api.py] /api/data: CASSINIrevno sort"
         url = '/api/data.json?instrument=Cassini+ISS,Cassini+VIMS&CASSINIrevno=000,00A,00B,00C,003&CASSINItargetcode=RI+(Rings+-+general)&limit=5000&order=time1&cols=opusid,CASSINIrevno&order=-CASSINIrevnoint'
         print(url)
@@ -701,42 +701,42 @@ class ApiResultsTests(ApiTestHelper, TestCase):
             ######### /api/files API TESTS #########
             ########################################
 
-    def test__api_files_COISS_versions_w1866145657(self) -> None:
+    def test__api_files_coiss_versions_w1866145657(self) -> None:
         "[test_results_api.py] /api/files: COISS versions w1866145657"
         url = '/api/files/co-iss-w1866145657.json'
         self._run_json_equal_file(url, 'api_files_COISS_versions_w1866145657.json')
 
-    def test__api_files_COISS_versions_n1461112307(self) -> None:
+    def test__api_files_coiss_versions_n1461112307(self) -> None:
         "[test_results_api.py] /api/files: COISS versions n1461112307"
         url = '/api/files/co-iss-n1461112307.json'
         self._run_json_equal_file(url, 'api_files_COISS_versions_n1461112307.json')
 
-    def test__api_files_COVIMS_versions_v1487539692_ir(self) -> None:
+    def test__api_files_covims_versions_v1487539692_ir(self) -> None:
         "[test_results_api.py] /api/files: COVIMS versions v1487539692_ir"
         url = '/api/files/co-vims-v1487539692_ir.json'
         self._run_json_equal_file(url, 'api_files_COVIMS_versions_v1487539692_ir.json')
 
-    def test__api_files_COVIMS_versions_v1487539692_vis(self) -> None:
+    def test__api_files_covims_versions_v1487539692_vis(self) -> None:
         "[test_results_api.py] /api/files: COVIMS versions v1487539692_vis"
         url = '/api/files/co-vims-v1487539692_vis.json'
         self._run_json_equal_file(url, 'api_files_COVIMS_versions_v1487539692_vis.json')
 
-    def test__api_files_GOSSI_versions_c0368388622(self) -> None:
+    def test__api_files_gossi_versions_c0368388622(self) -> None:
         "[test_results_api.py] /api/files: GOSSI versions c0368388622"
         url = '/api/files/go-ssi-c0368388622.json'
         self._run_json_equal_file(url, 'api_files_GOSSI_versions_c0368388622.json')
 
-    def test__api_files_VGISS_no_versions_c0948955(self) -> None:
+    def test__api_files_vgiss_no_versions_c0948955(self) -> None:
         "[test_results_api.py] /api/files: VGISS no versions c0948955"
         url = '/api/files/vg-iss-2-n-c0948955.json'
         self._run_json_equal_file(url, 'api_files_VGISS_no_versions_c0948955.json')
 
-    def test__api_files_HSTWFC3_no_versions_ib4v21gcq(self) -> None:
+    def test__api_files_hstwfc3_no_versions_ib4v21gcq(self) -> None:
         "[test_results_api.py] /api/files: HSTWFC3 no versions ib4v21gcq"
         url = '/api/files/hst-11559-wfc3-ib4v21gcq.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_no_versions_ib4v21gcq.json')
 
-    def test__api_files_HSTWFC3_versions_ib4v12n6q(self) -> None:
+    def test__api_files_hstwfc3_versions_ib4v12n6q(self) -> None:
         "[test_results_api.py] /api/files: HSTWFC3 versions ib4v12n6q"
         url = '/api/files/hst-11559-wfc3-ib4v12n6q.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_versions_ib4v12n6q.json')
@@ -754,17 +754,17 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         self._run_status_equal(url, 400,
                                http400_search_params_invalid('/api/files.json'))
 
-    def test__api_files_COISS_2002_order_startobs_limit(self) -> None:
+    def test__api_files_coiss_2002_order_startobs_limit(self) -> None:
         "[test_results_api.py] /api/files: COISS 2002 order startobs limit"
         url = '/api/files.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_json_equal_file(url, 'api_files_COISS_2002_order_startobs_limit.json')
 
-    def test__api_files_COISS_2002_order_page_limit(self) -> None:
+    def test__api_files_coiss_2002_order_page_limit(self) -> None:
         "[test_results_api.py] /api/files: COISS 2002 order startobs limit"
         url = '/api/files.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&page=2&limit=5'
         self._run_json_equal_file(url, 'api_files_COISS_2002_order_page_limit.json')
 
-    def test__api_files_COISS_2002_empty_order_startobs_limit(self) -> None:
+    def test__api_files_coiss_2002_empty_order_startobs_limit(self) -> None:
         "[test_results_api.py] /api/files: COISS 2002 empty order startobs limit"
         url = '/api/files.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=&startobs=10&limit=5'
         self._run_json_equal_file(url, 'api_files_COISS_2002_empty_order_startobs_limit.json')
@@ -774,32 +774,32 @@ class ApiResultsTests(ApiTestHelper, TestCase):
             ######### /api/image and /api/images API TESTS #########
             ########################################################
 
-    def test__api_image_COISS_w1866145657_thumb_json(self) -> None:
+    def test__api_image_coiss_w1866145657_thumb_json(self) -> None:
         "[test_results_api.py] /api/image: COISS w1866145657"
         url = '/api/image/thumb/co-iss-w1866145657.json'
         self._run_json_equal_file(url, 'api_image_COISS_w1866145657_thumb_json.json')
 
-    def test__api_image_COISS_w1866145657_small_json(self) -> None:
+    def test__api_image_coiss_w1866145657_small_json(self) -> None:
         "[test_results_api.py] /api/image: COISS w1866145657"
         url = '/api/image/small/co-iss-w1866145657.json'
         self._run_json_equal_file(url, 'api_image_COISS_w1866145657_small_json.json')
 
-    def test__api_image_COISS_w1866145657_med_json(self) -> None:
+    def test__api_image_coiss_w1866145657_med_json(self) -> None:
         "[test_results_api.py] /api/image: COISS w1866145657"
         url = '/api/image/med/co-iss-w1866145657.json'
         self._run_json_equal_file(url, 'api_image_COISS_w1866145657_med_json.json')
 
-    def test__api_image_COISS_w1866145657_full_json(self) -> None:
+    def test__api_image_coiss_w1866145657_full_json(self) -> None:
         "[test_results_api.py] /api/image: COISS w1866145657"
         url = '/api/image/full/co-iss-w1866145657.json'
         self._run_json_equal_file(url, 'api_image_COISS_w1866145657_full_json.json')
 
-    def test__api_image_COISS_w1866145657_thumb_html(self) -> None:
+    def test__api_image_coiss_w1866145657_thumb_html(self) -> None:
         "[test_results_api.py] /api/image: COISS w1866145657"
         url = '/api/image/thumb/co-iss-w1866145657.html'
         self._run_html_equal_file(url, 'api_image_COISS_w1866145657_thumb_html.html')
 
-    def test__api_image_COISS_w1866145657_small_csv(self) -> None:
+    def test__api_image_coiss_w1866145657_small_csv(self) -> None:
         "[test_results_api.py] /api/image: COISS w1866145657"
         url = '/api/image/small/co-iss-w1866145657.csv'
         self._run_csv_equal_file(url, 'api_image_COISS_w1866145657_small_csv.csv')
@@ -815,52 +815,52 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/images.json?opusid=fred'
         self._run_json_equal_file(url, 'api_images_no_results.json')
 
-    def test__api_images_COCIRS_5408_limit(self) -> None:
+    def test__api_images_cocirs_5408_limit(self) -> None:
         "[test_results_api.py] /api/images: COCIRS 5408 limit"
         url = '/api/images.json?bundleid=COCIRS_5408&limit=20'
         self._run_json_equal_file(url, 'api_images_COCIRS_5408_limit.json')
 
-    def test__api_images_COISS_2002_order_startobs_limit_json(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_json(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit json"
         url = '/api/images.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_json.json')
 
-    def test__api_images_COISS_2002_order_page_limit_json(self) -> None:
+    def test__api_images_coiss_2002_order_page_limit_json(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order page limit json"
         url = '/api/images.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&page=2&limit=5'
         self._run_json_equal_file(url, 'api_images_COISS_2002_order_page_limit_json.json')
 
-    def test__api_images_COISS_2002_order_startobs_limit_csv(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_csv(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit csv"
         url = '/api/images.csv?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_csv_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_csv.csv')
 
-    def test__api_images_COISS_2002_order_startobs_limit_thumb_json(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_thumb_json(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit thumb json"
         url = '/api/images/thumb.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_thumb_json.json')
 
-    def test__api_images_COISS_2002_order_startobs_limit_thumb_html(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_thumb_html(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit thumb html"
         url = '/api/images/thumb.html?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_html_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_thumb_html.html')
 
-    def test__api_images_COISS_2002_order_startobs_limit_thumb_csv(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_thumb_csv(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit thumb csv"
         url = '/api/images/thumb.csv?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_csv_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_thumb_csv.csv')
 
-    def test__api_images_COISS_2002_order_startobs_limit_small_json(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_small_json(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit small json"
         url = '/api/images/small.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_small_json.json')
 
-    def test__api_images_COISS_2002_order_startobs_limit_med_json(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_med_json(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit med json"
         url = '/api/images/med.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_med_json.json')
 
-    def test__api_images_COISS_2002_order_startobs_limit_full_json(self) -> None:
+    def test__api_images_coiss_2002_order_startobs_limit_full_json(self) -> None:
         "[test_results_api.py] /api/images: COISS 2002 order startobs limit full json"
         url = '/api/images/full.json?instrument=Cassini+ISS&bundleid=COISS_2002&order=-time1,opusid&startobs=10&limit=5'
         self._run_json_equal_file(url, 'api_images_COISS_2002_order_startobs_limit_full_json.json')
@@ -888,7 +888,7 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/categories/vg-iss-2-s-c4360004.json'
         self._run_json_equal_file(url, 'api_categories_vg_iss_2_s_c4360004.json')
 
-    def test__api_categories_COISS_2002(self) -> None:
+    def test__api_categories_coiss_2002(self) -> None:
         "[test_results_api.py] /api/categories: COISS_2002"
         url = '/api/categories.json?bundleid=COISS_2002'
         self._run_json_equal_file(url, 'api_categories_COISS_2002.json')
@@ -927,12 +927,12 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/product_types/vg-iss-2-s-c4360004.json'
         self._run_json_equal_file(url, 'api_product_types_vg_iss_2_s_c4360004.json')
 
-    def test__api_product_types_COISS_2002(self) -> None:
+    def test__api_product_types_coiss_2002(self) -> None:
         "[test_results_api.py] /api/product_types: COISS_2002"
         url = '/api/product_types.json?bundleid=COISS_2002'
         self._run_json_equal_file(url, 'api_product_types_COISS_2002.json')
 
-    def test__api_product_types_COISS_2002_cache(self) -> None:
+    def test__api_product_types_coiss_2002_cache(self) -> None:
         "[test_results_api.py] /api/product_types: COISS_2002 cache"
         url = '/api/product_types.json?bundleid=COISS_2002'
         self._run_json_equal_file(url, 'api_product_types_COISS_2002.json')

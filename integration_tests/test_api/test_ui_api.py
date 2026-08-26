@@ -480,7 +480,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['startobs'] = 1
         self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "page" term was not a valid integer; it has been set to 1.')
 
-    def test__api_normalizeurl_page_XXX(self) -> None:
+    def test__api_normalizeurl_page_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: page XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?page=XXX'
@@ -545,7 +545,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['startobs'] = 1
         self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "startobs" term was not a valid integer; it has been set to 1.')
 
-    def test__api_normalizeurl_startobs_XXX(self) -> None:
+    def test__api_normalizeurl_startobs_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: startobs XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?startobs=XXX'
@@ -603,7 +603,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         url = '/__normalizeurl.json?reqno=5'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_reqno_XXX(self) -> None:
+    def test__api_normalizeurl_reqno_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: reqno XXX"
         # Should be ignored
         new_slugs = dict(self.default_url_slugs)
@@ -722,7 +722,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_lonely_qtype_used_multi_badval_XXX(self) -> None:
+    def test__api_normalizeurl_lonely_qtype_used_multi_badval_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: lonely qtype used multi badval XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=rightasc&qtype-rightasc=XXX'
@@ -789,7 +789,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['qtype-bundleid'] = 'ends'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_lonely_qtype_used_string_badval_XXX(self) -> None:
+    def test__api_normalizeurl_lonely_qtype_used_string_badval_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: lonely qtype used string badval XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=bundleid&qtype-bundleid=XXX'
@@ -890,7 +890,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['qtype-bundleid'] = 'contains'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-bundleid_2" is a unit for a field that does not allow units; it has been ignored.')
 
-    def test__api_normalizeurl_lonely_unit_used_multi_badval_XXX(self) -> None:
+    def test__api_normalizeurl_lonely_unit_used_multi_badval_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: lonely unit used multi badval XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&unit-observationduration=XXX'
@@ -1781,14 +1781,14 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_-1" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_multi_good_1_clause_bad_XXX(self) -> None:
+    def test__api_normalizeurl_search_multi_good_1_clause_bad_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search multi bad 1 _XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=rightasc&rightasc1_XXX=10.'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_multi_good_12_clause_01_XXX(self) -> None:
+    def test__api_normalizeurl_search_multi_good_12_clause_01_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _01_XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=rightasc&rightasc1_01=10.&rightasc2_XXX=20.'
@@ -1798,7 +1798,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc2_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_multi_good_12_clause_XXX_01(self) -> None:
+    def test__api_normalizeurl_search_multi_good_12_clause_xxx_01(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _XXX_01"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=rightasc&rightasc1_XXX=10.&rightasc2_01=20.'
@@ -1808,7 +1808,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_multi_good_12_clause_1_01_XXX_qtypes(self) -> None:
+    def test__api_normalizeurl_search_multi_good_12_clause_1_01_xxx_qtypes(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_01_XXX qtypes"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=rightasc&rightasc1_1=10.&rightasc2_01=20.&qtype-rightasc_1=only&qtype-rightasc_XXX=only'
@@ -1821,7 +1821,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_multi_good_12_clause_1_02_XXX_qtypes(self) -> None:
+    def test__api_normalizeurl_search_multi_good_12_clause_1_02_xxx_qtypes(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_02_XXX qtypes"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=rightasc&rightasc1_1=10.&rightasc2_02=20.&qtype-rightasc_1=only&qtype-rightasc_XXX=only'
@@ -1834,7 +1834,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_bad_0(self) -> None:
+    def test__api_normalizeurl_search_surfacegeo_good_1_clause_bad_0(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 bad _0"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_0=8'
@@ -1842,7 +1842,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'surfacegeometrytargetname'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude1_0" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_bad_XXX(self) -> None:
+    def test__api_normalizeurl_search_surfacegeo_good_1_clause_bad_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 bad _XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_XXX=8'
@@ -1850,7 +1850,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'surfacegeometrytargetname'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude1_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_01_XXX(self) -> None:
+    def test__api_normalizeurl_search_surfacegeo_good_12_clause_01_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 bad _01_XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_01=8&SURFACEGEOpan_planetographiclatitude2_XXX=18'
@@ -1861,7 +1861,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude2_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_10(self) -> None:
+    def test__api_normalizeurl_search_surfacegeo_good_1_clause_10(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 _10"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_10=8'
@@ -1872,7 +1872,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_01_1(self) -> None:
+    def test__api_normalizeurl_search_surfacegeo_good_1_clause_01_1(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 _01_1"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_01=8&SURFACEGEOpan_planetographiclatitude1_1=18'
@@ -1886,7 +1886,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_1_02_XXX_qtypes(self) -> None:
+    def test__api_normalizeurl_search_surfacegeo_good_12_clause_1_02_xxx_qtypes(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 _1_02_XXX qtypes"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_1=8&SURFACEGEOpan_planetographiclatitude2_02=18&qtype-SURFACEGEOpan_planetographiclatitude_1=only&qtype-SURFACEGEOpan_planetographiclatitude_XXX=only'
@@ -1900,7 +1900,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-SURFACEGEOpan_planetographiclatitude_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_1_02_XXX_units(self) -> None:
+    def test__api_normalizeurl_search_surfacegeo_good_12_clause_1_02_xxx_units(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 _1_02_XXX unit"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_1=8&SURFACEGEOpan_planetographiclatitude2_02=18&unit-SURFACEGEOpan_planetographiclatitude_1=degrees&unit-SURFACEGEOpan_planetographiclatitude_XXX=degrees'
@@ -2188,14 +2188,14 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_-1" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_single_good_1_clause_bad_XXX(self) -> None:
+    def test__api_normalizeurl_search_single_good_1_clause_bad_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search single bad 1 _XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_single_good_12_clause_01_XXX(self) -> None:
+    def test__api_normalizeurl_search_single_good_12_clause_01_xxx(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search single good 12 _01_XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_XXX=20.'
@@ -2204,7 +2204,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration2_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_single_good_12_clause_XXX_01(self) -> None:
+    def test__api_normalizeurl_search_single_good_12_clause_xxx_01(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search single good 12 _XXX_01"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.&observationduration2_01=20.'
@@ -2213,7 +2213,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_single_good_12_clause_1_01_XXX_qtypes(self) -> None:
+    def test__api_normalizeurl_search_single_good_12_clause_1_01_xxx_qtypes(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX qtypes"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_01=20.&qtype-observationduration_1=only&qtype-observationduration_XXX=only'
@@ -2224,7 +2224,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" is unknown; it has been ignored.</li>')
 
-    def test__api_normalizeurl_search_single_good_12_clause_1_02_XXX_qtypes(self) -> None:
+    def test__api_normalizeurl_search_single_good_12_clause_1_02_xxx_qtypes(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_02_XXX qtypes"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_02=20.&qtype-observationduration_1=only&qtype-observationduration_XXX=only'
@@ -2235,7 +2235,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" is unknown; it has been ignored.</li>')
 
-    def test__api_normalizeurl_search_single_good_12_clause_1_01_XXX_units(self) -> None:
+    def test__api_normalizeurl_search_single_good_12_clause_1_01_xxx_units(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX units"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_01=20.&unit-observationduration_1=seconds&unit-observationduration_XXX=milliseconds'
@@ -2246,7 +2246,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" is unknown; it has been ignored.')
 
-    def test__api_normalizeurl_search_single_good_12_clause_1_02_XXX_units(self) -> None:
+    def test__api_normalizeurl_search_single_good_12_clause_1_02_xxx_units(self) -> None:
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_02_XXX units"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_02=20.&unit-observationduration_1=milliseconds&unit-observationduration_XXX=milliseconds'
