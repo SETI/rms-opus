@@ -73,6 +73,12 @@ dev = [
   # typeshed's stubs for mysqlclient, so the MySQL import backend is really checked
   # rather than silenced by an ignore_missing_imports entry.
   "types-mysqlclient",
+  # typeshed's stubs for requests, needed by opus_import/util/retrieve_ra_dec.py
+  # and opus_log_analyzer/opus/slug.py. requests ships py.typed from 2.33 but the
+  # requirements.txt pin the integration runner installs is older and does not,
+  # so without this entry the type gate passes on the GitHub job and fails on a
+  # venv built from the pins. See the dependency-skew note in the plan.
+  "types-requests",
   "pymarkdownlnt>=0.9.35",
   "pytest>=7.0",
   "pytest-cov>=4.0",
