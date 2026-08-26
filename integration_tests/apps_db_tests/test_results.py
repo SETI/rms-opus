@@ -1,4 +1,4 @@
-# integration_tests/apps_db_tests/test_results.py
+"""Tests for the results views and for which tables a search triggers."""
 
 import logging
 from unittest import TestCase
@@ -31,8 +31,16 @@ cursor = connection.cursor()
 
 
 class ResultsTests(TestCase):
+    """The results views, and which tables a given search has to join against."""
 
     def _empty_user_searches(self) -> None:
+        """Delete every recorded search and the cache tables they created.
+
+        A search records itself in `user_searches` and materializes its results into a
+        `cache_<number>` table named after that row, so leaving either behind would let
+        one test answer another's query. The counter is reset too, because the table
+        name is derived from it and the tests assert on whole responses.
+        """
         cursor = connection.cursor()
         cursor.execute('DELETE FROM user_searches')
         cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
@@ -45,6 +53,15 @@ class ResultsTests(TestCase):
         self.factory = RequestFactory()
 
     def setUp(self) -> None:
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also empties the user-search table, whose rows and cache tables are what a
+        search leaves behind.
+        """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
@@ -53,6 +70,11 @@ class ResultsTests(TestCase):
         logging.disable(logging.ERROR)
 
     def tearDown(self) -> None:
+        """Empty the user-search table again, and restore logging.
+
+        Clearing it on the way out as well as on the way in is what keeps the cache
+        tables a test created from reaching whatever runs next.
+        """
         self._empty_user_searches()
         logging.disable(logging.NOTSET)
 

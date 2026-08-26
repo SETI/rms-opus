@@ -1,4 +1,4 @@
-# integration_tests/test_api/test_results_api.py
+"""Golden-response tests for the results API: data, images, files and metadata."""
 
 import json
 import logging
@@ -26,9 +26,20 @@ from .api_test_helper import ApiTestHelper, go_live_target
 
 
 class ApiResultsTests(ApiTestHelper, TestCase):
+    """The results API, one recorded response per request."""
 
     def setUp(self) -> None:
         # self.UPDATE_FILES = True
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also gives the cache a key prefix of this run's own schema, empties it, and
+        chooses the client: a plain session for a live server, otherwise one that drives
+        the WSGI application in process.
+        """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -42,6 +53,7 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         cache.clear()
 
     def tearDown(self) -> None:
+        """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
 

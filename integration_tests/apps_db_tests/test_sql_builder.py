@@ -28,6 +28,7 @@ from opus_app.apps.tools import sql_builder
 
 
 class SQLBuilderIdentifierTests(TestCase):
+    """Quoting an identifier, and refusing one that cannot be quoted safely."""
 
     def test__quote_identifier_ok(self) -> None:
         "[test_sql_builder.py] quote_identifier: ordinary names"
@@ -64,6 +65,7 @@ class SQLBuilderIdentifierTests(TestCase):
 
 
 class SQLBuilderExpressionTests(TestCase):
+    """Building one expression: its SQL text and the parameters that go with it."""
 
     def test__value_is_a_placeholder(self) -> None:
         "[test_sql_builder.py] value: never renders the value into the SQL"
@@ -200,6 +202,7 @@ class SQLBuilderExpressionTests(TestCase):
 
 
 class SQLBuilderSelectTests(TestCase):
+    """Assembling a SELECT, and the order its parameters come out in."""
 
     def test__select_matches_the_search_query_shape(self) -> None:
         "[test_sql_builder.py] Select: the exact text construct_query_string emits"
@@ -331,6 +334,7 @@ class SQLBuilderSelectTests(TestCase):
 
 
 class SQLBuilderStatementTests(TestCase):
+    """The statements built around a SELECT: INSERT ... SELECT, DELETE and the rest."""
 
     def test__count_rows(self) -> None:
         "[test_sql_builder.py] count_rows"

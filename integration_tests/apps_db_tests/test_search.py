@@ -3,6 +3,18 @@
 # These tests require the following volumes, imported in this order:
 # COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201,HSTI1_2003
 
+"""Tests for search-URL parsing and for the SQL each kind of search clause builds.
+
+These are the unit tests for `url_to_search_params` and the clause builders
+beneath it -- the code that turns a user-readable OPUS URL into a query. They
+need the database because the parsing consults the parameter-info tables the
+import writes.
+
+These tests require the following volumes, imported in this order:
+COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201,
+HSTI1_2003
+"""
+
 import logging
 from collections.abc import Mapping
 from typing import Any
@@ -29,8 +41,17 @@ from ._broken_requests import request_without_get, request_without_meta
 
 
 class SearchTests(TestCase):
+    """Search-URL parsing, and the SQL each kind of search clause builds."""
 
     def _empty_user_searches(self) -> None:
+        """Delete every recorded search and the cache tables they created.
+
+        A search records itself in `user_searches` and materializes its results into a
+        `cache_<number>` table named after that row, so leaving either behind would let
+        one test answer another's query. The count is checked first because the common
+        case is an already-empty table, and the counter is reset because the cache table
+        name is derived from it.
+        """
         cursor = connection.cursor()
         sql = 'SELECT COUNT(*) FROM user_searches' # Check first for efficiency
         cursor.execute(sql)
@@ -47,6 +68,15 @@ class SearchTests(TestCase):
         self.factory = RequestFactory()
 
     def setUp(self) -> None:
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also empties the user-search table, whose rows and cache tables are what a
+        search leaves behind.
+        """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
@@ -55,6 +85,7 @@ class SearchTests(TestCase):
         logging.disable(logging.ERROR)
 
     def tearDown(self) -> None:
+        """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
     def _search_params(self, request_get: Mapping[str, str],

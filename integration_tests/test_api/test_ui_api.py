@@ -1,4 +1,4 @@
-# integration_tests/test_api/test_ui_api.py
+"""Golden-response tests for the UI API: URL normalization and page state."""
 
 import json
 import logging
@@ -19,9 +19,20 @@ from .api_test_helper import ApiTestHelper, go_live_target
 
 
 class ApiUITests(ApiTestHelper, TestCase):
+    """The UI API, one recorded response per request."""
 
     def setUp(self) -> None:
         # self.UPDATE_FILES = True
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also records the URL slugs a request that names none normalizes to, and
+        chooses the client: a plain session for a live server, otherwise one that drives
+        the WSGI application in process.
+        """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -46,6 +57,7 @@ class ApiUITests(ApiTestHelper, TestCase):
         }
 
     def tearDown(self) -> None:
+        """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
     def _run_url_slugs_equal(self, url: str, expected: dict[str, Any],

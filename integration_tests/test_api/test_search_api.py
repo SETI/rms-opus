@@ -1,4 +1,4 @@
-# integration_tests/test_api/test_search_api.py
+"""Golden-response tests for the search API and its string-choice endpoints."""
 
 import json
 import logging
@@ -21,9 +21,21 @@ from .api_test_helper import ApiTestHelper, go_live_target
 
 
 class ApiSearchTests(ApiTestHelper, TestCase):
+    """The search API and its string-choice endpoints, against recorded responses."""
 
     def setUp(self) -> None:
         # self.UPDATE_FILES = True
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also raises the three string-choice search thresholds out of reach, so that
+        the full search always runs and the recorded responses do not depend on how fast
+        this machine is, and chooses the client: a plain session for a live server,
+        otherwise one that drives the WSGI application in process.
+        """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -43,6 +55,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         cache.clear()
 
     def tearDown(self) -> None:
+        """Put back the three string-choice search thresholds, and restore logging."""
         logging.disable(logging.NOTSET)
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = self.search_count_threshold
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD  = self.search_time_threshold

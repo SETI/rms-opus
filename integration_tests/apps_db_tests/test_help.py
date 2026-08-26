@@ -1,4 +1,4 @@
-# integration_tests/apps_db_tests/test_help.py
+"""Tests for the help views' handling of a request that is not usable."""
 
 import logging
 from unittest import TestCase
@@ -22,8 +22,18 @@ from ._broken_requests import request_without_get, request_without_meta
 
 
 class HelpTests(TestCase):
+    """The help views, called directly with a request they cannot use."""
 
     def setUp(self) -> None:
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also empties the cache, so a response another test cached cannot answer this
+        one, and builds the request factory these tests call the views with.
+        """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -33,6 +43,7 @@ class HelpTests(TestCase):
         self.factory = RequestFactory()
 
     def tearDown(self) -> None:
+        """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
 

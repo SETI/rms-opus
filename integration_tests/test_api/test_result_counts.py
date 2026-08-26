@@ -1,4 +1,11 @@
-# integration_tests/test_api/test_result_counts.py
+"""Compare result counts against a recorded table of them.
+
+The recorded counts are in `data/result_counts.csv`. By default they are
+checked against the public server, because they are counts over the whole
+archive rather than over whatever this installation imported;
+`manage.py api-internal-db-result-counts` checks them against the local
+database instead.
+"""
 
 import csv
 import json
@@ -16,10 +23,20 @@ from .api_test_helper import go_live_target, result_counts_against_internal_db
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
+    """Result counts for each recorded search, checked against `result_counts.csv`."""
+
     filename = "integration_tests/test_api/data/result_counts.csv"
 
     # disable error logging and trace output before test
     def setUp(self) -> None:
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also gives the cache a key prefix of this run's own schema.
+        """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -29,6 +46,7 @@ class APIResultCountsTests(TestCase):
 
     # enable error logging and trace output after test
     def tearDown(self) -> None:
+        """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
     def test_api_result_counts_from_csv(self) -> None:
@@ -124,6 +142,8 @@ class APIResultCountsTests(TestCase):
 ########################################
 class ApiForResultCounts:
     # we need https and no need to specify port number
+    """The result-count endpoint of whichever server this run checks against."""
+
     api_base_url = "{}://{}.seti.org/opus/api/meta/result_count.json?"
 
     def __init__(self, target: str | None = "production") -> None:

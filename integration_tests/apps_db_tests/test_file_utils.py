@@ -1,4 +1,4 @@
-# integration_tests/apps_db_tests/test_file_utils.py
+"""Tests for the file and product helpers in `opus_app.apps.tools.file_utils`."""
 
 import logging
 from unittest import TestCase
@@ -10,8 +10,17 @@ from opus_app.apps.tools.file_utils import get_pds_products
 
 
 class FileUtilsTests(TestCase):
+    """The product and file-path helpers behind the download endpoints."""
 
     def setUp(self) -> None:
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also empties the cache, so a response another test cached cannot answer this one.
+        """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -20,6 +29,7 @@ class FileUtilsTests(TestCase):
         cache.clear()
 
     def tearDown(self) -> None:
+        """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
 

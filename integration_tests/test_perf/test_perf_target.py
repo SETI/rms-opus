@@ -1,6 +1,13 @@
 # Test the performance of searching by Intended Target Name and returning metadata for
 # Intended Target Name.
 
+"""Time a target search and the metadata fetch for its results.
+
+Hand-run against a server started separately; it is not a test the suite
+collects, and its name is what the directory it sits in calls it rather than
+a claim that `pytest` should pick it up.
+"""
+
 import random
 import time
 import urllib.parse

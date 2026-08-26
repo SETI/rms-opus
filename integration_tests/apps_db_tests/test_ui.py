@@ -1,4 +1,4 @@
-# integration_tests/apps_db_tests/test_ui.py
+"""Tests for the UI views: URL normalization and the notification banner."""
 
 import json
 import logging
@@ -16,8 +16,18 @@ from ._broken_requests import request_without_get, request_without_meta
 
 
 class UiTests(TestCase):
+    """The UI views: URL normalization and the notification banner."""
 
     def setUp(self) -> None:
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also silences tracebacks, empties the cache and builds the request factory
+        these tests call the views with.
+        """
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
         settings.OPUS_FAKE_API_DELAYS = 0
@@ -28,6 +38,7 @@ class UiTests(TestCase):
         self.factory = RequestFactory()
 
     def tearDown(self) -> None:
+        """Restore logging and the traceback limit after one test."""
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 

@@ -1,4 +1,4 @@
-# integration_tests/test_db_data/test_local_db_integrity.py
+"""Checks that the imported tables agree with each other."""
 
 from typing import Any
 from unittest import TestCase
@@ -43,6 +43,7 @@ class DBIntegrityTest(TestCase):
     #############################################
     ######### DATABASE INTEGRITY CHECKS #########
     #############################################
+    """Cross-checks between the tables the import pipeline wrote."""
 
     def test__pds_image_wl_bundle_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_pds, obs_type_image, obs_wavelength, obs_profile
@@ -366,8 +367,7 @@ class DBIntegrityTest(TestCase):
             self.assertEqual(expected_fields, fields)
 
     def test__partables_has_all_surface_geo_tables(self) -> None:
-        """DB Integrity: partables table has an entry for each surface_geo table
-        """
+        """DB Integrity: partables table has an entry for each surface_geo table"""
         count_partables = (Partables.objects
                            .filter(partable__contains='surface_geometry__')
                            .values('partable').distinct().count())
@@ -376,8 +376,7 @@ class DBIntegrityTest(TestCase):
         self.assertEqual(count_partables, count_surface_geo)
 
     def test__tablenames_has_all_surface_geo_tables(self) -> None:
-        """DB Integrity: table_names table has an entry for each surface_geo table
-        """
+        """DB Integrity: table_names table has an entry for each surface_geo table"""
         count_partables = (Partables.objects
                            .filter(partable__contains='surface_geometry__')
                            .values('partable').distinct().count())
