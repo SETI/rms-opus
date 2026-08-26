@@ -391,7 +391,12 @@ memory. Consequences and rules:
     let it be reviewed, and put fixes after. Before invoking it the executor states in the
     PR description: which head was reviewed, the exact unreviewed delta (commits, files,
     insertions/deletions, and which files are executable), and that CI is green on the
-    **final** head. State the delta; do not argue from it — whether to wait or waive is the
+    **final** head. "CI green" here means the **integration workflow specifically** has run
+    on the final head, not merely lint and unit tests: when any unreviewed file is
+    executable — as two of PR-15's four were — the full suite is what stands in for the
+    missing review, and the rule is doing more work than it was written to do if no
+    integration run covers that head. (PR-15's executor raised this against the rule as
+    first written; it was right.) State the delta; do not argue from it — whether to wait or waive is the
     orchestrator's call. Retrying is capped: three refusals is sufficient evidence the
     quota is not on a short cycle, after which one hourly check replaces the 10-minute
     increments (each attempt posts a PR comment, so frequency is not free). Used on PR-15,
@@ -1004,6 +1009,16 @@ its own mypy.ini) is folded into the same strict config.
   PR-19's fixture-driven layer forward, so annotations are checked against behavior, not
   only schema). Docstrings across the hierarchy; MRO documented (feeds the dev-guide
   Mermaid diagram).
+- **Named bug this PR must fix (found and measured during PR-15, assigned by the
+  orchestrator 2026-08-25):** `steps/do_update_mult_info.py` unpacks **six** values per
+  `mult_options` entry, but every packaged entry carries **seven** (measured: 410 entries
+  across the table schemas, all of length 7). `--update-mult-info` therefore raises
+  `ValueError` at the first table with any `mult_options`, i.e. the option cannot run at
+  all. It is invisible because `--do-it-all` does not imply it. Pre-existing and
+  byte-identical at `f17422e4`; PR-15 documented it rather than fixing it because **this**
+  PR owns the `MultField` `TypedDict` that defines the entry shape, so the shape gets
+  defined once here instead of being patched there and re-derived here. Fix the unpack
+  against the TypedDict and add a regression test that exercises the option.
 
 **PR-17: Annotate the Django side + `opus_log_analyzer`** (tools, then app views/models
 with django-stubs; `HttpRequest`→`HttpResponse` signatures; log-analyzer engine and OPUS
