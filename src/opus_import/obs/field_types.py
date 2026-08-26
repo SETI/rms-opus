@@ -105,10 +105,13 @@ class MultField(TypedDict):
         col_val: The value itself, before
             `opus_import.steps.do_import_obs.import_observation_table` normalizes a flag
             column's spelling and before `update_mult_table` renders it with ``str``.
-            It is ``str | int | None`` rather than ``str | None`` because numeric
-            enumerations reach it as numbers: ``obs_volume_vg2810`` passes the literal
-            ``0`` for ``filter_number``, and the VGISS and GOSSI ``filter_number``
-            methods pass a PDS index column that holds an integer.
+            An enumeration is not always text: ``obs_volume_vg2810`` passes the literal
+            ``0`` for ``filter_number``; the VGISS and GOSSI ``filter_number`` methods
+            pass an index column the labels declare ``ASCII_INTEGER``; and GOSSI's
+            ``frame_duration`` passes one declared ``ASCII_REAL``, which is why a float
+            belongs here too. Numpy is not in the union: an integer column arrives as a
+            `numpy.int64`, which is not an `int`, so those methods pass it through
+            `as_int` first.
         disp: ``'Y'`` to offer the value in the search form, ``'N'`` to hide it.
         disp_name: How the value is shown to users, or None to have
             `update_mult_table` derive a label from ``col_val``.
@@ -125,7 +128,7 @@ class MultField(TypedDict):
             above.
     """
 
-    col_val: str | int | None
+    col_val: str | int | float | None
     disp: str
     disp_name: str | None
     disp_order: int | str | None

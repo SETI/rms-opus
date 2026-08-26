@@ -36,11 +36,13 @@ class ObsRingGeometry(ObsBase):
         # Supplied by ObsGeneral, which every class combining this one also inherits.
         def field_obs_general_planet_id(self) -> MultFieldRet: ...
 
-    def _ascending_node_offset(self, planet: str | int | None) -> float | None:
+    def _ascending_node_offset(self, planet: str | int | float | None) -> float | None:
         """Return the longitude offset between a planet's ring-plane node and J2000.
 
         Parameters:
-            planet: The OPUS planet id, as a mult column's value gives it.
+            planet: The OPUS planet id, as a mult column's value gives it --
+            which is why it is typed as widely as
+            `opus_import.obs.field_types.MultField`'s ``col_val``.
 
         Returns:
             The offset in degrees, or None for a planet with no ring-plane longitude

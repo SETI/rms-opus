@@ -744,7 +744,8 @@ class ObsBase:
                 planet_id = 'OTHER'
         return config_targets.PLANET_GROUP_MAPPING[planet_id]
 
-    def _create_mult(self, col_val: str | int | None, disp_name: str | None = None,
+    def _create_mult(self, col_val: str | int | float | None,
+                     disp_name: str | None = None,
                      disp: str = 'Y', disp_order: int | str | None = None,
                      grouping: str | None = None, group_disp_order: str | None = None,
                      tooltip: str | None = None,

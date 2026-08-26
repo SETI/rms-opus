@@ -34,6 +34,7 @@ import functools
 import inspect
 import json
 import textwrap
+import typing
 from pathlib import Path
 from typing import Any
 
@@ -43,7 +44,7 @@ import pytest
 import opus_support
 from opus_import import config_data, obs
 from opus_import.config_bundle_info import BUNDLE_INFO
-from opus_import.obs.field_types import as_int
+from opus_import.obs.field_types import MultField, as_int
 from opus_import.obs.obs_base import ObsBase
 
 from .conftest import make_context
@@ -699,11 +700,49 @@ def _matches(alias: str, value: Any) -> bool:
     raise AssertionError(f'unknown alias {alias}')
 
 
+@functools.cache
+def _mult_value_types() -> dict[str, tuple[type, ...]]:
+    """What each `opus_import.obs.field_types.MultField` key admits, per its own
+    declaration.
+
+    Read off the TypedDict rather than restated here, so that narrowing a key's
+    declaration makes this fail if a real value no longer fits it -- the alternative is
+    two copies of the same statement, which is what the decision table already had to
+    be rescued from.
+
+    Returns:
+        The admitted types per key, with None dropped: a None value is checked
+        separately, since every key admits one.
+    """
+    hints = typing.get_type_hints(MultField)
+    types = {}
+    for key, hint in hints.items():
+        args = typing.get_args(hint) or (hint,)
+        types[key] = tuple(a for a in args if a is not type(None))
+    return types
+
+
 def _is_mult(value: Any) -> bool:
-    """Whether a value is a `opus_import.obs.field_types.MultField`."""
-    return isinstance(value, dict) and set(value) == {
-        'col_val', 'disp', 'disp_name', 'disp_order', 'grouping', 'group_disp_order',
-        'tooltip', 'aliases'}
+    """Whether a value is a `opus_import.obs.field_types.MultField`.
+
+    Both halves matter: the key set, and the type behind each key. A `numpy.int64`
+    reaching ``col_val`` is exactly as false as one reaching an `IntField` method, and
+    the key-set check alone cannot see it -- `numpy.float64` and `numpy.str_` subclass
+    their builtins, `numpy.integer` does not.
+    """
+    admitted_by_key = _mult_value_types()
+    if not isinstance(value, dict) or set(value) != set(admitted_by_key):
+        return False
+    for key, admitted in admitted_by_key.items():
+        item = value[key]
+        if item is None:
+            continue
+        # bool is an int subclass and is never one of these. numpy needs no special
+        # case: numpy.float64 and numpy.str_ pass because they really are a float and a
+        # str, and numpy.integer fails because it really is not an int.
+        if isinstance(item, bool) or not isinstance(item, admitted):
+            return False
+    return True
 
 
 #: What each mission's fixture drives, measured. Exact rather than a floor, because a

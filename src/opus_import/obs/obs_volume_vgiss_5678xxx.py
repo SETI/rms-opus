@@ -261,7 +261,9 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         return self._create_mult(self._index_col('FILTER_NAME'))
 
     def field_obs_instrument_vgiss_filter_number(self) -> MultFieldRet:
-        return self._create_mult(self._index_col('FILTER_NUMBER'))
+        # as_int because the labels declare this column ASCII_INTEGER, so it arrives as
+        # a numpy integer, which is not an `int`; see field_types.as_int.
+        return self._create_mult(as_int(self._index_col('FILTER_NUMBER')))
 
     def field_obs_instrument_vgiss_camera(self) -> MultFieldRet:
         camera = self._index_col('INSTRUMENT_NAME')
