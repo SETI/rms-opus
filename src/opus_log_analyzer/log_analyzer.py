@@ -1,3 +1,13 @@
+"""The log analyzer: turn Apache access logs into a session report.
+
+`python -m opus_log_analyzer` runs this. The work is a pipeline: `LogReader`
+parses log lines, `LogParser` groups them into per-host sessions, and the
+`--configuration` module interprets each session in the vocabulary of the site
+being analyzed -- OPUS by default -- and renders the report.
+
+`--batch` and `--cronjob` are the modes that run today; see issue #1451 for the
+others.
+"""
 import argparse
 import glob
 import importlib
@@ -23,6 +33,8 @@ DEFAULT_CONFIGURATION_MODULE = 'opus_log_analyzer.opus.configuration'
 
 
 class RunType(Enum):
+    """Which of the analyzer's four modes a run is in."""
+
     BATCH = auto(),
     SUMMARY = auto(),
     REALTIME = auto(),
@@ -30,8 +42,32 @@ class RunType(Enum):
 
 
 def _create_argument_parser() -> argparse.ArgumentParser:
+    """Build the command-line parser.
+
+    Kept separate from `main` so the shipped defaults -- notably
+    `DEFAULT_CONFIGURATION_MODULE` -- can be asserted without running the
+    analyzer.
+
+    Returns:
+        The parser, with `prog` set explicitly so the help text names the
+        installed command rather than the file argparse was run from.
+    """
+
     def parse_ignored_ips(x: str) -> list[ipaddress.IPv4Network]:
-        return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
+        """Parse one comma-separated `--ignore-ip` value into networks.
+
+        Parameters:
+            x: A comma-separated list of CIDR blocks or bare addresses.
+
+        Returns:
+            One network per element. The declared element type is IPv4 because
+            the rest of this package is; `ip_network` returns an IPv6 network
+            for an IPv6 argument, which then matches nothing. See issue #1463.
+        """
+        return [
+            ipaddress.ip_network(address, strict=False)  # type: ignore[misc]  # see docstring
+            for address in x.split(',')
+        ]
 
     # prog is explicit because argparse would otherwise name whatever file was executed:
     # `__main__.py` for `python -m opus_log_analyzer`.
@@ -102,6 +138,18 @@ def _create_argument_parser() -> argparse.ArgumentParser:
 
 
 def main(arguments: list[str] | None = None) -> None:
+    """Run the analyzer.
+
+    Parameters:
+        arguments: The command line, or None to read `sys.argv`.
+
+    Raises:
+        AttributeError: In any mode other than `--batch`/`--cronjob`, before any
+            work is done, because the branch that handles them reads an argument
+            the parser never defines. See issue #1451.
+        Exception: If real-time mode was given other than exactly one log file,
+            or any other mode was given none.
+    """
     args = _create_argument_parser().parse_args(arguments)
 
     run_type = cast(RunType, args.run_type)
@@ -119,7 +167,7 @@ def main(arguments: list[str] | None = None) -> None:
         IpToHostConverter.get_ip_to_host_converter(**vars(args))
 
     module = importlib.import_module(args.configuration_file)
-    configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore
+    configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))
     log_parser = LogParser(configuration, **vars(args))
 
     if run_type == RunType.REALTIME:
@@ -145,6 +193,20 @@ def main(arguments: list[str] | None = None) -> None:
 
 
 def handle_cached_log_entries(args: argparse.Namespace) -> list[LogEntry]:
+    """Read the log entries, through a pickle cache keyed on the file names.
+
+    Used only under the hidden `--xxcached_log_entry` flag, to make repeated
+    runs over the same logs quick while developing.
+
+    Parameters:
+        args: The parsed arguments; `log_files` is read.
+
+    Returns:
+        The parsed entries, from `.logs/log-<hash>.db` if that file exists,
+        otherwise freshly read and then written there. The cache is keyed on the
+        sorted file names alone, so it does not notice a log file changing
+        underneath it, and the path is relative to the working directory.
+    """
     import hashlib
 
     # Imported for the self-written entry cache; see the pickle.load below.

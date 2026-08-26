@@ -1,3 +1,14 @@
+"""Grouping log entries into per-host sessions, and rendering them.
+
+This is the generic half of the analyzer: it knows about hosts, sessions and
+timeouts, and nothing about the site being analyzed. What an individual request
+means is decided by the `AbstractConfiguration` the caller supplies, which is
+also what renders the HTML report.
+
+A session is a run of one host's requests with no gap longer than the session
+timeout, and one that the configuration reports no icon flags for is discarded
+as having done nothing.
+"""
 from __future__ import annotations
 
 import datetime
@@ -22,6 +33,7 @@ from opus_log_analyzer.log_entry import LogEntry
 
 class LiveSession(NamedTuple):
     """Used by LogParser.run_realtime to keep track of active session"""
+
     host_ip: IPv4Address
     session_info: AbstractSessionInfo
     start_time_string: str
@@ -29,10 +41,21 @@ class LiveSession(NamedTuple):
     timeout: datetime.datetime
 
     def with_timeout(self, timeout: datetime.datetime) -> LiveSession:
+        """Return a copy of this session with a new expiry.
+
+        Parameters:
+            timeout: When the session should now expire.
+        """
         return self._replace(timeout=timeout)
 
 
 class Entry(NamedTuple):
+    """One request within a session, with what the configuration made of it.
+
+    `data` is the lines the report prints for this request, and `opus_url` is
+    the site URL it corresponds to, where the configuration recognized one.
+    """
+
     log_entry: LogEntry
     relative_start_time: datetime.timedelta
     data: list[str]
@@ -40,45 +63,73 @@ class Entry(NamedTuple):
     id: LogId
 
     def target_url(self) -> str:
+        """The full URL this request asked for."""
         return self.log_entry.url.geturl()
 
 
 class Session(NamedTuple):
+    """One host's uninterrupted run of activity, and what it did.
+
+    `id` is a short base-36 label unique within a run, used to name the session
+    in the report.
+    """
+
     host_ip: IPv4Address
     entries: list[Entry]
     session_info: AbstractSessionInfo
     id: str
 
     def start_time(self) -> datetime.datetime:
+        """When the session's first request arrived."""
         return self.entries[0].log_entry.time
 
     def duration(self) -> datetime.timedelta:
+        """How long the session lasted, first request to last."""
         return self.entries[-1].log_entry.time - self.entries[0].log_entry.time
 
     @property
     def total_time(self) -> datetime.timedelta:
+        """How long the session lasted; the same value as `duration`."""
         return self.duration()
 
     def __hash__(self) -> int:
+        """Hash on the session id."""
         return hash(self.id)
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, Session) and self.id == id
+        """Compare on the session id.
+
+        This does not do what it says: the right-hand side is the builtin `id`
+        rather than `other.id`, so the comparison is always False and no session
+        equals any other, including itself. `__hash__` is correct, which is what
+        makes it damaging -- a set of sessions never de-duplicates. Recorded as
+        issue #1464 and deliberately not fixed here, because log-analyzer
+        behavior is out of scope for this modernization (plan rev 7.14).
+        """
+        return isinstance(other, Session) and self.id == id  # type: ignore[comparison-overlap]
 
     def __repr__(self) -> str:
         return f"<Session#{self.id} {self.host_ip} @ {self.start_time()}>"
 
 
 class HostInfo(NamedTuple):
+    """One host and its sessions, as the report groups them.
+
+    `name` is the reverse-DNS name where one was found and reverse lookup is
+    enabled, otherwise None, in which case the report shows the address.
+    """
+
     ip: IPv4Address
     name: str | None
     sessions: list[Session]
 
     @property
     def total_time(self) -> datetime.timedelta:
+        """The sum of this host's session durations, ignoring the gaps between."""
         return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
 
     def start_time(self) -> datetime.datetime:
+        """When this host's first session began."""
         return self.sessions[0].start_time()
 
 
@@ -99,7 +150,21 @@ class LogParser:
                  uses_html: bool, by_ip: bool,
                  ip_to_host_converter: IpToHostConverter,
                  ignored_ips: list[ipaddress.IPv4Network],
-                 **_: Any):
+                 **_: Any) -> None:
+        """Parameters:
+        configuration: Decides what each request means and renders the HTML
+            report.
+        session_timeout_minutes: A gap at least this long ends a session.
+        output: Path to write the report to, or empty for standard output.
+            Parent directories are created.
+        uses_html: Whether to render HTML rather than text.
+        by_ip: Whether the text report groups sessions by host. The HTML
+            report always groups by host regardless.
+        ip_to_host_converter: Supplies reverse-DNS names.
+        ignored_ips: Networks whose requests are skipped entirely.
+        **_: The rest of the parsed arguments, ignored. The caller passes the
+            whole argument namespace.
+        """
         self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
         if output:
@@ -113,10 +178,26 @@ class LogParser:
         self._id_generator = (f'{self.__base36(value):>04}' for value in itertools.count(1))
 
     def run_batch(self, log_entries: list[LogEntry]) -> None:
+        """Group every entry into sessions and write the whole report.
+
+        Parameters:
+            log_entries: The entries to report on. Sorted in place.
+        """
         print('Parsing input')
         all_sessions = self.__get_session_list(log_entries, self._uses_html)
 
         def do_grouping(by_ip: bool) -> list[HostInfo]:
+            """Collect the sessions into the report's top-level groups.
+
+            Parameters:
+                by_ip: Whether to gather all of a host's sessions under one
+                    entry, ordered by host name where known and by address
+                    otherwise. When False each session becomes its own entry and
+                    they are ordered by start time.
+
+            Returns:
+                The groups, in report order.
+            """
             if by_ip:
                 all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
                 sessions_list = [list(group)
@@ -141,7 +222,11 @@ class LogParser:
             self.__generate_batch_html_output(host_infos)
 
     def run_summary(self, log_entries: list[LogEntry]) -> None:
-        """Print out all slugs that have appeared in the text."""
+        """Print out all slugs that have appeared in the text.
+
+        Parameters:
+            log_entries: The entries to summarize. Sorted in place.
+        """
         all_sessions = self.__get_session_list(log_entries, uses_html=False)
         self._configuration.show_summary(all_sessions, self._output)
 
@@ -151,6 +236,10 @@ class LogParser:
 
         Each entry is processed as it is received.  Sessions can be interrupted and then continued to show information
         appearing in other sessions.  Note that log_entries is typically a generator tailing a file.
+
+        Parameters:
+            log_entries: The entries as they arrive. This does not return while
+                the iterator keeps yielding, which for a tailed file is forever.
         """
         output = self._output
         live_sessions: dict[IPv4Address, LiveSession] = {}
@@ -208,7 +297,18 @@ class LogParser:
             self.__print_entry_info(entry, entry_info, current_session.start_time)
 
     def __get_session_list(self, log_entries: list[LogEntry], uses_html: bool) -> list[Session]:
-        """Group the log entries into parsed sessions."""
+        """Group the log entries into parsed sessions.
+
+        Parameters:
+            log_entries: The entries to group. Sorted in place by host and time.
+            uses_html: Passed to the configuration, which renders differently
+                for the HTML report.
+
+        Returns:
+            One session per run of a host's requests with no gap longer than the
+            session timeout, excluding requests from an ignored network and
+            sessions the configuration reports no icon flags for.
+        """
 
         sessions: list[Session] = []
         log_entries.sort(key=lambda entry: (entry.host_ip, entry.time))
@@ -231,6 +331,20 @@ class LogParser:
                                          opus_url: str | None, log_id: LogId,
                                          session_start_time: datetime.datetime = session_start_time
                                          ) -> Entry:
+                    """Build one session entry, timed relative to the session start.
+
+                    Parameters:
+                        log_entry: The request.
+                        entry_info: The report lines the configuration produced.
+                        opus_url: The site URL the request corresponds to, if any.
+                        log_id: The request's position within the session.
+                        session_start_time: Bound as a default argument so each
+                            closure keeps the start time of the session it was
+                            created in.
+
+                    Returns:
+                        The entry.
+                    """
                     return Entry(log_entry=log_entry,
                                  relative_start_time=log_entry.time - session_start_time,
                                  data=entry_info, opus_url=opus_url, id=log_id)
@@ -257,6 +371,11 @@ class LogParser:
         return sessions
 
     def __generate_batch_text_output(self, host_infos: list[HostInfo]) -> None:
+        """Write the text report.
+
+        Parameters:
+            host_infos: The groups, in report order.
+        """
         output = self._output
         assert not self._uses_html
         for i, host_info in enumerate(host_infos):
@@ -272,18 +391,39 @@ class LogParser:
                     self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
     def __generate_batch_html_output(self, host_infos_by_ip: list[HostInfo]) -> None:
+        """Write the HTML report, through the configuration's generator.
+
+        Parameters:
+            host_infos_by_ip: The groups, in report order.
+        """
         batch_html_generator = self._configuration.create_batch_html_generator(host_infos_by_ip)
         batch_html_generator.generate_output(self._output)
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: list[str],
                            session_start_time: datetime.datetime) -> None:
-        """Print out the information for a log entry."""
+        """Print out the information for a log entry.
+
+        Parameters:
+            this_entry: The request.
+            this_entry_info: The report lines for it; the first is printed
+                against the elapsed time and the rest are indented under it.
+            session_start_time: The time the elapsed time is measured from.
+        """
         duration = this_entry.time - session_start_time
         print(f'    +{duration}: {this_entry_info[0]}', file=self._output)
         for info in this_entry_info[1:]:
             print(f'              {info}', file=self._output)
 
     def __get_hostname_from_ip(self, ip: IPv4Address) -> str:
+        """Render an address for the report, with its host name where known.
+
+        Parameters:
+            ip: The address.
+
+        Returns:
+            `name (address)` if reverse lookup found a name, otherwise the
+            address alone.
+        """
         name = self._ip_to_host_converter.convert(ip)
         if name:
             return f'{name} ({ip})'
@@ -292,6 +432,20 @@ class LogParser:
 
     @staticmethod
     def __sort_key_from_ip_and_name(ip: IPv4Address, name: str | None) -> Any:
+        """Order hosts by domain name, then by address.
+
+        Named hosts sort before unnamed ones, and are ordered by their name
+        read right to left, so hosts in the same domain group together.
+
+        Parameters:
+            ip: The host's address.
+            name: Its reverse-DNS name, or None.
+
+        Returns:
+            A sort key. Two keys are comparable only if the addresses in them
+            are the same IP version, so sorting a mix of IPv4 and IPv6 unnamed
+            hosts raises `TypeError`. See issue #1463.
+        """
         if name:
             return 1, tuple(reversed(name.lower().split('.')))
         else:
@@ -301,6 +455,17 @@ class LogParser:
 
     @classmethod
     def __base36(cls, value: int) -> str:
+        """Render a positive integer in lower-case base 36.
+
+        Parameters:
+            value: The number to render.
+
+        Returns:
+            Its base-36 digits, most significant first.
+
+        Raises:
+            AssertionError: If the value is not positive.
+        """
         result: list[str] = []
         assert value > 0
         while value > 0:

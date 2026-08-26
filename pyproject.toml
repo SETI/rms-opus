@@ -79,6 +79,9 @@ dev = [
   # so without this entry the type gate passes on the GitHub job and fails on a
   # venv built from the pins. See the dependency-skew note in the plan.
   "types-requests",
+  # typeshed's stubs for pytz, which opus_log_analyzer/cronjob_utils.py imports
+  # to fix the cron reports' timezone.
+  "types-pytz",
   "pymarkdownlnt>=0.9.35",
   "pytest>=7.0",
   "pytest-cov>=4.0",
@@ -243,7 +246,6 @@ ignore_missing_imports = true
 module = [
   "opus_app.*",
   "tests.opus_app.*",
-  "opus_log_analyzer.*",
   "integration_tests.*",
 ]
 ignore_errors = true

@@ -252,7 +252,7 @@ class QueryHandler:
         else:
             fields = [(name, getattr(search_family_values, attribute)) for name, attribute in fields_info]
             if self._uses_html:
-                joined_info = Markup(', ').join(
+                joined_info: str = Markup(', ').join(
                     self.safe_format('<mark><ins>{}:{}</ins></mark>', name, self.__format_search_value(value), )
                     for (name, value) in fields)
                 result.append(self.safe_format('{}: "{}" = ({}){}', action, label, joined_info, postscript))
@@ -294,7 +294,7 @@ class QueryHandler:
                     fmt = '{}:{}' if old == new else '<mark>{}:{}</mark>'
                     return self.safe_format(fmt, tag, self.__format_search_value(new))
 
-                joined_info = Markup(', ').join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
+                joined_info: str = Markup(', ').join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
                 result.append(self.safe_format('Change Search: "{}": ({})', label, joined_info))
             else:
                 def maybe_mark(tag: str, old: str | None, new: str | None) -> str:

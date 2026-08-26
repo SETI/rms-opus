@@ -54,7 +54,11 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         self._host_infos_by_ip = host_infos_by_ip
         self._sessions = [session for host_info in host_infos_by_ip for session in host_info.sessions]
         self._ip_to_host_name = {host_info.ip: host_info.name for host_info in host_infos_by_ip if host_info.name}
-        self._flag_name_to_flag = {x.name: x for x in IconFlags}
+        # __members__ rather than a comprehension over the class: a Flag
+        # member's `.name` is `str | None` (a composite value has no name),
+        # while __members__ is keyed by name by construction. Verified to
+        # produce an identical mapping, in the same order, for IconFlags.
+        self._flag_name_to_flag = dict(IconFlags.__members__)
         sessions_relative_directory = self._configuration.sessions_relative_directory
         if sessions_relative_directory:
             if sessions_relative_directory.startswith('/'):
@@ -69,7 +73,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
         output_generator: Iterable[str] = template.generate(context=self, host_infos_by_ip=self._host_infos_by_ip)
 
-        def get_lines():
+        def get_lines() -> Iterator[str]:
             # An iterator that breaks the results of the output_generator into lines.
             # Its job is complicated in that chunks aren't guarenteed to end with '\n'.
             leftover_text = ''

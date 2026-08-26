@@ -1,3 +1,10 @@
+"""The Jinja environment the HTML reports render through.
+
+The environment is built once at import and shared by both report generators.
+Constructing it resolves the packaged template directory, so a build that failed
+to ship `templates/` fails here rather than at first render.
+"""
+
 from jinja2 import Environment, PackageLoader, StrictUndefined
 
 # The report templates ship inside the wheel, so they are located through the package
