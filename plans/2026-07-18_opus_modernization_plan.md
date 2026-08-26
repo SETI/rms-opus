@@ -5428,3 +5428,188 @@ body; never rewrite or delete earlier notes.*
     suites report failures that have nothing to do with the code. Run them through
     `OPUS_CONFIG=... python manage.py test -b integration_tests.apps_db_tests.<mod>`
     until PR-18 wires pytest-django.
+- **2026-08-26 (PR-17b executed):** `integration_tests` is annotated, documented and
+  PEP 8-named, and **both suppression tables are empty** -- PR-01's exit criterion
+  met, and the end of Phase D. Facts later PRs rely on:
+  - **Nothing is silenced any more, and that is the state to keep.** `[tool.mypy]`
+    has no burn-down list and `[tool.ruff.lint.per-file-ignores]` has no rows. The
+    only exclusions left are the things that are not project source: the
+    out-of-scope `perf_test/`, setuptools-scm's generated `_version.py`, Django's
+    vendored `admin/js/compress.py`, and (for ruff only) the generated
+    `search/models.py`. Both tables now carry a comment saying a new entry is not
+    the way to land code that does not pass -- fix it, or suppress the one rule on
+    the one line with the reason, which `warn_unused_ignores` and `RUF100` then keep
+    honest.
+  - **What the two entries were holding, measured on this PR's base `71779fc3`.**
+    Regenerate rather than inherit: delete the entry and run the tool. Ruff: **164**
+    -- 158 `N802`, 6 `N801`. Mypy: **4180 errors in 21 files** -- 1729
+    `no-untyped-def`, 1846 `no-untyped-call`, 243 `index`, 128 `assignment`, 105
+    `var-annotated`, 47 `dict-item`, 30 `misc`, 29 `attr-defined`, 10 `arg-type`, 8
+    `import-untyped`, 4 `call-overload`, 1 `operator`. **PR-17a's notes quote 4488
+    for the same entry and both are right**: 4488 was measured at PR-14's head, and
+    PR-15/16/17a annotating the packages these suites call into turned 308
+    `no-untyped-call` reports into nothing before this PR began. **A count of what an
+    override hides is a property of the tree *under* it as much as of the tree it
+    names**, so it moves without anyone touching the named tree.
+  - **The reports came in families and each family had one fix.** This is the part
+    that generalizes; the same families are in any suite of this age.
+    - `no-untyped-def` (1708 functions) is mechanical. A token-based pass added
+      `-> None` to the 1696 whose own body provably contains no `return <value>` and
+      no `yield`, and printed the 12 that do for hand annotation. All 12 were the
+      `@api_view` handlers in `test_api_view.py`, and each declares `-> HttpResponse`
+      even where it only raises, because `api_view` takes a
+      `Callable[..., HttpResponse]` and `-> None` would make the decorator reject it.
+    - `no-untyped-call` (1846) is not a family: it is the shadow of the definitions
+      above it. It went to zero with no site touched.
+    - **A local doing two jobs** (`assignment`, `dict-item`, and most `arg-type`).
+      The suites reuse one name -- `expected` -- for each step of a multi-request
+      test, and mypy fixes its type at the first assignment. That first assignment is
+      annotated `Any` **only where the checker reported the conflict**, applied by a
+      loop that re-runs mypy until the reports stop, so nothing is widened
+      speculatively.
+    - **A result that may be absent** (`index`). `url_to_search_params` answers
+      `(None, None)` for a query it cannot parse. `SearchTests._search_params` states
+      once that the query parsed; the tests that expect the None still call the view.
+      The partition is derived from the tree -- of 111 calls, 85 index the result, 25
+      assert a half is None, 1 compares both to None -- and the converter refuses a
+      method that does both.
+    - **A request broken on purpose** (`assignment`, 71 of them). 71 tests built a
+      request and set `META` or `GET` to None to exercise the views' "no request"
+      guard. `apps_db_tests/_broken_requests.py` builds those two requests, so the
+      suppression is one site with one reason rather than 71 identical ones.
+    - **An argument of the wrong type on purpose.** A test that pins a rejection has
+      to pass the value that must be rejected. Each such call carries its marker and
+      its reason; one `mypy` run regenerates the set.
+    - **An empty literal** (`var-annotated`) takes the type its use requires.
+  - **A mix-in cannot see the class it is mixed into, and the fix is a conditional
+    base rather than a suppression per call.** `ApiTestHelper` produced 29
+    `attr-defined` reports for `self.assertEqual` and `self.client`. It now declares
+    `unittest.TestCase` as its base **under `TYPE_CHECKING` only**: making it a real
+    `TestCase` would collect it as an empty test class in each of the seven modules
+    that import it, and leaving it bare meant 29 suppressions. The suites list the
+    mix-in **before** `TestCase`, because with the base in place the other order has
+    no consistent MRO. The swap was proved rather than argued -- the mix-in's own 21
+    names do not intersect `TestCase`'s MRO at all, it makes no `super()` call, and
+    every attribute of all seven concrete classes resolves to the same object under
+    both orders.
+    **`self.client` here is a `requests.Session`, not a Django test client.** These
+    suites subclass `unittest.TestCase`, and each `setUp` installs either
+    `rest_framework.test.RequestsClient` (a `Session` subclass that drives the WSGI
+    application in process) or a plain `requests.Session` for a live server, so
+    `_get_response` returns a `requests.Response`. Anyone reaching for
+    `django.test.Client`'s API here will not find it.
+  - **A test setting injected at run time is invisible to django-stubs, and only on
+    reads.** `TEST_GO_LIVE` and `TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` are set by
+    `manage.py` and the `api-livetest-*` verbs and declared nowhere, so every *read*
+    is a `misc` report while every *write* passes -- django-stubs resolves reads
+    against the settings module and lets writes through. Both are read through an
+    accessor in `api_test_helper.py` that says so once, and they stay **functions**
+    because the value is assigned after that module is imported. **PR-18 needs this**:
+    it replaces the `manage.py` verbs with pytest, and the plan already names
+    `TEST_GO_LIVE`-style env config as the replacement. The accessor is the single
+    place that has to change.
+  - **mypy reports at most one error per line, which hides the second.**
+    `test_result_counts.py:51` reads both injected settings on one line and reported
+    one `misc`; the second appeared only after the first was fixed. Any total taken
+    from a checker is a count of *lines carrying a report*, not of defects, and only
+    a fix-and-re-measure loop tells the two apart.
+  - **`rest_framework` is in `ignore_missing_imports` rather than the dev extras.**
+    Typeshed carries no stub package for it; the stubs that exist are a separate
+    third-party distribution that re-types Django's own request and response classes,
+    which would put a second opinion about them beside django-stubs for the sake of
+    the one name the suite imports (`RequestsClient`, used only on the live path).
+  - **The renames are checked, not trusted, and the check is the one to reuse.** A
+    class name became CapWords and a test method name became lower case, with an
+    underscore inserted at a camelCase boundary so two words do not fuse. What makes
+    this safe on 1645 live tests is that **a duplicate method name is silent in
+    Python** -- the second definition replaces the first and the test disappears with
+    no error anywhere -- so the renamer aborts if a new name would collide inside its
+    class, and afterwards compares the set of (module, class, method) triples with the
+    set before it with the renames applied. **1645 before, 1645 after**, and the
+    integration run reports `Ran 1645 tests`. Nothing outside `integration_tests`
+    referred to any renamed name; the one mention left, in
+    `critiques/2026-02-17_opus_apps_codebase_analysis.md`, is the dated analysis that
+    asked for the change.
+  - **PR-17a's hand-off named one deliberate-wrong-type site; a `mypy` run names all
+    of them.** It recorded `test_sql_builder.py:57` (`quote_identifier(17)`). The same
+    file holds three more and `test_search.py` holds four. **This is the enumeration
+    failure the notes keep recording, appearing inside the notes themselves**: a site
+    was named where a rule was wanted. The rule is "a test that pins a rejection
+    passes the value that must be rejected", and it regenerates the set in one run.
+  - **The integration coverage baseline moves to 22282 statements / 1884 branches,
+    100%, with `Ran 1645 tests`**, from PR-17a's 22279 / 1884 / 1645. The whole delta
+    is **+3 statements and nothing else**, and it is attributable rather than
+    observed: `src/` is untouched by this PR, so every added statement has to be in
+    `integration_tests/test_api`, and running coverage.py's own parser over that
+    directory at both commits gives +1 in each of `test_cart_api.py`,
+    `test_search_api.py` and `test_ui_api.py` -- the three measured modules that
+    needed `from typing import Any`. **Docstrings and annotations cost nothing here,
+    which is why 1735 docstrings and 1740 annotations moved the number by three**: a
+    docstring is not a statement to coverage.py, a bare `x: T` emits no bytecode
+    inside a function body at all (checked against `co_lines()`), and `x: T = v`
+    compiles to the same instructions as `x = v`. The unit suite is 1173 tests,
+    unchanged; this PR adds and removes none.
+  - **What the integration gate actually measures, since three of the four suites are
+    outside it.** `integration_tests/.coveragerc` includes `src/opus_app/apps/*`,
+    `integration_tests/test_api/*` and `src/opus_support/*`, and omits
+    `api_test_helper.py` and `test_result_counts.py` from that. So `apps_db_tests`,
+    `test_db_data` and `test_perf` contribute nothing to the 100% gate, which is why
+    the narrowing assertions, the `_broken_requests` helper and the archive-reader
+    change could not have moved it.
+  - **`B101` is 326 on this head** -- 199 `src/opus_import`, 90 `src/opus_app`, 17
+    `src/opus_log_analyzer`, 16 `src/opus_support`, 4
+    `integration_tests/apps_db_tests`. PR-17a measured 322 with no last group; the 4
+    are this PR's narrowing assertions, so 322 + 4 = 326. Re-measure with `skips`
+    emptied **and** `--ignore-nosec`; the command is written out in the pyproject
+    comment. Note that bandit's `exclude_dirs` covers `integration_tests/test_api`,
+    `test_perf` and `test_db_data` but deliberately **not** `apps_db_tests`, which is
+    why an assertion added there moves the figure and one added in `test_api` would
+    not.
+  - **Three dead helpers in `api_test_helper.py`, two of which do not do what their
+    names say.** Recorded rather than fixed, because PR-18 moves this file's
+    neighbours and is the place to decide. Established by an AST pass over every
+    `self.<name>(...)` call in the suite, not by grep, and `getattr` dispatch was
+    checked for and does not exist here: `_run_html_contains`,
+    `_run_html_not_contains` and `_run_html_startswith` have **zero call sites**. The
+    first two also truncate the response to `len(expected)` before testing
+    membership, so "contains" is an equality test -- identical to
+    `_run_html_startswith` -- and "not contains" only rejects a response that *starts
+    with* the text. Their docstrings now say so. Separately, in
+    `_run_html_equal_file`, the assertion under the comment "There should be the same
+    number of images" compares `len(expected)` with `len(resp)`, the two response
+    *strings*, which the `assertEqual` two lines above has already proved equal; the
+    image lists it means are `expected_images` and `resp_images`.
+    **Vulture cannot see any of this**: `min_confidence` is 70 and an unused method is
+    a 60% finding. Lowering it would surface these along with every method used from
+    another module, which is why it is set where it is.
+  - **`apps_db_tests/test_results.py` opens a database cursor at import time and never
+    uses it.** `cursor = connection.cursor()` at module level is bound once and read
+    nowhere; `_empty_user_searches`, the only function that touches the name, makes
+    its own. Pre-existing and byte-identical at `71779fc3`. **It matters for PR-18**,
+    which brings this tree under pytest collection: a module-level database call runs
+    at *collection* time, before any fixture has decided whether there is a database.
+  - **`integration_tests/test_perf/` has no `__init__.py`**, unlike its three sibling
+    suites, and `test_perf_target.py` runs its measurements from the module body
+    against `http://127.0.0.1:8000`. It is not collected today and must not become
+    collectible -- PR-18's `pytest integration_tests` would import it. Its name is
+    what the directory calls it rather than a claim that a runner should pick it up.
+  - **The docstring standard was already met where it mattered and absent everywhere
+    else.** All 1645 test methods already carried the
+    `"[test_cart_api.py] /__cart/add: ..."` line each begins with; what was missing
+    was 25 module docstrings, 22 class docstrings and the fixture methods. Every
+    module, class, method and function in the tree has one now, counted by an AST walk
+    using the shared traversal (`tests/opus_import/_source_scan.py`) rather than off a
+    tool, because no checker enforces this and a count from a tool that does not
+    measure something is not a count.
+  - **The verification that made a diff this size reviewable, and the two corrections
+    it needed.** An AST comparison of both trees with annotations and docstrings
+    erased, printing every remaining statement-level difference so each has to be
+    accounted for by name. `x: T = v` **must** be normalized to `x = v` or every
+    widened assignment reads as a change, while a bare `x: T` **must not** be, because
+    that one really is a new statement; and it must **not** strip imports, so an added
+    `from typing import Any` shows up and is acknowledged. State its blind spot
+    whenever it is cited: it compares parsed structure, so a comment, a
+    `# type: ignore` marker and a change of quoting style are all invisible to it.
+    Over this PR it accounted for exactly the 71 broken requests, the 85 narrowed
+    calls, the archive reader's `isinstance`, one two-name split and the added
+    imports, and nothing else.
