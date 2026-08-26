@@ -18,6 +18,29 @@ DATA_DIR=$TEST_CAT_DIR/data
 export OPUS_CONFIG="$(pwd)/opus.toml"
 
 echo YES | ./scripts/import/import_for_tests.sh "--log-debug-limit 0 --log-info-limit 0"
+IMPORT_STATUS=$?
+# Check the import's own exit status, not just its error log. import_for_tests.sh runs
+# under `set -e`, so anything that stops it -- a missing interpreter, a failed bundle,
+# an aborted confirmation -- exits non-zero. Without this check the only gate was
+# `[ -s ERRORS.log ]` below, and a *missing* ERRORS.log is not `-s`: an import that died
+# before writing any log at all reported success, and this whole stage exited 0 having
+# imported nothing. Found during PR-16 when the venv was off a background shell's PATH,
+# `python: command not found` killed the import, and all three stages "completed" inside
+# the same wall-clock second.
+if [ $IMPORT_STATUS -ne 0 ]; then
+    echo "*******************************************"
+    echo "*** OPUS IMPORT FAILED (exit $IMPORT_STATUS) ***"
+    echo "*******************************************"
+    echo
+    if [ -f $LOG_DIR/import_logs/ERRORS.log ]; then
+        cat $LOG_DIR/import_logs/ERRORS.log
+        cp $LOG_DIR/import_logs/ERRORS.log $TEST_LOG_DIR/import_errors.log
+    else
+        echo "(no ERRORS.log was written -- the import did not get far enough to log)"
+    fi
+    exit -1
+fi
+
 if [ -s $LOG_DIR/import_logs/ERRORS.log ]; then
     echo "*****************************************"
     echo "*** OPUS IMPORT COMPLETED WITH ERRORS ***"
