@@ -13,7 +13,12 @@ pdfkit
 pillow >= 10.1
 pip-tools
 pyparsing
-pytest
+# Floor, not a pin: pytest through 9.0.2 relies on predictable
+# /tmp/pytest-of-<user> directory permissions (CVE-2025-71176), fixed in 9.0.3.
+# Stating the security requirement here is what stops a later regeneration
+# dropping below it: pip-compile takes the newest release the index offers, so
+# an index mirror or cache without the newer ones would resolve 9.0.2 silently.
+pytest >= 9.0.3
 pytest-cov
 pytest-django
 pytz

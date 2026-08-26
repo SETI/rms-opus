@@ -5951,10 +5951,38 @@ body; never rewrite or delete earlier notes.*
     Without the two packages the chain dies at `ModuleNotFoundError: No module named
     'pytest_django'` while loading `integration_tests/conftest.py`; with them the
     pinned environment reports the same 2574 passed / 22284 / 100% as the dev-extras
-    one. A `requirements.txt` header line also moved (`--no-index` appears in the
-    recorded command); that is a tool artifact of the regenerating environment rather
-    than anything the two entries caused, established by regenerating the *unmodified*
-    `requirements.in` the same way and getting that one line and nothing else.
+    one. **`pip-compile` writes `--no-index` into the header's recorded command here,
+    and that line is corrected by hand every time.** It is a pip-tools 7.5.2 quirk
+    rather than a record of how the file was resolved: it is emitted even when the
+    resolve demonstrably reaches PyPI (measured twice -- once while adding the two
+    entries, once while raising the pytest floor below, the latter in a freshly built
+    venv that resolved a *newer* pytest and warned about a yanked numpy sdist from
+    pythonhosted), and no pip config file, `PIP_*` variable or pip-tools setting is
+    behind it. Since the header documents *how to regenerate the file*, it is restored
+    to the canonical `pip-compile --output-file=requirements.txt requirements.in`.
+    **Expect to redo that after any regeneration.**
+  - **`pytest` carries a security floor, in two files, and both are load-bearing.**
+    `pytest >= 9.0.3` in `requirements.in` (hence `pytest==9.1.1` in
+    `requirements.txt`) and `pytest>=9.0.3` in `pyproject.toml`'s dev extras.
+    CVE-2025-71176 / GHSA-6w46-j5rx-g56g: pytest through 9.0.2 creates
+    `/tmp/pytest-of-<user>` with predictable permissions, so a local user on a shared
+    UNIX box -- which the self-hosted runner is -- can cause a denial of service or
+    possibly gain privileges. **Both files are needed because the two CI paths install
+    differently**: `run-app-tests.yml` installs `-r requirements.txt` then `-e .` with
+    no extras, so the lockfile governs it, while `run-tests.yml` and every developer
+    install `-e ".[dev]"`, which the lockfile never constrains. A floor states the
+    security requirement itself, so a later regeneration against an index mirror or
+    cache lacking the newer releases cannot drop below it. **How 9.0.2 got into the
+    lockfile is more mundane than a bad resolve, and is the part worth carrying:** it
+    was pinned on 2025-12-24 (`159349b6`, an unrelated import PR) when it was the
+    newest release; the advisory was published 2026-01-22 and 9.0.3 did not exist
+    until 2026-04-07, and nothing regenerated the lockfile in between. **A lockfile
+    pin ages into a vulnerability with nobody doing anything wrong**, which is what
+    the two floors together guard against and why neither is a `==`. The pin was
+    raised with
+    `pip-compile --upgrade-package pytest`, and **pytest was the only package that
+    moved**; a bare regeneration would sweep every pin, which is not a change to make
+    under an acceptance gate of frozen golden fixtures.
   - **`tests/integration_tests/` is a new directory, and it tests the test machinery.**
     `test_conftest.py` covers the collection rules and `test_api_test_helper.py` covers
     the go-live accessor; both import `integration_tests.…` directly. It mirrors the

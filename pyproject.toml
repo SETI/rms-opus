@@ -89,7 +89,15 @@ dev = [
   # printable API guide.
   "types-qrcode",
   "pymarkdownlnt>=0.9.35",
-  "pytest>=7.0",
+  # Floor set by CVE-2025-71176: pytest through 9.0.2 creates
+  # /tmp/pytest-of-<user> with predictable permissions, so a local user on a
+  # shared UNIX box can cause a denial of service or possibly gain privileges.
+  # This floor governs `pip install -e ".[dev]"` -- the GitHub-hosted jobs and
+  # developer installs -- which the lockfile does not constrain at all.
+  # requirements.in carries the same floor; the requirements.txt compiled from
+  # it pins an exact version, and the self-hosted runner installs from that
+  # lockfile rather than from these extras.
+  "pytest>=9.0.3",
   "pytest-cov>=4.0",
   "pytest-django>=4.5",
   "pytest-xdist>=3.8.0",
