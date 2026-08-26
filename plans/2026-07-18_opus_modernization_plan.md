@@ -5473,9 +5473,11 @@ body; never rewrite or delete earlier notes.*
     - **A result that may be absent** (`index`). `url_to_search_params` answers
       `(None, None)` for a query it cannot parse. `SearchTests._search_params` states
       once that the query parsed; the tests that expect the None still call the view.
-      The partition is derived from the tree -- of 111 calls, 85 index the result, 25
-      assert a half is None, 1 compares both to None -- and the converter refuses a
-      method that does both.
+      The partition is derived from the tree, and the figures are the **base's**: of
+      its 111 calls, 85 index the result, 25 assert a half is None, and 1 compares
+      both to None. (On the head the same scan reports 27, because the 85 now go
+      through the helper -- a count of call sites is a property of the tree you run
+      it on, so say which one.) The converter refuses a method that does both.
     - **A request broken on purpose** (`assignment`, 71 of them). 71 tests built a
       request and set `META` or `GET` to None to exercise the views' "no request"
       guard. `apps_db_tests/_broken_requests.py` builds those two requests, so the
