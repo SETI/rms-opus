@@ -1,4 +1,5 @@
 # results/urls.py
+"""The routes of the results API."""
 from django.urls import re_path
 
 from opus_app.apps.results.views import (

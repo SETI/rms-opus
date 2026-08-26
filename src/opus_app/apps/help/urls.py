@@ -1,4 +1,6 @@
 # help/urls.py
+"""The URL routes for the help pages."""
+
 from django.urls import re_path
 
 from opus_app.apps.help.views import (

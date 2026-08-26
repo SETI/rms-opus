@@ -82,6 +82,12 @@ dev = [
   # typeshed's stubs for pytz, which opus_log_analyzer/cronjob_utils.py imports
   # to fix the cron reports' timezone.
   "types-pytz",
+  # typeshed's stubs for regex, which apps/search/views.py uses for the
+  # user-supplied regular expressions a string search accepts.
+  "types-regex",
+  # typeshed's stubs for qrcode, which apps/help/views.py renders into the
+  # printable API guide.
+  "types-qrcode",
   "pymarkdownlnt>=0.9.35",
   "pytest>=7.0",
   "pytest-cov>=4.0",
@@ -221,7 +227,8 @@ django_settings_module = "opus_app.settings"
 # inside modules the burn-down below silences, so each annotation PR adds whatever the
 # checker then reports as import-untyped or import-not-found for the tree it annotates.
 [[tool.mypy.overrides]]
-module = ["julian.*", "pdsfile.*", "pdslogger.*", "pdsparser.*", "pdstable.*"]
+module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
+          "pdstable.*"]
 ignore_missing_imports = true
 
 # Type burn-down list. `strict = true` applies to the whole repository; these
@@ -245,8 +252,6 @@ ignore_missing_imports = true
 # record the number here: it moves with every intervening PR.
 [[tool.mypy.overrides]]
 module = [
-  "opus_app.*",
-  "tests.opus_app.*",
   "integration_tests.*",
 ]
 ignore_errors = true

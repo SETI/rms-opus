@@ -1,4 +1,6 @@
 # metadata/urls.py
+"""The URL routes for the metadata API."""
+
 from django.urls import re_path
 
 from opus_app.apps.metadata.views import (

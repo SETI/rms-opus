@@ -96,7 +96,7 @@ class SQLIdentifierError(ValueError):
     """Raised when a name that is about to be used as an SQL identifier is unsafe."""
 
 
-def quote_identifier(name):
+def quote_identifier(name: str) -> str:
     """Return `name` quoted for use as an identifier, rejecting unsafe names.
 
     Parameters:
@@ -106,8 +106,8 @@ def quote_identifier(name):
         The name quoted by the database backend (backticks on MySQL).
 
     Raises:
-        SQLIdentifierError: If the name is not made up solely of ASCII letters,
-            digits and underscores.
+        SQLIdentifierError: If the name is not a string made up solely of ASCII
+            letters, digits and underscores.
     """
     if not isinstance(name, str) or not _IDENTIFIER_RE.match(name):
         raise SQLIdentifierError(f'Unsafe SQL identifier: {name!r}')
@@ -123,10 +123,10 @@ class Expr(NamedTuple):
     """
 
     sql: str
-    params: list
+    params: list[Any]
 
 
-def column(name, table=None):
+def column(name: str, table: str | None = None) -> Expr:
     """Return a reference to a column, optionally qualified by its table.
 
     Parameters:
@@ -141,46 +141,46 @@ def column(name, table=None):
     return Expr(f'{quote_identifier(table)}.{quote_identifier(name)}', [])
 
 
-def value(val):
+def value(val: Any) -> Expr:
     """Return a placeholder that carries `val` as a parameter."""
     return Expr('%s', [val])
 
 
-def count_star():
+def count_star() -> Expr:
     """Return `COUNT(*)`."""
     return Expr('COUNT(*)', [])
 
 
-def _function(func_name, *args):
+def _function(func_name: str, *args: Expr) -> Expr:
     """Return `func_name(arg, ...)` with the arguments' parameters in order."""
-    params = []
+    params: list[Any] = []
     for arg in args:
         params += arg.params
     rendered = _SEPARATOR.join(arg.sql for arg in args)
     return Expr(f'{func_name}({rendered})', params)
 
 
-def count_distinct(expr):
+def count_distinct(expr: Expr) -> Expr:
     """Return `COUNT(DISTINCT expr)`."""
     return Expr(f'COUNT(DISTINCT {expr.sql})', list(expr.params))
 
 
-def sum_of(expr):
+def sum_of(expr: Expr) -> Expr:
     """Return `SUM(expr)`."""
     return _function('SUM', expr)
 
 
-def min_of(expr):
+def min_of(expr: Expr) -> Expr:
     """Return `MIN(expr)`."""
     return _function('MIN', expr)
 
 
-def max_of(expr):
+def max_of(expr: Expr) -> Expr:
     """Return `MAX(expr)`."""
     return _function('MAX', expr)
 
 
-def json_contains(expr, val):
+def json_contains(expr: Expr, val: Any) -> Expr:
     """Return `JSON_CONTAINS(expr, %s)`, testing membership of a JSON array.
 
     MULTIGROUP fields hold a JSON list of mult ids, so a search for one value has
@@ -189,7 +189,7 @@ def json_contains(expr, val):
     return _function('JSON_CONTAINS', expr, value(val))
 
 
-def json_extract_first(expr):
+def json_extract_first(expr: Expr) -> Expr:
     """Return `JSON_EXTRACT(expr, "$[0]")`, the first element of a JSON array.
 
     A MULTIGROUP field has no single value to sort or join on, so the first
@@ -198,7 +198,7 @@ def json_extract_first(expr):
     return Expr(f'JSON_EXTRACT({expr.sql}, "$[0]")', list(expr.params))
 
 
-def angular_separation(longitude_column, target_longitude):
+def angular_separation(longitude_column: Expr, target_longitude: float) -> Expr:
     """Return the angular distance in degrees between a column and a longitude.
 
     Renders `ABS(MOD(%s - <column> + 540., 360.) - 180.)`, which maps the
@@ -211,7 +211,7 @@ def angular_separation(longitude_column, target_longitude):
                 [target_longitude, *longitude_column.params])
 
 
-def binary_op(left, operator, right):
+def binary_op(left: Expr, operator: str, right: Expr) -> Expr:
     """Return `left <operator> right`, with spaces around the operator.
 
     Parameters:
@@ -228,7 +228,7 @@ def binary_op(left, operator, right):
                 list(left.params) + list(right.params))
 
 
-def columns_equal(left, right):
+def columns_equal(left: Expr, right: Expr) -> Expr:
     """Return `left=right` for two column references, with no surrounding spaces.
 
     Kept distinct from `binary_op(left, '=', right)` because a join condition and
@@ -240,19 +240,19 @@ def columns_equal(left, right):
     return Expr(f'{left.sql}={right.sql}', [])
 
 
-def is_null(expr):
+def is_null(expr: Expr) -> Expr:
     """Return `expr IS NULL`."""
     return Expr(f'{expr.sql} IS NULL', list(expr.params))
 
 
-def in_values(expr, vals):
+def in_values(expr: Expr, vals: list[Any]) -> Expr:
     """Return `expr IN (%s,...)` with one placeholder per value."""
     placeholders = _SEPARATOR.join(['%s'] * len(vals))
     return Expr(f'{expr.sql} IN ({placeholders})',
                 list(expr.params) + list(vals))
 
 
-def in_sequence(expr, vals):
+def in_sequence(expr: Expr, vals: list[Any] | tuple[Any, ...]) -> Expr:
     """Return `expr IN %s`, passing the whole sequence as one parameter.
 
     mysqlclient expands a list or tuple parameter into a parenthesized list, so
@@ -263,12 +263,12 @@ def in_sequence(expr, vals):
     return Expr(f'{expr.sql} IN %s', [*expr.params, vals])
 
 
-def parenthesize(expr):
+def parenthesize(expr: Expr) -> Expr:
     """Return `(expr)`."""
     return Expr(f'({expr.sql})', list(expr.params))
 
 
-def join_exprs(exprs, operator):
+def join_exprs(exprs: list[Expr], operator: str) -> Expr:
     """Return the expressions joined by `operator`, without adding parentheses.
 
     Parameters:
@@ -277,13 +277,13 @@ def join_exprs(exprs, operator):
     """
     if operator not in ('AND', 'OR'):
         raise ValueError(f'Unsupported logical operator: {operator!r}')
-    params = []
+    params: list[Any] = []
     for expr in exprs:
         params += expr.params
     return Expr(f' {operator} '.join(expr.sql for expr in exprs), params)
 
 
-def combine_exprs(exprs, operator):
+def combine_exprs(exprs: list[Expr], operator: str) -> Expr:
     """Return the expressions combined by `operator`, parenthesized if there is more than one.
 
     A single expression is returned unchanged, so a one-clause search reads as
@@ -305,7 +305,7 @@ class Subquery:
     select: 'Select'
     alias: str
 
-    def render(self):
+    def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this source as it appears in a FROM clause."""
         sql, params = self.select.build()
         return f'({sql}) AS {quote_identifier(self.alias)}', params
@@ -324,7 +324,7 @@ class JSONTable:
     value_column: str
     alias: str
 
-    def render(self):
+    def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this source as it appears in a FROM clause."""
         return (f'JSON_TABLE({self.source_column.sql}, "$[*]" COLUMNS '
                 f'({quote_identifier(self.value_column)} TEXT PATH "$")) '
@@ -332,7 +332,7 @@ class JSONTable:
                 list(self.source_column.params))
 
 
-def _render_source(source):
+def _render_source(source: str | Subquery | JSONTable) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` for a table name, a `Subquery` or a `JSONTable`."""
     if isinstance(source, str):
         return quote_identifier(source), []
@@ -346,11 +346,11 @@ class Join:
     #: 'INNER' or 'LEFT'.
     kind: str
     #: The table name, `Subquery` or `JSONTable` being joined in.
-    source: Any
+    source: str | Subquery | JSONTable
     #: The ON condition, or None for a `JSON_TABLE` join, which has none.
-    on: Any = None
+    on: Expr | None = None
 
-    def render(self):
+    def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this join."""
         if self.kind not in ('INNER', 'LEFT'):
             raise ValueError(f'Unsupported join kind: {self.kind!r}')
@@ -372,15 +372,16 @@ class FromSource:
     summary and the queries that join a search to its cache table rely on.
     """
 
-    source: Any
-    joins: list = field(default_factory=list)
+    source: str | Subquery | JSONTable
+    joins: list[Join] = field(default_factory=list)
 
-    def add_join(self, kind, source, on=None):
+    def add_join(self, kind: str, source: str | Subquery | JSONTable,
+                 on: Expr | None = None) -> 'FromSource':
         """Append a join to this source and return self."""
         self.joins.append(Join(kind, source, on))
         return self
 
-    def render(self):
+    def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this source and its joins."""
         sql, params = _render_source(self.source)
         for join in self.joins:
@@ -394,7 +395,7 @@ class _OrderBy(NamedTuple):
     """One ORDER BY item. `descending` of None emits no direction keyword."""
 
     expr: Expr
-    descending: Any
+    descending: bool | None
 
 
 class Select:
@@ -406,7 +407,8 @@ class Select:
     placeholder order.
     """
 
-    def __init__(self, distinct=False, max_execution_time=None):
+    def __init__(self, distinct: bool = False,
+                 max_execution_time: int | None = None) -> None:
         """Create an empty statement.
 
         Parameters:
@@ -426,22 +428,22 @@ class Select:
             raise ValueError('max_execution_time must be an int number of '
                              f'milliseconds: {max_execution_time!r}')
         self._max_execution_time = max_execution_time
-        self._columns = []
-        self._from = []
-        self._where = []
-        self._group_by = []
-        self._order_by = []
-        self._limit = None
-        self._offset = None
+        self._columns: list[Expr] = []
+        self._from: list[FromSource] = []
+        self._where: list[Expr] = []
+        self._group_by: list[Expr] = []
+        self._order_by: list[_OrderBy] = []
+        self._limit: int | None = None
+        self._offset: int | None = None
 
-    def add_column(self, expr, alias=None):
+    def add_column(self, expr: Expr, alias: str | None = None) -> 'Select':
         """Add a result column, optionally under an alias, and return self."""
         if alias is not None:
             expr = Expr(f'{expr.sql} AS {quote_identifier(alias)}', expr.params)
         self._columns.append(expr)
         return self
 
-    def add_from(self, source):
+    def add_from(self, source: str | Subquery | JSONTable) -> FromSource:
         """Add a comma-separated table source and return the `FromSource` for it.
 
         The return value is the `FromSource`, not the statement, so that joins can
@@ -449,7 +451,7 @@ class Select:
         """
         return self.add_from_source(FromSource(source))
 
-    def add_from_source(self, from_source):
+    def add_from_source(self, from_source: FromSource) -> FromSource:
         """Add an already-built `FromSource` and return it.
 
         This is for a FROM clause that is assembled once and used by more than one
@@ -459,17 +461,17 @@ class Select:
         self._from.append(from_source)
         return from_source
 
-    def add_where(self, expr):
+    def add_where(self, expr: Expr) -> 'Select':
         """AND another condition into the WHERE clause and return self."""
         self._where.append(expr)
         return self
 
-    def add_group_by(self, expr):
+    def add_group_by(self, expr: Expr) -> 'Select':
         """Add a GROUP BY term and return self."""
         self._group_by.append(expr)
         return self
 
-    def add_order_by(self, expr, descending=None):
+    def add_order_by(self, expr: Expr, descending: bool | None = None) -> 'Select':
         """Add an ORDER BY term and return self.
 
         Parameters:
@@ -480,7 +482,7 @@ class Select:
         self._order_by.append(_OrderBy(expr, descending))
         return self
 
-    def limit(self, count):
+    def limit(self, count: int) -> 'Select':
         """Set LIMIT and return self.
 
         The count is rendered as a literal rather than as a parameter: it is a
@@ -493,16 +495,16 @@ class Select:
         self._limit = count
         return self
 
-    def offset(self, count):
+    def offset(self, count: int) -> 'Select':
         """Set OFFSET and return self. The count is an `int`; see `limit`."""
         if not isinstance(count, int):
             raise ValueError(f'OFFSET must be an int: {count!r}')
         self._offset = count
         return self
 
-    def build(self):
+    def build(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of the finished statement."""
-        params = []
+        params: list[Any] = []
         sql = 'SELECT '
         if self._max_execution_time is not None:
             sql += f'/*+ MAX_EXECUTION_TIME({self._max_execution_time}) */ '
@@ -512,7 +514,7 @@ class Select:
         for col in self._columns:
             params += col.params
 
-        from_sql = []
+        from_sql: list[str] = []
         for from_source in self._from:
             source_sql, source_params = from_source.render()
             from_sql.append(source_sql)
@@ -530,7 +532,7 @@ class Select:
                 params += group.params
 
         if self._order_by:
-            terms = []
+            terms: list[str] = []
             for order in self._order_by:
                 term = order.expr.sql
                 if order.descending is not None:
@@ -547,8 +549,9 @@ class Select:
         return sql, params
 
 
-def create_table_from_select_sql(table_name, select_sql, column_defs=None,
-                                 temporary=False):
+def create_table_from_select_sql(table_name: str, select_sql: str,
+                                 column_defs: str | None = None,
+                                 temporary: bool = False) -> str:
     """Return the SQL of a CREATE TABLE ... SELECT, given the SELECT as text.
 
     This is for the one caller that receives its SELECT already rendered --
@@ -573,7 +576,9 @@ def create_table_from_select_sql(table_name, select_sql, column_defs=None,
     return statement + select_sql
 
 
-def create_table_as_select(table_name, select, column_defs=None, temporary=False):
+def create_table_as_select(table_name: str, select: Select,
+                           column_defs: str | None = None,
+                           temporary: bool = False) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a CREATE TABLE ... SELECT.
 
     Parameters:
@@ -589,12 +594,12 @@ def create_table_as_select(table_name, select, column_defs=None, temporary=False
             params)
 
 
-def drop_table(table_name):
+def drop_table(table_name: str) -> str:
     """Return the SQL of a DROP TABLE."""
     return f'DROP TABLE {quote_identifier(table_name)}'
 
 
-def count_rows(table_name):
+def count_rows(table_name: str) -> str:
     """Return the SQL of `SELECT COUNT(*) FROM <table>`."""
     select = Select()
     select.add_column(count_star())
@@ -603,7 +608,7 @@ def count_rows(table_name):
     return sql
 
 
-def delete_from(table_name, where):
+def delete_from(table_name: str, where: Expr) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a DELETE from one table.
 
     Parameters:
@@ -618,7 +623,8 @@ def delete_from(table_name, where):
             list(where.params))
 
 
-def delete_joined(target_table, from_source, where):
+def delete_joined(target_table: str, from_source: FromSource,
+                  where: Expr) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a DELETE that selects its rows through a join.
 
     Renders `DELETE <target> FROM <source> ... WHERE ...`: the rows to delete come
@@ -637,12 +643,16 @@ def delete_joined(target_table, from_source, where):
             from_params + list(where.params))
 
 
-def _quoted_column_list(column_names):
-    """Return `(a,b,c)` for a list of column names, quoted and validated."""
+def _quoted_column_list(column_names: tuple[str, ...] | list[str]) -> str:
+    """Return the column names quoted and validated, separated by commas.
+
+    The parentheses that enclose a column list are added by the caller.
+    """
     return _SEPARATOR.join(quote_identifier(name) for name in column_names)
 
 
-def replace_into_values(table_name, column_names):
+def replace_into_values(table_name: str,
+                        column_names: tuple[str, ...] | list[str]) -> str:
     """Return the SQL of a `REPLACE INTO <table> (...) VALUES (%s,...)`.
 
     One placeholder per column, so the statement is what `cursor.executemany` wants:
@@ -658,24 +668,27 @@ def replace_into_values(table_name, column_names):
             f' ({_quoted_column_list(column_names)}) VALUES ({placeholders})')
 
 
-def replace_into_select(table_name, column_names, select):
+def replace_into_select(table_name: str,
+                        column_names: tuple[str, ...] | list[str],
+                        select: Select) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a `REPLACE INTO <table> (...) SELECT ...`."""
     sql, params = select.build()
     return (f'REPLACE INTO {quote_identifier(table_name)}'
             f' ({_quoted_column_list(column_names)}) {sql}', params)
 
 
-def update(table_name, assignments, where):
+def update(table_name: str, assignments: list[tuple[str, Any]],
+           where: Expr) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of an UPDATE.
 
     Parameters:
         table_name: The table to update.
-        assignments: A sequence of `(column_name, value)` pairs. Each value is
+        assignments: A list of `(column_name, value)` pairs. Each value is
             rendered as a parameter.
         where: The WHERE condition. Required, for the reason `delete_from` gives.
     """
-    params = []
-    sets = []
+    params: list[Any] = []
+    sets: list[str] = []
     for column_name, val in assignments:
         sets.append(f'{quote_identifier(column_name)}=%s')
         params.append(val)

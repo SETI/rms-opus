@@ -19,7 +19,19 @@
 #
 ################################################################################
 
+"""The metadata API: result counts, mult counts, range endpoints, and field lists.
+
+The first three describe what a search matches -- how many observations it finds,
+how those divide among the values of a mult field, and the smallest and largest
+values a range field takes over them -- and each is served as JSON, HTML or CSV.
+The fourth describes the searchable fields themselves; `get_fields_info`, which
+serves it, is also where the API guide's field list comes from.
+"""
+
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
 from django.apps import apps
 from django.conf import settings
@@ -69,6 +81,9 @@ from opus_support import (
     parse_form_type,
 )
 
+if TYPE_CHECKING:
+    from django.http import HttpRequest, HttpResponse
+
 log = logging.getLogger(__name__)
 
 
@@ -80,7 +95,8 @@ log = logging.getLogger(__name__)
 
 @never_cache
 @api_view
-def api_get_result_count(request, fmt, internal=False, *, api_code):
+def api_get_result_count(request: HttpRequest, fmt: str, internal: bool = False, *,
+                         api_code: int) -> HttpResponse:
     """Return the result count for a given search.
 
     You can specify a sort order as well as search arguments because the result
@@ -109,6 +125,23 @@ def api_get_result_count(request, fmt, internal=False, *, api_code):
 
     Returned CSV:
         result count,47
+
+    Parameters:
+        request: The request whose query string describes the search.
+        fmt: The format to answer in: `json`, `html` or `csv`.
+        internal: Answer the internal form of the call, which requires a reqno and
+            returns it alongside the count.
+        api_code: The API call number, supplied by the `api_view` decorator.
+
+    Returns:
+        The result count in the requested format, or an internal-error response if
+        the search could not be run.
+
+    Raises:
+        Http400Error: If the search parameters cannot be parsed, or the internal
+            form of the call has no usable reqno.
+        Http404: If there is no request, or it has no GET or META, or fmt is not
+            one of the formats above.
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/api/meta/result_count.{fmt}'))
@@ -140,14 +173,30 @@ def api_get_result_count(request, fmt, internal=False, *, api_code):
 
     return ret
 
-def api_get_result_count_internal(request):
+def api_get_result_count_internal(request: HttpRequest) -> HttpResponse:
+    """Return the result count for a given search, for the OPUS user interface.
+
+    This is a PRIVATE API.
+
+    Format: __api/meta/result_count.json
+    Arguments: Normal search arguments
+               reqno=<N> (Required)
+
+    Parameters:
+        request: The request whose query string describes the search.
+
+    Returns:
+        What `api_get_result_count` returns for the JSON format, with the reqno
+        alongside the count.
+    """
     return api_get_result_count(request, 'json', internal=True)
 
 
 @never_cache
 @api_view
-def api_get_mult_counts(request, slug, fmt, internal=False, *,
-                        api_code):
+def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
+                        internal: bool = False, *,
+                        api_code: int) -> HttpResponse:
     r"""Return the mults for a given slug along with result counts.
 
     This is a PUBLIC API.
@@ -177,6 +226,25 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
     Returned CSV:
         name1,name2,name3
         number1,number2,number3
+
+    Parameters:
+        request: The request whose query string describes the search.
+        slug: The mult field to count the values of.
+        fmt: The format to answer in: `json`, `html` or `csv`.
+        internal: Answer the internal form of the call, which requires a reqno and
+            returns it alongside the counts.
+        api_code: The API call number, supplied by the `api_view` decorator.
+
+    Returns:
+        The count of matching observations for each of the field's values, in the
+        requested format, or an internal-error response if the search or the
+        field's values could not be read.
+
+    Raises:
+        Http400Error: If the search parameters cannot be parsed, the slug names no
+            field, or the internal form of the call has no usable reqno.
+        Http404: If there is no request, or it has no GET or META, or fmt is not
+            one of the formats above.
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/api/meta/mults/{slug}.{fmt}'))
@@ -190,6 +258,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
         log.error('api_get_mult_counts: Failed to get selections for slug %s, '
                   +'URL %s', str(slug), request.GET)
         raise Http400Error(http400_search_params_invalid(request))
+    # url_to_search_params returns both of them or neither.
+    assert extras is not None
 
     param_info = get_param_info_by_slug(slug, 'col', allow_units_override=False)
     if not param_info:
@@ -197,6 +267,9 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
                   +'slug %s *** Selections %s *** Extras %s', str(slug),
                   str(selections), str(extras))
         raise Http400Error(http400_unknown_slug(slug, request))
+    # allow_units_override is off, so this is the ParamInfo itself rather than
+    # the (ParamInfo, units) pair that mode returns.
+    assert isinstance(param_info, ParamInfo)
 
     table_name = param_info.category_name
     param_qualified_name = param_info.param_qualified_name()
@@ -278,6 +351,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
 
         if selections:
             # selections are constrained so join in the user_table
+            # The check above returned already if the search produced no table.
+            assert user_table is not None
             select.add_from(user_table)
             select.add_where(search_cache_join_condition(table_name, user_table))
 
@@ -332,14 +407,31 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
 
     return ret
 
-def api_get_mult_counts_internal(request, slug):
+def api_get_mult_counts_internal(request: HttpRequest, slug: str) -> HttpResponse:
+    r"""Return the mults for a given slug with result counts, for the OPUS user interface.
+
+    This is a PRIVATE API.
+
+    Format: __api/meta/mults/(?P<slug>[-\w]+).json
+    Arguments: Normal search arguments
+               reqno=<N> (Required)
+
+    Parameters:
+        request: The request whose query string describes the search.
+        slug: The mult field to count the values of.
+
+    Returns:
+        What `api_get_mult_counts` returns for the JSON format, with the reqno
+        alongside the counts.
+    """
     return api_get_mult_counts(request, slug, 'json', internal=True)
 
 
 @never_cache
 @api_view
-def api_get_range_endpoints(request, slug, fmt, internal=False, *,
-                            api_code):
+def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
+                            internal: bool = False, *,
+                            api_code: int) -> HttpResponse:
     r"""Compute and return range widget endpoints (min, max, nulls)
 
     This is a PUBLIC API.
@@ -380,6 +472,25 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
     Returned CSV:
         min,max,nulls,units
         0.0000,50000.0000,11,km
+
+    Parameters:
+        request: The request whose query string describes the search.
+        slug: The range field to find the endpoints of.
+        fmt: The format to answer in: `json`, `html` or `csv`.
+        internal: Answer the internal form of the call, which requires a reqno and
+            returns it alongside the endpoints.
+        api_code: The API call number, supplied by the `api_view` decorator.
+
+    Returns:
+        The endpoints in the requested format, or an internal-error response if the
+        search could not be run.
+
+    Raises:
+        Http400Error: If the search parameters cannot be parsed, the slug names no
+            field, the units are not valid for that field, or the internal form of
+            the call has no usable reqno.
+        Http404: If there is no request, or it has no GET or META, or fmt is not
+            one of the formats above.
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(
@@ -394,11 +505,16 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
         log.error('api_get_range_endpoints: Could not find param_info entry '
                   +'for slug %r', slug)
         raise Http400Error(http400_unknown_slug(slug, request))
+    # Source 'widget' returns the ParamInfo itself; the pair form belongs to
+    # source 'col' with allow_units_override.
+    assert isinstance(param_info, ParamInfo)
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
     units = request.GET.get('units', get_default_unit(form_type_unit_id))
-    if form_type_unit_id and not is_valid_unit(form_type_unit_id, units):
+    # units is None only when the caller named none and form_type_unit_id is None,
+    # which this condition has already excluded.
+    if form_type_unit_id and not is_valid_unit(form_type_unit_id, units):  # type: ignore[arg-type]
         log.error('api_get_range_endpoints: Bad units %r for '
                   +'slug %r', units, slug)
         raise Http400Error(http400_unknown_units(units, slug, request))
@@ -420,6 +536,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
     param1 = param_no_num + '1'
     param2 = param_no_num + '2'
 
+    # The comparison below already requires the field to carry a slug.
+    assert param_info.slug is not None
     if (form_type in settings.RANGE_FORM_TYPES and
         param_info.slug[-1] not in '12'):
         param1 = param2 = param_no_num  # single column range query
@@ -429,6 +547,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
         log.error('api_get_range_endpoints: Could not find selections for '
                   +'request %s', str(request.GET))
         raise Http400Error(http400_search_params_invalid(request))
+    # url_to_search_params returns both of them or neither.
+    assert extras is not None
 
     # Remove this param from the user's query if it is constrained.
     # This keeps the green hinting numbers from reacting to changes to its
@@ -471,6 +591,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
             # There are selections, so tie the query to user_table. The cache
             # table has no model, so this cross-join and its condition cannot be
             # expressed through the ORM and are built as raw SQL instead.
+            # The block above returned already if the search produced no table.
+            assert user_table is not None
             cache_join = search_cache_join_condition(table_name, user_table)
             # The database column, not the model field name: the two differ for a
             # field declared with db_column, and the ORM path below names fields.
@@ -556,13 +678,30 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
 
     return ret
 
-def api_get_range_endpoints_internal(request, slug):
+def api_get_range_endpoints_internal(request: HttpRequest, slug: str) -> HttpResponse:
+    r"""Return range widget endpoints for a given slug, for the OPUS user interface.
+
+    This is a PRIVATE API.
+
+    Format: __api/meta/range/endpoints/(?P<slug>[-\w]+).json
+    Arguments: Normal search arguments
+               units=<unit> (Optional, gives units to return in)
+               reqno=<N>    (Required)
+
+    Parameters:
+        request: The request whose query string describes the search.
+        slug: The range field to find the endpoints of.
+
+    Returns:
+        What `api_get_range_endpoints` returns for the JSON format, with the reqno
+        alongside the endpoints.
+    """
     return api_get_range_endpoints(request, slug, 'json', internal=True)
 
 
 @never_cache
 @api_view
-def api_get_fields(request, fmt, slug=None):
+def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> HttpResponse:
     r"""Return information about fields in the database (slugs).
 
     This is a PUBLIC API.
@@ -603,20 +742,36 @@ def api_get_fields(request, fmt, slug=None):
 
     If collapse=1, then all surface geometry is collapsed into a single
     <TARGET> version based on the Saturn prototype.
+
+    Parameters:
+        request: The request being served.
+        fmt: The format to answer in: `json` or `csv`.
+        slug: Describe only the field with this slug; when it is absent, every
+            field is described.
+
+    Returns:
+        The description of the fields in the requested format.
+
+    Raises:
+        Http400Error: If the collapse argument is not an integer.
+        Http404: If there is no request, or it has no GET or META, or fmt is not
+            one of the formats above.
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/api/fields/{slug}.{fmt}'))
 
     collapse = request.GET.get('collapse', '0')
     try:
-        collapse = int(collapse) != 0
+        collapse_flag = int(collapse) != 0
     except ValueError as err:
         # %r for the same reason api_edit_cart uses it on recyclebin: this is
         # still the raw request string when int() raised.
         log.error('api_get_fields: Bad value for collapse %r', collapse)
         raise Http400Error(http400_bad_collapse(collapse, request)) from err
 
-    return get_fields_info(fmt, request, slug=slug, collapse=collapse)
+    # The URL patterns bring only json and csv here, and for those get_fields_info
+    # answers with a response rather than the dictionary its 'raw' format returns.
+    return get_fields_info(fmt, request, slug=slug, collapse=collapse_flag)  # type: ignore[return-value]
 
 
 ################################################################################
@@ -627,12 +782,31 @@ def api_get_fields(request, fmt, slug=None):
 
 # This routine is public because it's called by _edit_cart_addall
 # in cart/views.py
-def get_result_count_helper(request, api_code):
+def get_result_count_helper(request: HttpRequest,
+                            api_code: int) -> tuple[int | None, str | None,
+                                                    HttpResponse | None]:
+    """Count the observations a search matches.
+
+    Parameters:
+        request: The request whose query string describes the search.
+        api_code: The API call number to log the search under.
+
+    Returns:
+        The number of matching observations, the name of the cache table holding
+        the search results, and an error response. On success the error response
+        is None; when the search could not be run, the count and the table name
+        are None instead and the caller is expected to return the error response.
+
+    Raises:
+        Http400Error: If the search parameters cannot be parsed.
+    """
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('get_result_count_helper: Could not find selections for '
                   +'request %s', str(request.GET))
         raise Http400Error(http400_search_params_invalid(request))
+    # url_to_search_params returns both of them or neither.
+    assert extras is not None
 
     table = get_user_query_table(selections, extras, api_code=api_code)
 
@@ -661,8 +835,16 @@ def get_result_count_helper(request, api_code):
 
     return count, table, None
 
-def get_cart_count(session_id):
-    "Return the number of items in the current cart."
+def get_cart_count(session_id: str | None) -> tuple[int, int]:
+    """Return the number of items in the current cart.
+
+    Parameters:
+        session_id: The session whose cart is being counted.
+
+    Returns:
+        The number of items in the cart, and the number of items in its recycle
+        bin.
+    """
     count = (Cart.objects
              .filter(session_id__exact=session_id)
              .filter(recycled=0)
@@ -674,14 +856,34 @@ def get_cart_count(session_id):
     return count, recycled_count
 
 # This routine is public because it's called by the API guide in guide/views.py
-def get_fields_info(fmt, request, slug=None, collapse=False):
-    "Helper routine for api_get_fields."
+def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
+                    collapse: bool = False) -> dict[str, dict[str, Any]] | HttpResponse:
+    """Describe the searchable fields, for api_get_fields and the API guide.
+
+    Parameters:
+        fmt: `raw` to return the description itself, or `json` or `csv` to return
+            it as a response in that format.
+        request: The request being served, which is named in the error raised for
+            an unknown format.
+        slug: Describe only the field with this slug; when it is absent, every
+            field is described.
+        collapse: Collapse the surface geometry fields onto a single target, whose
+            name appears as `<TARGET>` in the labels and slugs.
+
+    Returns:
+        For `raw`, a dictionary of category label to a dictionary of field id to
+        that field's description, both in display order. For the other formats, a
+        response carrying the same descriptions.
+
+    Raises:
+        Http404: If fmt is not one of the formats above.
+    """
     if slug:
         fields = ParamInfo.objects.filter(slug=slug)
     else:
         fields = ParamInfo.objects.all()
     fields.order_by('category_name', 'slug')
-    return_obj = {}
+    return_obj: dict[str, dict[str, Any]] = {}
     for f in fields:
         if not f.slug:
             # Include referred slug
@@ -690,8 +892,13 @@ def get_fields_info(fmt, request, slug=None, collapse=False):
                 category = f.category_name
                 disp_order = f.disp_order
                 # A referred slug will never contain a unit specifier
-                f = get_param_info_by_slug(referred_slug, 'col',
-                                           allow_units_override=False)
+                referred_f = get_param_info_by_slug(referred_slug, 'col',
+                                                    allow_units_override=False)
+                # The lines below already require the referred field to exist,
+                # and allow_units_override is off, so this is the ParamInfo
+                # itself rather than the pair that mode returns.
+                assert isinstance(referred_f, ParamInfo)
+                f = referred_f
                 f.label = f.body_qualified_label()
                 f.label_results = f.body_qualified_label_results(True)
                 f.referred_slug = referred_slug
@@ -701,6 +908,9 @@ def get_fields_info(fmt, request, slug=None, collapse=False):
                 # There shouldn't be a case where BOTH the slug and
                 # referred_slug are None, but just to be careful...
                 continue
+        # The row either carries a slug or was replaced above by the field its
+        # referred slug names; the lines below require one either way.
+        assert f.slug is not None
         # We cheat with the HTML return because we want to collapse all the
         # surface geometry down to a single target version to save screen
         # space. This is a horrible hack, but for right now we just assume
@@ -720,7 +930,7 @@ def get_fields_info(fmt, request, slug=None, collapse=False):
 
         return_obj[cat] = return_obj.get(cat, {})
 
-        entry = {}
+        entry: dict[str, Any] = {}
         return_obj[cat]['table_order'] = table_name.disp_order
         entry['disp_order'] = f.disp_order
         collapsed_slug = f.slug
@@ -784,6 +994,7 @@ def get_fields_info(fmt, request, slug=None, collapse=False):
         for _key, val in cat_data.items():
             del val['disp_order']
 
+    ret: dict[str, dict[str, Any]] | HttpResponse
     if fmt == 'raw':
         ret = return_obj
     elif fmt == 'json':

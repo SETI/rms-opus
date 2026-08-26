@@ -35,6 +35,8 @@ class Contexts(models.Model):
     timestamp = models.DateTimeField()
 
     class Meta:
+        """Model options: the table the rows come from, which Django does not manage."""
+
         managed = False
         db_table = 'contexts'
 
@@ -51,16 +53,19 @@ class Definitions(models.Model):
     timestamp = models.DateTimeField()
 
     class Meta:
+        """Model options: the table the rows come from, which Django does not manage."""
+
         managed = False
         db_table = 'definitions'
         unique_together = (('term', 'context'),)
 
 
-def get_def_for_tooltip(term, context):
+def get_def_for_tooltip(term: str | None, context: str | None) -> str | None:
     """Get a dictionary definition for (i) tooltips in the OPUS UI.
 
     Parameters:
-        term: The dictionary term to look up.
+        term: The dictionary term to look up. Nothing at all matches no definition,
+            which is what a mult value with no stored value amounts to.
         context: The name of the context the term is defined in.
 
     Returns:
@@ -72,7 +77,11 @@ def get_def_for_tooltip(term, context):
         entry = Definitions.objects.get(context__name=context, term=term)
     except Definitions.DoesNotExist:
         # We allow mult tooltips to be None
-        if not context.startswith('MULT_'): # pragma: no cover - import error
+        # A context of None matches no definition and then reaches this line, where
+        # it raises AttributeError. Every ParamInfo column this is called with is
+        # nullable, so that is a real fault rather than a typing artifact, and it is
+        # recorded here instead of being annotated away.
+        if not context.startswith('MULT_'): # type: ignore[union-attr] # pragma: no cover - import error
             log.error('No tooltip definition for context "%s" term "%s"',
                       context, term)
         return None
