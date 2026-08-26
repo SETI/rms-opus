@@ -272,10 +272,12 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         samples = self._supp_index_col('LINE_SAMPLES')
         if line1 is None or line2 is None or line_bin is None or samples is None:
             return None, None
+        # as_int because every one of these columns arrives from numpy, which does not
+        # subclass int; see opus_import.obs.field_types.as_int.
         min_val = min(samples, (line2-line1+1)//line_bin)
         max_val = max(samples, (line2-line1+1)//line_bin)
-        min_ret: IntField = None if min_val < 0 else min_val
-        max_ret: IntField = None if max_val < 0 else max_val
+        min_ret: IntField = None if min_val < 0 else as_int(min_val)
+        max_ret: IntField = None if max_val < 0 else as_int(max_val)
 
         return min_ret, max_ret
 

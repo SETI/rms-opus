@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import functools
 import inspect
 import json
 import textwrap
@@ -39,6 +40,7 @@ from typing import Any
 import numpy as np
 import pytest
 
+import opus_support
 from opus_import import config_data, obs
 from opus_import.config_bundle_info import BUNDLE_INFO
 from opus_import.obs.field_types import as_int
@@ -884,6 +886,160 @@ def test_an_integer_column_is_an_int_even_from_a_numpy_index(
 
     assert raised == []
     assert wrong == []
+
+
+#: Calls that yield a builtin `int` whatever they are handed.
+_INT_CALLS = frozenset(('as_int', 'int', 'len', 'ord'))
+#: Calls that preserve their arguments' type, so they are only as good as those.
+_TYPE_PRESERVING_CALLS = frozenset(('min', 'max', 'abs', 'round', 'sum'))
+
+
+def _yields_an_int(value: ast.expr, assigned: dict[str, ast.expr],
+                   inductive: set[str], depth: int = 0) -> bool:
+    """Whether an expression can be seen to yield a builtin `int` (or None).
+
+    Parameters:
+        value: The expression a method returns.
+        assigned: The local names of the enclosing function, mapped to what they were
+            assigned, so a return of a bare name can be followed to its source.
+        inductive: Methods whose own annotation mentions `IntField`, and which this
+            same check therefore covers.
+        depth: Guards against a cycle in the local assignments.
+
+    Returns:
+        Whether it does. Answering False for something that is in fact an int is a
+        false alarm, not a missed defect, which is the direction to err in.
+    """
+    if depth > 8:
+        return True
+    recurse = functools.partial(_yields_an_int, assigned=assigned,
+                                inductive=inductive, depth=depth + 1)
+    if isinstance(value, ast.Constant):
+        return value.value is None or isinstance(value.value, int)
+    if isinstance(value, ast.IfExp):
+        return recurse(value.body) and recurse(value.orelse)
+    if isinstance(value, ast.BinOp):
+        return recurse(value.left) and recurse(value.right)
+    if isinstance(value, ast.UnaryOp):
+        return recurse(value.operand)
+    if isinstance(value, ast.Call):
+        func = value.func
+        name = (func.attr if isinstance(func, ast.Attribute)
+                else func.id if isinstance(func, ast.Name) else None)
+        if name in _INT_CALLS:
+            return True
+        if name in _TYPE_PRESERVING_CALLS:
+            # min/max/abs/round keep numpy numpy, so they are safe only if every
+            # argument is. This is what a coercion dropped from COUVIS's pixel-size
+            # helper slipped through when they were treated as safe outright.
+            return all(recurse(a) for a in value.args)
+        return bool(name and (name in inductive or name.startswith('field_obs_')))
+    if isinstance(value, ast.Subscript):
+        return recurse(value.value)
+    if isinstance(value, ast.Name):
+        if value.id in assigned:
+            return recurse(assigned[value.id])
+        # A module-level constant is a checked-in literal.
+        return value.id.lstrip('_').isupper()
+    if isinstance(value, ast.Tuple):
+        return all(recurse(e) for e in value.elts)
+    return False
+
+
+def _assigned_locals(fn: ast.FunctionDef) -> dict[str, ast.expr]:
+    """Map each local name a function assigns exactly once to what it was assigned."""
+    seen: dict[str, ast.expr | None] = {}
+    for node in ast.walk(fn):
+        targets: list[ast.expr] = []
+        assigned_value: ast.expr | None = None
+        if isinstance(node, ast.Assign):
+            targets = list(node.targets)
+            assigned_value = node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            targets = [node.target]
+            assigned_value = node.value
+        for target in targets:
+            names = (target.elts if isinstance(target, ast.Tuple) else [target])
+            for element in names:
+                if not isinstance(element, ast.Name):
+                    continue
+                value = assigned_value
+                if len(names) > 1 and not isinstance(value, ast.Call):
+                    # Unpacked from something other than a call: not followable.
+                    value = None
+                # Assigned more than once: not followable either.
+                seen[element.id] = None if element.id in seen else value
+    return {k: v for k, v in seen.items() if v is not None}
+
+
+@functools.cache
+def _int_returning_functions() -> frozenset[str]:
+    """Every function in the import and support packages annotated to return an int.
+
+    Returns:
+        Their names. A call to one of these needs no conversion of its own, which is
+        what lets a field method return `opus_support.parse_cassini_orbit`'s result
+        directly. Names rather than qualified names, which is coarse in the safe
+        direction only: it can excuse a call it should not, never flag one it should.
+    """
+    names = set()
+    roots = [_OBS_DIR.parent, Path(opus_support.__file__).parent]
+    for root in roots:
+        for path in sorted(root.glob('**/*.py')):
+            tree = ast.parse(path.read_text(encoding='utf-8'), str(path))
+            for fn in ast.walk(tree):
+                if not isinstance(fn, ast.FunctionDef) or fn.returns is None:
+                    continue
+                returns = ast.unparse(fn.returns)
+                if returns in ('int', 'IntField') or (
+                        returns.startswith(('tuple[', 'tuple['))
+                        and 'int' in returns and 'float' not in returns
+                        and 'str' not in returns):
+                    names.add(fn.name)
+    return frozenset(names)
+
+
+def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
+    """No `IntField` value is handed back without something having converted it.
+
+    The runtime check above only reaches the six missions layer 2 can instantiate, and
+    56% of the definitions are outside them. This reads the source instead, following a
+    returned name back to what it was assigned: `pdstable` hands an integer index column
+    back as a `numpy.int64`, and `min`, `max` and arithmetic all keep it one, so the
+    conversion has to be somewhere on the path.
+
+    It covers every function whose annotation mentions `IntField`, not only the field
+    methods, because a helper returning `tuple[IntField, IntField]` is where the value
+    is actually produced -- which is where the one gap the runtime check could not see
+    turned out to be, in COUVIS's pixel-size helper.
+    """
+    inductive = set(_int_returning_functions())
+    functions = []
+    for path in sorted(_OBS_DIR.glob('*.py')):
+        tree = ast.parse(path.read_text(encoding='utf-8'), str(path))
+        for cls in [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]:
+            for fn in cls.body:
+                if not isinstance(fn, ast.FunctionDef) or fn.returns is None:
+                    continue
+                if 'IntField' not in ast.unparse(fn.returns):
+                    continue
+                inductive.add(fn.name)
+                functions.append((path.name, cls.name, fn))
+
+    unconverted = []
+    for name, cls_name, fn in functions:
+        assigned = _assigned_locals(fn)
+        for node in ast.walk(fn):
+            if not isinstance(node, ast.Return) or node.value is None:
+                continue
+            if _yields_an_int(node.value, assigned, inductive):
+                continue
+            unconverted.append(
+                f'{name}:{node.lineno} {cls_name}.{fn.name} returns '
+                f'{ast.unparse(node.value)[:60]}')
+
+    assert len(functions) > 50, f'only {len(functions)} IntField functions examined'
+    assert unconverted == []
 
 
 def test_the_alias_names_are_the_ones_the_package_defines() -> None:
