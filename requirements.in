@@ -15,9 +15,11 @@ pip-tools
 pyparsing
 # Floor, not a pin: pytest through 9.0.2 relies on predictable
 # /tmp/pytest-of-<user> directory permissions (CVE-2025-71176), fixed in 9.0.3.
-# Stating the security requirement here is what stops a later regeneration
-# dropping below it: pip-compile takes the newest release the index offers, so
-# an index mirror or cache without the newer ones would resolve 9.0.2 silently.
+# What the floor buys is a loud failure instead of a quiet one: pip-compile takes
+# the newest release an index offers, so against a mirror or cache that can see
+# only vulnerable versions a bare `pytest` resolves one and says nothing, while
+# this constraint leaves no candidate and errors. That is reasoning about what a
+# constraint does, not a resolve anyone has run here.
 pytest >= 9.0.3
 pytest-cov
 pytest-django

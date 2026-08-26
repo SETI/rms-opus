@@ -5970,9 +5970,12 @@ body; never rewrite or delete earlier notes.*
     possibly gain privileges. **Both files are needed because the two CI paths install
     differently**: `run-app-tests.yml` installs `-r requirements.txt` then `-e .` with
     no extras, so the lockfile governs it, while `run-tests.yml` and every developer
-    install `-e ".[dev]"`, which the lockfile never constrains. A floor states the
-    security requirement itself, so a later regeneration against an index mirror or
-    cache lacking the newer releases cannot drop below it. **How 9.0.2 got into the
+    install `-e ".[dev]"`, which the lockfile never constrains. **What a floor buys is
+    a loud failure instead of a quiet one:** pip-compile takes the newest release an
+    index offers, so against a mirror or cache that can see only vulnerable versions a
+    bare `pytest` resolves one and says nothing, while the constraint leaves no
+    candidate and errors. That is reasoning about what a constraint does, not a resolve
+    anyone has run -- do not cite it as measured. **How 9.0.2 got into the
     lockfile is more mundane than a bad resolve, and is the part worth carrying:** it
     was pinned on 2025-12-24 (`159349b6`, an unrelated import PR) when it was the
     newest release; the advisory was published 2026-01-22 and 9.0.3 did not exist
