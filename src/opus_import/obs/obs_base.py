@@ -242,14 +242,17 @@ class ObsBase:
             could not derive an id from it, either of which is logged as an error.
         """
         filespec = self.primary_filespec
-        if filespec == self._opus_id_last_filespec:
-            # Creating the OPUS ID can be expensive so we cache it here because
-            # it is used for every obs_ table.
-            return self._opus_id_cached
+        # The None check comes first because the cache starts at (None, None): a
+        # missing filespec would otherwise match the empty cache and return None as a
+        # hit, so the very first invalid observation is the one that goes unreported.
         if filespec is None:
             self._log_nonrepeating_error(
                         'Unable to create OPUS_ID: this observation has no filespec')
             return None
+        if filespec == self._opus_id_last_filespec:
+            # Creating the OPUS ID can be expensive so we cache it here because
+            # it is used for every obs_ table.
+            return self._opus_id_cached
         pdsf = self._pdsfile_from_filespec(filespec)
         opus_id: str | None = pdsf.opus_id
         if not opus_id:

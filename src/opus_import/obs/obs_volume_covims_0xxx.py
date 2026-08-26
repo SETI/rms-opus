@@ -268,19 +268,40 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     ##########################################
 
     def field_obs_mission_cassini_spacecraft_clock_count1(self) -> FloatField:
-        sc = '1/' + self._index_col('SPACECRAFT_CLOCK_START_COUNT')
-        sc = self._fix_cassini_sclk(sc)
-        if sc is None:
+        """The start clock count, with the partition VIMS omits.
+
+        Returns:
+            The count as a number, or None if the index has none. The raw column is
+            checked before the partition prefix is added: prefixing None raises
+            `TypeError` and aborts the bundle, and `_fix_cassini_sclk` returns None
+            only for a None input, so a check placed after the concatenation cannot
+            see the missing-count case it names.
+        """
+        count = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
+        if count is None:
             self._log_nonrepeating_error('Missing SPACECRAFT_CLOCK_START_COUNT')
             return None
+        sc = self._fix_cassini_sclk('1/' + count)
+        # Not None: `_fix_cassini_sclk` returns None only for a None input, and `count`
+        # was checked above. Asserting rather than re-checking keeps the dead branch
+        # this method used to carry from coming back.
+        assert sc is not None
         return self._parse_cassini_sclk(sc)
 
     def field_obs_mission_cassini_spacecraft_clock_count2(self) -> FloatField:
-        sc = '1/' + self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
-        sc = self._fix_cassini_sclk(sc)
-        if sc is None:
+        """The stop clock count, never earlier than the start count.
+
+        Returns:
+            The count as a number, or None if the index has none. The raw column is
+            checked before the partition prefix is added, for the reason
+            `field_obs_mission_cassini_spacecraft_clock_count1` gives.
+        """
+        count = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
+        if count is None:
             self._log_nonrepeating_error('Missing SPACECRAFT_CLOCK_STOP_COUNT')
             return None
+        sc = self._fix_cassini_sclk('1/' + count)
+        assert sc is not None  # for the reason count1 gives
         sc_cvt = self._parse_cassini_sclk(sc)
         if sc_cvt is None:
             return None

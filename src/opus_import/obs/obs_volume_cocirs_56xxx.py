@@ -35,12 +35,18 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
 
         Returns:
             The volume-prefixed path, which for these volumes is the spectrum file rather
-            than the observation index's own.
+            than the observation index's own, or None if the index has no usable
+            spectrum path. `opus_import.obs.obs_base.ObsBase.opus_id` and the PDS3
+            filespec helpers all treat None as "this observation has no filespec" and
+            report it, so returning it is the established shape here; concatenating
+            it raises `TypeError` and aborts the bundle instead.
         """
         # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
         filespec = self._index_col('SPECTRUM_FILE_SPECIFICATION')
+        if filespec is None:
+            return None
         assert self.bundle is not None
-        return cast(str | None, self.bundle + '/' + filespec)
+        return self.bundle + '/' + cast(str, filespec)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
         """Convert a ``.LBL`` file specification to the ``.IMG`` data file.
