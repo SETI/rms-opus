@@ -116,7 +116,7 @@ class ApiViewTests(TestCase):
         @api_view
         def handler(request: HttpRequest, size: str,
                     fmt: str | None = None) -> HttpResponse:
-            """Answer with the URL arguments it was given, so the test can read them back."""
+            """Answer with the URL arguments given, so the test can read them back."""
             return HttpResponse(f'{size}/{fmt}')
 
         response = handler(self._request(), 'thumb', fmt='json')
@@ -142,7 +142,7 @@ class ApiViewTests(TestCase):
         "[test_api_view.py] api_view: a handler with no api_code parameter"
         @api_view
         def handler(request: HttpRequest, **kwargs: str) -> HttpResponse:
-            """Answer with the keyword arguments it received, which must not include one."""
+            """Report the keyword arguments it got; api_code must not be one."""
             return HttpResponse(repr(sorted(kwargs)))
 
         response = handler(self._request(), slug='time')
@@ -176,7 +176,7 @@ class ApiViewTests(TestCase):
         "[test_api_view.py] api_view: an Http400Error carrying no message"
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
-            """Raise the bad-request class itself, so there is no message to fall back on."""
+            """Raise the bad-request class itself, with no message to fall back on."""
             raise Http400Error
 
         response = handler(self._request())
@@ -223,7 +223,7 @@ class ApiViewTests(TestCase):
         # path is caller-controlled and lands in the message verbatim.
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
-            """Raise, so the 500 page is built from the request path this test supplied."""
+            """Raise, so the 500 page is built from this test's request path."""
             raise RuntimeError('boom')
 
         response = handler(self._request('/api/data<script>alert(1)</script>.json'))
@@ -241,7 +241,7 @@ class ApiViewTests(TestCase):
         # 400 would be the same defect as an unescaped 500.
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
-            """Raise a bad-request error whose message is markup the 400 page must escape."""
+            """Raise a bad-request error whose message is markup the page must escape."""
             raise Http400Error(http400_bad_limit('<script>alert(1)</script>',
                                                  request))
 

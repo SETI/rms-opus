@@ -40,6 +40,9 @@ class ResultsTests(TestCase):
         `cache_<number>` table named after that row, so leaving either behind would let
         one test answer another's query. The counter is reset too, because the table
         name is derived from it and the tests assert on whole responses.
+
+        It also empties the Django cache and builds the request factory these tests
+        call the views with, because `setUp` calls this instead of doing either.
         """
         cursor = connection.cursor()
         cursor.execute('DELETE FROM user_searches')
@@ -59,8 +62,8 @@ class ResultsTests(TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also empties the user-search table, whose rows and cache tables are what a
-        search leaves behind.
+        It also calls `_empty_user_searches`, which clears the rows and cache tables a
+        search leaves behind and builds this suite's request factory.
         """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0

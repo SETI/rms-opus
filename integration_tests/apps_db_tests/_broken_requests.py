@@ -29,7 +29,7 @@ def request_without_meta(factory: RequestFactory, path: str) -> HttpRequest:
         The request, ready to be passed straight to a view.
     """
     request = factory.get(path)
-    request.META = None  # type: ignore[assignment]
+    request.META = None  # type: ignore[assignment]  # None is the value under test
     return request
 
 
@@ -44,5 +44,5 @@ def request_without_get(factory: RequestFactory, path: str) -> HttpRequest:
         The request, ready to be passed straight to a view.
     """
     request = factory.get(path)
-    request.GET = None  # type: ignore[assignment]
+    request.GET = None  # type: ignore[assignment]  # None is the value under test
     return request

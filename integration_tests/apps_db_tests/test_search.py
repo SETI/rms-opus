@@ -46,6 +46,9 @@ class SearchTests(TestCase):
         one test answer another's query. The count is checked first because the common
         case is an already-empty table, and the counter is reset because the cache table
         name is derived from it.
+
+        It also empties the Django cache and builds the request factory these tests
+        call the views with, because `setUp` calls this instead of doing either.
         """
         cursor = connection.cursor()
         sql = 'SELECT COUNT(*) FROM user_searches' # Check first for efficiency
@@ -69,8 +72,8 @@ class SearchTests(TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also empties the user-search table, whose rows and cache tables are what a
-        search leaves behind.
+        It also calls `_empty_user_searches`, which clears the rows and cache tables a
+        search leaves behind and builds this suite's request factory.
         """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -83,8 +86,13 @@ class SearchTests(TestCase):
         """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
-    def _search_params(self, request_get: Mapping[str, str],
-                       **kwargs: bool) -> tuple[dict[str, Any], dict[str, Any]]:
+    def _search_params(self, request_get: Mapping[str, str], *,
+                       allow_errors: bool = False,
+                       allow_regex_errors: bool = False,
+                       return_slugs: bool = False,
+                       pretty_results: bool = False,
+                       allow_empty: bool = False
+                       ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Parse a query string, requiring that it parsed.
 
         `url_to_search_params` answers None for both halves when it cannot parse a
@@ -92,14 +100,28 @@ class SearchTests(TestCase):
         query did parse. Stating that once here is what lets those tests read the
         result directly; the tests that expect the None call the view itself.
 
+        The mode flags are repeated rather than forwarded as ``**kwargs`` so that
+        they keep their names: under ``**kwargs`` a misspelled flag would type-check
+        at every call site and only fail when the test ran.
+
         Parameters:
             request_get: The query string to parse.
-            **kwargs: The view's own mode flags, passed through unchanged.
+            allow_errors: Keep going past a value that cannot be parsed, marking
+                that slug None instead of failing the whole query.
+            allow_regex_errors: Keep going past a malformed regular expression.
+            return_slugs: Key the result by slug, one value each, rather than by
+                qualified column name with a list per clause.
+            pretty_results: Return each value as the text it formats to rather than
+                as a number or a list.
+            allow_empty: Accept a query that selects nothing.
 
         Returns:
             The selections and the extras, both known to be present.
         """
-        selections, extras = url_to_search_params(request_get, **kwargs)
+        selections, extras = url_to_search_params(
+            request_get, allow_errors=allow_errors,
+            allow_regex_errors=allow_regex_errors, return_slugs=return_slugs,
+            pretty_results=pretty_results, allow_empty=allow_empty)
         assert selections is not None
         assert extras is not None
         return selections, extras

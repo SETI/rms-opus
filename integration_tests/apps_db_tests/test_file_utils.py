@@ -19,7 +19,8 @@ class FileUtilsTests(TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also empties the cache, so a response another test cached cannot answer this one.
+        It also empties the cache, so a response another test cached cannot answer
+        this one.
         """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0

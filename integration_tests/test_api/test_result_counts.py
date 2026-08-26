@@ -1,10 +1,11 @@
 """Compare result counts against a recorded table of them.
 
-The recorded counts are in `data/result_counts.csv`. By default they are
-checked against the public server, because they are counts over the whole
-archive rather than over whatever this installation imported;
-`manage.py api-internal-db-result-counts` checks them against the local
-database instead.
+The recorded counts are in `data/result_counts.csv`. They are counts over the whole
+archive rather than over whatever this installation imported, so the comparison only
+runs when something says which archive to ask: `manage.py api-livetest-pro` or
+`api-livetest-dev` for a live server, or `api-internal-db-result-counts` for the
+local database. A plain run of this module checks nothing -- both flags are off and
+the guard around the comparison is false.
 """
 
 import csv
@@ -16,7 +17,7 @@ import requests
 from django.conf import settings
 from rest_framework.test import RequestsClient
 
-from .api_test_helper import go_live_target, result_counts_against_internal_db
+from .api_test_helper import go_live_target
 
 
 ##################
@@ -68,7 +69,7 @@ class APIResultCountsTests(TestCase):
         else:
             client = RequestsClient()
 
-        if go_live_target() or result_counts_against_internal_db():
+        if go_live_target() or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
             error_flag = []
             count = 0
             with open(self.filename) as csvfile:
@@ -141,9 +142,9 @@ class APIResultCountsTests(TestCase):
 ### Api url and payload for the test ###
 ########################################
 class ApiForResultCounts:
-    # we need https and no need to specify port number
     """The result-count endpoint of whichever server this run checks against."""
 
+    # we need https and no need to specify port number
     api_base_url = "{}://{}.seti.org/opus/api/meta/result_count.json?"
 
     def __init__(self, target: str | None = "production") -> None:

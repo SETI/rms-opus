@@ -5,9 +5,8 @@ response against a value written into the test or a file under `responses/`. The
 comparison is what varies -- JSON, HTML, CSV, an archive's member list, an embedded
 PNG -- so it lives here once and the suites mix it in.
 
-The mix-in is also where the suite's two runtime-injected settings are read; see
-`go_live_target` for why they are read through a function rather than off
-`django.conf.settings` directly.
+The mix-in is also where `TEST_GO_LIVE` is read; see `go_live_target` for why that
+one setting goes through a function rather than off `django.conf.settings` directly.
 """
 
 import base64
@@ -34,35 +33,24 @@ _RESPONSES_FILE_ROOT = 'integration_tests/test_api/responses/'
 def go_live_target() -> str | None:
     """Which remote server the API suite runs against, or None for the local one.
 
-    `TEST_GO_LIVE` is not a configured setting: `manage.py` sets it to None before
-    handing off to the test runner, and the `api-livetest-*` verbs load
-    `enable_livetests_dev`/`enable_livetests_pro`, whose module bodies set it to
-    ``'dev'`` or ``'production'``. It is therefore absent from the settings module
-    that django-stubs resolves attribute types against, and reading it through
-    `getattr` is what states that -- the alternative is thirty identical
-    suppressions saying the same thing thirty times.
+    `TEST_GO_LIVE` is the one OPUS setting the settings module does not declare:
+    `manage.py` sets it to None before handing off to the test runner, and the
+    `api-livetest-*` verbs load `enable_livetests_dev`/`enable_livetests_pro`, whose
+    module bodies set it to ``'dev'`` or ``'production'``. It is therefore absent
+    from the module django-stubs resolves attribute types against, and reading it
+    through `getattr` is what states that -- the alternative is thirty identical
+    suppressions saying the same thing thirty times. (Its sibling
+    `TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` *is* declared, in `opus_app.settings`,
+    and is read directly; do not wrap that one, or the checker stops looking at it.)
 
-    Reading it through a function rather than caching it in a module constant is
-    load-bearing: the value is assigned after this module is imported.
+    Reading this one through a function rather than caching it in a module constant
+    is load-bearing: the value is assigned after this module is imported.
 
     Returns:
         The target name a live test run was started with, or None when the suite is
         running against the locally imported database.
     """
     return getattr(settings, 'TEST_GO_LIVE', None)
-
-
-def result_counts_against_internal_db() -> bool:
-    """Whether the result-count suite checks the internal database's own counts.
-
-    Injected exactly like `go_live_target`'s setting: `manage.py` sets it False and
-    the `api-internal-db-result-counts` verb sets it True.
-
-    Returns:
-        True when the recorded counts are checked against the local import rather
-        than against the public server.
-    """
-    return bool(getattr(settings, 'TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB', False))
 
 
 if TYPE_CHECKING:

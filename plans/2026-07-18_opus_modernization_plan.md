@@ -5453,12 +5453,15 @@ body; never rewrite or delete earlier notes.*
     names**, so it moves without anyone touching the named tree.
   - **The reports came in families and each family had one fix.** This is the part
     that generalizes; the same families are in any suite of this age.
-    - `no-untyped-def` (1708 functions) is mechanical. A token-based pass added
+    - `no-untyped-def` is mechanical. The base reports 1729; the sweep ran after
+      `api_test_helper.py`'s 21 functions had been annotated by hand, so it saw
+      1708. A token-based pass added
       `-> None` to the 1696 whose own body provably contains no `return <value>` and
-      no `yield`, and printed the 12 that do for hand annotation. All 12 were the
-      `@api_view` handlers in `test_api_view.py`, and each declares `-> HttpResponse`
-      even where it only raises, because `api_view` takes a
-      `Callable[..., HttpResponse]` and `-> None` would make the decorator reject it.
+      no `yield`, and printed the 12 that do for hand annotation. Eleven are the
+      `@api_view` handlers in `test_api_view.py`, each of which declares
+      `-> HttpResponse` even where it only raises, because `api_view` takes a
+      `Callable[..., HttpResponse]` and `-> None` would make the decorator reject it;
+      the twelfth is that file's `_request` fixture helper, which returns a request.
     - `no-untyped-call` (1846) is not a family: it is the shadow of the definitions
       above it. It went to zero with no site touched.
     - **A local doing two jobs** (`assignment`, `dict-item`, and most `arg-type`).
@@ -5483,7 +5486,9 @@ body; never rewrite or delete earlier notes.*
     - **An empty literal** (`var-annotated`) takes the type its use requires.
   - **A mix-in cannot see the class it is mixed into, and the fix is a conditional
     base rather than a suppression per call.** `ApiTestHelper` produced 29
-    `attr-defined` reports for `self.assertEqual` and `self.client`. It now declares
+    `attr-defined` reports for `self.assertEqual` and `self.client` (28 of the base's
+    29; the 29th is `test_results.py`'s re-export report, which the import move
+    fixed). It now declares
     `unittest.TestCase` as its base **under `TYPE_CHECKING` only**: making it a real
     `TestCase` would collect it as an empty test class in each of the seven modules
     that import it, and leaving it bare meant 29 suppressions. The suites list the
@@ -5507,21 +5512,25 @@ body; never rewrite or delete earlier notes.*
     application in process) or a plain `requests.Session` for a live server, so
     `_get_response` returns a `requests.Response`. Anyone reaching for
     `django.test.Client`'s API here will not find it.
-  - **A test setting injected at run time is invisible to django-stubs, and only on
-    reads.** `TEST_GO_LIVE` and `TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` are set by
-    `manage.py` and the `api-livetest-*` verbs and declared nowhere, so every *read*
-    is a `misc` report while every *write* passes -- django-stubs resolves reads
-    against the settings module and lets writes through. Both are read through an
-    accessor in `api_test_helper.py` that says so once, and they stay **functions**
-    because the value is assigned after that module is imported. **PR-18 needs this**:
-    it replaces the `manage.py` verbs with pytest, and the plan already names
-    `TEST_GO_LIVE`-style env config as the replacement. The accessor is the single
+  - **`TEST_GO_LIVE` is the one setting the settings module does not declare, and it
+    is invisible to django-stubs only on reads.** `manage.py` sets it to None and the
+    `api-livetest-*` verbs set it to a server name, but nothing declares it, so every
+    *read* is a `misc` report while every *write* passes -- django-stubs resolves a
+    read against the settings module and lets a write through. All 30 `misc` reports
+    on the base are that one setting. It is read through an accessor in
+    `api_test_helper.py` that says so once, and it stays a **function** because the
+    value is assigned after that module is imported. **PR-18 needs this**: it
+    replaces the `manage.py` verbs with pytest, and the plan already names
+    `TEST_GO_LIVE`-style env config as the replacement, so the accessor is the single
     place that has to change.
-  - **mypy reports at most one error per line, which hides the second.**
-    `test_result_counts.py:51` reads both injected settings on one line and reported
-    one `misc`; the second appeared only after the first was fixed. Any total taken
-    from a checker is a count of *lines carrying a report*, not of defects, and only
-    a fix-and-re-measure loop tells the two apart.
+    **Its sibling `TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` is NOT in the same
+    position: it is declared at `src/opus_app/settings.py:464` and type-checks as a
+    plain attribute read.** This PR first gave it an accessor too, on the assumption
+    that two settings set by the same `manage.py` block must be alike. They are not,
+    and the accessor was worse than useless -- a `getattr` there suppresses nothing
+    real and silently opts the one *checked* setting out of the check. Its review
+    caught it. **The general form: a suppression is only load-bearing if removing it
+    produces an error, and that is one command to find out.**
   - **`rest_framework` is in `ignore_missing_imports` rather than the dev extras.**
     Typeshed carries no stub package for it; the stubs that exist are a separate
     third-party distribution that re-types Django's own request and response classes,
@@ -5604,12 +5613,13 @@ body; never rewrite or delete earlier notes.*
     what the directory calls it rather than a claim that a runner should pick it up.
   - **The docstring standard was already met where it mattered and absent everywhere
     else.** All 1645 test methods already carried the
-    `"[test_cart_api.py] /__cart/add: ..."` line each begins with; what was missing
-    was 25 module docstrings, 22 class docstrings and the fixture methods. Every
-    module, class, method and function in the tree has one now, counted by an AST walk
-    using the shared traversal (`tests/opus_import/_source_scan.py`) rather than off a
-    tool, because no checker enforces this and a count from a tool that does not
-    measure something is not a count.
+    `"[test_cart_api.py] /__cart/add: ..."` line each begins with; measured on
+    `71779fc3` what was missing was **26 module docstrings, 23 class docstrings and 82
+    method docstrings**. Every module, class, method and function in the tree has one
+    now -- 29 + 23 + 1739 = **1791 docstrings** over 1739 definitions -- counted by an
+    AST walk using the shared traversal (`tests/opus_import/_source_scan.py`) rather
+    than off a tool, because no checker enforces this and a count from a tool that
+    does not measure something is not a count.
   - **The verification that made a diff this size reviewable, and the two corrections
     it needed.** An AST comparison of both trees with annotations and docstrings
     erased, printing every remaining statement-level difference so each has to be
@@ -5619,6 +5629,32 @@ body; never rewrite or delete earlier notes.*
     `from typing import Any` shows up and is acknowledged. State its blind spot
     whenever it is cited: it compares parsed structure, so a comment, a
     `# type: ignore` marker and a change of quoting style are all invisible to it.
-    Over this PR it accounted for exactly the 71 broken requests, the 85 narrowed
-    calls, the archive reader's `isinstance`, one two-name split and the added
-    imports, and nothing else.
+    Over this PR the residual set is: the 71 broken requests, the 85 narrowed calls,
+    the 30 setting reads routed to the accessor, the base-order swap on 7 suites plus
+    the mix-in's conditional base and `client` annotation, the `ignore_list`
+    restructure (which adds an `else`), two `expected_bytes` renames, the
+    `decoded1`/`decoded2` split, the archive reader's `isinstance` and hoisted
+    lookup, one two-name split in `test_perf_target`, the 4 narrowing asserts, and
+    the added imports. **An earlier version of this bullet listed a third of that and
+    said "and nothing else"** -- the per-commit runs were each complete for their own
+    commit, and summing them from memory is not the same as running the check across
+    the PR. That is the PR-17a failure ("a per-commit measurement cannot support a
+    PR-level claim") reappearing in the bullet that describes the tool built to
+    prevent it. Run it base-to-head and read what it prints.
+  - **Two things for PR-18 that are not defects today.** `go_live_target()`'s
+    `getattr(settings, 'TEST_GO_LIVE', None)` turns a missing setting into "run
+    locally" rather than an `AttributeError`. Unreachable now, because `manage.py`
+    always sets it and `run_coverage.sh` goes through `manage.py` -- but under pytest
+    there is no `manage.py`, and a loud failure becomes a silent default. And
+    `test_result_counts.py` compares nothing at all unless a verb sets one of the two
+    flags: a plain run of that module walks past its own comparison. The dead default
+    is pre-existing; its module docstring now says so rather than claiming the public
+    server is checked by default.
+  - **Every finding of this PR's review was in its prose, not its code** -- one
+    blocking (a setting wrongly described as undeclared, and given a pointless
+    accessor because of it) and the rest counts and claims in these very notes that
+    were asserted rather than measured. The code changes, the renames, the coverage
+    delta and the base measurements all reproduced exactly under an independent
+    re-measurement. **The pattern to expect on an annotation PR is therefore not a
+    broken test; it is a sentence that was never checked**, and the cheapest guard is
+    to write no sentence whose measurement you cannot name.

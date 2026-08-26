@@ -405,8 +405,9 @@ run_code_checks() {
 
     if [ "$RUN_MYPY" = true ] && [ "$ENABLE_MYPY" = true ]; then
         print_info "Running mypy..."
-        # The source root, the strict settings and the burn-down list all come from
-        # pyproject.toml; the paths match the CI lint job's MYPY_PATHS.
+        # The source root and the strict settings come from pyproject.toml, which
+        # carries no burn-down list any more; the paths match the CI lint job's
+        # MYPY_PATHS.
         # shellcheck disable=SC2086  # word-splitting of the path list is intended
         if python -m mypy $OPUS_MYPY_PATHS; then
             print_success "Mypy passed"
