@@ -451,6 +451,17 @@ class QueryHandler:
                       for name, attr in fields_info]
             if self._uses_html:
                 def maybe_mark(tag: str, old: str | None, new: str | None) -> str:
+                    """Render one changed attribute, marking it when it moved.
+
+                    Parameters:
+                        tag: The attribute's name, as the report shows it.
+                        old: Its previous value.
+                        new: Its current value.
+
+                    Returns:
+                        The rendered attribute, wrapped in a `mark` element when
+                        the two values differ.
+                    """
                     fmt = '{}:{}' if old == new else '<mark>{}:{}</mark>'
                     return self.safe_format(fmt, tag, self.__format_search_value(new))
 
@@ -458,6 +469,17 @@ class QueryHandler:
                 result.append(self.safe_format('Change Search: "{}": ({})', label, joined_info))
             else:
                 def maybe_mark(tag: str, old: str | None, new: str | None) -> str:
+                    """Render one changed attribute, upper-casing it when it moved.
+
+                    Parameters:
+                        tag: The attribute's name, as the report shows it.
+                        old: Its previous value.
+                        new: Its current value.
+
+                    Returns:
+                        The rendered attribute, with the name upper-cased when
+                        the two values differ.
+                    """
                     return f'{tag if old == new else tag.upper()}:{self.__format_search_value(new)}'
 
                 joined_info = ', '.join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
