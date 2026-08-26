@@ -4648,6 +4648,17 @@ body; never rewrite or delete earlier notes.*
        Discovering the overlap late is the failure mode to prevent -- this one is 1405
        values from 6 leaf classes driven off synthetic metadata, and its scope note is
        in the test's own docstring.
+  - **Rebase before starting a long run, never during one.** The local integration chain
+    is 30-45 minutes, and PR-17 and PR-19 both face it against a `rewrite` that may have
+    moved. Rebasing while one is in flight rewrites the working tree under the running
+    test, which can invalidate the result *silently* -- a mid-run `git checkout` of a
+    source file yields a pass or a failure that describes no tree that ever existed. It
+    happened here and the run survived only because the rebase turned out to be
+    doc-only: `git diff <pre-rebase> HEAD --name-only -- src tests` came back empty, so
+    the run still described the final tree. **That check is the rule when it happens
+    anyway** -- if it returns any path, discard the run and start it again; a
+    convenient-sounding argument that the change "could not have mattered" is not a
+    substitute for the empty diff.
     2. **A test that re-implements the rule it is checking checks nothing.** Layer 1 had
        its own copy of how `import_run_field_function` builds a method name, so changing
        the production rule left every test green. The rule is
