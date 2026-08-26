@@ -1,12 +1,9 @@
-################################################################################
-# obs_cassini_common_pds4.py
-#
-# Defines the ObsCassiniCommonPDS4 class, which augments ObsCassiniCommon with
-# methods that are PDS4-specific.
-# Currently, none of the Cassini PDS4 migrations have been imported into OPUS
-# yet (and so this PDS4 class simply inherits from the shared Cassini Common,
-# using the attributes deduced from the OBSERVATION_ID).
-################################################################################
+"""What every Cassini instrument's PDS4 bundles share.
+
+The PDS4 counterpart of `opus_import.obs.obs_cassini_common_pds3`. It supplies the
+``obs_instrument_coiss`` columns from the PDS4 dictionary's own names, which is what a
+Cassini ISS bundle delivered as PDS4 needs.
+"""
 
 from typing import cast
 
@@ -19,6 +16,12 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
     ##############################################################
     ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
     ##############################################################
+
+    """What every Cassini instrument's PDS4 bundles share.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_mission_cassini_obs_name(self) -> StrField:
         # Strip leading/trailing whitespace from the label value

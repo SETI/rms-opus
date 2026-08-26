@@ -1,11 +1,9 @@
-################################################################################
-# obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.py
-#
-# Defines the ObsBundleCassiniISSFRingMosaicsRSFrench2025 class, which encapsulates
-# fields in the common, obs_mission_cassini, and obs_instrument_coiss tables for
-# the PDS4 bundleset "cassini_iss_fring_mosaics_rsfrench2025". This class
-# supports derived data from the cassini_iss_fring_mosaics_rsfrench2025 bundle.
-################################################################################
+"""The obs class for the Cassini ISS F ring mosaics bundle.
+
+PDS4 mosaics of Saturn's F ring assembled from Cassini ISS images. Each mosaic covers a
+range of longitudes rather than a pointing, so its resolution columns are computed from
+the F ring's own circumference.
+"""
 
 import math
 from typing import cast
@@ -34,7 +32,19 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
     ### HELPER FUNCTIONS ###
     #######################
 
+    """The Cassini ISS mosaics of Saturn's F ring.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _camera(self) -> str:
+        """Return which ISS camera took the images a mosaic was built from.
+
+        Returns:
+            ``'N'`` for the narrow-angle camera or ``'W'`` for the wide-angle one, read from
+            the last letter of the first image's name.
+        """
         return cast(str, self._index_col('min_image_name')[-1].upper())
 
 
@@ -44,10 +54,16 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COISS``."""
         return 'COISS'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this mosaic's data file.
+
+        Returns:
+            The bundle-prefixed path, or None for an index row that names no file.
+        """
         rel = self._index_col('file_spec')
         if rel is None:
             return None
@@ -59,6 +75,17 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
                                         add_phase_from_row: bool = False,
                                         add_phase_from_inst: bool = False
                                         ) -> str | None:
+        """Build a file specification from a row of this bundle's index.
+
+        Parameters:
+            row: The index row to read.
+            convert_lbl: Ignored; the path already names the data file.
+            add_phase_from_row: Ignored; this bundle has one observation per row.
+            add_phase_from_inst: Ignored, for the same reason.
+
+        Returns:
+            The bundle-prefixed path, or None if the row names no file.
+        """
         rel = row.get('file_spec')
         if rel is None:
             return None
@@ -77,6 +104,11 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         return self._create_mult('SAT')
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target of every observation in this bundle.
+
+        Returns:
+            Saturn's rings, which is what a F ring mosaic is of by construction.
+        """
         return [('S RINGS', 'Saturn Rings')]
 
     def field_obs_general_quantity(self) -> MultFieldRet:

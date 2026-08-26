@@ -1,10 +1,8 @@
-################################################################################
-# obs_volume_corss_8xxx.py
-#
-# Defines the ObsVolumeCORSS8xxx class, which encapsulates fields for
-# common and obs_mission_cassini for CORSS_8001 (there is no RSS instrument
-# table).
-################################################################################
+"""The obs class for CORSS_8001.
+
+Cassini RSS ring occultation profiles. There is no ``obs_instrument_corss`` table:
+everything RSS records that OPUS searches on is a profile column.
+"""
 
 from typing import cast
 
@@ -31,8 +29,15 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Cassini RSS ring occultation profiles of CORSS_8001.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``CORSS``."""
         return 'CORSS'
 
 

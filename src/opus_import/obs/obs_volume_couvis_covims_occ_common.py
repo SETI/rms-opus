@@ -1,9 +1,8 @@
-################################################################################
-# obs_volume_couvis_covims_occ_common.py
-#
-# Defines the ObsVolumeUVISVIMSOccCommon class, which encapsulate fields that
-# are common to the ObsVolumeCOUVIS8xxx and ObsVolumeCOVIMS8xxx classes.
-################################################################################
+"""What the UVIS and VIMS ring-occultation volumes share.
+
+Both record a stellar occultation of Saturn's rings, and both name the star the same
+way, so the star and the profile columns are computed once here.
+"""
 
 from typing import cast
 
@@ -15,6 +14,12 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
+
+    """What the UVIS and VIMS ring-occultation volumes share.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_general_time1(self) -> FloatField:
         return self._time_from_supp_index()

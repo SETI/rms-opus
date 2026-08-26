@@ -1,10 +1,7 @@
-################################################################################
-# obs_volume_coiss_12xxx.py
-#
-# Defines the ObsVolumeCOISS12xxx class, which encapsulates fields in the
-# common, obs_mission_cassini, and obs_instrument_coiss tables for
-# COISS_[12]xxx.
-################################################################################
+"""The obs class for COISS_1xxx and COISS_2xxx.
+
+Cassini ISS images of Jupiter and of Saturn.
+"""
 
 from typing import cast
 
@@ -27,11 +24,27 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Cassini ISS images of COISS_1xxx and COISS_2xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COISS``."""
         return 'COISS'
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.IMG`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.IMG``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.IMG')
 
 
@@ -85,6 +98,11 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         return self._create_mult(self._cassini_planet_id())
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target this observation was aimed at.
+
+        Returns:
+            The intended target, as a one-element list.
+        """
         return [self._cassini_intended_target_name()]
 
     def field_obs_general_quantity(self) -> MultFieldRet:

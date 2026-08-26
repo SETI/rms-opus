@@ -1,10 +1,10 @@
-################################################################################
-# obs_volume_hubble_common.py
-#
-# Defines the ObsVolumeHubbleCommon class, which encapsulates fields in the
-# common and obs_mission_hubble tables. Note HST does not have separate tables
-# for each instrument but combines them all together.
-################################################################################
+"""What every HST instrument shares: its filters, and what they say about the observation.
+
+An HST label records the filter wheels as one ``+``-joined name, and whether an
+observation is an image or a spectrum follows from which filter is in place -- so each
+instrument decides that from its own filter vocabulary, and this holds what they have in
+common.
+"""
 
 from typing import cast
 
@@ -13,7 +13,23 @@ from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsVolumeHubbleCommon(ObsCommonPDS3):
+    """What every HST instrument shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _decode_filters(self) -> tuple[str, str | None]:
+        """Split the label's filter name into the two filter wheels' positions.
+
+        Returns:
+            The first wheel's filter and the second's, or None for the second where the
+            label names only one.
+
+        Raises:
+            ValueError: If the label names more than two filters, which no HST instrument
+                in these volumes has wheels for.
+        """
         filter_name = self._index_col('FILTER_NAME')
         if filter_name.find('+') == -1:
             return filter_name, None
@@ -33,6 +49,11 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         raise NotImplementedError
 
     def _is_image(self) -> bool:
+        """Whether this observation is spatially resolved.
+
+        Returns:
+            True for an image or a spectral image, False for a plain spectrum.
+        """
         obs_type = self._observation_type()
         assert obs_type in ('IMG', 'SPE', 'SPI')
         return obs_type == 'IMG' or obs_type == 'SPI'
@@ -44,14 +65,24 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
 
     @property
     def inst_host_id(self) -> str:
+        """The OPUS instrument host id, ``HST``."""
         return 'HST'
 
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id, ``HST``."""
         return 'HST'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this observation's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The volume-prefixed path.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -81,6 +112,12 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         return f'{pl_str}_IMG_HST_{instrument_id}_{image_date}_{filename}'
 
     def _planet_id(self) -> str:
+        """Return which planet this observation was of.
+
+        Returns:
+            The first three letters of the planet's name, or ``'OTH'`` for a target that is
+            not one of the planets.
+        """
         planet_name = self._index_col('PLANET_NAME')
         if planet_name not in ['VENUS', 'EARTH', 'MARS', 'JUPITER', 'SATURN',
                                'URANUS', 'NEPTUNE', 'PLUTO']:

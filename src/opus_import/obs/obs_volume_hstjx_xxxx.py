@@ -1,11 +1,7 @@
-################################################################################
-# obs_volume_hstjx_xxxx.py
-#
-# Defines the ObsVolumeHSTJxxxxx class, which encapsulates fields in the
-# common and obs_mission_hubble tables for the HST ACS instrument for
-# HSTJx_xxxx. Note HST does not have separate tables for each instrument but
-# combines them all together.
-################################################################################
+"""The obs class for HSTJx_xxxx.
+
+HST ACS observations.
+"""
 
 from typing import cast
 
@@ -15,7 +11,18 @@ from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
+    """The HST ACS observations of HSTJx_xxxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _acs_spec_flag(self) -> tuple[bool, str, str | None]:
+        """Decide whether this ACS observation is spectroscopic, from its filter.
+
+        Returns:
+            Whether the filter is a grism or a prism, followed by the two filter names.
+        """
         filter1, filter2 = self._decode_filters()
         return (filter1.startswith('G') or filter1.startswith('PR'),
                 filter1, filter2)
@@ -27,6 +34,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``HSTACS``."""
         return 'HSTACS'
 
 
@@ -35,6 +43,11 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     ################################
 
     def _observation_type(self) -> str | None:
+        """Whether this observation is an image or a spectral image.
+
+        Returns:
+            ``'SPI'`` through a grism or prism and ``'IMG'`` otherwise.
+        """
         if self._acs_spec_flag()[0]:
             return 'SPI'
         return 'IMG'

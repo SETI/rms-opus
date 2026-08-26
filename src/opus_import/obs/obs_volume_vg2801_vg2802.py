@@ -1,12 +1,9 @@
-################################################################################
-# obs_volume_vg28xx_vgpps_vguvs.py
-#
-# Defines the ObsVolumeVG2801PPS and ObsInstrumentVG2802UVS classes, which
-# encapsulate fields for the common and obs_mission_voyager tables for VGPPS
-# occultations in VG_2801 and VGUVS occultations in VG_2802. We put these
-# instruments in the same file because they have identical import functions
-# except for the instrument_id. Neither has a dedicated instrument table.
-################################################################################
+"""The obs class for VG_2801 and VG_2802.
+
+Voyager PPS and UVS radial ring profiles. These carry no geometry summary, so which face
+of the rings the signal source was on is decided from the star and the planet and
+checked against the observation's time.
+"""
 
 from typing import cast
 
@@ -18,6 +15,12 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
+
+    """What the VG_2801 and VG_2802 radial ring profiles share.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_general_quantity(self) -> MultFieldRet:
         return self._create_mult('OPDEPTH')
@@ -73,6 +76,15 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
     #     - Source is SIGMA SGR (Target N RINGS)
     #     - Source is BETA PER (Target U RINGS)
     def _is_voyager_at_north(self) -> bool:
+        """Whether the signal source was on the north face of the rings.
+
+        Which face is decided by the star and the planet rather than by geometry columns,
+        because these profiles carry none. The observation's start time is checked against
+        the intervals the answer holds over, and a disagreement is logged as an error.
+
+        Returns:
+            True if the source was north of the ring plane.
+        """
         src_name = self._supp_index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
@@ -100,6 +112,15 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         return cast(bool, is_at_north)
 
     def _is_voyager_at_north_except_uranus(self) -> bool:
+        """Whether the signal source was on the north face, counting Uranus's rings as south.
+
+        Uranus's pole is tipped past the ecliptic, so an observation of its rings is
+        north-facing by the ring plane's own reckoning and south-facing by the convention
+        the other columns use. This is the second reckoning.
+
+        Returns:
+            True if the source was north of the ring plane under that convention.
+        """
         src_name = self._supp_index_col('SIGNAL_SOURCE_NAME_1')
         target_name = self._index_col('TARGET_NAME').upper().strip()
 
@@ -300,8 +321,11 @@ class ObsVolumeVG2801VGPPS(ObsVolumeVG28xxVGPPSUVS):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Voyager PPS radial ring profiles of VG_2801."""
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``VGPPS``."""
         return 'VGPPS'
 
 
@@ -310,6 +334,9 @@ class ObsVolumeVG2802VGUVS(ObsVolumeVG28xxVGPPSUVS):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Voyager UVS radial ring profiles of VG_2802."""
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``VGUVS``."""
         return 'VGUVS'

@@ -1,9 +1,8 @@
-################################################################################
-# obs_pds_pds4.py
-#
-# Defines the ObsPdsPDS4 class, which augments ObsPds with methods that are
-# PDS4-specific.
-################################################################################
+"""The PDS4 variant of the ``obs_pds`` table module.
+
+A PDS4 product is identified by its logical identifier rather than by a data set id, and
+both are stored so that a search can use either.
+"""
 
 from typing import cast
 
@@ -20,6 +19,12 @@ class ObsPdsPDS4(ObsPds, ObsBasePDS4):
     ################################
     ### ! Might override these ! ###
     ################################
+
+    """The ``obs_pds`` columns for a PDS4 product.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_pds_data_set_id(self) -> StrField:
         return None  # Field not used for PDS4

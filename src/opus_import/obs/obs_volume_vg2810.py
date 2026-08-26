@@ -1,10 +1,7 @@
-################################################################################
-# obs_volume_vg2810_vgiss.py
-#
-# Defines the ObsVolumeVG28xxISS class, which encapsulates fields for the
-# common, obs_mission_voyager, and obs_instrument_vgiss tables for VG_2810
-# radial profiles.
-################################################################################
+"""The obs class for VG_2810.
+
+Voyager ISS radial ring profiles, reconstructed from the images.
+"""
 
 from typing import cast
 
@@ -17,8 +14,15 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Voyager ISS radial ring profiles of VG_2810.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``VGISS``."""
         return 'VGISS'
 
 

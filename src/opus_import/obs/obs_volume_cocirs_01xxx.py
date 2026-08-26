@@ -1,10 +1,10 @@
-################################################################################
-# obs_volume_cocirs_01xxx.py
-#
-# Defines the ObsVolumeCOCIRS01xxx class, which encapsulates fields in the
-# common, obs_mission_cassini, and obs_instrument_cocirs tables for volumes
-# COCIRS_[01]xxx.
-################################################################################
+"""The obs class for COCIRS_0xxx and COCIRS_1xxx.
+
+Cassini CIRS spectral cubes, resampled onto the ring plane or onto a body. Which
+projection a cube uses is encoded in the last letter of its product id, and it decides
+both the target and which geometry columns apply. These volumes carry their surface
+geometry inline rather than in per-target summary files.
+"""
 
 from collections.abc import Sequence
 from typing import cast
@@ -15,15 +15,34 @@ from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
 
 class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
+    """The Cassini CIRS cubes of COCIRS_0xxx and COCIRS_1xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _get_cube_map_projection(self) -> str:
+        """Return which projection this cube was resampled onto.
+
+        Returns:
+            The last letter of the product id, lower-cased: ``'r'`` for a ring projection,
+            ``'e'`` for equirectangular, ``'p'`` for point.
+        """
         return cast(str, self._index_col('PRODUCT_ID')[-1].lower())
 
     def _is_ring_map_projection(self) -> bool:
+        """Whether this cube is projected onto the ring plane rather than onto a body."""
         return self._get_cube_map_projection() == 'r'
 
     # Use north based emission angle to determine if observer is at the north of the
     # ring.
     def _is_cassini_at_north(self) -> bool:
+        """Whether the spacecraft was on the north face of the rings.
+
+        Returns:
+            True for a north-based emission angle of 90 degrees or less, which is what
+            decides the sign of the observer's ring elevation.
+        """
         ea = self.field_obs_ring_geometry_north_based_emission1()
         assert ea is not None
         return 0 <= ea <= 90
@@ -35,9 +54,19 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COCIRS``."""
         return 'COCIRS'
 
     def surface_geo_target_list(self) -> Sequence[str] | None:
+        """The targets this observation has surface geometry for.
+
+        These volumes carry the geometry inline rather than in per-target summary files, so
+        the targets are named here and the surface geometry methods are called once for each.
+
+        Returns:
+            The target, as a one-element tuple, or an empty one for a ring observation whose
+            primary body or target name is not Saturn's, which is logged as an error.
+        """
         # If the surface_geo info exists somewhere other than in separate summary
         # files, we can give a list of targets this observation supports here.
         # This instrument's surface geo field methods will then be called on
@@ -55,6 +84,15 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         return (self._index_col('TARGET_NAME'), )
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.tar.gz`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.tar.gz``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.tar.gz')
 
 
@@ -69,6 +107,11 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         return self._create_mult('SAT')
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target this observation was aimed at.
+
+        Returns:
+            The intended target, as a one-element list.
+        """
         return [self._cassini_intended_target_name()]
 
     def field_obs_general_quantity(self) -> MultFieldRet:

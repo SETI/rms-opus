@@ -1,10 +1,7 @@
-################################################################################
-# obs_volume_couvis_8xxx.py
-#
-# Defines the ObsVolumeCOUVIS8xxx class, which encapsulates fields in the
-# common, obs_mission_cassini, and obs_instrument_couvis tables for COUVIS_8001
-# occultations.
-################################################################################
+"""The obs class for COUVIS_8001.
+
+Cassini UVIS stellar ring occultation profiles.
+"""
 
 from typing import cast
 
@@ -17,8 +14,15 @@ class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Cassini UVIS ring occultation profiles of COUVIS_8001.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COUVIS``."""
         return 'COUVIS'
 
 

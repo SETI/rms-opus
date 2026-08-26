@@ -1,9 +1,11 @@
-################################################################################
-# obs_surface_geometry_target.py
-#
-# Defines the ObsSurfaceGeometryTarget class, which encapsulates fields in the
-# obs_surface_geometry_<TARGET> tables.
-################################################################################
+"""The ``obs_surface_geometry__<TARGET>`` columns: where the observation fell on one body's
+surface.
+
+One module per OPUS table, mixed into every obs class that fills the table. A column
+whose value depends on the PDS version or on the instrument is left to a subclass, which
+is why most of the methods here can be overridden and a few raise `NotImplementedError`
+outright.
+"""
 
 from typing import Any
 
@@ -17,6 +19,12 @@ class ObsSurfaceGeometryTarget(ObsBase):
     ####################################
 
     ### Don't override these ###
+
+    """The ``obs_surface_geometry__<TARGET>`` columns, filled once per target.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_surface_geometry_target_opus_id(self) -> StrField:
         return self.opus_id
@@ -304,6 +312,17 @@ class ObsSurfaceGeometryTarget(ObsBase):
     def validate_surface_geo_fields(self, row: dict[str, Any],
                                     metadata: dict[str, Any],
                                     table_name: str) -> None:
+        """Report a gridless surface geometry value whose minimum and maximum disagree.
+
+        The surface geometry counterpart of
+        `opus_import.obs.obs_ring_geometry.ObsRingGeometry.validate_ring_geo_fields`.
+
+        Parameters:
+            row: The per-target surface geometry row this observation produced.
+            metadata: What the import has computed for this observation, for the bundle's
+                ``temporal_camera`` setting.
+            table_name: The ``obs_surface_geometry__<TARGET>`` table, for the message.
+        """
         # This runs after all fields have been populated.
         # Compare min/max gridless fields and make sure they are the same
         # for a non-temporal camera.

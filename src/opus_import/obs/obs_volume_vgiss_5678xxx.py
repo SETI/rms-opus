@@ -1,10 +1,8 @@
-################################################################################
-# obs_volume_vgiss_5678xxx.py
-#
-# Defines the ObsVolumeVGISS5678xxx class, which encapsulates fields in the
-# common, obs_mission_voyager, and obs_instrument_vgiss tables for
-# VGISS_[5678]xxx.
-################################################################################
+"""The obs class for VGISS_5xxx through VGISS_8xxx.
+
+Voyager ISS images of the four outer planets. The supplemental index names the volume in
+a column of its own, which is why the OPUS id is derived from it separately.
+"""
 
 from typing import cast
 
@@ -33,11 +31,31 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Voyager ISS images of VGISS_5xxx through VGISS_8xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``VGISS``."""
         return 'VGISS'
 
     def opus_id_from_supp_index_row(self, supp_row: IndexRow) -> str | None:
+        """Return the OPUS id a supplemental index row describes.
+
+        The supplemental index for these volumes names the volume in a different column from
+        every other index, which is why this exists alongside
+        `opus_import.obs.obs_base.ObsBase.opus_id_from_index_row`.
+
+        Parameters:
+            supp_row: The supplemental index row to read.
+
+        Returns:
+            The OPUS id, or the file's own name if ``pdsfile`` could not derive one, which
+            is logged as an error.
+        """
         bundle_id = supp_row['VOLUME_NAME']
         filespec = supp_row['FILE_SPECIFICATION_NAME']
         full_filespec = bundle_id + '/' + filespec
@@ -50,6 +68,15 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         return cast(str | None, opus_id)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.IMG`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.IMG``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.IMG')
 
 
@@ -121,6 +148,12 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         return EIGHT_BIT_IMAGE_LEVELS
 
     def _vgiss_pixel_size_helper(self) -> tuple[int, int]:
+        """Return the two dimensions of the image, in pixels.
+
+        Returns:
+            The number of lines and the number of samples, from the window the supplemental
+            index records.
+        """
         line1 = self._supp_index_col('FIRST_LINE')
         line2 = self._supp_index_col('LAST_LINE')
         sample1 = self._supp_index_col('FIRST_SAMPLE')
@@ -141,6 +174,12 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     ###################################
 
     def _vgiss_wavelength_helper(self) -> tuple[int, int] | None:
+        """Look up this observation's filter wavelengths.
+
+        Returns:
+            The minimum and maximum wavelength in nanometres, or None for a filter this
+            pipeline does not describe, which is logged as an error.
+        """
         filter_name = self._index_col('FILTER_NAME')
         if filter_name not in _VGISS_FILTER_WAVELENGTHS:
             self._log_nonrepeating_error(f'Unknown VGISS filter name "{filter_name}"')
@@ -177,6 +216,11 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     ############################################
 
     def _mission_phase_name(self) -> str | None:
+        """Return the mission phase this observation belongs to.
+
+        Returns:
+            The phase the index records, which these volumes carry as a column.
+        """
         return cast(str | None, self._index_col('MISSION_PHASE_NAME'))
 
     def field_obs_mission_voyager_mission_phase_name(self) -> MultFieldRet:

@@ -1,10 +1,9 @@
-################################################################################
-# obs_volume_cocirs_56xxx.py
-#
-# Defines the ObsVolumeCOCIRS56xxx class, which encapsulates fields in the
-# common, obs_mission_cassini, and obs_instrument_cocirs tables for volumes
-# COCIRS_[56]xxx.
-################################################################################
+"""The obs class for COCIRS_5xxx and COCIRS_6xxx.
+
+Cassini CIRS apodized spectra. The primary file is the spectrum rather than the
+observation index's own, and the spectral columns are computed in wavenumbers and
+converted.
+"""
 
 from typing import cast
 
@@ -18,18 +17,40 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Cassini CIRS spectra of COCIRS_5xxx and COCIRS_6xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COCIRS``."""
         return 'COCIRS'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this spectrum's data file.
+
+        Returns:
+            The volume-prefixed path, which for these volumes is the spectrum file rather
+            than the observation index's own.
+        """
         # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
         filespec = self._index_col('SPECTRUM_FILE_SPECIFICATION')
         assert self.bundle is not None
         return cast(str | None, self.bundle + '/' + filespec)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.IMG`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.IMG``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.IMG')
 
 
@@ -57,6 +78,11 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         return self._create_mult(self._cassini_planet_id())
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target this observation was aimed at.
+
+        Returns:
+            The intended target, as a one-element list.
+        """
         return [self._cassini_intended_target_name()]
 
     def field_obs_general_quantity(self) -> MultFieldRet:

@@ -1,9 +1,9 @@
-################################################################################
-# obs_volume_couvis_0xxx.py
-#
-# Defines the ObsVolumeCOUVIS0xxx class, which encapsulates fields in the
-# common, obs_mission_cassini, and obs_instrument_couvis tables for COUVIS_0xxx.
-################################################################################
+"""The obs class for COUVIS_0xxx.
+
+Cassini UVIS observations. One volume set holds four instruments -- two spectrographs, a
+photometer and a hydrogen-deuterium cell -- distinguished by the file name, and only a
+spectrograph with a spatially resolved window produces an image at all.
+"""
 
 import os
 from typing import cast
@@ -18,12 +18,27 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Cassini UVIS observations of COUVIS_0xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COUVIS``."""
         return 'COUVIS'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this observation's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The path, which these volumes already record relative to the volume root.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -32,9 +47,24 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return cast(str | None, filespec.lstrip('/'))
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.DAT`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.DAT``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.DAT')
 
     def _channel_time_helper(self) -> tuple[str, str]:
+        """Split the file name into the UVIS channel and the observation's time stamp.
+
+        Returns:
+            The channel -- ``'EUV'``, ``'FUV'``, ``'HSP'`` or ``'HDAC'`` -- and the time
+            stamp that follows it in the name.
+        """
         file_name = self._index_col('FILE_NAME')
         last_part = os.path.basename(file_name)
         last_part = last_part.replace('.LBL', '')
@@ -49,6 +79,13 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return channel, image_time
 
     def _is_image(self) -> bool:
+        """Whether this observation is a spectral image rather than a spectrum or a time series.
+
+        Returns:
+            True for a spatially resolved EUV or FUV observation. The photometers produce no
+            image at all, an occultation slit produces a time series, and a single-pixel
+            window produces a spectrum.
+        """
         channel, _image_time = self._channel_time_helper()
         slit_state = self._index_col('SLIT_STATE')
 
@@ -67,6 +104,12 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return cast(bool, object_type != 'SPECTRUM')
 
     def _integration_duration_helper(self) -> FloatField:
+        """Return the integration duration in seconds.
+
+        Returns:
+            The duration, or None if the index does not carry one. The photometer records it
+            in milliseconds and every other channel in seconds, which is what this converts.
+        """
         dur = self._index_col('INTEGRATION_DURATION')
         if dur is None:
             return None
@@ -83,6 +126,11 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ################################
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target this observation was aimed at.
+
+        Returns:
+            The intended target, as a one-element list.
+        """
         return [self._cassini_intended_target_name()]
 
     def field_obs_general_time2(self) -> FloatField:
@@ -199,6 +247,14 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return SIXTEEN_BIT_IMAGE_LEVELS
 
     def _pixel_size_helper(self) -> tuple[IntField, IntField]:
+        """Return the two dimensions of the imaging window, in pixels.
+
+        Returns:
+            The smaller and the larger dimension, or ``(None, None)`` where the observation
+            is not an image, carries no supplemental index row, or is missing one of the
+            window columns. A dimension that comes out negative is returned as None rather
+            than as a nonsense count.
+        """
         if not self._is_image():
             return None, None
 

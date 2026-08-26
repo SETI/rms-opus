@@ -1,12 +1,9 @@
-################################################################################
-# obs_volume_vg28xx.py
-#
-# Defines the ObsVolumeVG28xx class, the parent for the
-# ObsVolumeVG2810VGISS, ObsVolumeVG2801VGPPS, ObsVolumeVG2803VGRSS,
-# and ObsVolumeVG2802VGUVS classes, which encapsulate
-# fields in the common, obs_mission_voyager, and (sometimes)
-# obs_instrument_vgiss tables for the VG_28XX volumes.
-################################################################################
+"""What every Voyager ring-profile volume shares.
+
+The VG_28xx volumes hold radial profiles reconstructed from the Voyager occultations
+rather than the original observations, so the mission phase comes from the planet the
+profile is of and the geometry columns come from the profile's own label.
+"""
 
 from typing import cast
 
@@ -56,11 +53,27 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """What every Voyager ring-profile volume shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id, ``VG``."""
         return 'VG'
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.TAB`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.TAB``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.TAB')
 
 
@@ -188,6 +201,12 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
     ############################################
 
     def _mission_phase_name(self) -> str | None:
+        """Return the mission phase this observation belongs to.
+
+        Returns:
+            The phase, derived from the planet the profile is of, since these volumes record
+            no phase of their own.
+        """
         target_name = self._index_col('TARGET_NAME').upper()
         mission_phase = _VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
         return mission_phase

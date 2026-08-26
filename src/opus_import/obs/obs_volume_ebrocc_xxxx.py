@@ -1,10 +1,10 @@
-################################################################################
-# obs_volume_ebrocc_xxxx.py
-#
-# Defines the ObsVolumeEBROCCxxxx class, which encapsulates fields for
-# the common tables for EBROCC_0001. This class supports multiple instruments
-# in a single volume.
-################################################################################
+"""The obs class for EBROCC_xxxx.
+
+ground-based stellar occultations of Saturn's rings from 1989. Six telescopes
+contributed, so the instrument is per observation rather than per volume, and the
+geometry is fixed for the whole event -- the Sun lit the north face and Earth viewed it,
+which is what the module comment works through.
+"""
 
 from typing import cast
 
@@ -38,8 +38,20 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The ground-based Saturn ring occultations of EBROCC_xxxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, which differs per observation in these volumes.
+
+        Returns:
+            The telescope and instrument, named the way PDS4 does, or None before any
+            observation has been read.
+        """
         if self._metadata is None:
             # This happens during the create_tables phase
             return None
@@ -49,14 +61,24 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
 
     @property
     def inst_host_id(self) -> str:
+        """The OPUS instrument host id, ``GB``."""
         return 'GB'
 
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id, ``GB``."""
         return 'GB'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this occultation profile's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The volume-prefixed path.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -67,6 +89,15 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return cast(str | None, self.bundle + '/' + filespec)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.TAB`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.TAB``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.TAB')
 
 
@@ -90,6 +121,13 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         return self._create_mult('SAT')
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target of these observations.
+
+        Returns:
+            Saturn's rings, as a one-element list, or ``[(None, None)]`` if the label names
+            something else -- which is logged as an error, since these volumes hold nothing
+            but Saturn ring occultations.
+        """
         target_name = self._index_label_col('TARGET_NAME')
 
         if target_name != 'S RINGS':

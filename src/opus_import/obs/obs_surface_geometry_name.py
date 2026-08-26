@@ -1,9 +1,11 @@
-################################################################################
-# obs_surface_geometry_name.py
-#
-# Defines the ObsSurfaceGeometryName class, which encapsulates fields in the
-# obs_surface_geometry_name table.
-################################################################################
+"""The ``obs_surface_geometry_name`` columns: the one body a per-target geometry row
+belongs to.
+
+One module per OPUS table, mixed into every obs class that fills the table. A column
+whose value depends on the PDS version or on the instrument is left to a subclass, which
+is why most of the methods here can be overridden and a few raise `NotImplementedError`
+outright.
+"""
 
 from opus_import.obs.field_types import MultFieldRet, StrField
 from opus_import.obs.obs_base import ObsBase
@@ -15,6 +17,12 @@ class ObsSurfaceGeometryName(ObsBase):
     ####################################
 
     ### Don't override these ###
+
+    """The ``obs_surface_geometry_name`` columns: the body one geometry row is for.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_surface_geometry_name_opus_id(self) -> StrField:
         return self.opus_id

@@ -1,10 +1,7 @@
-################################################################################
-# obs_volume_nhxxmv_xxxx.py
-#
-# Defines the ObsVolumeNHxxMVXxxx class, which encapsulates fields in the
-# common, obs_mission_new_horizons, and obs_instrument_nhmvic tables for
-# NHxxMV_xxxx.
-################################################################################
+"""The obs class for NHxxMV_xxxx.
+
+New Horizons MVIC images, identified the same way as the LORRI ones.
+"""
 
 from typing import cast
 
@@ -18,20 +15,37 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The New Horizons MVIC images of NHxxMV_xxxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``NHMVIC``."""
         return 'NHMVIC'
 
     @property
     def inst_host_id(self) -> str:
+        """The OPUS instrument host id, ``NH``."""
         return 'NH'
 
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id, ``NH``."""
         return 'NH'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this image's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The volume-prefixed path.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -42,6 +56,15 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
         return cast(str | None, self.bundle + '/' + filespec)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a label's path to the engineering FITS file OPUS identifies observations by.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path naming the ``.fit`` file, in its engineering rather than its
+            science version.
+        """
         filespec = filespec.replace('.lbl', '.fit')
         filespec = filespec.replace('.LBL', '.FIT')
         filespec = filespec.replace('_sci', '_eng')

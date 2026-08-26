@@ -1,12 +1,9 @@
-################################################################################
-# obs_volume_cassini_occ_common.py
-#
-# Defines the ObsVolumeCassiniOccCommon class, the parent for the
-# ObsVolumeCORSS8xxx, ObsVolumeCOUVIS8xxx, and ObsVolumeCOVIMS8xxx
-# classes, which encapsulate fields in the obs_instrument_corss,
-# obs_instrument_couvis, and obs_instrument_covims tables for the 8xxx
-# occultation volumes
-################################################################################
+"""What every Cassini ring-occultation volume shares.
+
+An occultation profile is of Saturn's rings by construction and its direction is encoded
+in the file name, which is what makes these columns common across the instruments that
+recorded one.
+"""
 
 from typing import cast
 
@@ -15,7 +12,22 @@ from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 
 
 class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
+    """What every Cassini ring-occultation volume shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.LBL`` file specification to the ``.TAB`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.LBL`` replaced by ``.TAB``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.LBL', '.TAB')
 
 
@@ -24,6 +36,11 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
     ################################
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target of every observation in these volumes.
+
+        Returns:
+            Saturn's rings, which is what a ring occultation is of by construction.
+        """
         target_name, target_info = self._get_target_info('S RINGS')
         # 'S RINGS' is in TARGET_NAME_INFO, so the lookup cannot fail.
         assert target_info is not None

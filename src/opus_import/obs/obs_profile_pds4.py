@@ -1,9 +1,7 @@
-################################################################################
-# obs_profile_pds4.py
-#
-# Defines the ObsProfilePDS4 class, which augments ObsProfile with methods that
-# are PDS4-specific.
-################################################################################
+"""The PDS4 variant of the ``obs_profile`` table module.
+
+Empty by default for the same reason as `opus_import.obs.obs_profile_pds3`.
+"""
 
 from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_base_pds4 import ObsBasePDS4
@@ -18,6 +16,12 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
     ################################
     ### ! Might override these ! ###
     ################################
+
+    """The ``obs_profile`` columns for a PDS4 observation.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_profile_occ_type(self) -> MultFieldRet:
         return self._create_mult(None)

@@ -1,11 +1,7 @@
-################################################################################
-# obs_volume_hstnx_xxxx.py
-#
-# Defines the ObsVolumeHSTNxxxxx class, which encapsulates fields in the
-# common and obs_mission_hubble tables for the HST NICMOS instrument for
-# HSTNx_xxxx. Note HST does not have separate tables for each instrument but
-# combines them all together.
-################################################################################
+"""The obs class for HSTNx_xxxx.
+
+HST NICMOS observations.
+"""
 
 from typing import cast
 
@@ -15,7 +11,18 @@ from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
+    """The HST NICMOS observations of HSTNx_xxxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _nicmos_spec_flag(self) -> tuple[bool, str, str | None]:
+        """Decide whether this NICMOS observation is spectroscopic, from its filter.
+
+        Returns:
+            Whether the filter is a grism, followed by the two filter names.
+        """
         filter1, filter2 = self._decode_filters()
         return filter1.startswith('G'), filter1, filter2
 
@@ -26,6 +33,7 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``HSTNICMOS``."""
         return 'HSTNICMOS'
 
 
@@ -34,6 +42,11 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     ################################
 
     def _observation_type(self) -> str | None:
+        """Whether this observation is an image or a spectral image.
+
+        Returns:
+            ``'SPI'`` through a grism and ``'IMG'`` otherwise.
+        """
         if self._nicmos_spec_flag()[0]:
             return 'SPI'
         return 'IMG'

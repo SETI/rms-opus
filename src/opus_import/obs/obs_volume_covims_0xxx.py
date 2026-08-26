@@ -1,10 +1,8 @@
-################################################################################
-# obs_volume_covims_0xxx.py
-#
-# Defines the ObsVolumeCOVIMS0xxx class, which encapsulates fields in the
-# common, obs_mission_cassini, and obs_instrument_covims tables for COVIMS_8xxx
-# occultations.
-################################################################################
+"""The obs class for COVIMS_0xxx.
+
+Cassini VIMS cubes. One index row describes both an infrared and a visible observation,
+so each row is expanded into two and the OPUS id carries the channel.
+"""
 
 from typing import cast
 
@@ -14,7 +12,14 @@ from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
 
 
 class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
+    """The Cassini VIMS cubes of COVIMS_0xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _is_image(self) -> bool:
+        """Whether this observation is a spectral image rather than a single spectrum."""
         return cast(bool, self._index_col('INSTRUMENT_MODE_ID') == 'IMAGE')
 
 
@@ -24,10 +29,19 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COVIMS``."""
         return 'COVIMS'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this observation's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The volume-prefixed path, built from the index's separate path and file columns.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -37,10 +51,28 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         return f'{self.bundle}{path_name}/{file_name}'
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
+        """Convert a ``.lbl`` file specification to the ``.qub`` data file.
+
+        Parameters:
+            filespec: The path, relative to the holdings root.
+
+        Returns:
+            The same path with ``.lbl`` replaced by ``.qub``, which is the file
+            this bundle's observations are identified by.
+        """
         return filespec.replace('.lbl', '.qub')
 
     @property
     def opus_id(self) -> str | None:
+        """The OPUS id of the current observation, with its channel appended.
+
+        One COVIMS index row describes both an infrared and a visible observation, so the id
+        the file specification alone yields is not unique.
+
+        Returns:
+            The id with ``_ir`` or ``_vis`` appended, or the plain id while the indexes are
+            being scanned, before either channel has been selected.
+        """
         if self.phase_name is None:
             # This happens during scanning the index/supp_index/geo files because
             # we don't have separate phases at that time.
@@ -51,6 +83,12 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
 
     @property
     def phase_names(self) -> list[str]:
+        """The channels this index row is expanded into.
+
+        Returns:
+            ``'VIS'``, ``'IR'``, or both, according to which sampling modes the row records
+            as used. Every field method is called once per channel.
+        """
         phase_names = []
         if self._index_col('VIS_SAMPLING_MODE_ID') != 'N/A':
             phase_names.append('VIS')
@@ -64,6 +102,11 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     ################################
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target this observation was aimed at.
+
+        Returns:
+            The intended target, as a one-element list.
+        """
         return [self._cassini_intended_target_name()]
 
     # We occasionally don't bother to generate ring_geo data for COVIMS, like during

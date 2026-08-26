@@ -1,14 +1,11 @@
-################################################################################
-# obs_cassini_common.py
-#
-# Defines the ObsCassiniCommon class, which encapsulates fields in the
-# common and obs_mission_cassini tables.
-# Note this began as a duplicate of obs_cassini_common_pds3.py (formerly named
-# obs_volume_cassini_common.py) but only the shared PDS3 and PDS4 parts (deduced
-# from the observation ID: target code, is_prime, and the revno, etc) remain,
-# whilst the PDS3 parts (involving TARGET_DESC and SCLK counts) were moved to
-# obs_cassini_common_pds3.py.
-################################################################################
+"""What every Cassini instrument shares: the observation name, and what is derived from it.
+
+A Cassini observation name encodes the prime instrument, the orbit number, the target
+code and the activity, none of which is a column of its own, so most of this module is
+about parsing it and reporting one that cannot be parsed. The mission phase is derived
+from the observation's time rather than read from the label, because the labels do not
+agree on how a phase is spelled.
+"""
 
 import re
 from collections.abc import Callable
@@ -313,6 +310,12 @@ _COISS_FILTER_WAVELENGTHS = {
 # W/MT3/BL1
 
 class ObsCassiniCommon(ObsBase):
+    """What every Cassini instrument shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     if TYPE_CHECKING:
         # Supplied by ObsGeneral, which every class combining this one also inherits.
         def field_obs_general_time1(self) -> FloatField: ...
@@ -327,6 +330,13 @@ class ObsCassiniCommon(ObsBase):
     # After this time, north side of the ring is lit.
     # Before this time, south side of the ring is lit.
     def _is_ring_north_side_lit(self) -> bool | None:
+        """Whether the Sun was on the north face of Saturn's rings.
+
+        Returns:
+            True after Saturn's 2009 equinox and False before it, or None if the
+            observation has no start time. Which face is lit is what turns an angle measured
+            from the lit face into a north-based one.
+        """
         start_time = self.field_obs_general_time1()
         if start_time is None:
             return None
@@ -334,6 +344,12 @@ class ObsCassiniCommon(ObsBase):
         return cast(bool | None, start_time > equinox_time)
 
     def _coiss_target_desc_mapping(self) -> dict[str, str]:
+        """Return the corrections applied to COISS ``TARGET_DESC`` values.
+
+        Returns:
+            The mapping, which a subclass overrides where its own volumes spell a target
+            differently.
+        """
         return _COISS_TARGET_DESC_MAPPING
 
     def _parse_cassini_sclk(self, sclk: str,
@@ -425,6 +441,14 @@ class ObsCassiniCommon(ObsBase):
         return 'SAT'
 
     def _cassini_normalize_mission_phase_name(self) -> str | None:
+        """Return the mission phase this observation falls in, by its start time.
+
+        The phase is derived from the time rather than read from the label, because the
+        labels do not agree on how a phase is spelled or on when one ends.
+
+        Returns:
+            The phase name in upper case, or None for a time in no phase's range.
+        """
         time1 = self.field_obs_general_time1()
         assert time1 is not None
         for phase, start_time_sec, stop_time_sec in _CASSINI_PHASE_NAME_MAPPING:
@@ -439,6 +463,20 @@ class ObsCassiniCommon(ObsBase):
     def _coiss_wavelength_helper(self, camera: str | None, filter1: str | None,
                                  filter2: str | None
                                  ) -> tuple[FloatField, FloatField, FloatField]:
+        """Look up a COISS filter combination's wavelengths.
+
+        Parameters:
+            camera: ``'N'`` or ``'W'``.
+            filter1: The first filter wheel's position.
+            filter2: The second filter wheel's position.
+
+        Returns:
+            The central wavelength, the full width at half maximum, and the effective
+            wavelength, in nanometres, or ``(None, None, None)`` for a combination this
+            pipeline does not describe, which is logged as an error. A polarized
+            combination that is not listed falls back to the unpolarized one and is logged
+            as a warning instead.
+        """
         key = (camera, filter1, filter2)
         if key in _COISS_FILTER_WAVELENGTHS:
             return _COISS_FILTER_WAVELENGTHS[key]
@@ -461,6 +499,20 @@ class ObsCassiniCommon(ObsBase):
     def _combined_filter(self, camera: str | None = None,
                          filter1: str | None = None,
                          filter2: str | None = None) -> str:
+        """Return the single filter name OPUS shows for a two-wheel filter combination.
+
+        Parameters:
+            camera: ``'N'`` or ``'W'``, or None to read it from the index.
+            filter1: The first filter wheel's position, or None to read the pair from the
+                index.
+            filter2: The second filter wheel's position, or None for the same reason.
+
+        Returns:
+            The name: ``'CLEAR'`` when both wheels are clear, the one filter's name when
+            only one is, and otherwise the two joined by ``+`` -- in wavelength order, or in
+            name order where the wavelengths are equal or unknown, with a polarizer always
+            placed second.
+        """
         if camera is None:
             camera = self._index_col('INSTRUMENT_ID')[3]
 
@@ -501,14 +553,25 @@ class ObsCassiniCommon(ObsBase):
 
     @property
     def inst_host_id(self) -> str:
+        """The OPUS instrument host id, ``CO``."""
         return 'CO'
 
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id, ``CO``."""
         return 'CO'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this observation's data file.
+
+        Computed from the primary index alone, deliberately: it is what the OPUS id is
+        derived from, and the OPUS id is in turn what finds this observation's row in the
+        supplemental index.
+
+        Returns:
+            The volume-prefixed path.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -537,6 +600,13 @@ class ObsCassiniCommon(ObsBase):
         return None
 
     def _rev_no(self) -> str | None:
+        """Return the Saturn orbit number this observation was taken during.
+
+        Returns:
+            The three characters of the observation name that hold it, or None if the
+            observation name is unparsable or names a cruise-phase orbit, which OPUS does
+            not number.
+        """
         obs_name = self.field_obs_mission_cassini_obs_name()
         if not self._cassini_valid_obs_name(obs_name):
             return None
@@ -573,6 +643,15 @@ class ObsCassiniCommon(ObsBase):
         return self._create_mult('No')
 
     def _prime_inst_id(self) -> str:
+        """Return which instrument the observation was primarily taken for.
+
+        A Cassini observation is often recorded by one instrument while another is the
+        reason it was taken, and the observation name records both.
+
+        Returns:
+            The OPUS instrument id of the prime instrument, or ``'UNK'`` where the
+            observation name is missing or unparsable.
+        """
         obs_name = self.field_obs_mission_cassini_obs_name()
         if obs_name is None:
             return 'UNK'

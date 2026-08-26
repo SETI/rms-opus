@@ -1,9 +1,8 @@
-################################################################################
-# obs_bundle_occ_common.py
-#
-# Defines the ObsBundleOccCommon class, which encapsulate fields that are common
-# to the PDS4 occultation classes.
-################################################################################
+"""What every PDS4 occultation bundle shares.
+
+A PDS4 occultation product names its own data file in the index, which is the one thing
+these bundles have in common that the PDS4 base class does not already give them.
+"""
 
 from typing import cast
 
@@ -16,8 +15,20 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """What every PDS4 occultation bundle shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this occultation profile's data file.
+
+        Returns:
+            The path the index row's ``filepath`` column holds, which for these bundles is
+            already relative to the holdings root.
+        """
         return cast(str | None, self._index_col('filepath'))
 
 

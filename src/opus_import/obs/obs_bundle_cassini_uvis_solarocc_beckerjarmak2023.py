@@ -1,12 +1,9 @@
-################################################################################
-# obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.py
-#
-# Defines the ObsBundleCassiniUvisSolarOccBeckerJarmak class, which encapsulates
-# fields in the common, common occultation, obs_mission_cassini, and
-# obs_instrument_couvis tables for COUVIS solar occultations. This class
-# supports derived data from UVIS EUV archived in the
-# cassini_uvis_solarocc_beckerjarmak2023 bundle.
-################################################################################
+"""The obs class for the Cassini UVIS solar occultation bundle.
+
+PDS4 profiles of Saturn's rings from solar rather than stellar occultations. The angles
+are given relative to the lit face of the rings, which changed sides at Saturn's 2009
+equinox, so they are converted to north-based ones.
+"""
 
 from typing import cast
 
@@ -20,8 +17,15 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Cassini UVIS solar occultation profiles of Saturn's rings.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``COUVIS``."""
         return 'COUVIS'
 
 
@@ -39,6 +43,11 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         return self._create_mult('SAT')
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target of every observation in this bundle.
+
+        Returns:
+            Saturn's rings, which is what a ring occultation is of by construction.
+        """
         return [('S RINGS', 'Saturn Rings')]
 
 
@@ -105,6 +114,16 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         # Work out north-based incidence angles based on date of Saturnian equinox
         # (when the sun was illuminating the north side of the rings).
 
+        """Convert this observation's incidence and emission angles to north-based ones.
+
+        The bundle's own index gives them relative to the lit face of the rings, which
+        changed sides at Saturn's 2009 equinox; OPUS stores them relative to north, so an
+        observation after the equinox is taken as given and one before it is reflected.
+
+        Returns:
+            The north-based incidence and emission angles in degrees, or ``(None, None)``
+            if the observation has no start time or either angle is missing.
+        """
         inc = self.field_obs_ring_geometry_incidence1()
         em  = self.field_obs_ring_geometry_emission1()
 

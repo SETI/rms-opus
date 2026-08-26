@@ -68,11 +68,33 @@ _LID_TO_INST = {
 }
 
 class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
+    """The Earth-based stellar occultations of Uranus and its rings.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _is_atmos(self) -> bool:
+        """Whether this observation profiles Uranus's atmosphere rather than its rings.
+
+        Returns:
+            True for an atmospheric profile, which is what decides the target and several
+            of the profile columns.
+        """
         lid = self._index_col('pds:logical_identifier')
         return 'atmos' in lid
 
     def _inst_name(self) -> str | None:
+        """Return which telescope and instrument recorded this occultation.
+
+        The bundle carries observations from many ground-based observatories, so the
+        instrument is per observation rather than per bundle, and it is encoded in the
+        logical identifier rather than given as a column.
+
+        Returns:
+            The OPUS instrument id, or None while the tables are being created, before any
+            observation has been read.
+        """
         if self._metadata is None:
             # This happens during the create_tables phase
             return None
@@ -86,10 +108,23 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
         return _LID_TO_INST[f'{inst1}_{inst2}']
 
     def _star_id(self) -> str:
+        """Return the occulted star's name in the form the star catalog uses.
+
+        Returns:
+            The name upper-cased with its spaces replaced by underscores, which is how
+            `opus_import.config_targets.STAR_RA_DEC` keys it.
+        """
         star_name = self._index_col('rings:star_name')
         return cast(str, star_name.upper().replace(' ', '_'))
 
     def _star_ra_dec_range(self) -> tuple[float, float, float, float]:
+        """Return the search range for the occulted star's position.
+
+        Returns:
+            The minimum and maximum right ascension followed by the minimum and maximum
+            declination, in degrees. The range is a point unless a slop is configured: a
+            star's position is treated as fixed.
+        """
         star_id = self._star_id()
         return (config_targets.STAR_RA_DEC[star_id][0]-self._STAR_RA_DEC_SLOP,
                 config_targets.STAR_RA_DEC[star_id][0]+self._STAR_RA_DEC_SLOP,
@@ -103,15 +138,33 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, which differs per observation in this bundle.
+
+        Returns:
+            The telescope and instrument `_inst_name` decodes, or None before any
+            observation has been read -- which is what keeps an ``obs_instrument_*`` table
+            from being created for a bundle that has no single instrument.
+        """
         return self._inst_name()
 
 
     @property
     def inst_host_id(self) -> str:
+        """The OPUS instrument host id.
+
+        Returns:
+            ``'HST'`` for the one observation taken from orbit, ``'GB'`` for the
+            ground-based ones.
+        """
         return 'HST' if self._inst_name() == 'hst.fos' else 'GB'
 
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id.
+
+        Returns:
+            ``'HST'`` or ``'GB'``, decided the same way as `inst_host_id`.
+        """
         return 'HST' if self._inst_name() == 'hst.fos' else 'GB'
 
     ################################
@@ -134,6 +187,12 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
         return self._create_mult('URA')
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target of this observation.
+
+        Returns:
+            Uranus for an atmospheric profile and its rings otherwise, as a one-element
+            list, or ``[(None, None)]`` if the name is one this pipeline does not describe.
+        """
         lookup_name = 'URANUS' if self._is_atmos() else 'U RINGS'
         target_name, target_info = self._get_target_info(lookup_name)
         if target_info is None:

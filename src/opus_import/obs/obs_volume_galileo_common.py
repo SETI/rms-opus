@@ -1,9 +1,4 @@
-################################################################################
-# obs_volume_galileo_common.py
-#
-# Defines the ObsVolumeGalileoCommon class, which encapsulates fields in the
-# common and obs_mission_galileo tables.
-################################################################################
+"""What every Galileo volume shares: its spacecraft clock format."""
 
 import opus_support
 from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
@@ -11,6 +6,12 @@ from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsVolumeGalileoCommon(ObsCommonPDS3):
+    """What every Galileo volume shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _parse_galileo_sclk(self, sclk: str) -> FloatField:
         """Parse a Galileo SCLK, reporting a bad one instead of raising.
 

@@ -1,11 +1,7 @@
-################################################################################
-# obs_volume_hstox_xxxx.py
-#
-# Defines the ObsVolumeHSTOxxxxx class, which encapsulates fields in the
-# common and obs_mission_hubble tables for the HST STIS instrument for
-# HSTOx_xxxx. Note HST does not have separate tables for each instrument but
-# combines them all together.
-################################################################################
+"""The obs class for HSTOx_xxxx.
+
+HST STIS observations.
+"""
 
 from typing import cast
 
@@ -15,7 +11,14 @@ from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
+    """The HST STIS observations of HSTOx_xxxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _stis_spec_flag(self) -> bool:
+        """Whether this STIS observation is a spectrum rather than an image."""
         return self._observation_type() == 'SPE'
 
 
@@ -25,6 +28,7 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``HSTSTIS``."""
         return 'HSTSTIS'
 
 
@@ -33,6 +37,15 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
     ################################
 
     def _observation_type(self) -> str | None:
+        """Whether this observation is an image or a spectrum.
+
+        Unlike the other HST instruments STIS records the distinction directly, so it is
+        read rather than derived from the filter.
+
+        Returns:
+            ``'SPE'`` or ``'IMG'``, or None for a value this pipeline does not describe,
+            which is logged as an error.
+        """
         obs_type = self._index_col('OBSERVATION_TYPE')
         if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'):
             self._log_nonrepeating_error(f'Unknown HST OBSERVATION_TYPE "{obs_type}"')

@@ -1,9 +1,11 @@
-################################################################################
-# obs_profile.py
-#
-# Defines the ObsProfile class, which encapsulates fields in the
-# obs_profile table.
-################################################################################
+"""The ``obs_profile`` columns: what an occultation profile records: its direction, its
+source, and its optical depth.
+
+One module per OPUS table, mixed into every obs class that fills the table. A column
+whose value depends on the PDS version or on the instrument is left to a subclass, which
+is why most of the methods here can be overridden and a few raise `NotImplementedError`
+outright.
+"""
 
 from opus_import import config_targets
 from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
@@ -14,8 +16,24 @@ class ObsProfile(ObsBase):
 
     ### Utility functions useful for subclasses ###
 
+    """The ``obs_profile`` columns, which only an occultation fills.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _star_name_helper(self, index: str,
                           col: str) -> tuple[str | None, TargetInfo | None]:
+        """Look up the occulted star named in one of the index files.
+
+        Parameters:
+            index: The metadata key of the index or label holding the name.
+            col: The column holding it.
+
+        Returns:
+            The corrected star name and its target information, or ``(None, None)`` if the
+            star is one this pipeline does not describe.
+        """
         assert self._metadata is not None
         target_name = self._metadata[index][col]
         target_name = target_name.replace(' ', '').upper()
@@ -26,6 +44,17 @@ class ObsProfile(ObsBase):
     def _prof_ra_dec_helper(
             self, index: str,
             col: str) -> tuple[FloatField, FloatField, FloatField, FloatField]:
+        """Return the search range for the occulted star's position.
+
+        Parameters:
+            index: The metadata key of the index or label naming the star.
+            col: The column holding the name.
+
+        Returns:
+            The minimum and maximum right ascension followed by the minimum and maximum
+            declination, in degrees, or four Nones if the star is unknown or carries no
+            position, the latter of which is logged as an error.
+        """
         target_name, _target_info = self._star_name_helper(index, col)
         if target_name is None:
             return None, None, None, None

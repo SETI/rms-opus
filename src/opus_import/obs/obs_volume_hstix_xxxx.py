@@ -1,11 +1,7 @@
-################################################################################
-# obs_volume_hstix_xxxx.py
-#
-# Defines the ObsVolumeHSTIxxxxx class, which encapsulates fields in the
-# common and obs_mission_hubble tables for the HST WFC3 instrument for
-# HSTIx_xxxx. Note HST does not have separate tables for each instrument but
-# combines them all together.
-################################################################################
+"""The obs class for HSTIx_xxxx.
+
+HST WFC3 observations.
+"""
 
 from typing import cast
 
@@ -15,7 +11,20 @@ from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
+    """The HST WFC3 observations of HSTIx_xxxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _wfc3_spec_flag(self) -> tuple[bool, str, str | None] | None:
+        """Decide whether this WFC3 observation is spectroscopic, from its filter.
+
+        Returns:
+            Whether the filter is a grism, followed by the two filter names, or None if the
+            label carries a second filter -- which WFC3 has no wheel for, and which is
+            logged as an error.
+        """
         filter1, filter2 = self._decode_filters()
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
@@ -29,6 +38,7 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
 
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``HSTWFC3``."""
         return 'HSTWFC3'
 
 
@@ -37,6 +47,12 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     ################################
 
     def _observation_type(self) -> str | None:
+        """Whether this observation is an image or a spectral image.
+
+        Returns:
+            ``'SPI'`` through a grism and ``'IMG'`` otherwise, or None if the filter could
+            not be decoded.
+        """
         spec_flag = self._wfc3_spec_flag()
         if spec_flag is None:
             return None

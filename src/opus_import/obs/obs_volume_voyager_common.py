@@ -1,9 +1,9 @@
-################################################################################
-# obs_volume_voyager_common.py
-#
-# Defines the ObsVolumeVoyagerCommon class, which encapsulates fields in the
-# common and obs_mission_voyager tables.
-################################################################################
+"""What every Voyager volume shares: the spacecraft, the clock format, and the planet.
+
+Which of the two spacecraft took an observation is read from the index rather than fixed
+per volume, and the planet is taken from the mission phase, since a Voyager volume spans
+more than one encounter.
+"""
 
 from typing import cast
 
@@ -13,6 +13,12 @@ from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsVolumeVoyagerCommon(ObsCommonPDS3):
+    """What every Voyager volume shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _parse_voyager_sclk(self, sclk: str) -> FloatField:
         """Parse a Voyager SCLK, reporting a bad one instead of raising.
 
@@ -27,16 +33,30 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
 
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id, ``VG``."""
         return 'VG'
 
     @property
     def inst_host_id(self) -> str:
+        """The OPUS instrument host id.
+
+        Returns:
+            ``'VG1'`` or ``'VG2'``, from the spacecraft the index names.
+        """
         inst_host = self._some_index_col('INSTRUMENT_HOST_NAME')
         assert inst_host in ['VOYAGER 1', 'VOYAGER 2']
         return cast(str, 'VG'+inst_host[-1])
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this observation's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The volume-prefixed path.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -65,6 +85,11 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
         raise NotImplementedError
 
     def _planet_id(self) -> str:
+        """Return which planet this observation was of.
+
+        Returns:
+            The OPUS planet id, taken from the first three letters of the mission phase.
+        """
         mp = self._mission_phase_name()
         assert mp is not None
         pl = mp[:3].upper()

@@ -1,9 +1,4 @@
-################################################################################
-# obs_volume_new_horizons_common.py
-#
-# Defines the ObsVolumeNewHorizonsCommon class, which encapsulates fields in the
-# common and obs_mission_new_horizons tables.
-################################################################################
+"""What every New Horizons volume shares: its spacecraft clock format."""
 
 from typing import cast
 
@@ -22,6 +17,12 @@ _MISSION_PHASE_NAMES = {
 }
 
 class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
+    """What every New Horizons volume shares.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     def _parse_new_horizons_sclk(self, sclk: str) -> FloatField:
         """Parse a New Horizons SCLK, reporting a bad one instead of raising.
 

@@ -1,9 +1,11 @@
-################################################################################
-# obs_ring_geometry.py
-#
-# Defines the ObsRingGeometry class, which encapsulates fields in the
-# obs_ring_geometry table.
-################################################################################
+"""The ``obs_ring_geometry`` columns: where the observation fell on a ring plane, and at
+what angles.
+
+One module per OPUS table, mixed into every obs class that fills the table. A column
+whose value depends on the PDS version or on the instrument is left to a subclass, which
+is why most of the methods here can be overridden and a few raise `NotImplementedError`
+outright.
+"""
 
 from typing import TYPE_CHECKING, Any
 
@@ -24,16 +26,40 @@ _ASCENDING_NODE_OFFSET_DEG = {
 
 
 class ObsRingGeometry(ObsBase):
+    """The ``obs_ring_geometry`` columns: where a ring plane was crossed.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     if TYPE_CHECKING:
         # Supplied by ObsGeneral, which every class combining this one also inherits.
         def field_obs_general_planet_id(self) -> MultFieldRet: ...
 
     def _ascending_node_offset(self, planet: str | int | None) -> float | None:
+        """Return the longitude offset between a planet's ring-plane node and J2000.
+
+        Parameters:
+            planet: The OPUS planet id, as a mult column's value gives it.
+
+        Returns:
+            The offset in degrees, or None for a planet with no ring-plane longitude system
+            here -- which includes every value that is not one of the planet ids.
+        """
         if not isinstance(planet, str):
             return None
         return _ASCENDING_NODE_OFFSET_DEG.get(planet)
 
     def _j2000_to_ascending(self, long: FloatField) -> FloatField:
+        """Convert a J2000-referenced ring longitude to an ascending-node-referenced one.
+
+        Parameters:
+            long: The longitude in degrees, or None.
+
+        Returns:
+            The converted longitude in ``[0, 360)``, or None if there was none to convert or
+            this observation's planet has no ring-plane longitude system.
+        """
         if long is None:
             return None
         planet_id = self.field_obs_general_planet_id()
@@ -47,6 +73,16 @@ class ObsRingGeometry(ObsBase):
         return (long + offset) % 360.
 
     def _ascending_to_j2000(self, long: FloatField) -> FloatField:
+        """Convert an ascending-node-referenced ring longitude to a J2000-referenced one.
+
+        The inverse of `_j2000_to_ascending`.
+
+        Parameters:
+            long: The longitude in degrees, or None.
+
+        Returns:
+            The converted longitude in ``[0, 360)``, or None on the same two conditions.
+        """
         if long is None:
             return None
         planet_id = self.field_obs_general_planet_id()
@@ -467,6 +503,17 @@ class ObsRingGeometry(ObsBase):
 
     def validate_ring_geo_fields(self, row: dict[str, Any],
                                  metadata: dict[str, Any]) -> None:
+        """Report a gridless ring geometry value whose minimum and maximum disagree.
+
+        A gridless quantity describes the observation as a whole rather than a point in it,
+        so its pair should be equal -- unless the observation spans enough time for the
+        geometry to have moved, which is what ``temporal_camera`` records.
+
+        Parameters:
+            row: The ``obs_ring_geometry`` row this observation produced.
+            metadata: What the import has computed for this observation, for the bundle's
+                ``temporal_camera`` setting.
+        """
         # This runs after all fields have been populated.
         # Compare min/max gridless fields and make sure they are the same
         # for a non-temporal camera.

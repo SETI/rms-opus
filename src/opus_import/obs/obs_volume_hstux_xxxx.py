@@ -1,11 +1,7 @@
-################################################################################
-# obs_volume_hstux_xxxx.py
-#
-# Defines the ObsVolumeHSTUxxxxx class, which encapsulates fields in the
-# common and obs_mission_hubble tables for the HST WFPC2 instrument for
-# HSTUx_xxxx. Note HST does not have separate tables for each instrument but
-# combines them all together.
-################################################################################
+"""The obs class for HSTUx_xxxx.
+
+HST WFPC2 observations.
+"""
 
 from opus_import.obs.field_types import IntField, MultFieldRet
 from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
@@ -17,8 +13,15 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The HST WFPC2 observations of HSTUx_xxxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``HSTWFPC2``."""
         return 'HSTWFPC2'
 
 
@@ -27,6 +30,11 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     ################################
 
     def _observation_type(self) -> str | None:
+        """Whether this observation is an image or a spectrum.
+
+        Returns:
+            Always ``'IMG'``: WFPC2 has no spectroscopic mode.
+        """
         return 'IMG'
 
     def field_obs_general_observation_type(self) -> MultFieldRet:

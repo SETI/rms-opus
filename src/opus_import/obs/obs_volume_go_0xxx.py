@@ -1,9 +1,8 @@
-################################################################################
-# obs_volume_go_0xxx.py
-#
-# Defines the ObsVolumeGO0xxx class, which encapsulates fields in the
-# common, obs_mission_galileo, and obs_instrument_gossi tables for GO_0xxx.
-################################################################################
+"""The obs class for GO_0xxx.
+
+Galileo SSI images. The index gives one pointing rather than a range, so the right
+ascension range is the camera's own field of view about it.
+"""
 
 from typing import cast
 
@@ -53,20 +52,37 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Galileo SSI images of GO_0xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``GOSSI``."""
         return 'GOSSI'
 
     @property
     def inst_host_id(self) -> str:
+        """The OPUS instrument host id, ``GO``."""
         return 'GO'
 
     @property
     def mission_id(self) -> str:
+        """The OPUS mission id, ``GO``."""
         return 'GO'
 
     @property
     def primary_filespec(self) -> str | None:
+        """The path of this image's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The volume-prefixed path.
+        """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
         # This is because this (and the subsequent creation of opus_id) is used
@@ -84,6 +100,16 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     # We only have the center point for RA,DEC so derive the edges by using the
     # FOV
     def _gossi_ra_helper(self) -> tuple[FloatField, FloatField]:
+        """Return the right ascension range the camera's field of view covers.
+
+        The index gives the pointing as a single direction, so the range is the field of
+        view's diagonal about it, widened by the declination's convergence of meridians.
+
+        Returns:
+            The minimum and maximum right ascension in degrees, or ``(None, None)`` if the
+            index carries no pointing. A range that wraps past 360 degrees is returned in
+            the order that says so.
+        """
         ra = self._index_col('RIGHT_ASCENSION')
         dec = self._index_col('DECLINATION')
         if ra is None or dec is None:
@@ -222,6 +248,12 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     ###################################
 
     def _gossi_wavelength_helper(self) -> tuple[int, int, int] | None:
+        """Look up this observation's filter wavelengths.
+
+        Returns:
+            The minimum, maximum and effective wavelength in nanometres, or None for a
+            filter this pipeline does not describe, which is logged as an error.
+        """
         filter_name = self._index_col('FILTER_NAME')
 
         if filter_name not in _GOSSI_FILTER_WAVELENGTHS:

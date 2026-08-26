@@ -1,9 +1,10 @@
-################################################################################
-# obs_type_image.py
-#
-# Defines the ObsTypeImage class, which encapsulates fields in the
-# obs_type_image table.
-################################################################################
+"""The ``obs_type_image`` columns: an image's dimensions and its intensity levels.
+
+One module per OPUS table, mixed into every obs class that fills the table. A column
+whose value depends on the PDS version or on the instrument is left to a subclass, which
+is why most of the methods here can be overridden and a few raise `NotImplementedError`
+outright.
+"""
 
 from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
 from opus_import.obs.obs_base import ObsBase
@@ -21,6 +22,12 @@ class ObsTypeImage(ObsBase):
     ####################################
 
     ### Don't override these ###
+
+    """The ``obs_type_image`` columns: an image's size and its levels.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_type_image_opus_id(self) -> StrField:
         return self.opus_id

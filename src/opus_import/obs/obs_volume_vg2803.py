@@ -1,9 +1,7 @@
-################################################################################
-# obs_volume_vg2803_vgrss.py
-#
-# Defines the ObsVolumeVG2803RSS class, which encapsulates fields for the
-# common and obs_mission_voyager tables for VGRSS occultations in VG_2803.
-################################################################################
+"""The obs class for VG_2803.
+
+Voyager RSS radial ring profiles.
+"""
 
 from typing import cast
 
@@ -22,8 +20,15 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+    """The Voyager RSS radial ring profiles of VG_2803.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     @property
     def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``VGRSS``."""
         return 'VGRSS'
 
 
@@ -66,6 +71,7 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
 
 
     def _is_voyager_at_uranus(self) -> bool:
+        """Whether this profile is of Uranus's rings rather than another planet's."""
         target_name, _target_disp_name = self._target_name()[0]
         return target_name == 'U RINGS'
 

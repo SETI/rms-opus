@@ -1,9 +1,11 @@
-################################################################################
-# obs_general.py
-#
-# Defines the ObsGeneral class, which encapsulates fields in the
-# obs_general table.
-################################################################################
+"""The ``obs_general`` columns: what every observation has: its ids, its target, its times,
+and its sky position.
+
+One module per OPUS table, mixed into every obs class that fills the table. A column
+whose value depends on the PDS version or on the instrument is left to a subclass, which
+is why most of the methods here can be overridden and a few raise `NotImplementedError`
+outright.
+"""
 
 import json
 import os
@@ -19,6 +21,12 @@ class ObsGeneral(ObsBase):
     ####################################
 
     ### Don't override these ###
+
+    """The ``obs_general`` columns, which every observation has.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     def field_obs_general_opus_id(self) -> StrField:
         return self.opus_id
@@ -131,6 +139,16 @@ class ObsGeneral(ObsBase):
     ################################
 
     def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """Return every target this observation is of.
+
+        Returns:
+            One ``(name, shown name)`` pair per target, which is what lets an observation
+            carry several. Most instruments return exactly one.
+
+        Raises:
+            NotImplementedError: Always; a PDS-version or instrument class must override
+                this, since no two of them record the target the same way.
+        """
         raise NotImplementedError
 
     def field_obs_general_target_name(self) -> list[MultField]:

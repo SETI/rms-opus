@@ -1,9 +1,10 @@
-################################################################################
-# obs_cassini_common_pds3.py
-#
-# Defines the ObsCassiniCommonPDS3 class, which augments ObsCassiniCommon, and
-# overrides target names and SCLK counts.
-################################################################################
+"""What every Cassini instrument's PDS3 volumes share.
+
+Two things the PDS4 bundles do not need: reconciling ``TARGET_NAME`` with the target
+description, which is what a sky or calibration pointing records the real target in, and
+correcting a spacecraft clock count into the form the parser accepts, which the
+instruments spell differently from one another.
+"""
 
 from typing import cast
 
@@ -14,10 +15,28 @@ from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
 class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
+    """What every Cassini instrument's PDS3 volumes share.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     ################################################################################
     # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
     ################################################################################
     def _cassini_intended_target_name(self) -> tuple[str | None, str | None]:
+        """Return the target this observation was aimed at, correcting the label where needed.
+
+        ``TARGET_NAME`` records what the spacecraft was pointed at, which is not always what
+        the observation is of: a sky or calibration pointing carries a target description
+        that names the real one, and several volumes spell a target in a way this pipeline
+        maps.
+
+        Returns:
+            The corrected target name and the name shown for it, or ``(None, None)`` if the
+            name is one this pipeline does not describe. Under ``--import-ignore-errors``
+            the name becomes the string ``'None'`` so that the observation still imports.
+        """
         target_name = self._index_col('TARGET_NAME').upper()
         # Note this mapping takes care of the "ATLAS:" case from COUVIS_0053
         if target_name in config_targets.TARGET_NAME_MAPPING:
@@ -68,6 +87,17 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
         return target_name, target_info[2]
 
     def _fix_cassini_sclk(self, count: str | None) -> str | None:
+        """Correct a Cassini spacecraft clock count into the form the parser accepts.
+
+        The instruments do not agree on how they write one: CIRS omits the fractional part,
+        VIMS writes a partition where there is none, and some volumes pad differently.
+
+        Parameters:
+            count: The count as the label spells it.
+
+        Returns:
+            The corrected count, or None if there was none to correct.
+        """
         if count is None:
             return None
 
