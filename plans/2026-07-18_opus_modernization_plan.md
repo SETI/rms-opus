@@ -4692,6 +4692,23 @@ body; never rewrite or delete earlier notes.*
     anyway** -- if it returns any path, discard the run and start it again; a
     convenient-sounding argument that the change "could not have mattered" is not a
     substitute for the empty diff.
+  - **The local integration chain can pass without importing anything, and PR-17 and
+    PR-19 both lean on it.** `opus_import_test_database.sh` runs the import at line 20
+    and **never checks its exit status**; the only gate is `[ -s .../ERRORS.log ]` at
+    line 21, and a missing `ERRORS.log` is not `-s`, so a run where the importer never
+    started reports success and the chain proceeds to the unit tests. Observed here for
+    real: with the venv absent from a background shell's `PATH`, `import_for_tests.sh`
+    died on `python: command not found`, the import stage still exited 0, all three
+    stages "completed" inside the same wall-clock second, and only an unrelated
+    `coverage` failure made the run visible as a failure at all. **Do not accept `exit 0`
+    as evidence the chain ran.** Read the log for the positive observations -- the
+    per-bundle `HEADER | Importing <BUNDLE>` lines (33 bundles plus the dictionary), the
+    `Ran N tests` line, and the coverage `TOTAL` -- and treat a stage that finishes in
+    zero seconds as a failure regardless of its status. Two related traps in the same
+    chain: the wrapper's own exit code is not the script's (`cmd; echo $?` after a pipe
+    reports the *last* command, which produced a green-looking `ruff=0` directly under
+    "Found 2 errors" during this PR), and `opus_main_test.sh` does not invoke
+    `opus_check_coverage.sh` at all.
   - **Reproduce the CI gate command-for-command; do not approximate it.** Two traps cost
     time here. (a) **`ruff check .` is not the gate** -- CI lints
     `RUFF_PATHS="src integration_tests tests manage.py"`, and the repo root holds
