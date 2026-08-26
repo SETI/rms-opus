@@ -14,6 +14,8 @@ pillow >= 10.1
 pip-tools
 pyparsing
 pytest
+pytest-cov
+pytest-django
 pytz
 pyyaml >= 6.0.1
 qrcode
