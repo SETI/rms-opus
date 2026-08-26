@@ -1018,6 +1018,89 @@ def test_an_integer_column_survives_numpy() -> None:
     assert as_int('1294561143') == 1294561143
 
 
+def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() -> None:
+    """Three sites build a string out of an index value; none may do so unchecked.
+
+    `import_util.safe_column` returns None both when a column is absent from the table
+    and when the mask marks it missing, so ``'1/' + count`` and ``bundle + '/' + path``
+    raise `TypeError` and abort the whole bundle rather than reporting one bad
+    observation. All three predate this PR; the guards are what is new.
+
+    The covims pair is the reason this test exists rather than a note. A guard *was*
+    present, and its message named the missing-count case exactly -- but it sat after
+    the concatenation, so the case it named raised two lines earlier, and
+    `_fix_cassini_sclk` returns None only for a None input. It could not fire in either
+    direction. A dead guard is worse than no guard, because it reads as coverage.
+    """
+    from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
+    from opus_import.obs.obs_volume_covims_0xxx import ObsVolumeCOVIMS0xxx
+
+    # An index row with none of the columns these methods read.
+    metadata: dict[str, Any] = {'index_row': {}}
+
+    cocirs = ObsVolumeCOCIRS56xxx(make_context(args=argparse.Namespace()),
+                                  bundle='COCIRS_5408', metadata=metadata)
+    assert cocirs.primary_filespec is None
+
+    covims = ObsVolumeCOVIMS0xxx(make_context(args=argparse.Namespace()),
+                                 bundle='COVIMS_0006', metadata=metadata)
+    assert covims.field_obs_mission_cassini_spacecraft_clock_count1() is None
+    assert covims.field_obs_mission_cassini_spacecraft_clock_count2() is None
+
+    logged = ' '.join(covims._ctx.logger.messages_at('error'))
+    assert 'SPACECRAFT_CLOCK_START_COUNT' in logged
+    assert 'SPACECRAFT_CLOCK_STOP_COUNT' in logged
+
+
+def test_a_missing_filespec_is_reported_on_the_very_first_observation(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """The empty opus_id cache must not answer for an observation that has no filespec.
+
+    `ObsBase` starts the cache at ``(None, None)``, so a `primary_filespec` of None
+    equals `_opus_id_last_filespec` on the first call and used to return the cached None
+    as a *hit* -- skipping the branch that logs the error. The observation that goes
+    unreported is therefore the first invalid one, which is the one a maintainer most
+    needs to hear about, and nothing downstream can tell "no id" from "cached no id".
+
+    Driven twice because a check placed after the cache lookup passes the second call
+    and fails only the first.
+    """
+    cls = _class_by_name(_MISSION_FIXTURES['COISS']['class_name'])
+    monkeypatch.setattr(cls, 'primary_filespec', property(lambda self: None))
+    instrument = cls(make_context(args=argparse.Namespace()), bundle='TEST_BUNDLE')
+
+    assert instrument.opus_id is None
+    assert instrument.opus_id is None
+
+    logger = instrument._ctx.logger
+    errors = [m for m in logger.messages_at('error') if 'no filespec' in m]
+    assert errors, f'nothing logged; saw {logger.messages}'
+
+
+def test_as_int_refuses_to_round() -> None:
+    """A non-integral value raises rather than being truncated into the column.
+
+    `int(3.7)` is 3 with no complaint, so a truncating `as_int` would store a value the
+    source never held, in a column whose schema says integer, and every check after that
+    point would pass. That is the failure this whole annotation pass exists to prevent,
+    so it has to be an error rather than a silent repair -- `import_run_field_function`
+    reports it and leaves the column empty.
+    """
+    for value in (3.7, -0.5, np.float64(2.5)):
+        with pytest.raises(ValueError, match='not an integer'):
+            as_int(value)
+
+    # An integral float is not a rounding error, and is still accepted.
+    assert as_int(3.0) == 3
+    assert as_int(np.float64(9.0)) == 9
+
+    # A digit string is exempt from the round-trip check, because `12 != '12'` would
+    # otherwise reject every valid one; `int` already rejects a non-integral string.
+    assert as_int('12') == 12
+    with pytest.raises(ValueError):
+        as_int('3.7')
+
+
 @pytest.mark.parametrize('instrument_id', sorted(_MISSION_FIXTURES))
 def test_an_integer_column_is_an_int_even_from_a_numpy_index(
         instrument_id: str) -> None:
