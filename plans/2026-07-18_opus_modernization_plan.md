@@ -1009,7 +1009,8 @@ its own mypy.ini) is folded into the same strict config.
   | anything else | `int*`/`uint*` | `IntField = int \| None` |
 
   Measured to cover all 1202 `field_obs_*` definitions with no residue. **`FlagField` is
-  retired** — it has no user, and `MultField['col_val']` carries `str | int | None` honestly.
+  retired** — it has no user, and `MultField['col_val']` carries that union honestly (see the
+  corrected type two entries below; do not read this sentence as pinning it).
   `field_type: json` (one column, `obs_general.preview_images`) folds into `StrField`.
   **Two `MultField` value types are corrected against the tree:** `col_val: str | int | float | None`
   (widened again during PR-16's pass-2 mutation testing, which found the declaration false at
