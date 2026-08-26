@@ -4669,7 +4669,13 @@ body; never rewrite or delete earlier notes.*
        `tests/opus_import/_source_scan.py`: the traversal lives in one module the
        source-reading tests import, so a future scan cannot reintroduce either blind
        spot without deliberately not using it. **Import the traversal; do not write it
-       again.** Measured when the shared helper went in: the reintroduced `cls.body`
+       again.** The two halves of that helper are *not* equally protected, and the
+       difference is worth carrying: mutating `rglob` back to `glob` **is** caught,
+       because `_int_returning_functions` scans `src/opus_import`, which has real
+       subpackages -- while mutating the nested-method walk back to `cls.body` is
+       **not**, because nothing in `obs/` currently defines a method inside an ``if``.
+       The first half has a test behind it; the second is a structural guarantee only,
+       and stays true exactly as long as the traversal is not rewritten by hand. Measured when the shared helper went in: the reintroduced `cls.body`
        scan was missing 0 definitions *today* -- `obs/` is flat and nothing nests a
        method in an ``if`` -- so this was latent rather than live, which is exactly why
        it survived review twice. And a floor that a partial scan clears is a weak
