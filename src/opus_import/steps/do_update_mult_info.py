@@ -2,15 +2,12 @@
 
 A ``mult_`` table holds the enumerated values one column can take, along with how the
 web application should present them. Where a table schema pins those presentation
-details in a ``mult_options`` entry, this step is meant to copy them over whatever the
-import wrote, so that editing a schema is enough to change a label or a sort order
-without re-importing.
+details in a ``mult_options`` entry, this step copies them over whatever the import
+wrote, so that editing a schema is enough to change a label or a sort order without
+re-importing.
 
-It cannot currently do that. Every ``mult_options`` entry in the packaged table schemas
-carries seven values and `update_mult_info` unpacks six, so the step raises
-`ValueError` at the first table that has any. Nothing else calls it and
-``--update-mult-info`` is not implied by ``--do-it-all``, which is why the fault is
-invisible to an ordinary import run.
+The step runs only when ``--update-mult-info`` is given; nothing else calls it, and
+``--do-it-all`` does not imply it.
 """
 
 from __future__ import annotations
@@ -18,6 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from opus_import import import_util
+from opus_import.import_util import MultOption
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -31,13 +29,20 @@ def update_mult_info(ctx: ImportContext) -> None:
     cannot be found is reported and skipped rather than aborting the run, and a column
     with no ``mult_options`` entry is left exactly as the import wrote it.
 
+    Every presentation column a schema pins is written: the label, the sort key, whether
+    the value is offered in the search form, the group it belongs to and that group's
+    sort key. The value itself and the row id are not touched -- the id is what the
+    ``obs_`` rows already reference, and the value is what a row means rather than how it
+    is shown.
+
     Parameters:
         ctx: The import run's context, for the open database and the logger.
 
     Raises:
-        ValueError: At the first column that has ``mult_options``, because the unpacking
-            below takes six values and every packaged entry carries seven. No table is
-            updated before that happens.
+        TypeError: If a ``mult_options`` entry does not carry exactly the seven values
+            `opus_import.import_util.MultOption` names. That is a fault in the packaged
+            schema, and stopping is better than writing a row built from values that
+            landed in the wrong columns.
     """
     db = ctx.db
     assert db is not None
@@ -47,27 +52,39 @@ def update_mult_info(ctx: ImportContext) -> None:
     table_names = db.table_names('perm', prefix='mult_')
 
     for table_name in table_names:
-        # Try to figure out what the table name is
+        # A mult table's name is its observation table's name joined to its column's,
+        # and both halves contain underscores, so where the split falls has to be
+        # decided by trying them. A table name alone is not enough to decide it: both
+        # `obs_surface_geometry` and `obs_surface_geometry_name` are real tables, so
+        # `mult_obs_surface_geometry_name_target_name` matches a schema at the shorter
+        # split and only the longer one leaves a column that exists. The split is
+        # therefore the one where the schema *and* the column both resolve.
         splits = table_name.split('_')
         table_schema = None
-        for n_splits in range(3, 6):
-            # Covers mult_obs_general to mult_obs_mission_new_horizons
+        column = None
+        for n_splits in range(3, len(splits)):
             trial_name = '_'.join(splits[1:n_splits])
-            table_schema = import_util.read_schema_for_table(ctx, trial_name)
-            if table_schema is not None:
+            trial_schema = import_util.read_schema_for_table(ctx, trial_name)
+            if trial_schema is None:
+                continue
+            if table_schema is None:
+                # Remembered so that a table whose column resolves nowhere is reported
+                # against a schema that exists, rather than as an unknown table.
+                table_schema = trial_schema
+            mult_field_name = '_'.join(splits[n_splits:])
+            for trial_column in trial_schema:
+                if trial_column['field_name'] == mult_field_name:
+                    table_schema, column = trial_schema, trial_column
+                    break
+            if column is not None:
                 break
         if table_schema is None:
             logger.log('error',
                 f'Unable to find table schema for mult "{table_name}"')
             continue
-        mult_field_name = '_'.join(splits[n_splits:])
-        for column in table_schema:
-            field_name = column['field_name']
-            if field_name == mult_field_name:
-                break
-        else:
+        if column is None:
             logger.log('error',
-        f'Unable to find field "{mult_field_name}" in table "{table_name}"')
+                f'Unable to find a column matching mult table "{table_name}"')
             continue
 
         mult_options = column.get('mult_options', False)
@@ -75,14 +92,16 @@ def update_mult_info(ctx: ImportContext) -> None:
             continue
 
         for mult_info in mult_options:
-            id_num, _value, label, disp_order, display, _definition = mult_info
+            option = MultOption(*mult_info)
 
             row_dict = {
-                'label': str(label),
-                'disp_order': disp_order,
-                'display': display
+                'label': str(option.label),
+                'disp_order': option.disp_order,
+                'display': option.display,
+                'grouping': option.grouping,
+                'group_disp_order': option.group_disp_order,
             }
 
             db.update_row('perm', table_name, row_dict,
                           f'{db.quote_identifier("id")}=%s',
-                          where_params=[id_num])
+                          where_params=[option.id])

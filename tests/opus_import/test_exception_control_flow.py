@@ -32,6 +32,8 @@ import pytest
 import opus_import.obs
 from opus_import.importdb import ImportDBError
 
+from ._source_scan import module_files
+
 #: Every operation on `ImportDBSuper` that can raise `ImportDBError`, plus the attributes
 #: the pipeline reaches the database through: `ImportContext.db` today, and the
 #: `impglobals.DATABASE` global it replaced. `DATABASE` is kept because a module that
@@ -56,11 +58,19 @@ _DB_MODULES = ('opus_import.importdb', 'opus_import.steps')
 _DB_TAILS = frozenset({'importdb', 'steps'})
 
 _OBS_DIR = Path(opus_import.obs.__file__).parent
-_OBS_MODULES = sorted(_OBS_DIR.glob('*.py'))
+#: Via `_source_scan`, not a local glob: a scan that sees part of the tree still passes,
+#: so the traversal is shared to keep the two blind spots described there out of it.
+_OBS_MODULES = module_files(_OBS_DIR)
 
 
 def test_the_sweep_below_actually_has_modules_to_sweep() -> None:
-    """Guard against the glob silently matching nothing and the sweep passing vacuously."""
+    """Guard against the glob silently matching nothing and the sweep passing vacuously.
+
+    This is a floor, and it is worth being clear about what it does not do: 40 is well
+    under the 57 modules present, so it catches a traversal that collapses to nothing or
+    nearly nothing, and not one that quietly drops a handful. The protection against
+    *that* is `_source_scan` being the only traversal, rather than this number.
+    """
     assert len(_OBS_MODULES) > 40
 
 

@@ -69,7 +69,7 @@ In addition to the fields corresponding to the metadata available in the UI, eac
 - `obs_general_id`: An integer corresponding to the `id` field in the `obs_general` table. This field is used to join multiple tables together so that a single joined row has all of the metadata from all of the relevant tables. This field does not exist in the `obs_general` table itself.
 - `opus_id`: The OPUS ID of the row
 - `bundle_id`: The PDS3 Volume ID of the row
-- `instrument_id`: The PDS3 Instrument ID of the row
+- `instrument_id`: The PDS3 Instrument ID of the row. Unlike the others in this list, this one is not in every `obs_*` table: the per-instrument tables do not carry it (the table's own name already says which instrument it is), and neither do the Galileo and Voyager mission tables. Read the table's schema in `table_schemas/` rather than assuming it is there.
 - `id`: An integer that can be used to quickly index a row in the table
 - `timestamp`: A date/time field that records when the row was last updated
 

@@ -29,6 +29,9 @@ import traceback
 from typing import TYPE_CHECKING, Any
 
 from opus_import import config_data, import_util
+from opus_import.obs.obs_base import ObsBase
+from opus_import.obs.obs_ring_geometry import ObsRingGeometry
+from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_mult
 
 if TYPE_CHECKING:
@@ -36,7 +39,7 @@ if TYPE_CHECKING:
     from opus_import.import_util import TableSchema
 
 
-def import_observation_table(ctx: ImportContext, instrument_obj: Any,
+def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                              table_name: str,
                              table_schema: TableSchema,
                              metadata: dict[str, Any]) -> dict[str, Any] | None:
@@ -356,13 +359,39 @@ def import_observation_table(ctx: ImportContext, instrument_obj: Any,
 
     if not ctx.args.import_ignore_geo_mismatch:
         if table_name == 'obs_ring_geometry':
+            # A geometry table is only ever filled by a class that mixes in the module
+            # defining it, which every class in config_bundle_info does.
+            assert isinstance(instrument_obj, ObsRingGeometry)
             instrument_obj.validate_ring_geo_fields(new_row, metadata)
         elif table_name.startswith('obs_surface_geometry__'):
+            assert isinstance(instrument_obj, ObsSurfaceGeometryTarget)
             instrument_obj.validate_surface_geo_fields(new_row, metadata, table_name)
 
     return new_row
 
-def import_run_field_function(ctx: ImportContext, instrument_obj: Any,
+def field_function_name(table_name: str, field_name: str) -> str:
+    """Return the name of the obs method that computes one column.
+
+    This is the pipeline's only rule for finding a field method, so a method whose name
+    it cannot produce is a method that is never called.
+    ``tests/opus_import/test_obs_field_annotations.py`` resolves the hierarchy against
+    the schemas through this function rather than restating it, so that changing the
+    rule here changes what that test checks.
+
+    Parameters:
+        table_name: The table being filled. Every ``obs_surface_geometry__<TARGET>``
+            table shares the methods named for ``obs_surface_geometry_target``, since
+            they are all built from that one template.
+        field_name: The column being computed.
+
+    Returns:
+        The method name, such as ``field_obs_general_opus_id``.
+    """
+    if table_name.startswith('obs_surface_geometry__'):
+        table_name = 'obs_surface_geometry_target'
+    return 'field_'+table_name+'_'+field_name
+
+def import_run_field_function(ctx: ImportContext, instrument_obj: ObsBase,
                               table_name: str, table_schema: TableSchema,
                               metadata: dict[str, Any],
                               field_name: str) -> tuple[bool, Any]:
@@ -387,9 +416,7 @@ def import_run_field_function(ctx: ImportContext, instrument_obj: Any,
         and the reason -- no such method, or an exception with its traceback -- has been
         logged as an error.
     """
-    if table_name.startswith('obs_surface_geometry__'):
-        table_name = 'obs_surface_geometry_target'
-    func_name = 'field_'+table_name+'_'+field_name
+    func_name = field_function_name(table_name, field_name)
     if (not hasattr(instrument_obj, func_name) or
         not callable(func := getattr(instrument_obj, func_name))):
         class_name = type(instrument_obj).__name__

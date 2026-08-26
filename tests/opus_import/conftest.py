@@ -63,3 +63,4 @@ def _opus_config(ci_config_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     process-wide cache is cleared around every test by the root conftest.
     """
     monkeypatch.setenv(OPUS_CONFIG_ENV_VAR, str(ci_config_path))
+

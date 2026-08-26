@@ -1,22 +1,30 @@
-################################################################################
-# obs_volume_hstix_xxxx.py
-#
-# Defines the ObsVolumeHSTIxxxxx class, which encapsulates fields in the
-# common and obs_mission_hubble tables for the HST WFC3 instrument for
-# HSTIx_xxxx. Note HST does not have separate tables for each instrument but
-# combines them all together.
-################################################################################
+"""The obs class for HSTIx_xxxx.
 
+HST WFC3 observations.
+"""
+
+
+from opus_import.obs.field_types import IntField, MultFieldRet, as_int
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """The HST WFC3 observations of HSTIx_xxxx.
 
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
-    def _wfc3_spec_flag(self):
+    def _wfc3_spec_flag(self) -> tuple[bool, str, str | None] | None:
+        """Decide whether this WFC3 observation is spectroscopic, from its filter.
+
+        Returns:
+            Whether the filter is a grism, followed by the two filter names, or None if
+            the
+            label carries a second filter -- which WFC3 has no wheel for, and which is
+            logged as an error.
+        """
         filter1, filter2 = self._decode_filters()
         if filter2 is not None:
             self._log_nonrepeating_error('filter2 not None')
@@ -29,7 +37,8 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``HSTWFC3``."""
         return 'HSTWFC3'
 
 
@@ -37,12 +46,21 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def _observation_type(self):
-        if self._wfc3_spec_flag()[0]:
+    def _observation_type(self) -> str | None:
+        """Whether this observation is an image or a spectral image.
+
+        Returns:
+            ``'SPI'`` through a grism and ``'IMG'`` otherwise, or None if the filter could
+            not be decoded.
+        """
+        spec_flag = self._wfc3_spec_flag()
+        if spec_flag is None:
+            return None
+        if spec_flag[0]:
             return 'SPI'
         return 'IMG'
 
-    def field_obs_general_observation_type(self):
+    def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
 
 
@@ -50,7 +68,7 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
 
-    def field_obs_type_image_levels(self):
+    def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
         return SIXTEEN_BIT_IMAGE_LEVELS # WFC3 Inst Handbook, Sec 2.2.3
@@ -60,13 +78,19 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_spec_flag(self):
-        if self._wfc3_spec_flag()[0]:
+    def field_obs_wavelength_spec_flag(self) -> MultFieldRet:
+        spec_flag = self._wfc3_spec_flag()
+        if spec_flag is None:
+            return self._create_mult(None)
+        if spec_flag[0]:
             return self._create_mult('Y')
         return self._create_mult('N')
 
-    def field_obs_wavelength_spec_size(self):
-        spec_flag, filter1, _filter2 = self._wfc3_spec_flag()
+    def field_obs_wavelength_spec_size(self) -> IntField:
+        wfc3_spec_flag = self._wfc3_spec_flag()
+        if wfc3_spec_flag is None:
+            return None
+        spec_flag, filter1, _filter2 = wfc3_spec_flag
         if not spec_flag:
             return None
 
@@ -86,16 +110,16 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
         else:
             raise NotImplementedError(filter1)
 
-        spec_size = bw // wr
+        spec_size = int(bw // wr)
 
         lines = self._index_col('LINES')
         samples = self._index_col('LINE_SAMPLES')
         if lines is None or samples is None:
             return spec_size
 
-        return min(max(lines, samples), spec_size)
+        return as_int(min(max(lines, samples), spec_size))
 
-    def field_obs_wavelength_polarization_type(self):
+    def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         return self._create_mult('NONE')
 
 
@@ -103,7 +127,7 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
 
-    def field_obs_mission_hubble_filter_type(self):
+    def field_obs_mission_hubble_filter_type(self) -> MultFieldRet:
         filter1, filter2 = self._decode_filters()
 
         # WFC3 doesn't do filter stacking

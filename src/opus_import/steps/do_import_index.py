@@ -136,6 +136,10 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                 for row_no in row_nos:
                     orig_filespec = instrument_obj.primary_filespec_from_index_row(
                                             obs_rows[row_no], convert_lbl=True)
+                    if orig_filespec is None:
+                        # A row that names no file cannot be the one this OPUS ID came
+                        # from.
+                        continue
                     orig_filespec = instrument_obj.convert_filespec_from_lbl(
                                                                         orig_filespec)
                     if orig_filespec in deriv_filespec:
@@ -161,7 +165,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                     orig_filespec = instrument_obj.primary_filespec_from_index_row(
                                                     obs_rows[row_no], convert_lbl=True)
                     sfx = ' (chosen)' if row_no == good_row else ''
-                    import_util.log_info(ctx, '  '+orig_filespec+sfx)
+                    import_util.log_info(ctx, '  '+str(orig_filespec)+sfx)
 
         old_obs_rows = obs_rows
         obs_rows = []
@@ -173,7 +177,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                 import_util.log_info(
                     ctx,
                     'Dropping index row '+
-                    instrument_obj.primary_filespec_from_index_row(row))
+                    str(instrument_obj.primary_filespec_from_index_row(row)))
 
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
@@ -385,6 +389,9 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
         # currently work with CIRS, which makes the logging not give full
         # row information.
         primary_filespec = instrument_obj.primary_filespec
+        # Every observation reaching this point came from an index row that named a
+        # file; an obs class returns None only for a row that did not.
+        assert primary_filespec is not None
         primary_filespec = instrument_obj.convert_filespec_from_lbl(primary_filespec)
         ctx.current_primary_filespec = primary_filespec
         primary_filespec = primary_filespec.upper()
@@ -411,6 +418,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
             primary_filespec_phase = instrument_obj.primary_filespec_from_index_row(
                                                             index_row, convert_lbl=True,
                                                             add_phase_from_inst=True)
+            assert primary_filespec_phase is not None
             primary_filespec_phase = primary_filespec_phase.upper()
             if 'ring_geo' in metadata:
                 ring_geo = metadata['ring_geo'].get(primary_filespec_phase, None)
@@ -522,7 +530,8 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                               f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(obs_row)
 
-            if instrument_obj.surface_geo_target_list():
+            inline_surface_geo_targets = instrument_obj.surface_geo_target_list()
+            if inline_surface_geo_targets:
                 # The are some cases (like COCIRS_[01]xxx) where the index files
                 # contain the surface geo information instead of a separate
                 # summary file. In these cases we ask the instrument for the list of
@@ -536,7 +545,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                     # obs_surface_geometry as well as all of the
                     # obs_surface_geometry__<TARGET> tables
 
-                    for target_name in instrument_obj.surface_geo_target_list():
+                    for target_name in inline_surface_geo_targets:
                         used_targets.add(target_name)
                         # Note the following only affects
                         # obs_surface_geometry__<T> not the generalized

@@ -4584,3 +4584,395 @@ body; never rewrite or delete earlier notes.*
     for the coverage totals not to move at all. What the run does prove is the import
     itself -- the assertions and the three fixes above survive a real 30-bundle import
     with no ERRORS.log entries.
+- **2026-08-25 (PR-16 executed):** the `obs` hierarchy is annotated against the packaged
+  table schemas, the type burn-down list has lost `opus_import.obs.*` and
+  `tests.opus_import.*`, and a two-layer test holds the annotations and the schemas
+  together. Facts later PRs rely on:
+  - **The decision table in the plan body could not be followed, and the orchestrator
+    ratified a replacement on 2026-08-25.** The plan keyed the alias on `field_type`;
+    the determinant is `pi_form_type`. A column whose form type is `GROUP` stores an
+    index into a `mult_` table whatever its storage type is --
+    `ImportDBMySQL.create_table` gives `flag_yesno`, `flag_onoff` and `mult_idx` the
+    same `int unsigned` -- so its method returns a mult dictionary rather than a scalar,
+    and `do_import_obs.import_observation_table` treats a bare value from a group column
+    as fatal (it logs `bad data type returned for mult` and discards the whole
+    observation, not just the column). Measured then: of 90 GROUP/MULTIGROUP columns, 18
+    are not `mult_idx`/`mult_list`, and following the plan's table would have annotated
+    50 method definitions as scalars that demonstrably return dictionaries. The ratified
+    table is form-type first, and it lives in
+    `tests/opus_import/test_obs_field_annotations.py`'s `_alias_for`, which is the only
+    copy: **read it there rather than from the plan body or from here.** `FlagField` was
+    retired with the old table -- it had no user -- and `json` folds into `StrField`.
+  - **`MultField`'s value types were corrected against the tree, and a later reader
+    should not "fix" them back.** The plan gave `col_val: str | None` and
+    `group_disp_order: int | None`. Measured: `obs_volume_vg2810` passes the literal `0`
+    for `filter_number` and the VGISS and GOSSI `filter_number` methods pass a PDS index
+    column that holds an integer. Pass 2's mutation testing then falsified even that:
+    GOSSI `frame_duration` passes a column the labels declare `ASCII_REAL`, so
+    `col_val` is `str | int | float | None` -- a genuine widening of the declared
+    domain rather than a numpy artifact, and rev 7.19 was amended to match. Every value
+    that reaches `group_disp_order` is text -- both obs call sites pass a
+    `PLANET_GROUP_MAPPING` entry's `'010'`-style `disp_order`, and of the 410
+    `mult_options` entries in the packaged schemas the 54 that set the equivalent column
+    set it to a string, none to a number. **Two keys are carried and read by nothing:**
+    no code anywhere reads `MultField['tooltip']` (a `mult_` table has no such column)
+    and no obs class passes `tooltip` or `aliases`, so both are None in every row this
+    pipeline writes. They are kept because the plan pins them, not because they do
+    anything.
+  - **The two-layer test is the artifact to extend, not to re-derive.**
+    `tests/opus_import/test_obs_field_annotations.py` reads every field method out of
+    the source, resolves it against the schema, and requires the declared type to be
+    that column's alias; it also fails on a method no column names, on a computed column
+    no leaf class can answer, and on a computed column the table does not cover. Its
+    second layer builds one instrument per mission from a metadata fixture and checks
+    the runtime type of every value returned. **The layers are checked by mutation, and a later PR that changes them must re-run
+    that rather than reason about it.** The first version of this file passed a
+    mutation set the executor chose and failed four an independent reviewer chose --
+    a field method raising, `ObsBase._index_col` raising, a geometry column renamed to
+    one that does not exist, and a transposition inside `MultOption` all left it green.
+    The set it now survives is in the PR description; the lesson is that **the mutations
+    worth running are the ones you did not think of**, so hand the job to someone who
+    is trying to break it. A second reviewer, briefed only to break them, then ran 51
+    more and found six further classes; the file survives 21 recorded mutations now.
+    **The four blind spots worth knowing in advance**, because any schema-versus-code
+    test will have them:
+    1. **A type check cannot see a wrong value.** A unit conversion, a transposed pair,
+       an inverted branch and a column swapped for a *different real one* all keep the
+       type. That is closed here by recording every value all six missions produce in
+       `tests/opus_import/fixtures/obs_field_values.json` and comparing -- regenerate it
+       with ``pytest ... --regenerate-obs-values`` and read the diff, because every line
+       of it is a change in what the import would store. **PR-19 should decide
+       deliberately whether to absorb or supersede that fixture**: it builds the
+       holdings-free suite over `mini_holdings`, which is the same job at greater
+       breadth, and two golden files covering overlapping ground is worth avoiding.
+       Discovering the overlap late is the failure mode to prevent -- this one is 1405
+       values from 6 leaf classes driven off synthetic metadata, and its scope note is
+       in the test's own docstring.
+    2. **A test that re-implements the rule it is checking checks nothing.** Layer 1 had
+       its own copy of how `import_run_field_function` builds a method name, so changing
+       the production rule left every test green. The rule is
+       `opus_import.steps.do_import_obs.field_function_name` now and the test calls it.
+       That change also exposed a fault in the test: matching a method name **by prefix**
+       also matches a longer table's, so `obs_surface_geometry` was claiming the
+       `obs_surface_geometry_name` and `obs_surface_geometry_target` methods and driving
+       66 methods twice under the wrong table.
+    3. **A stub that logs before raising is still a stub.** A check that counts
+       statements calls it covered.
+    4. **An AST scan sees only what it walks, and a partial scan passes.**
+       ``glob('*.py')`` misses a subpackage and ``cls.body`` misses a method nested in an
+       ``if``; both make a definition invisible to every source-level check, and neither
+       announces itself, because the result of under-scanning is a green test. Both were
+       written here, both were fixed, and then **`cls.body` was reintroduced a few
+       hundred lines below the fix, in the same file**, by a scan written afterwards --
+       the floor of `> 50` could not catch it, since a scan seeing a third of the tree
+       still clears 50. The fix that closes the class rather than the instance is
+       `tests/opus_import/_source_scan.py`: the traversal lives in one module the
+       source-reading tests import, so a future scan cannot reintroduce either blind
+       spot without deliberately not using it. **Import the traversal; do not write it
+       again.** The two halves of that helper are *not* equally protected, and the
+       difference is worth carrying: mutating `rglob` back to `glob` **is** caught,
+       because `_int_returning_functions` scans `src/opus_import`, which has real
+       subpackages -- while mutating the nested-method walk back to `cls.body` is
+       **not**, because nothing in `obs/` currently defines a method inside an ``if``.
+       The first half has a test behind it; the second is a structural guarantee only,
+       and stays true exactly as long as the traversal is not rewritten by hand. Measured when the shared helper went in: the reintroduced `cls.body`
+       scan was missing 0 definitions *today* -- `obs/` is flat and nothing nests a
+       method in an ``if`` -- so this was latent rather than live, which is exactly why
+       it survived review twice. And a floor that a partial scan clears is a weak
+       assertion in general: where a count can be derived from an independent traversal,
+       assert against that instead of a constant, and where it cannot, say in the
+       docstring what the floor does *not* protect against.
+    The behavioral layer found a real defect on its first run, which is the argument for
+    keeping it: `field_obs_instrument_coiss_image_number` declared an integer for an
+    `int4` column and returned the index column verbatim, which COISS_2002's own
+    `index.lbl` declares `CHARACTER`. Only the database's coercion was making the stored
+    value an integer.
+  - **Do not modify the tree while a long run is live -- and expect to want to.** The
+    local integration chain is 30-45 minutes, and PR-17 and PR-19 both face it against a
+    `rewrite` that may have moved. Changing the tree under a running test (a rebase, an
+    edit, a `git checkout`) can invalidate the result *silently*: it yields a pass or a
+    failure describing no tree that ever existed.
+
+    **The failure here was structural, not carelessness, which is why the rule is
+    phrased as it is.** PR-16 broke this three separate times in one session, each time
+    having just written or read the rule. The reason is that a 30-45 minute wait is
+    precisely when there is time to do useful work, so the incentive to touch the tree
+    peaks exactly when it is most harmful. A rule phrased as "don't" loses to that. The
+    operational form that survives it: **queue tree edits while a run is live and apply
+    them after** -- write the change as a script in a scratch directory, then run it
+    when the chain reports. That converts the waiting time into real work without
+    touching the tree, which is what the bare prohibition failed to offer.
+
+    **The check, when it happens anyway:** `git diff <pre-run> HEAD --name-only -- src
+    tests/opus_support integration_tests`. If it returns any path, discard the run and
+    start it again; a convenient-sounding argument that the change "could not have
+    mattered" is not a substitute for the empty diff. The argument is *always* available
+    after the fact, which is what makes it untrustworthy rather than whether it happens
+    to be true -- it was true on PR-16's run 7, which was discarded anyway.
+
+    **Those three paths are the whole scope, deliberately.** `run_coverage.sh` executes
+    exactly two suites -- `pytest tests/opus_support` and `manage.py test -b
+    integration_tests` -- plus the import against `src`. **`tests/opus_import` is never
+    collected by the chain**, so an edit there cannot affect a run and must not trigger
+    a re-run. That precision is load-bearing in both directions: a check that fires on
+    untouched paths costs a needless 9 minutes, gets renegotiated the second time, and
+    is then not a check at all. State what a check covers *and* what it deliberately
+    does not.
+  - **The local integration chain can pass without importing anything, and PR-17 and
+    PR-19 both lean on it.** `opus_import_test_database.sh` runs the import at line 20
+    and **never checks its exit status**; the only gate is `[ -s .../ERRORS.log ]` at
+    line 21, and a missing `ERRORS.log` is not `-s`, so a run where the importer never
+    started reports success and the chain proceeds to the unit tests. Observed here for
+    real: with the venv absent from a background shell's `PATH`, `import_for_tests.sh`
+    died on `python: command not found`, the import stage still exited 0, all three
+    stages "completed" inside the same wall-clock second, and only an unrelated
+    `coverage` failure made the run visible as a failure at all. **Do not accept `exit 0`
+    as evidence the chain ran.** Read the log for the positive observations -- the
+    per-bundle `HEADER | Importing <BUNDLE>` lines (33 bundles plus the dictionary), the
+    `Ran N tests` line, and the coverage `TOTAL` -- and treat a stage that finishes in
+    zero seconds as a failure regardless of its status. Two related traps in the same
+    chain: the wrapper's own exit code is not the script's (`cmd; echo $?` after a pipe
+    reports the *last* command, which produced a green-looking `ruff=0` directly under
+    "Found 2 errors" during this PR), and `opus_main_test.sh` does not invoke
+    `opus_check_coverage.sh` at all.
+  - **Reproduce the CI gate command-for-command; do not approximate it.** Two traps cost
+    time here. (a) **`ruff check .` is not the gate** -- CI lints
+    `RUFF_PATHS="src integration_tests tests manage.py"`, and the repo root holds
+    `vulture_whitelist.py`, which is deliberately outside that scope (its own header says
+    so) and trips `B018`+`F821` by construction, because a bare name is exactly what a
+    vulture whitelist is. Linting `.` reports two errors CI does not have. (b) **`mypy`
+    without `OPUS_CONFIG` set does not fail, it crashes** -- `INTERNAL ERROR ... Error
+    constructing plugin instance of NewSemanalDjangoPlugin`, which names the plugin and
+    not the cause. `run-tests.yml` sets `OPUS_CONFIG: tests/fixtures/opus_ci.toml` at
+    workflow level; set it locally or the type gate is unrunnable. Also note
+    `opus_main_test.sh` does **not** call `opus_check_coverage.sh` -- it leaves
+    `coverage_report.txt` in the repo root and CI checks it in a later step, so a local
+    run proving "100%" has to run that script itself.
+  - **Three crash-on-None sites in the obs hierarchy, two fixed here and one class to
+    watch for.** All three predate this PR and share a shape: a value read from a PDS
+    index is concatenated into a string without checking it, and `_index_col` returns
+    None both when the column is absent and when the table's mask marks it missing. The
+    fix in each case is the *established* shape rather than a new one -- `ObsBase.opus_id`
+    and the PDS3 filespec helpers already treat a None filespec as "this observation has
+    no filespec", log it and return None. Fixed: `obs_volume_cocirs_56xxx.primary_filespec`
+    (`self.bundle + '/' + filespec`, `TypeError` and the bundle aborts, triggered by a
+    COCIRS_5xxx/6xxx row whose `SPECTRUM_FILE_SPECIFICATION` is absent or masked) and
+    `obs_volume_covims_0xxx`'s two `spacecraft_clock_count` methods (`'1/' + count`, same
+    mechanism, on a missing `SPACECRAFT_CLOCK_START_COUNT`/`STOP_COUNT`). **The covims one
+    carries a lesson worth more than the fix**: PR-16 added a `if sc is None: log; return`
+    guard to those methods whose message named the missing-count case exactly -- and the
+    guard was unreachable in both directions, because the missing case raises two lines
+    earlier and `_fix_cassini_sclk` returns None only for a None input. A guard that
+    cannot fire is worse than no guard: it tells a reader the case is handled. **Check
+    the raw value, not the derived one.**
+  - **`as_int` raises on a non-integral value rather than truncating.** `int(3.7)` is 3
+    with no error, so a `float` reaching an `IntField` column would have been stored
+    silently rounded -- changed data that passes every downstream check, which is the
+    exact failure this annotation work exists to prevent. It now raises `ValueError`,
+    which `import_run_field_function` reports while leaving the column empty. A string is
+    exempted from the round-trip check because `int` already rejects a non-integral
+    string and `12 != '12'` would otherwise fire on every valid digit string.
+  - **Where the aliases live and what they mean.**
+    `opus_import/obs/field_types.py` holds `StrField`, `FloatField`, `IntField`, the
+    `MultField` TypedDict and `MultFieldRet`. The module is named `field_types` and not
+    `typing` because ruff's `A005` forbids shadowing a standard-library module name --
+    PR-17 and PR-21 should not "tidy" that.
+  - **Two idioms run through the hierarchy, and they mean different things.** A `cast`
+    marks the boundary where untyped PDS index data is asserted to be what the schema
+    says: `ObsBase._index_col` and its siblings return `Any` because a PDS index is
+    untyped as far as this code is concerned, and mypy cannot check the claim. An
+    `assert x is not None` marks an invariant the checker cannot follow but that the code
+    already relied on -- a bundle that always carries the geometry a formula reads.
+    Regenerate the counts with `grep -c` rather than carrying them; PR-14's note prefers
+    an annotated local to a `cast`, and this PR deviated deliberately, because at this
+    scale the local form doubles a third of the method bodies without saying anything the
+    `cast` does not. **The three geometry readers are the exception and need neither**:
+    `_ring_geo_index_col`, `_surface_geo_index_col` and `_sky_geo_index_col` declare
+    `FloatField` directly, because every column of a geometry summary file is one and
+    every caller of all three declares a float -- measured over all 156 call sites at
+    this PR, with no exception. Annotating them was worth doing first: it takes a large
+    block of the hierarchy out of the boundary entirely.
+  - **Nothing in the hierarchy changed method resolution, and that was measured rather
+    than argued.** Dumping each of the 25 leaf classes' MRO and the defining class of
+    every attribute at `7691a720` and at this tree: **no leaf class's MRO list changed at
+    all**, and the only names whose defining class moved are `__dict__`, `__weakref__`
+    and `__init__` (to `ObsBase`, from the deletions below) plus the one renamed helper.
+    The script takes two trees and is worth re-running after any change to a base class
+    list; `git archive <rev> | tar -x -C <dir>` plus `PYTHONPATH` is how the two trees
+    were driven.
+  - **Three deletions, each provably inert, and why they were in an annotation PR.**
+    `ObsGeneral`, `ObsPds` and `ObsProfile` now derive from `ObsBase`, which they already
+    did in every combination the pipeline builds; without it, every use of an inherited
+    attribute in those three modules was an error the checker could not resolve. The 52 `__init__` overrides that
+    only forwarded to `super()` are gone, so every leaf resolves `__init__` to `ObsBase`,
+    where each of those chains ended. And 17 `field_obs_..._instrument_id` methods are
+    gone: `import_run_field_function` builds the name it looks up from a schema column,
+    and the deleted names answer to none. **The rule, not the list, is what to
+    regenerate** -- and it is narrower than it first looks: of the 8 `obs_instrument_*`
+    schemas none declares an `instrument_id` column, but of the 5 `obs_mission_*` ones
+    three do (Cassini, Hubble, New Horizons) and their methods are kept; only the Galileo
+    and Voyager ones, whose schemas have no such column, were deleted. **They were
+    deleted rather than exempted** because an exemption would have had to be a
+    hand-maintained list of code sites and would also have hidden a mistyped method name,
+    which is the mistake the rule most usefully catches.
+  - **`--update-mult-info` works now, and the shape it reads is named once.**
+    `import_util.MultOption` is a `NamedTuple` of the seven values a `mult_options` entry
+    carries (`id, value, label, disp_order, display, grouping, group_disp_order`); both
+    readers build one instead of decoding positions, so an entry of the wrong length
+    raises at the entry rather than writing a mangled row. Re-measured from scratch: 410
+    entries in 15 files, all of length seven. The step also writes the grouping pair,
+    which the six-value unpack could never reach -- 54 of the 410 entries pin a
+    `grouping` and a `group_disp_order`, so an update stopping at `display` left a schema
+    edit half-applied.
+    **A second fault in the same step was found only by driving it over every table the
+    schemas imply.** A mult table's name is its observation table's name joined to its
+    column's, and both halves contain underscores, so the split has to be found by
+    trying; the loop took the first split whose *schema* resolved, and since
+    `obs_surface_geometry` and `obs_surface_geometry_name` are both real tables,
+    `mult_obs_surface_geometry_name_target_name` matched at the shorter one and left a
+    column that exists nowhere. The split is now the one where the schema *and* the
+    column both resolve. State the outcome as the measurement rather than as "it works":
+    over the 90 `mult_` tables the packaged schemas imply, **55 updated, 35 left alone
+    because their columns pin no `mult_options`, 0 errors** -- against 55 / 34 / 1
+    before. Contrived table names never exercised this, which is why the test now drives
+    the implied 90. **`MultOption` is not `MultField`**: the first is a schema entry's
+    seven-element JSON list, the second is `_create_mult`'s eight-key return dictionary,
+    and they use different vocabulary for the same ideas (`value`/`display`/`label`
+    against `col_val`/`disp`/`disp_name`).
+  - **Faults honest annotation exposed, all fixed here, each on a path the integration
+    suite does not reach.** Written out so nobody re-derives them:
+    1. `ObsCassiniCommonPDS3._cassini_intended_target_name` called
+       `self._announce_unknown_target_name`, which exists nowhere in the repository and
+       is byte-identical at `origin/main`. Every Cassini PDS3 observation whose
+       `TARGET_NAME` this pipeline does not describe raised `AttributeError` -- caught by
+       `import_run_field_function` and logged as a traceback -- instead of recording the
+       unknown name. It calls `_log_unknown_target_name`.
+    2. `ObsBase._get_target_info` returned the bare string `'OTHER'` under
+       `--import-ignore-errors`, where every caller wants a pair -- each either unpacks
+       one or hands it to a caller that does. The option exists precisely to let an
+       unknown target through, and it raised `ValueError` instead.
+    3. `_gossi_wavelength_helper` and `_vgiss_wavelength_helper` returned the integer `0`
+       for a filter this pipeline does not describe, and their callers subscript the
+       result. Both return None now and the callers report a missing wavelength, which
+       replaces a second, spurious error in the log.
+    4. `ObsVolumeCOUVIS0xxx._pixel_size_helper` promised a pair and returned a bare None
+       on two of its four paths, both of which its callers subscript.
+    5. `ObsVolumeHSTIxxxxx._wfc3_spec_flag` returns None when the label carries a second
+       filter, which all three of its callers subscripted or unpacked.
+    6. `ObsCassiniCommonPDS4.field_obs_instrument_coiss_combined_filter` passed the whole
+       mult dictionary where `_combined_filter` wants the camera letter, which would have
+       raised `TypeError` from an unhashable lookup key. It is unreachable today -- the
+       one PDS4 Cassini class that fills `obs_instrument_coiss` overrides it -- and is
+       recorded here because that could change.
+    7. `do_import_index` resolving an ambiguous OPUS id raised `TypeError` on an index
+       row that names no file; it skips the row.
+  - **Two signature changes, and no rename anywhere.** Comparing `inspect.signature` for
+    every public callable in `opus_import` between `7691a720` and this tree -- parameter
+    name, kind, declaration position and required-ness -- reports **1519 callables in
+    both trees and two changed signatures**, both the same fix:
+    `ObsBasePDS4.primary_filespec_from_index_row` and the F ring bundle's override of it
+    dropped the `add_phase_from_row` parameter their base declares and
+    `do_import_index` passes, so a PDS4 bundle with an associated geometry index would
+    have raised `TypeError`. The parameter is declared in the base's position, and every
+    call site in the repository passes `row` positionally and everything else by keyword,
+    so no call binds differently. 70 callables disappeared and 8 appeared, all of them
+    accounted for by the three deletions and by five abstract stubs -- three on
+    `ObsBase` (`_pdsfile_from_filespec`, `_time_from_some_index`,
+    `_time2_from_some_index`) and one each on `ObsVolumeHubbleCommon` and
+    `ObsVolumeVoyagerCommon`. **Re-run that comparison after any later annotation PR**:
+    a rename is invisible to a grep for positional calls, which is why it compares
+    names. **State the inclusion rule alongside any count taken from it** -- an
+    independent reviewer's script counted 1532 rather than 1519 on the same trees,
+    because "public callable" can reasonably include or exclude a NamedTuple's
+    synthesized methods and a property's setter. The three claims that matter
+    (two changed signatures, no rename, 70 removed) reproduced exactly under both.
+  - **A mixin that needs a method from a sibling mixin declares it under
+    `if TYPE_CHECKING:`.** `ObsRingGeometry` and `ObsCassiniCommon` call
+    `obs_general`'s field methods, which their own base does not have. The block adds
+    nothing to the class at run time, so the MRO is untouched, and it makes a coupling
+    the class statement does not express visible to the checker and to the reader. Where
+    the method is one every subclass supplies -- `ObsVolumeHubbleCommon._observation_type`,
+    `ObsVolumeVoyagerCommon._mission_phase_name` -- an abstract stub that raises is used
+    instead, matching what `ObsBase` already does.
+  - **Docstring scope was an orchestrator ruling, not an executor judgment
+    (2026-08-25).** Every module, every class and all 207 non-field methods carry a
+    docstring; the 1185 `field_obs_*` methods deliberately do not, and each class that
+    has them says so once in its own docstring. The reasoning to cite: the plan says
+    "docstrings across the hierarchy", not one per method; 1185 near-identical entries
+    would degrade the Sphinx output PR-21 publishes; and the authoritative statement of
+    what a field method returns is its schema column plus the test that checks the
+    correspondence, which is checkable, where 1185 hand-written sentences would be 1185
+    chances to be wrong. **PR-21 should not add them**, and a docstring-coverage gate
+    added later needs this exemption written into it.
+  - **The hierarchy's method resolution order is documented in
+    `opus_import/obs/__init__.py`**, which is where PR-21's Mermaid diagram should come
+    from. The two orderings that surprise: the PDS-version base lands in the *middle* of
+    the table modules rather than after them, and a mission's PDS-version-independent
+    half sits below every table module. Read the split off the tree rather than from
+    prose -- an earlier draft of that docstring explained it by which table modules derive
+    from the base, which is not what the linearization does.
+  - **`config_bundle_info.BundleInfo.instrument_class` is `type[ObsBase] | None`**, and
+    the steps take an `ObsBase` rather than the `Any` PR-15 had to use. The two geometry
+    validators are declared by their table modules rather than by `ObsBase`, so
+    `do_import_obs` asserts the class it was handed mixes the module in; a later PR that
+    wants to be rid of those two assertions should move the declarations, not the
+    assertions.
+  - **`numpy` does not subclass `int`, and that is why `IntField` needed a coercion
+    rather than a wider union.** ``pdstable`` parses an integer index column with numpy,
+    so what reaches a field method is a `numpy.int64` --  and
+    ``isinstance(numpy.int64(0), int)`` is **False**. The asymmetry is the trap and is
+    worth memorizing: `numpy.float64` **does** subclass `float` and `numpy.str_`
+    **does** subclass `str`, so `FloatField` and `StrField` were true all along and
+    nothing pointed at the one alias that was not. `opus_import.obs.field_types.as_int`
+    is the single place the boundary is enforced; a later PR annotating another package
+    that reads ``pdstable`` should expect the same and reach for the same shape rather
+    than widening an alias to `int | numpy.integer | None`, which would push numpy into
+    the vocabulary every consumer inherits.
+    **Two traps this cost real time on, both worth knowing before repeating the
+    exercise.** First, `min`, `max`, `abs`, `round` and `sum` *preserve* their
+    arguments' type: `min(numpy.int64(1), numpy.int64(2))` is a `numpy.int64`, so a
+    conversion upstream of one of them is not a conversion at all. Second, arithmetic
+    does the same, so a helper computing ``line2 - line1 + 1`` from index columns hands
+    numpy back however carefully the columns were read. Both were found by the static
+    sweep in `tests/opus_import/test_obs_field_annotations.py`, which follows a returned
+    name back through the function's own assignments precisely because the runtime check
+    cannot reach 56% of the definitions; a fixture holding plain Python numbers hides
+    all of this.
+  - **A tool's blind spot is not evidence of absence, and this is a distinct failure
+    mode from the quantifier one.** This PR claimed a scan for repeated blocks
+    "reports nothing else" and a reviewer immediately found a duplicated single line:
+    the scan looked for runs of three or more identical lines and therefore could not
+    see a one-line duplicate. **When you cite a scan, state what it cannot see** -- the
+    same discipline the quantifier rule asks for, applied to the instrument instead of
+    to the count. The related shape, which cost this PR three findings, is a
+    justification that is *wrong* under a conclusion that is *right*: a change correctly
+    described as inert, for a reason that does not hold. It is more dangerous than a
+    plainly false claim, because a reader who spot-checks the outcome finds nothing
+    wrong.
+  - **Two pre-existing defects found while annotating, left for a later PR.** Both are
+    byte-identical at `7691a720`, so neither is this PR's to fix, and each is written
+    out so nobody re-derives it:
+    1. **`ObsVolumeVG2801VGPPS.field_obs_ring_geometry_observer_ring_elevation2` is
+       byte-identical to `...elevation1`**, where the `solar_ring_elevation` pair four
+       lines above it correctly swaps 1 and 2 between the two methods. This looks like a
+       **live data defect rather than dead code**: both methods are dispatched to, so
+       the `obs_ring_geometry` rows of every bundle these classes import carry the same
+       value in `observer_ring_elevation1` and `observer_ring_elevation2` where the
+       other elevation pair carries two. The affected bundles are VG_2801 and VG_2802
+       (`ObsVolumeVG2801VGPPS` and `ObsVolumeVG2802VGUVS`, both through
+       `ObsVolumeVG28xxVGPPSUVS`). Whoever picks it up should start by confirming the
+       stored values against the archive rather than by reading the code, since the
+       symmetry argument alone does not say which of the two is wrong.
+    2. **`ObsVolumeCOCIRS01xxx._is_cassini_at_north` has no caller anywhere in the
+       repository.** Vulture does not flag it, because the whole obs hierarchy is
+       dynamically dispatched. This PR gave it a docstring and a narrowing assertion
+       rather than deleting it, since a helper with no caller is not the same kind of
+       dead as a method the dispatcher can never name.
+  - **Verification evidence.** `scripts/run-all-checks.sh -c` clean over 212 source files
+    (ruff, the strict type check with both burn-down entries removed, pytest, pyroma,
+    bandit, vulture). The unit suite is **1146 passed**, against 1124 at `7691a720` --
+    measured by collecting both trees and diffing the test ids, not by adding up. The 22
+    are the 6 `--update-mult-info` regression tests, the 15 annotation tests, and one
+    more case of the existing
+    `test_exception_control_flow.py::test_an_obs_module_never_reaches_the_database`,
+    which is parametrized over the obs modules and so gains one for `field_types.py`.

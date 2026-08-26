@@ -1,11 +1,9 @@
-################################################################################
-# obs_volume_new_horizons_common.py
-#
-# Defines the ObsVolumeNewHorizonsCommon class, which encapsulates fields in the
-# common and obs_mission_new_horizons tables.
-################################################################################
+"""What every New Horizons volume shares: its spacecraft clock format."""
+
+from typing import cast
 
 import opus_support
+from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 _MISSION_PHASE_NAMES = {
@@ -19,10 +17,13 @@ _MISSION_PHASE_NAMES = {
 }
 
 class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """What every New Horizons volume shares.
 
-    def _parse_new_horizons_sclk(self, sclk):
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
+    def _parse_new_horizons_sclk(self, sclk: str) -> FloatField:
         """Parse a New Horizons SCLK, reporting a bad one instead of raising.
 
         Returns the converted SCLK, or None if it could not be parsed.
@@ -35,7 +36,7 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         # Values are:
         #   Jupiter Encounter
         #   Pluto Cruise
@@ -60,27 +61,27 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
     ### OVERRIDE FROM ObsPds ###
     ############################
 
-    def field_obs_pds_note(self):
+    def field_obs_pds_note(self) -> StrField:
         note = self._supp_index_col('OBSERVATION_DESC')
         if note == 'NULL':
             return None
-        return note
+        return cast(StrField, note)
 
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    def field_obs_mission_new_horizons_opus_id(self):
+    def field_obs_mission_new_horizons_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_mission_new_horizons_bundle_id(self):
+    def field_obs_mission_new_horizons_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_mission_new_horizons_instrument_id(self):
+    def field_obs_mission_new_horizons_instrument_id(self) -> StrField:
         return self.instrument_id
 
-    def field_obs_mission_new_horizons_spacecraft_clock_count1(self):
+    def field_obs_mission_new_horizons_spacecraft_clock_count1(self) -> FloatField:
         partition = self._supp_index_col('SPACECRAFT_CLOCK_COUNT_PARTITION')
         start_time = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
 
@@ -88,7 +89,7 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
 
         return self._parse_new_horizons_sclk(sc)
 
-    def field_obs_mission_new_horizons_spacecraft_clock_count2(self):
+    def field_obs_mission_new_horizons_spacecraft_clock_count2(self) -> FloatField:
         partition = self._supp_index_col('SPACECRAFT_CLOCK_COUNT_PARTITION')
         stop_time = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
 
@@ -107,7 +108,7 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
 
         return sc_cvt
 
-    def field_obs_mission_new_horizons_mission_phase(self):
+    def field_obs_mission_new_horizons_mission_phase(self) -> MultFieldRet:
         mp = self._supp_index_col('MISSION_PHASE_NAME')
         good_mp = _MISSION_PHASE_NAMES[mp]
         return self._create_mult(col_val=good_mp.upper(), disp_name=good_mp)

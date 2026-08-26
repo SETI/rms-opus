@@ -221,8 +221,6 @@ ignore_missing_imports = true
 # per-file-ignores table above, and PR-17's exit criterion is that this list is empty
 # as well. There is no repository-wide exclusion: everything outside these packages
 # is checked strictly today.
-#     opus_import.obs          - annotated in PR-16; the rest of opus_import is
-#                                annotated, which is why this names the subpackage
 #     opus_app                 - annotated in PR-17
 #     opus_log_analyzer        - partly annotated already; completed in PR-17
 #     integration_tests        - PR-17, like the rest: the plan body gives that PR
@@ -231,15 +229,12 @@ ignore_missing_imports = true
 #                                that is never passed to the checker is an exclusion
 #                                nothing can see.
 # A package's tests are silenced with it where they need it, since a test's
-# annotations follow the signatures of the code it drives. tests/opus_import stays
-# silenced with opus_import.obs because the tests that drive an obs class cannot be
-# clean until that hierarchy is annotated; PR-16 removes the two together.
+# annotations follow the signatures of the code it drives, and a call into a silenced
+# package is reported in the caller's own file rather than in the callee's.
 # To measure what an entry is holding back, delete it and run the checker. Do not
 # record the number here: it moves with every intervening PR.
 [[tool.mypy.overrides]]
 module = [
-  "opus_import.obs.*",
-  "tests.opus_import.*",
   "opus_app.*",
   "tests.opus_app.*",
   "opus_log_analyzer.*",

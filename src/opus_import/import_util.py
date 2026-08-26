@@ -29,7 +29,7 @@ import sys
 import traceback
 from functools import lru_cache
 from importlib.resources import files
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, NamedTuple
 
 import julian
 import numpy as np
@@ -58,6 +58,39 @@ TableSchema = list[dict[str, Any]]
 An element is the same thing as an `opus_import.importdb.super.SchemaColumn`; the two
 aliases are spelled separately so that neither package has to import the other.
 """
+
+
+class MultOption(NamedTuple):
+    """One entry of a column's ``mult_options`` list, named rather than positional.
+
+    A column whose schema carries ``mult_options`` has its ``mult_`` table pinned there
+    instead of being discovered from the data, and each entry is one row of that table.
+    The JSON holds a list, so a reader has to know what each position means; building
+    one of these from it is what turns that knowledge into something a checker and a
+    reader can both see, and an entry of the wrong length raises `TypeError` here rather
+    than being silently mis-assigned further on.
+
+    The ``aliases`` column every ``mult_`` table also has is deliberately absent: a
+    schema pins no aliases, and `opus_import.steps.do_import_mult` fills that column in
+    as None.
+
+    Attributes:
+        id: The row id the ``obs_`` column stores.
+        value: The column value this row stands for, or None for the absent value.
+        label: How the web application shows the value.
+        disp_order: The sort key, as text or as a number.
+        display: ``'Y'`` to offer the value in the search form, ``'N'`` to hide it.
+        grouping: The group the value belongs to in the search form, or None.
+        group_disp_order: The group's sort key, or None.
+    """
+
+    id: int
+    value: str | None
+    label: str
+    disp_order: str | int
+    display: str
+    grouping: str | None
+    group_disp_order: str | None
 
 # Data that ships inside the package, located through importlib.resources rather than
 # from __file__ or the working directory so that it is found in an installed wheel too:

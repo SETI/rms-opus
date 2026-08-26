@@ -1,11 +1,12 @@
-################################################################################
-# obs_volume_corss_8xxx.py
-#
-# Defines the ObsVolumeCORSS8xxx class, which encapsulates fields for
-# common and obs_mission_cassini for CORSS_8001 (there is no RSS instrument
-# table).
-################################################################################
+"""The obs class for CORSS_8001.
 
+Cassini RSS ring occultation profiles. There is no ``obs_instrument_corss`` table:
+everything RSS records that OPUS searches on is a profile column.
+"""
+
+from typing import cast
+
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_volume_cassini_occ_common import ObsVolumeCassiniOccCommon
 
 # TODOPDS4 Verify that these are correct
@@ -24,16 +25,20 @@ _DSN_NUM_TO_PDS4_INST = {
 
 
 class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """The Cassini RSS ring occultation profiles of CORSS_8001.
 
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
 
+
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``CORSS``."""
         return 'CORSS'
 
 
@@ -41,10 +46,10 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_time1(self):
+    def field_obs_general_time1(self) -> FloatField:
         return self._time_from_supp_index(column='SPACECRAFT_EVENT_START_TIME')
 
-    def field_obs_general_time2(self):
+    def field_obs_general_time2(self) -> FloatField:
         return self._time2_from_supp_index(self.field_obs_general_time1(),
                                            column='EARTH_RECEIVED_STOP_TIME')
 
@@ -53,35 +58,35 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    def field_obs_wavelength_wavelength1(self):
-        return self._index_col('WAVELENGTH') * 10000 # cm -> micron
+    def field_obs_wavelength_wavelength1(self) -> FloatField:
+        return cast(FloatField, self._index_col('WAVELENGTH') * 10000) # cm -> micron
 
-    def field_obs_wavelength_wavelength2(self):
-        return self._index_col('WAVELENGTH') * 10000 # cm -> micron
+    def field_obs_wavelength_wavelength2(self) -> FloatField:
+        return cast(FloatField, self._index_col('WAVELENGTH') * 10000) # cm -> micron
 
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
 
-    def field_obs_profile_occ_type(self):
+    def field_obs_profile_occ_type(self) -> MultFieldRet:
         return self._create_mult('RAD')
 
-    def field_obs_profile_quality_score(self):
+    def field_obs_profile_quality_score(self) -> MultFieldRet:
         return self._create_mult('UNASSIGNED')
 
-    def field_obs_profile_wl_band(self):
+    def field_obs_profile_wl_band(self) -> MultFieldRet:
         band = self._index_col('BAND_NAME')
         if band == 'K':
             band = 'KA'
         return self._create_mult(band)
 
-    def field_obs_profile_source(self):
+    def field_obs_profile_source(self) -> MultFieldRet:
         # disp_order '!Cassini' is to force Cassini to be before all stars
         return self._create_mult(col_val='CASSINI', disp_name='Cassini',
                                  disp_order='!Cassini')
 
-    def field_obs_profile_host(self):
+    def field_obs_profile_host(self) -> MultFieldRet:
         dsn = self._supp_index_col('DSN_STATION_NUMBER')
         return self._create_mult(_DSN_NUM_TO_PDS4_INST[dsn])
 
@@ -90,67 +95,69 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
 
-    def field_obs_ring_geometry_solar_ring_elevation1(self):
-        return -self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_solar_ring_elevation1(self) -> FloatField:
+        return cast(FloatField, -self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_solar_ring_elevation2(self):
-        return -self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
+        return cast(FloatField, -self._index_col('MINIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_observer_ring_elevation1(self):
-        return self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_observer_ring_elevation1(self) -> FloatField:
+        return cast(FloatField, self._index_col('MINIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_observer_ring_elevation2(self):
-        return self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
+        return cast(FloatField, self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_incidence1(self):
-        return self._index_col('MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_incidence1(self) -> FloatField:
+        return cast(FloatField, self._index_col('MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_incidence2(self):
-        return self._index_col('MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_incidence2(self) -> FloatField:
+        return cast(FloatField, self._index_col('MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_emission1(self):
-        return 180. - self._index_col('MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_emission1(self) -> FloatField:
+        return cast(FloatField,
+                    180. - self._index_col('MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_emission2(self):
-        return 180. - self._index_col('MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    def field_obs_ring_geometry_emission2(self) -> FloatField:
+        return cast(FloatField,
+                    180. - self._index_col('MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE'))
 
-    def field_obs_ring_geometry_north_based_incidence1(self):
-        return 90. + self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_north_based_incidence1(self) -> FloatField:
+        return cast(FloatField, 90. + self._index_col('MINIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_north_based_incidence2(self):
-        return 90. + self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_north_based_incidence2(self) -> FloatField:
+        return cast(FloatField, 90. + self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_north_based_emission1(self):
-        return 90. - self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
+        return cast(FloatField, 90. - self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_north_based_emission2(self):
-        return 90. - self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
+        return cast(FloatField, 90. - self._index_col('MINIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_solar_ring_opening_angle1(self):
-        return -self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_solar_ring_opening_angle1(self) -> FloatField:
+        return cast(FloatField, -self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_solar_ring_opening_angle2(self):
-        return -self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_solar_ring_opening_angle2(self) -> FloatField:
+        return cast(FloatField, -self._index_col('MINIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        return self._index_col('MINIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_observer_ring_opening_angle1(self) -> FloatField:
+        return cast(FloatField, self._index_col('MINIMUM_OBSERVED_RING_ELEVATION'))
 
-    def field_obs_ring_geometry_observer_ring_opening_angle2(self):
-        return self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION')
+    def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
+        return cast(FloatField, self._index_col('MAXIMUM_OBSERVED_RING_ELEVATION'))
 
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ##########################################
 
-    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+    def field_obs_mission_cassini_spacecraft_clock_count1(self) -> FloatField:
         count = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
         if count == 'UNK':
             return None
         sc = '1/' + str(count)
         return self._parse_cassini_sclk(sc)
 
-    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+    def field_obs_mission_cassini_spacecraft_clock_count2(self) -> FloatField:
         count = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         if count == 'UNK':
             return None
@@ -168,13 +175,13 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
 
         return sc_cvt
 
-    def field_obs_mission_cassini_ert1(self):
+    def field_obs_mission_cassini_ert1(self) -> FloatField:
         return self._time_from_supp_index(column='EARTH_RECEIVED_START_TIME')
 
-    def field_obs_mission_cassini_ert2(self):
+    def field_obs_mission_cassini_ert2(self) -> FloatField:
         return self._time2_from_supp_index(self.field_obs_mission_cassini_ert1(),
                                           column='EARTH_RECEIVED_STOP_TIME')
 
-    def field_obs_mission_cassini_mission_phase_name(self):
+    def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         mp = self._cassini_normalize_mission_phase_name()
         return self._create_mult(mp)

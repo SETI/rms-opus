@@ -12,7 +12,8 @@ PDS4TODO Temporary comment
 
 To create the index files:
 
-for i in `(cd /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased; ls -d *_u[0-9]*)`
+for i in `(cd /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased; ls -d
+*_u[0-9]*)`
 do
 echo Processing $i
 mkdir -p /data/new-pds4-holdings/metadata/uranus_occs_earthbased/$i
@@ -34,7 +35,10 @@ python pds4_create_xml_index.py \
 done
 """
 
+from typing import cast
+
 from opus_import import config_targets
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_bundle_occ_common import ObsBundleOccCommon
 
 # TODOPDS4 We should be able to get rid of this mapping once
@@ -65,14 +69,33 @@ _LID_TO_INST = {
 }
 
 class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """The Earth-based stellar occultations of Uranus and its rings.
 
-    def _is_atmos(self):
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
+    def _is_atmos(self) -> bool:
+        """Whether this observation profiles Uranus's atmosphere rather than its rings.
+
+        Returns:
+            True for an atmospheric profile, which is what decides the target and several
+            of the profile columns.
+        """
         lid = self._index_col('pds:logical_identifier')
         return 'atmos' in lid
 
-    def _inst_name(self):
+    def _inst_name(self) -> str | None:
+        """Return which telescope and instrument recorded this occultation.
+
+        The bundle carries observations from many ground-based observatories, so the
+        instrument is per observation rather than per bundle, and it is encoded in the
+        logical identifier rather than given as a column.
+
+        Returns:
+            The OPUS instrument id, or None while the tables are being created, before any
+            observation has been read.
+        """
         if self._metadata is None:
             # This happens during the create_tables phase
             return None
@@ -85,11 +108,24 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
         _, _, _star, inst1, inst2 = main_lid.split('_')
         return _LID_TO_INST[f'{inst1}_{inst2}']
 
-    def _star_id(self):
-        star_name = self._index_col('rings:star_name')
-        return star_name.upper().replace(' ', '_')
+    def _star_id(self) -> str:
+        """Return the occulted star's name in the form the star catalog uses.
 
-    def _prof_ra_dec_helper(self):
+        Returns:
+            The name upper-cased with its spaces replaced by underscores, which is how
+            `opus_import.config_targets.STAR_RA_DEC` keys it.
+        """
+        star_name = self._index_col('rings:star_name')
+        return cast(str, star_name.upper().replace(' ', '_'))
+
+    def _star_ra_dec_range(self) -> tuple[float, float, float, float]:
+        """Return the search range for the occulted star's position.
+
+        Returns:
+            The minimum and maximum right ascension followed by the minimum and maximum
+            declination, in degrees. The range is a point unless a slop is configured: a
+            star's position is treated as fixed.
+        """
         star_id = self._star_id()
         return (config_targets.STAR_RA_DEC[star_id][0]-self._STAR_RA_DEC_SLOP,
                 config_targets.STAR_RA_DEC[star_id][0]+self._STAR_RA_DEC_SLOP,
@@ -102,40 +138,65 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     #############################
 
     @property
-    def instrument_id(self):
+    def instrument_id(self) -> str | None:
+        """The OPUS instrument id, which differs per observation in this bundle.
+
+        Returns:
+            The telescope and instrument `_inst_name` decodes, or None before any
+            observation has been read -- which is what keeps an ``obs_instrument_*`` table
+            from being created for a bundle that has no single instrument.
+        """
         return self._inst_name()
 
 
     @property
-    def inst_host_id(self):
+    def inst_host_id(self) -> str:
+        """The OPUS instrument host id.
+
+        Returns:
+            ``'HST'`` for the one observation taken from orbit, ``'GB'`` for the
+            ground-based ones.
+        """
         return 'HST' if self._inst_name() == 'hst.fos' else 'GB'
 
     @property
-    def mission_id(self):
+    def mission_id(self) -> str:
+        """The OPUS mission id.
+
+        Returns:
+            ``'HST'`` or ``'GB'``, decided the same way as `inst_host_id`.
+        """
         return 'HST' if self._inst_name() == 'hst.fos' else 'GB'
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_right_asc1(self):
-        return self._prof_ra_dec_helper()[0]
+    def field_obs_general_right_asc1(self) -> FloatField:
+        return self._star_ra_dec_range()[0]
 
-    def field_obs_general_right_asc2(self):
-        return self._prof_ra_dec_helper()[1]
+    def field_obs_general_right_asc2(self) -> FloatField:
+        return self._star_ra_dec_range()[1]
 
-    def field_obs_general_declination1(self):
-        return self._prof_ra_dec_helper()[2]
+    def field_obs_general_declination1(self) -> FloatField:
+        return self._star_ra_dec_range()[2]
 
-    def field_obs_general_declination2(self):
-        return self._prof_ra_dec_helper()[3]
+    def field_obs_general_declination2(self) -> FloatField:
+        return self._star_ra_dec_range()[3]
 
-    def field_obs_general_planet_id(self):
+    def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult('URA')
 
-    def _target_name(self):
-        target_name = 'URANUS' if self._is_atmos() else 'U RINGS'
-        target_name, target_info = self._get_target_info(target_name)
+    def _target_name(self) -> list[tuple[str | None, str | None]]:
+        """The target of this observation.
+
+        Returns:
+            Uranus for an atmospheric profile and its rings otherwise, as a one-element
+            list, or ``[(None, None)]`` if the name is one this pipeline does not
+            describe.
+        """
+        lookup_name = 'URANUS' if self._is_atmos() else 'U RINGS'
+        target_name, target_info = self._get_target_info(lookup_name)
         if target_info is None:
             return [(None, None)]
         return [(target_name, target_info[2])]
@@ -145,7 +206,7 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     ### OVERRIDE FROM ObsProfile ###
     ################################
 
-    def field_obs_profile_occ_type(self):
+    def field_obs_profile_occ_type(self) -> MultFieldRet:
         occ_type = self._index_col('rings:occultation_type')
         if occ_type == 'stellar':
             return self._create_mult('STE')
@@ -153,7 +214,7 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
             f'Unknown rings:occultation:type "{occ_type}"')
         return self._create_mult(None)
 
-    def field_obs_profile_occ_dir(self):
+    def field_obs_profile_occ_dir(self) -> MultFieldRet:
         occ_dir = self._index_col('rings:ring_profile_direction')
         if occ_dir is None:
             occ_dir = self._index_col('rings:time_series_direction')
@@ -167,21 +228,21 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
         self._log_nonrepeating_error(f'Unknown profile direction "{occ_dir}"')
         return self._create_mult(None)
 
-    def field_obs_profile_body_occ_flag(self):
+    def field_obs_profile_body_occ_flag(self) -> MultFieldRet:
         return self._create_mult(self._index_col('rings:planetary_occultation_flag'))
 
-    def field_obs_profile_quality_score(self):
+    def field_obs_profile_quality_score(self) -> MultFieldRet:
         return self._create_mult(self._index_col('rings:data_quality_score'))
 
-    def field_obs_profile_optical_depth1(self):
+    def field_obs_profile_optical_depth1(self) -> FloatField:
         ret = self._index_col('rings:lowest_detectable_opacity')
-        return ret
+        return cast(FloatField, ret)
 
-    def field_obs_profile_optical_depth2(self):
+    def field_obs_profile_optical_depth2(self) -> FloatField:
         ret = self._index_col('rings:highest_detectable_opacity')
-        return ret
+        return cast(FloatField, ret)
 
-    def field_obs_profile_wl_band(self):
+    def field_obs_profile_wl_band(self) -> MultFieldRet:
         wl_range = self._index_col('pds:wavelength_range')
         if not wl_range:
             self._log_nonrepeating_error('pds:wavelength_range missing')
@@ -194,13 +255,13 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
         self._log_nonrepeating_error(f'Unknown pds:wavelength_range "{wl_range}"')
         return self._create_mult(None)
 
-    def field_obs_profile_source(self):
+    def field_obs_profile_source(self) -> MultFieldRet:
         star_name = self._index_col('rings:star_name')
         star_name_id = star_name.upper().replace(' ', '_')
         return self._create_mult(star_name_id, disp_name=star_name,
                                  grouping='Stars')
 
-    def field_obs_profile_host(self):
+    def field_obs_profile_host(self) -> MultFieldRet:
         return self._create_mult(self._inst_name())
 
 
@@ -211,10 +272,10 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     # Note - A lot of the ring-specific fields are missing from atmos labels so
     # they will just turn out to be None.
 
-    def field_obs_ring_geometry_projected_radial_resolution1(self):
-        return self._index_col('rings:radial_resolution')
+    def field_obs_ring_geometry_projected_radial_resolution1(self) -> FloatField:
+        return cast(FloatField, self._index_col('rings:radial_resolution'))
 
-    def field_obs_ring_geometry_projected_radial_resolution2(self):
+    def field_obs_ring_geometry_projected_radial_resolution2(self) -> FloatField:
         return self.field_obs_ring_geometry_projected_radial_resolution1()
 
     # Earth was seeing Uranus' south pole for the entire duration of this data set.
@@ -229,30 +290,30 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     # Thus the star was illuminating the north side of the rings, and the
     # north-based values are the same as the plain values.
 
-    def field_obs_ring_geometry_north_based_incidence1(self):
+    def field_obs_ring_geometry_north_based_incidence1(self) -> FloatField:
         return self.field_obs_ring_geometry_incidence1()
 
-    def field_obs_ring_geometry_north_based_incidence2(self):
+    def field_obs_ring_geometry_north_based_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_incidence2()
 
-    def field_obs_ring_geometry_north_based_emission1(self):
+    def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
         return self.field_obs_ring_geometry_emission1()
 
-    def field_obs_ring_geometry_north_based_emission2(self):
+    def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_emission2()
 
     # The solar ring opening angle depends on planet and geometry.
-    def field_obs_ring_geometry_solar_ring_opening_angle1(self):
+    def field_obs_ring_geometry_solar_ring_opening_angle1(self) -> FloatField:
         oa = self._index_col('rings:observed_ring_elevation')
         if oa is not None:
             oa = -oa
-        return oa
+        return cast(FloatField, oa)
 
-    def field_obs_ring_geometry_solar_ring_opening_angle2(self):
+    def field_obs_ring_geometry_solar_ring_opening_angle2(self) -> FloatField:
         return self.field_obs_ring_geometry_solar_ring_opening_angle1()
 
-    def field_obs_ring_geometry_observer_ring_opening_angle1(self):
-        return self._index_col('rings:observed_ring_elevation')
+    def field_obs_ring_geometry_observer_ring_opening_angle1(self) -> FloatField:
+        return cast(FloatField, self._index_col('rings:observed_ring_elevation'))
 
-    def field_obs_ring_geometry_observer_ring_opening_angle2(self):
+    def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()

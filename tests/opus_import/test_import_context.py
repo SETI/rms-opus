@@ -14,13 +14,14 @@ import argparse
 import ast
 import inspect
 import textwrap
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from opus_import import import_util
 from opus_import.cli import _make_warning_handler
 from opus_import.context import ImportContext
+from opus_import.importdb.super import ImportDBSuper
 from opus_import.obs.obs_base import ObsBase
 from opus_import.steps import do_import, do_import_mult
 
@@ -35,7 +36,7 @@ def ctx() -> ImportContext:
 
 def _messages(ctx: ImportContext, level: str) -> list[str]:
     """Return the messages the context's recording logger holds at `level`."""
-    logger: RecordingLogger = ctx.logger  # type: ignore[assignment]
+    logger = cast(RecordingLogger, ctx.logger)
     return logger.messages_at(level)
 
 
@@ -335,7 +336,7 @@ def test_dumping_writes_only_the_modified_tables_and_clears_the_created_record()
                         rows: list[dict[str, Any]]) -> None:
             written.append((namespace, raw_table_name))
 
-    ctx.db = _FakeDatabase()
+    ctx.db = cast(ImportDBSuper, _FakeDatabase())
     do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
     ctx.mult_table_cache['mult_obs_general_untouched'] = []
     ctx.created_import_mult_tables |= {'mult_obs_general_x',

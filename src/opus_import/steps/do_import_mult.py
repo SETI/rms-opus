@@ -51,32 +51,36 @@ def _convert_sql_response_to_mult_table(rows: Sequence[Sequence[Any]]) -> list[M
     Parameters:
         rows: The rows, each holding the columns `_mult_table_column_names` names, in
             that order. A row of seven values instead of eight is a preprogrammed
-            ``mult_options`` entry from a table schema, which carries no aliases.
+            ``mult_options`` entry from a table schema, which carries no aliases; the
+            other seven are `opus_import.import_util.MultOption` either way.
 
     Returns:
         One dictionary per row, keyed by column name, with the label rendered as a
         string and a missing aliases column filled in as None.
+
+    Raises:
+        TypeError: If a row carries neither seven nor eight values, since it then names
+            neither shape.
     """
     mult_rows = []
     for row in rows:
+        aliases: Any = None
         if len(row) == 8:
-            (id_num, value, label, disp_order,
-             display, grouping, group_disp_order, aliases) = row
+            *option_values, aliases = row
         else:
             # preprogrammed mult options list doesn't have aliases field
-            (id_num, value, label, disp_order,
-             display, grouping, group_disp_order) = row
-            aliases = None
+            option_values = list(row)
+        option = import_util.MultOption(*option_values)
 
         row_dict = {
-            'id': id_num,
-            'value': value,
-            'label': str(label),
+            'id': option.id,
+            'value': option.value,
+            'label': str(option.label),
             'aliases': aliases,
-            'disp_order': disp_order,
-            'display': display,
-            'grouping': grouping,
-            'group_disp_order': group_disp_order
+            'disp_order': option.disp_order,
+            'display': option.display,
+            'grouping': option.grouping,
+            'group_disp_order': option.group_disp_order
         }
         mult_rows.append(row_dict)
     return mult_rows

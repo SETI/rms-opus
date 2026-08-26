@@ -1,17 +1,25 @@
-################################################################################
-# obs_surface_geometry_target.py
-#
-# Defines the ObsSurfaceGeometryTarget class, which encapsulates fields in the
-# obs_surface_geometry_<TARGET> tables.
-################################################################################
+"""The ``obs_surface_geometry__<TARGET>`` columns: where the observation fell on one
+body's
+surface.
 
+One module per OPUS table, mixed into every obs class that fills the table. A column
+whose value depends on the PDS version or on the instrument is left to a subclass, which
+is why most of the methods here can be overridden and a few raise `NotImplementedError`
+outright.
+"""
+
+from typing import Any
+
+from opus_import.obs.field_types import FloatField, StrField
 from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometryTarget(ObsBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """The ``obs_surface_geometry__<TARGET>`` columns, filled once per target.
 
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -19,24 +27,25 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     ### Don't override these ###
 
-    def field_obs_surface_geometry_target_opus_id(self):
+
+    def field_obs_surface_geometry_target_opus_id(self) -> StrField:
         return self.opus_id
 
-    def field_obs_surface_geometry_target_bundle_id(self):
+    def field_obs_surface_geometry_target_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_surface_geometry_target_instrument_id(self):
+    def field_obs_surface_geometry_target_instrument_id(self) -> StrField:
         return self.instrument_id
 
     # East Longitude
 
-    def field_obs_surface_geometry_target_iau_east_longitude1(self):
+    def field_obs_surface_geometry_target_iau_east_longitude1(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_iau_west_longitude2()
         if long is None:
             return None
         return (360. - long) % 360
 
-    def field_obs_surface_geometry_target_iau_east_longitude2(self):
+    def field_obs_surface_geometry_target_iau_east_longitude2(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_iau_west_longitude1()
         if long is None:
             return None
@@ -45,13 +54,13 @@ class ObsSurfaceGeometryTarget(ObsBase):
             return 360
         return (360. - long) % 360
 
-    def field_obs_surface_geometry_target_sub_solar_iau_east_longitude1(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_east_longitude1(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude2()
         if long is None:
             return None
         return (360. - long) % 360
 
-    def field_obs_surface_geometry_target_sub_solar_iau_east_longitude2(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_east_longitude2(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_sub_solar_iau_west_longitude1()
         if long is None:
             return None
@@ -60,13 +69,13 @@ class ObsSurfaceGeometryTarget(ObsBase):
             return 360
         return (360. - long) % 360
 
-    def field_obs_surface_geometry_target_sub_observer_iau_east_longitude1(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_east_longitude1(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude2()
         if long is None:
             return None
         return (360. - long) % 360
 
-    def field_obs_surface_geometry_target_sub_observer_iau_east_longitude2(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_east_longitude2(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude1()
         if long is None:
             return None
@@ -75,13 +84,13 @@ class ObsSurfaceGeometryTarget(ObsBase):
             return 360
         return (360. - long) % 360
 
-    def field_obs_surface_geometry_target_observer_east_longitude1(self):
+    def field_obs_surface_geometry_target_observer_east_longitude1(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_observer_west_longitude2()
         if long is None:
             return None
         return -long
 
-    def field_obs_surface_geometry_target_observer_east_longitude2(self):
+    def field_obs_surface_geometry_target_observer_east_longitude2(self) -> FloatField:
         long = self.field_obs_surface_geometry_target_observer_west_longitude1()
         if long is None:
             return None
@@ -99,199 +108,199 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     # Planetographic Latitude
 
-    def field_obs_surface_geometry_target_planetographic_latitude1(self):
+    def field_obs_surface_geometry_target_planetographic_latitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_PLANETOGRAPHIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_planetographic_latitude2(self):
+    def field_obs_surface_geometry_target_planetographic_latitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_PLANETOGRAPHIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self):
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
                                            'MINIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self):
+    def field_obs_surface_geometry_target_sub_solar_planetographic_latitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
                                            'MAXIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self):
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
                                            'MINIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self):
+    def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
                                            'MAXIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE')
 
     # Planetocentric Latitude
 
-    def field_obs_surface_geometry_target_planetocentric_latitude1(self):
+    def field_obs_surface_geometry_target_planetocentric_latitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_PLANETOCENTRIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_planetocentric_latitude2(self):
+    def field_obs_surface_geometry_target_planetocentric_latitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_PLANETOCENTRIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self):
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
                                            'MINIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self):
+    def field_obs_surface_geometry_target_sub_solar_planetocentric_latitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
                                            'MAXIMUM_PLANETOCENTRIC_SUB_SOLAR_LATITUDE',
                                            'SUB_SOLAR_PLANETOCENTRIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self):
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
                                            'MINIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
 
-    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self):
+    def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
                                            'MAXIMUM_PLANETOCENTRIC_SUB_OBSERVER_LATITUDE',
                                            'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE')
 
     # West Longitude
 
-    def field_obs_surface_geometry_target_iau_west_longitude1(self):
+    def field_obs_surface_geometry_target_iau_west_longitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_iau_west_longitude2(self):
+    def field_obs_surface_geometry_target_iau_west_longitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_SUB_SOLAR_IAU_LONGITUDE',
                                            'SUB_SOLAR_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self):
+    def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_SUB_SOLAR_IAU_LONGITUDE',
                                            'SUB_SOLAR_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_SUB_OBSERVER_IAU_LONGITUDE',
                                            'SUB_OBSERVER_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self):
+    def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_SUB_OBSERVER_IAU_LONGITUDE',
                                            'SUB_OBSERVER_IAU_LONGITUDE')
 
-    def field_obs_surface_geometry_target_observer_west_longitude1(self):
+    def field_obs_surface_geometry_target_observer_west_longitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_LONGITUDE_WRT_OBSERVER')
 
-    def field_obs_surface_geometry_target_observer_west_longitude2(self):
+    def field_obs_surface_geometry_target_observer_west_longitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_LONGITUDE_WRT_OBSERVER')
 
     # Distance & Resolution
 
-    def field_obs_surface_geometry_target_range_to_body1(self):
+    def field_obs_surface_geometry_target_range_to_body1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_SURFACE_DISTANCE')
 
-    def field_obs_surface_geometry_target_range_to_body2(self):
+    def field_obs_surface_geometry_target_range_to_body2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_SURFACE_DISTANCE')
 
-    def field_obs_surface_geometry_target_center_distance1(self):
+    def field_obs_surface_geometry_target_center_distance1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_CENTER_DISTANCE',
                                            'CENTER_DISTANCE')
 
-    def field_obs_surface_geometry_target_center_distance2(self):
+    def field_obs_surface_geometry_target_center_distance2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_CENTER_DISTANCE',
                                            'CENTER_DISTANCE')
 
-    def field_obs_surface_geometry_target_finest_resolution1(self):
+    def field_obs_surface_geometry_target_finest_resolution1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_FINEST_SURFACE_RESOLUTION')
 
-    def field_obs_surface_geometry_target_finest_resolution2(self):
+    def field_obs_surface_geometry_target_finest_resolution2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_FINEST_SURFACE_RESOLUTION')
 
-    def field_obs_surface_geometry_target_coarsest_resolution1(self):
+    def field_obs_surface_geometry_target_coarsest_resolution1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_COARSEST_SURFACE_RESOLUTION')
 
-    def field_obs_surface_geometry_target_coarsest_resolution2(self):
+    def field_obs_surface_geometry_target_coarsest_resolution2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_COARSEST_SURFACE_RESOLUTION')
 
-    def field_obs_surface_geometry_target_center_resolution1(self):
+    def field_obs_surface_geometry_target_center_resolution1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_CENTER_RESOLUTION',
                                            'CENTER_RESOLUTION')
 
-    def field_obs_surface_geometry_target_center_resolution2(self):
+    def field_obs_surface_geometry_target_center_resolution2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_CENTER_RESOLUTION',
                                            'CENTER_RESOLUTION')
 
     # Lighting Geometry
 
-    def field_obs_surface_geometry_target_center_phase_angle1(self):
+    def field_obs_surface_geometry_target_center_phase_angle1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_CENTER_PHASE_ANGLE',
                                            'CENTER_PHASE_ANGLE')
 
-    def field_obs_surface_geometry_target_center_phase_angle2(self):
+    def field_obs_surface_geometry_target_center_phase_angle2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_CENTER_PHASE_ANGLE',
                                            'CENTER_PHASE_ANGLE')
 
-    def field_obs_surface_geometry_target_phase1(self):
+    def field_obs_surface_geometry_target_phase1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_PHASE_ANGLE')
 
-    def field_obs_surface_geometry_target_phase2(self):
+    def field_obs_surface_geometry_target_phase2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_PHASE_ANGLE')
 
-    def field_obs_surface_geometry_target_incidence1(self):
+    def field_obs_surface_geometry_target_incidence1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_INCIDENCE_ANGLE')
 
-    def field_obs_surface_geometry_target_incidence2(self):
+    def field_obs_surface_geometry_target_incidence2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_INCIDENCE_ANGLE')
 
-    def field_obs_surface_geometry_target_emission1(self):
+    def field_obs_surface_geometry_target_emission1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_EMISSION_ANGLE')
 
-    def field_obs_surface_geometry_target_emission2(self):
+    def field_obs_surface_geometry_target_emission2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_EMISSION_ANGLE')
 
-    def field_obs_surface_geometry_target_solar_hour_angle1(self):
+    def field_obs_surface_geometry_target_solar_hour_angle1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_LOCAL_HOUR_ANGLE')
 
-    def field_obs_surface_geometry_target_solar_hour_angle2(self):
+    def field_obs_surface_geometry_target_solar_hour_angle2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_LOCAL_HOUR_ANGLE')
 
     # Pole & Limb
 
-    def field_obs_surface_geometry_target_north_pole_clock_angle(self):
+    def field_obs_surface_geometry_target_north_pole_clock_angle(self) -> FloatField:
         return self._surface_geo_index_col('NORTH_POLE_CLOCK_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_north_pole_position_angle(self):
+    def field_obs_surface_geometry_target_north_pole_position_angle(self) -> FloatField:
         return self._surface_geo_index_col('NORTH_POLE_POSITION_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_limb_clock_angle1(self):
+    def field_obs_surface_geometry_target_limb_clock_angle1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_LIMB_CLOCK_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_limb_clock_angle2(self):
+    def field_obs_surface_geometry_target_limb_clock_angle2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_LIMB_CLOCK_ANGLE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_limb_altitude1(self):
+    def field_obs_surface_geometry_target_limb_altitude1(self) -> FloatField:
         return self._surface_geo_index_col('MINIMUM_LIMB_ALTITUDE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_limb_altitude2(self):
+    def field_obs_surface_geometry_target_limb_altitude2(self) -> FloatField:
         return self._surface_geo_index_col('MAXIMUM_LIMB_ALTITUDE', missing_ok=True)
 
     # Image Geometry
 
-    def field_obs_surface_geometry_target_diameter_pixels(self):
+    def field_obs_surface_geometry_target_diameter_pixels(self) -> FloatField:
         return self._surface_geo_index_col('DIAMETER_IN_PIXELS', missing_ok=True)
 
-    def field_obs_surface_geometry_target_center_x_coordinate(self):
+    def field_obs_surface_geometry_target_center_x_coordinate(self) -> FloatField:
         return self._surface_geo_index_col('CENTER_X_COORDINATE', missing_ok=True)
 
-    def field_obs_surface_geometry_target_center_y_coordinate(self):
+    def field_obs_surface_geometry_target_center_y_coordinate(self) -> FloatField:
         return self._surface_geo_index_col('CENTER_Y_COORDINATE', missing_ok=True)
 
     # Timing
 
-    def field_obs_surface_geometry_target_surface_intercept_time1(self):
+    def field_obs_surface_geometry_target_surface_intercept_time1(self) -> FloatField:
         return self._time_helper('surface_geo_row',
                                  'MINIMUM_SURFACE_INTERCEPT_TIME',
                                  missing_index_ok=True)
 
-    def field_obs_surface_geometry_target_surface_intercept_time2(self):
+    def field_obs_surface_geometry_target_surface_intercept_time2(self) -> FloatField:
         return self._time2_helper('surface_geo_row',
                                   self.field_obs_surface_geometry_target_surface_intercept_time1(),
                                   'MAXIMUM_SURFACE_INTERCEPT_TIME',
@@ -302,7 +311,20 @@ class ObsSurfaceGeometryTarget(ObsBase):
     ### Field validation ###
     ########################
 
-    def validate_surface_geo_fields(self, row, metadata, table_name):
+    def validate_surface_geo_fields(self, row: dict[str, Any],
+                                    metadata: dict[str, Any],
+                                    table_name: str) -> None:
+        """Report a gridless surface geometry value whose minimum and maximum disagree.
+
+        The surface geometry counterpart of
+        `opus_import.obs.obs_ring_geometry.ObsRingGeometry.validate_ring_geo_fields`.
+
+        Parameters:
+            row: The per-target surface geometry row this observation produced.
+            metadata: What the import has computed for this observation, for the bundle's
+                ``temporal_camera`` setting.
+            table_name: The ``obs_surface_geometry__<TARGET>`` table, for the message.
+        """
         # This runs after all fields have been populated.
         # Compare min/max gridless fields and make sure they are the same
         # for a non-temporal camera.
