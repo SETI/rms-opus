@@ -4791,6 +4791,16 @@ body; never rewrite or delete earlier notes.*
     that reads ``pdstable`` should expect the same and reach for the same shape rather
     than widening an alias to `int | numpy.integer | None`, which would push numpy into
     the vocabulary every consumer inherits.
+    **Two traps this cost real time on, both worth knowing before repeating the
+    exercise.** First, `min`, `max`, `abs`, `round` and `sum` *preserve* their
+    arguments' type: `min(numpy.int64(1), numpy.int64(2))` is a `numpy.int64`, so a
+    conversion upstream of one of them is not a conversion at all. Second, arithmetic
+    does the same, so a helper computing ``line2 - line1 + 1`` from index columns hands
+    numpy back however carefully the columns were read. Both were found by the static
+    sweep in `tests/opus_import/test_obs_field_annotations.py`, which follows a returned
+    name back through the function's own assignments precisely because the runtime check
+    cannot reach 56% of the definitions; a fixture holding plain Python numbers hides
+    all of this.
   - **A tool's blind spot is not evidence of absence, and this is a distinct failure
     mode from the quantifier one.** This PR claimed a scan for repeated blocks
     "reports nothing else" and a reviewer immediately found a duplicated single line:
