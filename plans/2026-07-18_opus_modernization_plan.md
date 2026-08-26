@@ -5220,6 +5220,32 @@ body; never rewrite or delete earlier notes.*
     exits 0 without ever calling `opus_check_coverage.sh`, so the chain reported
     success at 99% while `run-app-tests.yml:96` -- which does call it -- would
     have failed. Run that script yourself after every local chain.
+  - **Never edit a source file while the chain is running, and check `stat`
+    before believing a coverage anomaly.** A run of PR-17a's tree reported 99%
+    with 12 missed statements in `tools/dictionary.py` -- a file whose committed
+    source was byte-identical to the 100% run before it. The cause was an edit
+    made to that file 37 seconds before the chain's `coverage report` ran:
+    coverage recorded arcs against the pre-edit file and reported against the
+    post-edit one, so the line numbers no longer corresponded and it emitted
+    phantom misses in exactly the file that had been touched. **The tell is that
+    the reported missing lines were not statements at all** -- the file's
+    statements start at line 21 and the report named 17-19 -- which matches none
+    of the real explanations (import timing, ordering, data merging) and points
+    straight at two versions of one file. `stat` on the named file against the
+    run's start and end times settles it in one command, and is the first thing
+    to try. The don't-touch-the-tree rule covers **source files first**; applying
+    it only to the coverage data file, as happened here, is not enough.
+  - **A latent coverage hazard, not the cause of the above but worth knowing:**
+    `parallel = true` is set in `[tool.coverage.run]` in `pyproject.toml` and is
+    *not* set in `integration_tests/.coveragerc`. Any coverage invocation that
+    loses `COVERAGE_RCFILE` therefore writes `.coverage.<host>.<pid>` fragments
+    that the integration config's non-parallel `coverage erase` will not
+    necessarily remove, and `run_coverage.sh` appends with `coverage run -a`.
+    Accumulated data can only make coverage look better, never worse, so the
+    signature would be a clean-state run reporting *less* than a dirty-state one.
+    Checked at PR-17a: no fragments present and `COVERAGE_PROCESS_START` unset,
+    so nothing is wrong today. CI is safe by construction -- `actions/checkout@v4`
+    cleans the workspace each run -- but a local chain is not.
   - **The integration coverage baseline moves to 22264 statements / 1882
     branches, 100%**, from PR-13/14/15's 22161 / 1880. The whole delta is this
     PR's own additions to `src/opus_app/apps/*` (assertions, narrowings, the
@@ -5274,6 +5300,29 @@ body; never rewrite or delete earlier notes.*
     `'msg'`. `cart/models.py`'s `# this is not being used` is false too -- `Cart`
     is queried in three views and the golden suite -- and was left alone as a
     comment edit outside this PR's lines; it is a candidate for whoever reopens it.
+  - **"True when written, false at the commit that ships" -- the named failure
+    mode, and every blocking finding in PR-17a's review was an instance of it.**
+    Four claims were each measured correctly and then shipped against a different
+    tree: the bandit figures were the base tree's (275/246, when the finished
+    tree has 322 and 90 of them are in `src/opus_app`, put there by this PR's own
+    assertions); "245 generated model classes" was 231; "75 type-ignore markers"
+    was 76; and "the two instances" of the two-name split was about a dozen. None
+    was a code defect and all four were in prose -- two of them in a checked-in
+    `pyproject.toml` comment, which is worse than the notes because nobody
+    re-derives a config comment.
+    **The root cause is mechanical, not carelessness:** the inertness check was
+    run once per commit, comparing that commit to its parent, so each result was
+    true of its own commit and **none of them described the PR**. A per-commit
+    measurement cannot support a PR-level claim.
+    **The rule that closes it, applied by the author rather than by a reviewer:
+    re-take every measurement on the head you are shipping, and say which head it
+    was taken on.** Sweep the diff, the Execution notes, the checked-in tool
+    comments and the PR description together -- they are one artifact for this
+    purpose, and the config comments are the ones that outlive everyone.
+    The orchestrator's ratification of the first bandit figure into rev 7.20 had
+    to be corrected too, which is the PR-15 "nobody re-derives it once it is
+    written down" failure one level up: the executor measured, the orchestrator
+    ratified, and neither re-derived it at the shipping commit.
   - **The unit baseline at `7ecedd13` is 1173 tests**, which is what CI reports for
     that commit; PR-16's note records 1146 for its own tree. Nothing in PR-17a adds
     or removes a test, so 1173 is what it should still be.
