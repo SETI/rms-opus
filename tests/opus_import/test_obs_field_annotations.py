@@ -52,6 +52,7 @@ from opus_import.obs.field_types import MultField, as_int
 from opus_import.obs.obs_base import ObsBase
 from opus_import.steps.do_import_obs import field_function_name
 
+from ._source_scan import class_functions, functions_in, parsed_modules
 from .conftest import make_context
 
 _OBS_DIR = Path(obs.__file__).parent
@@ -90,7 +91,13 @@ def _alias_for(field_type: str | None, form_type: str | None) -> str | None:
     return None
 
 
+@functools.cache
 def _schema_columns() -> dict[str, dict[str, Any]]:
+    # Cached, as `_field_methods` and `_declared_annotations` below are: between them
+    # they parse 57 modules and 23 schemas, and the parametrized tests call them once
+    # per mission. The cached object is shared rather than copied, which is safe only
+    # while every caller treats it as read-only -- they do, and a caller that needs to
+    # mutate one should copy at its own call site rather than drop the cache here.
     """Return every ``obs_`` table column, keyed by the method name that computes it."""
     columns = {}
     for path in sorted(_SCHEMA_DIR.glob('obs_*.json')):
@@ -105,6 +112,7 @@ def _schema_columns() -> dict[str, dict[str, Any]]:
     return columns
 
 
+@functools.cache
 def _field_methods() -> list[tuple[str, str, str, int, str | None]]:
     """Return every field method defined in the hierarchy, read from its source.
 
@@ -114,21 +122,18 @@ def _field_methods() -> list[tuple[str, str, str, int, str | None]]:
         source says the alias, which is what a reader of the module sees.
     """
     found = []
-    for path in sorted(_OBS_DIR.rglob('*.py')):
-        tree = ast.parse(path.read_text(encoding='utf-8'), str(path))
-        for cls in [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]:
-            # ast.walk, not cls.body: a method defined inside an `if` block is still a
-            # method, and rglob because a subpackage's modules are still modules.
-            for fn in ast.walk(cls):
-                if not isinstance(fn, ast.FunctionDef):
-                    continue
-                if not fn.name.startswith('field_obs_'):
-                    continue
-                annotation = ast.unparse(fn.returns) if fn.returns is not None else None
-                found.append((path.name, cls.name, fn.name, fn.lineno, annotation))
+    # `_source_scan.class_functions`, never a hand-written glob/`cls.body` pair: the
+    # traversal is what decides how much of the tree this test can see, and a partial
+    # one passes.
+    for path, cls, fn in class_functions(_OBS_DIR):
+        if not fn.name.startswith('field_obs_'):
+            continue
+        annotation = ast.unparse(fn.returns) if fn.returns is not None else None
+        found.append((path.name, cls.name, fn.name, fn.lineno, annotation))
     return found
 
 
+@functools.cache
 def _declared_annotations() -> dict[str, str]:
     """Return the alias each field method declares, keyed by method name.
 
@@ -1132,14 +1137,13 @@ def _int_returning_functions() -> frozenset[str]:
     names = set()
     roots = [_OBS_DIR.parent, Path(opus_support.__file__).parent]
     for root in roots:
-        for path in sorted(root.glob('**/*.py')):
-            tree = ast.parse(path.read_text(encoding='utf-8'), str(path))
-            for fn in ast.walk(tree):
-                if not isinstance(fn, ast.FunctionDef) or fn.returns is None:
+        for _path, tree in parsed_modules(root):
+            for fn in functions_in(tree):
+                if fn.returns is None:
                     continue
                 returns = ast.unparse(fn.returns)
                 if returns in ('int', 'IntField') or (
-                        returns.startswith(('tuple[', 'tuple['))
+                        returns.startswith('tuple[')
                         and 'int' in returns and 'float' not in returns
                         and 'str' not in returns):
                     names.add(fn.name)
@@ -1162,16 +1166,11 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
     """
     inductive = set(_int_returning_functions())
     functions = []
-    for path in sorted(_OBS_DIR.glob('*.py')):
-        tree = ast.parse(path.read_text(encoding='utf-8'), str(path))
-        for cls in [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]:
-            for fn in cls.body:
-                if not isinstance(fn, ast.FunctionDef) or fn.returns is None:
-                    continue
-                if 'IntField' not in ast.unparse(fn.returns):
-                    continue
-                inductive.add(fn.name)
-                functions.append((path.name, cls.name, fn))
+    for path, cls, fn in class_functions(_OBS_DIR):
+        if fn.returns is None or 'IntField' not in ast.unparse(fn.returns):
+            continue
+        inductive.add(fn.name)
+        functions.append((path.name, cls.name, fn))
 
     unconverted = []
     for name, cls_name, fn in functions:
@@ -1185,8 +1184,15 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
                 f'{name}:{node.lineno} {cls_name}.{fn.name} returns '
                 f'{ast.unparse(node.value)[:60]}')
 
-    # A floor, for the same reason as in `_field_methods`'s own check.
-    assert len(functions) > 50, f'only {len(functions)} IntField functions examined'
+    # Tied to the declarations rather than to a constant: a floor of 50 is cleared by a
+    # scan that sees a third of the tree, which is exactly the failure this needs to
+    # catch. `_declared_annotations` is built by a separate traversal, so agreement
+    # between the two is evidence neither silently shrank.
+    expected = {name for name, alias in _declared_annotations().items()
+                if 'IntField' in alias}
+    seen = {fn.name for _module, _cls, fn in functions}
+    assert expected - seen == set(), f'IntField methods the sweep never saw: '\
+                                     f'{sorted(expected - seen)}'
     assert unconverted == []
 
 
