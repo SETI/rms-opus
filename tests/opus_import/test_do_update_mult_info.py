@@ -93,14 +93,18 @@ def test_every_pinned_presentation_column_is_written() -> None:
     grouped = [o for o in options if o[5] is not None]
     assert grouped, 'the packaged schema no longer groups any instrument_id value'
 
+    # Indexed by position rather than through `MultOption`. Decoding the expectation
+    # with the same NamedTuple the code under test decodes with would make this pass
+    # for any transposition inside it -- which is the same kind of fault as the
+    # six-values-for-seven one this file exists for.
     for option in options:
-        expected = import_util.MultOption(*option)
-        assert by_id[expected.id] == {
-            'label': str(expected.label),
-            'disp_order': expected.disp_order,
-            'display': expected.display,
-            'grouping': expected.grouping,
-            'group_disp_order': expected.group_disp_order,
+        row_id, _value, label, disp_order, display, grouping, group_disp_order = option
+        assert by_id[row_id] == {
+            'label': str(label),
+            'disp_order': disp_order,
+            'display': display,
+            'grouping': grouping,
+            'group_disp_order': group_disp_order,
         }
 
 
@@ -147,6 +151,6 @@ def test_an_entry_of_the_wrong_length_stops_the_step(
     db = _RecordingDatabase(['mult_obs_general_instrument_id'])
     ctx: ImportContext = make_context(logger=RecordingLogger(), db=db)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match='MultOption'):
         do_update_mult_info.update_mult_info(ctx)
     assert db.updates == []
