@@ -52,27 +52,39 @@ def update_mult_info(ctx: ImportContext) -> None:
     table_names = db.table_names('perm', prefix='mult_')
 
     for table_name in table_names:
-        # Try to figure out what the table name is
+        # A mult table's name is its observation table's name joined to its column's,
+        # and both halves contain underscores, so where the split falls has to be
+        # decided by trying them. A table name alone is not enough to decide it: both
+        # `obs_surface_geometry` and `obs_surface_geometry_name` are real tables, so
+        # `mult_obs_surface_geometry_name_target_name` matches a schema at the shorter
+        # split and only the longer one leaves a column that exists. The split is
+        # therefore the one where the schema *and* the column both resolve.
         splits = table_name.split('_')
         table_schema = None
-        for n_splits in range(3, 6):
-            # Covers mult_obs_general to mult_obs_mission_new_horizons
+        column = None
+        for n_splits in range(3, len(splits)):
             trial_name = '_'.join(splits[1:n_splits])
-            table_schema = import_util.read_schema_for_table(ctx, trial_name)
-            if table_schema is not None:
+            trial_schema = import_util.read_schema_for_table(ctx, trial_name)
+            if trial_schema is None:
+                continue
+            if table_schema is None:
+                # Remembered so that a table whose column resolves nowhere is reported
+                # against a schema that exists, rather than as an unknown table.
+                table_schema = trial_schema
+            mult_field_name = '_'.join(splits[n_splits:])
+            for trial_column in trial_schema:
+                if trial_column['field_name'] == mult_field_name:
+                    table_schema, column = trial_schema, trial_column
+                    break
+            if column is not None:
                 break
         if table_schema is None:
             logger.log('error',
                 f'Unable to find table schema for mult "{table_name}"')
             continue
-        mult_field_name = '_'.join(splits[n_splits:])
-        for column in table_schema:
-            field_name = column['field_name']
-            if field_name == mult_field_name:
-                break
-        else:
+        if column is None:
             logger.log('error',
-        f'Unable to find field "{mult_field_name}" in table "{table_name}"')
+                f'Unable to find a column matching mult table "{table_name}"')
             continue
 
         mult_options = column.get('mult_options', False)

@@ -7,6 +7,8 @@ disagreement between the shape the schemas hold and the shape the step read out 
 which a hand-written schema fixture could not have shown.
 """
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -16,6 +18,8 @@ from opus_import.context import ImportContext
 from opus_import.steps import do_update_mult_info
 
 from .conftest import RecordingLogger, make_context
+
+_SCHEMA_DIR = Path(import_util.__file__).parent / 'table_schemas'
 
 
 class _RecordingDatabase:
@@ -130,7 +134,49 @@ def test_an_unknown_column_is_reported() -> None:
     _db, logger = _run(['mult_obs_general_nosuchcolumn'])
 
     assert logger.messages_at('error') == [
-        'Unable to find field "nosuchcolumn" in table "mult_obs_general_nosuchcolumn"']
+        'Unable to find a column matching mult table "mult_obs_general_nosuchcolumn"']
+
+
+def test_a_table_whose_name_is_also_a_shorter_table_still_resolves() -> None:
+    """The split between table name and column name is decided by both resolving.
+
+    `obs_surface_geometry` and `obs_surface_geometry_name` are both real tables, so
+    ``mult_obs_surface_geometry_name_target_name`` matches a schema at the shorter split
+    -- and only at the longer one is what remains a column that exists. Taking the first
+    schema that matched left this table structurally unreachable: the step reported
+    ``Unable to find field "name_target_name"`` and skipped it on every run.
+    """
+    _db, logger = _run(['mult_obs_surface_geometry_name_target_name'])
+
+    assert logger.messages_at('error') == []
+
+
+def test_every_mult_table_the_schemas_imply_resolves() -> None:
+    """No mult table a real database would hold is unreachable.
+
+    Driven over every ``mult_`` table the packaged schemas imply -- one per GROUP or
+    MULTIGROUP column -- rather than over names chosen here, because the fault this
+    guards against was a name-splitting rule that contrived names never exercised.
+    """
+    implied = []
+    for path in sorted(_SCHEMA_DIR.glob('obs_*.json')):
+        for column in json.loads(path.read_text(encoding='utf-8')):
+            if not isinstance(column, dict) or not column.get('field_name'):
+                continue
+            form_type = column.get('pi_form_type')
+            head = (form_type.split(':')[0] if isinstance(form_type, str)
+                    else form_type)
+            if head in ('GROUP', 'MULTIGROUP'):
+                implied.append(
+                    import_util.table_name_mult(path.stem, column['field_name']))
+    assert len(implied) > 80
+
+    db, logger = _run(implied)
+
+    assert logger.messages_at('error') == []
+    # A column whose values are not pinned in the schema is left as the import wrote it,
+    # which is most of them; what matters is that none was skipped for being unresolvable.
+    assert len({table for table, _row, _where in db.updates}) > 50
 
 
 def test_an_entry_of_the_wrong_length_stops_the_step(
