@@ -8,7 +8,7 @@ spectrograph with a spatially resolved window produces an image at all.
 import os
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 
@@ -378,7 +378,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         if band1 is None or band2 is None or band_bin is None:
             return None
 
-        return cast(IntField, (band2 - band1 + 1) // band_bin)
+        return as_int((band2 - band1 + 1) // band_bin)
 
 
     ##########################################
@@ -451,22 +451,22 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return self._create_mult_keep_case(channel)
 
     def field_obs_instrument_couvis_band1(self) -> IntField:
-        return cast(IntField, self._supp_index_col('MINIMUM_BAND_NUMBER'))
+        return as_int(self._supp_index_col('MINIMUM_BAND_NUMBER'))
 
     def field_obs_instrument_couvis_band2(self) -> IntField:
-        return cast(IntField, self._supp_index_col('MAXIMUM_BAND_NUMBER'))
+        return as_int(self._supp_index_col('MAXIMUM_BAND_NUMBER'))
 
     def field_obs_instrument_couvis_band_bin(self) -> IntField:
-        return cast(IntField, self._supp_index_col('BAND_BINNING_FACTOR'))
+        return as_int(self._supp_index_col('BAND_BINNING_FACTOR'))
 
     def field_obs_instrument_couvis_line1(self) -> IntField:
-        return cast(IntField, self._supp_index_col('WINDOW_MINIMUM_LINE_NUMBER'))
+        return as_int(self._supp_index_col('WINDOW_MINIMUM_LINE_NUMBER'))
 
     def field_obs_instrument_couvis_line2(self) -> IntField:
-        return cast(IntField, self._supp_index_col('WINDOW_MAXIMUM_LINE_NUMBER'))
+        return as_int(self._supp_index_col('WINDOW_MAXIMUM_LINE_NUMBER'))
 
     def field_obs_instrument_couvis_line_bin(self) -> IntField:
-        return cast(IntField, self._supp_index_col('LINE_BINNING_FACTOR'))
+        return as_int(self._supp_index_col('LINE_BINNING_FACTOR'))
 
     def field_obs_instrument_couvis_samples(self) -> IntField:
-        return cast(IntField, self._supp_index_col('LINE_SAMPLES'))
+        return as_int(self._supp_index_col('LINE_SAMPLES'))

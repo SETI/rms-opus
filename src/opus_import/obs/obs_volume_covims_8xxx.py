@@ -5,7 +5,7 @@ Cassini VIMS stellar ring occultation profiles.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIMSOccCommon
 
 
@@ -125,10 +125,10 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
         return self._create_mult(self._supp_index_col('STAR_TRACKING'))
 
     def field_obs_instrument_covims_swath_width(self) -> IntField:
-        return cast(IntField, self._supp_index_col('SWATH_WIDTH'))
+        return as_int(self._supp_index_col('SWATH_WIDTH'))
 
     def field_obs_instrument_covims_swath_length(self) -> IntField:
-        return cast(IntField, self._supp_index_col('SWATH_LENGTH'))
+        return as_int(self._supp_index_col('SWATH_LENGTH'))
 
     def field_obs_instrument_covims_ir_exposure(self) -> FloatField:
         ir_exp = self._supp_index_col('IR_EXPOSURE')

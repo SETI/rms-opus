@@ -6,7 +6,7 @@ so each row is expanded into two and the OPUS id carries the channel.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
 
@@ -212,14 +212,12 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     def field_obs_type_image_greater_pixel_size(self) -> IntField:
         if not self._is_image():
             return None
-        return cast(IntField,
-                    max(self._index_col('SWATH_WIDTH'), self._index_col('SWATH_LENGTH')))
+        return as_int(max(self._index_col('SWATH_WIDTH'), self._index_col('SWATH_LENGTH')))
 
     def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         if not self._is_image():
             return None
-        return cast(IntField,
-                    min(self._index_col('SWATH_WIDTH'), self._index_col('SWATH_LENGTH')))
+        return as_int(min(self._index_col('SWATH_WIDTH'), self._index_col('SWATH_LENGTH')))
 
 
     ###################################
@@ -322,10 +320,10 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         return self._create_mult(self._index_col('STAR_TRACKING'))
 
     def field_obs_instrument_covims_swath_width(self) -> IntField:
-        return cast(IntField, self._index_col('SWATH_WIDTH'))
+        return as_int(self._index_col('SWATH_WIDTH'))
 
     def field_obs_instrument_covims_swath_length(self) -> IntField:
-        return cast(IntField, self._index_col('SWATH_LENGTH'))
+        return as_int(self._index_col('SWATH_LENGTH'))
 
     def field_obs_instrument_covims_ir_exposure(self) -> FloatField:
         ir_exp = self._index_col('IR_EXPOSURE')

@@ -8,7 +8,7 @@ from typing import cast
 
 import numpy as np
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_type_image import EIGHT_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_galileo_common import ObsVolumeGalileoCommon
 
@@ -234,13 +234,13 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         cutoff = self._supp_index_col('CUT_OUT_WINDOW')
         if cutoff is None or cutoff[2] is None or cutoff[3] is None:
             return 800
-        return cast(IntField, max(cutoff[2], cutoff[3]))
+        return as_int(max(cutoff[2], cutoff[3]))
 
     def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         cutoff = self._supp_index_col('CUT_OUT_WINDOW')
         if cutoff is None or cutoff[2] is None or cutoff[3] is None:
             return 800
-        return cast(IntField, min(cutoff[2], cutoff[3]))
+        return as_int(min(cutoff[2], cutoff[3]))
 
 
     ###################################

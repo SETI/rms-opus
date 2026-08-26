@@ -3,9 +3,8 @@
 HST NICMOS observations.
 """
 
-from typing import cast
 
-from opus_import.obs.field_types import IntField, MultFieldRet
+from opus_import.obs.field_types import IntField, MultFieldRet, as_int
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
@@ -90,10 +89,10 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
         if lines is None and samples is None:
             return None
         if lines is None:
-            return cast(IntField, samples)
+            return as_int(samples)
         if samples is None:
-            return cast(IntField, lines)
-        return cast(IntField, max(lines, samples))
+            return as_int(lines)
+        return as_int(max(lines, samples))
 
     def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         filter_name = self._index_col('FILTER_NAME')

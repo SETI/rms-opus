@@ -7,7 +7,7 @@ converted.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_cassini_common_pds3 import ObsCassiniCommonPDS3
 from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
@@ -151,7 +151,7 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         return self._create_mult('Y')
 
     def field_obs_wavelength_spec_size(self) -> IntField:
-        return cast(IntField, self._index_col('SPECTRUM_SAMPLES'))
+        return as_int(self._index_col('SPECTRUM_SAMPLES'))
 
 
     ##########################################

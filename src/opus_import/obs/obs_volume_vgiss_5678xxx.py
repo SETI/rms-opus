@@ -7,7 +7,7 @@ a column of its own, which is why the OPUS id is derived from it separately.
 from typing import cast
 
 from opus_import.import_util import IndexRow
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_type_image import EIGHT_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
 
@@ -158,7 +158,9 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         line2 = self._supp_index_col('LAST_LINE')
         sample1 = self._supp_index_col('FIRST_SAMPLE')
         sample2 = self._supp_index_col('LAST_SAMPLE')
-        return line2-line1+1, sample2-sample1+1
+        # int() because the index columns arrive from numpy, which does not subclass
+        # int; see opus_import.obs.field_types.as_int.
+        return int(line2-line1+1), int(sample2-sample1+1)
 
     def field_obs_type_image_greater_pixel_size(self) -> IntField:
         pix1, pix2 = self._vgiss_pixel_size_helper()
@@ -266,9 +268,9 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def field_obs_instrument_vgiss_usable_lines(self) -> IntField:
         line1 = self._supp_index_col('FIRST_LINE')
         line2 = self._supp_index_col('LAST_LINE')
-        return cast(IntField, line2-line1+1)
+        return as_int(line2-line1+1)
 
     def field_obs_instrument_vgiss_usable_samples(self) -> IntField:
         sample1 = self._supp_index_col('FIRST_SAMPLE')
         sample2 = self._supp_index_col('LAST_SAMPLE')
-        return cast(IntField, sample2-sample1+1)
+        return as_int(sample2-sample1+1)

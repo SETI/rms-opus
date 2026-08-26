@@ -9,7 +9,7 @@ instruments spell differently from one another.
 from typing import cast
 
 from opus_import import config_targets
-from opus_import.obs.field_types import IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_cassini_common import ObsCassiniCommon
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
@@ -177,7 +177,7 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
         return self._create_mult(ret)
 
     def field_obs_instrument_coiss_missing_lines(self) -> IntField:
-        return cast(IntField, self._index_col('MISSING_LINES'))
+        return as_int(self._index_col('MISSING_LINES'))
 
     def field_obs_instrument_coiss_shutter_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('SHUTTER_MODE_ID'))

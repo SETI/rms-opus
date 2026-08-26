@@ -50,7 +50,7 @@ forbids shadowing a standard-library module name.
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import Any, TypedDict
 
 StrField = str | None
 """A text column's value, or None where the observation has none.
@@ -66,7 +66,41 @@ FloatField = float | None
 """A ``real4`` or ``real8`` column's value, or None where the observation has none."""
 
 IntField = int | None
-"""An ``int*`` or ``uint*`` column's value, or None where the observation has none."""
+"""An ``int*`` or ``uint*`` column's value, or None where the observation has none.
+
+Read `as_int` before returning one straight from a PDS index: this alias means a builtin
+`int`, and a PDS index does not hand one out.
+"""
+
+
+def as_int(value: Any) -> IntField:
+    """Return an integer column's value as a builtin `int`.
+
+    ``pdstable`` parses an integer index column with numpy, so what reaches a field
+    method is a `numpy.int64`. That is **not** an `int` --
+    ``isinstance(numpy.int64(0), int)`` is False, because `numpy.integer` does not
+    subclass it -- so returning one directly makes `IntField` a false statement about
+    the value, which nothing but a runtime check would notice. The asymmetry is worth
+    knowing: `numpy.float64` *does* subclass `float` and `numpy.str_` *does* subclass
+    `str`, so `FloatField` and `StrField` need no equivalent.
+
+    Converting is lossless: a `numpy.int64` holds no value a Python `int` cannot.
+
+    Parameters:
+        value: What the index gave, which may be a number, a string of digits, or None.
+
+    Returns:
+        The value as an `int`, or None if there was none.
+
+    Raises:
+        ValueError: If the value is not an integer at all. The column's schema says it
+            is one, so that is a fault in the data rather than something to paper over;
+            `opus_import.steps.do_import_obs.import_run_field_function` reports it and
+            leaves the column empty.
+    """
+    if value is None:
+        return None
+    return int(value)
 
 
 class MultField(TypedDict):

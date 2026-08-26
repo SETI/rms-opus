@@ -5,7 +5,7 @@ HST STIS observations.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, as_int
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
@@ -115,7 +115,7 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
             samples = 0
         if x1d_size is None:
             x1d_size = 0
-        return cast(IntField, max(lines, samples, x1d_size))
+        return as_int(max(lines, samples, x1d_size))
 
     def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         return self._create_mult('NONE')

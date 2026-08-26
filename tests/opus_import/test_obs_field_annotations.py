@@ -34,10 +34,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 
 from opus_import import config_data, obs
 from opus_import.config_bundle_info import BUNDLE_INFO
+from opus_import.obs.field_types import as_int
 from opus_import.obs.obs_base import ObsBase
 
 from .conftest import make_context
@@ -691,6 +693,12 @@ _EXPECTED_RETURNS: dict[str, tuple[int, int]] = {
 
 
 def _drive(instrument_id: str) -> tuple[list[str], list[str], int, int]:
+    """Call every field method the mission's own fixture drives."""
+    return _drive_fixture(instrument_id, _MISSION_FIXTURES[instrument_id])
+
+
+def _drive_fixture(instrument_id: str,
+                   fixture: dict[str, Any]) -> tuple[list[str], list[str], int, int]:
     """Call every field method one mission's class resolves.
 
     Returns:
@@ -698,7 +706,6 @@ def _drive(instrument_id: str) -> tuple[list[str], list[str], int, int]:
         that raised -- followed by how many methods returned at all and how many
         returned something other than an absent value.
     """
-    fixture = _MISSION_FIXTURES[instrument_id]
     instrument = _instrument_for(fixture)
     assert instrument.instrument_id == instrument_id
 
@@ -806,6 +813,48 @@ def test_no_field_method_is_left_unannotated() -> None:
                    if annotation is None]
 
     assert unannotated == []
+
+
+def test_an_integer_column_survives_numpy() -> None:
+    """`IntField` means a builtin int, and a PDS index does not hand one out.
+
+    ``pdstable`` parses an integer column with numpy, and `numpy.integer` does not
+    subclass `int` -- unlike `numpy.float64` and `numpy.str_`, which do subclass their
+    builtins, so only this alias needs the conversion. Without
+    `opus_import.obs.field_types.as_int` every `IntField` method reading such a column
+    would be declaring something false, and only a runtime check like this one would
+    ever say so.
+    """
+    assert not isinstance(np.int64(7), int), 'numpy started subclassing int'
+    assert isinstance(np.float64(7), float)
+    assert isinstance(np.str_('x'), str)
+
+    assert isinstance(as_int(np.int64(7)), int)
+    assert as_int(np.int64(7)) == 7
+    assert as_int(None) is None
+    assert as_int('1294561143') == 1294561143
+
+
+@pytest.mark.parametrize('instrument_id', sorted(_MISSION_FIXTURES))
+def test_an_integer_column_is_an_int_even_from_a_numpy_index(
+        instrument_id: str) -> None:
+    """Drive each mission with numpy-typed index values, as ``pdstable`` produces them.
+
+    The fixtures hold plain Python numbers, which is why the layer above cannot see
+    this: every integer column would still look like an `int`. Re-running the same
+    sweep with every integer promoted to `numpy.int64` is what makes the conversion
+    load-bearing.
+    """
+    fixture = _MISSION_FIXTURES[instrument_id]
+    numpy_fixture = {
+        key: ({k: (np.int64(v) if type(v) is int else v) for k, v in value.items()}
+              if isinstance(value, dict) else value)
+        for key, value in fixture.items()}
+
+    wrong, raised, _returned, _non_null = _drive_fixture(instrument_id, numpy_fixture)
+
+    assert raised == []
+    assert wrong == []
 
 
 def test_the_alias_names_are_the_ones_the_package_defines() -> None:

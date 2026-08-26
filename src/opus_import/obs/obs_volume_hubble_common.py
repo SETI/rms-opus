@@ -8,7 +8,7 @@ common.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
@@ -162,7 +162,7 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         samples = self._index_col('LINE_SAMPLES')
         if lines is None or samples is None:
             return None
-        return cast(IntField, max(lines, samples))
+        return as_int(max(lines, samples))
 
     def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         if not self._is_image():
@@ -171,7 +171,7 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         samples = self._index_col('LINE_SAMPLES')
         if lines is None or samples is None:
             return None
-        return cast(IntField, min(lines, samples))
+        return as_int(min(lines, samples))
 
 
     ###################################
@@ -232,7 +232,7 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         return cast(StrField, self._index_col('STSCI_GROUP_ID'))
 
     def field_obs_mission_hubble_hst_proposal_id(self) -> IntField:
-        return cast(IntField, self._index_col('HST_PROPOSAL_ID'))
+        return as_int(self._index_col('HST_PROPOSAL_ID'))
 
     def field_obs_mission_hubble_hst_pi_name(self) -> StrField:
         return cast(StrField, self._index_col('HST_PI_NAME'))

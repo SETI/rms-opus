@@ -3,9 +3,8 @@
 HST WFC3 observations.
 """
 
-from typing import cast
 
-from opus_import.obs.field_types import IntField, MultFieldRet
+from opus_import.obs.field_types import IntField, MultFieldRet, as_int
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
@@ -117,7 +116,7 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
         if lines is None or samples is None:
             return spec_size
 
-        return cast(IntField, min(max(lines, samples), spec_size))
+        return as_int(min(max(lines, samples), spec_size))
 
     def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         return self._create_mult('NONE')

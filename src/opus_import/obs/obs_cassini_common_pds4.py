@@ -7,7 +7,7 @@ Cassini ISS bundle delivered as PDS4 needs.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_cassini_common import ObsCassiniCommon
 from opus_import.obs.obs_common_pds4 import ObsCommonPDS4
 
@@ -73,7 +73,7 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         return self._create_mult(self._index_col('cassini:image_observation_type'))
 
     def field_obs_instrument_coiss_missing_lines(self) -> IntField:
-        return cast(IntField, self._index_col('cassini:missing_lines'))
+        return as_int(self._index_col('cassini:missing_lines'))
 
     def field_obs_instrument_coiss_shutter_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('cassini:shutter_mode_id'))
