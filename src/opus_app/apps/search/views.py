@@ -62,9 +62,9 @@ from opus_app.apps.tools.app_utils import (
 from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Mapping
 
-    from django.http import HttpRequest, HttpResponse, QueryDict
+    from django.http import HttpRequest, HttpResponse
 
 from opus_support import (
     convert_from_default_unit,
@@ -170,6 +170,9 @@ def api_string_search_choices(request: HttpRequest, slug: str, *,
         log.error('api_string_search_choices: unknown slug "%s"',
                   slug)
         raise Http400Error(http400_unknown_slug(slug, request))
+    # Source 'search' returns the ParamInfo itself; the pair form belongs to
+    # source 'col' with allow_units_override.
+    assert isinstance(param_info, ParamInfo)
 
     param_qualified_name = param_info.param_qualified_name()
     param_category = param_info.category_name
@@ -194,6 +197,8 @@ def api_string_search_choices(request: HttpRequest, slug: str, *,
         log.error('api_string_search_choices: Could not find selections for'
                   +' request %s', str(request.GET))
         raise Http400Error(http400_search_params_invalid(request))
+    # url_to_search_params returns both dictionaries or neither.
+    assert extras is not None
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -300,6 +305,9 @@ def api_string_search_choices(request: HttpRequest, slug: str, *,
             search_cache_join_condition(param_category, user_query_table))
 
         if partial_query:
+            # get_string_query returns both halves together or neither, and the
+            # None case returned above.
+            assert like_params is not None
             select.add_where(sql_builder.Expr(like_query, like_params))
 
         select.add_order_by(param_column)
@@ -325,6 +333,9 @@ def api_string_search_choices(request: HttpRequest, slug: str, *,
         select.add_from(param_category)
 
         if partial_query:
+            # get_string_query returns both halves together or neither, and the
+            # None case returned above.
+            assert like_params is not None
             select.add_where(sql_builder.Expr(like_query, like_params))
 
         select.add_order_by(param_column)
@@ -388,7 +399,7 @@ def api_string_search_choices(request: HttpRequest, slug: str, *,
 #
 ################################################################################
 
-def url_to_search_params(request_get: QueryDict | dict[str, str],
+def url_to_search_params(request_get: Mapping[str, str],
                          allow_errors: bool = False,
                          allow_regex_errors: bool = False,
                          return_slugs: bool = False,
@@ -468,8 +479,8 @@ def url_to_search_params(request_get: QueryDict | dict[str, str],
     extras: dict[str, Any] = {}
     qtypes: dict[str, Any] = {}
     units: dict[str, Any] = {}
-    order_params: list[str] = []
-    order_descending_params: list[bool] = []
+    order_params: list[str] | None = []
+    order_descending_params: list[bool] | None = []
 
     # Note that request_get.items() automatically gets rid of duplicate entries
     # because it returns a dict.
@@ -558,6 +569,9 @@ def url_to_search_params(request_get: QueryDict | dict[str, str],
             log.error('url_to_search_params: unknown slug "%s"',
                       orig_slug)
             return None, None
+        # Every call above passes source 'qtype' or 'search'; the pair form is
+        # returned only for source 'col' with allow_units_override.
+        assert isinstance(param_info, ParamInfo)
 
         slug_no_num = strip_numeric_suffix(slug)
 
@@ -989,7 +1003,7 @@ def get_user_query_table(selections: dict[str, Any], extras: dict[str, Any],
     # Is this key set in the cache?
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  + ':cache_table:' + str(cache_table_num))
-    cached_val = cache.get(cache_key)
+    cached_val: str | None = cache.get(cache_key)
     if cached_val:
         return cached_val
 
@@ -1019,6 +1033,9 @@ def get_user_query_table(selections: dict[str, Any], extras: dict[str, Any],
     create_sql = sql_builder.create_table_from_select_sql(
         cache_table_name, sql,
         column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS)
+    # construct_query_string returns both halves together or neither, and the
+    # caller checked the SQL half above.
+    assert params is not None
     try:
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
@@ -1038,7 +1055,8 @@ def get_user_query_table(selections: dict[str, Any], extras: dict[str, Any],
     return cache_table_name
 
 
-def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -> int | None:
+def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]
+                           ) -> tuple[int, bool]:
     """Creates a new row in the user_searches table for each search request.
 
     This table lists query params+values plus any extra info needed to
@@ -1160,7 +1178,8 @@ _PARAMINFO_CACHE: dict[Any, Any] = {}
 
 def get_param_info_by_slug(slug: str, source: str,
                            allow_units_override: bool = False,
-                           check_valid_units: bool = True) -> ParamInfo | None:
+                           check_valid_units: bool = True
+                           ) -> ParamInfo | tuple[ParamInfo | None, str | None] | None:
     """Given a slug, look up the corresponding ParamInfo.
 
     If source == 'col', then this is a column name. We look at the
@@ -1378,17 +1397,18 @@ def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
                 return None, None
             if mult_values:
                 mult_column = sql_builder.column(param_info.name, cat_name)
+                mult_clause: sql_builder.Expr
                 if form_type == 'GROUP':
                     # Single-valued mult. We can be efficient by seeing if the field
                     # contents is in the list of search values.
-                    clause = sql_builder.in_values(mult_column, mult_values)
+                    mult_clause = sql_builder.in_values(mult_column, mult_values)
                 else:
                     # Multi-valued mult (multisel). We have to see if each search value
                     # is in the database field list, so we have to check them one by one.
-                    clause = sql_builder.join_exprs(
+                    mult_clause = sql_builder.join_exprs(
                         [sql_builder.json_contains(mult_column, str(mult_value))
                          for mult_value in mult_values], 'OR')
-                clauses.append(clause)
+                clauses.append(mult_clause)
                 obs_tables.add(cat_name)
 
         elif form_type in settings.RANGE_FORM_TYPES:
@@ -1415,6 +1435,8 @@ def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
 
             if clause is None:
                 return None, None
+            # These builders return both halves together or neither.
+            assert params is not None
             clauses.append(sql_builder.Expr(clause, params))
             obs_tables.add(cat_name)
 
@@ -1423,6 +1445,8 @@ def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
                                               qtypes)
             if clause is None:
                 return None, None
+            # These builders return both halves together or neither.
+            assert params is not None
             clauses.append(sql_builder.Expr(clause, params))
             obs_tables.add(cat_name)
 
@@ -1432,7 +1456,7 @@ def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
             return None, None
 
     # Make the ordering terms
-    order_terms = []
+    order_terms: list[tuple[Any, bool]] | None = []
     if 'order' in extras:
         order_params, descending_params = extras['order']
 
@@ -1441,6 +1465,10 @@ def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
                                                    descending_params)
         if order_terms is None:
             return None, None
+        # create_order_by_terms returns all three or none, and the check above
+        # ruled out none.
+        assert order_mult_tables is not None
+        assert order_obs_tables is not None
         mult_tables |= order_mult_tables
         obs_tables |= order_obs_tables
 
@@ -1458,6 +1486,9 @@ def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
         select.add_where(sql_builder.combine_exprs(clauses, 'AND'))
 
     # Add in the ORDER BY clause
+    # order_terms starts as [] and is only replaced by a non-None list, since the
+    # None case returned above.
+    assert order_terms is not None
     for order_column, descending in order_terms:
         select.add_order_by(order_column, descending=descending)
 
@@ -1996,6 +2027,9 @@ def parse_order_slug(all_order: str | None
             log.error('parse_order_slug: Unable to resolve order '
                       +'slug "%s"', order)
             return None, None
+        # The pair form is returned only for source='col' with
+        # allow_units_override, which this call turns off.
+        assert isinstance(param_info, ParamInfo)
         order_param = param_info.param_qualified_name()
         if order_param == 'obs_pds.opus_id':
             # Force opus_id to be from obs_general for efficiency
