@@ -1,5 +1,3 @@
-# integration_tests/apps_db_tests/test_api_view.py
-
 """Tests for the @api_view decorator in opus_app.apps.tools.app_utils.
 
 These need no database: they drive the decorator with handlers written here, not

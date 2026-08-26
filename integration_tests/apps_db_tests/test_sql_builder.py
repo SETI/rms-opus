@@ -1,5 +1,3 @@
-# integration_tests/apps_db_tests/test_sql_builder.py
-
 """Tests for the SQL assembly helpers in opus_app.apps.tools.sql_builder.
 
 These need no database: they check what the builder renders, not what the server

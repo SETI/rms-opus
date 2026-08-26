@@ -1,6 +1,3 @@
-# Hand-run against a local server to regenerate golden fixtures. Unlike the rest
-# of the suite, which runs from the repository root, this writes to
-# `responses/` relative to the working directory, so run it from this directory.
 """Regenerate the recorded API responses by driving a running OPUS server.
 
 Hand-run, never part of the suite: it issues each request in `OPUS_IDS`

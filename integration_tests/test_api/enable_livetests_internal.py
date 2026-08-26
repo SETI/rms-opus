@@ -1,4 +1,3 @@
-# Don't do anything. This is just a placeholder to allow manage.py to work.
 """Point the API suite at the locally imported database, which is the default.
 
 Loaded as a test label by `manage.py api-internal-db`. It deliberately does

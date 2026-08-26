@@ -101,8 +101,8 @@ class ApiTestHelper(_ApiTestHelperBase):
         Returns:
             The response, whichever client answered it.
         """
-        if (not go_live_target() or
-            go_live_target() == "production"):
+        target = go_live_target()
+        if not target or target == "production":
             url = "https://opus.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds.seti.org" + url
@@ -443,10 +443,14 @@ class ApiTestHelper(_ApiTestHelperBase):
         """Normalize a CSV response body for comparison.
 
         Parameters:
-            text: The response body, as bytes or as text.
+            text: The response body **as bytes**, either the response's own or the
+                literal a test recorded. The first two and the last character of its
+                ``str()`` are dropped unconditionally -- they are the ``b'`` and the
+                closing quote -- so passing text here silently loses three
+                characters. Every call site passes bytes.
 
         Returns:
-            The body with its bytes-repr wrapper and carriage returns removed.
+            The body with that wrapper and its carriage returns removed.
         """
         text = str(text)[2:-1]
         text = (text.replace('\\\\r', '').replace('\\r', '')

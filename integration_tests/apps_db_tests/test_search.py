@@ -1,8 +1,3 @@
-# integration_tests/apps_db_tests/test_search.py
-
-# These tests require the following volumes, imported in this order:
-# COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201,HSTI1_2003
-
 """Tests for search-URL parsing and for the SQL each kind of search clause builds.
 
 These are the unit tests for `url_to_search_params` and the clause builders
