@@ -5490,8 +5490,17 @@ body; never rewrite or delete earlier notes.*
     mix-in **before** `TestCase`, because with the base in place the other order has
     no consistent MRO. The swap was proved rather than argued -- the mix-in's own 21
     names do not intersect `TestCase`'s MRO at all, it makes no `super()` call, and
-    every attribute of all seven concrete classes resolves to the same object under
-    both orders.
+    across all seven concrete suites every one of their 131-429 names is provided by
+    the same class under `(ApiTestHelper, TestCase)` as under `(TestCase,
+    ApiTestHelper)`.
+    **The obvious way to check that is wrong, and wrong in the direction that
+    frightens you into reverting a correct change.** Comparing the *fetched* objects
+    -- `getattr(new, n) is getattr(old, n)` -- reports a difference for `setUpClass`,
+    `tearDownClass`, `addClassCleanup`, `doClassCleanups`, `enterClassContext` and
+    `_class_cleanups` on every class, because a classmethod's descriptor binds to the
+    class it is fetched from and two fetches from two classes are never the same
+    object whatever the MRO is. The question is **which class in the MRO provides
+    each name**, and that has to be asked of `__mro__` and `vars()` directly.
     **`self.client` here is a `requests.Session`, not a Django test client.** These
     suites subclass `unittest.TestCase`, and each `setUp` installs either
     `rest_framework.test.RequestsClient` (a `Session` subclass that drives the WSGI
