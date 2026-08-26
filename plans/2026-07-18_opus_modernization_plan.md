@@ -4659,6 +4659,19 @@ body; never rewrite or delete earlier notes.*
     anyway** -- if it returns any path, discard the run and start it again; a
     convenient-sounding argument that the change "could not have mattered" is not a
     substitute for the empty diff.
+  - **Reproduce the CI gate command-for-command; do not approximate it.** Two traps cost
+    time here. (a) **`ruff check .` is not the gate** -- CI lints
+    `RUFF_PATHS="src integration_tests tests manage.py"`, and the repo root holds
+    `vulture_whitelist.py`, which is deliberately outside that scope (its own header says
+    so) and trips `B018`+`F821` by construction, because a bare name is exactly what a
+    vulture whitelist is. Linting `.` reports two errors CI does not have. (b) **`mypy`
+    without `OPUS_CONFIG` set does not fail, it crashes** -- `INTERNAL ERROR ... Error
+    constructing plugin instance of NewSemanalDjangoPlugin`, which names the plugin and
+    not the cause. `run-tests.yml` sets `OPUS_CONFIG: tests/fixtures/opus_ci.toml` at
+    workflow level; set it locally or the type gate is unrunnable. Also note
+    `opus_main_test.sh` does **not** call `opus_check_coverage.sh` -- it leaves
+    `coverage_report.txt` in the repo root and CI checks it in a later step, so a local
+    run proving "100%" has to run that script itself.
     2. **A test that re-implements the rule it is checking checks nothing.** Layer 1 had
        its own copy of how `import_run_field_function` builds a method name, so changing
        the production rule left every test green. The rule is
