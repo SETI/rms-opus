@@ -532,7 +532,10 @@ def test_a_field_method_returns_what_it_declares(instrument_id: str) -> None:
             try:
                 value = getattr(instrument, name)()
             except Exception:
-                continue       # business; only a returned value is
+                # A method that raises is not this test's business: the fixture is one
+                # observation, not a whole bundle, so a method may legitimately need a
+                # column this one does not carry. Only a returned value is checked.
+                continue
             returned += 1
             if not _matches(alias, value):
                 wrong.append(f'{name} declares {alias} but returned {value!r}')
