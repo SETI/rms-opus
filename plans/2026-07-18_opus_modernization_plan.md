@@ -1071,7 +1071,7 @@ individually-justified entries.
 - **SPLIT INTO PR-17a AND PR-17b (rev 7.20, 2026-08-26), on PR-17's measured
   stop-and-report.** The plan's §8 offered "subdivide by app"; the split is **by tree**
   instead, because each half then empties whole rows in both the mypy burn-down and the
-  /seti/newnav/capped-run.sh ruff `per-file-ignores` table, so no finer-grained override has to be invented and later
+  ruff `per-file-ignores` table, so no finer-grained override has to be invented and later
   removed. Both halves stay under CodeRabbit's 100-file cap and get a real review; the
   combined PR measured ~85 files and several thousand changed lines.
   - **PR-17a — Django side + log analyzer.** Annotate and docstring `src/opus_app` and
@@ -1080,7 +1080,7 @@ individually-justified entries.
     sweep** inherited from PR-13; the bandit/vulture reduction; `py.typed` for both
     packages; `types-requests` into the dev extras. ~65 files.
   - **PR-17b — the integration suites.** `integration_tests` annotations (measured 4488
-    /seti/newnav/capped-run.sh mypy errors, of which 1697 are bare `def f(self):` taking `-> None`), ~361 substantive
+    mypy errors, of which 1697 are bare `def f(self):` taking `-> None`), ~361 substantive
     body errors, the `integration_tests/**` ruff row, and the `N801`/`N802` renames.
     ~27 files. **Must land before PR-18**, preserving PR-14's ordering constraint.
 - **Three gaps the original criterion could not discharge, ruled with rev 7.20:**
@@ -5382,7 +5382,7 @@ body; never rewrite or delete earlier notes.*
     -- an `Optional` dereferenced with no check, which raises rather than
     returning a status. A sweep over error returns cannot find a missing check;
     it can only reclassify one that is there. What surfaced them was annotation:
-    /seti/newnav/capped-run.sh mypy reporting the `Optional` dereference.
+    mypy reporting the `Optional` dereference.
     **The general point for PR-17b and PR-19:** the two sweeps are complementary,
     not overlapping. Anywhere PR-13 declared an endpoint's status codes settled,
     a later annotation pass can still find an unguarded dereference that answers
