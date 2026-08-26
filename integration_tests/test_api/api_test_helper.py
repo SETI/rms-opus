@@ -5,7 +5,7 @@ response against a value written into the test or a file under `responses/`. The
 comparison is what varies -- JSON, HTML, CSV, an archive's member list, an embedded
 PNG -- so it lives here once and the suites mix it in.
 
-This module is also where the run's go-live target is read; see `go_live_target`.
+Which server the suite drives is read here too; see `go_live_target`.
 """
 
 import base64
@@ -36,26 +36,27 @@ GO_LIVE_TARGETS = ('dev', 'production')
 
 
 def go_live_target() -> str | None:
-    """Which remote server the API suite runs against, or None for the local one.
+    """Which deployed server the API suite runs against, or None for the local one.
 
-    This used to be the Django setting `TEST_GO_LIVE`, which `manage.py` set to None
-    before handing off to Django's test runner and which the `api-livetest-*` verbs
-    overwrote by naming a module whose body assigned it. pytest has no `manage.py`,
-    so the target comes from the environment instead, and reading it here keeps that
-    one decision in one place.
+    The target is `GO_LIVE_ENV_VAR` in the environment. An **unset or empty** variable
+    selects the locally imported database, which is what an ordinary run wants;
+    `'dev'` and `'production'` select the two servers `_get_response` knows how to
+    build a URL for.
 
-    An **unset or empty** variable means the locally imported database, which is what
-    an ordinary run wants. Any **other** value is refused rather than quietly treated
-    the same way: under the old setting a missing value and a misspelled one were
-    indistinguishable, so a live run started with a typo would silently have tested
-    the local application instead.
+    Any **other** value is refused rather than quietly read as "run locally". The two
+    outcomes are otherwise indistinguishable to the caller -- a suite pointed at
+    nothing and a suite pointed at the local application both pass -- so a run started
+    with a misspelled target would report success for something nobody asked for.
+
+    This is a function rather than a module constant because the environment may be
+    set after the module is imported.
 
     Returns:
-        The target a live run named, or None when the suite is running against the
-        locally imported database.
+        `'dev'`, `'production'`, or None for the locally imported database.
 
     Raises:
-        RuntimeError: If the variable is set to something that names no server.
+        RuntimeError: If the variable holds a value that names no server. The message
+            gives the variable, the value, and the values that would work.
     """
     target = os.environ.get(GO_LIVE_ENV_VAR, '')
     if not target:
@@ -311,12 +312,10 @@ class ApiTestHelper(_ApiTestHelperBase):
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
-        # There should be the same number of images, and they should decode
-        # identically. The count really cannot differ once the bodies compare equal --
+        # The loop below pairs the images off, so it needs the two lists to be the
+        # same length. That cannot fail once the bodies compare equal --
         # __extract_images replaces every image with the same fixed marker, so equal
-        # bodies hold equal numbers of markers -- but it is what the following loop
-        # needs to be true, and it was being asserted of the two body strings, which
-        # the assertion above has already compared. That is why zip() below stays
+        # bodies hold equal numbers of markers -- which is also why zip() stays
         # strict=False: a mismatch is caught here, with both counts named.
         self.assertEqual(len(expected_images), len(resp_images))
         for image1, image2 in zip(expected_images, resp_images, strict=False):

@@ -113,8 +113,10 @@ docs = [
 # which needs an imported database and the PDS holdings behind it. That tree is a
 # root-level sibling of this one precisely so this selection works; asking for it by
 # name (`pytest integration_tests`) is the only way to run it. Nothing is filtered out
-# of the default run with -m, so a test that lands in tests/ runs there whatever it is
-# marked.
+# of the default run with -m. That is a deliberate departure from the "exclude the
+# heavy tier with -m" advice in .cursor/rules/python_testing.mdc: here the heavy tier
+# is a whole directory rather than tests scattered through one, so selecting by path
+# says the same thing and cannot be defeated by a test that forgets its marker.
 testpaths = ["tests"]
 # pytest-django configures Django once per session, which is what lets a unittest.TestCase
 # under integration_tests/ reach the imported schema and what lets tests/opus_app/ import
@@ -129,7 +131,9 @@ DJANGO_SETTINGS_MODULE = "opus_app.settings"
 # are exactly that collision, and both collect under this mode.
 addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib"]
 # --strict-markers is on, so every marker used anywhere has to be declared here.
-# integration_tests/conftest.py applies all three; nothing in tests/ is marked.
+# integration_tests/conftest.py applies `integration` to everything it collects;
+# `holdings` and `livetest` are module-level pytestmarks on the one module each
+# describes. Nothing in tests/ is marked.
 markers = [
   "integration: needs the OPUS database a full import populated (integration_tests/ only)",
   "holdings: reads a product file out of the PDS holdings tree, not just the database row naming it",

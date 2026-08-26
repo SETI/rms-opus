@@ -2,7 +2,7 @@
 
 These need no database: they drive the decorator with handlers written here, not
 with real API endpoints. The 100% branch-coverage gate measures
-`src/opus_app/apps/*`, so every branch of the decorator still has to be exercised by
+`src/opus_app/apps/*`, so every branch of the decorator has to be exercised by
 the suite that gate reads -- which is why the integration coverage invocation runs
 `tests/opus_app` alongside `integration_tests` in a single pass. Living here rather
 than in `integration_tests/` is what also puts them in the holdings-free run on the

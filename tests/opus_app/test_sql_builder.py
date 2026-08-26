@@ -2,7 +2,7 @@
 
 These need no database: they check what the builder renders, not what the server
 does with it. The 100% branch-coverage gate measures `src/opus_app/apps/*`, so every
-branch of the builder still has to be exercised by the suite that gate reads --
+branch of the builder has to be exercised by the suite that gate reads --
 which is why the integration coverage invocation runs `tests/opus_app` alongside
 `integration_tests` in a single pass. Living here rather than in `integration_tests/`
 is what also puts them in the holdings-free run on the GitHub-hosted CI.

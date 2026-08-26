@@ -10,25 +10,28 @@ created.** pytest-django blocks database access for any test that has not asked 
 it, and nothing here asks: these are plain `unittest.TestCase` subclasses, which
 pytest collects natively and which pytest-django therefore does not manage. That is
 fixed by the plan rather than chosen here -- the suites read and write the freshly
-imported schema with no create, no teardown and no surrounding transaction -- which is
-why `@pytest.mark.django_db` is **forbidden** in this tree and the collection hook
-below refuses it. That marker would wrap each test in a transaction that is rolled
-back, or, with ``transaction=True``, flush the schema the import just filled.
+imported schema with no create, no teardown and no surrounding transaction.
 
-**Markers.** The hook below gives every test collected here `integration`, which is
-what the whole tree has in common. The two narrower markers name one module each and
-are declared on those modules: `test_api/test_cart_api.py` carries `holdings`,
-because building a download archive copies real product files out of the PDS holdings
-tree, and `test_api/test_result_counts.py` carries `livetest`, because it queries a
-server outside this process. All three select *within* an explicit invocation
+**Three ways of asking pytest-django to manage the database are therefore refused**,
+and the collection hook below rejects all of them by name: `@pytest.mark.django_db`,
+the `db`/`transactional_db` fixtures, and a `django.test.SimpleTestCase` subclass.
+Each would either wrap a test in a transaction that is rolled back or, worse, run
+`django_db_setup` -- and `DATABASES['default']['TEST']['NAME']` is the live schema
+itself, so that would rebuild the database the import just filled.
+
+**Markers.** The hook gives every test collected here `integration`, which is what the
+whole tree has in common. The two narrower markers name one module each and are
+declared on those modules: `test_api/test_cart_api.py` carries `holdings`, because
+building a download archive copies real product files out of the PDS holdings tree,
+and `test_api/test_result_counts.py` carries `livetest`, because it queries a server
+outside this process. All three select *within* an explicit invocation
 (``pytest integration_tests -m "not livetest"``); the default run is directory-scoped
 and never reaches this tree at all.
 
-**The run's own configuration.** `manage.py`'s custom `api-*` test verbs used to carry
-this, by naming a module whose body assigned a Django setting. Two environment
-variables replace them, and both are read once at session start so that a value
-naming nothing fails the run before any test does: `OPUS_TEST_GO_LIVE`, through
-`test_api.api_test_helper.go_live_target`, and the one named below.
+**The run's own configuration.** Two environment variables choose what a run checks
+against: `OPUS_TEST_GO_LIVE`, read through `test_api.api_test_helper.go_live_target`,
+and `OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB`, read through
+`internal_db_requested` below.
 """
 
 import os
@@ -37,6 +40,7 @@ from pathlib import Path
 
 import pytest
 from django.conf import settings
+from django.test import SimpleTestCase
 from pytest_django import DjangoDbBlocker
 
 from .test_api.api_test_helper import go_live_target
@@ -47,9 +51,14 @@ from .test_api.api_test_helper import go_live_target
 collect_ignore = ['test_perf']
 
 #: Environment variable that makes `test_result_counts` compare against the locally
-#: imported database instead of checking nothing. Any non-empty value turns it on;
-#: `manage.py api-internal-db-result-counts` was the verb it replaces.
+#: imported database instead of checking nothing. `manage.py
+#: api-internal-db-result-counts` was the verb it replaces.
 INTERNAL_DB_ENV_VAR = 'OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB'
+
+#: The ways of asking pytest-django to manage the database, none of which this tree may
+#: use. `django_db_setup` is what makes them dangerous rather than merely wrong.
+FORBIDDEN_DB_MARKER = 'django_db'
+FORBIDDEN_DB_FIXTURES = ('db', 'transactional_db')
 
 #: Warning filters this tree adds back on top of `filterwarnings = ["error"]`, which
 #: pyproject.toml sets for every run. They are applied as markers on this tree's items
@@ -61,20 +70,37 @@ INTERNAL_DB_ENV_VAR = 'OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB'
 #: rather than a defect in the code under test. Django warns when a cache key exceeds
 #: memcached's 250-character limit. `search.views.set_user_search_number` builds its
 #: key from `CACHE_SERVER_PREFIX`, `CACHE_KEY_PREFIX` and four MD5 hashes, and each
-#: suite's `setUp` overrides `CACHE_KEY_PREFIX` to ``'opustest:' + DB_SCHEMA_NAME`` --
-#: where the schema name is `opus_test_db_<20-character unique id>`. Measured on one
-#: such key: 252 characters here, against 219 for a deployed installation whose schema
-#: is `opus`. So the limit is exceeded by that 33-character name and by nothing else. The
-#: warning was always raised under `manage.py test`; only `filterwarnings` makes it
-#: fail, and it fails *inside* the view, where `api_view` turns it into an HTTP 500. The
-#: headroom a deployed installation has is not large, though, so the hazard is real and
-#: is recorded in the plan's Execution notes.
+#: suite's `setUp` overrides `CACHE_KEY_PREFIX` to ``'opustest:' + DB_SCHEMA_NAME``.
+#: Measured on one such key: 252 characters against a test installation's
+#: ``opustest:opus_test_db_<20-character id>``, and 219 against a deployed one's
+#: ``opus:opus`` -- a 33-character difference, of which 29 is the schema name and 4 the
+#: ``opustest:``/``opus:`` prefix. Note where the failure lands: the warning is raised
+#: *inside* a view, so `api_view` catches it and answers HTTP 500 rather than letting
+#: it surface as a warning. A deployed installation's 31 characters of headroom are not
+#: much, so the hazard is real and is recorded in the plan's Execution notes.
 SUPPRESSED_WARNINGS = (
     'ignore:Cache key will cause errors if used with memcached'
     ':django.core.cache.backends.base.CacheKeyWarning',
 )
 
 _SUITE_ROOT = Path(__file__).parent
+
+
+def internal_db_requested() -> bool:
+    """Return whether result counts are to be checked against the local database.
+
+    Any non-empty value of `INTERNAL_DB_ENV_VAR` turns the comparison on; the variable
+    being unset or empty leaves it off, which is what an ordinary run wants.
+
+    This parses an environment variable, which is why it is a function. It is not the
+    kind of accessor that wraps a declared Django setting and hides it from the type
+    checker: the setting it feeds, `TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB`, is
+    declared in `opus_app.settings` and `test_result_counts` reads it directly.
+
+    Returns:
+        True if the environment asks for the comparison.
+    """
+    return bool(os.environ.get(INTERNAL_DB_ENV_VAR, ''))
 
 
 def _is_ours(item: pytest.Item) -> bool:
@@ -92,8 +118,30 @@ def _is_ours(item: pytest.Item) -> bool:
     return _SUITE_ROOT in Path(item.path).parents
 
 
+def _managed_database_request(item: pytest.Item) -> str | None:
+    """Return how a test asks pytest-django to manage the database, if it does.
+
+    Parameters:
+        item: The collected test.
+
+    Returns:
+        A phrase naming what the test asked for, or None if it asked for nothing.
+    """
+    if item.get_closest_marker(FORBIDDEN_DB_MARKER) is not None:
+        return f'@pytest.mark.{FORBIDDEN_DB_MARKER}'
+    fixtures = getattr(item, 'fixturenames', ())
+    for name in FORBIDDEN_DB_FIXTURES:
+        if name in fixtures:
+            return f'the {name!r} fixture'
+    test_class = getattr(item, 'cls', None)
+    if isinstance(test_class, type) and issubclass(test_class, SimpleTestCase):
+        return (f'{test_class.__name__}, which subclasses '
+                f'django.test.{SimpleTestCase.__name__}')
+    return None
+
+
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Mark every test in this tree `integration`, and refuse the `django_db` marker.
+    """Mark every test in this tree `integration`, and refuse a managed database.
 
     The narrower markers are not applied here: `holdings` and `livetest` describe two
     named modules and sit on those modules, where a reader meets them.
@@ -102,18 +150,19 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         items: Every test the session collected, from this tree and any other.
 
     Raises:
-        pytest.UsageError: If a test here carries `@pytest.mark.django_db`.
+        pytest.UsageError: If a test here asks pytest-django to manage the database.
     """
     for item in items:
         if not _is_ours(item):
             continue
-        if item.get_closest_marker('django_db') is not None:
+        asked_for = _managed_database_request(item)
+        if asked_for is not None:
             raise pytest.UsageError(
-                f'{item.nodeid} carries @pytest.mark.django_db, which is forbidden '
-                f'in integration_tests/: these suites run against the imported '
-                f'schema itself, and the marker would either wrap the test in a '
-                f'transaction that is rolled back or, with transaction=True, flush '
-                f'that schema. Use a plain unittest.TestCase, as everything else '
+                f'{item.nodeid} uses {asked_for}, which is forbidden in '
+                f'integration_tests/: these suites run against the imported schema '
+                f'itself, and letting pytest-django manage the database would wrap '
+                f'the test in a transaction that is rolled back or rebuild that '
+                f'schema outright. Use a plain unittest.TestCase, as everything else '
                 f'here does.')
         item.add_marker(pytest.mark.integration)
         for warning_filter in SUPPRESSED_WARNINGS:
@@ -137,14 +186,15 @@ def _live_database(django_db_blocker: DjangoDbBlocker) -> Iterator[None]:
 
 @pytest.fixture(scope='session', autouse=True)
 def _test_run_configuration() -> None:
-    """Read the two settings `manage.py`'s test verbs used to set.
+    """Read what the environment says this run checks against.
 
-    Both are read before any test runs, so a value naming nothing fails the run
-    immediately rather than at whichever test happens to look at it.
+    Both variables are read before the first test *of this tree*, so a value naming
+    nothing stops the run rather than being discovered by whichever test looks at it.
+    A command line that also names `tests/` runs that suite first, so the failure
+    arrives after it rather than at session start.
 
     Raises:
         RuntimeError: If `OPUS_TEST_GO_LIVE` names no server.
     """
     go_live_target()
-    settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = bool(
-        os.environ.get(INTERNAL_DB_ENV_VAR, ''))
+    settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = internal_db_requested()

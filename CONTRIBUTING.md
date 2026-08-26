@@ -113,13 +113,13 @@ are asked for by name; see `integration_tests/test_api/TEST_API_README.md`.
 For more verbose output:
 
 ```bash
-pytest -v
+OPUS_CONFIG=tests/fixtures/opus_ci.toml pytest -v
 ```
 
 To run a specific test file:
 
 ```bash
-pytest tests/test_specific_file.py
+OPUS_CONFIG=tests/fixtures/opus_ci.toml pytest tests/opus_support/test_units.py
 ```
 
 ## Documentation

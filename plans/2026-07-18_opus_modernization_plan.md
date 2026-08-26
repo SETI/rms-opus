@@ -5771,12 +5771,16 @@ body; never rewrite or delete earlier notes.*
     `unittest.TestCase` subclasses, pytest-django does not manage them, and **no test
     database is created** -- verified by the run itself, which reads and writes the
     imported schema. `integration_tests/conftest.py` unblocks the database for the
-    session (`django_db_blocker.unblock()`) and a collection hook refuses
-    `@pytest.mark.django_db` anywhere in the tree, naming the node.
+    session (`django_db_blocker.unblock()`) and a collection hook refuses **every way
+    of asking pytest-django to manage the database**, naming the node: the
+    `@pytest.mark.django_db` marker the plan names, the `db`/`transactional_db`
+    fixtures that are the same request spelled differently, and a
+    `django.test.SimpleTestCase` subclass -- which is the dangerous one, because it
+    needs neither marker nor fixture and pytest-django manages it on sight, running
+    `django_db_setup` against a `TEST['NAME']` that *is* the live schema.
     `tests/integration_tests/test_conftest.py` drives that hook with a stub item,
-    because a real test carrying the forbidden marker could not be checked in; five
-    mutations of the hook (dropping the `django_db` check, the `integration` marker,
-    the path filter, the warning filters, and `collect_ignore`) each fail it.
+    because a real test asking for a managed database could not be checked in; nine
+    mutations of the hook each fail it, with no survivors.
     **Note the drift, which changes no instruction:** PR-01's note and the PR-18 plan
     text call these `django.test.TestCase` subclasses. They are `unittest.TestCase`
     subclasses -- PR-17b already recorded this -- and that is exactly what makes the
@@ -5791,12 +5795,20 @@ body; never rewrite or delete earlier notes.*
     does not know, which closes what PR-17b flagged: under the old setting a missing
     value and a misspelled one were indistinguishable, so a live run started with a
     typo silently tested the local application. The `getattr` suppression is gone with
-    the setting. `OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` (any non-empty value)
+    the setting. **The refusal has its own tests, in
+    `tests/integration_tests/test_api_test_helper.py`, because nothing else could
+    cover it**: `api_test_helper.py` is in the integration gate's `omit` list, and the
+    suite only ever runs with the variable unset, so restoring the silent fallback
+    would have been invisible to every gate. Five mutations of the accessor fail those
+    tests. `OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` (any non-empty value)
     replaces `api-internal-db-result-counts`; the conftest assigns it to the
     **still-declared** `settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB`, so
     PR-17b's point about keeping that one a checked attribute read still holds.
-    The `profile` verb is gone with no replacement in the tree;
-    `python -m cProfile -o profile.out -m pytest integration_tests` is the equivalent.
+    **The `profile` verb went too, which is wider than the plan's "custom *test*
+    verbs"**: it wrapped `cProfile` around any management command, not only `test`.
+    `TEST_API_README.md` carries the replacement recipe
+    (`python -m cProfile -o profile.out -m pytest ...`), and `.gitignore` lost the
+    `profile.txt` entry that verb was the only writer of.
   - **`filterwarnings = ["error"]` now covers `integration_tests/`, which it never did
     under `manage.py test` -- expect any test added there to meet warnings the golden
     suite has always raised and nobody saw.** Two did, and neither was added to the
@@ -5814,18 +5826,23 @@ body; never rewrite or delete earlier notes.*
     key from `CACHE_SERVER_PREFIX`, `CACHE_KEY_PREFIX` and four MD5 hashes. Measured on
     a key from this suite: **252 characters**, against memcached's 250 limit; the same
     key with a deployed installation's `'opus:' + 'opus'` prefix instead of the test
-    `'opustest:' + opus_test_db_<20-character id>` is **219**. So the limit is exceeded
-    by the 33-character test schema name and by nothing else today -- but production
-    runs memcached, `CACHE_SERVER_PREFIX` is configuration, and 31 characters is the
-    whole margin. Whoever picks this up should hash the tail rather than lengthen the
+    `'opustest:' + opus_test_db_<20-character id>` is **219**. The 33-character
+    difference is 29 characters of schema name plus 4 of `opustest:` against `opus:`
+    -- it coincidentally equals the test schema name's own length, so do not read it
+    as "the schema name and nothing else". Nothing but the naming of a test
+    installation puts it over today -- but production runs memcached,
+    `CACHE_SERVER_PREFIX` is configuration, and 31 characters is the whole margin. Whoever picks this up should hash the tail rather than lengthen the
     limit. Re-measure rather than trusting these numbers: the key's shape is in
     `search/views.py` and the prefix in each suite's `setUp`.
   - **`pytest-django` puts the repository root on `sys.path`, and that is load-bearing
     in one place.** `_add_django_project_to_path` finds the directory holding
     `manage.py` and inserts it at `sys.path[0]` during
-    `pytest_load_initial_conftests`. That is why
-    `tests/integration_tests/test_conftest.py` can `import integration_tests.conftest`
-    at all. **PR-22, which owns the deploy chain, must leave `manage.py` at the
+    `pytest_load_initial_conftests`. That is why the two modules in
+    `tests/integration_tests/` can `import integration_tests.…` at all, and it is
+    load-bearing rather than incidental: the chain now runs the **`pytest` console
+    script**, where `run_coverage.sh` ran `python -m pytest`, so the working directory
+    is no longer on `sys.path` by itself. Verified under the pinned environment, which
+    is the one that would have exposed the difference. **PR-22, which owns the deploy chain, must leave `manage.py` at the
     repository root** (§2 already says it stays there as a dev convenience) or that
     import stops resolving.
   - **pytest-cov starts coverage before Django is set up, which is what keeps the 100%
@@ -5912,31 +5929,43 @@ body; never rewrite or delete earlier notes.*
     `requirements.txt` + `pip install -e .` and run the chain in it before pushing.
     Without the two packages the chain dies at `ModuleNotFoundError: No module named
     'pytest_django'` while loading `integration_tests/conftest.py`; with them the
-    pinned environment reports the same 2571 passed / 22284 / 100% as the dev-extras
+    pinned environment reports the same 2574 passed / 22284 / 100% as the dev-extras
     one. A `requirements.txt` header line also moved (`--no-index` appears in the
     recorded command); that is a tool artifact of the regenerating environment rather
     than anything the two entries caused, established by regenerating the *unmodified*
     `requirements.in` the same way and getting that one line and nothing else.
+  - **`tests/integration_tests/` is a new directory, and it tests the test machinery.**
+    `test_conftest.py` covers the collection rules and `test_api_test_helper.py` covers
+    the go-live accessor; both import `integration_tests.…` directly. It mirrors the
+    package it tests, the way the rest of `tests/` mirrors `src/`. Two things a later PR
+    should know: it is **not** in the integration coverage invocation, because it
+    measures none of the source that gate covers, and `integration_tests/conftest.py`
+    grew a public `internal_db_requested()` so the environment parsing behind
+    `TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` is reachable from a test. That function is
+    not the kind of accessor PR-17b deleted -- it parses an environment variable rather
+    than wrapping a declared setting, and the setting it feeds is still read directly.
   - **Verification evidence, all on the shipping tree.** `scripts/run-all-checks.sh`
-    clean (ruff, mypy over `src integration_tests tests manage.py` -- 214 source files
-    -- pytest **1287 passed**, pyroma 10/10, bandit, vulture, pymarkdown). The
+    clean (ruff, mypy over `src integration_tests tests manage.py` -- 215 source files
+    -- pytest **1313 passed**, pyroma 10/10, bandit, vulture, pymarkdown). The
     integration chain ran against a 33-bundle import into a fresh MySQL schema
     (`ERRORS.log` empty, import exit 0) and reported
-    **`2571 passed` / `TOTAL 22284 stmts, 0 missing, 1884 branches, 0 partial, 100%`**,
+    **`2574 passed` / `TOTAL 22284 stmts, 0 missing, 1884 branches, 0 partial, 100%`**,
     `opus_check_coverage.sh` exit 0, and **zero golden-fixture diffs**
     (`git status integration_tests/test_api/responses` empty afterwards).
   - **Every count above reconciles against the PR-17b baseline from two directions,
     which is how the +2 was caught rather than accepted.** Baseline measured locally on
     `6e422c34` before any change, reproducing PR-17b's figures exactly:
     `Ran 1645 tests` / 22282 / 1884 / 100%, and 1173 unit tests.
-    - **Unit 1173 -> 1287**: +6 conftest-rule tests, +62 moved in, +46 new
+    - **Unit 1173 -> 1313**: +29 in the new `tests/integration_tests/` (18 for the
+      collection rules, 11 for the go-live accessor), +62 moved in, +49 new
       `app_utils` tests.
     - **Integration 1645 -> 1583**: -62, the two moved modules, and
       `pytest --collect-only integration_tests` reported exactly 1645 *before* the
       move -- which is also the check that pytest collects the same set Django's
       `DiscoverRunner` did.
-    - **Combined coverage run 2571** = 1583 + 822 (`tests/opus_support`) + 166
-      (`tests/opus_app`, itself 58 + 62 + 46).
+    - **Combined coverage run 2574** = 1583 + 822 (`tests/opus_support`) + 169
+      (`tests/opus_app`, itself 58 + 62 + 49). `tests/integration_tests/` is not in
+      that run: it measures none of the source the gate covers.
     - **Statements 22282 -> 22284**: +2, both in
       `integration_tests/test_api/test_cart_api.py` (2461 -> 2463 in the per-file
       report), which are its `import pytest` and its `pytestmark` line. Nothing else

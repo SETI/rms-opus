@@ -4,10 +4,10 @@
 decisions that are the same everywhere: what a query parameter means, what a slug's
 trailing digit means, what a download is called, and what an error page says. None of
 that reads the database, so it belongs in the holdings-free suite the GitHub-hosted CI
-runs -- the golden-response suite exercises all of it too, but only as a side effect of
+runs. The golden-response suite reaches all of it as well, but only as a side effect of
 driving whole endpoints, and only on the self-hosted runner with a full import behind
-it. A regression here shows up as a wrong response body two layers up; these tests name
-the function instead.
+it -- so a regression surfaces there as a wrong response body two layers from its cause.
+These tests name the function instead, and run wherever `pytest` does.
 
 What is worth pinning, and why:
 
@@ -30,6 +30,7 @@ What is worth pinning, and why:
 """
 
 import csv
+import importlib.metadata
 import io
 import json
 import re
@@ -194,9 +195,15 @@ def test_download_filename_ends_with_a_varying_letter() -> None:
     assert finals <= set('abcdefghijklmnopqrstuvwxyz')
 
 
-def test_sort_dictionary() -> None:
+def test_sort_dictionary_orders_by_key() -> None:
     """The result is ordered by key, which is what a recorded response compares to."""
     assert list(sort_dictionary({'b': 1, 'a': 2, 'C': 3})) == ['C', 'a', 'b']
+
+
+def test_sort_dictionary_keeps_every_item() -> None:
+    """Reordering must not disturb what each key maps to, or lose one."""
+    original = {'b': 1, 'a': 2, 'C': 3}
+    assert sort_dictionary(original) == original
 
 
 def test_json_response_declares_its_type() -> None:
@@ -234,9 +241,16 @@ def test_an_error_message_names_the_path_it_was_given(
         factory: RequestFactory) -> None:
     """The builders take a request or a bare path, and say the same thing either way."""
     request = _request(factory, 'opusid=nosuch')
-    assert http404_unknown_opus_id('nosuch', request).endswith('/api/data.json')
-    assert http404_unknown_opus_id('nosuch', '/api/data.json').endswith(
-        '/api/data.json')
+    assert (http404_unknown_opus_id('nosuch', request)
+            == http404_unknown_opus_id('nosuch', '/api/data.json'))
+
+
+def test_an_error_message_names_the_value_that_was_rejected(
+        factory: RequestFactory) -> None:
+    """A page that says only "not found" leaves the user nothing to correct."""
+    message = http404_unknown_opus_id('nosuch', _request(factory, 'opusid=nosuch'))
+    assert 'nosuch' in message
+    assert '/api/data.json' in message
 
 
 def test_an_error_message_survives_having_no_request_at_all() -> None:
@@ -254,6 +268,14 @@ def test_wrap_http500_string_escapes() -> None:
 
 
 def test_get_git_version_reads_the_installed_distribution() -> None:
-    """It names `rms-opus`; a wrong name would raise here and on the About page."""
-    version = get_git_version()
-    assert re.match(r'\d+\.\d+', version), version
+    """It reports the version of `rms-opus` itself.
+
+    The distribution name is the part that can go wrong: a typo raises
+    `PackageNotFoundError` on the About page and in every cache-busting asset URL.
+    """
+    assert get_git_version() == importlib.metadata.version('rms-opus')
+
+
+def test_get_git_version_reports_something_shaped_like_a_version() -> None:
+    """The templates append it to a URL, so it has to be a version and not a marker."""
+    assert re.match(r'\d+\.\d+', get_git_version()), get_git_version()

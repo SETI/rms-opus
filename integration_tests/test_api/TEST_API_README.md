@@ -6,6 +6,11 @@ location for it.
 A bare `pytest` does **not** run any of them: `testpaths` selects `tests/`, the
 holdings-free unit suite, so this tree is only ever reached by naming it.
 
+**Run this tree serially.** Do not add `-n` to any command below. The suites mutate
+shared state in the one database they share -- one of them drops the `cache_*` tables
+between tests -- so two workers would answer each other's queries. The unit suite in
+`tests/` is the one that runs under `-n auto --dist loadscope`.
+
 ## Running the suites
 
 * Everything -- the API tests, the DB integrity checks and the internal app tests:
@@ -23,12 +28,12 @@ holdings-free unit suite, so this tree is only ever reached by naming it.
 * One module, or one test:
 
         pytest integration_tests/apps_db_tests/test_search.py
-        pytest "integration_tests/test_api/test_cart_api.py::ApiCartTests::test__api_cart_status"
+        pytest "integration_tests/test_api/test_cart_api.py::ApiCartTests::test__api_cart_status_no_reqno"
 
-Markers select within any of those. Every test here carries `integration`; the
-suites that read a product file out of the PDS holdings tree also carry `holdings`,
-and `test_result_counts.py`, the one module that queries a server outside this
-process, carries `livetest`:
+Markers select within any of those. Every test here carries `integration`;
+`test_cart_api.py`, the one module that reads product files out of the PDS holdings
+tree, also carries `holdings`, and `test_result_counts.py`, the one module that queries
+a server outside this process, carries `livetest`:
 
         pytest integration_tests -m "not livetest"
         pytest integration_tests -m holdings
@@ -37,7 +42,7 @@ process, carries `livetest`:
 
 `OPUS_TEST_GO_LIVE` points the API suite at a deployed server instead of the
 in-process application. Leave it unset (or empty) to run against the locally
-imported database; any other value than the two below fails the run immediately.
+imported database; any value other than the two below fails the run immediately.
 
 * Against the production site:
 
@@ -68,6 +73,11 @@ which archive to ask:
         OPUS_TEST_GO_LIVE=dev \
             pytest integration_tests/test_api/test_result_counts.py
 
+## Profiling a run
+
+        python -m cProfile -o profile.out -m pytest integration_tests/test_api
+        python -c "import pstats; pstats.Stats('profile.out').sort_stats('cumulative').print_stats(40)"
+
 ## Coverage
 
 The self-hosted workflow gates this tree at 100% through
@@ -79,8 +89,9 @@ under the coverage configuration in `integration_tests/.coveragerc`. To reproduc
                    tests/opus_support tests/opus_app integration_tests
         COVERAGE_RCFILE=integration_tests/.coveragerc coverage report -m
 
-`tests/opus_support` and `tests/opus_app` are in that run because the configuration
-measures `src/opus_support` and `src/opus_app/apps` at 100%, and parts of both are
-exercised only by those two holdings-free packages. `COVERAGE_RCFILE` is what keeps
-coverage off the unit-coverage settings in `pyproject.toml`, which measure a
-different set of packages against a different gate (plan §5a).
+That configuration measures `src/opus_app/apps`, `integration_tests/test_api` and
+`src/opus_support`, and `tests/opus_support` and `tests/opus_app` are the directories
+under `tests/` holding tests that reach any of it -- which is why the run names all
+three. `COVERAGE_RCFILE` is what keeps coverage off the unit-coverage settings in
+`pyproject.toml`, which measure a different set of packages against a different gate
+(plan §5a).

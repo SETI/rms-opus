@@ -31,13 +31,17 @@ export COVERAGE_RCFILE=integration_tests/.coveragerc
 # not `parallel`, so remove the fragments here.
 rm -f .coverage .coverage.*
 
-# The suites in one run, because the 100% gate measures src/opus_app/apps,
-# integration_tests/test_api and src/opus_support together (see the include list in
-# integration_tests/.coveragerc). tests/opus_support and tests/opus_app are the only
-# directories under tests/ that reach any of that source: they exercise opus_support
-# in full and the two parts of the Django app -- the @api_view decorator and the SQL
-# builder -- that need no database. Dropping either would deflate the gate rather
-# than fail it.
+# Every suite in one run, because the gate measures src/opus_app/apps,
+# integration_tests/test_api and src/opus_support together (the include list in
+# integration_tests/.coveragerc). The rule for which tests/ directories belong here,
+# rather than a list that will go stale: those holding tests that reach source inside
+# that include list. Today that is tests/opus_support and tests/opus_app. Dropping one
+# would deflate the gate rather than fail it, which is the whole reason this is a
+# single run.
+#
+# Deliberately serial: no -n. These suites share one database and mutate it -- one of
+# them drops the cache_* tables between tests -- so they are not parallel-safe. The
+# holdings-free suite in tests/ is the one that runs under -n auto.
 pytest --cov --cov-config=integration_tests/.coveragerc \
        tests/opus_support tests/opus_app integration_tests
 if [ $? -ne 0 ]; then
