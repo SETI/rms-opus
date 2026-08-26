@@ -10,11 +10,11 @@ from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_COLLAPSE,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP400_UNKNOWN_UNITS,
+    http400_bad_collapse,
+    http400_bad_or_missing_reqno,
+    http400_search_params_invalid,
+    http400_unknown_slug,
+    http400_unknown_units,
 )
 
 from .api_test_helper import ApiTestHelper
@@ -232,14 +232,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/result_count: primaryfilespec=1866365558 no qtype reqno bad internal"
         url = '/__api/meta/result_count.json?primaryfilespec=1866365558&reqno=NaN'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO(
+                               http400_bad_or_missing_reqno(
                                    '/__api/meta/result_count.json'))
 
     def test__api_meta_result_count_string_no_qtype_reqno_bad_internal_2(self):
         "[test_metadata_api.py] /api/meta/result_count: primaryfilespec=1866365558 no qtype reqno bad internal 2"
         url = '/__api/meta/result_count.json?primaryfilespec=1866365558&reqno=-1'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO(
+                               http400_bad_or_missing_reqno(
                                    '/__api/meta/result_count.json'))
 
     def test__api_meta_result_count_html_reqno(self):
@@ -259,14 +259,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/result_count: with bad slug"
         url = '/api/meta/result_count.json?bundleid=COISS_2111&RINGGEOringradius1=70000&RINGGEOringradius3=80000&qtype-RINGGEOringradius=only'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/api/meta/result_count.json'))
 
     def test__api_meta_result_count_bad_value(self):
         "[test_metadata_api.py] /api/meta/result_count: with bad value"
         url = '/api/meta/result_count.json?observationduration=1X2'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/api/meta/result_count.json'))
 
 
@@ -418,14 +418,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 planet Saturn reqno bad internal"
         url = '/__api/meta/mults/target.json?bundleid=COISS_2111&planet=Saturn&reqno=NaN'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO(
+                               http400_bad_or_missing_reqno(
                                    '/__api/meta/mults/target.json'))
 
     def test__api_meta_mults_COISS_2111_saturn_reqno_bad_internal_2(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 planet Saturn reqno bad internal 2"
         url = '/__api/meta/mults/target.json?bundleid=COISS_2111&planet=Saturn&reqno=-101010'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO(
+                               http400_bad_or_missing_reqno(
                                    '/__api/meta/mults/target.json'))
 
     def test__api_meta_mults_NHPELO_1001_csv_reqno(self):
@@ -445,14 +445,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/mults: bad parameter"
         url = '/api/meta/mults/target.json?bundleid=COISS_2111&planetx=Saturn'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/api/meta/mults/target.json'))
 
     def test__api_meta_mults_bad_slug(self):
         "[test_metadata_api.py] /api/meta/mults: bad slug"
         url = '/api/meta/mults/targetx.json?bundleid=COISS_2111&planet=Saturn'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(
+                               http400_unknown_slug(
                                    'targetx', '/api/meta/mults/targetx.json'))
 
 
@@ -584,7 +584,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS degrees"
         url = '/api/meta/range/endpoints/observationduration.json?bundleid=VGISS_6210&units=degrees'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_UNITS('degrees', 'observationduration',
+                               http400_unknown_units('degrees', 'observationduration',
                                    '/api/meta/range/endpoints/observationduration.json'))
 
     # General / Right Ascension (floating point return with nulls)
@@ -730,14 +730,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno bad internal"
         url = '/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=NaN'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO(
+                               http400_bad_or_missing_reqno(
                                    '/__api/meta/range/endpoints/lesserpixelsize.json'))
 
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno_bad_internal_2(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno bad internal 2"
         url = '/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=-101010'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO(
+                               http400_bad_or_missing_reqno(
                                    '/__api/meta/range/endpoints/lesserpixelsize.json'))
 
     def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_html_reqno(self):
@@ -788,14 +788,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/meta/range/endpoints: bad search"
         url = '/__api/meta/range/endpoints/lesserpixelsize.json?observationduration=1x2'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/__api/meta/range/endpoints/lesserpixelsize.json'))
 
     def test__api_meta_range_endpoints_bad_slug(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: bad slug name"
         url = '/__api/meta/range/endpoints/badslug.json?instrument=Cassini+ISS'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('badslug',
+                               http400_unknown_slug('badslug',
                                    '/__api/meta/range/endpoints/badslug.json'))
 
 
@@ -849,4 +849,4 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         "[test_metadata_api.py] /api/fields: all json bad collapse"
         url = '/api/fields.json?collapse=X'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_COLLAPSE('X', '/api/fields.json'))
+                               http400_bad_collapse('X', '/api/fields.json'))

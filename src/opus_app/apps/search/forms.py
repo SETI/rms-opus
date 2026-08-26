@@ -1,4 +1,13 @@
+"""The Django form behind the Search tab's widgets.
+
+A widget is built from the slugs it covers: each slug's `param_info` row says how
+that field is searched, and the form grows the inputs that go with it.
+"""
+
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
 from django import forms
 from django.apps import apps
@@ -8,33 +17,58 @@ from opus_app.apps.search.views import get_param_info_by_slug, is_single_column_
 from opus_app.apps.tools.app_utils import get_mult_name, get_numeric_suffix, strip_numeric_suffix
 from opus_support import parse_form_type
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+
 log = logging.getLogger(__name__)
 
 
 class MultiFloatField(forms.Field):
+    """The field a range endpoint's input is built from.
+
+    It adds nothing to `django.forms.Field`; everything that makes the input a range
+    endpoint comes from the widget the field is given.
+    """
+
     pass
 
 class SearchForm(forms.Form):
-    """
-    >>>> from opus_app.apps.search.forms import *
-    >>>> auto_id = False
-    >>>> slug1 = 'planet'
-    >>>> slug2 = 'target'
-    >>>> form_vals = { slug1:None, slug2:None }
-    >>>> SearchForm(form_vals, auto_id=auto_id).as_ul()
+    """The search inputs for the fields named by a mapping of slug to value.
 
+    Each slug's `param_info` row says how its field is searched, and the matching
+    text input, range endpoint, dropdown or checkbox group is added to the form
+    under that slug. A text field also gets the qtype dropdown that goes beside it,
+    and so does a range field whose two endpoints are separate columns.
     """
-    def __init__(self, form_vals, *args, **kwargs):
+    def __init__(self, form_vals: Mapping[str, Any], *args: Any, **kwargs: Any) -> None:
+        """Build the inputs for every slug in the mapping.
+
+        Where the last slug built was a range endpoint, the form is then reduced to
+        that field's two endpoints, in min then max order, followed by its qtype
+        dropdown if it has one.
+
+        Parameters:
+            form_vals: The initial value for each field to build, keyed by slug.
+                It is also what the form is bound to, so it is what
+                `django.forms.Form` reads its data from.
+            *args: Passed on to `django.forms.Form`.
+            **kwargs: Passed on to `django.forms.Form`, except `grouping`, which
+                selects the group of mult values to offer for a mult field.
+        """
         grouping = kwargs.pop('grouping', None)
         super().__init__(form_vals, *args, **kwargs)
 
         for slug in form_vals:
             param_info = get_param_info_by_slug(slug, 'search')
+            # Everything below dereferences param_info unconditionally, so a slug
+            # that names no field is a fault rather than an input case. The one
+            # caller resolves each slug before it builds the mapping.
+            assert param_info is not None
             (form_type, _form_type_format,
              _form_type_unit_id) = parse_form_type(param_info.form_type)
 
             if form_type == 'STRING':
-                choices = ((x,x) for x in settings.STRING_QTYPES)
+                choices: Iterable[tuple[str, str]] = ((x,x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
                     widget=forms.TextInput(
                         attrs={'class': 'STRING',
@@ -64,6 +98,9 @@ class SearchForm(forms.Form):
                 if num == '2':
                     # Get the hints for slug2 from slug1 field in database
                     pi_slug1 = get_param_info_by_slug(slug[:-1] + '1', 'search')
+                    # The same reliance as above: the hints of the field's other
+                    # endpoint are read without checking that it was found.
+                    assert pi_slug1 is not None
                     hints = pi_slug1.field_hints2 if pi_slug1.field_hints2 else ''
                 else:
                     hints = param_info.field_hints1 if param_info.field_hints1 else ''

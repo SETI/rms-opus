@@ -50,9 +50,9 @@ from django.test import RequestFactory
 
 from opus_app.apps.tools import app_utils
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_LIMIT,
     Http400Error,
     api_view,
+    http400_bad_limit,
 )
 
 
@@ -141,7 +141,7 @@ class ApiViewTests(TestCase):
         "[test_api_view.py] api_view: Http400Error becomes a 400 naming the problem"
         @api_view
         def handler(request):
-            raise Http400Error(HTTP400_BAD_LIMIT('x', request))
+            raise Http400Error(http400_bad_limit('x', request))
 
         response = handler(self._request('/api/data.json'))
         self.assertEqual(400, response.status_code)
@@ -187,7 +187,9 @@ class ApiViewTests(TestCase):
         self.assertEqual(1, len(captured.records))
         record = captured.records[0]
         self.assertIsNotNone(record.exc_info)
-        self.assertIn('handler: Unhandled exception', record.getMessage())
+        # The handler name is interpolated with %r, like every other value
+        # a log message in this app carries, so it is quoted.
+        self.assertIn("'handler': Unhandled exception", record.getMessage())
 
     def test__the_500_body_escapes_the_request_path(self):
         "[test_api_view.py] api_view: a hostile request path cannot inject HTML"
@@ -213,7 +215,7 @@ class ApiViewTests(TestCase):
         # 400 would be the same defect as an unescaped 500.
         @api_view
         def handler(request):
-            raise Http400Error(HTTP400_BAD_LIMIT('<script>alert(1)</script>',
+            raise Http400Error(http400_bad_limit('<script>alert(1)</script>',
                                                  request))
 
         response = handler(self._request('/api/data.json'))

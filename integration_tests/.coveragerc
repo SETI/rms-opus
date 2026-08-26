@@ -25,3 +25,10 @@ Title = Coverage Report for OPUS Backend Tests
 exclude_lines =
   pragma: no cover
   def __unicode__
+# A `if TYPE_CHECKING:` block and an `@overload` stub are both, by construction,
+# never executed: the first is False at run time and the second is a signature
+# declaration whose body is `...`. They are annotation machinery rather than
+# untested code, and excluding them here is what keeps the 100% gate meaningful
+# instead of pushing a `# pragma: no cover` onto every such block.
+  if TYPE_CHECKING:
+  @overload

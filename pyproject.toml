@@ -73,6 +73,21 @@ dev = [
   # typeshed's stubs for mysqlclient, so the MySQL import backend is really checked
   # rather than silenced by an ignore_missing_imports entry.
   "types-mysqlclient",
+  # typeshed's stubs for requests, needed by opus_import/util/retrieve_ra_dec.py
+  # and opus_log_analyzer/opus/slug.py. requests ships py.typed from 2.33 but the
+  # requirements.txt pin the integration runner installs is older and does not,
+  # so without this entry the type gate passes on the GitHub job and fails on a
+  # venv built from the pins. See the dependency-skew note in the plan.
+  "types-requests",
+  # typeshed's stubs for pytz, which opus_log_analyzer/cronjob_utils.py imports
+  # to fix the cron reports' timezone.
+  "types-pytz",
+  # typeshed's stubs for regex, which apps/search/views.py uses for the
+  # user-supplied regular expressions a string search accepts.
+  "types-regex",
+  # typeshed's stubs for qrcode, which apps/help/views.py renders into the
+  # printable API guide.
+  "types-qrcode",
   "pymarkdownlnt>=0.9.35",
   "pytest>=7.0",
   "pytest-cov>=4.0",
@@ -167,6 +182,11 @@ exclude_lines = [
   "pragma: no cover",
   "def __repr__",
   "raise NotImplementedError",
+  # Never executed by construction: a TYPE_CHECKING block is False at run time,
+  # and an @overload stub is a signature declaration whose body is `...`. Kept in
+  # step with integration_tests/.coveragerc, which needs the same two.
+  "if TYPE_CHECKING:",
+  "@overload",
 ]
 fail_under = 90
 
@@ -212,7 +232,8 @@ django_settings_module = "opus_app.settings"
 # inside modules the burn-down below silences, so each annotation PR adds whatever the
 # checker then reports as import-untyped or import-not-found for the tree it annotates.
 [[tool.mypy.overrides]]
-module = ["julian.*", "pdsfile.*", "pdslogger.*", "pdsparser.*", "pdstable.*"]
+module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
+          "pdstable.*"]
 ignore_missing_imports = true
 
 # Type burn-down list. `strict = true` applies to the whole repository; these
@@ -221,13 +242,14 @@ ignore_missing_imports = true
 # per-file-ignores table above, and PR-17's exit criterion is that this list is empty
 # as well. There is no repository-wide exclusion: everything outside these packages
 # is checked strictly today.
-#     opus_app                 - annotated in PR-17
-#     opus_log_analyzer        - partly annotated already; completed in PR-17
-#     integration_tests        - PR-17, like the rest: the plan body gives that PR
-#                                every temporary override. It is listed here rather
-#                                than left out of the checked paths, because a path
-#                                that is never passed to the checker is an exclusion
+#     opus_app                 - annotated in PR-17a
+#     integration_tests        - PR-17b, like the rest: the plan body gives PR-17
+#                                every temporary override, and rev 7.20 splits that
+#                                between 17a and 17b. It is listed here rather than
+#                                left out of the checked paths, because a path that
+#                                is never passed to the checker is an exclusion
 #                                nothing can see.
+# opus_log_analyzer left this list in PR-17a and is checked strictly now.
 # A package's tests are silenced with it where they need it, since a test's
 # annotations follow the signatures of the code it drives, and a call into a silenced
 # package is reported in the caller's own file rather than in the callee's.
@@ -235,9 +257,6 @@ ignore_missing_imports = true
 # record the number here: it moves with every intervening PR.
 [[tool.mypy.overrides]]
 module = [
-  "opus_app.*",
-  "tests.opus_app.*",
-  "opus_log_analyzer.*",
   "integration_tests.*",
 ]
 ignore_errors = true
@@ -253,6 +272,17 @@ exclude = [
   # in there is Django's own vendored admin/js/compress.py, marked
   # linguist-vendored in .gitattributes; it is an asset, not project source.
   "src/opus_app/static",
+  # Machine-written by scripts/models/create_opus_models.sh (manage.py inspectdb
+  # plus a sed pipeline), so nothing hand-edited here survives the next
+  # regeneration. That script formats its own output with `ruff format`, which
+  # ruff applies to an explicitly named path regardless of this exclusion.
+  # Excluding it also means the 231 generated model classes and their nested
+  # Meta classes carry no docstrings and are not expected to: writing them would
+  # flood the Sphinx API reference PR-21 publishes with entries no reader gains
+  # anything from, and the next regeneration would delete them anyway. This is a
+  # permanent exclusion like the two above, not a burn-down entry, and does not
+  # affect the per-file-ignores table.
+  "src/opus_app/apps/search/models.py",
 ]
 
 [tool.ruff.format]
@@ -273,35 +303,44 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 #   unittest.TestCase permanently (plan PR-18), so these unittest->pytest-assertion
 #   rules can never burn down and are ignored globally; PT018 and every other PT
 #   rule stay enforced.
-extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027"]
+# E501  - line too long. Retired here (plan rev 7.20) rather than burned down,
+#   because from PR-23 onward `ruff format` is what enforces layout, and E501's
+#   entire residue is tokens no formatter can split. Regenerate the measurement
+#   rather than trusting these numbers: empty the per-file-ignores table below
+#   and run `ruff check`, then run `ruff format` over the same paths and run it
+#   again. Measured that way at this PR (ruff 0.16.4): 1267 before formatting,
+#   718 after, and 678 of those 718 are in integration_tests -- single URL query
+#   strings and PDS file paths inside the golden-response fixtures, each one
+#   literal with nothing to break at. Splitting them means 678 hand-edits to the
+#   suite that is this rewrite's primary safety net, in the implicit-string-
+#   concatenation defect class that produced the fused 'cm^-1perpixel' alias bug
+#   PR-03a fixed. `line-length` stays 100 and still governs the formatter.
+extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
-# Burn-down list (plan PR-01). PR-17's exit criterion is that this table is empty.
+# Burn-down list (plan PR-01). PR-17's exit criterion is that this table is
+# empty; PR-17a emptied every row it owns and PR-17b removes the one left.
 #
-# Legacy flake8 ignores that need real refactoring; retired through PR-17.
-#     E501 - line too long;
+# Legacy flake8 ignores that needed real refactoring:
 #     E722 - bare `except:`;
 #     F403 - `from module import *`; F405 - name may be undefined from star import;
 #     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
+# E501 left this table for the documented global ignore above rather than being
+# burned down; the reasoning and its measurement are stated there.
 #
-# The Django app and its live-DB suites carry only the three codes that still
-# fire there: over a thousand E501 and 187 N801/N802, all of which PR-01
-# assigned to PR-17. They are not burned down by the PR that moved the tree
-# here, because reformatting and renaming on that scale is PR-17's work.
-# E722/F403/F405 are absent from these globs deliberately: this tree contains no
-# bare `except:`, and settings.py reads the configuration file through opus_config
-# rather than a star import.
+# `src/opus_app` and `src/opus_log_analyzer` have no row any more: E501 was the
+# only code that fired in the log analyzer and it is globally ignored now, and
+# the Django app's 24 SCREAMING_CASE message helpers and one lower-case view
+# class were renamed.
 #
-# The log analyzer carries E501 alone: 153 long lines that PR-17 (which owns
-# this tree) rewraps. Measured with the table emptied, E722/F403/F405/N801/N802
-# fire zero times there, so the six-code row this tree used to carry was
-# over-broad and is trimmed to what actually fires.
+# The live-DB suites keep the two naming codes until PR-17b, which annotates
+# them. Their names are unittest test methods and classes carrying PDS bundle
+# identifiers (test__api_meta_mults_COISS_2111), so renaming them belongs with
+# the PR that reads every one of those files rather than as a drive-by here.
 #
 # `src/opus_support`, `src/opus_config`, `src/opus_import`, `tests` and
 # `manage.py` have no row at all: they meet the full rule set.
-"src/opus_app/**/*.py" = ["E501", "N801", "N802"]
-"integration_tests/**/*.py" = ["E501", "N801", "N802"]
-"src/opus_log_analyzer/**/*.py" = ["E501"]
+"integration_tests/**/*.py" = ["N801", "N802"]
 #
 # The PT015/B011 (`assert False`) and B006 (mutable default argument) sites
 # PR-01 grandfathered here were fixed in PR-02, so their per-file ignores are
@@ -327,59 +366,52 @@ exclude_dirs = [
   "perf_test", "venv", ".venv",
   "integration_tests/test_api", "integration_tests/test_perf",
   "integration_tests/test_db_data",
+  # Django's own vendored asset script, marked linguist-vendored in
+  # .gitattributes. It is third-party code we do not edit, so its subprocess use
+  # is not ours to annotate; skipping it here is what retired the B404/B603
+  # category skips. Named exactly rather than excluding the whole static tree, so
+  # any Python placed there later is scanned rather than silently skipped -- the
+  # same choice [tool.mypy] exclude makes about this file.
+  "src/opus_app/static/admin/js/compress.py",
 ]
 targets = ["src", "integration_tests", "manage.py"]
-# Burn-down skip list (plan PR-01): category-level skips for existing patterns,
-# each justified below. PR-17 shrinks these to individually-justified `# nosec`
-# lines. B324 (weak MD5) was fixed in-code via usedforsecurity=False.
-# B105 (hardcoded_password_string) has left this list: its only hit was the 'XXX'
-# placeholder in the dictionary app's secrets template, which the TOML
-# configuration replaced, and the check passes unskipped.
-# B610 (django_extra_used) has left this list too: PR-12 removed all four
-# QuerySet.extra() call sites, and `bandit -t B610,B611` over the same targets
-# now reports 0 of each (it reported 4 B610 and 0 B611 before). Three of the four
-# joined the search cache table, which has no model, and are raw SQL built by
-# opus_app.apps.tools.sql_builder now; the fourth became an ORM __isnull filter.
+# PR-01 opened this list with fourteen category skips as a burn-down valve, and
+# PR-17a closed it down to the one entry that is irreducible. Everything else is
+# a per-line `# nosec <ID> - <reason>` at the statement it covers; regenerate the
+# set with `grep -rn "# nosec" src integration_tests manage.py`, and re-derive
+# what the list is holding back by emptying it and re-running bandit.
+#
+# B105 left in PR-08 (the 'XXX' placeholder went with the dictionary app's
+# secrets template) and B610 in PR-12 (all four QuerySet.extra() sites are gone).
+# B607 left here: it fired zero times, and a skip that suppresses nothing is a
+# claim about the code that is no longer true.
+#
+# Expect bandit to log "nosec encountered (Bxxx), but no failed test on
+# file X:N" lines on a clean run. That is not a misplaced marker: bandit runs
+# each check against every candidate node, attaches a `# nosec` to the whole
+# statement's line range, and warns for each node in that range the check did
+# not fire on -- so a statement holding several string or call nodes emits one
+# warning per node that was fine. A bare `# nosec` silences the warnings by
+# suppressing every check on the line, which is worse, so the markers name their
+# test id and the warnings stand. The exit status is what gates.
 skips = [
-  "B101",  # assert_used: asserts are internal invariants, not input validation.
-  "B110",  # try_except_pass: legacy best-effort cleanup paths.
-  "B113",  # request_without_timeout: internal log-analyzer API client.
-  "B301",  # pickle: shelve/pickle over the tool's own locally-produced cache data.
-  "B311",  # random: non-cryptographic fault injection (throw_random_*).
-  "B403",  # import pickle/subprocess modules (imports alone are not the risk).
-  "B404",
-  "B506",  # yaml.load: parses a trusted, repo-bundled FAQ file via FullLoader.
-  "B603",  # subprocess without shell: fixed, internal command invocations.
-  "B607",  # start_process_with_partial_path: same internal invocations.
-  "B608",  # hardcoded_sql. PR-12 formalized SQL assembly, so this now covers
-           # only the two modules that are allowed to build SQL text -- the web
-           # side's opus_app.apps.tools.sql_builder and the import side's
-           # importdb/{mysql,super}.py -- plus two identifier-only queries in
-           # steps/do_validate.py. Both validate every identifier against
-           # ^[A-Za-z0-9_]+$, which is what the check cannot see.
-           #
-           # Values are a weaker claim than an earlier version of this comment
-           # made, so state it by where the value comes from rather than by an
-           # exhaustive list of exceptions:
-           #   - DML (SELECT/INSERT/UPDATE/DELETE) binds its values as %s
-           #     parameters on both sides. That is the path request data and
-           #     command-line data travel.
-           #   - LIMIT/OFFSET and the MAX_EXECUTION_TIME hint are rendered as
-           #     literals, after an isinstance(..., int) check. They are row and
-           #     millisecond counts, not data.
-           #   - DDL on the import side renders literals: create_table formats a
-           #     column's field_default and its field_enum_options straight into
-           #     the CREATE TABLE text. Those come from the table_schemas JSON
-           #     packaged with opus_import, not from request or command-line
-           #     input. The default is hand-quoted by string concatenation with
-           #     no escaping, so a schema default containing a quote would emit
-           #     broken DDL; nothing in the repository has one.
-           #
-           # Measured at PR-12 over the same targets: 16 findings in 7 files
-           # before, 12 in 4 after, none in a view. PR-17 turns these into
-           # per-line `# nosec` -- carry the three cases above into them rather
-           # than the shorter claim they replace.
-  "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
+  # assert_used. These are not input validation and never were: they are the
+  # narrowing assertions PR-14, PR-15 and PR-16 added so that mypy strict could
+  # follow an invariant the code already relied on, plus a few pre-existing
+  # invariant checks. Do not trust the number below without re-measuring -- it
+  # grows with every annotation PR. Regenerate it with `skips` emptied and
+  # `--ignore-nosec`, which is the only way to see what the list is holding back:
+  #     bandit -c pyproject.toml -r src integration_tests manage.py \
+  #            -f json -q --ignore-nosec
+  # Measured that way on the PR-17a tree: 322 B101 findings -- 199 in
+  # src/opus_import, 90 in src/opus_app, 17 in src/opus_log_analyzer and 16 in
+  # src/opus_support. The largest share is in other packages' trees, but PR-17a
+  # contributed the 90 itself, so this is not a skip that only covers somebody
+  # else's code. A per-line `# nosec` on each would be 322 comments restating one
+  # fact, which is the noise this list was shrunk to avoid. Python's -O strips
+  # asserts, and nothing here is deployed with -O; if that ever changes, these
+  # become real checks and this skip has to be revisited rather than kept.
+  "B101",
 ]
 
 # Enabled in PR-02 (after the dead-code removal). Genuine dead code is

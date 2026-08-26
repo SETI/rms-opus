@@ -14,4 +14,12 @@
 # handlers in src/opus_import/importdb/super.py and src/opus_import/cli.py
 # use only `message`, so `lineno` is unused but cannot be dropped without
 # breaking the callback signature.
+#
+# Measured at PR-17a: at the configured scope this entry currently suppresses
+# nothing -- `vulture src integration_tests tests manage.py` is clean without
+# it, because tests/opus_import reads `node.lineno` off AST nodes and that marks
+# the name as used everywhere. It is kept rather than retired because that is
+# incidental coupling to an unrelated tree: `vulture src` alone still reports
+# both handlers, so a later PR that narrows the scan paths or rewrites those
+# tests would need it back. Re-check with `vulture src` before removing it.
 lineno  # unused variable (warnings.showwarning callback)

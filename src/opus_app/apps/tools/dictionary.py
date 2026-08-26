@@ -6,12 +6,8 @@
 are `managed = False`: Django is told the tables exist but must not create, alter or
 drop them.
 
-These two models and `get_def_for_tooltip` used to be a Django app of their own. The
-browsable dictionary site that app once served was removed long before this file
-existed, leaving an app whose entire content was the code below, so the app was
-deleted and its remains moved here. `tools` is where they belong: it is the app the
-other OPUS apps already reach into for shared helpers, and `paraminfo`, `ui` and
-`cart` are exactly the three that use them.
+They live in `tools` because that is the app the rest of OPUS reaches into for
+shared helpers: `paraminfo`, `ui` and `cart` are the three that use them.
 
 Both classes were produced by `inspectdb` and their field definitions are reproduced
 verbatim, because the columns they name are created by the import pipeline rather
@@ -35,6 +31,8 @@ class Contexts(models.Model):
     timestamp = models.DateTimeField()
 
     class Meta:
+        """Model options: the table the rows come from, which Django does not manage."""
+
         managed = False
         db_table = 'contexts'
 
@@ -51,16 +49,19 @@ class Definitions(models.Model):
     timestamp = models.DateTimeField()
 
     class Meta:
+        """Model options: the table the rows come from, which Django does not manage."""
+
         managed = False
         db_table = 'definitions'
         unique_together = (('term', 'context'),)
 
 
-def get_def_for_tooltip(term, context):
+def get_def_for_tooltip(term: str | None, context: str | None) -> str | None:
     """Get a dictionary definition for (i) tooltips in the OPUS UI.
 
     Parameters:
-        term: The dictionary term to look up.
+        term: The dictionary term to look up. Nothing at all matches no definition,
+            which is what a mult value with no stored value amounts to.
         context: The name of the context the term is defined in.
 
     Returns:
@@ -72,8 +73,12 @@ def get_def_for_tooltip(term, context):
         entry = Definitions.objects.get(context__name=context, term=term)
     except Definitions.DoesNotExist:
         # We allow mult tooltips to be None
-        if not context.startswith('MULT_'): # pragma: no cover - import error
-            log.error('No tooltip definition for context "%s" term "%s"',
+        # A context of None matches no definition and then reaches this line, where
+        # it raises AttributeError. Every ParamInfo column this is called with is
+        # nullable, so that is a real fault rather than a typing artifact, and it is
+        # recorded here instead of being annotated away.
+        if not context.startswith('MULT_'): # type: ignore[union-attr] # pragma: no cover - import error
+            log.error('No tooltip definition for context "%r" term "%r"',
                       context, term)
         return None
     return entry.definition

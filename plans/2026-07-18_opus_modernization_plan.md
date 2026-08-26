@@ -5033,3 +5033,384 @@ body; never rewrite or delete earlier notes.*
     more case of the existing
     `test_exception_control_flow.py::test_an_obs_module_never_reaches_the_database`,
     which is parametrized over the obs modules and so gains one for `field_types.py`.
+- **2026-08-26 (PR-17a executed):** PR-17 is split by tree (rev 7.20). PR-17a
+  annotates and documents `src/opus_app` and `src/opus_log_analyzer`, empties both
+  suppression tables of every row it owns, and does the `%r` log sweep; **PR-17b
+  owns `integration_tests`** and the two rows left behind. Facts later PRs rely on:
+  - **What is left for PR-17b, in one place.** `[tool.mypy]`'s burn-down list holds
+    exactly `integration_tests.*`, and `[tool.ruff.lint.per-file-ignores]` holds
+    exactly `"integration_tests/**/*.py" = ["N801", "N802"]`. Removing both is
+    PR-17b's exit criterion and completes PR-01's. Regenerate the size by deleting
+    the entries rather than trusting a number; measured at this PR for scale only,
+    the ruff row is 164 violations (unittest test methods and classes carrying PDS
+    bundle identifiers such as `test__api_meta_mults_COISS_2111`) and the mypy entry
+    is dominated by `no-untyped-def` on `def test_x(self):` methods. Two specific
+    hand-offs: `integration_tests/apps_db_tests/test_sql_builder.py:57` passes the
+    integer `17` to `quote_identifier` deliberately, to exercise its rejection of a
+    non-string, and **needs a `# type: ignore[arg-type]` with that reason** once the
+    override comes off; and `test_api_view.py`/`test_sql_builder.py` are the two
+    files PR-18 moves into `tests/opus_app/`, so PR-17b should expect them to move
+    rather than annotate them as permanent residents.
+  - **E501 was retired, not burned down (rev 7.20 ruling).** It lives in
+    `[tool.ruff.lint] extend-ignore` beside PR-01's `PT009`/`PT027`, with its
+    justification in the comment there. The generating rule, since the numbers move:
+    empty the per-file table and run `ruff check`, then run `ruff format` over the
+    same paths and run it again. Measured that way here (ruff 0.16.4): **1267 before
+    formatting, 718 after, 678 of those 718 in `integration_tests`** -- single URL
+    query strings and PDS file paths inside golden fixtures, with nothing to break
+    the line at. From PR-23 the formatter, not the linter, enforces layout;
+    `line-length` stays 100 and still governs it. **Do not reintroduce E501 as a
+    per-file ignore**: it is a global, documented decision now.
+  - **`src/opus_app/apps/search/models.py` is excluded from ruff entirely**, and
+    that is deliberate rather than a burn-down entry. It is written wholesale by
+    `scripts/models/create_opus_models.sh`, so a hand edit does not survive
+    regeneration, and PR-07 -- which would have rewritten the generator -- was
+    deferred by rev 7.11. The generator now runs `ruff format` on its own output
+    (ruff honours an explicitly named path regardless of the exclusion). The
+    exclusion also covers docstrings: **the 231 generated model classes and their
+    231 nested `Meta` classes deliberately have none**, and PR-21 should not add
+    them -- they would flood the Sphinx API reference and the next regeneration
+    would delete them. (231 is the count in that module; the 244 the inertness
+    dump reports is every model in the project, which is a different number and
+    not the one to quote here.) Formatting it was proved inert by dumping
+    `apps.get_models(include_auto_created=True, include_swapped=True)` before and
+    after: 244 models, byte-identical, including every field's class, column,
+    internal type and callable defaults by identity.
+  - **The bandit skip list is one entry, and the reasoning is worth keeping.**
+    `B101` stays a category skip; everything else is a per-line
+    `# nosec <ID>` with a reason above the statement. Regenerate the set with
+    `grep -rn "# nosec" src integration_tests manage.py` and re-measure what the
+    list holds back by emptying it. **Re-measure rather than trusting a number
+    here; it grows
+    with every annotation PR, and the first version of this bullet quoted the
+    base tree's figures for the finished tree.** The measurement has to pass
+    `--ignore-nosec` as well as emptying `skips`, or the 27 converted findings
+    are invisible. Done that way on the PR-17a tree: **322 B101 findings -- 199
+    in `src/opus_import`, 90 in `src/opus_app`, 17 in `src/opus_log_analyzer`,
+    16 in `src/opus_support`**. The largest share is in other packages, but
+    **PR-17a contributed the 90 itself** through its own narrowing assertions, so
+    this is not a skip that merely covers somebody else's code. `B404`/`B603`
+    left the list by excluding Django's vendored
+    `static/admin/js/compress.py` by exact path (matching what `[tool.mypy]` does
+    with that file); `B607` left it because it fired zero times.
+    **Expect bandit to log `nosec encountered (Bxxx), but no failed test` lines on a
+    clean run** -- it attaches a `# nosec` to a statement's whole line range and
+    warns for each candidate node the check did not fire on, so a statement holding
+    several string or call nodes emits one warning per node that was fine. A bare
+    `# nosec` silences the warnings by suppressing every check on the line, which is
+    worse. The exit status is what gates.
+  - **`opus_log_analyzer` is strict-clean and fully documented**, and its type
+    override is gone. Its verification is **rendered-report parity**, because the
+    integration suite does not exercise this package at all (PR-06 established
+    this). The method, which is reusable: build a synthetic Apache access log and
+    error log, serve the OPUS fields JSON from a local file through a `file://`
+    `--api-host-url` so nothing touches the network, render from the base tree and
+    the new tree via `PYTHONPATH`, and compare bytes. Six renderings here -- text
+    by-ip, text by-time, HTML, a 90 KB text report, error-analyzer text and
+    error-analyzer HTML -- all byte-identical. **Take the report from redirected
+    stdout, not from `--output`**: see #1467.
+  - **Six defects were found by annotating and filed rather than fixed**, because
+    rev 7.14 puts log-analyzer behavior out of scope and #1468 is a configuration
+    contract rather than a Django concern. **#1463** IPv6 addresses flow into fields
+    declared IPv4 (measured: cross-version membership is silently False, so
+    `--ignore-ip` never matches across families, and sorting a mixed set raises
+    `TypeError`). **#1464** `Session.__eq__` compares against the builtin `id`, so
+    no session equals any other and a set of sessions never de-duplicates.
+    **#1465** `--summary` raises `ValueError` in `show_summary` (a three-way unpack
+    of a two-tuple) behind the `AttributeError` #1451 already records, plus a dead
+    `[OBSOLETE]` marker. **#1466** `slug.py` casts away a real `None`. **#1467** the
+    `--output` report stream is never closed: instrumenting one run shows 64 writes
+    and zero closes, and a report smaller than the 8 KB buffer is lost in its
+    entirety with exit status 0 -- the cron templates all pass `--html` and produce
+    far more than 8 KB, which is why it has gone unnoticed. **#1468**
+    `log_api_calls = true` is schema-valid and reaches `True.lower()`; measured, it
+    escapes `api_view` (the call is before the decorator's `try`), so every API call
+    fails and `exit_api_call` never runs.
+  - **`selections`, `qtypes` and `units` in `url_to_search_params` are annotated
+    `dict[str, Any]` on purpose, and the docstring carries what the type cannot.**
+    Their value *shape* is chosen by the function's mode flags: a list per clause by
+    default, one value per slug under `return_slugs`, and formatted text rather than
+    a number under `pretty_results`. A precise union is expressible but would push
+    narrowing into every consumer for an invariant the code establishes by mode
+    rather than by type. The docstring now states each mode's shape and no longer
+    claims values "are always lists", which two of the three modes falsified.
+    **A later PR that wants a tighter type should change the function's shape, not
+    the annotation.**
+  - **Where a local was doing two jobs it got two names, not a union**, and
+    there are about **a dozen** of them across the app, not the two an earlier
+    draft of this bullet named. Regenerate the list from the delta classification
+    below rather than counting by hand; the ones worth knowing are
+    `set_user_search_number`'s `s` (a model, then a queryset, then its first row),
+    `get_reqno`'s `reqno` (query-string text, then the parsed number),
+    `construct_query_string`'s `clause` (a finished `Expr` in the mult branch, an
+    unpacked SQL string in the others), and `get_search_results_chunk`'s
+    `start_obs`/`page_no` pair. Each is behavior-identical -- nothing between the
+    two names reads the first value -- and `get_reqno`'s keeps `int(None)` raising
+    `TypeError` into the same `except`.
+  - **The PR's whole executable delta against `7ecedd13`, classified.** The
+    per-commit inertness runs each compared one commit to its parent, so each was
+    true of its own commit and **none of them describes the PR**. Measured across
+    the 58 changed files under `src/`: **299 mechanical rewrites** (the 25-name
+    SCREAMING_CASE-to-lowercase rename and the 262-occurrence `%r` sweep, paired
+    against the statement they replaced), **76 narrowing asserts**, **62
+    annotation imports**, **4 `@overload` stub lines**, and **57 statements** that
+    are the dozen two-name splits plus five individually-justified changes
+    (`_create_csv_file`'s explicit `return None`, `ranges = []`,
+    `dict(IconFlags.__members__)`, the `SearchResultsChunk` alias, and
+    `duplicates = ...`). Nothing else.
+  - **`enter_api_call`'s `name` parameter is read by nothing, and never has been.**
+    It is byte-identical at `101bc511`, PR-13's base. This makes one sentence of
+    PR-13's notes misleading rather than wrong in its conclusion: it records that
+    `api_init_detail_page` logged under the name `api_get_data` and that "the
+    decorator takes the name from `handler.__name__`, so that is corrected". The
+    argument passed did change; **no log line did**, because the parameter is
+    discarded. Whether the API-call log should carry the handler name is a behavior
+    question this PR left alone.
+  - **A missing guard in `get_string_query`, recorded because it is an asymmetry
+    rather than a bug today.** Its three sibling clause builders
+    (`construct_query_string`, `get_range_query`, `get_longitude_query`) all return
+    `(None, None)` when a qualified name resolves to no `ParamInfo`; this one
+    dereferences the result. Unreachable from either caller --
+    `construct_query_string` resolves the same name and bails first, and
+    `api_string_search_choices` takes the name off an already-resolved `ParamInfo` --
+    so it carries an assertion with that reasoning rather than a fourth guard, which
+    would have been a behavior change on a path nothing takes.
+  - **Three latent faults in `sql_builder`, none reachable today**, for whoever
+    reopens it: `in_values(expr, [])` renders `IN ()`, a syntax error, guarded by the
+    `if mult_values:` at its only caller; `join_exprs([], op)` returns an empty
+    `Expr` which would emit a bare `WHERE`; and `Select.build()` appends `FROM`
+    unconditionally, so a `Select` with no source renders a trailing `FROM`.
+  - **CI and the self-hosted runner resolve different dependency trees, and the type
+    gate is exposed to it.** The lint job installs `-e ".[dev]"` and gets whatever is
+    current; the runner installs `requirements.txt` pins. `requests` ships `py.typed`
+    from 2.33 and the pinned 2.32.5 does not, so `mypy` was **green in CI and red on
+    a pinned venv** at `7ecedd13`, naming `opus_import/util/retrieve_ra_dec.py`.
+    `types-requests` fixes it under both resolutions. `types-pytz` and `types-regex`
+    joined for the same reason. **The class, not the instance, is what to carry:
+    PR-19 and PR-22 both build environments, and a check that passes on one and fails
+    on the other will name a file rather than the skew.** PR-03 recorded the same
+    class against pytest's `filterwarnings`.
+  - **Two verification tools were written for this PR and both had a blind spot that
+    a green result hides.** They live in the PR description rather than the tree.
+    (1) An *inertness* check parses both trees, strips docstrings and annotations,
+    and compares ASTs statement by statement, so an annotation diff can be read as
+    "annotations, docstrings, and this explicit list". It does **not** strip imports,
+    deliberately -- an added `from typing import Any` shows up and must be
+    acknowledged. (2) A *docstring* check reports every definition with no docstring.
+    Its first version walked only definition nodes, so **a function defined inside an
+    `if` was invisible to it** -- the under-scanning class PR-16 recorded against
+    `cls.body`, reproduced in the tool built to check the fix -- and it reported
+    "0 missing" for `opus/query_handler.py` while two closures had none. Its second
+    version accepted a file path and silently reported `0 of 0`, because `rglob` on a
+    file yields nothing. Both are fixed. **The lesson is the one PR-16 stated: state
+    what a scan cannot see, and prefer a count derived from an independent traversal
+    to a floor.**
+  - **76 `# type: ignore` markers across the two packages, and every one is
+    load-bearing** -- `warn_unused_ignores` is on under `strict`, so an
+    unnecessary one fails CI. **Regenerate with a pattern that admits several
+    codes in one marker** -- `#\s*type:\s*ignore\[([a-z, -]+)\]` -- because a
+    character-class-only pattern misses `# type: ignore[index, union-attr]` in
+    `results/views.py` and undercounts both the total and `union-attr`. Measured
+    here, the largest groups are `union-attr` 17, `attr-defined` 13, `arg-type`
+    11, `assignment` 9, `operator` 8. **They fall into two kinds and
+    the difference is the point.** Roughly half sit under a comment naming a real
+    defect or a filed issue: a nullable `param_info` column (`label`,
+    `label_results`, `slug`) dereferenced with no guard, a helper whose None
+    return is not checked. Those are recorded rather than asserted away, because
+    an `assert` there would claim an invariant the data does not carry. The rest
+    are limitations the checker cannot see past: django-stubs typing
+    `QueryDict.__getitem__` as `str | list[object]` when it returns the last
+    value, `qrcode.make_image()` declared as the pure-Python image when Pillow
+    makes it a `PilImage`, display attributes attached to ORM rows for the
+    templates, and `fmt` deciding both the archive class and its mode string in
+    `cart/views.py`. **A later PR should not "clean these up" without reading the
+    comment at the site**: deleting one of the first kind hides a defect, and
+    deleting one of the second re-breaks the gate.
+  - **Two annotations in this PR were wrong and both were caught downstream, not
+    by review.** `set_user_search_number` was declared `-> int | None` and returns
+    a 2-tuple; `get_param_info_by_slug` was declared `-> ParamInfo | None` and
+    returns a pair on two paths. Both came from inferring the return type from the
+    function's name instead of reading its `return` statements. **The generator, so
+    the next annotation PR can run it:** for each function compare the declared
+    return type's top level against the *arity* of every `return` in it -- arity is
+    decidable from the source and is exactly where this mistake shows. Over both
+    packages it now reports three, all benign and each explainable
+    (`SearchResultsChunk` is a tuple alias, twice; `get_slug_info` is the #1465
+    looseness).
+  - **`get_param_info_by_slug` is `@overload`ed on two parameters, and the
+    reasoning generalizes.** The honest union return forced narrowing at roughly
+    forty call sites in four files. The overloads key on `source` *and*
+    `allow_units_override`, which is what the body actually branches on, so the
+    combination the code handles but nobody uses -- `allow_units_override` with a
+    source other than `'col'` -- is now a type error rather than a silent scalar.
+    Every caller passes both as literals, which is what makes this resolvable;
+    check that before reaching for the same tool elsewhere.
+  - **The `%r` sweep is done and its worklist was regenerated, not inherited.**
+    262 occurrences on 176 lines across 9 files, found by an AST pass over every
+    `log.<level>(...)` whose message is a literal. Three messages were built by
+    concatenation and had no mechanical rewrite (two `'Unparseable form type ' +
+    str(...)`, and `api_normalize_url`'s slug, which is the live caller-supplied
+    one PR-13 named); two more sat inside commented-out logging calls, which an
+    AST sweep cannot see by construction. All five were converted by hand.
+    `grep -rnE "log\.(debug|info|warning|error|exception|critical)\(" src/opus_app`
+    piped through a `%s` filter now returns nothing, comments included. The 101
+    `str(...)`-wrapped arguments were deliberately left wrapped: `str` and `repr`
+    agree for the mappings and lists they carry.
+  - **Annotation machinery is excluded from both coverage configs, and this very
+    nearly shipped as a CI failure.** `if TYPE_CHECKING:` blocks and `@overload`
+    stubs are statements that by construction never execute -- the first is False
+    at run time, the second is a signature declaration with a `...` body -- so
+    adding them dropped the integration gate to **99% (18 missed statements, 12
+    partial branches across 10 files)**. `integration_tests/.coveragerc` and
+    `[tool.coverage.report]` both gained `if TYPE_CHECKING:` and `@overload` in
+    `exclude_lines`, which is what keeps the 100% gate meaningful rather than
+    scattering `# pragma: no cover` over every such block. **The trap PR-16
+    recorded is real and this is the second PR to meet it:** `opus_main_test.sh`
+    exits 0 without ever calling `opus_check_coverage.sh`, so the chain reported
+    success at 99% while `run-app-tests.yml:96` -- which does call it -- would
+    have failed. Run that script yourself after every local chain.
+  - **Never edit a source file while the chain is running, and check `stat`
+    before believing a coverage anomaly.** A run of PR-17a's tree reported 99%
+    with 12 missed statements in `tools/dictionary.py` -- a file whose committed
+    source was byte-identical to the 100% run before it. The cause was an edit
+    made to that file 37 seconds before the chain's `coverage report` ran:
+    coverage recorded arcs against the pre-edit file and reported against the
+    post-edit one, so the line numbers no longer corresponded and it emitted
+    phantom misses in exactly the file that had been touched. **The tell is that
+    the reported missing lines were not statements at all** -- the file's
+    statements start at line 21 and the report named 17-19 -- which matches none
+    of the real explanations (import timing, ordering, data merging) and points
+    straight at two versions of one file. `stat` on the named file against the
+    run's start and end times settles it in one command, and is the first thing
+    to try. The don't-touch-the-tree rule covers **source files first**; applying
+    it only to the coverage data file, as happened here, is not enough.
+  - **A bandit justification in `importdb/mysql.py` overclaimed for the second
+    time.** PR-15 corrected the pyproject comment for the same reason; PR-17a's
+    per-line replacements then repeated the shape. Four methods -- `read_rows`,
+    `update_row`, `delete_rows`, `copy_rows_between_namespaces` -- append the
+    caller's `where` fragment **verbatim**, so "identifiers are the only
+    interpolations" was false at all four, and `read_rows` additionally claimed
+    to carry "no values at all" while passing `where_params`. Corrected to state
+    the contract: identifiers are validated, only the values inside `where` are
+    bound, the fragment itself is not, and the API is for trusted callers. **The
+    pattern to watch: a suppression comment that lists what is safe is one edit
+    away from being read as a list of everything that is interpolated.** Say what
+    is true and stop -- do not append a reassurance that it is therefore safe,
+    because safety here rests on the caller rather than on this code.
+  - **A latent coverage hazard, not the cause of the above but worth knowing:**
+    `parallel = true` is set in `[tool.coverage.run]` in `pyproject.toml` and is
+    *not* set in `integration_tests/.coveragerc`. Any coverage invocation that
+    loses `COVERAGE_RCFILE` therefore writes `.coverage.<host>.<pid>` fragments
+    that the integration config's non-parallel `coverage erase` will not
+    necessarily remove, and `run_coverage.sh` appends with `coverage run -a`.
+    Accumulated data can only make coverage look better, never worse, so the
+    signature would be a clean-state run reporting *less* than a dirty-state one.
+    Checked at PR-17a: no fragments present and `COVERAGE_PROCESS_START` unset,
+    so nothing is wrong today. CI is safe by construction -- `actions/checkout@v4`
+    cleans the workspace each run -- but a local chain is not.
+  - **The integration coverage baseline moves to 22264 statements / 1882
+    branches, 100%**, from PR-13/14/15's 22161 / 1880. The whole delta is this
+    PR's own additions to `src/opus_app/apps/*` (assertions, narrowings, the
+    two-name splits) minus the 32 statements and 24 branches the two new
+    `exclude_lines` entries remove. `Ran 1643 tests` is unchanged.
+  - **A test does assert log text, which the `%r` sweep found the hard way.**
+    PR-13's notes say the widget-slug log line "was changed to match it but
+    nothing asserts log text" -- true of the golden fixtures, and false of the
+    unit suite PR-13 itself added. `test_api_view.py::
+    test__api_view_logs_an_unhandled_exception_with_its_traceback` asserts the
+    message of `api_view`'s 500 record, so rewriting
+    `log.exception('%s: Unhandled exception', handler.__name__)` to `%r` failed
+    it -- caught by the integration chain, not by the unit suite, because that
+    file is not collected by a bare `pytest`. The sweep was kept and the
+    assertion updated, rather than exempting the one site: `handler.__name__` is
+    a Python identifier and cannot carry CR/LF, so `%r` buys nothing there, but
+    an invariant with no exceptions is checkable in one grep and an invariant
+    with one exception is not. **The general point for a later sweep: search the
+    suites for `assertLogs`/`getMessage`/`caplog` before rewriting log formats.**
+    Only that one assertion was sensitive; the other three in that file match on
+    substrings no placeholder touches.
+  - **Defects found while annotating the Django side, none fixed here.** Written
+    out so nobody re-derives them. In `cart/views.py`: `_create_csv_file`'s 500
+    response is discarded by `api_create_download`, which then fails later with a
+    `FileNotFoundError` and leaks its temp files; `?urlonly=0` is truthy and
+    yields a URL-only archive against the documented meaning (not front-end
+    reachable -- the JS only ever sends `urlonly=1`); and
+    `int(request.GET.get('hierarchical', 0))` answers 500 where every other
+    malformed parameter answers 400. In `ui/views.py`: an unknown slug in
+    `?cols=` or `?widgets=` on `__metadata_selector.json` dereferences None and
+    answers **500 where the rest of the API answers 400**, and
+    `_get_menu_labels` passes `get_triggered_tables`' None straight into a Django
+    `filter(table_name__in=...)`. In `results/views.py`: the same unchecked
+    `get_triggered_tables`, and `_get_metadata_by_slugs(..., 'raw_data', ...)`
+    returning an error response that the caller subscripts. In
+    `metadata/views.py`: a database failure in `api_get_range_endpoints` is
+    reported as a bare `Http404` where the sibling `api_get_mult_counts` returns a
+    500 for the identical condition. In `tools/db_utils.py`: `','.join(...)` over
+    a list that can hold None, reachable from `api_get_metadata?fmt=json` on a
+    MULTIGROUP field with a null mult row. In `paraminfo/models.py`:
+    `body_qualified_label` uses a nullable `label` with `in` and `+` where its
+    results sibling returns None for the same condition. In `tools/dictionary.py`:
+    a None `context` reaches `context.startswith('MULT_')`. `search/forms.py`'s
+    trailing block reads two names leaked from a `for` loop, so an empty mapping
+    raises `NameError` and several slugs silently reduce the form to the last
+    range field.
+  - **PR-13's 400-vs-404 sweep missed two sites, and the blind spot is worth
+    knowing because it is structural rather than careless.** CodeRabbit found
+    that an unknown `cols` or `widgets` slug on `__metadata_selector.json`
+    dereferenced a None `ParamInfo` and answered **500 where PR-13's rule 2
+    requires 400**. Established rather than assumed: both call sites are present
+    at PR-13's base `101bc511`, and PR-13 **edited that very handler** -- it
+    applied the decorator and converted the `reqno` validation ten lines below.
+    So they were missed, not introduced.
+    **Why its sweep could not see them:** PR-13's scope was "status codes +
+    logging only" over the endpoints' *existing* error paths, reclassifying a 404
+    that should have been a 400. Both of these sites had **no error path at all**
+    -- an `Optional` dereferenced with no check, which raises rather than
+    returning a status. A sweep over error returns cannot find a missing check;
+    it can only reclassify one that is there. What surfaced them was annotation:
+    /seti/newnav/capped-run.sh mypy reporting the `Optional` dereference.
+    **The general point for PR-17b and PR-19:** the two sweeps are complementary,
+    not overlapping. Anywhere PR-13 declared an endpoint's status codes settled,
+    a later annotation pass can still find an unguarded dereference that answers
+    500 on the same input class, and the decision table already decides what it
+    should answer. Fixing one is applying a ratified rule, not making a call.
+  - **Three claims in the tree were false and were corrected rather than
+    restated**: `SessionInfo`'s "This is an abstract class" (it declares none and
+    is instantiated directly), `get_pds_products`' warning that its result is not
+    in `opus_id_list` order (it pre-populates in that order and dicts keep it),
+    and `api_normalize_url`'s documented `'message'` key, which the code spells
+    `'msg'`. `cart/models.py`'s `# this is not being used` is false too -- `Cart`
+    is queried in three views and the golden suite -- and was left alone as a
+    comment edit outside this PR's lines; it is a candidate for whoever reopens it.
+  - **"True when written, false at the commit that ships" -- the named failure
+    mode, and every blocking finding in PR-17a's review was an instance of it.**
+    Four claims were each measured correctly and then shipped against a different
+    tree: the bandit figures were the base tree's (275/246, when the finished
+    tree has 322 and 90 of them are in `src/opus_app`, put there by this PR's own
+    assertions); "245 generated model classes" was 231; "75 type-ignore markers"
+    was 76; and "the two instances" of the two-name split was about a dozen. None
+    was a code defect and all four were in prose -- two of them in a checked-in
+    `pyproject.toml` comment, which is worse than the notes because nobody
+    re-derives a config comment.
+    **The root cause is mechanical, not carelessness:** the inertness check was
+    run once per commit, comparing that commit to its parent, so each result was
+    true of its own commit and **none of them described the PR**. A per-commit
+    measurement cannot support a PR-level claim.
+    **The rule that closes it, applied by the author rather than by a reviewer:
+    re-take every measurement on the head you are shipping, and say which head it
+    was taken on.** Sweep the diff, the Execution notes, the checked-in tool
+    comments and the PR description together -- they are one artifact for this
+    purpose, and the config comments are the ones that outlive everyone.
+    The orchestrator's ratification of the first bandit figure into rev 7.20 had
+    to be corrected too, which is the PR-15 "nobody re-derives it once it is
+    written down" failure one level up: the executor measured, the orchestrator
+    ratified, and neither re-derived it at the shipping commit.
+  - **The unit baseline at `7ecedd13` is 1173 tests**, which is what CI reports for
+    that commit; PR-16's note records 1146 for its own tree. Nothing in PR-17a adds
+    or removes a test, so 1173 is what it should still be.
+  - **`pytest integration_tests/...` does not work and is not supposed to.** Plain
+    pytest never configures Django (`testpaths = ["tests"]`, no pytest-django yet),
+    so `connection.ops.quote_name` fails in `ConnectionHandler` and the DB-free
+    suites report failures that have nothing to do with the code. Run them through
+    `OPUS_CONFIG=... python manage.py test -b integration_tests.apps_db_tests.<mod>`
+    until PR-18 wires pytest-django.

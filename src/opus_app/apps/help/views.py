@@ -15,6 +15,16 @@
 #
 ################################################################################
 
+"""The OPUS help pages, from the About page to the API guide.
+
+Every page but the splash page is rendered by `_render_html_or_pdf`, which returns
+it either as HTML or as a PDF built from the template it is given, according to the
+format named in the URL. Two pages take their text from files that ship inside this
+package: the FAQ from `faq.yaml`, and the API guide from `api_guide.md`.
+"""
+
+from __future__ import annotations
+
 import base64
 import datetime
 import logging
@@ -22,6 +32,7 @@ import os
 import platform
 import re
 from io import BytesIO
+from typing import Any
 
 import mistune
 import pdfkit
@@ -36,9 +47,9 @@ from django.views.decorators.cache import never_cache
 from opus_app.apps.metadata.views import get_fields_info
 from opus_app.apps.search.models import MultObsGeneralInstrumentId, ObsGeneral
 from opus_app.apps.tools.app_utils import (
-    HTTP404_NO_REQUEST,
     api_view,
     get_git_version,
+    http404_no_request,
 )
 
 log = logging.getLogger(__name__)
@@ -52,15 +63,28 @@ log = logging.getLogger(__name__)
 
 @never_cache
 @api_view
-def api_about(request, fmt):
-    """Renders the about page.
+def api_about(request: HttpRequest, fmt: str) -> HttpResponse:
+    """Render the About page.
 
     This is a PRIVATE API.
 
     Format: __help/about.(?P<fmt>html|pdf)
+
+    The page is given the OPUS version, the schema and host name of the database
+    being served, and the name of the machine serving it.
+
+    Parameters:
+        request: The request being served.
+        fmt: `html` for the page itself, `pdf` for a PDF download.
+
+    Returns:
+        The About page in the requested format.
+
+    Raises:
+        Http404: If there is no request, or it has no GET or META.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/about.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/about.{fmt}'))
 
     git_id = get_git_version()
     database_schema = settings.DB_SCHEMA_NAME
@@ -79,27 +103,41 @@ def api_about(request, fmt):
 
 @never_cache
 @api_view
-def api_bundles(request, fmt):
-    """Renders the bundles page.
+def api_bundles(request: HttpRequest, fmt: str) -> HttpResponse:
+    """Render the Bundles page.
 
     This is a PRIVATE API.
 
     Format: __help/bundles.(?P<fmt>html|pdf)
+
+    The page lists the bundles that hold observations in the database, grouped under
+    the name of the instrument each was taken with.
+
+    Parameters:
+        request: The request being served.
+        fmt: `html` for the page itself, `pdf` for a PDF download.
+
+    Returns:
+        The Bundles page in the requested format.
+
+    Raises:
+        Http404: If there is no request, or it has no GET or META.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/bundles.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/bundles.{fmt}'))
 
-    all_bundles = {}
+    all_bundles: dict[str, list[str]] = {}
     for d in (ObsGeneral.objects.values('instrument_id','bundle_id')
               .order_by('instrument_id','bundle_id').distinct()):
         instrument_name = (MultObsGeneralInstrumentId.objects.values('label')
                            .filter(id=d['instrument_id']))
         all_bundles.setdefault(instrument_name[0]['label'],
                                []).append(d['bundle_id'])
+    joined_bundles: dict[str, str] = {}
     for k,_v in all_bundles.items():
-        all_bundles[k] = ', '.join(all_bundles[k])
+        joined_bundles[k] = ', '.join(all_bundles[k])
 
-    context = {'all_bundles': all_bundles}
+    context = {'all_bundles': joined_bundles}
     return _render_html_or_pdf(
                     request, 'help/bundles.html', fmt, 'bundles',
                     'Bundles/Volumes Available for Searching with OPUS', context)
@@ -107,26 +145,42 @@ def api_bundles(request, fmt):
 
 @never_cache
 @api_view
-def api_faq(request, fmt):
-    """Renders the faq page.
+def api_faq(request: HttpRequest, fmt: str) -> HttpResponse:
+    """Render the FAQ page.
 
     This is a PRIVATE API.
 
     Format: __help/faq.(?P<fmt>html|pdf)
+
+    The questions and answers are read from `faq.yaml`, which ships inside this
+    package. The HTML page offers them collapsed; the PDF does not.
+
+    Parameters:
+        request: The request being served.
+        fmt: `html` for the page itself, `pdf` for a PDF download.
+
+    Returns:
+        The FAQ page in the requested format.
+
+    Raises:
+        Http404: If there is no request, or it has no GET or META, or `faq.yaml`
+            cannot be parsed.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/faq.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/faq.{fmt}'))
 
     path = os.path.dirname(os.path.abspath(__file__))
     faq_content_file = 'faq.yaml'
     with open(os.path.join(path, faq_content_file)) as stream:
         text = stream.read()
         try:
-            faq = yaml.load(text, Loader=yaml.FullLoader)
+            # FullLoader (not the unsafe default) over apps/help/faq.yaml, which
+            # ships inside this package. No request data reaches this parser.
+            faq = yaml.load(text, Loader=yaml.FullLoader)  # nosec B506
         except yaml.YAMLError as exc: # pragma: no cover -
             # This can only happen if there is a problem with the YAML in the
             # FAQ.YAML file
-            log.exception('api_faq: Unable to parse %s', faq_content_file)
+            log.exception('api_faq: Unable to parse %r', faq_content_file)
             raise Http404 from exc
 
     context = {'faq': faq,
@@ -138,15 +192,25 @@ def api_faq(request, fmt):
 
 @never_cache
 @api_view
-def api_gettingstarted(request, fmt):
-    """Renders the getting started page.
+def api_gettingstarted(request: HttpRequest, fmt: str) -> HttpResponse:
+    """Render the Getting Started page.
 
     This is a PRIVATE API.
 
     Format: __help/gettingstarted.(?P<fmt>html|pdf)
+
+    Parameters:
+        request: The request being served.
+        fmt: `html` for the page itself, `pdf` for a PDF download.
+
+    Returns:
+        The Getting Started page in the requested format.
+
+    Raises:
+        Http404: If there is no request, or it has no GET or META.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/gettingstarted.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/gettingstarted.{fmt}'))
 
     return _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
                                'getting_started',
@@ -155,41 +219,78 @@ def api_gettingstarted(request, fmt):
 
 @never_cache
 @api_view
-def api_splash(request):
-    """Renders the splash page.
+def api_splash(request: HttpRequest) -> HttpResponse:
+    """Render the splash page.
 
     This is a PRIVATE API.
 
     Format: __help/splash.html
+
+    Parameters:
+        request: The request being served.
+
+    Returns:
+        The splash page as HTML.
+
+    Raises:
+        Http404: If there is no request, or it has no GET or META.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__help/splash.html'))
+        raise Http404(http404_no_request('/__help/splash.html'))
 
     return render(request, 'help/splash.html')
 
 
 @never_cache
 @api_view
-def api_citing_opus(request, fmt):
-    """Renders the citing opus page.
+def api_citing_opus(request: HttpRequest, fmt: str) -> HttpResponse:
+    """Render the page explaining how to cite OPUS.
 
     This is a PRIVATE API.
 
     Format: __help/citing.(?P<fmt>html|pdf)
+    Arguments: searchurl=<URL> (Optional, a search to be cited)
+               stateurl=<URL>  (Optional, a page state to be cited)
+
+    The page carries a QR code for the public OPUS URL, plus one for each URL given
+    as an argument.
+
+    Parameters:
+        request: The request being served.
+        fmt: `html` for the page itself, `pdf` for a PDF download.
+
+    Returns:
+        The citation page in the requested format.
+
+    Raises:
+        Http404: If there is no request, or it has no GET or META.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/citing.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/citing.{fmt}'))
 
     opus_search_url = request.GET.get('searchurl', None)
     opus_state_url = request.GET.get('stateurl', None)
 
-    def url_to_png_string(url):
+    def url_to_png_string(url: str) -> str:
+        """Render a URL as a QR code.
+
+        Parameters:
+            url: The URL to encode in the QR code.
+
+        Returns:
+            A PNG image of the QR code, base64-encoded as ASCII text.
+        """
         qr = qrcode.QRCode(box_size=5, border=4)
         qr.add_data(url)
         qr.make(fit=True)
         url_qr = qr.make_image(fill_color='black', back_color='white')
         buffered = BytesIO()
-        url_qr.save(buffered, format='PNG')
+        # The stubs declare make_image() as returning the pure-Python
+        # PyPNGImage, whose save() takes no `format`. With Pillow installed --
+        # it is a declared dependency -- qrcode returns a PilImage instead,
+        # whose save() forwards **kwargs to PIL. Measured: the class here is
+        # qrcode.image.pil.PilImage and this call produces a PNG.
+        url_qr.save(buffered, format='PNG')  # type: ignore[call-arg]
         url_qr_string = base64.b64encode(buffered.getvalue()).decode('ascii', 'strict')
         return url_qr_string
 
@@ -216,15 +317,33 @@ def api_citing_opus(request, fmt):
 
 @never_cache
 @api_view
-def api_api_guide(request, fmt):
-    """Renders the API guide.
+def api_api_guide(request: HttpRequest, fmt: str) -> HttpResponse:
+    """Render the API guide.
 
-    Format: __help/apiguide.(?P<fmt>html|pdf)
+    Format: apiguide.(?P<fmt>pdf)
+            __help/apiguide.(?P<fmt>html|pdf)
+
+    The guide is written as Markdown in `api_guide.md`, which ships inside this
+    package, and is rendered to HTML here with the scheme and host this request
+    arrived on, the current date, and the OPUS version substituted into it. The
+    page also describes the searchable metadata fields, with the surface geometry
+    fields collapsed onto a single target.
 
     To edit guide content edit api_guide.md
+
+    Parameters:
+        request: The request being served.
+        fmt: `html` for the page itself, `pdf` for a PDF download, which is built
+            from its own print template.
+
+    Returns:
+        The API guide in the requested format.
+
+    Raises:
+        Http404: If there is no request, or it has no GET or META.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/apiguide.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/apiguide.{fmt}'))
 
     uri = HttpRequest.build_absolute_uri(request)
     prefix = '/'.join(uri.split('/')[:3])
@@ -248,6 +367,10 @@ def api_api_guide(request, fmt):
                       text)
         text = re.sub(r'%ENDCODE%', r'</code></pre></div>', text)
         guide = mistune.html(text)
+        # mistune.html carries an HTML renderer, so it returns the rendered text.
+        # The token list its return type also admits is what a Markdown object
+        # built with no renderer produces instead.
+        assert isinstance(guide, str)
         guide = guide.replace('%ADDCLASS%', '<div class="')
         guide = guide.replace('%ENDADDCLASS%', '">')
         guide = guide.replace('%ENDCLASS%', '</div>')
@@ -257,7 +380,9 @@ def api_api_guide(request, fmt):
         guide = guide.replace('<thead>', '<thead class="thead-dark">')
         guide = guide.replace('<td>', '<td class="op-table-padding">')
 
-    fields_dict = get_fields_info('raw', request, collapse=True)
+    # 'raw' is the format for which get_fields_info returns the dictionary itself
+    # rather than a response.
+    fields_dict: dict[str, dict[str, Any]] = get_fields_info('raw', request, collapse=True)  # type: ignore[assignment]
     fields = []
     for _cat, cat_data in fields_dict.items():
         for _field_name, field in cat_data.items():
@@ -277,8 +402,22 @@ def api_api_guide(request, fmt):
                                None, context)
 
 
-def _render_html_or_pdf(request, template, fmt, filename, title, context=None):
-    """Render a template as HTML or PDF."""
+def _render_html_or_pdf(request: HttpRequest, template: str, fmt: str, filename: str,
+                        title: str | None,
+                        context: dict[str, Any] | None = None) -> HttpResponse:
+    """Render a template as HTML or PDF.
+
+    Parameters:
+        request: The request being served.
+        template: The name of the template to render.
+        fmt: `html` to return the rendered page; anything else returns a PDF.
+        filename: The word naming the page in the PDF's download name.
+        title: A heading to place above the body of the PDF, or None to omit it.
+        context: The context to render the template with.
+
+    Returns:
+        The rendered page, or the PDF as an attachment named `opus_<filename>.pdf`.
+    """
     if fmt == 'html':  # pragma: no cover
         ret = render(request, template, context)
     else:  # pragma: no cover

@@ -10,14 +10,14 @@ from rest_framework.test import RequestsClient
 
 from opus_app.apps.cart.models import Cart
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_DOWNLOAD,
-    HTTP400_BAD_OR_MISSING_RANGE,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_BAD_RECYCLEBIN,
-    HTTP400_MISSING_OPUS_ID,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_DOWNLOAD_FILE_FORMAT,
-    HTTP400_UNKNOWN_SLUG,
+    http400_bad_download,
+    http400_bad_or_missing_range,
+    http400_bad_or_missing_reqno,
+    http400_bad_recyclebin,
+    http400_missing_opus_id,
+    http400_search_params_invalid,
+    http400_unknown_download_file_format,
+    http400_unknown_slug,
 )
 
 from .api_test_helper import ApiTestHelper
@@ -77,7 +77,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/view: no reqno"
         url = '/__cart/view.json'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/view.json'))
+                               http400_bad_or_missing_reqno('/__cart/view.json'))
 
     def test__api_cart_view_types_default(self):
         "[test_cart_api.py] /__cart/view: types default"
@@ -121,13 +121,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/status: no reqno"
         url = '/__cart/status.json'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/status.json'))
+                               http400_bad_or_missing_reqno('/__cart/status.json'))
 
     def test__api_cart_status_bad_download(self):
         "[test_cart_api.py] /__cart/status: bad download"
         url = '/__cart/status.json?download=inf&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_DOWNLOAD('inf', '/__cart/status.json'))
+                               http400_bad_download('inf', '/__cart/status.json'))
 
     def test__api_cart_status_download_ver(self):
         "[test_cart_api.py] /__cart/status: download=1, types is set to version 2 calib"
@@ -152,7 +152,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/reset: no reqno"
         url = '/__cart/reset.json'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/reset.json'))
+                               http400_bad_or_missing_reqno('/__cart/reset.json'))
 
     def test__api_cart_reset_download0(self):
         "[test_cart_api.py] /__cart/reset: download 0"
@@ -170,7 +170,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/reset: bad download"
         url = '/__cart/reset.json?download=inf&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_DOWNLOAD('inf', '/__cart/reset.json'))
+                               http400_bad_download('inf', '/__cart/reset.json'))
 
     def test__api_cart_reset_recyclebin0(self):
         "[test_cart_api.py] /__cart/reset: recyclebin 0"
@@ -209,7 +209,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/reset: bad download"
         url = '/__cart/reset.json?recyclebin=1e38&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_RECYCLEBIN('1e38', '/__cart/reset.json'))
+                               http400_bad_recyclebin('1e38', '/__cart/reset.json'))
 
     def test__api_cart_reset(self):
         "[test_cart_api.py] /__cart/reset"
@@ -229,7 +229,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/add: no reqno"
         url = '/__cart/add.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/add.json'))
+                               http400_bad_or_missing_reqno('/__cart/add.json'))
 
     def test__api_cart_add_missing(self):
         "[test_cart_api.py] /__cart/add: missing OPUSID no download"
@@ -238,7 +238,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_MISSING_OPUS_ID('/__cart/add.json'))
+                               http400_missing_opus_id('/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -250,7 +250,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_MISSING_OPUS_ID('/__cart/add.json'))
+                               http400_missing_opus_id('/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -412,7 +412,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?download=1&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_MISSING_OPUS_ID('/__cart/add.json'))
+                               http400_missing_opus_id('/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -424,7 +424,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=nh-mvic-mpf_000526016&download=1x2&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_DOWNLOAD('1x2', '/__cart/add.json'))
+                               http400_bad_download('1x2', '/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -572,7 +572,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/remove: no reqno"
         url = '/__cart/remove.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/remove.json'))
+                               http400_bad_or_missing_reqno('/__cart/remove.json'))
 
     def test__api_cart_remove_missing(self):
         "[test_cart_api.py] /__cart/remove: missing OPUSID no download"
@@ -581,7 +581,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_MISSING_OPUS_ID('/__cart/remove.json'))
+                               http400_missing_opus_id('/__cart/remove.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -593,7 +593,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_MISSING_OPUS_ID('/__cart/remove.json'))
+                               http400_missing_opus_id('/__cart/remove.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -638,7 +638,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/remove: recyclebin=x"
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456&recyclebin=x'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_RECYCLEBIN('x', '/__cart/remove.json'))
+                               http400_bad_recyclebin('x', '/__cart/remove.json'))
 
     def test__api_cart_remove_duplicate(self):
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download"
@@ -842,7 +842,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?download=1&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_MISSING_OPUS_ID('/__cart/remove.json'))
+                               http400_missing_opus_id('/__cart/remove.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -935,7 +935,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/addrange: no reqno"
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/addrange.json'))
+                               http400_bad_or_missing_reqno('/__cart/addrange.json'))
 
     def test__api_cart_addrange_missing(self):
         "[test_cart_api.py] /__cart/addrange: missing range no download"
@@ -944,7 +944,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -956,7 +956,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -968,7 +968,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -980,7 +980,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir,&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -992,7 +992,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1004,7 +1004,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1154,7 +1154,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/__cart/addrange.json'))
+                               http400_search_params_invalid('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1211,7 +1211,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?download=1&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1275,7 +1275,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/removerange: no reqno"
         url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/removerange.json'))
+                               http400_bad_or_missing_reqno('/__cart/removerange.json'))
 
     def test__api_cart_removerange_missing(self):
         "[test_cart_api.py] /__cart/removerange: missing range no download"
@@ -1285,7 +1285,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 200)
         url = '/__cart/removerange.json?reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1297,7 +1297,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1309,7 +1309,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1321,7 +1321,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir,&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1333,7 +1333,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1345,7 +1345,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1489,7 +1489,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?bundleidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/__cart/removerange.json'))
+                               http400_search_params_invalid('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1552,7 +1552,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?download=1&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/removerange.json'))
+                               http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1604,7 +1604,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1616,7 +1616,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_RANGE('/__cart/addrange.json'))
+                               http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1632,7 +1632,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = ('/__cart/addrange.json?view=cart&order=xxx'
                +'&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456')
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/__cart/addrange.json'))
+                               http400_unknown_slug(None, '/__cart/addrange.json'))
 
     def test__api_cart_addrange_duplicate_cart(self):
         "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download"
@@ -1971,7 +1971,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         "[test_cart_api.py] /__cart/addall: no reqno"
         url = '/__cart/addall.json?bundleid=VGISS_6210'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__cart/addall.json'))
+                               http400_bad_or_missing_reqno('/__cart/addall.json'))
 
     def test__api_cart_addall_one(self):
         "[test_cart_api.py] /__cart/addall: one time no download"
@@ -2034,7 +2034,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?bundleidXX=COVIMS_0006&reqno=456'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/__cart/addall.json'))
+                               http400_search_params_invalid('/__cart/addall.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2397,7 +2397,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/data.csv?cols=instrumentidx'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('instrumentidx', '/__cart/data.csv'))
+                               http400_unknown_slug('instrumentidx', '/__cart/data.csv'))
 
 
             ####################################################
@@ -2450,7 +2450,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&cols=targetx,opusid,time1&hierarchical=0'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('targetx', '/__cart/download.json'))
+                               http400_unknown_slug('targetx', '/__cart/download.json'))
 
     def test__api_cart_download_single_no_hierarchical_tar(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=tar"
@@ -3159,7 +3159,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=xxx'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_DOWNLOAD_FILE_FORMAT('xxx', '/__cart/download.json'))
+                               http400_unknown_download_file_format('xxx', '/__cart/download.json'))
 
     def test__api_cart_download_empty_tar(self):
         "[test_cart_api.py] /__cart/download.json: empty fmt=tar"

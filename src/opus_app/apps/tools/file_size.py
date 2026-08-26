@@ -25,7 +25,7 @@ _SIZE_UNITS = (
 )
 
 
-def nice_file_size(size_bytes):
+def nice_file_size(size_bytes: int) -> str:
     """Format a byte count as a short human-readable string.
 
     Parameters:

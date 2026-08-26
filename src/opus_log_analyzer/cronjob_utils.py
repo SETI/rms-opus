@@ -1,3 +1,10 @@
+"""Argument expansion shared by the two programs' cronjob modes.
+
+A cron entry names log files by `strftime` pattern rather than by name, so the
+patterns have to be resolved against a run date before anything is read. That
+date comes from `--date`, which accepts a relative day count, a month, or a
+day.
+"""
 import datetime
 import glob
 import re
@@ -7,13 +14,27 @@ from pathlib import Path
 
 import pytz
 
-""" Common code used for parsing cronjob args """
-
-
 DEFAULT_TIMEZONE = pytz.timezone('US/Pacific')
 
 
 def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> None:
+    """Resolve the date-patterned file arguments in place, and select batch mode.
+
+    `args.log_files`, `args.manifests`, `args.output` and
+    `args.sessions_relative_directory` are read as `strftime` patterns, expanded
+    against the run date and (for the first two) glob-expanded. `args.batch` is
+    set, because a cronjob run is a batch run.
+
+    Parameters:
+        args: The parsed arguments, modified in place.
+        error_analysis: Whether this is the error analyzer, which reports on a
+            single day rather than from the start of the month to the run date,
+            and has no manifests or per-session directory.
+
+    Raises:
+        Exception: If no log-file pattern was given, or none of the patterns
+            matched a file.
+    """
     run_date = __parse_date_argument(args)
     if not error_analysis:
         # From the beginning of the month to the specified date
@@ -24,6 +45,17 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
         dates = [run_date]
 
     def expand_and_glob_filenames(file_patterns: Sequence[str]) -> Sequence[str]:
+        """Expand date patterns, then glob, over the run's dates.
+
+        Parameters:
+            file_patterns: `strftime` patterns, which may also contain glob
+                metacharacters.
+
+        Returns:
+            Every distinct file matched by any pattern on any of the run's
+            dates, sorted by name. A pattern matching nothing contributes
+            nothing.
+        """
         all_patterns = {date.strftime(file_pattern) for file_pattern in file_patterns for date in dates}
         all_files = sorted(file for pattern in all_patterns for file in glob.glob(pattern))
         return all_files

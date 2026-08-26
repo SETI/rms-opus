@@ -466,7 +466,11 @@ class ImportDBSuper:
         q = self.quote_identifier
         columns = ','.join([q(c) for c in column_names])
 
-        cmd = f'SELECT {columns} FROM {q(table_name)}'
+        # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$). The
+        # caller's `where` fragment is appended verbatim below and is not
+        # validated; only the values inside it are bound, through where_params.
+        # This method is for trusted callers.
+        cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
         if where:
             cmd += f' WHERE {where}'
         res = self._execute_and_fetchall(cmd, 'read_rows',

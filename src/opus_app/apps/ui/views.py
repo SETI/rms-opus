@@ -16,8 +16,25 @@
 #
 ################################################################################
 
+"""The private API behind the OPUS user interface, and the view that serves the
+page the interface runs in.
+
+`MainSite` renders that page. Everything else here answers one of the calls the
+page then makes: the notification banner, the search menu, the metadata selector,
+a single search widget's HTML, the top of the Details tab, the normalizer that
+brings a bookmarked URL up to date, and a handler that does nothing and exists to
+be timed.
+
+These are private: they are shaped for the OPUS front end rather than for general
+use, and each handler's own docstring gives the URL it answers and what comes
+back.
+"""
+
+from __future__ import annotations
+
 import logging
 import os
+from typing import TYPE_CHECKING, Any, Literal
 
 from django.apps import apps
 from django.conf import settings
@@ -42,9 +59,6 @@ from opus_app.apps.search.views import (
     url_to_search_params,
 )
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP404_NO_REQUEST,
     Http400Error,
     api_view,
     cols_to_slug_list,
@@ -53,6 +67,9 @@ from opus_app.apps.tools.app_utils import (
     get_mult_name,
     get_reqno,
     get_session_id,
+    http400_bad_or_missing_reqno,
+    http400_unknown_slug,
+    http404_no_request,
     json_response,
     strip_numeric_suffix,
 )
@@ -74,13 +91,41 @@ from opus_support import (
     parse_form_type,
 )
 
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from django.http import HttpRequest, HttpResponse
+
 log = logging.getLogger(__name__)
 
 @method_decorator(never_cache, name='dispatch')
-class main_site(TemplateView): # pragma: no cover - only accessed from browser
+class MainSite(TemplateView): # pragma: no cover - only accessed from browser
+    """Serve the page the OPUS user interface runs in.
+
+    `opus_app/urls.py` routes both `/` and `/opus/` here. The response renders
+    `ui/base.html` and is marked never-cache, so a browser coming back to the
+    page asks for it again rather than showing a stored copy.
+    """
     template_name = "ui/base.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """Build the template context the page starts up from.
+
+        On top of what `TemplateView` supplies, the context carries the front
+        end's start-up defaults -- the default columns, widgets, sort order,
+        selection limit and preview guides from the settings -- the search menu
+        as already-rendered HTML, and `VERSION_SUFFIX`, a query string the
+        templates append to static asset URLs so a release invalidates whatever
+        the browser cached. The suffix comes from the `OPUS_FILE_VERSION`
+        setting, which is filled in from the git version the first time this
+        runs with it empty and is then stable for the life of the process.
+
+        Parameters:
+            **kwargs: The keyword arguments captured from the URL, passed on to
+                `TemplateView`.
+
+        Returns:
+            The template context.
+        """
         context = super().get_context_data(**kwargs)
         menu = _get_menu_labels(None, 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
@@ -97,7 +142,7 @@ class main_site(TemplateView): # pragma: no cover - only accessed from browser
 
 @never_cache
 @api_view
-def api_notifications(request):
+def api_notifications(request: HttpRequest) -> HttpResponse:
     """Return the HTML for any pending notifications and the date of the last
        blog update.
 
@@ -110,9 +155,22 @@ def api_notifications(request):
          'notification': '<html code>',            (or if none available 'None')
          'notification_mdate': '<file mod str>'    (ie: 1614648616.5189033)
         }
+
+    Each of the two comes from a file named by the settings. A file that is not
+    there is not an error: its entry comes back as null, which is how OPUS says
+    there is nothing to show.
+
+    Parameters:
+        request: The request being served.
+
+    Returns:
+        The JSON response described above.
+
+    Raises:
+        Http404: The call arrived without a usable request.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__notifications.json'))
+        raise Http404(http404_no_request('/__notifications.json'))
 
     lastupdate = None
     try:
@@ -123,7 +181,7 @@ def api_notifications(request):
             if lastupdate_val:
                 lastupdate = lastupdate_val
     except FileNotFoundError:
-        log.error('api_notifications: Failed to read file "%s"',
+        log.error('api_notifications: Failed to read file "%r"',
                   settings.OPUS_LAST_BLOG_UPDATE_FILE)
 
     notification = None
@@ -142,10 +200,10 @@ def api_notifications(request):
                 # is not the ordinary "no notification today" case the enclosing
                 # FileNotFoundError handler covers.
                 log.exception('api_notifications: Failed to read the modify '
-                              'date of file "%s"',
+                              'date of file "%r"',
                               settings.OPUS_NOTIFICATION_FILE)
     except FileNotFoundError:
-        log.debug('api_notifications: Failed to read file "%s"',
+        log.debug('api_notifications: Failed to read file "%r"',
                   settings.OPUS_NOTIFICATION_FILE)
 
     return json_response({'lastupdate': lastupdate,
@@ -154,7 +212,7 @@ def api_notifications(request):
 
 
 @api_view
-def api_get_menu(request):
+def api_get_menu(request: HttpRequest) -> HttpResponse:
     """Return the left side menu of the search page.
 
     This is a PRIVATE API.
@@ -162,11 +220,25 @@ def api_get_menu(request):
     Format: __menu.json
     Arguments: reqno=<reqno>
                Normal search arguments
+
+    The menu lists the search categories the current search makes available, so
+    the search terms in the query string change what comes back.
+
+    Parameters:
+        request: The request being served. The search terms are read from the
+            query string.
+
+    Returns:
+        A JSON response holding the menu's HTML under `html`, with `reqno`
+        echoed back.
+
+    Raises:
+        Http400Error: `reqno` is missing, is not an integer, or is negative.
     """
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_get_menu: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO('/__menu.json'))
+        raise Http400Error(http400_bad_or_missing_reqno('/__menu.json'))
 
     menu_context = _get_menu_labels(request, 'search')
     menu_context['which'] = 'search' # Used to create DOM IDs
@@ -178,7 +250,7 @@ def api_get_menu(request):
 
 @never_cache
 @api_view
-def api_get_metadata_selector(request):
+def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
     """Create the metadata selector list.
 
     This is a PRIVATE API.
@@ -186,7 +258,26 @@ def api_get_metadata_selector(request):
     Format: __metadata_selector.json
     Arguments: reqno=<reqno>
                Normal search arguments
+
+    The selector lists the metadata fields the current search makes available.
+    The fields named by `cols` are passed to the template as the current
+    selection; an empty or absent `cols` falls back to the default columns.
+
+    Parameters:
+        request: The request being served. `cols` gives the currently selected
+            metadata fields and `widgets` the currently displayed search fields.
+
+    Returns:
+        A JSON response holding the selector's HTML under `html`, the HTML for
+        the "add field" list under `add_field_html`, and `reqno` echoed back.
+
+    Raises:
+        Http400Error: `reqno` is missing, is not an integer, or is negative.
     """
+    # Reused for the raw value and then for the slugs parsed out of it, which is
+    # what the declaration below covers; each use is checked against whichever of
+    # the two it holds at that point.
+    col_slugs: str | list[str]
     col_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     col_slugs = cols_to_slug_list(col_slugs)
     col_slugs = list(filter(None, col_slugs)) # Eliminate empty slugs
@@ -198,23 +289,35 @@ def api_get_metadata_selector(request):
         # desired_unit is displayed.
         p, desired_unit = get_param_info_by_slug(col_slug, 'col',
                                                  allow_units_override=True)
-        (p.disp_unit, p.default_unit,
-         p.units) = get_disp_default_and_avail_units(p.form_type)
+        if p is None:
+            log.error('api_get_metadata_selector: unknown cols slug %r', col_slug)
+            raise Http400Error(http400_unknown_slug(col_slug, request))
+        # disp_unit, default_unit and units are not fields of ParamInfo: they are
+        # attached to the row for the menu templates to read.
+        (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
+         p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
 
         if desired_unit is not None:
-            p.disp_unit = p.units[desired_unit]
+            p.disp_unit = p.units[desired_unit] # type: ignore[attr-defined]
 
         if ':' in col_slug:
             col_slug, _, _ = col_slug.partition(':')
         col_slugs_info[col_slug] = p
 
-    search_slugs_info = []
+    search_slugs_info: list[ParamInfo] = []
+    # Reused the same way, in three steps: the raw value, the slugs parsed out of
+    # it, and those slugs with the empty ones dropped.
+    search_slugs: str | list[str] | filter[str] | None
     search_slugs = request.GET.get('widgets', None)
     if search_slugs:
         search_slugs = cols_to_slug_list(search_slugs)
         search_slugs = filter(None, search_slugs) # Eliminate empty slugs
         for search_slug in search_slugs:
             pi = get_param_info_by_slug(search_slug, 'widget')
+            if pi is None:
+                log.error('api_get_metadata_selector: unknown widgets slug %r',
+                          search_slug)
+                raise Http400Error(http400_unknown_slug(search_slug, request))
             if pi.display_results: # pragma: no cover -
                 # We don't currently support any search slugs that aren't also
                 # displayed
@@ -224,7 +327,7 @@ def api_get_metadata_selector(request):
     if reqno is None:
         log.error('api_get_metadata_selector: Missing or badly formatted reqno')
         raise Http400Error(
-                    HTTP400_BAD_OR_MISSING_REQNO('/__metadata_selector.json'))
+                    http400_bad_or_missing_reqno('/__metadata_selector.json'))
 
     menu_context = _get_menu_labels(request, 'selector', search_slugs_info)
 
@@ -241,7 +344,7 @@ def api_get_metadata_selector(request):
 
 @never_cache
 @api_view
-def api_get_widget(request, **kwargs):
+def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
     """Create a search widget and return its HTML.
 
     This is a PRIVATE API.
@@ -249,9 +352,39 @@ def api_get_widget(request, **kwargs):
     Format: __widget/<slug>.html
     Arguments: slug=<slug>
                addlink=true|false XXX???
+
+    The widget comes back with the search terms already in the query string
+    filled in, so a range field constrained more than once comes back with one
+    set of inputs per constraint.
+
+    Parameters:
+        request: The request being served. The search terms are read from the
+            query string.
+        **kwargs: The keyword arguments captured from the URL; `slug` names the
+            search field to render.
+
+    Returns:
+        The widget's HTML, rendered from `ui/widget.html`.
+
+    Raises:
+        Http400Error: The slug names no search field.
     """
 
-    def _update_form_with_grouping(form, form_vals, glabel):
+    def _update_form_with_grouping(form: str,
+                                   form_vals: dict[str, str | list[str] | None],
+                                   glabel: str) -> str:
+        """Append one mult group, and the inputs belonging to it, to the form.
+
+        Parameters:
+            form: The widget's HTML so far.
+            form_vals: The initial value for each field of the form.
+            glabel: The group's label. A '/' in it separates the levels of a
+                nested group, outermost first.
+
+        Returns:
+            The form with the group's container appended, holding the rendered
+            inputs for the group's own level.
+        """
         # Get each level of the directories, create proper mult group label
         # container based on the directory names
         dir_list = glabel.split('/')
@@ -313,15 +446,17 @@ def api_get_widget(request, **kwargs):
         # forge a log line.
         log.error('api_get_widget: Could not find param_info entry for slug %r',
                   requested_slug)
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(requested_slug, request))
+        raise Http400Error(http400_unknown_slug(requested_slug, request))
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
     param_qualified_name = param_info.param_qualified_name()
 
     tooltip = param_info.get_tooltip()
-    form_vals = {slug: None}
+    form_vals: dict[str, str | list[str] | None] = {slug: None}
     auto_id = True
+    selections: dict[str, Any] | None
+    extras: dict[str, Any] | None
     selections = {}
     extras = {}
     customized_input = False
@@ -342,6 +477,11 @@ def api_get_widget(request, **kwargs):
             # XXX Really should throw an error of some kind
             selections = {}
             extras = {}
+
+    # url_to_search_params hands back both dictionaries or neither -- every one
+    # of its failure returns is `None, None` -- and the branch above replaces
+    # both of them together, so `extras` is here wherever `selections` is.
+    assert extras is not None
 
     # Sadly, url_to_search_params optimizes the use of OPUS ID
     # so that it's always searched from obs_general even though it looks
@@ -590,7 +730,7 @@ def api_get_widget(request, **kwargs):
 
 @never_cache
 @api_view
-def api_init_detail_page(request, **kwargs):
+def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
     r"""Render the top part of the Details tab.
 
     This is a PRIVATE API.
@@ -604,6 +744,18 @@ def api_init_detail_page(request, **kwargs):
 
     The detail page calls other views via AJAX:
         results.get_metadata()
+
+    Parameters:
+        request: The request being served. Its session decides whether the
+            observation is shown as already in the cart.
+        **kwargs: The keyword arguments captured from the URL; `opus_id` names
+            the observation to render.
+
+    Returns:
+        The top of the Details tab, rendered from `ui/detail.html`.
+
+    Raises:
+        Http404: No observation has that OPUS ID.
     """
     opus_id = kwargs['opus_id']
 
@@ -613,7 +765,10 @@ def api_init_detail_page(request, **kwargs):
         # This OPUS ID isn't even in the database!
         raise Http404 from err
     instrument_id = lookup_pretty_value_for_mult(
-        get_param_info_by_slug('instrumentid', 'col'),
+        # 'instrumentid' is a fixed slug rather than anything the caller sent. A
+        # param_info table without it is a broken import, and this call is where
+        # that would surface either way.
+        get_param_info_by_slug('instrumentid', 'col'), # type: ignore[arg-type]
         obs_general.instrument_id, False)
     filespec = obs_general.primary_filespec
     selection = filespec.split('/')[-1].split('.')[0]
@@ -640,7 +795,7 @@ def api_init_detail_page(request, **kwargs):
     # XXX This should be replaced with a viewset query and pixel size
     preview_med_list = get_pds_preview_images(opus_id, None, 'med')
     if len(preview_med_list) != 1: # pragma: no cover - data error
-        log.error('Failed to find single med size image for "%s"', opus_id)
+        log.error('Failed to find single med size image for "%r"', opus_id)
         preview_med_url = ''
     else:
         preview_med_url = preview_med_list[0]['med_url']
@@ -648,7 +803,7 @@ def api_init_detail_page(request, **kwargs):
     # The full-size image is provided in case the user clicks on the medium one
     preview_full_list = get_pds_preview_images(opus_id, None, 'full')
     if len(preview_full_list) != 1: # pragma: no cover - data error
-        log.error('Failed to find single full size image for "%s"', opus_id)
+        log.error('Failed to find single full size image for "%r"', opus_id)
         preview_full_url = ''
     else:
         preview_full_url = preview_full_list[0]['full_url']
@@ -666,7 +821,7 @@ def api_init_detail_page(request, **kwargs):
     products = get_pds_products(opus_id)[opus_id]
     if not products: # pragma: no cover - data error
         products = {}
-    new_products = {}
+    new_products: dict[str, dict[str, dict[str, Any]]] = {}
     for version in products:
         new_products[version] = {}
         for product_type in products[version]:
@@ -709,7 +864,7 @@ def api_init_detail_page(request, **kwargs):
                                     term=product_type[2])
                 product_info['tooltip'] = entry.definition
             except Definitions.DoesNotExist: # pragma: no cover - import error
-                log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
+                log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"',
                           product_type[2])
                 product_info['tooltip'] = None
             new_products[version][product_type[3]] = product_info
@@ -730,7 +885,7 @@ def api_init_detail_page(request, **kwargs):
 
 @never_cache
 @api_view
-def api_normalize_url(request):
+def api_normalize_url(request: HttpRequest) -> HttpResponse:
     """Given a top-level OPUS URL, normalize it to modern format and return.
 
     This is a PRIVATE API.
@@ -740,24 +895,73 @@ def api_normalize_url(request):
     JSON return:
         {'new_url': '...',
          'new_slugs': [{'slug1': val}, {'slug2': val}],
-         'message': None or 'MSG'}
+         'msg': None or 'MSG'}
+
+    Every search term, metadata column, sort order and tab setting in the query
+    string is looked up, checked, and written back out in the form the current
+    OPUS uses: renamed slugs become their current names, values that no longer
+    make sense are dropped, and anything the URL leaves out is filled in with
+    the default. `msg` explains, in HTML, each thing that had to be changed, and
+    is null when the URL needed no explaining -- including when it was empty,
+    which is what a caller with no bookmark at all sends.
+
+    Parameters:
+        request: The request being served. The URL to normalize is its entire
+            query string.
+
+    Returns:
+        The JSON response described above.
+
+    Raises:
+        Http404: The call arrived without a usable request.
     """
-    def _escape_or_label_results(old_slug, pi):
+    def _escape_or_label_results(old_slug: str, pi: ParamInfo) -> str:
+        """Return the name to give a metadata field in a message to the user.
+
+        Parameters:
+            old_slug: The slug the caller wrote, which names the field when the
+                field is not one the results page can display.
+            pi: The field the slug resolved to.
+
+        Returns:
+            The field's results label, or the escaped slug.
+        """
         if pi.display_results:
-            return pi.body_qualified_label_results()
+            # body_qualified_label_results answers None for a field whose
+            # label_results column is empty. Every message this function feeds
+            # assumes a displayable field has a results label, and nothing
+            # enforces that, so the ignore records the assumption here rather
+            # than asserting a property of the data this code cannot check.
+            return pi.body_qualified_label_results() # type: ignore[return-value]
         return escape(old_slug)
 
-    def _escape_or_label(old_slug, pi):
+    def _escape_or_label(old_slug: str, pi: ParamInfo) -> str:
+        """Return the name to give a search field in a message to the user.
+
+        Parameters:
+            old_slug: The slug the caller wrote, which names the field when the
+                field is not one the results page can display.
+            pi: The field the slug resolved to.
+
+        Returns:
+            The field's search label, or the escaped slug.
+        """
         if pi.display_results: # pragma: no cover -
             # We don't currently support any display terms that aren't
             # also search terms
-            return pi.body_qualified_label()
+            # As above, for the search label.
+            return pi.body_qualified_label() # type: ignore[return-value]
         return escape(old_slug) # pragma: no cover
 
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
+        raise Http404(http404_no_request('/__normalizeurl.json'))
 
-    original_slugs = dict(list(request.GET.items())) # Make it mutable
+    # QueryDict.items() is typed as handing back `str | list[object]`, because
+    # MultiValueDict answers [] for a key whose list of values is empty. Parsing a
+    # query string cannot produce that -- every key it finds gets a value, even an
+    # empty one -- so what this builds is a dictionary of strings.
+    original_slugs: dict[str, str]
+    original_slugs = dict(list(request.GET.items())) # type: ignore[arg-type] # Make it mutable
 
     # When we are given a URL, this is the user just selecting something like
     # opus.pds-rings.seti.org/opus
@@ -766,8 +970,8 @@ def api_normalize_url(request):
     url_was_empty = len(original_slugs) == 0
 
     msg_list = []
-    new_url_suffix_list = []
-    new_url_search_list = []
+    new_url_suffix_list: list[tuple[str, str | int]] = []
+    new_url_search_list: list[list[str | None]] = []
     old_ui_slug_flag = False
 
     #
@@ -777,12 +981,27 @@ def api_normalize_url(request):
     required_widgets_list = []
 
     handled_slugs = []
-    search_slugs_by_clause = {}
-    units_by_slug = {} # To enforce a single unit for all clauses of a slug
+    search_slugs_by_clause: dict[str, list[tuple[str,
+                                                 str | None, str | None,
+                                                 str | None, str | None,
+                                                 str | None, str | None,
+                                                 str | None, str | None]]] = {}
+    units_by_slug: dict[str, str | None] = {} # To enforce a single unit for all clauses of a slug
 
     # Sort to make tests deterministic and to group qtype and unit
     # with search slugs
-    def _sort_func(key):
+    def _sort_func(key: str) -> str:
+        """Return the key a slug is sorted under.
+
+        Parameters:
+            key: The slug to order, carrying its clause number suffix if it has
+                one.
+
+        Returns:
+            A key that sorts a slug's `qtype-` and `unit-` forms next to the
+            slug itself and ahead of its '1' and '2' forms, with the clause
+            number left as the last thing compared.
+        """
         clause_num_str = ''
         if '_' in key:
             clause_num_str = key[key.index('_'):]
@@ -794,6 +1013,9 @@ def api_normalize_url(request):
         key += clause_num_str
         return key
 
+    # `slug` is reused at the end of this function for the slug half of each
+    # pair going into the new URL, which is typed as possibly None there.
+    slug: str | None
     for slug in sorted(original_slugs, key=_sort_func):
         if slug in settings.SLUGS_NOT_IN_DB:
             continue
@@ -839,18 +1061,22 @@ def api_normalize_url(request):
                    +'it has been ignored.')
             msg_list.append(msg)
             continue
+        # The slug column is nullable in the model, and everything below indexes
+        # and concatenates pi.slug without checking it, so say so once here.
+        assert pi.slug is not None
         # Search slugs might have numeric suffixes but single column ranges
         # don't so just ignore all the numbers.
         if (not is_qtype and not is_unit and
             strip_numeric_suffix(slug) != strip_numeric_suffix(pi.slug)):
             old_ui_slug_flag = True
+        pi_searchable: ParamInfo | None
         pi_searchable = pi
         if pi.slug[-1] == '2':
             # We have to look at the '1' version to see if it's searchable
             pi_searchable = get_param_info_by_slug(
                                     strip_numeric_suffix(pi.slug)+'1', 'search')
             if not pi_searchable: # pragma: no cover - we don't have non-searchable slugs
-                log.error('api_normalize_url: Found slug "%s" but not "%s"',
+                log.error('api_normalize_url: Found slug "%r" but not "%r"',
                           pi.slug, strip_numeric_suffix(pi.slug)+'1')
                 continue
         handled_slugs.append(pi.slug+clause_num_str)
@@ -909,12 +1135,14 @@ def api_normalize_url(request):
                         strip_numeric_suffix(pi.slug)+'2'+clause_num_str)
                 pi2 = get_param_info_by_slug(slug2, 'search')
                 if not pi2: # pragma: no cover - import error
-                    log.error('api_normalize_url: Search term "%s" was found '
-                              +' but "%s" was not',
+                    log.error('api_normalize_url: Search term "%r" was found '
+                              +' but "%r" was not',
                               escape(slug), escape(slug2))
                 else:
                     # Don't bother checking .display and .display_results
                     # here because this slug is governed by the '1' version.
+                    # The nullable slug column again, used unchecked below.
+                    assert pi2.slug is not None
                     search2 = strip_numeric_suffix(pi2.slug)+'2'
                     search2_val = original_slugs[slug2+clause_num_str]
             else:
@@ -946,10 +1174,12 @@ def api_normalize_url(request):
                         strip_numeric_suffix(pi.slug)+'1'+clause_num_str)
                 pi1 = get_param_info_by_slug(slug1, 'search')
                 if not pi1: # pragma: no cover - import error
-                    log.error('api_normalize_url: Search term "%s" was found '
-                              +' but "%s" was not',
+                    log.error('api_normalize_url: Search term "%r" was found '
+                              +' but "%r" was not',
                               escape(slug), escape(slug1))
                 else:
+                    # The nullable slug column again, used unchecked below.
+                    assert pi1.slug is not None
                     search1 = strip_numeric_suffix(pi1.slug)+'1'
                     search1_val = original_slugs[slug1+clause_num_str]
             else:
@@ -979,8 +1209,8 @@ def api_normalize_url(request):
 
         ### Handle qtypes ###
 
-        valid_qtypes = None
-        qtype_default = None
+        valid_qtypes: tuple[str, ...] | None = None
+        qtype_default: str | None = None
         if is_range and not is_single_column_range(pi.param_qualified_name()):
             valid_qtypes = settings.RANGE_QTYPES
             qtype_default = valid_qtypes[0]
@@ -994,7 +1224,7 @@ def api_normalize_url(request):
         # find it again.
         qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
         old_qtype_slug = qtype_slug
-        found_qtype = False
+        found_qtype: str | Literal[False] = False
         if qtype_slug+clause_num_str in original_slugs:
             found_qtype = qtype_slug+clause_num_str
         elif pi.old_slug:
@@ -1054,7 +1284,7 @@ def api_normalize_url(request):
         # find it again.
         unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
         old_unit_slug = unit_slug
-        found_unit = False
+        found_unit: str | Literal[False] = False
         if unit_slug+clause_num_str in original_slugs:
             found_unit = unit_slug+clause_num_str
         elif pi.old_slug:
@@ -1134,6 +1364,10 @@ def api_normalize_url(request):
             continue
 
         if search1_val is not None:
+            # Every branch above that gives search1_val a value sets search1 and
+            # pi1 in the same breath, from a ParamInfo it has already checked.
+            assert search1 is not None
+            assert pi1 is not None
             if selections[search1] is None:
                 if is_range:
                     msg = ('Search query for "'
@@ -1149,6 +1383,9 @@ def api_normalize_url(request):
             else:
                 search1_val = selections[search1]
         if search2_val is not None:
+            # As above, search2 and pi2 are set wherever search2_val is.
+            assert search2 is not None
+            assert pi2 is not None
             if selections[search2] is None:
                 msg = ('Search query for "'
                        +_escape_or_label(search2, pi2)
@@ -1253,14 +1490,17 @@ def api_normalize_url(request):
             msg_list.append(msg)
             continue
         if pi.slug in cols_list:
-            msg = ('Selected metadata field "'
+            # A displayable field is assumed to have a results label, as in
+            # _escape_or_label_results above.
+            msg = ('Selected metadata field "' # type: ignore[operator]
                    +pi.body_qualified_label_results()
                    +'" is duplicated in the list of selected metadata; '
                    +'only one copy is being used.')
             msg_list.append(msg)
             continue
         if desired_units is not None and not pi.is_valid_unit(desired_units):
-            msg = ('Selected metadata field "'
+            # As above.
+            msg = ('Selected metadata field "' # type: ignore[operator]
                    +pi.body_qualified_label_results()
                    +'" has invalid units "' + escape(desired_units)
                    +'"; units have been removed.')
@@ -1268,6 +1508,8 @@ def api_normalize_url(request):
             desired_units = None
         if col.partition(':')[0] != pi.slug:
             old_ui_slug_flag = True
+        # As in the search loop above: the nullable slug column, used unchecked.
+        assert pi.slug is not None
         cols_list.append(f'{pi.slug}:{desired_units}' if desired_units else pi.slug)
     if len(cols_list) == 0:
         msg = ('Your new selected metadata list is empty; '
@@ -1306,9 +1548,14 @@ def api_normalize_url(request):
                    +'searchable; it has been removed.')
             msg_list.append(msg)
             continue
+        # As in the search loop above: the nullable slug column, used unchecked.
+        assert pi.slug is not None
         widget_name = strip_numeric_suffix(pi.slug)
         if widget_name in widgets_list:
-            msg = ('Search field "' + pi.body_qualified_label_results()
+            # As above. This field reached here by being searchable rather than
+            # displayable, so the assumption is the wider one that the two go
+            # together, which the metadata selector relies on as well.
+            msg = ('Search field "' + pi.body_qualified_label_results() # type: ignore[operator]
                    +'" is duplicated in the list of search fields; '
                    +'only one copy is being used.')
             msg_list.append(msg)
@@ -1362,7 +1609,9 @@ def api_normalize_url(request):
             msg_list.append(msg)
             continue
         if pi.slug in order_slug_list:
-            msg = ('Sort order metadata field "'
+            # As above; a duplicate got past the displayable check on its first
+            # time through this loop.
+            msg = ('Sort order metadata field "' # type: ignore[operator]
                    +pi.body_qualified_label_results()
                    +'" is duplicated in the list of sort orders; '
                    +'only one copy is being used.')
@@ -1373,6 +1622,8 @@ def api_normalize_url(request):
                    +'" is not displayable; it has been removed.')
             msg_list.append(msg)
             continue
+        # As in the search loop above: the nullable slug column, used unchecked.
+        assert pi.slug is not None
         order_slug_list.append(pi.slug)
         if desc:
             order_list.append('-'+pi.slug)
@@ -1524,18 +1775,25 @@ def api_normalize_url(request):
     for slug in original_slugs:
         if slug in handled_slugs: # pragma: no cover - bug if False
             continue
-        log.error('api_normalize_url: Failed to handle slug "'+
-                  slug+'"') # pragma: no cover
+        log.error('api_normalize_url: Failed to handle slug %r',
+                  slug) # pragma: no cover
 
     new_url_list = []
-    new_url_dict_list = []
+    new_url_dict_list: list[dict[str, str | int | None]] = []
+    # The search pairs carry a value that the checker sees as possibly None; the
+    # suffix pairs carry the start-observation number, which is an int.
+    val: str | int | None
     for slug, val in new_url_search_list:
+        # Each pair above is appended under an `if <slug>:`, so the first element
+        # of every one of them is a slug rather than None.
+        assert slug is not None
         new_url_list.append(slug + '=' + str(val))
         new_url_dict_list.append({slug: val})
     for slug, val in new_url_suffix_list:
         new_url_list.append(slug + '=' + str(val))
         new_url_dict_list.append({slug: val})
 
+    final_msg: str | None
     final_msg = ''
     if old_ui_slug_flag:
         msg = ('<p>Your bookmarked URL is from a previous version of OPUS. '
@@ -1563,7 +1821,7 @@ def api_normalize_url(request):
 
 @never_cache
 @api_view
-def api_dummy(request, *args, **kwargs):
+def api_dummy(request: HttpRequest, *args: str, **kwargs: str) -> HttpResponse:
     """This API does nothing and is used for network performance testing.
 
     This is a PRIVATE API.
@@ -1572,6 +1830,17 @@ def api_dummy(request, *args, **kwargs):
 
     JSON return:
         {}
+
+    `urls.py` also routes the two `__fake/` modal URLs here, so the front end can
+    time a call that does no work of its own.
+
+    Parameters:
+        request: The request being served. Nothing is read from it.
+        *args: Positional arguments captured from the URL, ignored.
+        **kwargs: Keyword arguments captured from the URL, ignored.
+
+    Returns:
+        An empty JSON object.
     """
     return json_response({})
 
@@ -1582,8 +1851,36 @@ def api_dummy(request, *args, **kwargs):
 #
 ################################################################################
 
-def _get_menu_labels(request, labels_view, search_slugs_info=None):
-    "Return the categories in the search tab or metadata selector."
+def _get_menu_labels(request: HttpRequest | None, labels_view: str,
+                     search_slugs_info: list[ParamInfo] | None = None
+                     ) -> dict[str, Any]:
+    """Return the categories in the search tab or metadata selector.
+
+    The categories are the ones the current search makes available: with no
+    search terms that is the base set from the settings, and with search terms it
+    is the set those terms trigger. The fields listed under each category are the
+    ones this view shows -- the searchable ones for the search tab, the
+    displayable ones for the metadata selector -- and each field is given the
+    unit attributes the menu templates render it with.
+
+    The fields of `obs_surface_geometry_name` are folded into the
+    `obs_surface_geometry` category, and that category is not offered separately.
+
+    Parameters:
+        request: The request being served. Its search terms decide which
+            categories appear, and its `expanded_cats` names the ones that start
+            expanded. With None, the base categories are used and one default
+            category starts expanded.
+        labels_view: 'selector' for the metadata selector; any other value is
+            treated as the search tab.
+        search_slugs_info: The fields of the current search. In the metadata
+            selector, and only there, they are listed first under a category of
+            their own.
+
+    Returns:
+        A template context whose 'menu' holds the categories under 'divs' and
+        the fields of each category under 'data'.
+    """
     labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
         filter_ = "display"
@@ -1607,14 +1904,28 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     else: # pragma: no cover - see above
         selections = None
 
+    # get_triggered_tables answers None when it could not build the search's
+    # cache table, which the two queries below would then fail on.
+    triggered_tables: list[str] | None
     if not selections:
         # Makes a copy of settings.BASE_TABLES
         triggered_tables = settings.BASE_TABLES[:]
     else:
+        # Both dictionaries come back together from url_to_search_params, and
+        # `selections` is only truthy where that call supplied them.
+        assert extras is not None
         # XXX Needs api_code to report errors
         triggered_tables = get_triggered_tables(selections, extras)
 
-    divs = (TableNames.objects.filter(display='Y',
+    # Below, in the metadata selector, this also comes to hold the fake div made
+    # from a dictionary, which is what the wider half of the declared type is
+    # for; the two loops that follow run before that and see only rows.
+    divs: QuerySet[TableNames] | list[TableNames | dict[str, str | bool]]
+    # The misc ignore is for `table_name__in=triggered_tables`: get_triggered_tables
+    # can return None, which Django's filter would reject at run time. That is a
+    # real unchecked-None defect, recorded in the Execution notes rather than
+    # guarded here, so the marker stands in for it rather than hiding it.
+    divs = (TableNames.objects.filter(display='Y', # type: ignore[misc]
                                       table_name__in=triggered_tables)
                                .order_by('disp_order'))
     params = (ParamInfo.objects.filter(**{filter_:1,
@@ -1627,7 +1938,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     # We have to be careful to maintain ordering of sub-headings because the
     # original disp_order is the only way we know what the display order of
     # the sub-headings is.
-    sub_headings = {}
+    # `p` below is reassigned from a lookup that can come back empty.
+    p: ParamInfo | None
+    sub_headings: dict[str, list[str]] = {}
     for p in params:
         if p.sub_heading is None:
             continue
@@ -1635,7 +1948,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         if p.sub_heading not in sub_headings[p.category_name]:
             sub_headings[p.category_name].append(p.sub_heading)
 
-    menu_data = {}
+    menu_data: dict[str, Any] = {}
     menu_data['labels_view'] = labels_view
 
     obs_surface_geometry_name_div = None
@@ -1651,12 +1964,15 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         # obs_surface_geometry.
         if d.table_name == 'obs_surface_geometry_name':
             table_name = 'obs_surface_geometry'
+        # collapsed and show are not fields of TableNames. They are attached to
+        # the row here for the menu templates to read, which is why the checker
+        # has to be told about each of the four.
         if table_name in expanded_cats:
-            d.collapsed = ''
-            d.show = 'show'
+            d.collapsed = '' # type: ignore[attr-defined]
+            d.show = 'show' # type: ignore[attr-defined]
         else:
-            d.collapsed = 'collapsed'
-            d.show = ''
+            d.collapsed = 'collapsed' # type: ignore[attr-defined]
+            d.show = '' # type: ignore[attr-defined]
         menu_data.setdefault(table_name, {})
 
         if labels_view == 'search':
@@ -1696,10 +2012,16 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                         # A referred slug will never contain a unit specifier
                         p = get_param_info_by_slug(p.referred_slug, 'col',
                                                    allow_units_override=False)
+                        # Both lines below dereference p, so a referred_slug that
+                        # names no field is already a crash here.
+                        assert p is not None
                         p.label = p.body_qualified_label()
                         p.label_results = p.body_qualified_label_results(True)
 
                     if labels_view == 'search':
+                        # The slug column is nullable in the model, and this
+                        # branch indexes it without checking.
+                        assert p.slug is not None
                         if p.slug[-1] == '2':
                             # We can just skip these because we never use them
                             # for search widgets
@@ -1709,8 +2031,11 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                             # subheadings so we will always get here.
                             # Strip the trailing 1 off all ranges
                             p.slug = strip_numeric_suffix(p.slug)
-                    (p.disp_unit, p.default_unit,
-                     p.units) = get_disp_default_and_avail_units(p.form_type)
+                    # disp_unit, default_unit and units are not fields of
+                    # ParamInfo either; they are attached for the templates the
+                    # same way, wherever this function lists a field.
+                    (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
+                     p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
                     menu_data[table_name]['data'].setdefault(sub_head_tuple,
                                                                []).append(p)
         else:
@@ -1726,6 +2051,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     # A referred slug will never contain a unit specifier
                     p = get_param_info_by_slug(referred_slug, 'col',
                                                allow_units_override=False)
+                    # As above: the lines below dereference p.
+                    assert p is not None
                     p.label = p.body_qualified_label()
                     p.label_results = p.body_qualified_label_results(True)
                     # assign referred_slug used to determine if an icon should
@@ -1735,6 +2062,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # On the search tab, we don't need the trailing 1 & 2 for
                 # data-slug; in the Select Metadata modal we do.
                 if labels_view == 'search':
+                    # As above: this branch indexes the nullable slug column.
+                    assert p.slug is not None
                     if p.slug[-1] == '2': # pragma: no cover -
                         # These should already be marked as non-display and thus
                         # were filtered out by the filter_ function above.
@@ -1742,16 +2071,16 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     if p.slug[-1] == '1':
                         # Strip the trailing 1 off all ranges
                         p.slug = strip_numeric_suffix(p.slug)
-                (p.disp_unit, p.default_unit,
-                 p.units) = get_disp_default_and_avail_units(p.form_type)
+                (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
+                 p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
                 menu_data[table_name].setdefault('data', []).append(p)
 
     # If there are any search slugs, put those in first
     if labels_view == 'selector' and search_slugs_info:
         # Thanks to the way templates work, we can fake up a TableNames object
         # by using a standard dictionary.
-        search_div = {'table_name': 'search_fields',
-                      'label': 'Current Search Fields'}
+        search_div: dict[str, str | bool] = {'table_name': 'search_fields',
+                                            'label': 'Current Search Fields'}
         if 'search_fields' in expanded_cats:
             search_div['collapsed'] = ''
             search_div['show'] = 'show'
@@ -1762,9 +2091,11 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         menu_data.setdefault('search_fields', {})
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
-            (p.disp_unit, p.default_unit,
-             p.units) = get_disp_default_and_avail_units(p.form_type)
+            (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
+             p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
             menu_data['search_fields'].setdefault('data', []).append(p)
+            # The line below indexes the nullable slug column.
+            assert p.slug is not None
             if p.slug[-1] == '1':
                 # This is a numeric range field, so we want to add both
                 # the min and max slugs to the list.
@@ -1772,8 +2103,11 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # will never be a units modifier here.
                 p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col',
                                             allow_units_override=False)
-                (p2.disp_unit, p2.default_unit,
-                 p2.units) = get_disp_default_and_avail_units(p2.form_type)
+                # The line below dereferences p2, so a range field whose '2' half
+                # is missing from param_info is already a crash here.
+                assert p2 is not None
+                (p2.disp_unit, p2.default_unit, # type: ignore[attr-defined]
+                 p2.units) = get_disp_default_and_avail_units(p2.form_type) # type: ignore[attr-defined]
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
     new_div_list = []
@@ -1787,7 +2121,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         if isinstance(div, dict):
             div['first_category'] = first_category
         else:
-            div.first_category = first_category
+            # first_category is attached to the row for the template, like
+            # collapsed and show above.
+            div.first_category = first_category # type: ignore[attr-defined]
         first_category = False
 
     return {'menu': {'data': menu_data, 'divs': new_div_list}}

@@ -10,12 +10,24 @@
 #
 ################################################################################
 
+"""The search API, and the routines that turn a search URL into SQL.
+
+`url_to_search_params` parses a request's query string into the `(selections,
+extras)` pair the rest of the search path works in, and `construct_query_string`
+renders that pair as a SELECT through `opus_app.apps.tools.sql_builder`.
+`get_user_query_table` runs the search and caches its results in a per-search
+`cache_<n>` table that the results, metadata and cart views then join against.
+"""
+
+from __future__ import annotations
+
 import copy
 import hashlib
 import json
 import logging
 import re
 import time
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 # This is used instead of "re" because it's closer to the ICU regex library
 # used by MySQL.
@@ -32,22 +44,28 @@ from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import UserSearches
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_LIMIT,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP404_NO_REQUEST,
-    HTTP500_DATABASE_ERROR,
-    HTTP500_SEARCH_CACHE_FAILED,
     Http400Error,
     api_view,
     get_mult_name,
     get_reqno,
+    http400_bad_limit,
+    http400_bad_or_missing_reqno,
+    http400_search_params_invalid,
+    http400_unknown_slug,
+    http404_no_request,
+    http500_database_error,
+    http500_search_cache_failed,
     json_response,
     sort_dictionary,
     strip_numeric_suffix,
 )
 from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+
+    from django.http import HttpRequest, HttpResponse
+
 from opus_support import (
     convert_from_default_unit,
     convert_to_default_unit,
@@ -68,7 +86,7 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @api_view
-def api_normalize_input(request):
+def api_normalize_input(request: HttpRequest) -> HttpResponse:
     """Validate and normalize slug values.
 
     This is a PRIVATE API.
@@ -86,27 +104,28 @@ def api_normalize_input(request):
          "reqno": N}
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__api/normalizeinput.json'))
+        raise Http404(http404_no_request('/__api/normalizeinput.json'))
     (selections, _extras) = url_to_search_params(request.GET,
                                                 allow_errors=True,
                                                 return_slugs=True,
                                                 pretty_results=True)
     if selections is None:
         log.error('api_normalize_input: Could not find selections for'
-                  +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+                  +' request %r', str(request.GET))
+        raise Http400Error(http400_search_params_invalid(request))
 
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_normalize_input: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
     selections['reqno'] = reqno
 
     return json_response(selections)
 
 
 @api_view
-def api_string_search_choices(request, slug, *, api_code):
+def api_string_search_choices(request: HttpRequest, slug: str, *,
+                              api_code: int) -> HttpResponse:
     """Return valid choices for a string search given other search criteria.
 
     This is a PRIVATE API.
@@ -138,19 +157,19 @@ def api_string_search_choices(request, slug, *, api_code):
     specified limit. Only the limit number will be returned.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(
+        raise Http404(http404_no_request(
                                 f'/__api/stringsearchchoices/{slug}.json'))
 
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_string_search_choices: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
 
     param_info = get_param_info_by_slug(slug, 'search')
     if not param_info:
-        log.error('api_string_search_choices: unknown slug "%s"',
+        log.error('api_string_search_choices: unknown slug "%r"',
                   slug)
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))
+        raise Http400Error(http400_unknown_slug(slug, request))
 
     param_qualified_name = param_info.param_qualified_name()
     param_category = param_info.category_name
@@ -173,8 +192,10 @@ def api_string_search_choices(request, slug, *, api_code):
                                                 allow_regex_errors=True)
     if selections is None:
         log.error('api_string_search_choices: Could not find selections for'
-                  +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+                  +' request %r', str(request.GET))
+        raise Http400Error(http400_search_params_invalid(request))
+    # url_to_search_params returns both dictionaries or neither.
+    assert extras is not None
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -210,22 +231,22 @@ def api_string_search_choices(request, slug, *, api_code):
                                             api_code=api_code)
     if not user_query_table: # pragma: no cover - internal or database failure
         log.error('api_string_search_choices: get_user_query_table failed '
-                  +'*** Selections %s *** Extras %s',
+                  +'*** Selections %r *** Extras %r',
                   str(selections), str(extras))
-        return HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
+        return HttpResponseServerError(http500_search_cache_failed(request))
 
     limit = request.GET.get('limit', settings.DEFAULT_STRINGCHOICE_LIMIT)
     try:
         limit = int(limit)
     except ValueError as err:
         log.error('api_string_search_choices: Bad limit for'
-                  +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_BAD_LIMIT(limit, request)) from err
+                  +' request %r', str(request.GET))
+        raise Http400Error(http400_bad_limit(limit, request)) from err
 
     if limit < 1 or limit > settings.SQL_MAX_LIMIT:
         log.error('api_string_search_choices: Bad limit for'
-                  +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_BAD_LIMIT(limit, request))
+                  +' request %r', str(request.GET))
+        raise Http400Error(http400_bad_limit(limit, request))
 
     # We do this because the user may have included characters that aren't
     # allowed in a cache key
@@ -257,10 +278,10 @@ def api_string_search_choices(request, slug, *, api_code):
     cursor.execute(sql)
     results = cursor.fetchall()
     if len(results) != 1 or len(results[0]) != 1: # pragma: no cover - database error
-        log.error('api_string_search_choices: SQL failure: %s', sql)
-        return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+        log.error('api_string_search_choices: SQL failure: %r', sql)
+        return HttpResponseServerError(http500_database_error(request))
 
-    final_results = None
+    final_results: list[Any] | None = None
     truncated_results = False
 
     do_simple_search = False
@@ -281,6 +302,9 @@ def api_string_search_choices(request, slug, *, api_code):
             search_cache_join_condition(param_category, user_query_table))
 
         if partial_query:
+            # get_string_query returns both halves together or neither, and the
+            # None case returned above.
+            assert like_params is not None
             select.add_where(sql_builder.Expr(like_query, like_params))
 
         select.add_order_by(param_column)
@@ -292,8 +316,8 @@ def api_string_search_choices(request, slug, *, api_code):
         except DatabaseError as e:
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
                 # database error
-                log.exception('api_string_search_choices: "%s" failed', sql)
-                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+                log.exception('api_string_search_choices: "%r" failed', sql)
+                return HttpResponseServerError(http500_database_error(request))
             do_simple_search = True
 
     if do_simple_search:
@@ -306,6 +330,9 @@ def api_string_search_choices(request, slug, *, api_code):
         select.add_from(param_category)
 
         if partial_query:
+            # get_string_query returns both halves together or neither, and the
+            # None case returned above.
+            assert like_params is not None
             select.add_where(sql_builder.Expr(like_query, like_params))
 
         select.add_order_by(param_column)
@@ -317,8 +344,8 @@ def api_string_search_choices(request, slug, *, api_code):
         except DatabaseError as e: # pragma: no cover - database error
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
                 # database error
-                log.exception('api_string_search_choices: "%s" failed', sql)
-                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+                log.exception('api_string_search_choices: "%r" failed', sql)
+                return HttpResponseServerError(http500_database_error(request))
             final_results = []
 
     if final_results is None: # pragma: no cover - can't trigger during testing
@@ -346,7 +373,10 @@ def api_string_search_choices(request, slug, *, api_code):
                 final_results = [pattern.sub('<b>\\1</b>', x)
                                  for x in final_results]
             except Exception:
-                pass
+                # Match highlighting is cosmetic. A query that will not compile as a
+                # regular expression leaves the text unhighlighted rather than failing
+                # the search the user asked for.
+                pass  # nosec B110
 
     if len(final_results) > limit:
         final_results = final_results[:limit]
@@ -366,11 +396,13 @@ def api_string_search_choices(request, slug, *, api_code):
 #
 ################################################################################
 
-def url_to_search_params(request_get, allow_errors=False,
-                         allow_regex_errors=False,
-                         return_slugs=False,
-                         pretty_results=False,
-                         allow_empty=False):
+def url_to_search_params(request_get: Mapping[str, str],
+                         allow_errors: bool = False,
+                         allow_regex_errors: bool = False,
+                         return_slugs: bool = False,
+                         pretty_results: bool = False,
+                         allow_empty: bool = False
+                         ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     """Convert a URL to a set of selections and extras.
 
     This is the MAIN routine for taking a URL and parsing it for searching.
@@ -381,12 +413,21 @@ def url_to_search_params(request_get, allow_errors=False,
     This function takes the URL params and translates them into a list that
     contains 2 dictionaries:
         The first dict is the user selections: keys of the dictionary are
-            param_names of data columns in the data table; values are always
-            lists and represent the user's selections.
+            param_names of data columns in the data table; values represent
+            the user's selections.
         The 2nd dict is any extras being passed by user, like qtypes that
             define what types of queries will be performed for each
             param-value set in the first dict, units for numeric values,
             or sort order.
+
+    **The shape of a selections value depends on the mode flags below**, which is
+    why it is annotated as `Any` rather than pinned to one type. In the default
+    mode a value is a list, one entry per search clause. Under `return_slugs` it
+    is a single value per slug instead -- the empty string for a slug the caller
+    sent empty -- and `qtypes` and `units` in the extras change shape with it, to
+    one value per slug rather than a list per qualified name. Under
+    `pretty_results` a mult value is the joined string rather than the list, and
+    a numeric value is the text it formats to rather than the number.
 
     NOTE: Pass request_get = request.GET to this func please
     (This func doesn't return an http response so unit tests freak if you
@@ -428,12 +469,15 @@ def url_to_search_params(request_get, allow_errors=False,
                     'obs_general.right_asc': ['any']},
          'units': {'obs_general.right_asc': ['degrees']}}
     """
-    selections = {}
-    extras = {}
-    qtypes = {}
-    units = {}
-    order_params = []
-    order_descending_params = []
+    # selections is deliberately `Any`-valued: what a value holds is decided by
+    # this function's mode flags, and the docstring above states the shape each
+    # mode produces. qtypes and units are uniform and are typed exactly.
+    selections: dict[str, Any] = {}
+    extras: dict[str, Any] = {}
+    qtypes: dict[str, Any] = {}
+    units: dict[str, Any] = {}
+    order_params: list[str] | None = []
+    order_descending_params: list[bool] | None = []
 
     # Note that request_get.items() automatically gets rid of duplicate entries
     # because it returns a dict.
@@ -496,7 +540,7 @@ def url_to_search_params(request_get, allow_errors=False,
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
                 log.error('url_to_search_params: qtype slug has '+
-                          'numeric suffix "%s"', orig_slug)
+                          'numeric suffix "%r"', orig_slug)
                 return None, None
             param_info = get_param_info_by_slug(slug, 'qtype')
         elif slug.startswith('unit-'): # like unit-observationduration=msec
@@ -505,7 +549,7 @@ def url_to_search_params(request_get, allow_errors=False,
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
                 log.error('url_to_search_params: unit slug has '+
-                          'numeric suffix "%s"', orig_slug)
+                          'numeric suffix "%r"', orig_slug)
                 return None, None
             param_info = get_param_info_by_slug(slug, 'qtype')
         elif slug.startswith('sourceunit-'):
@@ -513,13 +557,13 @@ def url_to_search_params(request_get, allow_errors=False,
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
                 log.error('url_to_search_params: sourceunit slug has '+
-                          'numeric suffix "%s"', orig_slug)
+                          'numeric suffix "%r"', orig_slug)
                 return None, None
             param_info = get_param_info_by_slug(slug, 'qtype')
         else:
             param_info = get_param_info_by_slug(slug, 'search')
         if not param_info:
-            log.error('url_to_search_params: unknown slug "%s"',
+            log.error('url_to_search_params: unknown slug "%r"',
                       orig_slug)
             return None, None
 
@@ -559,7 +603,7 @@ def url_to_search_params(request_get, allow_errors=False,
         # Use the original slug name here since we hope if someone says
         # XXX=5 then they also say qtype-XXX=all
         qtype_slug = 'qtype-'+slug_no_num+clause_num_str
-        valid_qtypes = None
+        valid_qtypes: tuple[str, ...] | None = None
         if form_type not in settings.MULT_FORM_TYPES:
             valid_qtypes = settings.STRING_QTYPES
             if form_type in settings.RANGE_FORM_TYPES:
@@ -574,7 +618,7 @@ def url_to_search_params(request_get, allow_errors=False,
                     qtype_val = None
                 else:
                     log.error('url_to_search_params: Bad qtype value for '
-                              +'"%s": %s', qtype_slug, str(qtype_val))
+                              +'"%r": %r', qtype_slug, str(qtype_val))
                     return None, None
         else:
             if valid_qtypes is not None:
@@ -594,7 +638,7 @@ def url_to_search_params(request_get, allow_errors=False,
                     unit_val = None
                 else:
                     log.error('url_to_search_params: Bad unit value for '
-                              +'"%s": %s', unit_slug, str(unit_val))
+                              +'"%r": %r', unit_slug, str(unit_val))
                     return None, None
         else:
             # Default if not specified
@@ -614,7 +658,7 @@ def url_to_search_params(request_get, allow_errors=False,
             if (valid_units is None or
                 sourceunit_val not in valid_units):
                 log.error('url_to_search_params: Bad sourceunit value'
-                          +' for "%s": %s', sourceunit_slug,
+                          +' for "%r": %r', sourceunit_slug,
                           str(sourceunit_val))
                 if allow_errors: # pragma: no cover -
                     # sourceunit can only show up when called from
@@ -631,7 +675,7 @@ def url_to_search_params(request_get, allow_errors=False,
             # MULT types have no qtype, units, or 1/2 split.
             # They also can't accept a clause number.
             if clause_num_str:
-                log.error('url_to_search_params: Mult field "%s" has clause'
+                log.error('url_to_search_params: Mult field "%r" has clause'
                           +' number where none permitted', orig_slug)
                 return None, None
             # Presence of qtype or unit slug will be caught earalier
@@ -652,7 +696,7 @@ def url_to_search_params(request_get, allow_errors=False,
             # queries being built.
             # No other form types can be sorted since their ordering
             # corresponds to qtype/unit ordering.
-            new_val = sorted(set(values))
+            new_val: list[str] | str | None = sorted(set(values))
             # Now check to see if the mult values are all valid
             mult_name = get_mult_name(param_qualified_name)
             model_name = mult_name.title().replace('_','')
@@ -661,12 +705,15 @@ def url_to_search_params(request_get, allow_errors=False,
                            list(model.objects.filter(  Q(label__in=new_val)
                                                      | Q(value__in=new_val))
                                              .values('pk'))]
+            # Still the sorted list here: the join and the None replacement
+            # below are the only things that change what this name holds.
+            assert isinstance(new_val, list)
             if len(mult_values) != len(new_val):
                 if allow_errors:
                     new_val = None
                 else:
-                    log.error('url_to_search_params: Bad mult data for "%s", '
-                              +'wanted "%s" found "%s"',
+                    log.error('url_to_search_params: Bad mult data for "%r", '
+                              +'wanted "%r" found "%r"',
                               param_qualified_name, str(new_val),
                               str(mult_values))
                     return None, None
@@ -689,7 +736,7 @@ def url_to_search_params(request_get, allow_errors=False,
             for suffix in ('1', '2'):
                 new_slug = slug_no_num+suffix+clause_num_str
                 new_param_qualified_name = param_qualified_name_no_num+suffix
-                new_value = None
+                new_value: float | str | None = None
                 if new_slug in request_get:
                     value = request_get[new_slug].strip()
                     if value:
@@ -740,9 +787,9 @@ def url_to_search_params(request_get, allow_errors=False,
                         except ValueError as e:
                             new_value = None
                             if not allow_errors:
-                                log.error('url_to_search_params: Unit ID "%s" '
-                                          +'slug "%s" source unit "%s" unit '
-                                          +'"%s" threw ValueError(%s) for %s',
+                                log.error('url_to_search_params: Unit ID "%r" '
+                                          +'slug "%r" source unit "%r" unit '
+                                          +'"%r" threw ValueError(%r) for %r',
                                           form_type_unit_id, slug,
                                           sourceunit_val, unit_val,
                                           e, value)
@@ -845,7 +892,7 @@ def url_to_search_params(request_get, allow_errors=False,
         if is_unit or unit_val is not None: # pragma: no cover -
             # We shouldn't ever get here because string fields have no valid
             # units and this will be caught above
-            log.error('url_to_search_params: String field "%s" has unit',
+            log.error('url_to_search_params: String field "%r" has unit',
                       orig_slug)
             return None, None
         new_value = ''
@@ -855,8 +902,8 @@ def url_to_search_params(request_get, allow_errors=False,
         if (new_value and qtype_val == 'regex' and not allow_regex_errors
                 and not _valid_regex(new_value)):
             if not allow_errors:
-                log.error('url_to_search_params: String "%s" '
-                          +'slug "%s" is not a valid regex',
+                log.error('url_to_search_params: String "%r" '
+                          +'slug "%r" is not a valid regex',
                           new_value, slug)
                 return None, None
             new_value = None
@@ -900,13 +947,14 @@ def url_to_search_params(request_get, allow_errors=False,
     extras['qtypes'] = qtypes
     extras['units'] = units
 
-    # log.debug('url_to_search_params: GET %s *** Selections %s *** Extras %s',
+    # log.debug('url_to_search_params: GET %r *** Selections %r *** Extras %r',
     #           request_get, str(selections), str(extras))
 
     return selections, extras
 
 
-def get_user_query_table(selections, extras, api_code=None):
+def get_user_query_table(selections: dict[str, Any], extras: dict[str, Any],
+                         api_code: int | None = None) -> str | None:
     """Perform a data search and create a table of matching IDs.
 
     This is THE main data query place.
@@ -941,7 +989,7 @@ def get_user_query_table(selections, extras, api_code=None):
     cache_table_num, _cache_new_flag = set_user_search_number(selections, extras)
     if cache_table_num is None: # pragma: no cover - database error
         log.error('get_user_query_table: Failed to make entry in user_searches'+
-                  ' *** Selections %s *** Extras %s',
+                  ' *** Selections %r *** Extras %r',
                   str(selections), str(extras))
         return None
     cache_table_name = get_user_search_table_name(cache_table_num)
@@ -949,7 +997,7 @@ def get_user_query_table(selections, extras, api_code=None):
     # Is this key set in the cache?
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  + ':cache_table:' + str(cache_table_num))
-    cached_val = cache.get(cache_key)
+    cached_val: str | None = cache.get(cache_key)
     if cached_val:
         return cached_val
 
@@ -965,13 +1013,13 @@ def get_user_query_table(selections, extras, api_code=None):
     sql, params = construct_query_string(selections, extras)
     if sql is None: # pragma: no cover - already caught by previous checks
         log.error('get_user_query_table: construct_query_string failed'
-                  +' *** Selections %s *** Extras %s',
+                  +' *** Selections %r *** Extras %r',
                   str(selections), str(extras))
         return None
 
     if not sql: # pragma: no cover - not possible
         log.error('get_user_query_table: Query string is empty'
-                  +' *** Selections %s *** Extras %s',
+                  +' *** Selections %r *** Extras %r',
                   str(selections), str(extras))
         return None
 
@@ -979,6 +1027,9 @@ def get_user_query_table(selections, extras, api_code=None):
     create_sql = sql_builder.create_table_from_select_sql(
         cache_table_name, sql,
         column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS)
+    # construct_query_string returns both halves together or neither, and the
+    # caller checked the SQL half above.
+    assert params is not None
     try:
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
@@ -988,17 +1039,18 @@ def get_user_query_table(selections, extras, api_code=None):
         if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS: # pragma: no cover - ditto
             cache.set(cache_key, cache_table_name)
             return cache_table_name
-        log.exception('get_user_query_table: "%s" with params "%s" failed',
+        log.exception('get_user_query_table: "%r" with params "%r" failed',
                       create_sql, str(tuple(params)))
         return None
-    log.debug('API %s (%.3f) get_user_query_table: %s *** PARAMS %s',
+    log.debug('API %r (%.3f) get_user_query_table: %r *** PARAMS %r',
               str(api_code), time.time()-time1, create_sql, str(params))
 
     cache.set(cache_key, cache_table_name)
     return cache_table_name
 
 
-def set_user_search_number(selections, extras):
+def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]
+                           ) -> tuple[int, bool]:
     """Creates a new row in the user_searches table for each search request.
 
     This table lists query params+values plus any extra info needed to
@@ -1093,14 +1145,14 @@ def set_user_search_number(selections, extras):
                                      order_hash=order_hash)
     except UserSearches.MultipleObjectsReturned: # pragma: no cover -
         # This would only happen if the database is corrupted
-        s = UserSearches.objects.filter(selections_hash=selections_hash,
+        duplicates = UserSearches.objects.filter(selections_hash=selections_hash,
                                         qtypes_hash=qtypes_hash,
                                         units_hash=units_hash,
                                         order_hash=order_hash)
-        s = s[0]
+        s = duplicates[0]
         log.exception('set_user_search_number: Multiple entries in user_searches'
-                      +' for *** Selections %s *** Qtypes %s *** Units %s '
-                      +' *** Order %s',
+                      +' for *** Selections %r *** Qtypes %r *** Units %r '
+                      +' *** Order %r',
                       str(selections_json),
                       str(qtypes_json),
                       str(units_json),
@@ -1116,10 +1168,25 @@ def set_user_search_number(selections, extras):
 # We don't use the functools @lru_cache decorator because we need to make
 # each return a distinct copy of the ParamInfo, because multiple callers
 # mutate the structure after its returned.
-_PARAMINFO_CACHE = {}
+_PARAMINFO_CACHE: dict[Any, Any] = {}
 
-def get_param_info_by_slug(slug, source, allow_units_override=False,
-                           check_valid_units=True):
+@overload
+def get_param_info_by_slug(slug: str, source: Literal['col'],
+                           allow_units_override: Literal[True],
+                           check_valid_units: bool = True
+                           ) -> tuple[ParamInfo | None, str | None]: ...
+
+
+@overload
+def get_param_info_by_slug(slug: str, source: str,
+                           allow_units_override: Literal[False] = False,
+                           check_valid_units: bool = True) -> ParamInfo | None: ...
+
+
+def get_param_info_by_slug(slug: str, source: str,
+                           allow_units_override: bool = False,
+                           check_valid_units: bool = True
+                           ) -> ParamInfo | tuple[ParamInfo | None, str | None] | None:
     """Given a slug, look up the corresponding ParamInfo.
 
     If source == 'col', then this is a column name. We look at the
@@ -1151,7 +1218,7 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
     # Qtypes are forbidden from having a numeric suffix`
     if source == 'qtype' and slug[-1] in ('1', '2'): # pragma: no cover -
         # always caught by caller
-        log.error('get_param_info_by_slug: Qtype slug "%s" has unpermitted '+
+        log.error('get_param_info_by_slug: Qtype slug "%r" has unpermitted '+
                   'numeric suffix', slug)
         return None
 
@@ -1183,7 +1250,7 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
             # always caught by caller
             if (check_valid_units and desired_units is not None and
                 not pi.is_valid_unit(desired_units)):
-                log.error('get_param_info_by_slug: Slug "%s" unit "%s" invalid -'
+                log.error('get_param_info_by_slug: Slug "%r" unit "%r" invalid -'
                           'using default', slug, desired_units)
                 desired_units = None
             _PARAMINFO_CACHE[key] = pi
@@ -1262,7 +1329,7 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
 
     _PARAMINFO_CACHE[key] = None
 
-    log.error('get_param_info_by_slug: Slug "%s" source "%s" not found',
+    log.error('get_param_info_by_slug: Slug "%r" source "%r" not found',
               slug, source)
 
     if source == 'col' and allow_units_override:
@@ -1276,7 +1343,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
 #
 ################################################################################
 
-def construct_query_string(selections, extras):
+def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
+                           ) -> tuple[str | None, list[Any] | None]:
     """Given a set selections,extras generate the appropriate SQL SELECT"""
     all_qtypes = extras.get('qtypes', [])
     all_units = extras.get('units', [])
@@ -1297,8 +1365,8 @@ def construct_query_string(selections, extras):
         param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
         param_info = _get_param_info_by_qualified_name(param_qualified_name)
         if not param_info:
-            log.error('construct_query_string: No param_info for "%s"'
-                      +' *** Selections %s *** Extras *** %s',
+            log.error('construct_query_string: No param_info for "%r"'
+                      +' *** Selections %r *** Extras *** %r',
                       param_qualified_name,
                       str(selections), str(extras))
             return None, None
@@ -1328,25 +1396,26 @@ def construct_query_string(selections, extras):
                                                      | Q(value__in=value_list))
                                              .values('pk'))]
             if len(mult_values) != len(value_list):
-                log.error('construct_query_string: Bad mult data for "%s", '
-                          +'found %s'
-                          +' *** Selections %s *** Extras *** %s',
+                log.error('construct_query_string: Bad mult data for "%r", '
+                          +'found %r'
+                          +' *** Selections %r *** Extras *** %r',
                           param_qualified_name,
                           str(mult_values), str(selections), str(extras))
                 return None, None
             if mult_values:
                 mult_column = sql_builder.column(param_info.name, cat_name)
+                mult_clause: sql_builder.Expr
                 if form_type == 'GROUP':
                     # Single-valued mult. We can be efficient by seeing if the field
                     # contents is in the list of search values.
-                    clause = sql_builder.in_values(mult_column, mult_values)
+                    mult_clause = sql_builder.in_values(mult_column, mult_values)
                 else:
                     # Multi-valued mult (multisel). We have to see if each search value
                     # is in the database field list, so we have to check them one by one.
-                    clause = sql_builder.join_exprs(
+                    mult_clause = sql_builder.join_exprs(
                         [sql_builder.json_contains(mult_column, str(mult_value))
                          for mult_value in mult_values], 'OR')
-                clauses.append(clause)
+                clauses.append(mult_clause)
                 obs_tables.add(cat_name)
 
         elif form_type in settings.RANGE_FORM_TYPES:
@@ -1373,6 +1442,8 @@ def construct_query_string(selections, extras):
 
             if clause is None:
                 return None, None
+            # These builders return both halves together or neither.
+            assert params is not None
             clauses.append(sql_builder.Expr(clause, params))
             obs_tables.add(cat_name)
 
@@ -1381,16 +1452,18 @@ def construct_query_string(selections, extras):
                                               qtypes)
             if clause is None:
                 return None, None
+            # These builders return both halves together or neither.
+            assert params is not None
             clauses.append(sql_builder.Expr(clause, params))
             obs_tables.add(cat_name)
 
         else: # pragma: no cover - error catchall
-            log.error('construct_query_string: Unknown field type "%s" for '
-                      +'param "%s"', form_type, param_qualified_name)
+            log.error('construct_query_string: Unknown field type "%r" for '
+                      +'param "%r"', form_type, param_qualified_name)
             return None, None
 
     # Make the ordering terms
-    order_terms = []
+    order_terms: list[tuple[Any, bool]] | None = []
     if 'order' in extras:
         order_params, descending_params = extras['order']
 
@@ -1399,6 +1472,10 @@ def construct_query_string(selections, extras):
                                                    descending_params)
         if order_terms is None:
             return None, None
+        # create_order_by_terms returns all three or none, and the check above
+        # ruled out none.
+        assert order_mult_tables is not None
+        assert order_obs_tables is not None
         mult_tables |= order_mult_tables
         obs_tables |= order_obs_tables
 
@@ -1416,15 +1493,29 @@ def construct_query_string(selections, extras):
         select.add_where(sql_builder.combine_exprs(clauses, 'AND'))
 
     # Add in the ORDER BY clause
+    # order_terms starts as [] and is only replaced by a non-None list, since the
+    # None case returned above.
+    assert order_terms is not None
     for order_column, descending in order_terms:
         select.add_order_by(order_column, descending=descending)
 
     sql, clause_params = select.build()
-    log.debug('SEARCH SQL: %s *** PARAMS %s', sql, str(clause_params))
+    log.debug('SEARCH SQL: %r *** PARAMS %r', sql, str(clause_params))
     return sql, clause_params
 
 
-def _valid_regex(r):
+def _valid_regex(r: str) -> bool:
+    """Whether the database will accept a regular expression the caller typed.
+
+    The only way to know is to ask the server, since OPUS searches run the
+    expression through MySQL rather than through Python.
+
+    Parameters:
+        r: The regular expression, as the caller typed it.
+
+    Returns:
+        True if the server accepted it.
+    """
     # Validate the regex syntax. The only way to do this with certainty
     # is to actually try it on the SQL server and see if it throws
     # an error. No need to log this, though, because it's just bad
@@ -1436,7 +1527,9 @@ def _valid_regex(r):
         return False
     return True
 
-def get_string_query(selections, param_qualified_name, qtypes):
+def get_string_query(selections: dict[str, Any], param_qualified_name: str,
+                     qtypes: list[str]
+                     ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for strings.
 
     The following q-types are supported:
@@ -1454,6 +1547,14 @@ def get_string_query(selections, param_qualified_name, qtypes):
     values = selections[param_qualified_name]
 
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
+    # The three sibling clause builders (construct_query_string, get_range_query
+    # and get_longitude_query) return (None, None) when the name resolves to no
+    # ParamInfo; this one has never had that guard. It is unreachable from either
+    # caller today -- construct_query_string resolves the same name and bails
+    # first, and api_string_search_choices takes the name off an already-resolved
+    # ParamInfo -- so the invariant is asserted rather than a fourth guard being
+    # invented, which would be a behavior change on a path nothing reaches.
+    assert param_info is not None
 
     cat_name = param_info.category_name
     name = param_info.name
@@ -1464,8 +1565,8 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     if len(qtypes) != len(values):
         log.error('get_string_query: Inconsistent qtype/values lengths '
-                  +'for "%s" '
-                  +'*** Selections %s *** Qtypes %s ***',
+                  +'for "%r" '
+                  +'*** Selections %r *** Qtypes %r ***',
                   param_qualified_name, str(selections), str(qtypes))
         return None, None
 
@@ -1503,15 +1604,17 @@ def get_string_query(selections, param_qualified_name, qtypes):
                                            sql_builder.value(value))
         else: # pragma: no cover - protecting against future bugs
             log.error('get_string_query: Unknown qtype %r '
-                      +'for "%s" '
-                      +'*** Selections %s *** Qtypes %s ***',
+                      +'for "%r" '
+                      +'*** Selections %r *** Qtypes %r ***',
                       qtype, param_qualified_name, str(selections), str(qtypes))
             return None, None
         clauses.append(clause)
 
     return sql_builder.combine_exprs(clauses, 'OR')
 
-def get_range_query(selections, param_qualified_name, qtypes, units):
+def get_range_query(selections: dict[str, Any], param_qualified_name: str,
+                    qtypes: list[str] | None, units: list[str | None] | None
+                    ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for numeric ranges.
 
     This can either be a single column range (one table column holds the value)
@@ -1562,9 +1665,9 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
         name_min = name_max = name_no_num
         for qtype in qtypes:
             if qtype != 'any':
-                log.error('get_range_query: bad qtype "%s" '
-                          +'for "%s" '
-                          +'*** Selections %s *** Qtypes %s *** Units %s',
+                log.error('get_range_query: bad qtype "%r" '
+                          +'for "%r" '
+                          +'*** Selections %r *** Qtypes %r *** Units %r',
                           qtype, param_qualified_name,
                           str(selections), str(qtypes), str(units))
                 return None, None
@@ -1577,8 +1680,8 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
         len(values_min) != len(values_max)):
         log.error('get_range_query: Inconsistent qtype/unit/min/max lengths '
-                  +'for "%s" '
-                  +'*** Selections %s *** Qtypes %s *** Units %s',
+                  +'for "%r" '
+                  +'*** Selections %r *** Qtypes %r *** Units %r',
                   param_qualified_name, str(selections), str(qtypes),
                   str(units))
         return None, None
@@ -1595,14 +1698,14 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
                                                 form_type_unit_id,
                                                 unit)
         except KeyError:
-            log.error('get_range_query: Unknown unit "%s" for "%s" '
-                      +'*** Selections %s *** Qtypes %s *** Units %s',
+            log.error('get_range_query: Unknown unit "%r" for "%r" '
+                      +'*** Selections %r *** Qtypes %r *** Units %r',
                       unit, param_qualified_name, str(selections), str(qtypes),
                       str(units))
             return None, None
         except ValueError:
-            log.error('get_range_query: Unit "%s" on "%s" conversion failed '
-                      +'*** Selections %s *** Qtypes %s *** Units %s',
+            log.error('get_range_query: Unit "%r" on "%r" conversion failed '
+                      +'*** Selections %r *** Qtypes %r *** Units %r',
                       unit, param_qualified_name, str(selections), str(qtypes),
                       str(units))
             return None, None
@@ -1621,9 +1724,9 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
             # param_name_min <= value_max AND param_name_max >= value_min
             sides = ((column_max, '>=', value_min), (column_min, '<=', value_max))
         else:
-            log.error('get_range_query: Unknown qtype "%s" '
-                      +'for "%s" '
-                      +'*** Selections %s *** Qtypes %s *** Units %s',
+            log.error('get_range_query: Unknown qtype "%r" '
+                      +'for "%r" '
+                      +'*** Selections %r *** Qtypes %r *** Units %r',
                       qtype, param_qualified_name,
                       str(selections), str(qtypes), str(units))
             return None, None
@@ -1639,7 +1742,9 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
 
     return sql_builder.combine_exprs(clauses, 'OR')
 
-def get_longitude_query(selections, param_qualified_name, qtypes, units):
+def get_longitude_query(selections: dict[str, Any], param_qualified_name: str,
+                        qtypes: list[str] | None, units: list[str | None] | None
+                        ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for longitude ranges.
 
     Both sides of the range must be specified.
@@ -1686,8 +1791,8 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
         len(values_min) != len(values_max)):
         log.error('get_longitude_query: Inconsistent qtype/unit/min/max lengths '
-                  +'for "%s" '
-                  +'*** Selections %s *** Qtypes %s *** Units %s',
+                  +'for "%r" '
+                  +'*** Selections %r *** Qtypes %r *** Units %r',
                   param_qualified_name, str(selections), str(qtypes),
                   str(units))
         return None, None
@@ -1704,15 +1809,15 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                                                 form_type_unit_id,
                                                 unit)
         except KeyError:
-            log.error('get_longitude_query: Unknown unit "%s" for "%s" '
-                      +'*** Selections %s *** Qtypes %s *** Units %s',
+            log.error('get_longitude_query: Unknown unit "%r" for "%r" '
+                      +'*** Selections %r *** Qtypes %r *** Units %r',
                       unit, param_qualified_name, str(selections), str(qtypes),
                       str(units))
             return None, None
         except ValueError:
-            log.error('get_longitude_query: Unit "%s" on "%s" conversion '
+            log.error('get_longitude_query: Unit "%r" on "%r" conversion '
                       +'failed '
-                      +'*** Selections %s *** Qtypes %s *** Units %s',
+                      +'*** Selections %r *** Qtypes %r *** Units %r',
                       unit, param_qualified_name, str(selections), str(qtypes),
                       str(units))
             return None, None
@@ -1734,13 +1839,15 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                                                          new_qtypes, None)
             if range_clause is None:
                 return None, None
+            # get_range_query returns both halves together or neither.
+            assert range_params is not None
             clause = sql_builder.Expr(range_clause, range_params)
 
         elif is_single_column_range(param_qualified_name):
             # A single column range doesn't have center and d_ fields
             if qtype != 'any':
-                log.error('get_longitude_query: Bad qtype "%s" for "%s" '
-                          +'*** Selections %s *** Qtypes %s *** Units %s',
+                log.error('get_longitude_query: Bad qtype "%r" for "%r" '
+                          +'*** Selections %r *** Qtypes %r *** Units %r',
                           qtype, param_qualified_name,
                           str(selections), str(qtypes), str(units))
                 return None, None
@@ -1781,9 +1888,9 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                 bound = sql_builder.binary_op(sql_builder.value(d_long), '-',
                                               column_d_long)
             else:
-                log.error('get_longitude_query: Unknown qtype "%s" '
-                          +'for "%s"'
-                          +'*** Selections %s *** Qtypes %s *** Units %s',
+                log.error('get_longitude_query: Unknown qtype "%r" '
+                          +'for "%r"'
+                          +'*** Selections %r *** Qtypes %r *** Units %r',
                           qtype, param_qualified_name,
                           str(selections), str(qtypes),  str(units))
                 return None, None
@@ -1793,12 +1900,13 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
 
     return sql_builder.combine_exprs(clauses, 'OR')
 
-def get_user_search_table_name(num):
+def get_user_search_table_name(num: int | str) -> str:
     """ pass cache_no, returns user search table name"""
     return 'cache_' + str(num)
 
 
-def add_obs_table_joins(from_source, obs_tables):
+def add_obs_table_joins(from_source: sql_builder.FromSource,
+                        obs_tables: Iterable[str]) -> None:
     """LEFT JOIN each obs_ table onto obs_general.
 
     The joins are LEFT because an observation that has no row in one of these
@@ -1819,7 +1927,8 @@ def add_obs_table_joins(from_source, obs_tables):
                 sql_builder.column('obs_general_id', table)))
 
 
-def add_mult_table_joins(from_source, mult_tables):
+def add_mult_table_joins(from_source: sql_builder.FromSource,
+                         mult_tables: Iterable[tuple[str, bool, str, str]]) -> None:
     """LEFT JOIN each mult_ table onto the obs_ column that holds its id.
 
     Parameters:
@@ -1839,7 +1948,8 @@ def add_mult_table_joins(from_source, mult_tables):
                                       sql_builder.column('id', mult_table)))
 
 
-def search_cache_join_condition(table_name, cache_table_name):
+def search_cache_join_condition(table_name: str,
+                                cache_table_name: str) -> sql_builder.Expr:
     """Return the condition that ties a table's rows to a search's results.
 
     A search cache table holds one row per matching observation, keyed by
@@ -1868,7 +1978,7 @@ def search_cache_join_condition(table_name, cache_table_name):
 #
 ################################################################################
 
-def _get_param_info_by_qualified_name(param_qualified_name):
+def _get_param_info_by_qualified_name(param_qualified_name: str) -> ParamInfo | None:
     "Given a qualified name cat.name return the ParamInfo"
     if param_qualified_name.find('.') == -1:
         return None
@@ -1888,7 +1998,7 @@ def _get_param_info_by_qualified_name(param_qualified_name):
             return None
 
 
-def is_single_column_range(param_qualified_name):
+def is_single_column_range(param_qualified_name: str) -> bool:
     "Given a qualified name cat.name return True if it's a single-column range"
     cat_name = param_qualified_name.split('.')[0]
     name = param_qualified_name.split('.')[1]
@@ -1904,7 +2014,8 @@ def is_single_column_range(param_qualified_name):
     return True
 
 
-def parse_order_slug(all_order):
+def parse_order_slug(all_order: str | None
+                     ) -> tuple[list[str] | None, list[bool] | None]:
     "Given a list of slugs a,b,-c,d create the params and descending lists"
     order_params = []
     order_descending_params = []
@@ -1921,7 +2032,7 @@ def parse_order_slug(all_order):
         param_info = get_param_info_by_slug(order, 'col', allow_units_override=False)
         if not param_info:
             log.error('parse_order_slug: Unable to resolve order '
-                      +'slug "%s"', order)
+                      +'slug "%r"', order)
             return None, None
         order_param = param_info.param_qualified_name()
         if order_param == 'obs_pds.opus_id':
@@ -1932,7 +2043,10 @@ def parse_order_slug(all_order):
 
     return order_params, order_descending_params
 
-def create_order_by_terms(order_params, descending_params):
+def create_order_by_terms(order_params: list[str], descending_params: list[bool]
+                          ) -> tuple[list[tuple[Any, bool]] | None,
+                                     set[tuple[str, bool, str, str]] | None,
+                                     set[str] | None]:
     """Given params and descending lists, make the ORDER BY terms.
 
     Returns a list of (expression, descending) pairs ready for
@@ -1948,7 +2062,7 @@ def create_order_by_terms(order_params, descending_params):
         pi = _get_param_info_by_qualified_name(order_slug)
         if not pi:
             log.error('create_order_by_terms: Unable to resolve order'
-                      +' slug "%s"', order_slug)
+                      +' slug "%r"', order_slug)
             return None, None, None
         (form_type, _form_type_format,
          _form_type_unit_id) = parse_form_type(pi.form_type)

@@ -1,3 +1,10 @@
+"""Interpreting the slugs that appear in an OPUS URL.
+
+An OPUS URL names each search term and each result column by a short identifier called
+a slug.  `ToInfoMap` reads the field definitions an OPUS server publishes and turns a
+slug into an `Info`, giving the slug's verbose label, the `Family` of related slugs it
+belongs to, and `Flags` recording whether the slug was unrecognized or obsolete.
+"""
 import json
 import re
 from enum import Enum, Flag, auto
@@ -10,15 +17,31 @@ COLUMN_LABEL = 'full_label'
 
 
 class Family(NamedTuple):
+    """A group of slugs that together express one search term.
+
+    A range has two slugs, one for each end; `min` and `max` are the words that name
+    those ends when the report describes the term.  A singleton has a single slug, and
+    both words are empty.
+    """
+
     label: str  # The long name for this slug
     min: str  # 'min' or 'start'.  Empty string if this is a singleton
     max: str  # 'max' or 'stop'.  Empty string if this is a singleton
 
     def is_singleton(self) -> bool:
+        """Whether this family is a single slug rather than the two ends of a range."""
         return self.min == ''
 
 
 class FamilyType(Enum):
+    """The part a single slug plays in its `Family`.
+
+    `MIN` and `MAX` are the two ends of a range and `SINGLETON` a search term with one
+    value.  `QTYPE` and `UNIT` are the slugs carrying a term's query type and its
+    units, written with a `qtype-` or a `unit-` prefix.  `COLUMN` is a result column
+    rather than a search term.
+    """
+
     MIN = auto()
     MAX = auto()
     QTYPE = auto()
@@ -28,6 +51,14 @@ class FamilyType(Enum):
 
 
 class Flags(Flag):
+    """What was odd about a slug, if anything, when it was looked up.
+
+    A slug the field definitions do not mention is `UNKNOWN_SLUG`, and one listed as
+    an earlier name for another slug is `OBSOLETE_SLUG`.  `REMOVED_1_FROM_END` and
+    `REMOVED_2_FROM_END` mark a column slug that was recognized only once its trailing
+    digit had been dropped.
+    """
+
     NONE = 0
     UNKNOWN_SLUG = auto()  # slug not in our database
     REMOVED_1_FROM_END = auto()  # slug ending in 1 not in our database, but removing 1 works
@@ -40,6 +71,7 @@ class Flags(Flag):
         return ', '.join(x.lower() for x in temp.split('|'))
 
     def is_obsolete(self) -> bool:
+        """Whether `OBSOLETE_SLUG` is among these flags."""
         return bool(self & Flags.OBSOLETE_SLUG)
 
 
@@ -57,6 +89,14 @@ class Info(NamedTuple):
 
 
 class ToInfoMap:
+    """The slug definitions of one OPUS server, and lookups against them.
+
+    Constructing the map reads the server's field definitions.  Looking a slug up
+    returns an `Info` describing it, working one out where the definitions do not
+    cover the slug directly, and remembers the answer.  The two maps the answers are
+    remembered in are class attributes, so every instance in a process shares them.
+    """
+
     _slug_to_search_label: dict[str, str]
     _slug_to_column_label: dict[str, str]
     _old_slug_to_new_slug: dict[str, str]
@@ -120,6 +160,19 @@ class ToInfoMap:
             self._search_map[slug] = None
 
     def get_family_info_for_widget(self, widget: str) -> Family | None:
+        """Return the family of the search slug that a widget name refers to.
+
+        The name is tried as it stands and then with `1` and with `2` appended, and is
+        matched case-insensitively.  Only slugs already looked up as search slugs are
+        considered; this creates nothing.
+
+        Parameters:
+            widget: A widget name, as it appears in the URL that opens the widget.
+
+        Returns:
+            The `Family` of the first of the three names that is found, or None if
+            none of them is.
+        """
         widget = widget.lower()
         result = self._search_map.get(widget)
         if not result:
@@ -133,9 +186,46 @@ class ToInfoMap:
             return None
 
     def get_info_for_search_slug(self, slug: str, value: str) -> Info | None:
+        """Return information about a slug used as a search term in a query.
+
+        A slug the field definitions do not cover is given an `Info` of its own,
+        flagged `UNKNOWN_SLUG` and labeled with the slug as it was written.
+
+        Parameters:
+            slug: The slug name, matched case-insensitively.
+            value: The value the query gave for the slug.  It decides how a `qtype-`
+                slug is read.
+
+        Returns:
+            The `Info` for the slug, or None for a slug that carries no information,
+            such as one of `SLUGS_NOT_IN_DB`.
+        """
         return self._get_info_for_search_slug(slug, True, value)
 
     def _get_info_for_search_slug(self, original_slug: str, create: bool = True, value: str = '') -> Info | None:
+        """Look up a search slug, working one out where the definitions do not cover it.
+
+        The first of these that applies decides the answer: an entry already recorded
+        for the slug; an underscore and two or more digits at the end, which reuses the
+        entry for the slug without that suffix and records the digits as a subgroup; a
+        search label the server publishes; an earlier name for another slug, which
+        resolves to that slug and is flagged `OBSOLETE_SLUG`; a trailing 1 or 2, which
+        makes the two ends of a range; a `qtype-` prefix; a `unit-` prefix; and
+        finally, when `create` is set, an unknown slug.  Whatever is worked out is
+        recorded for later lookups.
+
+        Parameters:
+            original_slug: The slug as it was written; the lookup is case-insensitive.
+            create: Whether a slug that nothing else matched should be given an `Info`
+                flagged `UNKNOWN_SLUG`.
+            value: The value the query gave for the slug.  A `qtype-` slug is read as
+                belonging to a range when the value is `any`, `all` or `only`.
+
+        Returns:
+            The `Info` for the slug, or None.  None comes back for a name recorded as
+            carrying no information, for a `unit-` slug whose underlying slug is not
+            found, and for anything otherwise unmatched when `create` is false.
+        """
         base_result: Info | None
         slug = original_slug.lower()
         search_map = self._search_map
@@ -221,6 +311,22 @@ class ToInfoMap:
         return None
 
     def _known_label(self, slug: str, label: str, flag: Flags) -> Info:
+        """Build the `Info` for a search slug whose label is known.
+
+        A slug ending in 1 or 2 becomes the minimum or the maximum end of a range.  Its
+        family label is the label without a trailing ` (Min)` or ` (Max)`, or with the
+        word `Start` or `Stop` taken out of the middle; the two ends are then named
+        `min` and `max`, or `start` and `stop` when the label used those words.  Any
+        other slug becomes a singleton whose family label is the whole label.
+
+        Parameters:
+            slug: The canonical name to give the `Info`.
+            label: The verbose label for the slug.
+            flag: The flags to record on the `Info`.
+
+        Returns:
+            The `Info` for the slug.
+        """
         if slug[-1] in '12':
             if label.endswith(' (Min)') or label.endswith(' (Max)'):
                 family = Family(label=label[:-6], min='min', max='max')
@@ -247,6 +353,7 @@ class ToInfoMap:
         column_map = self._column_map
 
         def create_slug(canonical_name: str, label: str, flags: Flags) -> Info:
+            """Build the `Info` for a column slug, whose family is the label alone."""
             family = Family(label, '', '')
             return Info(canonical_name, label, flags, FamilyType.COLUMN, family)
 
@@ -282,6 +389,26 @@ class ToInfoMap:
 
     @staticmethod
     def __read_json(url_prefix: str) -> dict[str, Any]:
+        """Read an OPUS server's field definitions.
+
+        `DEFAULT_FIELDS_SUFFIX` is appended to the prefix, with any trailing slash on
+        the prefix dropped first.  A `file://` URL is read from the file system;
+        anything else is fetched over HTTP.
+
+        The server groups the definitions by category.  In the result they are
+        flattened into a single map from field name to definition, the `ringobsid`
+        entry is removed, and `ringobsid` is recorded as the old name of `opusid`.
+
+        Parameters:
+            url_prefix: The base URL of the server, or a `file://` URL naming a saved
+                copy of the definitions.
+
+        Returns:
+            The parsed JSON, with its `data` rewritten as described.
+
+        Raises:
+            requests.HTTPError: The server answered with an error status.
+        """
         if url_prefix.endswith('/'):
             url_prefix = url_prefix[:-1]
         url = url_prefix + ToInfoMap.DEFAULT_FIELDS_SUFFIX
@@ -290,7 +417,10 @@ class ToInfoMap:
             with open(url[7:]) as file:
                 text = file.read()
         else:
-            response = requests.get(url)
+            # A missing timeout, so an unresponsive --api-host-url hangs the run.
+            # Filed as issue #1449; log-analyzer behavior is out of scope for this
+            # modernization (plan rev 7.14), so it is recorded rather than fixed.
+            response = requests.get(url)  # nosec B113
             response.raise_for_status()
             text = response.text
         info = json.loads(text)

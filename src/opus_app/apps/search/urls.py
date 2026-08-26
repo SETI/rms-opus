@@ -1,4 +1,5 @@
 # search/urls.py
+"""The routes of the search API."""
 from django.urls import re_path
 
 from opus_app.apps.search.views import (

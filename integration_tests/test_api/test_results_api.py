@@ -10,16 +10,16 @@ from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_LIMIT,
-    HTTP400_BAD_OFFSET,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_BAD_PAGENO,
-    HTTP400_BAD_STARTOBS,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_CATEGORY,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP404_UNKNOWN_OPUS_ID,
-    HTTP404_UNKNOWN_RING_OBS_ID,
+    http400_bad_limit,
+    http400_bad_offset,
+    http400_bad_or_missing_reqno,
+    http400_bad_pageno,
+    http400_bad_startobs,
+    http400_search_params_invalid,
+    http400_unknown_category,
+    http400_unknown_slug,
+    http404_unknown_opus_id,
+    http404_unknown_ring_obs_id,
 )
 
 from .api_test_helper import ApiTestHelper
@@ -53,13 +53,13 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /__api/dataimages: bad cols"
         url = '/__api/dataimages.json?cols=xxx,yyy'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('xxx', '/__api/dataimages.json'))
+                               http400_unknown_slug('xxx', '/__api/dataimages.json'))
 
     def test__api_dataimages_bad_order(self):
         "[test_results_api.py] /__api/dataimages: bad order"
         url = '/__api/dataimages.json?order=xxx'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/__api/dataimages.json'))
+                               http400_search_params_invalid('/__api/dataimages.json'))
 
     def test__api_dataimages_bad_order_cart(self):
         "[test_results_api.py] /__api/dataimages: bad order with view=cart"
@@ -69,19 +69,19 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         # create_order_by_terms as None and abort there.
         url = '/__api/dataimages.json?view=cart&order=xxx&reqno=1'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/__api/dataimages.json'))
+                               http400_unknown_slug(None, '/__api/dataimages.json'))
 
     def test__api_dataimages_bad_search(self):
         "[test_results_api.py] /__api/dataimages: bad search"
         url = '/__api/dataimages.json?time1=xxx-yyy'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/__api/dataimages.json'))
+                               http400_search_params_invalid('/__api/dataimages.json'))
 
     def test__api_dataimages_no_results_default(self):
         "[test_results_api.py] /__api/dataimages: no results default cols"
         url = '/__api/dataimages.json?opusid=notgoodid'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
+                               http400_bad_or_missing_reqno('/__api/dataimages.json'))
 
     def test__api_dataimages_no_results_default_reqno(self):
         "[test_results_api.py] /__api/dataimages: no results default cols reqno"
@@ -92,13 +92,13 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /__api/dataimages: no results default cols reqno bad"
         url = '/__api/dataimages.json?opusid=notgoodid&reqno=-1'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
+                               http400_bad_or_missing_reqno('/__api/dataimages.json'))
 
     def test__api_dataimages_no_results_default_reqno_bad_2(self):
         "[test_results_api.py] /__api/dataimages: no results default cols reqno bad 2"
         url = '/__api/dataimages.json?opusid=notgoodid&reqno=1.0'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__api/dataimages.json'))
+                               http400_bad_or_missing_reqno('/__api/dataimages.json'))
 
     def test__api_dataimages_corss_cols_units(self):
         "[test_results_api.py] /__api/dataimages: corss search & cols & units"
@@ -231,7 +231,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/data: coiss_2002 more cols json bad startobs"
         url = '/api/data.json?startobs=5x2&cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&volumeid=COISS_2002'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_STARTOBS('5x2', '/api/data.json'))
+                               http400_bad_startobs('5x2', '/api/data.json'))
 
     def test__api_data_coiss_2002_more_cols_good_page_json(self):
         "[test_results_api.py] /api/data: coiss_2002 more cols json good page"
@@ -242,13 +242,13 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/data: coiss_2002 more cols json bad startobs"
         url = '/api/data.json?page=inf&cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&bundleid=COISS_2002'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_PAGENO('inf', '/api/data.json'))
+                               http400_bad_pageno('inf', '/api/data.json'))
 
     def test__api_data_coiss_2002_more_cols_bad_offset_json(self):
         "[test_results_api.py] /api/data: coiss_2002 more cols json bad startobs"
         url = '/api/data.json?page=10000000000000000000&cols=opusid,instrument,planet,target,time1,observationduration,CASSINIspacecraftclockcount1,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2,COISScamera,COISSfilter,COISSshuttermode,COISSshutterstate,COISScompressiontype,COISSdataconversiontype,COISSgainmode,COISSinstrumentmode,COISSmissinglines,COISSimagenumber,COISStargetdesc,COISSimageobservationtype&bundleid=COISS_2002'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OFFSET('999999999999999999900',
+                               http400_bad_offset('999999999999999999900',
                                                   '/api/data.json'))
 
     def test__api_data_coiss_2002_more_cols_csv(self):
@@ -301,13 +301,13 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/data: limit bad"
         url = '/api/data.csv?bundleid=CORSS_8001&cols=time1,time2&limit=3x2'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_LIMIT('3x2', '/api/data.csv'))
+                               http400_bad_limit('3x2', '/api/data.csv'))
 
     def test__api_data_limit_big_csv(self):
         "[test_results_api.py] /api/data: limit big"
         url = '/api/data.csv?bundleid=CORSS_8001&cols=time1,time2&limit=999999999999999999999999'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_LIMIT('999999999999999999999999',
+                               http400_bad_limit('999999999999999999999999',
                                                  '/api/data.csv'))
 
     def test__api_data_good_regex_opusid_csv(self):
@@ -319,43 +319,43 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/data: bad regex csv"
         url = r'/api/data.csv?opusid=[a-z]*(&qtype-opusid=regex'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/api/data.csv'))
+                               http400_search_params_invalid('/api/data.csv'))
 
     def test__api_data_bad_cols_json(self):
         "[test_results_api.py] /api/data: bad cols 1 json"
         url = '/api/data.json?bundleid=COISS_2002&cols=observationduration,fredethel,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/api/data.json'))
+                               http400_unknown_slug(None, '/api/data.json'))
 
     def test__api_data_bad_cols_csv(self):
         "[test_results_api.py] /api/data: bad cols 1 csv"
         url = '/api/data.csv?bundleid=COISS_2002&cols=observationduration,fredethel,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/api/data.csv'))
+                               http400_unknown_slug(None, '/api/data.csv'))
 
     def test__api_data_bad_cols_html(self):
         "[test_results_api.py] /api/data: bad cols 1 html"
         url = '/api/data.html?bundleid=COISS_2002&cols=observationduration,fredethel,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/api/data.html'))
+                               http400_unknown_slug(None, '/api/data.html'))
 
     def test__api_data_bad_cols2_json(self):
         "[test_results_api.py] /api/data: bad cols 2 json"
         url = '/api/data.json?bundleid=COISS_2002&cols=,observationduration,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/api/data.json'))
+                               http400_unknown_slug(None, '/api/data.json'))
 
     def test__api_data_bad_cols3_json(self):
         "[test_results_api.py] /api/data: bad cols 3 json"
         url = '/api/data.json?bundleid=COISS_2002&cols=observationduration,,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/api/data.json'))
+                               http400_unknown_slug(None, '/api/data.json'))
 
     def test__api_data_bad_cols4_json(self):
         "[test_results_api.py] /api/data: bad cols 4 json"
         url = '/api/data.json?bundleid=COISS_2002&cols=observationduration,bundleid,'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG(None, '/api/data.json'))
+                               http400_unknown_slug(None, '/api/data.json'))
 
 
             ################################################
@@ -580,14 +580,14 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/metadata: bad opusid json"
         url = '/api/metadata/vg-iss-2-s-c4360845x.json'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_OPUS_ID('vg-iss-2-s-c4360845x',
+                               http404_unknown_opus_id('vg-iss-2-s-c4360845x',
                                    '/api/metadata/vg-iss-2-s-c4360845x.json'))
 
     def test__api_metadata_bad_ringobsid_json(self):
         "[test_results_api.py] /api/metadata: bad ringobsid json"
         url = '/api/metadata/S_IMG_VG2_ISS_4360846_N.json'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_RING_OBS_ID('S_IMG_VG2_ISS_4360846_N',
+                               http404_unknown_ring_obs_id('S_IMG_VG2_ISS_4360846_N',
                                    '/api/metadata/S_IMG_VG2_ISS_4360846_N.json'))
 
     def test__api_metadata2_bad_opusid_json(self):
@@ -599,14 +599,14 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/metadata_v2: bad ringobsid json"
         url = '/api/metadata_v2/S_IMG_VG2_ISS_4360846_N.json'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_RING_OBS_ID('S_IMG_VG2_ISS_4360846_N',
+                               http404_unknown_ring_obs_id('S_IMG_VG2_ISS_4360846_N',
                                    '/api/metadata_v2/S_IMG_VG2_ISS_4360846_N.json'))
 
     def test__api_metadata_bad_opusid_html(self):
         "[test_results_api.py] /api/metadata: bad opusid html"
         url = '/api/metadata/vg-iss-2s-c4360845.html'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_OPUS_ID('vg-iss-2s-c4360845',
+                               http404_unknown_opus_id('vg-iss-2s-c4360845',
                                    '/api/metadata/vg-iss-2s-c4360845.html'))
 
     def test__api_metadata_bad_opusid_html_v2(self):
@@ -618,82 +618,82 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/metadata: bad opusid csv"
         url = '/api/metadata/0124.csv'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_OPUS_ID('0124', '/api/metadata/0124.csv'))
+                               http404_unknown_opus_id('0124', '/api/metadata/0124.csv'))
 
     def test__api_metadata_bad_opusid_csv_v2(self):
         "[test_results_api.py] /api/metadata_v2: bad opusid csv v2"
         url = '/api/metadata/1.csv'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_OPUS_ID('1', '/api/metadata/1.csv'))
+                               http404_unknown_opus_id('1', '/api/metadata/1.csv'))
 
     def test__api_metadata_bad_cols_json(self):
         "[test_results_api.py] /api/metadata: bad cols 1 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,fredethel,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('fredethel',
+                               http400_unknown_slug('fredethel',
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cols_csv(self):
         "[test_results_api.py] /api/metadata: bad cols 1 csv"
         url = '/api/metadata/vg-iss-2-s-c4360845.csv?cols=observationduration,fredethel,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('fredethel',
+                               http400_unknown_slug('fredethel',
                                    '/api/metadata/vg-iss-2-s-c4360845.csv'))
 
     def test__api_metadata_bad_cols_html(self):
         "[test_results_api.py] /api/metadata: bad cols 1 html"
         url = '/api/metadata/vg-iss-2-s-c4360845.html?cols=observationduration,fredethel,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('fredethel',
+                               http400_unknown_slug('fredethel',
                                    '/api/metadata/vg-iss-2-s-c4360845.html'))
 
     def test__api_metadata_bad_cols2_json(self):
         "[test_results_api.py] /api/metadata: bad cols 2 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=,observationduration,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('',
+                               http400_unknown_slug('',
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cols3_json(self):
         "[test_results_api.py] /api/metadata: bad cols 3 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,,bundleid'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('',
+                               http400_unknown_slug('',
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cols4_json(self):
         "[test_results_api.py] /api/metadata: bad cols 4 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,bundleid,'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('',
+                               http400_unknown_slug('',
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cats_json(self):
         "[test_results_api.py] /api/metadata: bad cats 1 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cats=obs_pds,whatever,obs_general'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_CATEGORY(
+                               http400_unknown_category(
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cats2_json(self):
         "[test_results_api.py] /api/metadata: bad cats 2 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cats=,obs_pds,obs_general'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_CATEGORY(
+                               http400_unknown_category(
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cats3_json(self):
         "[test_results_api.py] /api/metadata: bad cats 3 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cats=obs_pds,,obs_general'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_CATEGORY(
+                               http400_unknown_category(
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cats4_json(self):
         "[test_results_api.py] /api/metadata: bad cats 4 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cats=obs_pds,obs_general,'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_CATEGORY(
+                               http400_unknown_category(
                                    '/api/metadata/vg-iss-2-s-c4360845.json'))
 
 
@@ -745,14 +745,14 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/files: bad ringobsid"
         url = '/api/files/N_1_BAD.json'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_RING_OBS_ID('N_1_BAD',
+                               http404_unknown_ring_obs_id('N_1_BAD',
                                                            '/api/files/N_1_BAD.json'))
 
     def test__api_files_bad_search(self):
         "[test_results_api.py] /api/files: bad search"
         url = '/api/files.json?instrument=fred'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/api/files.json'))
+                               http400_search_params_invalid('/api/files.json'))
 
     def test__api_files_COISS_2002_order_startobs_limit(self):
         "[test_results_api.py] /api/files: COISS 2002 order startobs limit"
@@ -808,7 +808,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/images: bad search"
         url = '/api/images.json?instrument=fred'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/api/images.json'))
+                               http400_search_params_invalid('/api/images.json'))
 
     def test__api_images_no_results(self):
         "[test_results_api.py] /api/images: no results"
@@ -879,7 +879,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/categories: Bad ringobsid"
         url = '/api/categories/_123.json'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_RING_OBS_ID(
+                               http404_unknown_ring_obs_id(
                                     '_123',
                                     '/api/categories/_123.json'))
 
@@ -897,7 +897,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/categories: bad search"
         url = '/api/categories.json?bundleidx=COISS_2002'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/api/categories.json'))
+                               http400_search_params_invalid('/api/categories.json'))
 
     def test__api_categories_empty_search(self):
         "[test_results_api.py] /api/categories: empty search"
@@ -918,7 +918,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/product_types: Bad ringobsid"
         url = '/api/product_types/_N_1_2_3.json'
         self._run_status_equal(url, 404,
-                               HTTP404_UNKNOWN_RING_OBS_ID(
+                               http404_unknown_ring_obs_id(
                                    '_N_1_2_3',
                                    '/api/product_types/_N_1_2_3.json'))
 
@@ -944,7 +944,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/product_types: bad search"
         url = '/api/product_types.json?bundleidx=COISS_2002'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID('/api/product_types.json'))
+                               http400_search_params_invalid('/api/product_types.json'))
 
     def test__api_product_types_empty_search(self):
         "[test_results_api.py] /api/protect_types: empty search"
