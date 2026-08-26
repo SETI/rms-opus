@@ -5,8 +5,8 @@ parses log lines, `LogParser` groups them into per-host sessions, and the
 `--configuration` module interprets each session in the vocabulary of the site
 being analyzed -- OPUS by default -- and renders the report.
 
-`--batch` and `--cronjob` are the modes that run today; see issue #1451 for the
-others.
+`--batch` and `--cronjob` are the modes that run today. The other three read an
+argument the parser never defines and fail before doing any work.
 """
 import argparse
 import glob
@@ -62,7 +62,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         Returns:
             One network per element. The declared element type is IPv4 because
             the rest of this package is; `ip_network` returns an IPv6 network
-            for an IPv6 argument, which then matches nothing. See issue #1463.
+            for an IPv6 argument, which then matches nothing.
         """
         return [
             ipaddress.ip_network(address, strict=False)  # type: ignore[misc]  # see docstring
@@ -146,7 +146,7 @@ def main(arguments: list[str] | None = None) -> None:
     Raises:
         AttributeError: In any mode other than `--batch`/`--cronjob`, before any
             work is done, because the branch that handles them reads an argument
-            the parser never defines. See issue #1451.
+            the parser never defines.
         Exception: If real-time mode was given other than exactly one log file,
             or any other mode was given none.
     """

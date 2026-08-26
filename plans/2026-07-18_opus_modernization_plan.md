@@ -5018,10 +5018,12 @@ body; never rewrite or delete earlier notes.*
     regeneration, and PR-07 -- which would have rewritten the generator -- was
     deferred by rev 7.11. The generator now runs `ruff format` on its own output
     (ruff honours an explicitly named path regardless of the exclusion). The
-    exclusion also covers docstrings: **the 245 generated model classes and their
-    nested `Meta` classes deliberately have none**, and PR-21 should not add them --
-    they would flood the Sphinx API reference and the next regeneration would delete
-    them. Formatting it was proved inert by dumping
+    exclusion also covers docstrings: **the 231 generated model classes and their
+    231 nested `Meta` classes deliberately have none**, and PR-21 should not add
+    them -- they would flood the Sphinx API reference and the next regeneration
+    would delete them. (231 is the count in that module; the 244 the inertness
+    dump reports is every model in the project, which is a different number and
+    not the one to quote here.) Formatting it was proved inert by dumping
     `apps.get_models(include_auto_created=True, include_swapped=True)` before and
     after: 244 models, byte-identical, including every field's class, column,
     internal type and callable defaults by identity.
@@ -5029,11 +5031,16 @@ body; never rewrite or delete earlier notes.*
     `B101` stays a category skip; everything else is a per-line
     `# nosec <ID>` with a reason above the statement. Regenerate the set with
     `grep -rn "# nosec" src integration_tests manage.py` and re-measure what the
-    list holds back by emptying it. Measured here: 275 findings with `skips = []`,
-    of which **246 are B101, and 199 of those are in `src/opus_import` and 16 in
-    `src/opus_support`** -- the narrowing assertions PR-14/15/16 added on purpose.
-    Per-line comments there would be 246 restatements of one fact in three other
-    PRs' trees, which is the noise the criterion exists to remove. `B404`/`B603`
+    list holds back by emptying it. **Re-measure rather than trusting a number
+    here; it grows
+    with every annotation PR, and the first version of this bullet quoted the
+    base tree's figures for the finished tree.** The measurement has to pass
+    `--ignore-nosec` as well as emptying `skips`, or the 27 converted findings
+    are invisible. Done that way on the PR-17a tree: **322 B101 findings -- 199
+    in `src/opus_import`, 90 in `src/opus_app`, 17 in `src/opus_log_analyzer`,
+    16 in `src/opus_support`**. The largest share is in other packages, but
+    **PR-17a contributed the 90 itself** through its own narrowing assertions, so
+    this is not a skip that merely covers somebody else's code. `B404`/`B603`
     left the list by excluding Django's vendored
     `static/admin/js/compress.py` by exact path (matching what `[tool.mypy]` does
     with that file); `B607` left it because it fired zero times.
@@ -5080,11 +5087,28 @@ body; never rewrite or delete earlier notes.*
     claims values "are always lists", which two of the three modes falsified.
     **A later PR that wants a tighter type should change the function's shape, not
     the annotation.**
-  - **Where a local was doing two jobs it got two names, not a union.**
-    `set_user_search_number`'s `s` (a model, then a queryset, then its first row) and
-    `get_reqno`'s `reqno` (query-string text, then the parsed number) are the two
-    instances. Both are behavior-identical; the second keeps `int(None)` raising
+  - **Where a local was doing two jobs it got two names, not a union**, and
+    there are about **a dozen** of them across the app, not the two an earlier
+    draft of this bullet named. Regenerate the list from the delta classification
+    below rather than counting by hand; the ones worth knowing are
+    `set_user_search_number`'s `s` (a model, then a queryset, then its first row),
+    `get_reqno`'s `reqno` (query-string text, then the parsed number),
+    `construct_query_string`'s `clause` (a finished `Expr` in the mult branch, an
+    unpacked SQL string in the others), and `get_search_results_chunk`'s
+    `start_obs`/`page_no` pair. Each is behavior-identical -- nothing between the
+    two names reads the first value -- and `get_reqno`'s keeps `int(None)` raising
     `TypeError` into the same `except`.
+  - **The PR's whole executable delta against `7ecedd13`, classified.** The
+    per-commit inertness runs each compared one commit to its parent, so each was
+    true of its own commit and **none of them describes the PR**. Measured across
+    the 58 changed files under `src/`: **299 mechanical rewrites** (the 25-name
+    SCREAMING_CASE-to-lowercase rename and the 262-occurrence `%r` sweep, paired
+    against the statement they replaced), **76 narrowing asserts**, **62
+    annotation imports**, **4 `@overload` stub lines**, and **57 statements** that
+    are the dozen two-name splits plus five individually-justified changes
+    (`_create_csv_file`'s explicit `return None`, `ranges = []`,
+    `dict(IconFlags.__members__)`, the `SearchResultsChunk` alias, and
+    `duplicates = ...`). Nothing else.
   - **`enter_api_call`'s `name` parameter is read by nothing, and never has been.**
     It is byte-identical at `101bc511`, PR-13's base. This makes one sentence of
     PR-13's notes misleading rather than wrong in its conclusion: it records that
@@ -5132,12 +5156,14 @@ body; never rewrite or delete earlier notes.*
     file yields nothing. Both are fixed. **The lesson is the one PR-16 stated: state
     what a scan cannot see, and prefer a count derived from an independent traversal
     to a floor.**
-  - **75 `# type: ignore` markers across the two packages, and every one is
+  - **76 `# type: ignore` markers across the two packages, and every one is
     load-bearing** -- `warn_unused_ignores` is on under `strict`, so an
-    unnecessary one fails CI. Regenerate the breakdown with
-    `grep -rhoE "type: ignore\[[a-z-]+\]" src/opus_app src/opus_log_analyzer`;
-    measured here, the largest groups are `union-attr` 16, `attr-defined` 13,
-    `arg-type` 11, `assignment` 9, `operator` 8. **They fall into two kinds and
+    unnecessary one fails CI. **Regenerate with a pattern that admits several
+    codes in one marker** -- `#\s*type:\s*ignore\[([a-z, -]+)\]` -- because a
+    character-class-only pattern misses `# type: ignore[index, union-attr]` in
+    `results/views.py` and undercounts both the total and `union-attr`. Measured
+    here, the largest groups are `union-attr` 17, `attr-defined` 13, `arg-type`
+    11, `assignment` 9, `operator` 8. **They fall into two kinds and
     the difference is the point.** Roughly half sit under a comment naming a real
     defect or a filed issue: a nullable `param_info` column (`label`,
     `label_results`, `slug`) dereferenced with no guard, a helper whose None

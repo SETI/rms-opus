@@ -33,8 +33,7 @@ class LogEntry(NamedTuple):
     """Information from one line of an Apache log entry.
 
     `host_ip` is declared IPv4 because everything downstream is; an IPv6 client
-    address is stored here anyway. See issue #1463 and the note in
-    `LogReader.__parse_line`.
+    address is stored here anyway.
     """
 
     host_ip: ipaddress.IPv4Address
@@ -113,8 +112,8 @@ class LogReader:
             ValueError: If the line matches the pattern but a field within it
                 does not parse -- an address field that is not an IP address
                 (which is what Apache writes under `HostnameLookups On`), a
-                non-numeric size, or an unparseable timestamp. See issue #1450:
-                one such line aborts the whole run rather than being skipped.
+                non-numeric size, or an unparseable timestamp. One such line
+                aborts the whole run rather than being skipped.
         """
         match = re.match(LOG_PATTERN, line)
         if not match:

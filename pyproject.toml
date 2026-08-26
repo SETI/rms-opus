@@ -276,7 +276,7 @@ exclude = [
   # plus a sed pipeline), so nothing hand-edited here survives the next
   # regeneration. That script formats its own output with `ruff format`, which
   # ruff applies to an explicitly named path regardless of this exclusion.
-  # Excluding it also means the 245 generated model classes and their nested
+  # Excluding it also means the 231 generated model classes and their nested
   # Meta classes carry no docstrings and are not expected to: writing them would
   # flood the Sphinx API reference PR-21 publishes with entries no reader gains
   # anything from, and the next regeneration would delete them anyway. This is a
@@ -398,13 +398,19 @@ skips = [
   # assert_used. These are not input validation and never were: they are the
   # narrowing assertions PR-14, PR-15 and PR-16 added so that mypy strict could
   # follow an invariant the code already relied on, plus a few pre-existing
-  # invariant checks. Measured at PR-17a by emptying this list: 246 findings, of
-  # which 199 are in src/opus_import and 16 in src/opus_support -- trees whose
-  # annotation PRs put them there deliberately. A per-line `# nosec` on each
-  # would be 246 comments restating one fact, which is the noise this list was
-  # shrunk to avoid. Python's -O strips asserts, and nothing here is deployed
-  # with -O; if that ever changes, these become real checks and this skip has to
-  # be revisited rather than kept.
+  # invariant checks. Do not trust the number below without re-measuring -- it
+  # grows with every annotation PR. Regenerate it with `skips` emptied and
+  # `--ignore-nosec`, which is the only way to see what the list is holding back:
+  #     bandit -c pyproject.toml -r src integration_tests manage.py \
+  #            -f json -q --ignore-nosec
+  # Measured that way on the PR-17a tree: 322 B101 findings -- 199 in
+  # src/opus_import, 90 in src/opus_app, 17 in src/opus_log_analyzer and 16 in
+  # src/opus_support. The largest share is in other packages' trees, but PR-17a
+  # contributed the 90 itself, so this is not a skip that only covers somebody
+  # else's code. A per-line `# nosec` on each would be 322 comments restating one
+  # fact, which is the noise this list was shrunk to avoid. Python's -O strips
+  # asserts, and nothing here is deployed with -O; if that ever changes, these
+  # become real checks and this skip has to be revisited rather than kept.
   "B101",
 ]
 

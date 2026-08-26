@@ -102,10 +102,11 @@ class Session(NamedTuple):
         This does not do what it says: the right-hand side is the builtin `id`
         rather than `other.id`, so the comparison is always False and no session
         equals any other, including itself. `__hash__` is correct, which is what
-        makes it damaging -- a set of sessions never de-duplicates. Recorded as
-        issue #1464 and deliberately not fixed here, because log-analyzer
-        behavior is out of scope for this modernization (plan rev 7.14).
+        makes it damaging -- a set of sessions never de-duplicates.
         """
+        # Issue #1464 tracks the fix; log-analyzer behavior is out of scope for
+        # this modernization (plan rev 7.14), so it is recorded rather than
+        # changed.
         return isinstance(other, Session) and self.id == id  # type: ignore[comparison-overlap]
 
     def __repr__(self) -> str:
@@ -445,7 +446,7 @@ class LogParser:
         Returns:
             A sort key. Two keys are comparable only if the addresses in them
             are the same IP version, so sorting a mix of IPv4 and IPv6 unnamed
-            hosts raises `TypeError`. See issue #1463.
+            hosts raises `TypeError`.
         """
         if name:
             return 1, tuple(reversed(name.lower().split('.')))

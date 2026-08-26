@@ -94,8 +94,7 @@ class ToInfoMap:
     Constructing the map reads the server's field definitions.  Looking a slug up
     returns an `Info` describing it, working one out where the definitions do not
     cover the slug directly, and remembers the answer.  The two maps the answers are
-    remembered in are class attributes, so every instance in a process shares them
-    (issue #1452).
+    remembered in are class attributes, so every instance in a process shares them.
     """
 
     _slug_to_search_label: dict[str, str]

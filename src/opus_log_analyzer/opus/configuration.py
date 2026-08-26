@@ -123,9 +123,6 @@ class Configuration(AbstractConfiguration):
 
         The gathering step unpacks three values from the two that `get_slug_info`
         returns, so nothing is printed for a run that has any session at all.
-        Log-analyzer behavior is out of scope for this modernization (plan rev
-        7.14), so this is recorded rather than fixed; issue #1451 records that
-        `--summary` already fails before reaching this method.
 
         Parameters:
             sessions: The sessions to summarize.

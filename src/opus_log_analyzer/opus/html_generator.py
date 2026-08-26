@@ -618,7 +618,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         Returns:
             A sort key. Two keys are comparable only if the addresses in them
             are the same IP version, so sorting a mix of IPv4 and IPv6 unnamed
-            hosts raises `TypeError`. See issue #1463.
+            hosts raises `TypeError`.
         """
         if name:
             return 1, tuple(reversed(name.lower().split('.')))

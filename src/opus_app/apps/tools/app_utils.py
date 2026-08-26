@@ -559,9 +559,9 @@ def get_mult_name(param_qualified_name: str) -> str:
 def get_git_version() -> str:
     """Return the version of the OPUS distribution this site is running.
 
-    It identifies the deployed code on the About page and is the cache-busting
-    suffix on every static asset URL, so it changes exactly when a new release is
-    installed.
+    It identifies the deployed code on the About page, and the templates append
+    it as a cache-busting `?version=` suffix to the static assets that carry one,
+    so those URLs change when a new release is installed.
 
     Returns:
         The version of the installed ``rms-opus`` distribution, for example
@@ -693,7 +693,7 @@ def wrap_http500_string(s: str) -> str:
     The messages it wraps name the request path, which the caller controls.
 
     Escaping here rather than in `_request_path` is deliberate: that helper also
-    feeds the HTTP400_/HTTP404_ builders, whose messages are rendered by
+    feeds the http400_/http404_ builders, whose messages are rendered by
     `400.html` and Django's `404.html` and are therefore escaped by the template
     engine - escaping them a second time at the source would show the user
     `&amp;lt;` where they typed `<`.

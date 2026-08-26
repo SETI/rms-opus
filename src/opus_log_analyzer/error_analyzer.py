@@ -34,7 +34,7 @@ class ErrorEntry(NamedTuple):
     """One error-log line: when, from which client, and what it said.
 
     `host_ip` is declared IPv4 because the rest of this package is; an IPv6
-    client address is stored here anyway. See issue #1463.
+    client address is stored here anyway.
     """
 
     time: datetime.datetime
@@ -364,7 +364,7 @@ def main(arguments: list[str] | None = None) -> None:
         Returns:
             One network per element. The declared element type is IPv4 because
             the rest of this package is; `ip_network` returns an IPv6 network
-            for an IPv6 argument, which then matches nothing. See issue #1463.
+            for an IPv6 argument, which then matches nothing.
         """
         return [
             ipaddress.ip_network(address, strict=False)  # type: ignore[misc]  # see docstring

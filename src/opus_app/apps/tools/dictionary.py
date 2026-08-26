@@ -6,12 +6,8 @@
 are `managed = False`: Django is told the tables exist but must not create, alter or
 drop them.
 
-These two models and `get_def_for_tooltip` used to be a Django app of their own. The
-browsable dictionary site that app once served was removed long before this file
-existed, leaving an app whose entire content was the code below, so the app was
-deleted and its remains moved here. `tools` is where they belong: it is the app the
-other OPUS apps already reach into for shared helpers, and `paraminfo`, `ui` and
-`cart` are exactly the three that use them.
+They live in `tools` because that is the app the rest of OPUS reaches into for
+shared helpers: `paraminfo`, `ui` and `cart` are the three that use them.
 
 Both classes were produced by `inspectdb` and their field definitions are reproduced
 verbatim, because the columns they name are created by the import pipeline rather

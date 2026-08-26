@@ -186,7 +186,7 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
 
         Raises:
             ValueError: If the cache is empty, because the oldest expiry is a
-                `min` with no default. See issue #1452.
+                `min` with no default.
         """
         oldest = min(expiration for (_, expiration) in self._database.values())
         self._database.close()

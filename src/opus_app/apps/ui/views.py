@@ -1924,6 +1924,10 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
     # from a dictionary, which is what the wider half of the declared type is
     # for; the two loops that follow run before that and see only rows.
     divs: QuerySet[TableNames] | list[TableNames | dict[str, str | bool]]
+    # The misc ignore is for `table_name__in=triggered_tables`: get_triggered_tables
+    # can return None, which Django's filter would reject at run time. That is a
+    # real unchecked-None defect, recorded in the Execution notes rather than
+    # guarded here, so the marker stands in for it rather than hiding it.
     divs = (TableNames.objects.filter(display='Y', # type: ignore[misc]
                                       table_name__in=triggered_tables)
                                .order_by('disp_order'))

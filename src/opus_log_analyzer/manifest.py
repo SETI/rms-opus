@@ -64,7 +64,7 @@ class ManifestEntry(NamedTuple):
         Raises:
             AssertionError: If the file path is not absolute.
             IndexError: If the file path is absolute but has fewer than three
-                components. See issue #1452.
+                components.
         """
         path = PosixPath(self.file_path)
         assert path.is_absolute()
