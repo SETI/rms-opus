@@ -541,9 +541,12 @@ def test_a_field_method_returns_what_it_declares(instrument_id: str) -> None:
                 non_null += 1
 
     assert wrong == []
-    # A fixture that stopped driving the code would otherwise pass silently.
-    assert returned >= 100, f'only {returned} methods returned a value'
-    assert non_null >= 40, f'only {non_null} methods returned a real value'
+    # A fixture that stopped driving the code would otherwise pass silently. The floors
+    # are well under what each mission reaches today -- the thinnest returns 265 values,
+    # 225 of them real -- so a schema gaining or losing a column does not trip them,
+    # while a fixture that stopped matching the code it drives does.
+    assert returned >= 200, f'only {returned} methods returned a value'
+    assert non_null >= 150, f'only {non_null} methods returned a real value'
 
 
 def test_every_mission_is_represented() -> None:
