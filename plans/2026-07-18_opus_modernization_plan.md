@@ -4607,7 +4607,10 @@ body; never rewrite or delete earlier notes.*
     should not "fix" them back.** The plan gave `col_val: str | None` and
     `group_disp_order: int | None`. Measured: `obs_volume_vg2810` passes the literal `0`
     for `filter_number` and the VGISS and GOSSI `filter_number` methods pass a PDS index
-    column that holds an integer, so `col_val` is `str | int | None`; and every value
+    column that holds an integer. Pass 2's mutation testing then falsified even that:
+    GOSSI `frame_duration` passes a column the labels declare `ASCII_REAL`, so
+    `col_val` is `str | int | float | None` -- a genuine widening of the declared
+    domain rather than a numpy artifact, and rev 7.19 was amended to match. Every value
     that reaches `group_disp_order` is text -- both obs call sites pass a
     `PLANET_GROUP_MAPPING` entry's `'010'`-style `disp_order`, and of the 410
     `mult_options` entries in the packaged schemas the 54 that set the equivalent column
@@ -4638,7 +4641,13 @@ body; never rewrite or delete earlier notes.*
        type. That is closed here by recording every value all six missions produce in
        `tests/opus_import/fixtures/obs_field_values.json` and comparing -- regenerate it
        with ``pytest ... --regenerate-obs-values`` and read the diff, because every line
-       of it is a change in what the import would store.
+       of it is a change in what the import would store. **PR-19 should decide
+       deliberately whether to absorb or supersede that fixture**: it builds the
+       holdings-free suite over `mini_holdings`, which is the same job at greater
+       breadth, and two golden files covering overlapping ground is worth avoiding.
+       Discovering the overlap late is the failure mode to prevent -- this one is 1405
+       values from 6 leaf classes driven off synthetic metadata, and its scope note is
+       in the test's own docstring.
     2. **A test that re-implements the rule it is checking checks nothing.** Layer 1 had
        its own copy of how `import_run_field_function` builds a method name, so changing
        the production rule left every test green. The rule is
