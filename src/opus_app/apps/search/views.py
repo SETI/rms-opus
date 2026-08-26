@@ -10,12 +10,24 @@
 #
 ################################################################################
 
+"""The search API, and the routines that turn a search URL into SQL.
+
+`url_to_search_params` parses a request's query string into the `(selections,
+extras)` pair the rest of the search path works in, and `construct_query_string`
+renders that pair as a SELECT through `opus_app.apps.tools.sql_builder`.
+`get_user_query_table` runs the search and caches its results in a per-search
+`cache_<n>` table that the results, metadata and cart views then join against.
+"""
+
+from __future__ import annotations
+
 import copy
 import hashlib
 import json
 import logging
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 # This is used instead of "re" because it's closer to the ICU regex library
 # used by MySQL.
@@ -48,6 +60,12 @@ from opus_app.apps.tools.app_utils import (
     strip_numeric_suffix,
 )
 from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from django.http import HttpRequest, HttpResponse, QueryDict
+
 from opus_support import (
     convert_from_default_unit,
     convert_to_default_unit,
@@ -68,7 +86,7 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @api_view
-def api_normalize_input(request):
+def api_normalize_input(request: HttpRequest) -> HttpResponse:
     """Validate and normalize slug values.
 
     This is a PRIVATE API.
@@ -106,7 +124,8 @@ def api_normalize_input(request):
 
 
 @api_view
-def api_string_search_choices(request, slug, *, api_code):
+def api_string_search_choices(request: HttpRequest, slug: str, *,
+                              api_code: int) -> HttpResponse:
     """Return valid choices for a string search given other search criteria.
 
     This is a PRIVATE API.
@@ -260,7 +279,7 @@ def api_string_search_choices(request, slug, *, api_code):
         log.error('api_string_search_choices: SQL failure: %s', sql)
         return HttpResponseServerError(http500_database_error(request))
 
-    final_results = None
+    final_results: list[Any] | None = None
     truncated_results = False
 
     do_simple_search = False
@@ -369,11 +388,13 @@ def api_string_search_choices(request, slug, *, api_code):
 #
 ################################################################################
 
-def url_to_search_params(request_get, allow_errors=False,
-                         allow_regex_errors=False,
-                         return_slugs=False,
-                         pretty_results=False,
-                         allow_empty=False):
+def url_to_search_params(request_get: QueryDict | dict[str, str],
+                         allow_errors: bool = False,
+                         allow_regex_errors: bool = False,
+                         return_slugs: bool = False,
+                         pretty_results: bool = False,
+                         allow_empty: bool = False
+                         ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     """Convert a URL to a set of selections and extras.
 
     This is the MAIN routine for taking a URL and parsing it for searching.
@@ -384,12 +405,21 @@ def url_to_search_params(request_get, allow_errors=False,
     This function takes the URL params and translates them into a list that
     contains 2 dictionaries:
         The first dict is the user selections: keys of the dictionary are
-            param_names of data columns in the data table; values are always
-            lists and represent the user's selections.
+            param_names of data columns in the data table; values represent
+            the user's selections.
         The 2nd dict is any extras being passed by user, like qtypes that
             define what types of queries will be performed for each
             param-value set in the first dict, units for numeric values,
             or sort order.
+
+    **The shape of a selections value depends on the mode flags below**, which is
+    why it is annotated as `Any` rather than pinned to one type. In the default
+    mode a value is a list, one entry per search clause. Under `return_slugs` it
+    is a single value per slug instead -- the empty string for a slug the caller
+    sent empty -- and `qtypes` and `units` in the extras change shape with it, to
+    one value per slug rather than a list per qualified name. Under
+    `pretty_results` a mult value is the joined string rather than the list, and
+    a numeric value is the text it formats to rather than the number.
 
     NOTE: Pass request_get = request.GET to this func please
     (This func doesn't return an http response so unit tests freak if you
@@ -431,12 +461,15 @@ def url_to_search_params(request_get, allow_errors=False,
                     'obs_general.right_asc': ['any']},
          'units': {'obs_general.right_asc': ['degrees']}}
     """
-    selections = {}
-    extras = {}
-    qtypes = {}
-    units = {}
-    order_params = []
-    order_descending_params = []
+    # selections is deliberately `Any`-valued: what a value holds is decided by
+    # this function's mode flags, and the docstring above states the shape each
+    # mode produces. qtypes and units are uniform and are typed exactly.
+    selections: dict[str, Any] = {}
+    extras: dict[str, Any] = {}
+    qtypes: dict[str, Any] = {}
+    units: dict[str, Any] = {}
+    order_params: list[str] = []
+    order_descending_params: list[bool] = []
 
     # Note that request_get.items() automatically gets rid of duplicate entries
     # because it returns a dict.
@@ -562,7 +595,7 @@ def url_to_search_params(request_get, allow_errors=False,
         # Use the original slug name here since we hope if someone says
         # XXX=5 then they also say qtype-XXX=all
         qtype_slug = 'qtype-'+slug_no_num+clause_num_str
-        valid_qtypes = None
+        valid_qtypes: tuple[str, ...] | None = None
         if form_type not in settings.MULT_FORM_TYPES:
             valid_qtypes = settings.STRING_QTYPES
             if form_type in settings.RANGE_FORM_TYPES:
@@ -655,7 +688,7 @@ def url_to_search_params(request_get, allow_errors=False,
             # queries being built.
             # No other form types can be sorted since their ordering
             # corresponds to qtype/unit ordering.
-            new_val = sorted(set(values))
+            new_val: list[str] | str | None = sorted(set(values))
             # Now check to see if the mult values are all valid
             mult_name = get_mult_name(param_qualified_name)
             model_name = mult_name.title().replace('_','')
@@ -664,6 +697,9 @@ def url_to_search_params(request_get, allow_errors=False,
                            list(model.objects.filter(  Q(label__in=new_val)
                                                      | Q(value__in=new_val))
                                              .values('pk'))]
+            # Still the sorted list here: the join and the None replacement
+            # below are the only things that change what this name holds.
+            assert isinstance(new_val, list)
             if len(mult_values) != len(new_val):
                 if allow_errors:
                     new_val = None
@@ -692,7 +728,7 @@ def url_to_search_params(request_get, allow_errors=False,
             for suffix in ('1', '2'):
                 new_slug = slug_no_num+suffix+clause_num_str
                 new_param_qualified_name = param_qualified_name_no_num+suffix
-                new_value = None
+                new_value: float | str | None = None
                 if new_slug in request_get:
                     value = request_get[new_slug].strip()
                     if value:
@@ -909,7 +945,8 @@ def url_to_search_params(request_get, allow_errors=False,
     return selections, extras
 
 
-def get_user_query_table(selections, extras, api_code=None):
+def get_user_query_table(selections: dict[str, Any], extras: dict[str, Any],
+                         api_code: int | None = None) -> str | None:
     """Perform a data search and create a table of matching IDs.
 
     This is THE main data query place.
@@ -1001,7 +1038,7 @@ def get_user_query_table(selections, extras, api_code=None):
     return cache_table_name
 
 
-def set_user_search_number(selections, extras):
+def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -> int | None:
     """Creates a new row in the user_searches table for each search request.
 
     This table lists query params+values plus any extra info needed to
@@ -1096,11 +1133,11 @@ def set_user_search_number(selections, extras):
                                      order_hash=order_hash)
     except UserSearches.MultipleObjectsReturned: # pragma: no cover -
         # This would only happen if the database is corrupted
-        s = UserSearches.objects.filter(selections_hash=selections_hash,
+        duplicates = UserSearches.objects.filter(selections_hash=selections_hash,
                                         qtypes_hash=qtypes_hash,
                                         units_hash=units_hash,
                                         order_hash=order_hash)
-        s = s[0]
+        s = duplicates[0]
         log.exception('set_user_search_number: Multiple entries in user_searches'
                       +' for *** Selections %s *** Qtypes %s *** Units %s '
                       +' *** Order %s',
@@ -1119,10 +1156,11 @@ def set_user_search_number(selections, extras):
 # We don't use the functools @lru_cache decorator because we need to make
 # each return a distinct copy of the ParamInfo, because multiple callers
 # mutate the structure after its returned.
-_PARAMINFO_CACHE = {}
+_PARAMINFO_CACHE: dict[Any, Any] = {}
 
-def get_param_info_by_slug(slug, source, allow_units_override=False,
-                           check_valid_units=True):
+def get_param_info_by_slug(slug: str, source: str,
+                           allow_units_override: bool = False,
+                           check_valid_units: bool = True) -> ParamInfo | None:
     """Given a slug, look up the corresponding ParamInfo.
 
     If source == 'col', then this is a column name. We look at the
@@ -1279,7 +1317,8 @@ def get_param_info_by_slug(slug, source, allow_units_override=False,
 #
 ################################################################################
 
-def construct_query_string(selections, extras):
+def construct_query_string(selections: dict[str, Any], extras: dict[str, Any]
+                           ) -> tuple[str | None, list[Any] | None]:
     """Given a set selections,extras generate the appropriate SQL SELECT"""
     all_qtypes = extras.get('qtypes', [])
     all_units = extras.get('units', [])
@@ -1427,7 +1466,18 @@ def construct_query_string(selections, extras):
     return sql, clause_params
 
 
-def _valid_regex(r):
+def _valid_regex(r: str) -> bool:
+    """Whether the database will accept a regular expression the caller typed.
+
+    The only way to know is to ask the server, since OPUS searches run the
+    expression through MySQL rather than through Python.
+
+    Parameters:
+        r: The regular expression, as the caller typed it.
+
+    Returns:
+        True if the server accepted it.
+    """
     # Validate the regex syntax. The only way to do this with certainty
     # is to actually try it on the SQL server and see if it throws
     # an error. No need to log this, though, because it's just bad
@@ -1439,7 +1489,9 @@ def _valid_regex(r):
         return False
     return True
 
-def get_string_query(selections, param_qualified_name, qtypes):
+def get_string_query(selections: dict[str, Any], param_qualified_name: str,
+                     qtypes: list[str]
+                     ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for strings.
 
     The following q-types are supported:
@@ -1457,6 +1509,14 @@ def get_string_query(selections, param_qualified_name, qtypes):
     values = selections[param_qualified_name]
 
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
+    # The three sibling clause builders (construct_query_string, get_range_query
+    # and get_longitude_query) return (None, None) when the name resolves to no
+    # ParamInfo; this one has never had that guard. It is unreachable from either
+    # caller today -- construct_query_string resolves the same name and bails
+    # first, and api_string_search_choices takes the name off an already-resolved
+    # ParamInfo -- so the invariant is asserted rather than a fourth guard being
+    # invented, which would be a behavior change on a path nothing reaches.
+    assert param_info is not None
 
     cat_name = param_info.category_name
     name = param_info.name
@@ -1514,7 +1574,9 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     return sql_builder.combine_exprs(clauses, 'OR')
 
-def get_range_query(selections, param_qualified_name, qtypes, units):
+def get_range_query(selections: dict[str, Any], param_qualified_name: str,
+                    qtypes: list[str] | None, units: list[str | None] | None
+                    ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for numeric ranges.
 
     This can either be a single column range (one table column holds the value)
@@ -1642,7 +1704,9 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
 
     return sql_builder.combine_exprs(clauses, 'OR')
 
-def get_longitude_query(selections, param_qualified_name, qtypes, units):
+def get_longitude_query(selections: dict[str, Any], param_qualified_name: str,
+                        qtypes: list[str] | None, units: list[str | None] | None
+                        ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for longitude ranges.
 
     Both sides of the range must be specified.
@@ -1737,6 +1801,8 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                                                          new_qtypes, None)
             if range_clause is None:
                 return None, None
+            # get_range_query returns both halves together or neither.
+            assert range_params is not None
             clause = sql_builder.Expr(range_clause, range_params)
 
         elif is_single_column_range(param_qualified_name):
@@ -1796,12 +1862,13 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
 
     return sql_builder.combine_exprs(clauses, 'OR')
 
-def get_user_search_table_name(num):
+def get_user_search_table_name(num: int | str) -> str:
     """ pass cache_no, returns user search table name"""
     return 'cache_' + str(num)
 
 
-def add_obs_table_joins(from_source, obs_tables):
+def add_obs_table_joins(from_source: sql_builder.FromSource,
+                        obs_tables: Iterable[str]) -> None:
     """LEFT JOIN each obs_ table onto obs_general.
 
     The joins are LEFT because an observation that has no row in one of these
@@ -1822,7 +1889,8 @@ def add_obs_table_joins(from_source, obs_tables):
                 sql_builder.column('obs_general_id', table)))
 
 
-def add_mult_table_joins(from_source, mult_tables):
+def add_mult_table_joins(from_source: sql_builder.FromSource,
+                         mult_tables: Iterable[tuple[str, bool, str, str]]) -> None:
     """LEFT JOIN each mult_ table onto the obs_ column that holds its id.
 
     Parameters:
@@ -1842,7 +1910,8 @@ def add_mult_table_joins(from_source, mult_tables):
                                       sql_builder.column('id', mult_table)))
 
 
-def search_cache_join_condition(table_name, cache_table_name):
+def search_cache_join_condition(table_name: str,
+                                cache_table_name: str) -> sql_builder.Expr:
     """Return the condition that ties a table's rows to a search's results.
 
     A search cache table holds one row per matching observation, keyed by
@@ -1871,7 +1940,7 @@ def search_cache_join_condition(table_name, cache_table_name):
 #
 ################################################################################
 
-def _get_param_info_by_qualified_name(param_qualified_name):
+def _get_param_info_by_qualified_name(param_qualified_name: str) -> ParamInfo | None:
     "Given a qualified name cat.name return the ParamInfo"
     if param_qualified_name.find('.') == -1:
         return None
@@ -1891,7 +1960,7 @@ def _get_param_info_by_qualified_name(param_qualified_name):
             return None
 
 
-def is_single_column_range(param_qualified_name):
+def is_single_column_range(param_qualified_name: str) -> bool:
     "Given a qualified name cat.name return True if it's a single-column range"
     cat_name = param_qualified_name.split('.')[0]
     name = param_qualified_name.split('.')[1]
@@ -1907,7 +1976,8 @@ def is_single_column_range(param_qualified_name):
     return True
 
 
-def parse_order_slug(all_order):
+def parse_order_slug(all_order: str | None
+                     ) -> tuple[list[str] | None, list[bool] | None]:
     "Given a list of slugs a,b,-c,d create the params and descending lists"
     order_params = []
     order_descending_params = []
@@ -1935,7 +2005,10 @@ def parse_order_slug(all_order):
 
     return order_params, order_descending_params
 
-def create_order_by_terms(order_params, descending_params):
+def create_order_by_terms(order_params: list[str], descending_params: list[bool]
+                          ) -> tuple[list[tuple[Any, bool]] | None,
+                                     set[tuple[str, bool, str, str]] | None,
+                                     set[str] | None]:
     """Given params and descending lists, make the ORDER BY terms.
 
     Returns a list of (expression, descending) pairs ready for
