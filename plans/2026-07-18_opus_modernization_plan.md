@@ -4984,3 +4984,242 @@ body; never rewrite or delete earlier notes.*
     more case of the existing
     `test_exception_control_flow.py::test_an_obs_module_never_reaches_the_database`,
     which is parametrized over the obs modules and so gains one for `field_types.py`.
+- **2026-08-26 (PR-17a executed):** PR-17 is split by tree (rev 7.20). PR-17a
+  annotates and documents `src/opus_app` and `src/opus_log_analyzer`, empties both
+  suppression tables of every row it owns, and does the `%r` log sweep; **PR-17b
+  owns `integration_tests`** and the two rows left behind. Facts later PRs rely on:
+  - **What is left for PR-17b, in one place.** `[tool.mypy]`'s burn-down list holds
+    exactly `integration_tests.*`, and `[tool.ruff.lint.per-file-ignores]` holds
+    exactly `"integration_tests/**/*.py" = ["N801", "N802"]`. Removing both is
+    PR-17b's exit criterion and completes PR-01's. Regenerate the size by deleting
+    the entries rather than trusting a number; measured at this PR for scale only,
+    the ruff row is 164 violations (unittest test methods and classes carrying PDS
+    bundle identifiers such as `test__api_meta_mults_COISS_2111`) and the mypy entry
+    is dominated by `no-untyped-def` on `def test_x(self):` methods. Two specific
+    hand-offs: `integration_tests/apps_db_tests/test_sql_builder.py:57` passes the
+    integer `17` to `quote_identifier` deliberately, to exercise its rejection of a
+    non-string, and **needs a `# type: ignore[arg-type]` with that reason** once the
+    override comes off; and `test_api_view.py`/`test_sql_builder.py` are the two
+    files PR-18 moves into `tests/opus_app/`, so PR-17b should expect them to move
+    rather than annotate them as permanent residents.
+  - **E501 was retired, not burned down (rev 7.20 ruling).** It lives in
+    `[tool.ruff.lint] extend-ignore` beside PR-01's `PT009`/`PT027`, with its
+    justification in the comment there. The generating rule, since the numbers move:
+    empty the per-file table and run `ruff check`, then run `ruff format` over the
+    same paths and run it again. Measured that way here (ruff 0.16.4): **1267 before
+    formatting, 718 after, 678 of those 718 in `integration_tests`** -- single URL
+    query strings and PDS file paths inside golden fixtures, with nothing to break
+    the line at. From PR-23 the formatter, not the linter, enforces layout;
+    `line-length` stays 100 and still governs it. **Do not reintroduce E501 as a
+    per-file ignore**: it is a global, documented decision now.
+  - **`src/opus_app/apps/search/models.py` is excluded from ruff entirely**, and
+    that is deliberate rather than a burn-down entry. It is written wholesale by
+    `scripts/models/create_opus_models.sh`, so a hand edit does not survive
+    regeneration, and PR-07 -- which would have rewritten the generator -- was
+    deferred by rev 7.11. The generator now runs `ruff format` on its own output
+    (ruff honours an explicitly named path regardless of the exclusion). The
+    exclusion also covers docstrings: **the 245 generated model classes and their
+    nested `Meta` classes deliberately have none**, and PR-21 should not add them --
+    they would flood the Sphinx API reference and the next regeneration would delete
+    them. Formatting it was proved inert by dumping
+    `apps.get_models(include_auto_created=True, include_swapped=True)` before and
+    after: 244 models, byte-identical, including every field's class, column,
+    internal type and callable defaults by identity.
+  - **The bandit skip list is one entry, and the reasoning is worth keeping.**
+    `B101` stays a category skip; everything else is a per-line
+    `# nosec <ID>` with a reason above the statement. Regenerate the set with
+    `grep -rn "# nosec" src integration_tests manage.py` and re-measure what the
+    list holds back by emptying it. Measured here: 275 findings with `skips = []`,
+    of which **246 are B101, and 199 of those are in `src/opus_import` and 16 in
+    `src/opus_support`** -- the narrowing assertions PR-14/15/16 added on purpose.
+    Per-line comments there would be 246 restatements of one fact in three other
+    PRs' trees, which is the noise the criterion exists to remove. `B404`/`B603`
+    left the list by excluding Django's vendored
+    `static/admin/js/compress.py` by exact path (matching what `[tool.mypy]` does
+    with that file); `B607` left it because it fired zero times.
+    **Expect bandit to log `nosec encountered (Bxxx), but no failed test` lines on a
+    clean run** -- it attaches a `# nosec` to a statement's whole line range and
+    warns for each candidate node the check did not fire on, so a statement holding
+    several string or call nodes emits one warning per node that was fine. A bare
+    `# nosec` silences the warnings by suppressing every check on the line, which is
+    worse. The exit status is what gates.
+  - **`opus_log_analyzer` is strict-clean and fully documented**, and its type
+    override is gone. Its verification is **rendered-report parity**, because the
+    integration suite does not exercise this package at all (PR-06 established
+    this). The method, which is reusable: build a synthetic Apache access log and
+    error log, serve the OPUS fields JSON from a local file through a `file://`
+    `--api-host-url` so nothing touches the network, render from the base tree and
+    the new tree via `PYTHONPATH`, and compare bytes. Six renderings here -- text
+    by-ip, text by-time, HTML, a 90 KB text report, error-analyzer text and
+    error-analyzer HTML -- all byte-identical. **Take the report from redirected
+    stdout, not from `--output`**: see #1467.
+  - **Six defects were found by annotating and filed rather than fixed**, because
+    rev 7.14 puts log-analyzer behavior out of scope and #1468 is a configuration
+    contract rather than a Django concern. **#1463** IPv6 addresses flow into fields
+    declared IPv4 (measured: cross-version membership is silently False, so
+    `--ignore-ip` never matches across families, and sorting a mixed set raises
+    `TypeError`). **#1464** `Session.__eq__` compares against the builtin `id`, so
+    no session equals any other and a set of sessions never de-duplicates.
+    **#1465** `--summary` raises `ValueError` in `show_summary` (a three-way unpack
+    of a two-tuple) behind the `AttributeError` #1451 already records, plus a dead
+    `[OBSOLETE]` marker. **#1466** `slug.py` casts away a real `None`. **#1467** the
+    `--output` report stream is never closed: instrumenting one run shows 64 writes
+    and zero closes, and a report smaller than the 8 KB buffer is lost in its
+    entirety with exit status 0 -- the cron templates all pass `--html` and produce
+    far more than 8 KB, which is why it has gone unnoticed. **#1468**
+    `log_api_calls = true` is schema-valid and reaches `True.lower()`; measured, it
+    escapes `api_view` (the call is before the decorator's `try`), so every API call
+    fails and `exit_api_call` never runs.
+  - **`selections`, `qtypes` and `units` in `url_to_search_params` are annotated
+    `dict[str, Any]` on purpose, and the docstring carries what the type cannot.**
+    Their value *shape* is chosen by the function's mode flags: a list per clause by
+    default, one value per slug under `return_slugs`, and formatted text rather than
+    a number under `pretty_results`. A precise union is expressible but would push
+    narrowing into every consumer for an invariant the code establishes by mode
+    rather than by type. The docstring now states each mode's shape and no longer
+    claims values "are always lists", which two of the three modes falsified.
+    **A later PR that wants a tighter type should change the function's shape, not
+    the annotation.**
+  - **Where a local was doing two jobs it got two names, not a union.**
+    `set_user_search_number`'s `s` (a model, then a queryset, then its first row) and
+    `get_reqno`'s `reqno` (query-string text, then the parsed number) are the two
+    instances. Both are behavior-identical; the second keeps `int(None)` raising
+    `TypeError` into the same `except`.
+  - **`enter_api_call`'s `name` parameter is read by nothing, and never has been.**
+    It is byte-identical at `101bc511`, PR-13's base. This makes one sentence of
+    PR-13's notes misleading rather than wrong in its conclusion: it records that
+    `api_init_detail_page` logged under the name `api_get_data` and that "the
+    decorator takes the name from `handler.__name__`, so that is corrected". The
+    argument passed did change; **no log line did**, because the parameter is
+    discarded. Whether the API-call log should carry the handler name is a behavior
+    question this PR left alone.
+  - **A missing guard in `get_string_query`, recorded because it is an asymmetry
+    rather than a bug today.** Its three sibling clause builders
+    (`construct_query_string`, `get_range_query`, `get_longitude_query`) all return
+    `(None, None)` when a qualified name resolves to no `ParamInfo`; this one
+    dereferences the result. Unreachable from either caller --
+    `construct_query_string` resolves the same name and bails first, and
+    `api_string_search_choices` takes the name off an already-resolved `ParamInfo` --
+    so it carries an assertion with that reasoning rather than a fourth guard, which
+    would have been a behavior change on a path nothing takes.
+  - **Three latent faults in `sql_builder`, none reachable today**, for whoever
+    reopens it: `in_values(expr, [])` renders `IN ()`, a syntax error, guarded by the
+    `if mult_values:` at its only caller; `join_exprs([], op)` returns an empty
+    `Expr` which would emit a bare `WHERE`; and `Select.build()` appends `FROM`
+    unconditionally, so a `Select` with no source renders a trailing `FROM`.
+  - **CI and the self-hosted runner resolve different dependency trees, and the type
+    gate is exposed to it.** The lint job installs `-e ".[dev]"` and gets whatever is
+    current; the runner installs `requirements.txt` pins. `requests` ships `py.typed`
+    from 2.33 and the pinned 2.32.5 does not, so `mypy` was **green in CI and red on
+    a pinned venv** at `7ecedd13`, naming `opus_import/util/retrieve_ra_dec.py`.
+    `types-requests` fixes it under both resolutions. `types-pytz` and `types-regex`
+    joined for the same reason. **The class, not the instance, is what to carry:
+    PR-19 and PR-22 both build environments, and a check that passes on one and fails
+    on the other will name a file rather than the skew.** PR-03 recorded the same
+    class against pytest's `filterwarnings`.
+  - **Two verification tools were written for this PR and both had a blind spot that
+    a green result hides.** They live in the PR description rather than the tree.
+    (1) An *inertness* check parses both trees, strips docstrings and annotations,
+    and compares ASTs statement by statement, so an annotation diff can be read as
+    "annotations, docstrings, and this explicit list". It does **not** strip imports,
+    deliberately -- an added `from typing import Any` shows up and must be
+    acknowledged. (2) A *docstring* check reports every definition with no docstring.
+    Its first version walked only definition nodes, so **a function defined inside an
+    `if` was invisible to it** -- the under-scanning class PR-16 recorded against
+    `cls.body`, reproduced in the tool built to check the fix -- and it reported
+    "0 missing" for `opus/query_handler.py` while two closures had none. Its second
+    version accepted a file path and silently reported `0 of 0`, because `rglob` on a
+    file yields nothing. Both are fixed. **The lesson is the one PR-16 stated: state
+    what a scan cannot see, and prefer a count derived from an independent traversal
+    to a floor.**
+  - **75 `# type: ignore` markers across the two packages, and every one is
+    load-bearing** -- `warn_unused_ignores` is on under `strict`, so an
+    unnecessary one fails CI. Regenerate the breakdown with
+    `grep -rhoE "type: ignore\[[a-z-]+\]" src/opus_app src/opus_log_analyzer`;
+    measured here, the largest groups are `union-attr` 16, `attr-defined` 13,
+    `arg-type` 11, `assignment` 9, `operator` 8. **They fall into two kinds and
+    the difference is the point.** Roughly half sit under a comment naming a real
+    defect or a filed issue: a nullable `param_info` column (`label`,
+    `label_results`, `slug`) dereferenced with no guard, a helper whose None
+    return is not checked. Those are recorded rather than asserted away, because
+    an `assert` there would claim an invariant the data does not carry. The rest
+    are limitations the checker cannot see past: django-stubs typing
+    `QueryDict.__getitem__` as `str | list[object]` when it returns the last
+    value, `qrcode.make_image()` declared as the pure-Python image when Pillow
+    makes it a `PilImage`, display attributes attached to ORM rows for the
+    templates, and `fmt` deciding both the archive class and its mode string in
+    `cart/views.py`. **A later PR should not "clean these up" without reading the
+    comment at the site**: deleting one of the first kind hides a defect, and
+    deleting one of the second re-breaks the gate.
+  - **Two annotations in this PR were wrong and both were caught downstream, not
+    by review.** `set_user_search_number` was declared `-> int | None` and returns
+    a 2-tuple; `get_param_info_by_slug` was declared `-> ParamInfo | None` and
+    returns a pair on two paths. Both came from inferring the return type from the
+    function's name instead of reading its `return` statements. **The generator, so
+    the next annotation PR can run it:** for each function compare the declared
+    return type's top level against the *arity* of every `return` in it -- arity is
+    decidable from the source and is exactly where this mistake shows. Over both
+    packages it now reports three, all benign and each explainable
+    (`SearchResultsChunk` is a tuple alias, twice; `get_slug_info` is the #1465
+    looseness).
+  - **`get_param_info_by_slug` is `@overload`ed on two parameters, and the
+    reasoning generalizes.** The honest union return forced narrowing at roughly
+    forty call sites in four files. The overloads key on `source` *and*
+    `allow_units_override`, which is what the body actually branches on, so the
+    combination the code handles but nobody uses -- `allow_units_override` with a
+    source other than `'col'` -- is now a type error rather than a silent scalar.
+    Every caller passes both as literals, which is what makes this resolvable;
+    check that before reaching for the same tool elsewhere.
+  - **The `%r` sweep is done and its worklist was regenerated, not inherited.**
+    262 occurrences on 176 lines across 9 files, found by an AST pass over every
+    `log.<level>(...)` whose message is a literal. Three messages were built by
+    concatenation and had no mechanical rewrite (two `'Unparseable form type ' +
+    str(...)`, and `api_normalize_url`'s slug, which is the live caller-supplied
+    one PR-13 named); two more sat inside commented-out logging calls, which an
+    AST sweep cannot see by construction. All five were converted by hand.
+    `grep -rnE "log\.(debug|info|warning|error|exception|critical)\(" src/opus_app`
+    piped through a `%s` filter now returns nothing, comments included. The 101
+    `str(...)`-wrapped arguments were deliberately left wrapped: `str` and `repr`
+    agree for the mappings and lists they carry.
+  - **Defects found while annotating the Django side, none fixed here.** Written
+    out so nobody re-derives them. In `cart/views.py`: `_create_csv_file`'s 500
+    response is discarded by `api_create_download`, which then fails later with a
+    `FileNotFoundError` and leaks its temp files; `?urlonly=0` is truthy and
+    yields a URL-only archive against the documented meaning (not front-end
+    reachable -- the JS only ever sends `urlonly=1`); and
+    `int(request.GET.get('hierarchical', 0))` answers 500 where every other
+    malformed parameter answers 400. In `ui/views.py`: an unknown slug in
+    `?cols=` or `?widgets=` on `__metadata_selector.json` dereferences None and
+    answers **500 where the rest of the API answers 400**, and
+    `_get_menu_labels` passes `get_triggered_tables`' None straight into a Django
+    `filter(table_name__in=...)`. In `results/views.py`: the same unchecked
+    `get_triggered_tables`, and `_get_metadata_by_slugs(..., 'raw_data', ...)`
+    returning an error response that the caller subscripts. In
+    `metadata/views.py`: a database failure in `api_get_range_endpoints` is
+    reported as a bare `Http404` where the sibling `api_get_mult_counts` returns a
+    500 for the identical condition. In `tools/db_utils.py`: `','.join(...)` over
+    a list that can hold None, reachable from `api_get_metadata?fmt=json` on a
+    MULTIGROUP field with a null mult row. In `paraminfo/models.py`:
+    `body_qualified_label` uses a nullable `label` with `in` and `+` where its
+    results sibling returns None for the same condition. In `tools/dictionary.py`:
+    a None `context` reaches `context.startswith('MULT_')`. `search/forms.py`'s
+    trailing block reads two names leaked from a `for` loop, so an empty mapping
+    raises `NameError` and several slugs silently reduce the form to the last
+    range field.
+  - **Three claims in the tree were false and were corrected rather than
+    restated**: `SessionInfo`'s "This is an abstract class" (it declares none and
+    is instantiated directly), `get_pds_products`' warning that its result is not
+    in `opus_id_list` order (it pre-populates in that order and dicts keep it),
+    and `api_normalize_url`'s documented `'message'` key, which the code spells
+    `'msg'`. `cart/models.py`'s `# this is not being used` is false too -- `Cart`
+    is queried in three views and the golden suite -- and was left alone as a
+    comment edit outside this PR's lines; it is a candidate for whoever reopens it.
+  - **The unit baseline at `7ecedd13` is 1173 tests**, which is what CI reports for
+    that commit; PR-16's note records 1146 for its own tree. Nothing in PR-17a adds
+    or removes a test, so 1173 is what it should still be.
+  - **`pytest integration_tests/...` does not work and is not supposed to.** Plain
+    pytest never configures Django (`testpaths = ["tests"]`, no pytest-django yet),
+    so `connection.ops.quote_name` fails in `ConnectionHandler` and the DB-free
+    suites report failures that have nothing to do with the code. Run them through
+    `OPUS_CONFIG=... python manage.py test -b integration_tests.apps_db_tests.<mod>`
+    until PR-18 wires pytest-django.
