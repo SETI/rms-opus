@@ -182,6 +182,11 @@ exclude_lines = [
   "pragma: no cover",
   "def __repr__",
   "raise NotImplementedError",
+  # Never executed by construction: a TYPE_CHECKING block is False at run time,
+  # and an @overload stub is a signature declaration whose body is `...`. Kept in
+  # step with integration_tests/.coveragerc, which needs the same two.
+  "if TYPE_CHECKING:",
+  "@overload",
 ]
 fail_under = 90
 

@@ -5181,6 +5181,24 @@ body; never rewrite or delete earlier notes.*
     piped through a `%s` filter now returns nothing, comments included. The 101
     `str(...)`-wrapped arguments were deliberately left wrapped: `str` and `repr`
     agree for the mappings and lists they carry.
+  - **Annotation machinery is excluded from both coverage configs, and this very
+    nearly shipped as a CI failure.** `if TYPE_CHECKING:` blocks and `@overload`
+    stubs are statements that by construction never execute -- the first is False
+    at run time, the second is a signature declaration with a `...` body -- so
+    adding them dropped the integration gate to **99% (18 missed statements, 12
+    partial branches across 10 files)**. `integration_tests/.coveragerc` and
+    `[tool.coverage.report]` both gained `if TYPE_CHECKING:` and `@overload` in
+    `exclude_lines`, which is what keeps the 100% gate meaningful rather than
+    scattering `# pragma: no cover` over every such block. **The trap PR-16
+    recorded is real and this is the second PR to meet it:** `opus_main_test.sh`
+    exits 0 without ever calling `opus_check_coverage.sh`, so the chain reported
+    success at 99% while `run-app-tests.yml:96` -- which does call it -- would
+    have failed. Run that script yourself after every local chain.
+  - **The integration coverage baseline moves to 22264 statements / 1882
+    branches, 100%**, from PR-13/14/15's 22161 / 1880. The whole delta is this
+    PR's own additions to `src/opus_app/apps/*` (assertions, narrowings, the
+    two-name splits) minus the 32 statements and 24 branches the two new
+    `exclude_lines` entries remove. `Ran 1643 tests` is unchanged.
   - **A test does assert log text, which the `%r` sweep found the hard way.**
     PR-13's notes say the widget-slug log line "was changed to match it but
     nothing asserts log text" -- true of the golden fixtures, and false of the
