@@ -17,17 +17,18 @@ SIXTEEN_BIT_IMAGE_LEVELS = 2**16
 
 
 class ObsTypeImage(ObsBase):
+    """The ``obs_type_image`` columns: an image's size and its levels.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
     ### Don't override these ###
 
-    """The ``obs_type_image`` columns: an image's size and its levels.
-
-    Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
-    """
 
     def field_obs_type_image_opus_id(self) -> StrField:
         return self.opus_id

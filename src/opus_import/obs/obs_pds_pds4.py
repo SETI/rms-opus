@@ -12,6 +12,12 @@ from opus_import.obs.obs_pds import ObsPds
 
 
 class ObsPdsPDS4(ObsPds, ObsBasePDS4):
+    """The ``obs_pds`` columns for a PDS4 product.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
@@ -20,11 +26,6 @@ class ObsPdsPDS4(ObsPds, ObsBasePDS4):
     ### ! Might override these ! ###
     ################################
 
-    """The ``obs_pds`` columns for a PDS4 product.
-
-    Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
-    """
 
     def field_obs_pds_data_set_id(self) -> StrField:
         return None  # Field not used for PDS4

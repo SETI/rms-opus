@@ -1,4 +1,5 @@
-"""What every Cassini instrument shares: the observation name, and what is derived from it.
+"""What every Cassini instrument shares: the observation name, and what is derived from
+it.
 
 A Cassini observation name encodes the prime instrument, the orbit number, the target
 code and the activity, none of which is a column of its own, so most of this module is
@@ -334,7 +335,8 @@ class ObsCassiniCommon(ObsBase):
 
         Returns:
             True after Saturn's 2009 equinox and False before it, or None if the
-            observation has no start time. Which face is lit is what turns an angle measured
+            observation has no start time. Which face is lit is what turns an angle
+            measured
             from the lit face into a north-based one.
         """
         start_time = self.field_obs_general_time1()
@@ -509,7 +511,8 @@ class ObsCassiniCommon(ObsBase):
 
         Returns:
             The name: ``'CLEAR'`` when both wheels are clear, the one filter's name when
-            only one is, and otherwise the two joined by ``+`` -- in wavelength order, or in
+            only one is, and otherwise the two joined by ``+`` -- in wavelength order, or
+            in
             name order where the wavelengths are equal or unknown, with a polarizer always
             placed second.
         """
@@ -670,7 +673,7 @@ class ObsCassiniCommon(ObsBase):
         # If the last part is PRIME, the prime_inst is the first part. Otherwise
         # it's the last part.
         # From Matt Tiscareno:
-        # PIE is equivalent to PRIME. These were “pre-integrated elements” that
+        # PIE is equivalent to PRIME. These were "pre-integrated elements" that
         # were considered to be tall tent poles in the process of portioning out
         # observation time.
         if last == 'PRIME' or last == 'PIE':

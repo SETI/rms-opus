@@ -15,11 +15,12 @@ from opus_import.obs.obs_base import ObsBase
 
 
 class ObsBasePDS4(ObsBase):
+    """What every obs class for a PDS4 bundle shares."""
+
     #############################
     ### Public access methods ###
     #############################
 
-    """What every obs class for a PDS4 bundle shares."""
 
     def primary_filespec_from_index_row(self, row: IndexRow,
                                         convert_lbl: bool = False,

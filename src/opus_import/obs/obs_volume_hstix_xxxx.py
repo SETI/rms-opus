@@ -20,7 +20,8 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
         """Decide whether this WFC3 observation is spectroscopic, from its filter.
 
         Returns:
-            Whether the filter is a grism, followed by the two filter names, or None if the
+            Whether the filter is a grism, followed by the two filter names, or None if
+            the
             label carries a second filter -- which WFC3 has no wheel for, and which is
             logged as an error.
         """

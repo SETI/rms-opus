@@ -12,17 +12,18 @@ from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometryName(ObsBase):
+    """The ``obs_surface_geometry_name`` columns: the body one geometry row is for.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
     ### Don't override these ###
 
-    """The ``obs_surface_geometry_name`` columns: the body one geometry row is for.
-
-    Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
-    """
 
     def field_obs_surface_geometry_name_opus_id(self) -> StrField:
         return self.opus_id

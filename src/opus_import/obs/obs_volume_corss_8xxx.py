@@ -25,15 +25,16 @@ _DSN_NUM_TO_PDS4_INST = {
 
 
 class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Cassini RSS ring occultation profiles of CORSS_8001.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:

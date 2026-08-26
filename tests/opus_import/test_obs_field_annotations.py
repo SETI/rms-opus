@@ -30,7 +30,9 @@ from __future__ import annotations
 
 import argparse
 import ast
+import inspect
 import json
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -135,6 +137,22 @@ def _declared_annotations() -> dict[str, str]:
     return declared
 
 
+def _only_raises(method: Any) -> bool:
+    """Whether a method's whole body is a raise, which an abstract stub's is.
+
+    Read from the source rather than by calling it: an obs class's field methods reach
+    the index, and a stub is exactly the case where there is nothing to reach.
+    """
+    try:
+        tree = ast.parse(textwrap.dedent(inspect.getsource(method)))
+    except (OSError, TypeError, SyntaxError):  # pragma: no cover - not a Python method
+        return False
+    # tree.body[0] is the FunctionDef just parsed; ast.Module.body is not narrowed.
+    body = [n for n in tree.body[0].body   # type: ignore[attr-defined]
+            if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
+    return len(body) == 1 and isinstance(body[0], ast.Raise)
+
+
 def _leaf_classes() -> list[type[ObsBase]]:
     """Return every obs class `opus_import.config_bundle_info` can instantiate."""
     leaves: list[type[ObsBase]] = []
@@ -223,8 +241,15 @@ def test_every_column_the_import_computes_has_a_field_method() -> None:
                     continue
                 if column.get('data_source') != 'COMPUTE':
                     continue
-                if not hasattr(cls, name):
+                method = getattr(cls, name, None)
+                if method is None:
                     missing.append(f'{cls.__name__} populates {table} but has no {name}')
+                elif _only_raises(method):
+                    # `hasattr` alone would be satisfied by an abstract stub, which the
+                    # import cannot use: calling it aborts the column.
+                    missing.append(
+                        f'{cls.__name__} populates {table} but resolves {name} to a '
+                        f'stub that only raises')
 
     assert missing == []
 
@@ -646,6 +671,8 @@ def _instrument_for(fixture: dict[str, Any]) -> ObsBase:
     instrument = cls(make_context(args=args), bundle='TEST_BUNDLE', metadata=metadata)
     # There are no holdings here, so the one thing an obs class asks the file system for
     # is answered directly. Everything else it reads comes from the metadata above.
+    # Replacing a bound method is the point: there are no holdings here, and this is
+    # the one thing an obs class asks the file system for.
     instrument._pdsfile_from_filespec = (  # type: ignore[method-assign]
         lambda filespec: _FakePdsFile())
     return instrument
@@ -720,6 +747,8 @@ def _drive_fixture(instrument_id: str,
                 continue
             if column.get('data_source') != 'COMPUTE':
                 continue
+            # `_metadata` is `dict | None` on ObsBase; `_instrument_for` always
+            # supplies one, which the checker cannot see through the attribute.
             instrument._metadata['table_name'] = table   # type: ignore[index]
             instrument._metadata['field_name'] = (       # type: ignore[index]
                 name[len('field_' + table + '_'):])

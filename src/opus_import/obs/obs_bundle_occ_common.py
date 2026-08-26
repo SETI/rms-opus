@@ -11,15 +11,16 @@ from opus_import.obs.obs_common_pds4 import ObsCommonPDS4
 
 
 class ObsBundleOccCommon(ObsCommonPDS4):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """What every PDS4 occultation bundle shares.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def primary_filespec(self) -> str | None:

@@ -52,9 +52,15 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         """Whether this observation is spatially resolved.
 
         Returns:
-            True for an image or a spectral image, False for a plain spectrum.
+            True for an image or a spectral image, False for a plain spectrum and for
+            an observation whose type the instrument could not determine.
         """
         obs_type = self._observation_type()
+        # None where the instrument could not tell -- a WFC3 label carrying a second
+        # filter, or an unrecognized STIS observation type, both of which are logged
+        # where they are found. Neither is an image.
+        if obs_type is None:
+            return False
         assert obs_type in ('IMG', 'SPE', 'SPI')
         return obs_type == 'IMG' or obs_type == 'SPI'
 
@@ -115,7 +121,8 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         """Return which planet this observation was of.
 
         Returns:
-            The first three letters of the planet's name, or ``'OTH'`` for a target that is
+            The first three letters of the planet's name, or ``'OTH'`` for a target that
+            is
             not one of the planets.
         """
         planet_name = self._index_col('PLANET_NAME')
@@ -242,7 +249,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         if detector_id == '':
             return self._create_mult('UNKNOWN')
         instrument = self.instrument_id
-        assert instrument is not None
         assert instrument is not None
         ret = instrument[3:] + '-' + detector_id
         return self._create_mult_keep_case(ret)

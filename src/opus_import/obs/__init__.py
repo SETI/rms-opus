@@ -33,11 +33,12 @@ Five kinds of module
 How a method is chosen
 ----------------------
 
-A leaf class's method resolution order runs leaf, mission, assembly, table modules in
-the order the assembly class lists them, PDS-version base, root. So a bundle module
-overrides its mission's answer, a mission module overrides the table module's default,
-and a table module overrides nothing but `ObsBase`. Reading a Cassini ISS volume's order
-out of the tree gives:
+A leaf class's method resolution order runs leaf, then the mission's PDS-version half,
+then the assembly class, then the table modules in the order that class lists them, and
+finally the mission's PDS-version-independent half and the root. So a bundle module
+overrides everything, and a mission's PDS-version half overrides the table modules --
+but its PDS-version-independent half does not, because that one sits *below* them.
+Reading a Cassini ISS volume's order out of the tree gives:
 
 .. code-block:: text
 

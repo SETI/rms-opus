@@ -60,11 +60,14 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def surface_geo_target_list(self) -> Sequence[str] | None:
         """The targets this observation has surface geometry for.
 
-        These volumes carry the geometry inline rather than in per-target summary files, so
-        the targets are named here and the surface geometry methods are called once for each.
+        These volumes carry the geometry inline rather than in per-target summary files,
+        so
+        the targets are named here and the surface geometry methods are called once for
+        each.
 
         Returns:
-            The target, as a one-element tuple, or an empty one for a ring observation whose
+            The target, as a one-element tuple, or an empty one for a ring observation
+            whose
             primary body or target name is not Saturn's, which is logged as an error.
         """
         # If the surface_geo info exists somewhere other than in separate summary

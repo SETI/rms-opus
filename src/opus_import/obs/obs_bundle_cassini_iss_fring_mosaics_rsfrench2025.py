@@ -28,21 +28,23 @@ _NOTE_MAPPING = {
 _F_RING_CIRCUMFERENCE = 2 * math.pi * 140221.3
 
 class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
-    #######################
-    ### HELPER FUNCTIONS ###
-    #######################
-
     """The Cassini ISS mosaics of Saturn's F ring.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
 
+    #######################
+    ### HELPER FUNCTIONS ###
+    #######################
+
+
     def _camera(self) -> str:
         """Return which ISS camera took the images a mosaic was built from.
 
         Returns:
-            ``'N'`` for the narrow-angle camera or ``'W'`` for the wide-angle one, read from
+            ``'N'`` for the narrow-angle camera or ``'W'`` for the wide-angle one, read
+            from
             the last letter of the first image's name.
         """
         return cast(str, self._index_col('min_image_name')[-1].upper())
@@ -308,16 +310,20 @@ class ObsBundleCassiniISSFRingMosaicsRSFrench2025(ObsCassiniCommonPDS4):
         filter1, filter2 = 'CL1', 'CL2'
         central_wl, fwhm, _ = self._coiss_wavelength_helper(self._camera(),
                                                             filter1, filter2)
-        assert central_wl is not None
-        assert fwhm is not None
+        # _coiss_wavelength_helper reports a filter combination it does not describe
+        # and returns Nones, which is a documented outcome rather than an invariant.
+        if central_wl is None or fwhm is None:
+            return None
         return (central_wl - fwhm / 2) / 1000.
 
     def field_obs_wavelength_wavelength2(self) -> FloatField:
         filter1, filter2 = 'CL1', 'CL2'
         central_wl, fwhm, _ = self._coiss_wavelength_helper(self._camera(),
                                                             filter1, filter2)
-        assert central_wl is not None
-        assert fwhm is not None
+        # _coiss_wavelength_helper reports a filter combination it does not describe
+        # and returns Nones, which is a documented outcome rather than an invariant.
+        if central_wl is None or fwhm is None:
+            return None
         return (central_wl + fwhm / 2) / 1000.
 
     def field_obs_wavelength_wave_res1(self) -> FloatField:

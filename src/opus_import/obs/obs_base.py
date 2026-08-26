@@ -154,8 +154,9 @@ class ObsBase:
                 is what the same COVIMS case needs when looking a row up.
 
         Returns:
-            The file specification, or None if the row does not carry one or names a
-            different bundle, which is logged as an error.
+            The file specification, or None for a row that names no file. The PDS3
+            implementation logs why; the PDS4 one does not, because a PDS4 index row
+            either carries the path or is not a row OPUS imports.
 
         Raises:
             NotImplementedError: Always; a PDS-version subclass must override this.
@@ -271,13 +272,14 @@ class ObsBase:
             row: The index row to read.
 
         Returns:
-            The OPUS id, or None if the row's file specification does not resolve to
-            one, which is logged as a warning rather than an error because an index can
-            legitimately name files OPUS does not import.
+            The OPUS id, or None if the row names no file or its file specification
+            does not resolve to an id. Both are logged as a warning rather than an
+            error, because an index can legitimately name files OPUS does not import.
         """
         full_filespec = self.primary_filespec_from_index_row(row)
         if full_filespec is None:
-            # primary_filespec_from_index_row has already logged why.
+            self._log_nonrepeating_warning(
+                    'Unable to create OPUS_ID from index: the row names no file')
             return None
         try:
             pdsf = self._pdsfile_from_filespec(full_filespec)

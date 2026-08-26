@@ -34,15 +34,16 @@ _EBROCC_INST_TO_PDS4_INST = {
 # * Observer elevation = 90 - incidence angle
 
 class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The ground-based Saturn ring occultations of EBROCC_xxxx.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:
@@ -124,8 +125,10 @@ class ObsVolumeEBROCCxxxx(ObsCommonPDS3):
         """The target of these observations.
 
         Returns:
-            Saturn's rings, as a one-element list, or ``[(None, None)]`` if the label names
-            something else -- which is logged as an error, since these volumes hold nothing
+            Saturn's rings, as a one-element list, or ``[(None, None)]`` if the label
+            names
+            something else -- which is logged as an error, since these volumes hold
+            nothing
             but Saturn ring occultations.
         """
         target_name = self._index_label_col('TARGET_NAME')

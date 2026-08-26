@@ -49,15 +49,16 @@ THRESHOLD_START_TIME_VG_AT_NORTH = julian.tai_from_iso(
 # volumes.
 
 class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """What every Voyager ring-profile volume shares.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def mission_id(self) -> str:
@@ -204,7 +205,8 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
         """Return the mission phase this observation belongs to.
 
         Returns:
-            The phase, derived from the planet the profile is of, since these volumes record
+            The phase, derived from the planet the profile is of, since these volumes
+            record
             no phase of their own.
         """
         target_name = self._index_col('TARGET_NAME').upper()

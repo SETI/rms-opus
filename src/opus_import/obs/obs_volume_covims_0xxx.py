@@ -40,7 +40,8 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
 
         Returns:
-            The volume-prefixed path, built from the index's separate path and file columns.
+            The volume-prefixed path, built from the index's separate path and file
+            columns.
         """
         # Note it's very important that this can be calculated using ONLY
         # the primary index, not the supplemental index!
@@ -66,11 +67,13 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     def opus_id(self) -> str | None:
         """The OPUS id of the current observation, with its channel appended.
 
-        One COVIMS index row describes both an infrared and a visible observation, so the id
+        One COVIMS index row describes both an infrared and a visible observation, so the
+        id
         the file specification alone yields is not unique.
 
         Returns:
-            The id with ``_ir`` or ``_vis`` appended, or the plain id while the indexes are
+            The id with ``_ir`` or ``_vis`` appended, or the plain id while the indexes
+            are
             being scanned, before either channel has been selected.
         """
         if self.phase_name is None:
@@ -86,7 +89,8 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         """The channels this index row is expanded into.
 
         Returns:
-            ``'VIS'``, ``'IR'``, or both, according to which sampling modes the row records
+            ``'VIS'``, ``'IR'``, or both, according to which sampling modes the row
+            records
             as used. Every field method is called once per channel.
         """
         phase_names = []

@@ -11,15 +11,16 @@ from opus_import.obs.obs_volume_new_horizons_common import ObsVolumeNewHorizonsC
 
 
 class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The New Horizons MVIC images of NHxxMV_xxxx.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:
@@ -56,7 +57,8 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
         return cast(str | None, self.bundle + '/' + filespec)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
-        """Convert a label's path to the engineering FITS file OPUS identifies observations by.
+        """Convert a label's path to the engineering FITS file OPUS identifies
+        observations by.
 
         Parameters:
             filespec: The path, relative to the holdings root.

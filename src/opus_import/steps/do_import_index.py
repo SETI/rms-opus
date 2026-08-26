@@ -138,7 +138,7 @@ def import_one_index(ctx: ImportContext, bundle_id: str, vol_info: BundleInfo,
                                             obs_rows[row_no], convert_lbl=True)
                     if orig_filespec is None:
                         # A row that names no file cannot be the one this OPUS ID came
-                        # from; the reason it names none has already been logged.
+                        # from.
                         continue
                     orig_filespec = instrument_obj.convert_filespec_from_lbl(
                                                                         orig_filespec)

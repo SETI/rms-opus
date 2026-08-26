@@ -9,6 +9,12 @@ from opus_import.obs.obs_profile import ObsProfile
 
 
 class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
+    """The ``obs_profile`` columns for a PDS4 observation.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
@@ -17,11 +23,6 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
     ### ! Might override these ! ###
     ################################
 
-    """The ``obs_profile`` columns for a PDS4 observation.
-
-    Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
-    """
 
     def field_obs_profile_occ_type(self) -> MultFieldRet:
         return self._create_mult(None)

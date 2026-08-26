@@ -1,4 +1,5 @@
-"""The ``obs_surface_geometry__<TARGET>`` columns: where the observation fell on one body's
+"""The ``obs_surface_geometry__<TARGET>`` columns: where the observation fell on one
+body's
 surface.
 
 One module per OPUS table, mixed into every obs class that fills the table. A column
@@ -14,17 +15,18 @@ from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometryTarget(ObsBase):
+    """The ``obs_surface_geometry__<TARGET>`` columns, filled once per target.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
     ### Don't override these ###
 
-    """The ``obs_surface_geometry__<TARGET>`` columns, filled once per target.
-
-    Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
-    """
 
     def field_obs_surface_geometry_target_opus_id(self) -> StrField:
         return self.opus_id

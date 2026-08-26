@@ -17,13 +17,14 @@ MICRONS_PER_CM = 10000.
 
 
 class ObsWavelength(ObsBase):
-    # Helpers for wavelength
-
     """The ``obs_wavelength`` columns: the observation's spectral coverage.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    # Helpers for wavelength
+
 
     def _wave_res_from_full_bandwidth(self) -> FloatField:
         """Return the spectral resolution of an instrument that has only one band.

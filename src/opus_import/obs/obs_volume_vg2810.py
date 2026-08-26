@@ -10,15 +10,16 @@ from opus_import.obs.obs_volume_vg28xx import ObsVolumeVG28xx
 
 
 class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Voyager ISS radial ring profiles of VG_2810.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:

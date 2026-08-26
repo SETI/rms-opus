@@ -12,15 +12,16 @@ from opus_import.obs.obs_volume_vg28xx import THRESHOLD_START_TIME_VG_AT_NORTH, 
 
 
 class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
-    ################################
-    ### OVERRIDE FROM ObsGeneral ###
-    ################################
-
     """What the VG_2801 and VG_2802 radial ring profiles share.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    ################################
+    ### OVERRIDE FROM ObsGeneral ###
+    ################################
+
 
     def field_obs_general_quantity(self) -> MultFieldRet:
         return self._create_mult('OPDEPTH')
@@ -112,7 +113,8 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         return cast(bool, is_at_north)
 
     def _is_voyager_at_north_except_uranus(self) -> bool:
-        """Whether the signal source was on the north face, counting Uranus's rings as south.
+        """Whether the signal source was on the north face, counting Uranus's rings as
+        south.
 
         Uranus's pole is tipped past the ecliptic, so an observation of its rings is
         north-facing by the ring plane's own reckoning and south-facing by the convention

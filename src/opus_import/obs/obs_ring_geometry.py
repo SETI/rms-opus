@@ -43,7 +43,8 @@ class ObsRingGeometry(ObsBase):
             planet: The OPUS planet id, as a mult column's value gives it.
 
         Returns:
-            The offset in degrees, or None for a planet with no ring-plane longitude system
+            The offset in degrees, or None for a planet with no ring-plane longitude
+            system
             here -- which includes every value that is not one of the planet ids.
         """
         if not isinstance(planet, str):
@@ -57,7 +58,8 @@ class ObsRingGeometry(ObsBase):
             long: The longitude in degrees, or None.
 
         Returns:
-            The converted longitude in ``[0, 360)``, or None if there was none to convert or
+            The converted longitude in ``[0, 360)``, or None if there was none to convert
+            or
             this observation's planet has no ring-plane longitude system.
         """
         if long is None:
@@ -505,7 +507,8 @@ class ObsRingGeometry(ObsBase):
                                  metadata: dict[str, Any]) -> None:
         """Report a gridless ring geometry value whose minimum and maximum disagree.
 
-        A gridless quantity describes the observation as a whole rather than a point in it,
+        A gridless quantity describes the observation as a whole rather than a point in
+        it,
         so its pair should be equal -- unless the observation spans enough time for the
         geometry to have moved, which is what ``temporal_camera`` records.
 

@@ -9,15 +9,16 @@ from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
 
 
 class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The HST WFPC2 observations of HSTUx_xxxx.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:

@@ -1,4 +1,5 @@
-"""The ``obs_general`` columns: what every observation has: its ids, its target, its times,
+"""The ``obs_general`` columns: what every observation has: its ids, its target, its
+times,
 and its sky position.
 
 One module per OPUS table, mixed into every obs class that fills the table. A column
@@ -15,6 +16,12 @@ from opus_import.obs.obs_base import ObsBase
 
 
 class ObsGeneral(ObsBase):
+    """The ``obs_general`` columns, which every observation has.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -22,11 +29,6 @@ class ObsGeneral(ObsBase):
 
     ### Don't override these ###
 
-    """The ``obs_general`` columns, which every observation has.
-
-    Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
-    """
 
     def field_obs_general_opus_id(self) -> StrField:
         return self.opus_id

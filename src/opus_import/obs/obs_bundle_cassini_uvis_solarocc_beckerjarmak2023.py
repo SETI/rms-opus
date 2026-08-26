@@ -13,15 +13,16 @@ from opus_import.obs.obs_cassini_common_pds4 import ObsCassiniCommonPDS4
 
 
 class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCommonPDS4):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Cassini UVIS solar occultation profiles of Saturn's rings.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:

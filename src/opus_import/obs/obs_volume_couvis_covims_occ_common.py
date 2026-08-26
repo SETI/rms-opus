@@ -11,15 +11,16 @@ from opus_import.obs.obs_volume_cassini_occ_common import ObsVolumeCassiniOccCom
 
 
 class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
-    ################################
-    ### OVERRIDE FROM ObsGeneral ###
-    ################################
-
     """What the UVIS and VIMS ring-occultation volumes share.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    ################################
+    ### OVERRIDE FROM ObsGeneral ###
+    ################################
+
 
     def field_obs_general_time1(self) -> FloatField:
         return self._time_from_supp_index()

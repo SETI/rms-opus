@@ -25,15 +25,18 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     # HELPER FUNCTIONS USED BY CASSINI INSTRUMENTS
     ################################################################################
     def _cassini_intended_target_name(self) -> tuple[str | None, str | None]:
-        """Return the target this observation was aimed at, correcting the label where needed.
+        """Return the target this observation was aimed at, correcting the label where
+        needed.
 
-        ``TARGET_NAME`` records what the spacecraft was pointed at, which is not always what
+        ``TARGET_NAME`` records what the spacecraft was pointed at, which is not always
+        what
         the observation is of: a sky or calibration pointing carries a target description
         that names the real one, and several volumes spell a target in a way this pipeline
         maps.
 
         Returns:
-            The corrected target name and the name shown for it, or ``(None, None)`` if the
+            The corrected target name and the name shown for it, or ``(None, None)`` if
+            the
             name is one this pipeline does not describe. Under ``--import-ignore-errors``
             the name becomes the string ``'None'`` so that the observation still imports.
         """
@@ -89,7 +92,8 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     def _fix_cassini_sclk(self, count: str | None) -> str | None:
         """Correct a Cassini spacecraft clock count into the form the parser accepts.
 
-        The instruments do not agree on how they write one: CIRS omits the fractional part,
+        The instruments do not agree on how they write one: CIRS omits the fractional
+        part,
         VIMS writes a partition where there is none, and some volumes pad differently.
 
         Parameters:

@@ -15,11 +15,12 @@ from opus_import.obs.obs_base import ObsBase
 
 
 class ObsBasePDS3(ObsBase):
+    """What every obs class for a PDS3 volume shares."""
+
     #############################
     ### Public access methods ###
     #############################
 
-    """What every obs class for a PDS3 volume shares."""
 
     # Warning: This doesn't work for COCIRS. That's OK for now because there is
     # no supplemental metadata for those volumes.
@@ -37,14 +38,18 @@ class ObsBasePDS3(ObsBase):
 
         Parameters:
             row: The index row to read.
-            convert_lbl: True to run the result through `ObsBase.convert_filespec_from_lbl`.
-            add_phase_from_row: True to append the phase this row's ``OPUS_ID`` names, which
+            convert_lbl: True to run the result through
+            `ObsBase.convert_filespec_from_lbl`.
+            add_phase_from_row: True to append the phase this row's ``OPUS_ID`` names,
+            which
                 is what tells COVIMS's two geometry rows per observation apart.
             add_phase_from_inst: True to append this instance's own phase instead.
 
         Returns:
-            The volume-prefixed path, or None if the row names a different volume or carries
-            no file specification at all, either of which is logged as an error.
+            The volume-prefixed path, or None if the row names a different volume, which
+            is logged as an error. A row carrying none of the file-specification columns
+            yields the volume prefix alone rather than None: the fallback joins
+            ``PATH_NAME`` and ``FILE_NAME``, both of which default to empty.
         """
         # Given a row from an index file, return the primary_filespec.
         # This routine is as generic as possible, because within a single volume

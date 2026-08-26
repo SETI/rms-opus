@@ -6,29 +6,11 @@ statement written in the type system, so the schema and the code can be cross-ch
 rather than kept in step by hand: ``tests/opus_import/test_obs_field_annotations.py``
 resolves every method against its schema column and fails if the two disagree.
 
-Which alias a column takes is decided by the schema alone, in this order:
-
-.. list-table::
-   :header-rows: 1
-
-   * - ``pi_form_type`` (up to any ``:``)
-     - ``field_type``
-     - alias
-   * - ``GROUP``
-     - any
-     - `MultFieldRet`
-   * - ``MULTIGROUP``
-     - ``mult_list``
-     - ``list[MultField]``
-   * - anything else
-     - ``char*``, ``varchar*``, ``text``, ``json``
-     - `StrField`
-   * - anything else
-     - ``real4``, ``real8``
-     - `FloatField`
-   * - anything else
-     - ``int*``, ``uint*``
-     - `IntField`
+Which alias a column takes is decided by the schema alone. **The rule is written once,
+as ``_alias_for`` in that test**, and deliberately not restated here: two copies of a
+decision table drift, and these two had already begun to -- one said
+``list[MultField]`` required a ``mult_list`` storage type where the other asked only for
+a ``MULTIGROUP`` form type.
 
 **The form type is what decides, not the storage type**, and the difference is not a
 formality. A ``flag_yesno`` or ``flag_onoff`` column is stored as ``int unsigned``

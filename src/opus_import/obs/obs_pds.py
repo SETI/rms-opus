@@ -12,6 +12,12 @@ from opus_import.obs.obs_base import ObsBase
 
 
 class ObsPds(ObsBase):
+    """The ``obs_pds`` columns: what the PDS archive says about the product.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -19,11 +25,6 @@ class ObsPds(ObsBase):
 
     ### Don't override these ###
 
-    """The ``obs_pds`` columns: what the PDS archive says about the product.
-
-    Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
-    """
 
     def field_obs_pds_opus_id(self) -> StrField:
         return self.opus_id

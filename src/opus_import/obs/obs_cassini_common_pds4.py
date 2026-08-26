@@ -13,15 +13,16 @@ from opus_import.obs.obs_common_pds4 import ObsCommonPDS4
 
 
 class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
-    ##############################################################
-    ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
-    ##############################################################
-
     """What every Cassini instrument's PDS4 bundles share.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    ##############################################################
+    ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
+    ##############################################################
+
 
     def field_obs_mission_cassini_obs_name(self) -> StrField:
         # Strip leading/trailing whitespace from the label value

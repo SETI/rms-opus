@@ -27,15 +27,16 @@ _VGISS_FILTER_WAVELENGTHS = {
 
 
 class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Voyager ISS images of VGISS_5xxx through VGISS_8xxx.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:
@@ -45,7 +46,8 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def opus_id_from_supp_index_row(self, supp_row: IndexRow) -> str | None:
         """Return the OPUS id a supplemental index row describes.
 
-        The supplemental index for these volumes names the volume in a different column from
+        The supplemental index for these volumes names the volume in a different column
+        from
         every other index, which is why this exists alongside
         `opus_import.obs.obs_base.ObsBase.opus_id_from_index_row`.
 
@@ -151,7 +153,8 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         """Return the two dimensions of the image, in pixels.
 
         Returns:
-            The number of lines and the number of samples, from the window the supplemental
+            The number of lines and the number of samples, from the window the
+            supplemental
             index records.
         """
         line1 = self._supp_index_col('FIRST_LINE')

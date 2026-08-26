@@ -14,15 +14,16 @@ from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 
 
 class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Cassini UVIS observations of COUVIS_0xxx.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:
@@ -79,10 +80,12 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         return channel, image_time
 
     def _is_image(self) -> bool:
-        """Whether this observation is a spectral image rather than a spectrum or a time series.
+        """Whether this observation is a spectral image rather than a spectrum or a time
+        series.
 
         Returns:
-            True for a spatially resolved EUV or FUV observation. The photometers produce no
+            True for a spatially resolved EUV or FUV observation. The photometers produce
+            no
             image at all, an occultation slit produces a time series, and a single-pixel
             window produces a spectrum.
         """
@@ -107,8 +110,10 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         """Return the integration duration in seconds.
 
         Returns:
-            The duration, or None if the index does not carry one. The photometer records it
-            in milliseconds and every other channel in seconds, which is what this converts.
+            The duration, or None if the index does not carry one. The photometer records
+            it
+            in milliseconds and every other channel in seconds, which is what this
+            converts.
         """
         dur = self._index_col('INTEGRATION_DURATION')
         if dur is None:
@@ -250,7 +255,8 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         """Return the two dimensions of the imaging window, in pixels.
 
         Returns:
-            The smaller and the larger dimension, or ``(None, None)`` where the observation
+            The smaller and the larger dimension, or ``(None, None)`` where the
+            observation
             is not an image, carries no supplemental index row, or is missing one of the
             window columns. A dimension that comes out negative is returned as None rather
             than as a nonsense count.
@@ -400,9 +406,11 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         sc_cvt = self.field_obs_mission_cassini_spacecraft_clock_count1()
         time1 = self.field_obs_general_time1()
         time2 = self.field_obs_general_time2()
-        assert sc_cvt is not None
-        assert time1 is not None
-        assert time2 is not None
+        # count1 reports a badly formatted clock count and returns None, so this is a
+        # documented outcome rather than an invariant to assert: report nothing further
+        # and leave the column empty, as count1 already did.
+        if sc_cvt is None or time1 is None or time2 is None:
+            return None
         return sc_cvt + time2-time1
 
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:

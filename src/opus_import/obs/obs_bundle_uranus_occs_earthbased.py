@@ -12,7 +12,8 @@ PDS4TODO Temporary comment
 
 To create the index files:
 
-for i in `(cd /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased; ls -d *_u[0-9]*)`
+for i in `(cd /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased; ls -d
+*_u[0-9]*)`
 do
 echo Processing $i
 mkdir -p /data/new-pds4-holdings/metadata/uranus_occs_earthbased/$i
@@ -191,7 +192,8 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
 
         Returns:
             Uranus for an atmospheric profile and its rings otherwise, as a one-element
-            list, or ``[(None, None)]`` if the name is one this pipeline does not describe.
+            list, or ``[(None, None)]`` if the name is one this pipeline does not
+            describe.
         """
         lookup_name = 'URANUS' if self._is_atmos() else 'U RINGS'
         target_name, target_info = self._get_target_info(lookup_name)

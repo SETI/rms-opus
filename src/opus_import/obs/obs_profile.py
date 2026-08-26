@@ -13,14 +13,15 @@ from opus_import.obs.obs_base import ObsBase, TargetInfo
 
 
 class ObsProfile(ObsBase):
-
-    ### Utility functions useful for subclasses ###
-
     """The ``obs_profile`` columns, which only an occultation fills.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+
+    ### Utility functions useful for subclasses ###
+
 
     def _star_name_helper(self, index: str,
                           col: str) -> tuple[str | None, TargetInfo | None]:

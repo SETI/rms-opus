@@ -13,15 +13,16 @@ from opus_import.obs.obs_wavelength import MICRONS_PER_CM
 
 
 class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Cassini CIRS spectra of COCIRS_5xxx and COCIRS_6xxx.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:

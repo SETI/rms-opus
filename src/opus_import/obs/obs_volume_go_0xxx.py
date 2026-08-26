@@ -48,15 +48,16 @@ _GOSSI_FILTER_WAVELENGTHS = {
 # What a mess for only 13 observations...
 
 class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Galileo SSI images of GO_0xxx.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:

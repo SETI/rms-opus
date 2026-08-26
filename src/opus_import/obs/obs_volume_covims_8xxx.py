@@ -10,15 +10,16 @@ from opus_import.obs.obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIM
 
 
 class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
-    #############################
-    ### OVERRIDE FROM ObsBase ###
-    #############################
-
     """The Cassini VIMS ring occultation profiles of COVIMS_8001.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
     declaring the type `opus_import.obs.field_types` gives that column.
     """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
 
     @property
     def instrument_id(self) -> str | None:
