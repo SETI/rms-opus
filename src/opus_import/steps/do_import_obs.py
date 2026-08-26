@@ -29,6 +29,9 @@ import traceback
 from typing import TYPE_CHECKING, Any
 
 from opus_import import config_data, import_util
+from opus_import.obs.obs_base import ObsBase
+from opus_import.obs.obs_ring_geometry import ObsRingGeometry
+from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_mult
 
 if TYPE_CHECKING:
@@ -36,7 +39,7 @@ if TYPE_CHECKING:
     from opus_import.import_util import TableSchema
 
 
-def import_observation_table(ctx: ImportContext, instrument_obj: Any,
+def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                              table_name: str,
                              table_schema: TableSchema,
                              metadata: dict[str, Any]) -> dict[str, Any] | None:
@@ -356,13 +359,17 @@ def import_observation_table(ctx: ImportContext, instrument_obj: Any,
 
     if not ctx.args.import_ignore_geo_mismatch:
         if table_name == 'obs_ring_geometry':
+            # A geometry table is only ever filled by a class that mixes in the module
+            # defining it, which every class in config_bundle_info does.
+            assert isinstance(instrument_obj, ObsRingGeometry)
             instrument_obj.validate_ring_geo_fields(new_row, metadata)
         elif table_name.startswith('obs_surface_geometry__'):
+            assert isinstance(instrument_obj, ObsSurfaceGeometryTarget)
             instrument_obj.validate_surface_geo_fields(new_row, metadata, table_name)
 
     return new_row
 
-def import_run_field_function(ctx: ImportContext, instrument_obj: Any,
+def import_run_field_function(ctx: ImportContext, instrument_obj: ObsBase,
                               table_name: str, table_schema: TableSchema,
                               metadata: dict[str, Any],
                               field_name: str) -> tuple[bool, Any]:

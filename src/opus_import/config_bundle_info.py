@@ -6,10 +6,11 @@ OPUS knows and deliberately ignores. `opus_import.steps.do_import_tables.lookup_
 is how the pipeline reads it.
 """
 
-from typing import Any, Literal, TypedDict
+from typing import Literal, TypedDict
 
 # flake8: noqa
 
+from opus_import.obs.obs_base import ObsBase
 from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
 from opus_import.obs.obs_volume_cocirs_01xxx import ObsVolumeCOCIRS01xxx
 from opus_import.obs.obs_volume_coiss_12xxx import ObsVolumeCOISS12xxx
@@ -83,7 +84,7 @@ class BundleInfo(TypedDict):
     primary_index: tuple[str, ...] | None
     validate_index_rows: bool
     temporal_camera: bool
-    instrument_class: type[Any] | None
+    instrument_class: type[ObsBase] | None
 
 
 BUNDLE_INFO: list[tuple[str, BundleInfo]] = [
