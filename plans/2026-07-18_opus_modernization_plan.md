@@ -1105,13 +1105,18 @@ individually-justified entries.
      onward the **formatter, not the linter, enforces line length**.
   3. **Bandit `B101` stays as a justified category skip.** PR-01's note said PR-17 shrinks
      every skip to per-line `# nosec`; the plan body's "irreducible, individually-justified
-     entries" governs. Measured with `skips = []`: 246 of 275 findings are `B101`, and 199
-     are in `src/opus_import` plus 16 in `src/opus_support` — assertions **PR-14, PR-15 and
-     PR-16 deliberately added to narrow types**, in trees PR-17 does not own. ~215 `# nosec`
-     comments in other PRs' code would bury the real signal. The skip's comment must state
-     why those assertions exist and who added them. The remaining ~29 findings convert to
-     per-line `# nosec`. **`B607` is deleted outright** — it now fires zero times, and a
-     skip that fires zero times is a false claim about the code.
+     entries" governs. **The justification is what those assertions ARE — internal
+     invariants that narrow types, never input validation — not whose tree they sit in.**
+     (Corrected 2026-08-26: rev 7.20 first justified this with "215 in trees PR-17 does not
+     own", from a measurement taken on the *base* tree and omitting `--ignore-nosec`.
+     Re-measured on the shipping head: **322 `B101`** — 199 `opus_import`, **90
+     `opus_app`**, 17 `opus_log_analyzer`, 16 `opus_support` — so ~90 are in PR-17a's *own*
+     tree and the original sentence was false. The ruling survives; the reason it gave did
+     not. Whoever revisits this must **re-measure on the head being shipped**, with
+     `--ignore-nosec`, and never inherit these numbers.) The skip's comment must state why
+     those assertions exist. The remaining findings convert to per-line `# nosec`.
+     **`B607` is deleted outright** — it now fires zero times, and a skip that fires zero
+     times is a false claim about the code.
 - **Also owns the `%r` log sweep left over from PR-13** (assigned by the orchestrator
   2026-08-25, on PR-13's stop-and-report of the question). A bare **scalar** interpolated
   into a log message with `%s` can carry CR/LF from request data; `%r` escapes it.
