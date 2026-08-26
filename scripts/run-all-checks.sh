@@ -89,10 +89,10 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS burn-down state (plan §4): bandit, vulture, mypy and pytest are on now;
+# OPUS check state (plan §4): bandit, vulture, mypy and pytest are on now;
 # ruff-format waits for PR-23; sphinx for PR-21 (no docs/ yet). Each flag flips
-# true in its owning PR. mypy runs strict over the whole repository, with the
-# per-package burn-down list in [tool.mypy] that PR-17 empties.
+# true in its owning PR. mypy runs strict over the whole repository; [tool.mypy]'s
+# burn-down list is empty, while its exclude and ignore_missing_imports remain.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=false}"
 : "${ENABLE_MYPY:=true}"
@@ -109,8 +109,8 @@ SCOPE_SPECIFIED=false
 # names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
 # never scans tests.
 : "${OPUS_RUFF_PATHS:=src integration_tests tests manage.py}"
-# mypy covers the same trees; integration_tests/ is checked but silenced by a
-# burn-down entry in [tool.mypy], like every tree that is not annotated yet.
+# mypy covers the same trees, and integration_tests/ is checked strictly like
+# every other one: no tree carries a burn-down entry any more.
 : "${OPUS_MYPY_PATHS:=src integration_tests tests manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
 : "${OPUS_VULTURE_PATHS:=src integration_tests tests manage.py vulture_whitelist.py}"
@@ -405,8 +405,9 @@ run_code_checks() {
 
     if [ "$RUN_MYPY" = true ] && [ "$ENABLE_MYPY" = true ]; then
         print_info "Running mypy..."
-        # The source root, the strict settings and the burn-down list all come from
-        # pyproject.toml; the paths match the CI lint job's MYPY_PATHS.
+        # The source root and the strict settings come from pyproject.toml, which
+        # carries no burn-down list any more; the paths match the CI lint job's
+        # MYPY_PATHS.
         # shellcheck disable=SC2086  # word-splitting of the path list is intended
         if python -m mypy $OPUS_MYPY_PATHS; then
             print_success "Mypy passed"

@@ -228,38 +228,34 @@ django_settings_module = "opus_app.settings"
 # Third-party packages that ship neither annotations nor a typeshed stub package.
 # Where typeshed has one, the stub distribution goes in the dev extras instead and the
 # package does not belong here -- that is a real check rather than a silenced one.
-# Only the packages imported by annotated code need an entry; the rest are reported
-# inside modules the burn-down below silences, so each annotation PR adds whatever the
-# checker then reports as import-untyped or import-not-found for the tree it annotates.
+# Every package the repository imports either has an entry here or is checked: with
+# the burn-down list gone there is nowhere left for an unannotated import to be
+# reported and ignored, so a new dependency without annotations shows up as
+# import-untyped on the first run and is answered here, deliberately.
+# `rest_framework` is here rather than in the dev extras because typeshed carries no
+# stub package for it: the stubs that exist are a separate third-party distribution
+# that re-types Django's own request and response classes, which would put a second
+# opinion about them beside django-stubs for the sake of the one name the suite
+# imports (`RequestsClient`, used only on the live-server path).
 [[tool.mypy.overrides]]
 module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
-          "pdstable.*"]
+          "pdstable.*", "rest_framework.*"]
 ignore_missing_imports = true
 
-# Type burn-down list. `strict = true` applies to the whole repository; these
-# packages are not annotated yet, so their errors are silenced per module until the
-# PR that annotates them removes the entry. This is the same discipline as the ruff
-# per-file-ignores table above, and PR-17's exit criterion is that this list is empty
-# as well. There is no repository-wide exclusion: everything outside these packages
-# is checked strictly today.
-#     opus_app                 - annotated in PR-17a
-#     integration_tests        - PR-17b, like the rest: the plan body gives PR-17
-#                                every temporary override, and rev 7.20 splits that
-#                                between 17a and 17b. It is listed here rather than
-#                                left out of the checked paths, because a path that
-#                                is never passed to the checker is an exclusion
-#                                nothing can see.
-# opus_log_analyzer left this list in PR-17a and is checked strictly now.
-# A package's tests are silenced with it where they need it, since a test's
-# annotations follow the signatures of the code it drives, and a call into a silenced
-# package is reported in the caller's own file rather than in the callee's.
-# To measure what an entry is holding back, delete it and run the checker. Do not
-# record the number here: it moves with every intervening PR.
-[[tool.mypy.overrides]]
-module = [
-  "integration_tests.*",
-]
-ignore_errors = true
+# The type burn-down list is gone (plan PR-17, completed by PR-17b): `strict = true`
+# applies to the whole repository and no module is silenced by an `ignore_errors`
+# entry, because that list is empty. **That is the whole of the claim.** Suppression
+# has not vanished from this file and nobody should read it that way: `exclude` above
+# still holds the three paths that are not project source (`perf_test/`,
+# setuptools-scm's `_version.py`, Django's vendored `compress.py`), and the
+# `ignore_missing_imports` override above still covers the seven third-party packages
+# that ship neither annotations nor a typeshed stub. Each is documented where it sits.
+#
+# Nothing belongs here again. A tree that cannot pass the checker yet is not a
+# configuration problem: annotate it in the PR that owns it, or say at the site --
+# with the reason -- what the checker cannot see, which is what `# type: ignore[...]`
+# is for. `warn_unused_ignores` is on under `strict`, so each of those has to keep
+# earning its place.
 
 [tool.ruff]
 target-version = "py312"
@@ -318,33 +314,25 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
-# Burn-down list (plan PR-01). PR-17's exit criterion is that this table is
-# empty; PR-17a emptied every row it owns and PR-17b removes the one left.
+# Empty, and that is PR-01's exit criterion met (plan PR-17, finished by PR-17b).
+# Every tree in RUFF_PATHS -- src, integration_tests, tests, manage.py -- passes
+# with no *per-file* exception. That is what an empty table means and all it means:
+# the six codes in `extend-ignore` above are still ignored globally and four paths
+# are still in `exclude`. What the burn-down held, and where each entry went:
 #
-# Legacy flake8 ignores that needed real refactoring:
-#     E722 - bare `except:`;
-#     F403 - `from module import *`; F405 - name may be undefined from star import;
-#     N801 - invalid class name; N802 - invalid function name (legacy identifiers).
-# E501 left this table for the documented global ignore above rather than being
-# burned down; the reasoning and its measurement are stated there.
+#   E722, F403/F405   the bare `except:` and the star imports were refactored away
+#                     by the PRs that owned those trees.
+#   PT015, B011, B006 `assert False` and the mutable default arguments were fixed in
+#                     PR-02.
+#   E501              retired into the documented global ignore above rather than
+#                     burned down; the reasoning is stated there.
+#   N801, N802        the last row. The live-DB suites' classes and test methods now
+#                     read `CartTests` and `test__api_meta_mults_coiss_2111`; a PDS
+#                     bundle identifier keeps its shape in lower case.
 #
-# `src/opus_app` and `src/opus_log_analyzer` have no row any more: E501 was the
-# only code that fired in the log analyzer and it is globally ignored now, and
-# the Django app's 24 SCREAMING_CASE message helpers and one lower-case view
-# class were renamed.
-#
-# The live-DB suites keep the two naming codes until PR-17b, which annotates
-# them. Their names are unittest test methods and classes carrying PDS bundle
-# identifiers (test__api_meta_mults_COISS_2111), so renaming them belongs with
-# the PR that reads every one of those files rather than as a drive-by here.
-#
-# `src/opus_support`, `src/opus_config`, `src/opus_import`, `tests` and
-# `manage.py` have no row at all: they meet the full rule set.
-"integration_tests/**/*.py" = ["N801", "N802"]
-#
-# The PT015/B011 (`assert False`) and B006 (mutable default argument) sites
-# PR-01 grandfathered here were fixed in PR-02, so their per-file ignores are
-# gone.
+# A new row is not the way to land code that does not pass. Fix the code, or suppress
+# the one rule on the one line with `# noqa: <CODE>` and the reason, which `RUF100`
+# then keeps honest by failing when it stops being needed.
 
 [tool.pymarkdown.plugins.md013]
 # Line length (disable so README/CONTRIBUTING can use longer lines).
@@ -403,14 +391,18 @@ skips = [
   # `--ignore-nosec`, which is the only way to see what the list is holding back:
   #     bandit -c pyproject.toml -r src integration_tests manage.py \
   #            -f json -q --ignore-nosec
-  # Measured that way on the PR-17a tree: 322 B101 findings -- 199 in
-  # src/opus_import, 90 in src/opus_app, 17 in src/opus_log_analyzer and 16 in
-  # src/opus_support. The largest share is in other packages' trees, but PR-17a
-  # contributed the 90 itself, so this is not a skip that only covers somebody
-  # else's code. A per-line `# nosec` on each would be 322 comments restating one
-  # fact, which is the noise this list was shrunk to avoid. Python's -O strips
-  # asserts, and nothing here is deployed with -O; if that ever changes, these
-  # become real checks and this skip has to be revisited rather than kept.
+  # Measured that way on the PR-17b tree: 326 B101 findings -- 199 in
+  # src/opus_import, 90 in src/opus_app, 17 in src/opus_log_analyzer, 16 in
+  # src/opus_support and 4 in integration_tests/apps_db_tests. (PR-17a measured
+  # 322 without that last group, which is the four narrowing assertions PR-17b
+  # added; a PR that annotates anything bandit scans moves this number, which is
+  # why the command is written out above rather than the figure being trusted.)
+  # The largest share is in other packages' trees, but every annotation PR has
+  # contributed its own, so this is not a skip that only covers somebody else's
+  # code. A per-line `# nosec` on each would be 326 comments restating one fact,
+  # which is the noise this list was shrunk to avoid. Python's -O strips asserts,
+  # and nothing here is deployed with -O; if that ever changes, these become real
+  # checks and this skip has to be revisited rather than kept.
   "B101",
 ]
 

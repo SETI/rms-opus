@@ -1,4 +1,4 @@
-# integration_tests/apps_db_tests/test_file_utils.py
+"""Tests for the file and product helpers in `opus_app.apps.tools.file_utils`."""
 
 import logging
 from unittest import TestCase
@@ -9,9 +9,19 @@ from django.core.cache import cache
 from opus_app.apps.tools.file_utils import get_pds_products
 
 
-class fileUtilsTests(TestCase):
+class FileUtilsTests(TestCase):
+    """The product and file-path helpers behind the download endpoints."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Turn off fault injection and error logging for one test.
+
+        The `OPUS_FAKE_*` knobs are turned all the way up by other tests and are global,
+        so every suite resets them; a suite that did not would see its own API calls
+        fail at random.
+
+        It also empties the cache, so a response another test cached cannot answer
+        this one.
+        """
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -19,7 +29,8 @@ class fileUtilsTests(TestCase):
         logging.disable(logging.ERROR)
         cache.clear()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
+        """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
 
@@ -27,7 +38,7 @@ class fileUtilsTests(TestCase):
             ######### get_pds_products UNIT TESTS #########
             ###############################################
 
-    def test__get_pds_products_ib4v21gc_opusid_url(self):
+    def test__get_pds_products_ib4v21gc_opusid_url(self) -> None:
         "[test_file_utils.py] get_pds_products: no versions opusid hst-11559-wfc3-ib4v21gc url"
         opus_id = 'hst-11559-wfc3-ib4v21gcq'
         ret = get_pds_products(opus_id)
@@ -38,7 +49,7 @@ class fileUtilsTests(TestCase):
         print(expected)
         self.assertEqual(dict(ret), dict(expected))
 
-    def test__get_pds_products_ib4v19r3q_opusid_url(self):
+    def test__get_pds_products_ib4v19r3q_opusid_url(self) -> None:
         "[test_file_utils.py] get_pds_products: versions opusid hst-11559-wfc3-ib4v19r3q url"
         opus_id = 'hst-11559-wfc3-ib4v19r3q'
         ret = get_pds_products(opus_id)
@@ -49,7 +60,7 @@ class fileUtilsTests(TestCase):
         print(expected)
         self.assertEqual(dict(ret), dict(expected))
 
-    def test__get_pds_products_ib4v21gcq_opusid_path(self):
+    def test__get_pds_products_ib4v21gcq_opusid_path(self) -> None:
         "[test_file_utils.py] get_pds_products: no versions opusid hst-11559-wfc3-ib4v21gcq path"
         opus_id = 'hst-11559-wfc3-ib4v21gcq'
         ret = get_pds_products(opus_id, loc_type='path')
@@ -59,7 +70,7 @@ class fileUtilsTests(TestCase):
         print(expected)
         self.assertEqual(dict(ret), dict(expected))
 
-    def test__get_pds_products_ib4v19r3q_opusid_path(self):
+    def test__get_pds_products_ib4v19r3q_opusid_path(self) -> None:
         "[test_file_utils.py] get_pds_products: versions opusid hst-11559-wfc3-ib4v19r3q path"
         opus_id = 'hst-11559-wfc3-ib4v19r3q'
         ret = get_pds_products(opus_id, loc_type='path')
@@ -70,7 +81,7 @@ class fileUtilsTests(TestCase):
         print(expected)
         self.assertEqual(dict(ret), dict(expected))
 
-    def test__get_pds_products_kao0m91_occ_opusid_path(self):
+    def test__get_pds_products_kao0m91_occ_opusid_path(self) -> None:
         "[test_file_utils.py] get_pds_products: opusid kao0m91-vis-occ-1977-069-u0-epsilon-i path"
         opus_id = 'kao0m91-vis-occ-1977-069-u0-epsilon-i'
         ret = get_pds_products(opus_id, loc_type='path')
@@ -81,7 +92,7 @@ class fileUtilsTests(TestCase):
         print(expected)
         self.assertEqual(dict(ret), dict(expected))
 
-    def test__get_pds_products_multiple_opusid(self):
+    def test__get_pds_products_multiple_opusid(self) -> None:
         "[test_file_utils.py] get_pds_products: versions multiple opusids path"
         opus_id_list = ['co-iss-n1460960868',
                         'co-uvis-euv2001_001_02_12',

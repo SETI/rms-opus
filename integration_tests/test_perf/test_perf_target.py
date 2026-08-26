@@ -1,5 +1,9 @@
-# Test the performance of searching by Intended Target Name and returning metadata for
-# Intended Target Name.
+"""Time a target search and the metadata fetch for its results.
+
+Hand-run against a server started separately; it is not a test the suite
+collects, and its name is what the directory it sits in calls it rather than
+a claim that `pytest` should pick it up.
+"""
 
 import random
 import time
@@ -21,8 +25,20 @@ TARGET_LIST = [
     # 'Atlas,Calypso,Daphnis,Dione,Enceladus,Epimetheus,Helene,Hyperion,Hyrrokkin,Iapetus,Pandora,Pan,Pallene,Mimas,Methone,Janus,Phoebe,Polydeuces,Prometheus,Rhea,Saturn,Titan,Tethys,Telesto,Saturn+Rings,Io,Adrastea,Amalthea,Jupiter,Jupiter+Rings,Callisto,Europa,Thebe,Ganymede',
 ]
 
-def run_one_test(search_params, columns, num_iterations, randomize_search=False):
-    """Run one test multiple times and collect statistics."""
+def run_one_test(search_params: str, columns: str, num_iterations: int,
+                 randomize_search: bool = False) -> None:
+    """Run one test multiple times and collect statistics.
+
+    Parameters:
+        search_params: Query string selecting the observations to search for,
+            without a leading or trailing separator.
+        columns: Comma-separated metadata columns to return.
+        num_iterations: How many times to issue the request. With more than one and
+            no randomization the first result is discarded, because it is the one
+            that primed the cache.
+        randomize_search: Prefix each request with a distinct random start time, so
+            that successive requests are not answered from the cache.
+    """
     # We have to randomize the starting date to avoid the search results being cached
     # from run to run
     time_list = []
@@ -35,17 +51,17 @@ def run_one_test(search_params, columns, num_iterations, randomize_search=False)
             hr = random.randint(0, 23)
             minute = random.randint(0, 59)
             sec = random.randint(0, 59)
-            start_time = f'{yr:04d}-{month:02d}-{day:02d}T{hr:02d}:{minute:02d}:{sec:02d}.'
-            start_time += f'{iteration:03d}'
-            presearch_params = f'time1={start_time}&'
+            search_start = f'{yr:04d}-{month:02d}-{day:02d}T{hr:02d}:{minute:02d}:{sec:02d}.'
+            search_start += f'{iteration:03d}'
+            presearch_params = f'time1={search_start}&'
         url = f'{HOST}/api/data.json?{presearch_params}{search_params}'
         url += f'&cols={columns}&limit=10000'
         # print(url)
-        start_time = time.time()
+        request_start = time.time()
         with urllib.request.urlopen(url) as response:
             response.read()
             end_time = time.time()
-            time_list.append(end_time-start_time)
+            time_list.append(end_time-request_start)
     if not randomize_search and num_iterations > 1:
         # Throw away the first result because that was just priming the cache
         del time_list[0]
