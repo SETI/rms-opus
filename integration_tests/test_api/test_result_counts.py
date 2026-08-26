@@ -2,10 +2,14 @@
 
 The recorded counts are in `data/result_counts.csv`. They are counts over the whole
 archive rather than over whatever this installation imported, so the comparison only
-runs when something says which archive to ask: `manage.py api-livetest-pro` or
-`api-livetest-dev` for a live server, or `api-internal-db-result-counts` for the
-local database. A plain run of this module checks nothing -- both flags are off and
-the guard around the comparison is false.
+runs when something says which archive to ask.
+
+`api-result-counts` is the verb that selects this module, and on its own it checks
+nothing: both flags are off and the guard around the comparison is false. It is
+combined with a verb that sets one -- `manage.py test api-livetest-pro
+api-result-counts` for the public server, `api-livetest-dev` for the development one
+(see TEST_API_README.md) -- or replaced by `api-internal-db-result-counts`, which
+selects this module and sets the internal-database flag by itself.
 """
 
 import csv

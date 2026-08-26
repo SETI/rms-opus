@@ -98,7 +98,8 @@ jobs:
 
       - name: Mypy
         # Strict over the whole repository, with no module silenced and no tree
-        # excluded except the three files [tool.mypy] names individually.
+        # excluded except what [tool.mypy] names: the out-of-scope perf_test/
+        # directory and two generated or vendored files.
         # OPUS_CONFIG comes from the workflow-level env above.
         run: |
           mypy $MYPY_PATHS

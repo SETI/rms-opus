@@ -5434,9 +5434,11 @@ body; never rewrite or delete earlier notes.*
   - **Nothing is silenced any more, and that is the state to keep.** `[tool.mypy]`
     has no burn-down list and `[tool.ruff.lint.per-file-ignores]` has no rows. The
     only exclusions left are the things that are not project source: the
-    out-of-scope `perf_test/`, setuptools-scm's generated `_version.py`, Django's
-    vendored `admin/js/compress.py`, and (for ruff only) the generated
-    `search/models.py`. Both tables now carry a comment saying a new entry is not
+    out-of-scope `perf_test/`, setuptools-scm's generated `_version.py`, and Django's
+    vendored `admin/js/compress.py` -- which mypy and bandit name by exact path, so
+    that any Python placed beside it later is still checked, while **ruff excludes the
+    whole `src/opus_app/static` tree** it sits in. Ruff alone also excludes the
+    generated `search/models.py`. Both tables now carry a comment saying a new entry is not
     the way to land code that does not pass -- fix it, or suppress the one rule on
     the one line with the reason, which `warn_unused_ignores` and `RUF100` then keep
     honest.
@@ -5475,9 +5477,10 @@ body; never rewrite or delete earlier notes.*
       once that the query parsed; the tests that expect the None still call the view.
       The partition is derived from the tree, and the figures are the **base's**: of
       its 111 calls, 85 index the result, 25 assert a half is None, and 1 compares
-      both to None. (On the head the same scan reports 27, because the 85 now go
-      through the helper -- a count of call sites is a property of the tree you run
-      it on, so say which one.) The converter refuses a method that does both.
+      both to None. (On the head the same scan reports 27: the 26 tests that still
+      call the view directly, plus `_search_params`' own forwarding call. A count of
+      call sites is a property of the tree you run it on, so say which one.) The
+      converter refuses a method that does both.
     - **A request broken on purpose** (`assignment`, 71 of them). 71 tests built a
       request and set `META` or `GET` to None to exercise the views' "no request"
       guard. `apps_db_tests/_broken_requests.py` builds those two requests, so the
@@ -5564,7 +5567,7 @@ body; never rewrite or delete earlier notes.*
     directory at both commits gives +1 in each of `test_cart_api.py`,
     `test_search_api.py` and `test_ui_api.py` -- the three measured modules that
     needed `from typing import Any`. **Docstrings and annotations cost nothing here,
-    which is why 1735 docstrings and 1740 annotations moved the number by three**: a
+    which is why 1791 docstrings and 1739 annotations moved the number by three**: a
     docstring is not a statement to coverage.py, a bare `x: T` emits no bytecode
     inside a function body at all (checked against `co_lines()`), and `x: T = v`
     compiles to the same instructions as `x = v`. The unit suite is 1173 tests,
@@ -5614,8 +5617,11 @@ body; never rewrite or delete earlier notes.*
     collectible -- PR-18's `pytest integration_tests` would import it. Its name is
     what the directory calls it rather than a claim that a runner should pick it up.
   - **The docstring standard was already met where it mattered and absent everywhere
-    else.** All 1645 test methods already carried the
-    `"[test_cart_api.py] /__cart/add: ..."` line each begins with; measured on
+    else.** Every one of the 1645 test methods already carried a one-line docstring
+    -- 1625 of them the `"[test_cart_api.py] /__cart/add: ..."` form, and the 20 in
+    `test_db_data/test_local_db_integrity.py` a `"DB Integrity: ..."` one. (Do not
+    build a checker on "they all start with `[`": that is the shape of an "all"
+    written from whichever file happened to be open.) Measured on
     `71779fc3` what was missing was **26 module docstrings, 23 class docstrings and 82
     method docstrings**. Every module, class, method and function in the tree has one
     now -- 29 + 23 + 1739 = **1791 docstrings** over 1739 definitions -- counted by an
@@ -5702,3 +5708,11 @@ body; never rewrite or delete earlier notes.*
     Its cause is worth naming too, because it is not carelessness: the inference was
     "two settings written by the same `manage.py` block must be alike". Plausible,
     cheap to test, untested.
+  - **Two small things about `SearchTests._search_params`, for whoever edits it.**
+    Its five mode flags are written out rather than forwarded as `**kwargs`, because
+    `**kwargs: bool` erases the names and a misspelled flag then type-checks at all
+    85 call sites and fails only when the test runs. The cost is that the *defaults*
+    are pinned here as well, so a changed default in `url_to_search_params` would not
+    reach these tests -- a changed name still fails at once, at the forwarding call.
+    And `allow_regex_errors` is declared but passed by no test; it is kept so the
+    helper's surface matches the view's rather than because anything drives it.

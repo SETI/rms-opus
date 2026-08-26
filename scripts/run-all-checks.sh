@@ -89,10 +89,10 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS burn-down state (plan §4): bandit, vulture, mypy and pytest are on now;
+# OPUS check state (plan §4): bandit, vulture, mypy and pytest are on now;
 # ruff-format waits for PR-23; sphinx for PR-21 (no docs/ yet). Each flag flips
 # true in its owning PR. mypy runs strict over the whole repository, with the
-# per-package burn-down list in [tool.mypy] that PR-17 empties.
+# strict settings in [tool.mypy], which silences no module.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=false}"
 : "${ENABLE_MYPY:=true}"
@@ -110,7 +110,7 @@ SCOPE_SPECIFIED=false
 # never scans tests.
 : "${OPUS_RUFF_PATHS:=src integration_tests tests manage.py}"
 # mypy covers the same trees; integration_tests/ is checked but silenced by a
-# burn-down entry in [tool.mypy], like every tree that is not annotated yet.
+# strictly, like every other tree: [tool.mypy] silences none of them.
 : "${OPUS_MYPY_PATHS:=src integration_tests tests manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
 : "${OPUS_VULTURE_PATHS:=src integration_tests tests manage.py vulture_whitelist.py}"

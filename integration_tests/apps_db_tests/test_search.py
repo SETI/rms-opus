@@ -102,7 +102,10 @@ class SearchTests(TestCase):
 
         The mode flags are repeated rather than forwarded as ``**kwargs`` so that
         they keep their names: under ``**kwargs`` a misspelled flag would type-check
-        at every call site and only fail when the test ran.
+        at every call site and only fail when the test ran. The cost of repeating
+        them is that the defaults are pinned here too, so a changed default in
+        `url_to_search_params` would not reach these tests; a changed *name* still
+        fails immediately, at the forwarding call below.
 
         Parameters:
             request_get: The query string to parse.
@@ -113,7 +116,8 @@ class SearchTests(TestCase):
                 qualified column name with a list per clause.
             pretty_results: Return each value as the text it formats to rather than
                 as a number or a list.
-            allow_empty: Accept a query that selects nothing.
+            allow_empty: Keep a search term that has neither a min nor a max
+                value, which is what building a UI search widget needs.
 
         Returns:
             The selections and the extras, both known to be present.
