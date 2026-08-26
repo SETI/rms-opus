@@ -2,6 +2,7 @@
 
 import json
 import logging
+from typing import Any
 from unittest import TestCase
 
 import requests
@@ -47,7 +48,16 @@ class ApiUITests(ApiTestHelper, TestCase):
     def tearDown(self) -> None:
         logging.disable(logging.NOTSET)
 
-    def _run_url_slugs_equal(self, url, expected, msg_contains=None) -> None:
+    def _run_url_slugs_equal(self, url: str, expected: dict[str, Any],
+                             msg_contains: str | None = None) -> None:
+        """Assert a URL-normalization response reports given slugs.
+
+        Parameters:
+            url: Path of the API endpoint.
+            expected: The normalized slugs the response must carry.
+            msg_contains: Text the response's message must contain, or None to
+                assert that it carries no message.
+        """
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)

@@ -1,5 +1,6 @@
 # integration_tests/test_db_data/test_local_db_integrity.py
 
+from typing import Any
 from unittest import TestCase
 
 from django.apps import apps
@@ -61,7 +62,7 @@ class DBIntegrityTest(TestCase):
                .annotate(Count('bundle_id'))
                .order_by('bundle_id'))
         self.assertEqual(list(obs), list(img))
-        wl = (ObsWavelength.objects.values_list('bundle_id')
+        wl: Any = (ObsWavelength.objects.values_list('bundle_id')
                .annotate(Count('bundle_id'))
                .order_by('bundle_id'))
         self.assertEqual(list(obs), list(wl))

@@ -54,7 +54,7 @@ class SQLBuilderIdentifierTests(TestCase):
     def test__quote_identifier_rejects_non_string(self) -> None:
         "[test_sql_builder.py] quote_identifier: a non-string name"
         with self.assertRaises(sql_builder.SQLIdentifierError):
-            sql_builder.quote_identifier(17)
+            sql_builder.quote_identifier(17)  # type: ignore[arg-type]
 
     def test__column_qualified_and_bare(self) -> None:
         "[test_sql_builder.py] column: with and without a table"
@@ -269,14 +269,15 @@ class SQLBuilderSelectTests(TestCase):
         "[test_sql_builder.py] Select: LIMIT/OFFSET are rendered literally, so they must be ints"
         select = sql_builder.Select()
         with self.assertRaises(ValueError):
-            select.limit('10; DROP TABLE obs_general')
+            select.limit('10; DROP TABLE obs_general')  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
-            select.offset('0; DROP TABLE obs_general')
+            select.offset('0; DROP TABLE obs_general')  # type: ignore[arg-type]
 
     def test__select_rejects_non_int_max_execution_time(self) -> None:
         "[test_sql_builder.py] Select: the optimizer hint is rendered literally too"
         with self.assertRaises(ValueError):
-            sql_builder.Select(max_execution_time='1) */ UNION SELECT 1 /*')
+            sql_builder.Select(
+                max_execution_time='1) */ UNION SELECT 1 /*')  # type: ignore[arg-type]
 
     def test__select_rejects_unknown_join_kind(self) -> None:
         "[test_sql_builder.py] Select: only INNER and LEFT joins"

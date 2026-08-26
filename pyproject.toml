@@ -241,30 +241,17 @@ module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
           "pdstable.*", "rest_framework.*"]
 ignore_missing_imports = true
 
-# Type burn-down list. `strict = true` applies to the whole repository; these
-# packages are not annotated yet, so their errors are silenced per module until the
-# PR that annotates them removes the entry. This is the same discipline as the ruff
-# per-file-ignores table above, and PR-17's exit criterion is that this list is empty
-# as well. There is no repository-wide exclusion: everything outside these packages
-# is checked strictly today.
-#     opus_app                 - annotated in PR-17a
-#     integration_tests        - PR-17b, like the rest: the plan body gives PR-17
-#                                every temporary override, and rev 7.20 splits that
-#                                between 17a and 17b. It is listed here rather than
-#                                left out of the checked paths, because a path that
-#                                is never passed to the checker is an exclusion
-#                                nothing can see.
-# opus_log_analyzer left this list in PR-17a and is checked strictly now.
-# A package's tests are silenced with it where they need it, since a test's
-# annotations follow the signatures of the code it drives, and a call into a silenced
-# package is reported in the caller's own file rather than in the callee's.
-# To measure what an entry is holding back, delete it and run the checker. Do not
-# record the number here: it moves with every intervening PR.
-[[tool.mypy.overrides]]
-module = [
-  "integration_tests.*",
-]
-ignore_errors = true
+# The type burn-down list is gone (plan PR-17, completed by PR-17b): `strict = true`
+# applies to the whole repository and no module is silenced. There is no
+# repository-wide exclusion either, so every tree the checker is pointed at is
+# checked strictly. `exclude` above holds only the three files that are not project
+# source at all, each with its reason.
+#
+# Nothing belongs here again. A tree that cannot pass the checker yet is not a
+# configuration problem: annotate it in the PR that owns it, or say at the site --
+# with the reason -- what the checker cannot see, which is what `# type: ignore[...]`
+# is for. `warn_unused_ignores` is on under `strict`, so each of those has to keep
+# earning its place.
 
 [tool.ruff]
 target-version = "py312"

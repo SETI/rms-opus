@@ -126,7 +126,16 @@ class ApiForResultCounts:
     # we need https and no need to specify port number
     api_base_url = "{}://{}.seti.org/opus/api/meta/result_count.json?"
 
-    def __init__(self, target="production") -> None:
+    def __init__(self, target: str | None = "production") -> None:
+        """Choose the server whose result counts are compared with the recorded ones.
+
+        Parameters:
+            target: ``'production'`` (or None) for the public server and ``'dev'``
+                for the development one.
+
+        Raises:
+            AssertionError: If `target` names neither.
+        """
         self.target = target
         if not self.target or self.target == "production":
             self.result_counts_api = self.api_base_url.format("https", "opus.pds-rings")

@@ -17,6 +17,7 @@ import os
 import re
 import tarfile
 import zipfile
+from collections.abc import Sequence
 from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
@@ -153,12 +154,14 @@ class ApiTestHelper(_ApiTestHelperBase):
                 ApiTestHelper._depth_first_remove(el, ignore_list)
 
     @staticmethod
-    def _print_clean_diffs(got: str, expected: str) -> None:
+    def _print_clean_diffs(got: Sequence[Any], expected: Sequence[Any]) -> None:
         """Print the differing runs between two responses, to explain a failure.
 
         Parameters:
-            got: The response the server produced.
-            expected: The recorded response it was compared against.
+            got: The response the server produced, as text or as a list of an
+                archive's member names.
+            expected: The recorded response it was compared against, in the same
+                form.
         """
         if len(got) > 10000 or len(expected) > 10000:
             return # Too slow
@@ -248,12 +251,13 @@ class ApiTestHelper(_ApiTestHelperBase):
             self._print_clean_diffs(str(jdata), str(expected))
         self.assertEqual(expected, jdata)
 
-    def _run_html_equal(self, url: str, expected: str) -> None:
+    def _run_html_equal(self, url: str, expected: object) -> None:
         """Assert one URL answers 200 with a given HTML body.
 
         Parameters:
             url: Path of the API endpoint.
-            expected: The body the response must equal, once normalized.
+            expected: The body the response must equal once normalized, as text or
+                as the bytes it was recorded in.
         """
         print(url)
         response = self._get_response(url)
@@ -514,11 +518,16 @@ class ApiTestHelper(_ApiTestHelperBase):
         response = self._get_response(url)
         self.assertEqual(200, response.status_code)
         archive_file_path = None
+        archive_file: zipfile.ZipFile | tarfile.TarFile
+        # DOWNLOAD_FORMATS records (content type, write mode, read mode) per format.
+        # Both readers below declare `mode` as a set of literal strings, and this
+        # value comes from configuration, so it is a plain string at this point; the
+        # reader itself is what rejects a mode it does not know.
+        read_mode: Any = settings.DOWNLOAD_FORMATS[fmt][2]
         if response_type == 'json':
             jdata = json.loads(response.content)
             file = jdata['filename']
             path = file.replace(settings.TAR_FILE_URL_PATH, settings.TAR_FILE_PATH)
-            read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
             archive_file_path = path
             if fmt == 'zip':
                 archive_file = zipfile.ZipFile(path, mode=read_mode)
@@ -528,7 +537,6 @@ class ApiTestHelper(_ApiTestHelperBase):
                 archive_file = tarfile.open(name=path, mode=read_mode)  # noqa: SIM115
         else:
             binary_stream = BytesIO(response.content)
-            read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
             file = response.headers['Content-Disposition']
             archive_file_path = (settings.TAR_FILE_PATH + file[file.index('=')+1::])
             if fmt == 'zip':
@@ -536,7 +544,10 @@ class ApiTestHelper(_ApiTestHelperBase):
             else:
                 # SIM115 suppressed for the same reason as above.
                 archive_file = tarfile.open(mode=read_mode, fileobj=binary_stream)  # noqa: SIM115
-        if fmt == 'zip':
+        # Asking the object rather than re-deriving the format from `fmt`: every
+        # branch above opens a ZipFile exactly when fmt == 'zip', so this selects
+        # the same reader and narrows the union for the checker at the same time.
+        if isinstance(archive_file, zipfile.ZipFile):
             resp = archive_file.namelist()
         else:
             resp = archive_file.getnames()

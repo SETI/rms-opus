@@ -12,6 +12,8 @@ from django.test import RequestFactory
 
 from opus_app.apps.ui.views import api_normalize_url, api_notifications
 
+from ._broken_requests import request_without_get, request_without_meta
+
 
 class uiTests(TestCase):
 
@@ -36,16 +38,14 @@ class uiTests(TestCase):
 
     def test__api_notifications_no_meta(self) -> None:
         "[test_ui.py] api_notifications: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__notifications.json'):
             api_notifications(request)
 
     def test__api_notifications_no_get(self) -> None:
         "[test_ui.py] api_notifications: no GET"
-        request = self.factory.get('__notifications.json')
-        request.GET = None
+        request = request_without_get(self.factory, '__notifications.json')
         with self.assertRaises(Http404):
             api_notifications(request)
 
@@ -144,16 +144,14 @@ class uiTests(TestCase):
 
     def test__api_normalize_url_no_meta(self) -> None:
         "[test_ui.py] api_normalize_url: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__normalizeurl.json'):
             api_normalize_url(request)
 
     def test__api_normalize_url_no_get(self) -> None:
         "[test_ui.py] api_normalize_url: no GET"
-        request = self.factory.get('__normalizeurl.json')
-        request.GET = None
+        request = request_without_get(self.factory, '__normalizeurl.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__normalizeurl.json'):
             api_normalize_url(request)

@@ -2,6 +2,7 @@
 
 import json
 import logging
+from typing import Any
 from unittest import TestCase
 
 import requests
@@ -47,7 +48,17 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD  = self.search_time_threshold
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = self.search_time_threshold2
 
-    def _run_stringsearchchoices_subset(self, url, expected) -> None:
+    def _run_stringsearchchoices_subset(self, url: str,
+                                        expected: dict[str, Any]) -> None:
+        """Assert a string-search-choices response contains given choices.
+
+        The endpoint answers with whatever the imported bundles happen to hold, so
+        these tests pin the entries that must be present rather than the whole set.
+
+        Parameters:
+            url: Path of the API endpoint.
+            expected: Choices that must all appear in the response.
+        """
         # Ignore any returned choices that aren't in the expected set
         # to handle databases that have more stuff in them than we're expecting
         print(url)

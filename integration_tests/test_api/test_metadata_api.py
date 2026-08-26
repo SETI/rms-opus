@@ -39,7 +39,16 @@ class ApiMetadataTests(ApiTestHelper, TestCase):
     def tearDown(self) -> None:
         logging.disable(logging.NOTSET)
 
-    def _run_result_count_equal(self, url, expected, expected_reqno=None) -> None:
+    def _run_result_count_equal(self, url: str, expected: int,
+                                expected_reqno: int | None = None) -> None:
+        """Assert a result-count endpoint reports exactly one count.
+
+        Parameters:
+            url: Path of the API endpoint.
+            expected: The count it must report.
+            expected_reqno: The request number it must echo back, or None when the
+                response carries none.
+        """
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -54,8 +63,18 @@ class ApiMetadataTests(ApiTestHelper, TestCase):
             print(result_reqno)
             self.assertEqual(result_reqno, expected_reqno)
 
-    def _run_result_count_greater_equal(self, url, expected,
-                                        expected_reqno=None) -> None:
+    def _run_result_count_greater_equal(self, url: str, expected: int,
+                                        expected_reqno: int | None = None) -> None:
+        """Assert a result-count endpoint reports at least a given count.
+
+        Used where the exact count depends on which bundles were imported.
+
+        Parameters:
+            url: Path of the API endpoint.
+            expected: The smallest acceptable count.
+            expected_reqno: The request number it must echo back, or None when the
+                response carries none.
+        """
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)

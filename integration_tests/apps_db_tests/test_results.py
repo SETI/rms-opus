@@ -22,10 +22,13 @@ from opus_app.apps.results.views import (
     api_get_product_types_for_opus_id,
     api_get_product_types_for_search,
     get_triggered_tables,
-    url_to_search_params,
 )
+from opus_app.apps.search.views import url_to_search_params
+
+from ._broken_requests import request_without_get, request_without_meta
 
 cursor = connection.cursor()
+
 
 class resultsTests(TestCase):
 
@@ -60,16 +63,14 @@ class resultsTests(TestCase):
 
     def test__api_get_data_and_images_no_meta(self) -> None:
         "[test_results.py] api_get_data_and_images: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__api/dataimages.json'):
             api_get_data_and_images(request)
 
     def test__api_get_data_and_images_no_get(self) -> None:
         "[test_results.py] api_get_data_and_images: no GET"
-        request = self.factory.get('/__api/dataimages.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/__api/dataimages.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /__api/dataimages.json'):
             api_get_data_and_images(request)
@@ -81,16 +82,14 @@ class resultsTests(TestCase):
 
     def test__api_get_data_no_meta(self) -> None:
         "[test_results.py] api_get_data: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/data.json'):
             api_get_data(request, 'json')
 
     def test__api_get_data_no_get(self) -> None:
         "[test_results.py] api_get_data: no GET"
-        request = self.factory.get('/__api/data.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/__api/data.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/data.json'):
             api_get_data(request, 'json')
@@ -103,16 +102,14 @@ class resultsTests(TestCase):
 
     def test__api_get_metadata_no_meta(self) -> None:
         "[test_results.py] api_get_metadata: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/metadata/vg-iss-2-s-c4360845.json'):
             api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_no_get(self) -> None:
         "[test_results.py] api_get_metadata: no GET"
-        request = self.factory.get('/api/metadata/vg-iss-2-s-c4360845.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/metadata/vg-iss-2-s-c4360845.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/metadata/vg-iss-2-s-c4360845.json'):
             api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
@@ -124,16 +121,14 @@ class resultsTests(TestCase):
 
     def test__api_get_images_no_meta(self) -> None:
         "[test_results.py] api_get_images: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/images/None.json'):
             api_get_images(request, 'json')
 
     def test__api_get_images_no_get(self) -> None:
         "[test_results.py] api_get_images: no GET"
-        request = self.factory.get('/api/images.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/images.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/images/None.json'):
             api_get_images(request, 'json')
@@ -145,16 +140,14 @@ class resultsTests(TestCase):
 
     def test__api_get_images_by_size_no_meta(self) -> None:
         "[test_results.py] api_get_images_by_size: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_images_by_size(request, 'small', 'json')
 
     def test__api_get_images_by_size_no_get(self) -> None:
         "[test_results.py] api_get_images_by_size: no GET"
-        request = self.factory.get('/api/images/small.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/images/small.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_images_by_size(request, 'small', 'json')
@@ -166,16 +159,14 @@ class resultsTests(TestCase):
 
     def test__api_get_image_no_meta(self) -> None:
         "[test_results.py] api_get_image: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/image/small/vg-iss-2-s-c4360845.json'):
             api_get_image(request, 'vg-iss-2-s-c4360845', 'small', 'json')
 
     def test__api_get_image_no_get(self) -> None:
         "[test_results.py] api_get_image: no GET"
-        request = self.factory.get('/api/image/small/vg-iss-2-s-c4360845.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/image/small/vg-iss-2-s-c4360845.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/image/small/vg-iss-2-s-c4360845.json'):
             api_get_image(request, 'vg-iss-2-s-c4360845', 'small', 'json')
@@ -187,16 +178,14 @@ class resultsTests(TestCase):
 
     def test__api_get_files_no_meta(self) -> None:
         "[test_results.py] api_get_files: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/files/vg-iss-2-s-c4360845.json'):
             api_get_files(request, 'vg-iss-2-s-c4360845')
 
     def test__api_get_files_no_get(self) -> None:
         "[test_results.py] api_get_files: no GET"
-        request = self.factory.get('/api/files/vg-iss-2-s-c4360845.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/files/vg-iss-2-s-c4360845.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/files/vg-iss-2-s-c4360845.json'):
             api_get_files(request, 'vg-iss-2-s-c4360845')
@@ -208,16 +197,14 @@ class resultsTests(TestCase):
 
     def test__api_get_categories_for_opus_id_no_meta(self) -> None:
         "[test_results.py] api_get_categories_for_opus_id: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/categories/vg-iss-2-s-c4360845.json'):
             api_get_categories_for_opus_id(request, 'vg-iss-2-s-c4360845')
 
     def test__api_get_categories_for_opus_id_no_get(self) -> None:
         "[test_results.py] api_get_categories_for_opus_id: no GET"
-        request = self.factory.get('/api/categories/vg-iss-2-s-c4360845.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/categories/vg-iss-2-s-c4360845.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/categories/vg-iss-2-s-c4360845.json'):
             api_get_categories_for_opus_id(request, 'vg-iss-2-s-c4360845')
@@ -230,16 +217,14 @@ class resultsTests(TestCase):
 
     def test__api_get_categories_for_search_no_meta(self) -> None:
         "[test_results.py] api_get_categories_for_search: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/categories.json'):
             api_get_categories_for_search(request)
 
     def test__api_get_categories_for_search_no_get(self) -> None:
         "[test_results.py] api_get_categories_for_search: no GET"
-        request = self.factory.get('/api/categories.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/categories.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/categories.json'):
             api_get_categories_for_search(request)
@@ -251,16 +236,14 @@ class resultsTests(TestCase):
 
     def test__api_get_product_types_for_opus_id_no_meta(self) -> None:
         "[test_results.py] api_get_product_types_for_opus_id: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/product_types/vg-iss-2-s-c4360845.json'):
             api_get_product_types_for_opus_id(request, 'vg-iss-2-s-c4360845')
 
     def test__api_get_product_types_for_opus_id_no_get(self) -> None:
         "[test_results.py] api_get_product_types_for_opus_id: no GET"
-        request = self.factory.get('/api/product_types/vg-iss-2-s-c4360845.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/product_types/vg-iss-2-s-c4360845.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/product_types/vg-iss-2-s-c4360845.json'):
             api_get_product_types_for_opus_id(request, 'vg-iss-2-s-c4360845')
@@ -273,16 +256,14 @@ class resultsTests(TestCase):
 
     def test__api_get_product_types_for_search_no_meta(self) -> None:
         "[test_results.py] api_get_product_types_for_search: no META"
-        request = self.factory.get('dummy')
-        request.META = None
+        request = request_without_meta(self.factory, 'dummy')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/product_types.json'):
             api_get_product_types_for_search(request)
 
     def test__api_get_product_types_for_search_no_get(self) -> None:
         "[test_results.py] api_get_product_types_for_search: no GET"
-        request = self.factory.get('/api/product_types.json')
-        request.GET = None
+        request = request_without_get(self.factory, '/api/product_types.json')
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/product_types.json'):
             api_get_product_types_for_search(request)
@@ -292,8 +273,18 @@ class resultsTests(TestCase):
             ######### get_triggered_tables UNIT TESTS #########
             ###################################################
 
-    def _test_triggered_tables(self, q, expected) -> None:
-        (selections,extras) = url_to_search_params(q)
+    def _test_triggered_tables(self, q: QueryDict, expected: list[str]) -> None:
+        """Assert which tables one query string triggers a join against.
+
+        Parameters:
+            q: The query string, which must be one this suite expects to parse.
+            expected: The table names the query must trigger, in sorted order.
+        """
+        (selections, extras) = url_to_search_params(q)
+        # Every query these tests pass parses; a None here would mean the test's own
+        # query string was wrong rather than that the code under test misbehaved.
+        assert selections is not None
+        assert extras is not None
         print(selections)
         partables = get_triggered_tables(selections, extras)
         print('partables:')

@@ -6,7 +6,7 @@ if __name__ == "__main__":
 
     import requests
 
-    OPUS_IDS = [
+    OPUS_IDS: list[str] = [
         # 'co-cirs-0408010657-fp3',
         # 'co-cirs-0408031652-fp1',
         # 'co-cirs-0408041543-fp3',
