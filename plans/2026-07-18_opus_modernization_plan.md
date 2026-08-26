@@ -4191,3 +4191,320 @@ body; never rewrite or delete earlier notes.*
     diffs** (`git status integration_tests/test_api/responses` empty afterwards).
     Against PR-13's 22136 statements / 1876 branches the deltas are exactly the
     `opus_support` figures above: +25 statements and +4 branches, all covered.
+- **2026-08-25 (PR-15 executed):** every module of `opus_import` except the `obs`
+  hierarchy is annotated and carries Google-style docstrings, the package ships
+  `py.typed`, and the type burn-down entry has narrowed from `opus_import.*` to
+  `opus_import.obs.*`. Facts later PRs rely on:
+  - **What the burn-down entry means now, and what PR-16 removes.** The source entry is
+    `opus_import.obs.*`, which mypy matches against the `opus_import.obs` package itself
+    as well as its modules (verified: a `pkg.sub.*` override silences `pkg/sub/__init__.py`
+    too). **`tests.opus_import.*` stays silenced alongside it, and PR-16 must remove both
+    together**, because a test that constructs an obs class cannot be strict-clean while
+    that hierarchy is unannotated -- `disallow_untyped_calls` reports the call **in the
+    caller's file**, which no override on `opus_import.obs.*` can reach. That last point
+    governs more than the tests: it is why `steps/do_import_obs.py` annotates the obs
+    instance it is handed as `Any` (see below), and it is the general rule for calling
+    into a silenced package from an annotated one.
+    **But do not size that entry from the obs coupling alone.** Measured at this PR by
+    deleting the entry: **17 errors in 6 files, of which 7 are the obs `no-untyped-call`
+    kind**. The other 10 are ordinary annotation work in the tests themselves and have
+    nothing to do with the hierarchy -- missing type arguments, an `arg-type`, a
+    `comparison-overlap`, a `call-overload`, an `unused-ignore`, assigning a fake
+    database into an `ImportDBSuper | None`, and `attr-defined` on `opus_import.__main__`'s
+    implicit re-export of `main` (`no_implicit_reexport` is on, so `__main__` needs an
+    `__all__` or an explicit re-export before a test may import `main` from it).
+    Re-measure rather than carrying those numbers forward.
+  - **`ImportContext.db` is `ImportDBSuper | None`, and that shapes the whole diff.**
+    `opus_import.cli` builds the context and connects afterwards, so every function that
+    uses the database narrows it with an `assert ctx.db is not None` (or asserts the
+    local the function already bound). Regenerate the set with
+    `grep -rn "assert ctx\.db is not None\|assert db is not None" src/opus_import`.
+    **A later PR that wants to be rid of them should change the field, not the
+    assertions**: making `db` non-optional, or reaching it through an accessor that
+    raises, is a design change to `ImportContext` and to every call site, which is more
+    than an annotation PR should decide. The same pattern covers
+    `import_util.read_schema_for_table`, which returns None for a table with no packaged
+    schema: a read of a schema that ships with the package asserts it was found.
+  - **The obs instances the steps hold are annotated `Any`, deliberately, and PR-16
+    should retype them.** `do_import_obs` and `do_import_index` take an obs class
+    instance and call its methods; naming the real class today would make every one of
+    those calls a `no-untyped-call` error in the step's own file, for the reason above.
+    They are `Any` until the hierarchy is annotated. **PR-16 is the PR that can change
+    them**, and the run that finds them is deleting the `opus_import.obs.*` override and
+    reading what the checker says about the `steps` modules.
+  - **`ImportDBSuper` gained the type aliases the pipeline names.** `Namespace` is
+    `Literal['import', 'perm', 'all']`, so a mistyped namespace is now a type error
+    rather than a `NotImplementedError` at run time; `DBRow`, `SchemaColumn` and
+    `ResultRow` name a row to write, a column definition read from a packaged JSON
+    schema, and a row of a query result. `import_util` adds `IndexRow` and
+    `TableSchema`, and `config_bundle_info` adds a `BundleInfo` TypedDict for the value
+    half of every `BUNDLE_INFO` entry. Later PRs should import these rather than
+    re-spelling `dict[str, Any]`. **`BundleInfo` is worth reading before touching the
+    import path**: it declares `instrument_class` and `primary_index` as optional, which
+    they are for the four entries naming bundles OPUS deliberately ignores, and that is
+    what forces the three sites which use them to narrow first. A plain `dict[str, Any]`
+    let two of those three call an instrument class the annotation admitted could be
+    None. `ImportDBSuper.conn` is a bare class-level `Any` annotation, which
+    creates no attribute: the base class uses only `cursor()` and `commit()` and cannot
+    name a brand's connection type, and opening the connection is the subclass's job.
+  - **`table_names` returns a `Collection[str]`, and for one call shape it returns the
+    cache itself.** `table_names('all')` with no prefix returns the live `_table_names`
+    set that `drop_table` and `create_table` maintain; every other shape returns a new
+    list. A caller must not mutate the result. The return type is `Collection` rather
+    than a union because the contract is iteration, membership and length, in no
+    particular order -- callers that need an order already call `sorted()`.
+  - **MySQLdb is type-checked against typeshed stubs, not silenced.**
+    `types-mysqlclient` is in the dev extras, and mypy's own message is what found it:
+    "Library stubs not installed for X" means typeshed has them, while "missing library
+    stubs or py.typed marker" means nothing exists. The rule the `ignore_missing_imports`
+    comment now states, and which every later annotation PR should apply before adding an
+    entry: a package typeshed has stubs for gets its `types-*` distribution in the dev
+    extras; only a package with no stubs anywhere gets an entry. Read the current list
+    from `pyproject.toml` rather than from here.
+  - **Four public signatures changed, and the audit that found them is worth
+    repeating.** Comparing every public callable in `opus_import` between `f17422e4` and
+    this tree -- parameter name, kind, declaration position and required-ness -- reports
+    **1466 public callables on both sides and exactly four changed signatures**, which
+    is the whole list:
+    `ImportDBMySQL.__init__` takes named parameters instead of `*args, **kwargs`, and
+    `ImportDBSuper.table_info`, `delete_rows` and `find_column_max` rename their second
+    parameter `table_name` to `raw_table_name` (matching what the MySQL override has
+    always called it, and what the value is; these three are abstract stubs that only
+    raise, so no call reaches them, and nothing in the repository passes any of these by
+    keyword). `delete_rows` moved one more thing the audit compares: its `where` went
+    from required to optional, aligning the abstract with the MySQL override that has
+    always defaulted it. Two private signatures changed as well:
+    `ImportDBMySQL._execute` for the same reason as `__init__`, and
+    `do_import_mult._convert_sql_response_to_mult_table` dropped a parameter it never
+    read. **A rename is invisible to a grep for positional
+    calls**, which is why the audit compares names rather than counting call sites; the
+    script lives in the PR description's testing evidence and takes two trees.
+  - **`ImportDBMySQL.__init__`'s `engine` keyword could not survive that change, and
+    nothing was lost.** The branch read `kwargs['engine']` *after* calling
+    `ImportDBSuper.__init__(*args, **kwargs)`, which has no `engine` parameter and would
+    have raised `TypeError` first. `default_engine` was therefore always `'INNODB'` and
+    still is.
+  - **Three pre-existing faults were fixed because honest annotation exposed them; each
+    is small and each is a real behavior change on a path the integration suite does not
+    reach.**
+    1. `import_util.safe_pdstable_read` returned a bare list, not a pair, when a PDS4
+       index CSV held no data rows. Both callers unpack a pair, so an empty PDS4 index
+       raised `ValueError` on the unpack -- from the unpack itself, before either caller
+       could look at what it got. It returns `(rows, None)` now, which is what the
+       function's contract always said an empty file should give: the file was read
+       successfully, it just has no rows. **The two callers then diverge, and a later PR
+       should know which:** `do_import_index.import_one_index` tests `if not obs_rows:`
+       and reaches its "read failed" branch, so an empty *primary* index fails the bundle
+       as before; the associated-metadata caller tests `if assoc_rows is None:` and does
+       **not**, so an empty *associated* index now proceeds with zero cross-referenced
+       rows. That second outcome is deliberate: it is exactly what the PDS3 path already
+       does for an empty associated table, since `safe_pdstable_read_pds3` returns
+       `table.dicts_by_row()` unconditionally. The fix makes PDS4 agree with PDS3 rather
+       than inventing a behavior. **What it does not answer, and what belongs to a later
+       PR:** whether proceeding silently is *right* for an associated index. Zero
+       cross-referenced rows means every observation in the bundle imports with that
+       metadata missing, and nothing says so beyond the `--import-report-missing-*-geo`
+       options nobody turns on by default. That is an import-validation design question,
+       not an annotation one.
+    2. Two `self.logger.log(...)` calls in `ImportDBMySQL.__init__` were unguarded while
+       every other logging site in the file is guarded. `logger=None` is a supported
+       state -- PR-02's warning-handler flag exists for it, and
+       `tests/opus_import/test_importdb_mysql.py` constructs with it -- so those two
+       lines would have raised `AttributeError`. They are guarded now.
+    3. `do_import_obs.import_observation_table` left `column_val_list` as None when a
+       table schema named a `data_source` it does not implement, logged the error, and
+       then raised `TypeError` a few lines further on. An assertion now fails at the
+       fault rather than past it.
+  - **Four pre-existing faults found while annotating, left for a later PR** (they are
+    outside the lines this PR changed, and fixing them is not annotation work). Each is
+    written out so nobody has to re-derive it:
+    1. **The table-name cache diverges from the server in two situations**
+       (`importdb/mysql.py`). `create_table` adds the new name to `self._table_names`
+       only inside `if self.logger:` **and** only in the non-read-only branch beneath it,
+       while `drop_table` removes the name whenever the table existed, gated on neither.
+       So a `logger=None` instance never records a table it created and its
+       `table_exists` goes on saying False; and a `--read-only` run records every drop it
+       only simulated, so it says False for tables the server still has. The comment on
+       the `create_table` line explains the read-only half deliberately ("Don't pretend
+       the table has been created if it really hasn't"); the `logger` half looks
+       accidental, and the missing symmetry in `drop_table` looks like the real bug.
+    2. **`do_import_obs.import_observation_table` can read an unbound local.**
+       `mult_label_list` and its four siblings are initialized in the `else` branch that
+       runs only when the column has a `data_source`. A column with no `data_source`
+       skips that initialization, so on the first loop iteration the mult branch would
+       raise `NameError` and on any later one it silently reads the *previous* column's
+       lists. Reaching it needs a column with no `data_source` and a GROUP form type,
+       which no packaged schema currently has.
+    3. **`do_import_mult.update_mult_table`'s `if label is None:` is dead code.** It sits
+       after the `label = str(label)` earlier in the same function, so `label` is a
+       string by then and a None argument has already become the string `'None'`. The
+       `'N/A'` users actually see comes from the caller in `do_import_obs`, not from
+       here.
+    4. **A stale comment.** `do_import_obs.import_observation_table`'s header comment
+       still says "Always skip `id` for tables other than obs_general"; the loop beneath
+       it has no such check, and `id` is populated from the schema's `MAX_ID` data source
+       like any other column.
+  - **`--update-mult-info` has never worked, and PR-16 owns fixing it** (assigned by the
+    orchestrator 2026-08-25; the matching line goes into PR-16's plan-body section after
+    this merges). `do_update_mult_info` unpacks **six** values out of each
+    `mult_options` entry, and **every entry in the packaged table schemas carries
+    seven** -- measured across `src/opus_import/table_schemas/*.json`: **410 entries in
+    15 files, all of length 7**, zero of any other length. The step therefore raises
+    `ValueError` at the first table that has a `mult_options` column, before updating
+    anything.
+    **Why it has stayed invisible:** nothing else calls it, and ``--do-it-all`` does not
+    imply ``--update-mult-info``, so no ordinary import run reaches it -- the local
+    30-bundle chain included. **It is pre-existing, not introduced here:** the unpack is
+    byte-identical at `f17422e4`.
+    **Why PR-16:** it owns the obs/mult hierarchy and the `MultField` TypedDict that
+    matches `ObsBase._create_mult()`, so what the seventh value is and what this step
+    should do with it are its questions to answer.
+    **Regenerate the measurement rather than trusting the numbers above** -- parse every
+    `mult_options` list in the packaged schemas and compare each entry's length against
+    the unpack; a schema edit moves it. This PR documents the fault in the module
+    docstring and in a `Raises:` section and changes no behavior, because deciding what
+    the seventh value means is behavior work, not annotation work.
+  - **Two behaviors that surprise on reading, both documented in the code now, both
+    worth knowing before wiring anything to them:**
+    1. **A clean exit status does not mean a clean run.** A non-zero status from
+       `opus_import.cli.main` means the run stopped: contradictory
+       `--drop-permanent-tables` / `--scorched-earth`, a bad bundle descriptor, the
+       database connection failing, `do_import_steps` returning False, and an exception
+       reaching the top-level handler all produce one. **Do not read that list as
+       complete** -- an earlier revision of this bullet called it "exactly four cases"
+       and was wrong, and `sys.exit` is reachable from more than one module. What
+       matters in the other direction is firmer and is the part to rely on: **several
+       steps report failure through the log and leave the status zero**, a failed
+       dictionary import, a failed `param_info` / `partables` / `table_names` build,
+       `create_cart` giving up on its second attempt, and every `do_validate` error
+       among them. PR-22's acceptance check reads `ERRORS.log`, which is the right thing
+       to read; do not replace it with `$?`.
+    2. **An out-of-range value can be discarded silently.** `do_import_obs` logs an
+       error and NULLs a value outside its declared range, *except* for a column
+       carrying `val_set_invalid_to_null`, where it logs at debug instead. Such a column
+       loses out-of-range values without the run failing or the error log mentioning it.
+  - **The dictionary replacement is not atomic, and a failure part-way leaves the web
+    application without a dictionary** (raised by CodeRabbit on PR-15; recorded, not
+    fixed -- staging the tables and swapping them is a redesign of the dictionary
+    import, not annotation work). `do_dictionary.copy_dictionary_from_import_to_permanent`
+    drops the permanent `definitions` and `contexts` tables and then re-creates and
+    refills them, and `drop_table` commits through `_execute` rather than running inside
+    a transaction with the rest. So an error, a lost connection or a kill between the
+    drop and the final copy leaves the permanent dictionary absent or half-filled, with
+    no path back except re-running `--import-dictionary`. It is pre-existing and
+    unrelated to anything PR-15 changed.
+  - **The table-name cache asymmetry is real but unreachable today; here is the
+    reachability, so nobody re-derives it.** (Also raised independently by CodeRabbit on
+    PR-15, which is why it is written up rather than left as a one-liner.)
+    `ImportDBMySQL.create_table` adds the new name to `self._table_names` only inside
+    `if self.logger:` **and** only in its non-read-only branch, while `drop_table`
+    removes a name gated on neither. The damaging outcome -- a later `table_exists`
+    saying False for a table the server has, so the import re-issues a CREATE and fails
+    with "table already exists" -- needs the cache update skipped **and** real DDL to
+    execute. Neither trigger delivers that combination today: `get_db` is called from
+    exactly one place, `cli.py`'s `ctx.db = importdb.get_db(...)`, which always passes a
+    real `logger`, and nothing else in `src`, `scripts`, `tests` or `integration_tests`
+    constructs the backend; while `--read-only` does skip the cache update, it also
+    skips every mutating statement, so the divergence only makes the simulated output
+    wrong. **Regenerate that rather than trusting it** -- `grep -rn "get_db(" src
+    scripts tests integration_tests` is the whole call set. Fixing it is two lines
+    (move the cache update out of the logging branch), and it should happen the moment
+    anything constructs the backend without a logger.
+  - **`table_info` returns its cache, and one caller sorts it in place.**
+    `ImportDBMySQL.table_info` hands back the cached list object rather than a copy, and
+    `do_validate.validate_min_max_order` sorts it by field name, so every later call for
+    that table returns alphabetical order rather than the table's column order its
+    docstring promises. Nothing depends on the order today because `do_validate` is the
+    only caller that reads more than one column, but a later PR that adds one should
+    copy or re-fetch. The sibling `table_names` has the same aliasing shape and carries
+    a warning; this one now does too.
+  - **`opus_import` is measured by the unit gate, not the integration one.** The
+    integration workflow's 100% gate includes `src/opus_app/apps/*`,
+    `integration_tests/test_api/*` and `src/opus_support/*`
+    (`integration_tests/.coveragerc`), so the assertions and
+    declarations this PR adds under `src/opus_import` do not appear in its totals and
+    cannot move it. They are in the scope of the unit gate PR-19 introduces -- worth
+    knowing before that gate is set, since an assertion on an invariant is a statement
+    no test can fail.
+  - **Read this before writing docstrings for PR-16 or PR-17: one class of defect cost
+    this PR three review rounds, and it is a generator rather than a scatter.** The code
+    was clean from the first pass; **every** finding in rounds two and three was a
+    docstring or comment that said something false about the code, and two of them were
+    in the commits written to *fix* the round before. Both later PRs are
+    annotation-and-docstring PRs over code nobody has described before, so they will
+    meet the same generator.
+    **The three shapes it takes:**
+    1. **An exhaustiveness claim, which is the worst of them, because making a claim
+       more precise makes it falsifiable.** **The exemplar is "`main` exits non-zero in
+       exactly four cases", and it is worth following because it cost three separate
+       rounds.** It began as an overbroad claim ("any step fails"); round two replaced
+       it with the precise-and-wrong "exactly four", which missed the `sys.exit` in
+       `yield_import_bundle_ids` that `main`'s `except Exception:` deliberately does not
+       catch; round three caught that in the docstring; and CodeRabbit then found the
+       original claim still standing in one Execution-notes bullet while its correction
+       stood in another, so the notes contradicted themselves. **A quantifier is not
+       fixed by being counted more carefully -- it is fixed by not being a quantifier.**
+       The statement now says what a non-zero status means and explicitly refuses to
+       present its list as complete. Trigger words: *exactly, every, all, always, never,
+       only, one per, no other*.
+    2. **Prose that inherits a wrong comment already in the code.** Two new module
+       docstrings said the `obs_` rows reference the `mult_` tables "by foreign key",
+       restating a pre-existing comment. There is no such foreign key: across the
+       packaged schemas the only foreign-key targets are `obs_general.id`,
+       `obs_general.opus_id` and `contexts.name`. A `mult_idx` column carries a plain
+       index. **Fix the seeding comment too, or the next executor inherits it again.**
+    3. **A claim about a workflow nobody has run.** `retrieve_ra_dec`'s docstring said it
+       regenerates `star_ra_dec`'s table; its own star list is smaller than the table, so
+       following that instruction deletes the entries only the table has. An instruction
+       that destroys data is worse than a merely inaccurate sentence, and no reviewer
+       will catch it by reading -- only by running the comparison.
+    **The two rules that close it, applied by the author rather than by another
+    reviewer** (a reviewer finds the next instance; a rule ends the class):
+    * **No quantified or exhaustive claim survives unless the count was run and can be
+      stated.** Either back it with a measurement or drop the quantifier. "A failed step
+      can exit non-zero" needs no audit; "exactly four cases do" needs a count.
+    * **Prefer the narrower claim, and prefer deleting to weakening.** A docstring that
+      says less than the code does is safe forever; one that says more is a defect
+      waiting for a reader. A sentence that adds nothing should be cut -- an absent
+      sentence cannot be wrong.
+    **What actually established truth here was counting, not reading**: 410
+    `mult_options` entries all of arity seven, 46 foreign-key columns with zero `mult_`
+    targets, 190 stars in the table against 155 in the tool. Where a claim is countable,
+    count it exhaustively; a sample proves nothing. Verifying is cheap and reliable,
+    claiming is neither.
+    **Run the sweep over claims inherited from earlier PRs, not only over prose the
+    current PR wrote.** The mechanical quantifier sweep is what caught the strongest
+    instance of this whole class, and it was not in PR-15's prose at all: PR-12's
+    bandit `B608` skip justification in `pyproject.toml` said both SQL-building modules
+    "render every value as a `%s` parameter" and named **exactly two** exceptions. There
+    is a third -- `ImportDBMySQL.create_table` formats a column's `field_default` and
+    its `field_enum_options` straight into the CREATE TABLE text -- so a **security**
+    justification was overstating its guarantee. That text was approved during PR-12 and
+    survived three adversarial passes and a CodeRabbit review, which is the useful part:
+    **nobody re-derives a security justification once it is written down.** PR-15
+    corrected it (comment-only) rather than leaving it for whichever PR next happens to
+    own the file. **PR-17 inherits it**: it turns these skips into per-line `# nosec`
+    justifications, so it should carry the corrected three-case wording rather than the
+    shorter claim, and should re-derive each skip it converts instead of transcribing
+    it.
+  - **Docstring conventions this package now follows, so PR-16 and PR-17 match.** A
+    module docstring says what the module's table or step is *for* and why its work
+    happens where it does in the sequence, not what its functions are. `Returns:`
+    describes the failure value as well as the success one, because most of this
+    pipeline reports rather than raises: a step that logs an error and returns False is
+    the norm, and the docstring has to say which it does. `Raises:` on an abstract stub
+    names the `NotImplementedError` it raises, since that is its whole behavior.
+  - **Verification evidence.** `scripts/run-all-checks.sh -c` clean (ruff, the type check
+    over `src integration_tests tests manage.py` -- 209 source files -- pytest **1124
+    passed**, unchanged from PR-14 since this PR adds no test, pyroma 10/10, bandit,
+    vulture). A built wheel carries `opus_import/py.typed` alongside the two markers
+    PR-14 shipped, with the table schemas and dictionary data unchanged.
+    The full local chain (`opus_main_test.sh`: 30-bundle import into a fresh MySQL
+    schema, then the Django suite under the 100% gate) ran end to end with exit code 0:
+    **`Ran 1643 tests` / `OK` / `TOTAL 22161 stmts, 1880 branches, 100%`**, zero missing
+    statements, zero partial branches, and **zero golden-fixture diffs**. Those are
+    PR-14's numbers unchanged, which is the point: this PR adds statements only under
+    `src/opus_import`, which that gate does not include, so the *right* result here is
+    for the coverage totals not to move at all. What the run does prove is the import
+    itself -- the assertions and the three fixes above survive a real 30-bundle import
+    with no ERRORS.log entries.

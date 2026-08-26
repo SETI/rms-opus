@@ -1,25 +1,66 @@
-################################################################################
-# do_partables.py
-#
-# Generate and maintain the partables table.
-################################################################################
+"""Build the ``partables`` table, which says what a search reveals.
+
+A row maps a value a user can search for onto a table of further search parameters that
+value makes relevant: choosing the Cassini mission, for instance, reveals the Cassini
+mission table. The web application reads this to decide which sections of the search
+form to offer, so a mission or instrument with no row here has no searchable columns of
+its own.
+
+Most triggers name a ``mult_`` table row id, because that is what the corresponding
+``obs_general`` column holds. Surface geometry targets are the exception: their trigger
+value is the target name itself, since the web side compares the user's search text to
+it directly.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from opus_import import config_data, import_util
 from opus_import.steps.do_import_mult import mult_table_lookup_id
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-def _lookup_table_column(table_schema, column_name):
+    from opus_import.context import ImportContext
+
+
+def _lookup_table_column(table_schema: Sequence[dict[str, Any]],
+                         column_name: str) -> dict[str, Any] | None:
+    """Return one column's definition out of a table schema.
+
+    Parameters:
+        table_schema: The table's column definitions.
+        column_name: The column to find.
+
+    Returns:
+        The column's definition, or None if the schema has no such column.
+    """
     for table_column in table_schema:
         if table_column.get('field_name', None) == column_name:
             return table_column
     return None
 
-def create_import_partables_table(ctx):
+def create_import_partables_table(ctx: ImportContext) -> None:
+    """Fill the import ``partables`` table with every trigger OPUS knows.
+
+    One row per mission, per instrument and per instrument host, each keyed by the
+    ``mult_`` id of the corresponding ``obs_general`` value, plus one per surface
+    geometry target keyed by the target name. An HST instrument points at the Hubble
+    mission table, because HST keeps its columns there rather than in an instrument
+    table of its own.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('info', 'Creating new import partables table')
     partables_schema = import_util.read_schema_for_table(ctx, 'partables')
+    # partables.json is packaged with opus_import, so the schema is always found.
+    assert partables_schema is not None
     # Start from scratch
     db.drop_table('import', 'partables')
     db.create_table('import', 'partables', partables_schema,
@@ -32,10 +73,13 @@ def create_import_partables_table(ctx):
     # and type_id.
 
     obs_general_schema = import_util.read_schema_for_table(ctx, 'obs_general')
+    # obs_general.json is packaged with opus_import, so the schema is always found.
+    assert obs_general_schema is not None
 
-    rows = []
+    rows: list[dict[str, Any]] = []
 
     mission_id_column = _lookup_table_column(obs_general_schema, 'mission_id')
+    assert mission_id_column is not None
     for mission_id in sorted(config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
         mission_id_val = mult_table_lookup_id(ctx, 'obs_general', 'mission_id',
                                               mission_id_column, mission_id)
@@ -48,6 +92,7 @@ def create_import_partables_table(ctx):
         rows.append(entry)
 
     instrument_id_column = _lookup_table_column(obs_general_schema, 'instrument_id')
+    assert instrument_id_column is not None
     for instrument_id in sorted(config_data.INSTRUMENT_ID_TO_MISSION_ID.keys()):
         instrument_id_val = mult_table_lookup_id(ctx, 'obs_general', 'instrument_id',
                                                  instrument_id_column, instrument_id)
@@ -65,6 +110,7 @@ def create_import_partables_table(ctx):
         rows.append(entry)
 
     inst_host_id_column = _lookup_table_column(obs_general_schema, 'inst_host_id')
+    assert inst_host_id_column is not None
     for inst_host_id in sorted(config_data.INST_HOST_ID_TO_MISSION_ID.keys()):
         inst_host_id_val = mult_table_lookup_id(ctx, 'obs_general', 'inst_host_id',
                                                 inst_host_id_column, inst_host_id)
@@ -89,7 +135,7 @@ def create_import_partables_table(ctx):
     # }
     # rows.append(entry)
 
-    surface_geo_table_names = ctx.db.table_names(
+    surface_geo_table_names = db.table_names(
                                             'perm',
                                             prefix='obs_surface_geometry__')
     for table_name in sorted(surface_geo_table_names):
@@ -110,20 +156,34 @@ def create_import_partables_table(ctx):
 
     db.insert_rows('import', 'partables', rows)
 
-def copy_partables_from_import_to_permanent(ctx):
+def copy_partables_from_import_to_permanent(ctx: ImportContext) -> None:
+    """Replace the permanent ``partables`` table with the import one.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('info', 'Copying partables table from import to permanent')
     # Start from scratch
     partables_schema = import_util.read_schema_for_table(ctx, 'partables')
+    # partables.json is packaged with opus_import, so the schema is always found.
+    assert partables_schema is not None
     db.drop_table('perm', 'partables')
     db.create_table('perm', 'partables', partables_schema, ignore_if_exists=False)
 
     db.copy_rows_between_namespaces('import', 'perm', 'partables')
 
 
-def do_partables(ctx):
+def do_partables(ctx: ImportContext) -> None:
+    """Rebuild the permanent ``partables`` table, driven by ``--create-partables``.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
     create_import_partables_table(ctx)
     copy_partables_from_import_to_permanent(ctx)
+    assert ctx.db is not None
     ctx.db.drop_table('import', 'partables')

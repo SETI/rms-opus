@@ -1,4 +1,25 @@
+"""The MySQL implementation of the import pipeline's database interface.
+
+`ImportDBMySQL` is the one brand `opus_import.importdb.get_db` can return. It renders the
+OPUS table schemas as MySQL DDL and builds the statements that read and write rows.
+
+Every identifier it emits is validated against a strict pattern and then backtick-quoted,
+and the row statements bind their values as parameters rather than formatting them into
+the text. The DDL is the exception: `ImportDBMySQL.create_table` formats a column's
+default and its enum option list straight into the statement, which is safe only because
+those come from the table schemas packaged with `opus_import` and never from input.
+
+The driver is imported defensively, so that the module still imports without
+``mysqlclient`` installed and a package-wide sweep -- Sphinx autodoc, or a test
+collection -- does not fail on it. An instance built without the driver forces itself
+read-only and discards every statement rather than running or logging it, so it reports
+no tables and reads no rows; it is not a simulation anything can be driven through.
+"""
+
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING, Any
 
 try:
     import MySQLdb
@@ -6,7 +27,19 @@ try:
 except ImportError:
     MYSQLDB_AVAILABLE = False
 
-from opus_import.importdb.super import ImportDBError, ImportDBSuper
+from opus_import.importdb.super import (
+    DBRow,
+    ImportDBError,
+    ImportDBSuper,
+    Namespace,
+    ResultRow,
+    SchemaColumn,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Collection, Sequence
+
+    import pdslogger
 
 ERR_UNKNOWN_DATABASE = 1049
 
@@ -18,24 +51,61 @@ ERR_UNKNOWN_DATABASE = 1049
 _IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
 
 class ImportDBMySQL(ImportDBSuper):
+    """The import pipeline's database interface, rendered as MySQL.
+
+    Attributes:
+        default_engine: The storage engine every table is created with.
+        mysql_version: The server's version string, or ``'Simulated'`` when the driver is
+            absent.
+    """
+
     # Note that for MySQL, we ignore the db_name and only use the schema_name
-    def __init__(self, *args, **kwargs):
-        """Open the connection to a MySQL server. Note this will also
-           create the database if it doesn't already exist."""
-        super().__init__(*args, **kwargs)
+    def __init__(self, db_hostname: str, db_name: str, db_schema: str, db_user: str,
+                 db_password: str,
+                 mult_form_types: Sequence[str] | None = None,
+                 import_prefix: str | None = None,
+                 logger: pdslogger.PdsLogger | None = None,
+                 read_only: bool = False) -> None:
+        """Open the connection to a MySQL server, creating the schema if it is absent.
+
+        The parameters are `ImportDBSuper`'s, and ``db_name`` is ignored: MySQL has no
+        level above the schema.
+
+        Parameters:
+            db_hostname: The MySQL server's host name.
+            db_name: Unused.
+            db_schema: The schema (MySQL database) holding the OPUS tables. It is
+                created if the server does not already have it.
+            db_user: The user to connect as.
+            db_password: That user's password.
+            mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
+                or None for none of them.
+            import_prefix: The prefix distinguishing an import table from its permanent
+                counterpart, or None to make the two namespaces the same tables.
+            logger: Where to report progress, statements and warnings, or None to report
+                nothing.
+            read_only: True to log every mutating statement instead of executing it.
+
+        Raises:
+            ImportDBError: If the server cannot be reached, the schema can be neither
+                used nor created, or the session's SQL mode cannot be set.
+        """
+        super().__init__(db_hostname, db_name, db_schema, db_user, db_password,
+                         mult_form_types=mult_form_types,
+                         import_prefix=import_prefix,
+                         logger=logger, read_only=read_only)
         super()._enter('__init__')
 
-        self._table_info_cache = {}
+        self._table_info_cache: dict[tuple[Namespace, str], list[SchemaColumn]] = {}
 
         if not MYSQLDB_AVAILABLE:
             self.read_only = True
-            self.logger.log('warning',
-                'Python package MySQLdb not available - simulating all '+
-                'database accesses!')
+            if self.logger:
+                self.logger.log('warning',
+                    'Python package MySQLdb not available - simulating all '+
+                    'database accesses!')
 
         self.default_engine = 'INNODB'
-        if 'engine' in kwargs:
-            self.default_engine = kwargs['engine']
 
         if not MYSQLDB_AVAILABLE:
             self.conn = None
@@ -69,12 +139,12 @@ class ImportDBMySQL(ImportDBSuper):
                     try:
                         cmd = f'CREATE DATABASE {self.quote_identifier(self.db_schema)}'
                         self._execute(cmd)
-                    except MySQLdb.Error as e:
+                    except MySQLdb.Error as create_err:
                         if self.logger:
                             self.logger.log('fatal',
                             f'Unable to create new database "{self.db_schema}"'+
-                            f': {e.args[1]}')
-                        raise ImportDBError(e) from e
+                            f': {create_err.args[1]}')
+                        raise ImportDBError(create_err) from create_err
                     if self.logger:
                         self.logger.log('warning',
                                 f'  Created new database "{self.db_schema}"')
@@ -82,12 +152,12 @@ class ImportDBMySQL(ImportDBSuper):
                     try:
                         cmd = f'USE {self.quote_identifier(self.db_schema)}'
                         self._execute(cmd)
-                    except MySQLdb.Error as e:
+                    except MySQLdb.Error as use_err:
                         if self.logger:
                             self.logger.log('fatal',
                                 'Unable to use new database '+
-                                f'"{self.db_schema}": {e.args[1]}')
-                        raise ImportDBError(e) from e
+                                f'"{self.db_schema}": {use_err.args[1]}')
+                        raise ImportDBError(use_err) from use_err
                 else:
                     if self.logger:
                         self.logger.log('fatal',
@@ -101,7 +171,7 @@ class ImportDBMySQL(ImportDBSuper):
 
         # We keep a cached list of table names so we don't have to keep doing
         # SQL queries - go ahead and populate it now
-        self._table_names = None
+        self._table_names: set[str] | None = None
         self.table_names('all')
         assert self._table_names is not None
 
@@ -115,7 +185,8 @@ class ImportDBMySQL(ImportDBSuper):
             cmd = 'SELECT VERSION()'
             res = self._execute_and_fetchall(cmd, '__init__')
             self.mysql_version = res[0][0]
-            self.logger.log('info', f'  MySQL version: {self.mysql_version}')
+            if self.logger:
+                self.logger.log('info', f'  MySQL version: {self.mysql_version}')
 
             try:
                 cmd = ("set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,"
@@ -133,12 +204,37 @@ class ImportDBMySQL(ImportDBSuper):
 
         super()._exit()
 
-    def _execute(self, *args, **kwargs):
+    def _execute(self, cmd: str, param_list: Sequence[Any] | None = None,
+                 cur: Any = None, mutates: bool = False) -> None:
+        """Execute one statement, or do nothing at all when the driver is absent.
+
+        Parameters:
+            cmd: The statement, parameterized as `ImportDBSuper._execute` requires.
+            param_list: The parameters its placeholders consume, or None.
+            cur: An open cursor to run on, or None to open one and commit afterwards.
+            mutates: True if the statement changes the database.
+        """
         if not MYSQLDB_AVAILABLE:
             return
-        super()._execute(*args, **kwargs)
+        super()._execute(cmd, param_list, cur=cur, mutates=mutates)
 
-    def _execute_and_fetchall(self, cmd, func_name, param_list=None):
+    def _execute_and_fetchall(self, cmd: str, func_name: str,
+                              param_list: Sequence[Any] | None = None
+                              ) -> Sequence[ResultRow]:
+        """Execute one query and return every row of its result.
+
+        Parameters:
+            cmd: The query, parameterized as `ImportDBSuper._execute` requires.
+            func_name: The calling method's name, used in the failure message.
+            param_list: The parameters its placeholders consume, or None.
+
+        Returns:
+            The result rows, in the order the server returned them, or no rows at all
+            when the driver is absent.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
         if not MYSQLDB_AVAILABLE:
             return []
 
@@ -146,15 +242,22 @@ class ImportDBMySQL(ImportDBSuper):
             with self.conn.cursor() as cur:
                 self._execute(cmd, param_list, cur=cur)
                 self.conn.commit()
-                return cur.fetchall()
+                rows: Sequence[ResultRow] = cur.fetchall()
+                return rows
         except MySQLdb.Error as e:
             if self.logger:
                 self.logger.log('fatal',
                     f'Failed in {func_name}: {e.args[1]}')
             raise ImportDBError(e) from e
 
-    def quote_identifier(self, s):
+    def quote_identifier(self, s: str) -> str:
         """Return `s` backtick-quoted for use as an identifier.
+
+        Parameters:
+            s: The table, column or schema name.
+
+        Returns:
+            The name wrapped in backticks.
 
         Raises:
             ImportDBError: If the name is not made up solely of ASCII letters,
@@ -164,23 +267,63 @@ class ImportDBMySQL(ImportDBSuper):
             raise ImportDBError(f'Unsafe SQL identifier: {s!r}')
         return '`' + s + '`'
 
-    def _quoted_column_list(self, column_names):
-        "Return the column names quoted and comma-separated."
+    def _quoted_column_list(self, column_names: Sequence[str]) -> str:
+        """Return the column names quoted and comma-separated.
+
+        Parameters:
+            column_names: The columns, in the order they should appear.
+
+        Returns:
+            The quoted names joined by commas, ready for a column list.
+
+        Raises:
+            ImportDBError: If any name is not a legal identifier.
+        """
         return ','.join(self.quote_identifier(c) for c in column_names)
 
     @staticmethod
-    def _row_placeholders(row, column_names, param_list):
+    def _row_placeholders(row: DBRow, column_names: Sequence[str],
+                          param_list: list[Any]) -> str:
         """Append a row's values to param_list and return their placeholders.
 
         Every value is a parameter, including None: MySQLdb renders that as NULL,
         so no value is ever formatted into the statement text.
+
+        Parameters:
+            row: The values to write, keyed by column name.
+            column_names: The columns to take, in the order the statement names them.
+            param_list: The statement's parameter list, extended in place.
+
+        Returns:
+            One `%s` per column, comma-separated.
         """
         for column_name in column_names:
             param_list.append(row[column_name])
         return ','.join(['%s'] * len(column_names))
 
-    def table_names(self, namespace, prefix=None):
-        "Return a list of all table names in the schema."
+    def table_names(self, namespace: Namespace,
+                    prefix: str | list[str] | tuple[str, ...] | None = None
+                    ) -> Collection[str]:
+        """Return the names of the tables in a namespace.
+
+        The names are read from the server once and cached, so a run that creates and
+        drops tables through this instance never re-queries for them.
+
+        Parameters:
+            namespace: The namespace to list. ``'import'`` and ``'perm'`` return raw
+                names, with the import prefix stripped; ``'all'`` returns the names as
+                the server spells them.
+            prefix: One prefix, or several, that a name must start with; None for every
+                name.
+
+        Returns:
+            The matching table names, in no particular order. Passing a prefix always
+            gives a new list; asking for ``'all'`` without one gives the cache itself,
+            which the caller must not modify.
+
+        Raises:
+            NotImplementedError: If the namespace is not one of the three.
+        """
         super()._enter('table_names')
 
         if self._table_names is None:
@@ -198,6 +341,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
             #             f'  Current table names: {sorted(self._table_names)}')
         super()._exit()
 
+        ret_names: Collection[str]
         if namespace == 'all':
             ret_names = self._table_names
         elif namespace == 'import':
@@ -215,7 +359,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
             return ret_names
 
         if isinstance(prefix, (list, tuple)):
-            ret_list = []
+            ret_list: list[str] = []
             for name in ret_names:
                 for p in prefix:
                     if name.startswith(p):
@@ -225,8 +369,28 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 
         return [x for x in ret_names if x.startswith(prefix)]
 
-    def table_info(self, namespace, raw_table_name):
-        "Return a list containing information about the table columns."
+    def table_info(self, namespace: Namespace,
+                   raw_table_name: str) -> list[SchemaColumn]:
+        """Return the columns of a table as the server currently defines them.
+
+        The answer is cached per table and discarded whenever a table is created or
+        dropped through this instance.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+
+        Returns:
+            One dictionary per column, in the table's column order, each carrying
+            ``field_name``, ``field_default``, ``field_notnull`` and the OPUS
+            ``field_type`` the server's own type maps to. A table the server does not
+            have produces no columns rather than an error. This is the cached list
+            itself, so a caller that reorders or edits it changes what every later call
+            returns.
+
+        Raises:
+            NotImplementedError: If a column has a server type OPUS has no name for.
+        """
         cache_key = (namespace, raw_table_name)
         if cache_key in self._table_info_cache:
             return self._table_info_cache[cache_key]
@@ -291,8 +455,19 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         self._table_info_cache[cache_key] = column_list
         return column_list
 
-    def drop_table(self, namespace, raw_table_name, ignore_if_not_exists=True):
-        "Delete the given table if it exists."
+    def drop_table(self, namespace: Namespace, raw_table_name: str,
+                   ignore_if_not_exists: bool = True) -> None:
+        """Delete the given table if it exists.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            ignore_if_not_exists: True to do nothing when the table is absent.
+
+        Raises:
+            ImportDBError: If the table is absent and ``ignore_if_not_exists`` is False,
+                or the server rejects the statement.
+        """
         super()._enter('drop_table')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
@@ -326,6 +501,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     self.logger.log('debug',
                             f'Dropped table "{table_name}"')
 
+            # __init__ populates the cache and nothing clears it, so it is a set from
+            # the moment the instance exists; the None is only the load-once sentinel.
+            assert self._table_names is not None
             if table_name in self._table_names:
                 self._table_names.remove(table_name)
             else:
@@ -336,11 +514,29 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def create_table(self, namespace, raw_table_name, schema,
-                     ignore_if_exists=True):
-        """Create a new table from the given schema. Returns True if
-           table successfully created; False if table already existed
-           and ignore_if_exists==True."""
+    def create_table(self, namespace: Namespace, raw_table_name: str,
+                     schema: Sequence[SchemaColumn],
+                     ignore_if_exists: bool = True) -> bool:
+        """Create a new table from the given OPUS table schema.
+
+        Parameters:
+            namespace: The namespace to create the table in.
+            raw_table_name: The table, without its namespace prefix.
+            schema: The column definitions, as `opus_import.import_util` read them from
+                the packaged JSON schema. An entry carrying ``constraint`` contributes
+                that text instead of a column; one carrying ``pi_referred_slug``
+                describes a ``param_info`` row rather than a column and is skipped.
+            ignore_if_exists: True to leave an existing table alone.
+
+        Returns:
+            True if the table was created, False if it already existed and
+            ``ignore_if_exists`` was True.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+            NotImplementedError: If a column has a ``field_type`` MySQL has no rendering
+                for.
+        """
         super()._enter('create_table')
 
         if ignore_if_exists and self.table_exists(namespace, raw_table_name):
@@ -488,6 +684,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 # Don't pretend the table has been created if it really hasn't
                 # because we might try to read from it later expecting it to
                 # really be there!
+                assert self._table_names is not None
                 self._table_names.add(table_name)
 
         self.tables_created.append(table_name)
@@ -496,8 +693,16 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         super()._exit()
         return True
 
-    def analyze_table(self, namespace, raw_table_name):
-        """Analyze the given table. This recomputes key distribution."""
+    def analyze_table(self, namespace: Namespace, raw_table_name: str) -> None:
+        """Analyze the given table. This recomputes key distribution.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
         super()._enter('analyze_table')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
@@ -520,13 +725,24 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def insert_row(self, namespace, raw_table_name, row):
+    def insert_row(self, namespace: Namespace, raw_table_name: str,
+                   row: DBRow) -> None:
+        """Insert one row.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            row: The values to write, keyed by column name.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
         super()._enter('insert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        param_list = []
+        param_list: list[Any] = []
         placeholders = self._row_placeholders(row, sorted_column_names,
                                               param_list)
         cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
@@ -543,10 +759,19 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def insert_rows(self, namespace, raw_table_name, rows):
-        """Insert multiple rows as one transaction.
+    def insert_rows(self, namespace: Namespace, raw_table_name: str,
+                    rows: Sequence[DBRow]) -> None:
+        """Insert multiple rows, a thousand at a time.
 
-        All rows must have the same columns!"""
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            rows: The rows to write. All rows must have the same columns; an empty
+                sequence writes nothing.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
 
         if len(rows) == 0:
             return
@@ -566,7 +791,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
             sorted_column_names = sorted(rows[0].keys())
 
-            param_list = []
+            param_list: list[Any] = []
             value_tuples = []
             for row in rows[start_row:end_row]:
                 assert sorted_column_names == sorted(row.keys()), \
@@ -589,15 +814,29 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def update_row(self, namespace, raw_table_name, row, where,
-                   where_params=None):
+    def update_row(self, namespace: Namespace, raw_table_name: str, row: DBRow,
+                   where: str, where_params: Sequence[Any] | None = None) -> None:
+        """Assign new values to the columns of the rows a WHERE clause selects.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            row: The values to assign, keyed by column name.
+            where: The WHERE clause. Any value it compares against must be a `%s`
+                placeholder, never text.
+            where_params: The parameters that clause's placeholders consume. They follow
+                the assigned values in the statement's parameter list.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
         super()._enter('insert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
         set_cmds = []
-        param_list = []
+        param_list: list[Any] = []
         for column_name in sorted_column_names:
             set_cmds.append(f'{self.quote_identifier(column_name)}=%s')
             param_list.append(row[column_name])
@@ -615,18 +854,32 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def upsert_row(self, namespace, raw_table_name, key_name, row):
+    def upsert_row(self, namespace: Namespace, raw_table_name: str, key_name: str,
+                   row: DBRow) -> None:
+        """Insert one row, or update it if its key is already present.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            key_name: The column identifying the row. It is written on an insert and
+                never assigned on an update; a row of nothing but the key produces a
+                plain insert.
+            row: The values to write, keyed by column name.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
         super()._enter('upsert_row')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
         sorted_column_names = sorted(row.keys())
-        param_list = []
+        param_list: list[Any] = []
         placeholders = self._row_placeholders(row, sorted_column_names,
                                               param_list)
 
         assign_list = []
-        dup_param_list = []
+        dup_param_list: list[Any] = []
         for column_name in sorted_column_names:
             if column_name != key_name:
                 assign_list.append(f'{self.quote_identifier(column_name)}=%s')
@@ -651,11 +904,23 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def upsert_rows(self, namespace, raw_table_name, key_name, rows):
+    def upsert_rows(self, namespace: Namespace, raw_table_name: str, key_name: str,
+                    rows: Sequence[DBRow]) -> None:
         """Insert or update multiple rows, a packet of rows per statement.
 
-        Rows do not have to share a column set; rows that do are batched
-        together, in the order they were given."""
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            key_name: The column identifying a row. It is written on an insert and never
+                assigned on an update; rows of nothing but the key produce a plain
+                insert.
+            rows: The rows to write. They do not have to share a column set; rows that
+                do are batched together, in the order they were given. An empty sequence
+                writes nothing.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
 
         if len(rows) == 0:
             return
@@ -666,7 +931,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         # Group by column set so that every row in one statement contributes the
         # same VALUES tuple. In practice all the rows of a mult table match.
-        groups = {}
+        groups: dict[tuple[str, ...], list[DBRow]] = {}
         for row in rows:
             groups.setdefault(tuple(sorted(row.keys())), []).append(row)
 
@@ -689,7 +954,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 end_row = min(len(group_rows), packet_size * (packet_num+1))
 
                 value_tuples = []
-                param_list = []
+                param_list: list[Any] = []
                 for row in group_rows[start_row:end_row]:
                     placeholders = self._row_placeholders(row,
                                                           sorted_column_names,
@@ -712,8 +977,21 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def delete_rows(self, namespace, raw_table_name, where=None,
-                    where_params=None):
+    def delete_rows(self, namespace: Namespace, raw_table_name: str,
+                    where: str | None = None,
+                    where_params: Sequence[Any] | None = None) -> None:
+        """Delete the rows a WHERE clause selects.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            where: The WHERE clause, or None to delete every row. Any value it compares
+                against must be a `%s` placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
         super()._enter('delete_rows')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
@@ -733,9 +1011,26 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         self._exit()
 
-    def copy_rows_between_namespaces(self, src_namespace, dest_namespace,
-                                     raw_table_name, where=None,
-                                     where_params=None):
+    def copy_rows_between_namespaces(self, src_namespace: Namespace,
+                                     dest_namespace: Namespace, raw_table_name: str,
+                                     where: str | None = None,
+                                     where_params: Sequence[Any] | None = None) -> None:
+        """Copy rows of one table from one namespace to the same table in another.
+
+        Both tables must have the same columns in the same order, which they do because
+        both are created from the same OPUS table schema.
+
+        Parameters:
+            src_namespace: The namespace to read from.
+            dest_namespace: The namespace to write to.
+            raw_table_name: The table, without its namespace prefix.
+            where: The WHERE clause selecting the rows to copy, or None for every row.
+                Any value it compares against must be a `%s` placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
         super()._enter('copy_rows')
 
         src_table_name = self.convert_raw_to_namespace(src_namespace,
@@ -760,7 +1055,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         self._exit()
 
-    def general_select(self, cmd, param_list=None):
+    def general_select(self, cmd: str,
+                       param_list: Sequence[Any] | None = None) -> Sequence[ResultRow]:
         """Run `SELECT <cmd>` and return every row.
 
         Parameters:
@@ -768,6 +1064,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 quoted with `quote_identifier`; any value it compares against
                 must be a `%s` placeholder, never text.
             param_list: The parameters those placeholders consume.
+
+        Returns:
+            One tuple per row, in the order the query named its columns.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
         """
         super()._enter('cmd')
 
@@ -776,7 +1078,21 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         self._exit()
         return res
 
-    def find_column_max(self, namespace, raw_table_name, column_name):
+    def find_column_max(self, namespace: Namespace, raw_table_name: str,
+                        column_name: str) -> Any:
+        """Return the largest value in a column.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            column_name: The column to take the maximum of.
+
+        Returns:
+            The maximum, or None if the table has no rows.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
         super()._enter('find_column_max')
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)

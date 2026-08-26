@@ -1,8 +1,11 @@
-################################################################################
-# config_data.py
-#
-# Define general constants and mappings useful throughout the import process.
-################################################################################
+"""The names, ids and orderings the import shares across missions and instruments.
+
+Two kinds of thing live here: the tables OPUS populates for every observation, in the
+order it populates them, and the mappings between an id and everything derived from it --
+an instrument id to its mission, a mission id to its display name and its table suffix,
+and so on. Everything is a plain module-level constant; the import reads them and never
+writes them.
+"""
 
 
 # param_info form types that invoke mult_ tables

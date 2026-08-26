@@ -1,12 +1,15 @@
-################################################################################
-# config_targets/star_ra_dec.py
-#
-# The J2000 right ascension and declination of every star OPUS knows about.
-# Regenerate with `python -m opus_import.util.retrieve_ra_dec`.
-################################################################################
+"""The J2000 right ascension and declination of every star OPUS knows about.
+
+Both are in degrees. The table is checked in rather than looked up, so an import needs no
+network access. `opus_import.util.retrieve_ra_dec` looks coordinates up in SIMBAD and
+prints them in this format, but it works from its own list of stars, which does not cover
+every entry here -- **merge its output in rather than replacing this table with it.**
+"""
+
+from __future__ import annotations
 
 # Map each star name to its RA and DEC
-STAR_RA_DEC = {
+STAR_RA_DEC: dict[str, tuple[float, float]] = {
     '126_TAU':                ( 85.323823650,  16.534145916),
     '13_LYR':                 (283.833759285,  43.946092080),
     '26_TAU':                 ( 57.237257777,  23.857132186),

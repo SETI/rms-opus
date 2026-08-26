@@ -5,6 +5,8 @@ options are grouped into database selection, the import steps to perform (each m
 one ``opus_import.steps`` module), bundle selection, and logging.
 """
 
+from __future__ import annotations
+
 import argparse
 import cProfile
 import io
@@ -14,6 +16,7 @@ import pstats
 import sys
 import traceback
 import warnings
+from typing import TYPE_CHECKING
 
 import pdslogger
 from pdsfile import Pds3File, Pds4File
@@ -34,10 +37,15 @@ from opus_import.steps import (
     do_validate,
 )
 
+if TYPE_CHECKING:
+    from typing import TextIO
+
+    from opus_import.importdb.super import WarningHandler
+
 LOGNAME = 'opus_import.main'
 
 
-def _make_warning_handler(ctx):
+def _make_warning_handler(ctx: ImportContext) -> WarningHandler:
     """Return a `warnings.showwarning` that collects warnings on the context.
 
     Parameters:
@@ -48,13 +56,24 @@ def _make_warning_handler(ctx):
         the context on every call rather than closing over it, because reporting
         the accumulated warnings replaces the list with a fresh one.
     """
-    def handler(message, category, filename, lineno, file, line):
+    def handler(message: Warning | str, category: type[Warning], filename: str,
+                lineno: int, file: TextIO | None, line: str | None) -> None:
+        """Record one warning's text on the context, discarding everything else.
+
+        Parameters:
+            message: The warning, or its text.
+            category: The warning class. Not recorded.
+            filename: Where the warning was raised. Not recorded.
+            lineno: The line it was raised on. Not recorded.
+            file: Where the standard handler would have written it. Unused.
+            line: The source line, if the caller supplied one. Not recorded.
+        """
         ctx.python_warning_list.append(str(message))
 
     return handler
 
 
-def _create_argument_parser():
+def _create_argument_parser() -> argparse.ArgumentParser:
     """Build the pipeline's argument parser.
 
     Returns:
@@ -329,7 +348,7 @@ def _create_argument_parser():
     return parser
 
 
-def main():
+def main() -> None:
     """Run the import steps requested on the command line.
 
     Every step is driven by its own option; ``--do-it-all`` and its siblings simply turn
@@ -338,8 +357,13 @@ def main():
     read only once the arguments parse, so ``--help`` works without one.
 
     Raises:
-        SystemExit: With a non-zero status if the arguments are contradictory or any
-            step fails; the failure is logged before exiting.
+        SystemExit: With a non-zero status, logged first, when the arguments are
+            contradictory, a bundle descriptor is bad, the database connection fails,
+            the observation import fails, or an exception reaches the top-level handler.
+            **A non-zero status means the run stopped, not that a zero status means it
+            was clean:** several steps report failure through the log and leave the
+            status zero, a failed dictionary import and every validation error among
+            them. Read ``ERRORS.log`` to judge whether a run was clean.
     """
     command_list = sys.argv[1:]
 

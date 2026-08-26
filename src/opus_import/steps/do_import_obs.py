@@ -1,24 +1,74 @@
-################################################################################
-# do_import_obs.py
-#
-# Compute a single row of a single observation table by calling the obs class
-# field functions. These are the per-observation internals of do_import, not a
-# step of their own.
-################################################################################
+"""Compute one row of one observation table by calling the obs class field functions.
+
+A table's schema names, for each column, where its value comes from: a Python method on
+the bundle's obs class (``COMPUTE``), the ``obs_general`` row this observation already
+produced, one of two longitude computations, or the next id in sequence. This module
+walks the schema, obtains each value, checks it against the type and range the schema
+declares, replaces an enumerated value with its ``mult_`` table id, and assembles the
+row.
+
+Validation reports rather than raises, so one bad row does not end the run: a flag with
+an unrecognized spelling and a number that does not parse both become NULL and log an
+error, while a ``char`` column keeps a value of the right type by truncating an
+over-long one and substituting an empty string for one that is not a string. Logging an
+error is what marks the import as having produced bad data, so the run fails at the end.
+
+A value outside the column's declared range is the exception, and which way it goes is
+the schema's choice: it becomes NULL either way, but a column carrying
+``val_set_invalid_to_null`` logs at **debug** rather than error, so out-of-range values
+in that column are discarded silently and the run still succeeds.
+
+These are the per-observation internals of `opus_import.steps.do_import`, not a step of
+their own.
+"""
+
+from __future__ import annotations
 
 import json
 import traceback
+from typing import TYPE_CHECKING, Any
 
 from opus_import import config_data, import_util
 from opus_import.steps import do_import_mult
 
+if TYPE_CHECKING:
+    from opus_import.context import ImportContext
+    from opus_import.import_util import TableSchema
 
-def import_observation_table(ctx, instrument_obj,
-                             table_name,
-                             table_schema,
-                             metadata):
-    "Import the data from a row from a PDS file into a single table."
-    new_row = {}
+
+def import_observation_table(ctx: ImportContext, instrument_obj: Any,
+                             table_name: str,
+                             table_schema: TableSchema,
+                             metadata: dict[str, Any]) -> dict[str, Any] | None:
+    """Compute one observation's row of one table.
+
+    Three kinds of column are skipped: ``timestamp``, which the database maintains
+    itself; a column marked ``put_mults_here``, which holds another column's mult id;
+    and a ``pi_referred_slug`` entry, which describes a search parameter rather than a
+    column.
+
+    A column whose form type is a GROUP type stores a ``mult_`` table id rather than the
+    value, and the value is added to that table if it is new. A ``mult_list`` column
+    holds several values and is written as a JSON array, with a missing value omitted
+    rather than stored as null; every other column holds exactly one value.
+
+    The row is left on ``metadata`` under ``<table_name>_row`` as well as returned, so
+    that a later table's field functions can read what an earlier one computed.
+
+    Parameters:
+        ctx: The import run's context.
+        instrument_obj: The obs class instance for this bundle, whose
+            ``field_<table>_<column>`` methods compute the ``COMPUTE`` columns.
+        table_name: The table being filled.
+        table_schema: That table's column definitions.
+        metadata: What the import has computed for this observation so far, added to
+            here.
+
+    Returns:
+        The row, keyed by column name, or None if a mult column's field function
+        returned something that is not a mult specification, which is not recoverable.
+    """
+    new_row: dict[str, Any] = {}
 
     metadata[table_name+'_row'] = new_row
 
@@ -49,17 +99,18 @@ def import_observation_table(ctx, instrument_obj,
                 ctx,
                 f'No data source for column "{field_name}" in table '+
                 f'"{table_name}"')
-            column_val_list = []
+            column_val_list: list[Any] | None = []
         else:
             ### COMPUTE THE NEW COLUMN VALUE ###
 
             column_val_list = None
-            mult_label_list = None
-            aliases_list = None
-            disp_list = None
-            disp_order_list = None # Might be set with mult_label but not otherwise
-            grouping_list = None
-            group_disp_order_list = None
+            mult_label_list: list[Any] | None = None
+            aliases_list: list[Any] | None = None
+            disp_list: list[Any] | None = None
+            # Might be set with mult_label but not otherwise
+            disp_order_list: list[Any] | None = None
+            grouping_list: list[Any] | None = None
+            group_disp_order_list: list[Any] | None = None
 
             if data_source == 'OBS_GENERAL_ID':
                 obs_general_row = metadata['obs_general_row']
@@ -115,11 +166,20 @@ def import_observation_table(ctx, instrument_obj,
 
         ### VALIDATE THE COLUMN VALUE ###
 
+        if column_val_list is None:
+            # Only the unknown-data_source branch above leaves this unset, and it has
+            # already logged the schema fault. Raising here rather than asserting keeps
+            # the diagnostic under `python -O`, and this is control flow -- whether the
+            # variable got a value at all -- not an internal invariant.
+            raise ValueError(
+                f'No value computed for column "{field_name}" in table "{table_name}": '
+                f'unknown data_source "{data_source}"')
+
         # For a mult_list field, the column_val_list contains a list of column_vals.
         # Otherwise it contains a list with a single entry for the single value.
         assert field_type == 'mult_list' or len(column_val_list) == 1
 
-        row_val = []
+        row_val: list[Any] = []
 
         for column_val_num, column_val in enumerate(column_val_list):
             if column_val is None:
@@ -250,6 +310,13 @@ def import_observation_table(ctx, instrument_obj,
                         f'table "{table_name}" - bad data type returned for mult'
                     )
                     return None
+                # The seven lists are assigned together in the full-spec mult branch
+                # above, so the check just made establishes the other five as well.
+                assert aliases_list is not None
+                assert disp_list is not None
+                assert disp_order_list is not None
+                assert grouping_list is not None
+                assert group_disp_order_list is not None
                 mult_label = mult_label_list[column_val_num]
                 if mult_label is None:
                     if column_val is None:
@@ -295,10 +362,31 @@ def import_observation_table(ctx, instrument_obj,
 
     return new_row
 
-def import_run_field_function(ctx, instrument_obj,
-                              table_name, table_schema, metadata,
-                              field_name):
-    """Call the Python function used to populate a single field in a table."""
+def import_run_field_function(ctx: ImportContext, instrument_obj: Any,
+                              table_name: str, table_schema: TableSchema,
+                              metadata: dict[str, Any],
+                              field_name: str) -> tuple[bool, Any]:
+    """Call the obs class method that computes one column's value.
+
+    The method is named ``field_<table>_<column>``, and every
+    ``obs_surface_geometry__<TARGET>`` table shares the one named for
+    ``obs_surface_geometry_target``, since they are all built from that template.
+
+    Parameters:
+        ctx: The import run's context, for the logger.
+        instrument_obj: The obs class instance for this bundle.
+        table_name: The table being filled.
+        table_schema: That table's column definitions. Not read here: a field function
+            takes what it needs off the obs instance.
+        metadata: What the import has computed for this observation so far. Not read
+            here, for the same reason.
+        field_name: The column being computed.
+
+    Returns:
+        Whether the call succeeded, and what it returned. On failure the value is None
+        and the reason -- no such method, or an exception with its traceback -- has been
+        logged as an error.
+    """
     if table_name.startswith('obs_surface_geometry__'):
         table_name = 'obs_surface_geometry_target'
     func_name = 'field_'+table_name+'_'+field_name

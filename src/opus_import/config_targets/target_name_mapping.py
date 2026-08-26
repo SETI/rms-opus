@@ -1,13 +1,15 @@
-################################################################################
-# config_targets/target_name_mapping.py
-#
-# Map the non-standard target names some instruments use onto the standard
-# IAU names OPUS reports.
-################################################################################
+"""The non-standard target names some instruments use, and the IAU name OPUS reports.
+
+Every target name read from a PDS label is looked up here first, so that observations of
+one body are searchable under one name whichever mission took them.
+`opus_import.config_targets.target_name_info` then describes the name this maps onto.
+"""
+
+from __future__ import annotations
 
 # Some instruments (I'm looking at you, Cassini) don't use the official IAU
 # names for targets, but we want to in OPUS.
-TARGET_NAME_MAPPING = {
+TARGET_NAME_MAPPING: dict[str, str] = {
     # This is found in COCIRS_0xxx/1xxx
     'S_RINGS':                      'S RINGS',
     # These are found in COISS

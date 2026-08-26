@@ -1,21 +1,53 @@
-################################################################################
-# do_param_info.py
-#
-# Generate and maintain the param_info table.
-################################################################################
+"""Build the ``param_info`` table, which describes every search parameter to the UI.
+
+One row per searchable or displayable column: its label, its form type and unit, where it
+belongs in the search form, and what the data dictionary calls it. The web application
+reads nothing else to decide what the search form contains, so a column that has no
+``param_info`` row is invisible to users no matter what the import wrote into it.
+
+The rows are derived from the packaged table schemas of the permanent ``obs_`` tables,
+which is why this step has to run after the import rather than alongside it.
+"""
+
+from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING, Any
 
 import opus_support
 from opus_import import import_util
 
+if TYPE_CHECKING:
+    from opus_import.context import ImportContext
 
-def create_import_param_info_table(ctx):
+
+def create_import_param_info_table(ctx: ImportContext) -> bool:
+    """Fill the import ``param_info`` table from the permanent tables' schemas.
+
+    Every column of every permanent ``obs_`` table that carries a ``pi_category_name``
+    contributes one row. A column's ``pi_ranges`` names an entry in the packaged
+    ``param_info_ranges.json``, which is stored as JSON text in the row.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+
+    Returns:
+        True on success. False if a table's schema could not be read, a form type names
+        a unit `opus_support` does not know, or a ``pi_ranges`` entry is missing -- each
+        of which is logged as an error. The rows are written in one call at the end, so
+        a failure leaves the import table empty rather than partly built.
+
+    Raises:
+        json.decoder.JSONDecodeError: If ``param_info_ranges.json`` is not valid JSON.
+    """
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('info', 'Creating new import param_info table')
     pi_schema = import_util.read_schema_for_table(ctx, 'param_info')
+    # param_info.json is packaged with opus_import, so the schema is always found.
+    assert pi_schema is not None
     # Start from scratch
     db.drop_table('import', 'param_info')
     db.create_table('import', 'param_info', pi_schema, ignore_if_exists=False)
@@ -33,7 +65,7 @@ def create_import_param_info_table(ctx):
         logger.log('debug', f'Was reading ranges json file "{ranges_file}"')
         raise
 
-    rows = []
+    rows: list[dict[str, Any]] = []
     for table_name in table_names:
         table_schema = import_util.read_schema_for_table(ctx, table_name)
         if table_schema is None:
@@ -96,20 +128,37 @@ def create_import_param_info_table(ctx):
 
     return True
 
-def copy_param_info_from_import_to_permanent(ctx):
+def copy_param_info_from_import_to_permanent(ctx: ImportContext) -> None:
+    """Replace the permanent ``param_info`` table with the import one.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('info', 'Copying param_info table from import to permanent')
     # Start from scratch
     pi_schema = import_util.read_schema_for_table(ctx, 'param_info')
+    # param_info.json is packaged with opus_import, so the schema is always found.
+    assert pi_schema is not None
     db.drop_table('perm', 'param_info')
     db.create_table('perm', 'param_info', pi_schema, ignore_if_exists=False)
 
     db.copy_rows_between_namespaces('import', 'perm', 'param_info')
 
 
-def do_param_info(ctx):
+def do_param_info(ctx: ImportContext) -> None:
+    """Rebuild the permanent ``param_info`` table, driven by ``--create-param-info``.
+
+    The import table is dropped either way, so a failed build leaves nothing behind; a
+    failure also leaves the permanent table as the previous run wrote it.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
     if create_import_param_info_table(ctx):
         copy_param_info_from_import_to_permanent(ctx)
+    assert ctx.db is not None
     ctx.db.drop_table('import', 'param_info')

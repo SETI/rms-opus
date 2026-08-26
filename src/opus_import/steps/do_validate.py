@@ -1,11 +1,44 @@
-################################################################################
-# validate.py
-#
-# Perform various validations on the database.
-################################################################################
+"""Check a set of imported tables for the mistakes a schema edit tends to introduce.
+
+Nothing here changes the database. Each check reports what it finds through the logger,
+and a failure is worth attention rather than being fatal: the tables are already
+written, and an import that produced them is not undone by a validation error.
+
+The checks are aimed at the OPUS invariants no database constraint can express -- that
+every user-visible column is described in ``param_info``, that a paired minimum and
+maximum are really in that order, and that observations sharing a filter agree about
+that filter's wavelengths.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from opus_import.context import ImportContext
+    from opus_import.importdb.super import Namespace
 
 
-def validate_param_info(ctx, namespace):
+def validate_param_info(ctx: ImportContext, namespace: Namespace) -> None:
+    """Report user-visible columns that ``param_info`` does not describe.
+
+    Every column of every ``obs_`` table needs a ``param_info`` row, apart from the ones
+    users never search or see: ``id``, ``timestamp``, ``obs_general_id``, the ``d_``
+    (delta) columns and any column that has one, the ``mult_`` id columns, ``opus_id``
+    outside ``obs_general``, ``bundle_id`` outside ``obs_pds``, ``instrument_id``
+    outside ``obs_general``, and everything in ``obs_files``. A column with no row is
+    reported; a column with more than one is not, since the check tests only for
+    absence.
+
+    The rows are then scanned for a ``disp_order`` repeated within one category among
+    the displayed parameters, and for a repeated slug. Both scans use a subquery that
+    skips its first match, so they report a value shared by three or more rows and stay
+    silent about one shared by exactly two.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        namespace: The namespace holding the tables to check.
+    """
     # Every column in every obs_ table should have an entry in the param_info
     # table except for id and obs_general_id.
     # Exceptions are:
@@ -13,6 +46,7 @@ def validate_param_info(ctx, namespace):
     #   instrument_id in tables other than obs_general
 
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('debug', 'Validating param_info table')
@@ -84,13 +118,27 @@ COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
     f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate slug')
 
 
-def validate_nulls(ctx, namespace):
+def validate_nulls(ctx: ImportContext, namespace: Namespace) -> None:
+    """Report columns that allow NULL and never contain one.
+
+    Such a column can be tightened to NOT NULL in its table schema, which lets the
+    database enforce what the data already satisfies. The suggestion is logged at info
+    level, because it is an observation about the schema rather than a fault in the
+    data. The ``obs_surface_geometry__`` tables are skipped: they are all generated from
+    one template, so a column that happens to be full for one target says nothing about
+    the template.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        namespace: The namespace holding the tables to check.
+    """
     # Look for columns in OBS tables that don't contain nulls and yet the
     # column is marked as NULLS-OK and suggest the column type be changed.
     # We ignore obs_surface_geometry__ tables because they all come from a
     # single template so are harder to analyze.
 
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('debug', 'Validating non-NULL columns')
@@ -120,11 +168,24 @@ count(*) FROM {q(full_obs_table_name)} WHERE {q(field_name)} is NULL"""
     '- suggest changing column attributes')
 
 
-def validate_min_max_order(ctx, namespace):
+def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
+    """Report paired columns whose minimum exceeds its maximum.
+
+    A column named with a trailing ``1`` is the low end of a range and its ``2`` sibling
+    the high end, so a row where the second is smaller is bad data. A missing sibling,
+    and a pair with no ``param_info`` row or more than one, are reported too. Longitude
+    pairs are exempt: a longitude range wraps, so the low end legitimately exceeds the
+    high end.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        namespace: The namespace holding the tables to check.
+    """
     # Look for pairs of columns X1/X2 and check to make sure that X1 <= X2 in
     # all non-NULL cases.
 
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('debug', 'Validating MIN/MAX columns')
@@ -179,12 +240,26 @@ def validate_min_max_order(ctx, namespace):
     f'{field_name2} for some OPUS IDs; first 100: ' + ' '.join(opus_ids[:100]))
 
 
-def validate_filter_wavelength_consistency(ctx, namespace):
+def validate_filter_wavelength_consistency(ctx: ImportContext,
+                                           namespace: Namespace) -> None:
+    """Report filters whose observations disagree about their wavelengths.
+
+    Every observation taken through one filter should record the same wavelength range,
+    resolution, wave numbers and spectrum size, so grouping ``obs_wavelength`` by filter
+    should give one distinct value per field. Where the minimum and maximum of a group
+    differ, both are logged as a warning. Cassini ISS groups by camera as well as
+    filter, because its two cameras carry filters of the same name.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        namespace: The namespace holding the tables to check.
+    """
     # For each mission and instrument, then for each filter, look at the
     # wavelength table and see if the wl1 and wl2 fields contain only a single
     # value.
 
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     logger.log('debug', 'Validating filter/wavelength consistency')
@@ -243,7 +318,13 @@ LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
             +f' values for {full_obs_table_name} filter "{pretty_filter}": '
             +f'{row[col]} and {row[col+1]}')
 
-def do_validate(ctx, namespace='perm'):
+def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> None:
+    """Run every validation check, driven by ``--validate-perm``.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        namespace: The namespace holding the tables to check.
+    """
     ctx.logger.open(
             'Performing database validation', limits={'info': -1, 'debug': -1})
 

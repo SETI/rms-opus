@@ -1,29 +1,62 @@
-################################################################################
-# do_import_mult.py
-#
-# Read, cache, and write the mult_ tables that hold the enumerated values of the
-# obs_ table columns. These are the mult-handling internals of do_import, not a
-# step of their own.
-################################################################################
+"""Read, cache and write the ``mult_`` tables holding the ``obs_`` columns' values.
+
+A column whose values come from a fixed set stores a row id into a ``mult_`` table
+rather than the value itself, and that table carries how the web application should
+present each value: its label, its sort key, whether it is displayed, and which group it
+belongs to. A value the import has never seen before is appended to the table as it is
+encountered, which is why the tables are built alongside the observations rather than
+ahead of them.
+
+Every table is read once per bundle into `opus_import.context.ImportContext`'s cache and
+written back at the end of the bundle, so importing an index of a hundred thousand rows
+does not query for the same enumeration a hundred thousand times.
+
+These are the mult-handling internals of `opus_import.steps.do_import`, not a step of
+their own.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import opus_support
 from opus_import import import_util
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-def _mult_table_column_names():
+    from opus_import.context import ImportContext
+    from opus_import.importdb.super import Namespace
+
+MultRow = dict[str, Any]
+"""One row of a ``mult_`` table: a value, its id, and how it is presented."""
+
+
+def _mult_table_column_names() -> list[str]:
     """Return the list of columns every mult table has.
 
-       The grouping columns are part of that list rather than being added for the
-       *_target_name tables only, so this is the same for every mult table. The
-       docstring used to say the opposite and the function took a table_name it
-       never read."""
+    Every mult table has the same columns, the grouping pair included; they are not
+    added for the ``*_target_name`` tables alone.
+
+    Returns:
+        The column names, in the order the tables are read and written in.
+    """
 
     return ['id', 'value', 'label', 'disp_order', 'display',
             'grouping', 'group_disp_order', 'aliases']
 
-def _convert_sql_response_to_mult_table(mult_table_name, rows):
-    """Given a set of rows from an SQL query of a mult table, convert it into
-       our internal dictionary representation."""
+def _convert_sql_response_to_mult_table(rows: Sequence[Sequence[Any]]) -> list[MultRow]:
+    """Convert queried or preprogrammed mult rows into the internal representation.
+
+    Parameters:
+        rows: The rows, each holding the columns `_mult_table_column_names` names, in
+            that order. A row of seven values instead of eight is a preprogrammed
+            ``mult_options`` entry from a table schema, which carries no aliases.
+
+    Returns:
+        One dictionary per row, keyed by column name, with the label rendered as a
+        string and a missing aliases column filled in as None.
+    """
     mult_rows = []
     for row in rows:
         if len(row) == 8:
@@ -48,10 +81,30 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
         mult_rows.append(row_dict)
     return mult_rows
 
-def read_or_create_mult_table(ctx, mult_table_name, table_column):
-    """Given a mult table name, either read the table from the database or
-       return the cached version if we previously read it."""
+def read_or_create_mult_table(ctx: ImportContext, mult_table_name: str,
+                              table_column: dict[str, Any]) -> list[MultRow]:
+    """Return a mult table's rows, reading them into the cache the first time.
 
+    A column whose schema carries ``mult_options`` has its values fixed there, so those
+    are used and the table is marked for writing. Otherwise the rows come from the
+    database: from the import table when a previous run left one, and from the permanent
+    table otherwise. An import table this run created empty is not read, because it has
+    nothing in it yet; the permanent table is read instead and marked for writing, so
+    the values it holds survive into the import table.
+
+    A table that exists in neither namespace starts out with no rows, and the import
+    fills it as it meets values.
+
+    Parameters:
+        ctx: The import run's context, for the open database, the caches and the
+            arguments.
+        mult_table_name: The mult table, without its namespace prefix.
+        table_column: The definition of the column the table belongs to.
+
+    Returns:
+        The table's rows, which are the cache itself: appending to the returned list is
+        how `update_mult_table` adds a value.
+    """
     if mult_table_name in ctx.mult_table_cache:
         return ctx.mult_table_cache[mult_table_name]
 
@@ -59,8 +112,7 @@ def read_or_create_mult_table(ctx, mult_table_name, table_column):
         if not ctx.args.import_suppress_mult_messages:
             import_util.log_debug(
                 ctx, f'Using preprogrammed mult table "{mult_table_name}"')
-        mult_rows = _convert_sql_response_to_mult_table(mult_table_name,
-                                                        table_column['mult_options'])
+        mult_rows = _convert_sql_response_to_mult_table(table_column['mult_options'])
         ctx.mult_table_cache[mult_table_name] = mult_rows
         ctx.modified_mult_tables.add(mult_table_name)
         return mult_rows
@@ -72,14 +124,16 @@ def read_or_create_mult_table(ctx, mult_table_name, table_column):
     # and it's empty. In that case ignore the import one.
     # Otherwise, if there is already a non-import version, read that one.
     # And if there's no table to be found anyway, create a new one.
-    use_namespace = None
+    use_namespace: Namespace | None = None
 
+    db = ctx.db
+    assert db is not None
     if (mult_table_name not in ctx.created_import_mult_tables and
-        ctx.db.table_exists('import', mult_table_name)):
+        db.table_exists('import', mult_table_name)):
         # Previous import table available
         use_namespace = 'import'
 
-    elif ctx.db.table_exists('perm', mult_table_name):
+    elif db.table_exists('perm', mult_table_name):
         use_namespace = 'perm'
         # If we just created an import version but are reading the permanent
         # version, we have to write out the import version before doing
@@ -89,22 +143,35 @@ def read_or_create_mult_table(ctx, mult_table_name, table_column):
 
     if use_namespace is not None:
         ns_mult_table_name = (
-            ctx.db.convert_raw_to_namespace(use_namespace, mult_table_name))
+            db.convert_raw_to_namespace(use_namespace, mult_table_name))
         if not ctx.args.import_suppress_mult_messages:
             import_util.log_debug(ctx, f'Reading from mult table "{ns_mult_table_name}"')
-        rows = ctx.db.read_rows(use_namespace, mult_table_name,
-                                _mult_table_column_names())
-        mult_rows = _convert_sql_response_to_mult_table(mult_table_name, rows)
+        rows = db.read_rows(use_namespace, mult_table_name,
+                            _mult_table_column_names())
+        mult_rows = _convert_sql_response_to_mult_table(rows)
         ctx.mult_table_cache[mult_table_name] = mult_rows
         return mult_rows
 
-    rows = []
-    ctx.mult_table_cache[mult_table_name] = rows
-    return rows
+    empty_rows: list[MultRow] = []
+    ctx.mult_table_cache[mult_table_name] = empty_rows
+    return empty_rows
 
 
-def mult_table_lookup_id(ctx, table_name, field_name, table_column, val):
-    """Lookup the id for a single value in the cached version of a mult table."""
+def mult_table_lookup_id(ctx: ImportContext, table_name: str, field_name: str,
+                         table_column: dict[str, Any], val: Any) -> Any:
+    """Return the id a mult table already gives a value, without adding it.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the caches.
+        table_name: The observation table the column belongs to.
+        field_name: The column.
+        table_column: The definition of that column.
+        val: The value to look up. It is compared as a string, which is how mult tables
+            store their values; None matches a row whose value is None.
+
+    Returns:
+        The row id, or None if the table has no row for that value.
+    """
     mult_table_name = import_util.table_name_mult(table_name, field_name)
     mult_table = read_or_create_mult_table(ctx, mult_table_name, table_column)
     if val is not None:
@@ -116,11 +183,42 @@ def mult_table_lookup_id(ctx, table_name, field_name, table_column, val):
     return None
 
 
-def update_mult_table(ctx, table_name, field_name, table_column, val, label,
-                      aliases=None, disp='Y', disp_order=None, grouping=None,
-                      group_disp_order=None):
-    """Update a single value in the cached version of a mult table."""
+def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
+                      table_column: dict[str, Any], val: Any, label: Any,
+                      aliases: str | None = None, disp: str = 'Y',
+                      disp_order: Any = None, grouping: str | None = None,
+                      group_disp_order: Any = None) -> Any:
+    """Return the id a mult table gives a value, adding a row for it if it is new.
 
+    A new row is appended to the cached table and the table is marked for writing at the
+    end of the bundle. When no ``disp_order`` is given, one is made up so that the web
+    application's ordering is sensible without every schema having to state it: the
+    values are sorted numerically if they all parse as numbers or the column has a unit,
+    and ``Yes`` sorts before ``No`` and ``On`` before ``Off``. The absent-value labels
+    sort to the end, ``None`` then ``N/A`` then ``NULL`` -- but only for a column with no
+    unit, since a column that has one sorts them by their own text instead.
+
+    Parameters:
+        ctx: The import run's context, for the open database, the caches and the
+            arguments.
+        table_name: The observation table the column belongs to.
+        field_name: The column.
+        table_column: The definition of that column.
+        val: The value to find or add. It is stored as a string.
+        label: How the value is shown to users. It is rendered with ``str``, so None
+            becomes ``'None'`` and sorts with the other absent-value labels; a caller
+            that wants ``'N/A'`` passes it.
+        aliases: Other spellings a search should accept for this value.
+        disp: ``'Y'`` to show the value in the search form, ``'N'`` to hide it.
+        disp_order: The sort key, or None to derive one as described above.
+        grouping: The group the value belongs to in the search form, or None.
+        group_disp_order: The group's sort key, or None to sort groups by name.
+
+    Returns:
+        The row id: the existing one if the table already had the value, the new one if
+        a row was added, and 0 if the value is missing from a preprogrammed table, which
+        is reported as an error because such a table cannot be added to.
+    """
     mult_table_name = import_util.table_name_mult(table_name, field_name)
     mult_table = read_or_create_mult_table(ctx, mult_table_name, table_column)
     if val is not None:
@@ -233,36 +331,46 @@ def update_mult_table(ctx, table_name, field_name, table_column, val, label,
     return next_id
 
 
-def dump_import_mult_tables(ctx):
-    """Dump all of the cached import mult tables into the database."""
+def dump_import_mult_tables(ctx: ImportContext) -> None:
+    """Write every mult table this bundle changed out to the import namespace.
 
+    Parameters:
+        ctx: The import run's context, for the open database and the caches.
+    """
+    db = ctx.db
+    assert db is not None
     for mult_table_name in sorted(ctx.modified_mult_tables):
         rows = ctx.mult_table_cache[mult_table_name]
         # Insert or update all the rows
-        imp_mult_table_name = ctx.db.convert_raw_to_namespace('import',
-                                                              mult_table_name)
+        imp_mult_table_name = db.convert_raw_to_namespace('import',
+                                                          mult_table_name)
         import_util.log_debug(ctx, f'Writing mult table "{imp_mult_table_name}"')
-        ctx.db.upsert_rows('import', mult_table_name, 'id', rows)
+        db.upsert_rows('import', mult_table_name, 'id', rows)
         # If we wrote out a mult table, that means we didn't just create it
         # empty anymore, so remove it from ctx.created_import_mult_tables.
         if mult_table_name in ctx.created_import_mult_tables:
             ctx.created_import_mult_tables.remove(mult_table_name)
 
 
-def copy_mult_from_import_to_permanent(ctx):
-    """Copy ALL mult tables from import to permanent. We have to do all tables,
-       not just the ones that have changed, because tables might have changed
-       during previous import runs or previous bundles and we don't have a
-       record of that."""
+def copy_mult_from_import_to_permanent(ctx: ImportContext) -> None:
+    """Copy every import mult table over its permanent counterpart.
 
-    table_names = ctx.db.table_names('import', prefix='mult_')
+    All of them, not just the ones this run changed: an earlier run or an earlier bundle
+    may have changed a table, and nothing records that.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+    """
+    db = ctx.db
+    assert db is not None
+    table_names = db.table_names('import', prefix='mult_')
     for table_name in table_names:
-        imp_mult_table_name = ctx.db.convert_raw_to_namespace('import',
-                                                              table_name)
+        imp_mult_table_name = db.convert_raw_to_namespace('import',
+                                                          table_name)
         import_util.log_debug(ctx, f'Copying mult table "{imp_mult_table_name}"')
         # Read the import mult table
         column_list = _mult_table_column_names()
-        rows = ctx.db.read_rows('import', table_name, column_list)
-        mult_rows = _convert_sql_response_to_mult_table(table_name, rows)
+        rows = db.read_rows('import', table_name, column_list)
+        mult_rows = _convert_sql_response_to_mult_table(rows)
         # Write the permanent table
-        ctx.db.upsert_rows('perm', table_name, 'id', mult_rows)
+        db.upsert_rows('perm', table_name, 'id', mult_rows)

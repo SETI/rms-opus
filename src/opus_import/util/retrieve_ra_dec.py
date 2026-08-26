@@ -1,8 +1,30 @@
+"""Look up star coordinates in SIMBAD and print them in the checked-in table's format.
+
+`opus_import.config_targets.star_ra_dec` holds the coordinates the import actually uses.
+They are checked in rather than fetched, so that an import needs no network access, and
+this tool is how a coordinate is obtained when a star is added or an existing value is
+questioned.
+
+**Merge the output into that table; never paste it over the table.** The `STARS` list
+below is not the table's key set -- the table holds entries this list does not, so
+replacing the table wholesale would delete them. ``BET_ARI`` and the ``UCAC2_*`` block
+are examples; compare the two key sets before touching anything::
+
+    from opus_import.config_targets.star_ra_dec import STAR_RA_DEC
+    from opus_import.util.retrieve_ra_dec import STARS
+    sorted(set(STAR_RA_DEC) - set(STARS))   # entries only the table has
+
+Importing this module does nothing. Running it issues one HTTP request per entry in
+`STARS`.
+"""
+
+from __future__ import annotations
+
 import re
 
 import requests
 
-STARS = {
+STARS: dict[str, tuple[str | None, str, str]] = {
     '126_TAU':              (None,  'OTHER',      '126 Tau'),
     '13_LYR':               (None,  'OTHER',      '13 Lyr (R Lyr)'),
     '26_TAU':               (None,  'OTHER',      '26 Tau'),
@@ -170,9 +192,17 @@ name_pat = re.compile(r'NAME (\w+)')
 SIMBAD_TIMEOUT = (10, 60)
 
 
-def main():
-    """Print the STAR_RA_DEC table, looking each star up in SIMBAD."""
+def main() -> None:
+    """Print the STAR_RA_DEC table, looking each star up in SIMBAD.
 
+    One request per star, through a single session. A star SIMBAD does not resolve, or
+    resolves without J2000 coordinates, prints ``FAIL`` and its identifier instead of a
+    table row, so the run finishes and names what it could not find.
+
+    Raises:
+        requests.RequestException: If a lookup fails at the transport level, including
+            the timeout that keeps one unresponsive request from stalling the run.
+    """
     session = requests.Session()
 
     for key in STARS:

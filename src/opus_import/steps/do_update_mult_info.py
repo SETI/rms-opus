@@ -1,14 +1,46 @@
-################################################################################
-# do_update_mult_info.py
-#
-# Update the details of preprogrammed mult tables.
-################################################################################
+"""Write the checked-in display details back over the permanent ``mult_`` tables.
+
+A ``mult_`` table holds the enumerated values one column can take, along with how the
+web application should present them. Where a table schema pins those presentation
+details in a ``mult_options`` entry, this step is meant to copy them over whatever the
+import wrote, so that editing a schema is enough to change a label or a sort order
+without re-importing.
+
+It cannot currently do that. Every ``mult_options`` entry in the packaged table schemas
+carries seven values and `update_mult_info` unpacks six, so the step raises
+`ValueError` at the first table that has any. Nothing else calls it and
+``--update-mult-info`` is not implied by ``--do-it-all``, which is why the fault is
+invisible to an ordinary import run.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from opus_import import import_util
 
+if TYPE_CHECKING:
+    from opus_import.context import ImportContext
 
-def update_mult_info(ctx):
+
+def update_mult_info(ctx: ImportContext) -> None:
+    """Update every permanent ``mult_`` table whose schema pins its values.
+
+    The table's name says which schema and which column it belongs to, so the name is
+    split apart and matched against the packaged schemas. A table whose schema or column
+    cannot be found is reported and skipped rather than aborting the run, and a column
+    with no ``mult_options`` entry is left exactly as the import wrote it.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+
+    Raises:
+        ValueError: At the first column that has ``mult_options``, because the unpacking
+            below takes six values and every packaged entry carries seven. No table is
+            updated before that happens.
+    """
     db = ctx.db
+    assert db is not None
     logger = ctx.logger
 
     # Find all the permanent mult_ tables
