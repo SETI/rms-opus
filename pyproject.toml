@@ -253,6 +253,17 @@ exclude = [
   # in there is Django's own vendored admin/js/compress.py, marked
   # linguist-vendored in .gitattributes; it is an asset, not project source.
   "src/opus_app/static",
+  # Machine-written by scripts/models/create_opus_models.sh (manage.py inspectdb
+  # plus a sed pipeline), so nothing hand-edited here survives the next
+  # regeneration. That script formats its own output with `ruff format`, which
+  # ruff applies to an explicitly named path regardless of this exclusion.
+  # Excluding it also means the 245 generated model classes and their nested
+  # Meta classes carry no docstrings and are not expected to: writing them would
+  # flood the Sphinx API reference PR-21 publishes with entries no reader gains
+  # anything from, and the next regeneration would delete them anyway. This is a
+  # permanent exclusion like the two above, not a burn-down entry, and does not
+  # affect the per-file-ignores table.
+  "src/opus_app/apps/search/models.py",
 ]
 
 [tool.ruff.format]
