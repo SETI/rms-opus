@@ -27,8 +27,6 @@ from opus_app.apps.search.views import url_to_search_params
 
 from ._broken_requests import request_without_get, request_without_meta
 
-cursor = connection.cursor()
-
 
 class ResultsTests(TestCase):
     """The results views, and which tables a given search has to join against."""

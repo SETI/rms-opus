@@ -1,8 +1,10 @@
 """Time a target search and the metadata fetch for its results.
 
-Hand-run against a server started separately; it is not a test the suite
-collects, and its name is what the directory it sits in calls it rather than
-a claim that `pytest` should pick it up.
+Hand-run against a server started separately -- ``python
+integration_tests/test_perf/test_perf_target.py`` -- and not a test any runner
+collects. Its name is what the directory it sits in calls it rather than a claim
+that `pytest` should pick it up, and the timing runs are behind a `__main__` guard
+so that importing the module measures nothing.
 """
 
 import random
@@ -68,19 +70,26 @@ def run_one_test(search_params: str, columns: str, num_iterations: int,
 
     print(f'{np.mean(time_list):7.3f} +/- {np.std(time_list):7.3f}')
 
-print('--- Target search tests (1 run)')
 
-for test_num, target in enumerate(TARGET_LIST):
-    print(f'{test_num+1:3d}: ', end='')
-    run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 1,
-                 randomize_search=False)
+def main() -> None:
+    """Run every timing test against the server named by `HOST`."""
+    print('--- Target search tests (1 run)')
 
-print('--- Target search + time tests (10 runs)')
+    for test_num, target in enumerate(TARGET_LIST):
+        print(f'{test_num+1:3d}: ', end='')
+        run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 1,
+                     randomize_search=False)
 
-for test_num, target in enumerate(TARGET_LIST):
-    print(f'{test_num+1:3d}: ', end='')
-    run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 10,
-                 randomize_search=True)
+    print('--- Target search + time tests (10 runs)')
 
-print('--- Target metadata test')
-run_one_test('', 'opusid,target', 10, randomize_search=False)
+    for test_num, target in enumerate(TARGET_LIST):
+        print(f'{test_num+1:3d}: ', end='')
+        run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 10,
+                     randomize_search=True)
+
+    print('--- Target metadata test')
+    run_one_test('', 'opusid,target', 10, randomize_search=False)
+
+
+if __name__ == '__main__':
+    main()
