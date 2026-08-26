@@ -4687,17 +4687,37 @@ body; never rewrite or delete earlier notes.*
     `int4` column and returned the index column verbatim, which COISS_2002's own
     `index.lbl` declares `CHARACTER`. Only the database's coercion was making the stored
     value an integer.
-  - **Rebase before starting a long run, never during one.** The local integration chain
-    is 30-45 minutes, and PR-17 and PR-19 both face it against a `rewrite` that may have
-    moved. Rebasing while one is in flight rewrites the working tree under the running
-    test, which can invalidate the result *silently* -- a mid-run `git checkout` of a
-    source file yields a pass or a failure that describes no tree that ever existed. It
-    happened here and the run survived only because the rebase turned out to be
-    doc-only: `git diff <pre-rebase> HEAD --name-only -- src tests` came back empty, so
-    the run still described the final tree. **That check is the rule when it happens
-    anyway** -- if it returns any path, discard the run and start it again; a
-    convenient-sounding argument that the change "could not have mattered" is not a
-    substitute for the empty diff.
+  - **Do not modify the tree while a long run is live -- and expect to want to.** The
+    local integration chain is 30-45 minutes, and PR-17 and PR-19 both face it against a
+    `rewrite` that may have moved. Changing the tree under a running test (a rebase, an
+    edit, a `git checkout`) can invalidate the result *silently*: it yields a pass or a
+    failure describing no tree that ever existed.
+
+    **The failure here was structural, not carelessness, which is why the rule is
+    phrased as it is.** PR-16 broke this three separate times in one session, each time
+    having just written or read the rule. The reason is that a 30-45 minute wait is
+    precisely when there is time to do useful work, so the incentive to touch the tree
+    peaks exactly when it is most harmful. A rule phrased as "don't" loses to that. The
+    operational form that survives it: **queue tree edits while a run is live and apply
+    them after** -- write the change as a script in a scratch directory, then run it
+    when the chain reports. That converts the waiting time into real work without
+    touching the tree, which is what the bare prohibition failed to offer.
+
+    **The check, when it happens anyway:** `git diff <pre-run> HEAD --name-only -- src
+    tests/opus_support integration_tests`. If it returns any path, discard the run and
+    start it again; a convenient-sounding argument that the change "could not have
+    mattered" is not a substitute for the empty diff. The argument is *always* available
+    after the fact, which is what makes it untrustworthy rather than whether it happens
+    to be true -- it was true on PR-16's run 7, which was discarded anyway.
+
+    **Those three paths are the whole scope, deliberately.** `run_coverage.sh` executes
+    exactly two suites -- `pytest tests/opus_support` and `manage.py test -b
+    integration_tests` -- plus the import against `src`. **`tests/opus_import` is never
+    collected by the chain**, so an edit there cannot affect a run and must not trigger
+    a re-run. That precision is load-bearing in both directions: a check that fires on
+    untouched paths costs a needless 9 minutes, gets renegotiated the second time, and
+    is then not a check at all. State what a check covers *and* what it deliberately
+    does not.
   - **The local integration chain can pass without importing anything, and PR-17 and
     PR-19 both lean on it.** `opus_import_test_database.sh` runs the import at line 20
     and **never checks its exit status**; the only gate is `[ -s .../ERRORS.log ]` at
