@@ -15,12 +15,27 @@
 #
 ################################################################################
 
+"""The cart API: what is in a cart, editing what is in it, and downloading it.
+
+The handlers here are the ones `cart/urls.py` routes: the `__cart/*` endpoints the
+OPUS front end calls, plus the `api/download/<opus_id>.<fmt>` archive route. Each of
+them is wrapped in `api_view`, so an `Http400Error` raised for a parameter the caller
+got wrong becomes a 400 response and any other unhandled failure becomes a 500.
+
+A cart is the set of `cart` table rows carrying one session id. A row whose
+`recycled` column is 1 is in the recycle bin: still in the table, counted separately
+from the rest, and left out of the download totals and of the archives themselves.
+"""
+
+from __future__ import annotations
+
 import csv
 import logging
 import os
 import tarfile
 import time
 import zipfile
+from typing import TYPE_CHECKING, Any, Literal
 
 from django.conf import settings
 from django.db import DatabaseError, connection
@@ -71,6 +86,9 @@ from opus_app.apps.tools.dictionary import Definitions
 from opus_app.apps.tools.file_size import nice_file_size
 from opus_app.apps.tools.file_utils import get_pds_products
 
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
 log = logging.getLogger(__name__)
 
 #: The cart table's columns, in the order every write to it supplies them.
@@ -86,7 +104,7 @@ _CART_COLUMNS = ('session_id', 'obs_general_id', 'opus_id', 'recycled')
 
 @never_cache
 @api_view
-def api_view_cart(request):
+def api_view_cart(request: HttpRequest) -> HttpResponse:
     """Return the OPUS-specific left side of the "Selections" page as HTML.
 
     This includes the number of files selected, total size of files selected,
@@ -144,7 +162,7 @@ def api_view_cart(request):
 
 @never_cache
 @api_view
-def api_cart_status(request):
+def api_cart_status(request: HttpRequest) -> HttpResponse:
     """Return the number of items in a cart.
 
     It is used to update the "Selections <N>" tab in the OPUS UI.
@@ -225,7 +243,7 @@ def api_cart_status(request):
 
 @never_cache
 @api_view
-def api_get_cart_csv(request, *, api_code):
+def api_get_cart_csv(request: HttpRequest, *, api_code: int) -> HttpResponse:
     """Returns a CSV file of the current cart.
 
     The CSV file contains the columns specified in the request.
@@ -247,6 +265,9 @@ def api_get_cart_csv(request, *, api_code):
         # _csv_helper
         raise Http400Error(http400_unknown_slug(None, request))
 
+    # _csv_helper returns a page whenever it returns no error.
+    assert page is not None
+
     csv_filename = download_filename(None, 'cart')
 
     return csv_response(csv_filename, page, column_labels)
@@ -254,7 +275,8 @@ def api_get_cart_csv(request, *, api_code):
 
 @never_cache
 @api_view
-def api_edit_cart(request, action, *, api_code, **kwargs):
+def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
+                  **kwargs: Any) -> HttpResponse:
     """Add or remove items from a cart.
 
     This is a PRIVATE API.
@@ -325,18 +347,18 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
                   request.GET)
         raise Http400Error(http400_bad_or_missing_reqno(request))
 
-    opus_id = None
+    opus_id: list[str] | None = None
     if action in ('add', 'remove'):
-        opus_id = request.GET.get('opusid', None)
-        if not opus_id: # Also catches empty string
+        opus_id_str = request.GET.get('opusid', None)
+        if not opus_id_str: # Also catches empty string
             log.error('api_edit_cart: Missing opusid: %s',
                       request.GET)
             raise Http400Error(http400_missing_opus_id(request))
-        opus_id = opus_id.split(',')
+        opus_id = opus_id_str.split(',')
 
-    recycle_bin = request.GET.get('recyclebin', 0)
+    recycle_bin_str = request.GET.get('recyclebin', 0)
     try:
-        recycle_bin = int(recycle_bin)
+        recycle_bin = int(recycle_bin_str)
     except (TypeError, ValueError):
         # int() on the str-or-int this can hold raises only these two; the
         # catch-all this replaces was needed by the fault injection that used to
@@ -351,14 +373,19 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
         # because it is not part of #512. (%s of request.GET itself is already
         # safe: QueryDict's str() is its repr(), which escapes control
         # characters in the values.)
-        log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin,
+        log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin_str,
                   request.GET)
-        raise Http400Error(http400_bad_recyclebin(recycle_bin,
+        raise Http400Error(http400_bad_recyclebin(recycle_bin_str,
                                                   request)) from None
 
+    err: str | Literal[False] | HttpResponse
     if action == 'add':
+        # opus_id is filled in above whenever the action is 'add' or 'remove'.
+        assert opus_id is not None
         err = _add_to_cart_table(opus_id, session_id)
     elif action == 'remove':
+        # opus_id is filled in above whenever the action is 'add' or 'remove'.
+        assert opus_id is not None
         err = _remove_from_cart_table(opus_id, session_id, recycle_bin)
     elif action in ('addrange', 'removerange'):
         err = _edit_cart_range(request, session_id, action, recycle_bin,
@@ -400,7 +427,7 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
 
 @never_cache
 @api_view
-def api_reset_session(request):
+def api_reset_session(request: HttpRequest) -> HttpResponse:
     """Remove everything from the cart and reset the session.
 
     This is a PRIVATE API.
@@ -505,7 +532,8 @@ def api_reset_session(request):
 
 @never_cache
 @api_view
-def api_create_download(request, opus_id=None, fmt=None, *, api_code):
+def api_create_download(request: HttpRequest, opus_id: str | None = None,
+                        fmt: str | None = None, *, api_code: int) -> HttpResponse:
     r"""Creates an archive file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
@@ -527,12 +555,12 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
     session_id = get_session_id(request)
 
     download_current_only = False
-    product_types = request.GET.get('types', 'all')
-    if product_types is None or product_types == '':
+    product_types_str = request.GET.get('types', 'all')
+    if product_types_str is None or product_types_str == '':
         product_types = ['all']
         download_current_only = True
     else:
-        product_types = product_types.lower().split(',')
+        product_types = product_types_str.lower().split(',')
     # By default, we want to download all files of the "Current" version if types
     # parameter is not specified.
     if opus_id:
@@ -628,18 +656,29 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
 
     mime_type = settings.DOWNLOAD_FORMATS[fmt][0]
     write_mode = settings.DOWNLOAD_FORMATS[fmt][1]
+    # `fmt` decides both which class builds the archive and which mode string opens
+    # it, a correlation the type checker cannot follow: `archive_file` is a
+    # `ZipFile | TarFile` from here to the end of the function, and each call on it
+    # below is valid only for the branch it sits in. Two more things it cannot
+    # follow: the mode strings come from a settings dict of plain `str` where the
+    # stubs ask for a `Literal`, and `HttpResponse` is file-like enough for both
+    # libraries at run time without matching the file protocols the stubs ask for
+    # (zipfile wants a `write` that returns a byte count, and tarfile's protocol
+    # also lists `read` and `seek`). Hence the ignores on the archive calls in the
+    # rest of this function.
+    archive_file: zipfile.ZipFile | tarfile.TarFile
     # Add each file to the new archive file and create a manifest too
     if return_directly:
         response = HttpResponse(content_type=mime_type)
         if fmt == 'zip':
-            archive_file = zipfile.ZipFile(response, mode=write_mode)
+            archive_file = zipfile.ZipFile(response, mode=write_mode)  # type: ignore[call-overload]  # see the note above
         else:
-            archive_file = tarfile.open(mode=write_mode, fileobj=response)  # noqa: SIM115
+            archive_file = tarfile.open(mode=write_mode, fileobj=response)  # type: ignore[call-overload]  # see the note above  # noqa: SIM115
     else:
         if fmt == 'zip':
-            archive_file = zipfile.ZipFile(archive_file_name, mode=write_mode)
+            archive_file = zipfile.ZipFile(archive_file_name, mode=write_mode)  # type: ignore[call-overload]  # see the note above
         else:
-            archive_file = tarfile.open(name=archive_file_name, mode=write_mode)  # noqa: SIM115
+            archive_file = tarfile.open(name=archive_file_name, mode=write_mode)  # type: ignore[call-overload]  # see the note above  # noqa: SIM115
 
     # The archive, manifest, and URL handles are written incrementally across the
     # rest of this function and closed explicitly below, so a context manager does
@@ -724,9 +763,9 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
                         if not url_file_only:
                             try:
                                 if fmt == 'zip':
-                                    archive_file.write(path, arcname=filename)
+                                    archive_file.write(path, arcname=filename)  # type: ignore[union-attr]  # zip branch; see the note above
                                 else:
-                                    archive_file.add(path, arcname=filename)
+                                    archive_file.add(path, arcname=filename)  # type: ignore[union-attr]  # tar branch; see the note above
                             except Exception: # pragma: no cover - internal error
                                 log.exception(
                                     'api_create_download threw exception for '
@@ -746,13 +785,13 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
     manifest_fp.close()
     url_fp.close()
     if fmt == 'zip':
-        archive_file.write(manifest_file_name, arcname='manifest.csv')
-        archive_file.write(csv_file_name, arcname='data.csv')
-        archive_file.write(url_file_name, arcname='urls.txt')
+        archive_file.write(manifest_file_name, arcname='manifest.csv')  # type: ignore[union-attr]  # zip branch; see the note above
+        archive_file.write(csv_file_name, arcname='data.csv')  # type: ignore[union-attr]  # zip branch; see the note above
+        archive_file.write(url_file_name, arcname='urls.txt')  # type: ignore[union-attr]  # zip branch; see the note above
     else:
-        archive_file.add(manifest_file_name, arcname='manifest.csv')
-        archive_file.add(csv_file_name, arcname='data.csv')
-        archive_file.add(url_file_name, arcname='urls.txt')
+        archive_file.add(manifest_file_name, arcname='manifest.csv')  # type: ignore[union-attr]  # tar branch; see the note above
+        archive_file.add(csv_file_name, arcname='data.csv')  # type: ignore[union-attr]  # tar branch; see the note above
+        archive_file.add(url_file_name, arcname='urls.txt')  # type: ignore[union-attr]  # tar branch; see the note above
     archive_file.close()
 
     os.remove(csv_file_name)
@@ -775,13 +814,20 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
 #
 ################################################################################
 
-def _get_download_info(product_types, session_id):
+def _get_download_info(product_types: list[str],
+                       session_id: str | None) -> dict[str, Any]:
     """Return information about the current cart useful for download.
 
     The resulting totals are limited to the given product_types.
     ['all'] means include all product types that are checked by default in the
     database.
     Product types for items in the recycle bin are returned with values of 0.
+
+    Parameters:
+        product_types: The product types to total up, each a slug name
+            optionally followed by `@` and a version name, or the single entry
+            `'all'`.
+        session_id: The session whose cart is described.
 
     Returns dict containing:
         'total_download_count':       Total number of unique files
@@ -808,18 +854,18 @@ def _get_download_info(product_types, session_id):
     """
     cursor = connection.cursor()
 
-    def cart_join_condition():
+    def cart_join_condition() -> sql_builder.Expr:
         """Return the condition tying obs_files rows to their cart entries."""
         return sql_builder.columns_equal(
             sql_builder.column('obs_general_id', 'cart'),
             sql_builder.column('obs_general_id', 'obs_files'))
 
-    def in_this_cart():
+    def in_this_cart() -> sql_builder.Expr:
         """Return the condition restricting the cart to this session."""
         return sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
                                      '=', sql_builder.value(session_id))
 
-    def not_recycled():
+    def not_recycled() -> sql_builder.Expr:
         """Return the condition excluding the recycle bin."""
         return sql_builder.binary_op(sql_builder.column('recycled', 'cart'),
                                      '=', sql_builder.value(0))
@@ -850,7 +896,7 @@ def _get_download_info(product_types, session_id):
     results = cursor.fetchall()
 
     product_cats = []
-    product_cat_dict = {}
+    product_cat_dict: dict[str, dict[str, list[dict[str, Any]]]] = {}
     product_dict_by_short_name_ver = {}
 
     for res in results:
@@ -869,7 +915,7 @@ def _get_download_info(product_types, session_id):
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
-            cur_product_list = []
+            cur_product_list: list[dict[str, Any]] = []
             product_cat_dict[pretty_name] = {}
             product_cat_dict[pretty_name][ver] = cur_product_list
         else:
@@ -1053,12 +1099,21 @@ def _get_download_info(product_types, session_id):
 #
 ################################################################################
 
-def _add_to_cart_table(opus_id_list, session_id):
+def _add_to_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
+                       session_id: str | None) -> str | Literal[False]:
     """Add OPUS_IDs to the cart table.
 
     Note that we don't care here if the caller set recyclebin=0 or 1 because
     we always do the same operation - put or replace the item in the cart
     with recycled=0.
+
+    Parameters:
+        opus_id_list: The OPUS IDs to add; a single one may be given on its own.
+        session_id: The session whose cart is being added to.
+
+    Returns:
+        False once the observations have been added, or a message for the user
+        saying why none of them were.
     """
     cursor = connection.cursor()
     if not isinstance(opus_id_list, (list, tuple)): # pragma: no cover -
@@ -1111,12 +1166,25 @@ def _add_to_cart_table(opus_id_list, session_id):
 
     return False
 
-def _remove_from_cart_table(opus_id_list, session_id, recycle_bin):
+def _remove_from_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
+                            session_id: str | None,
+                            recycle_bin: int) -> str | Literal[False]:
     """Remove OPUS_IDs from the cart table.
 
     If recycle_bin is True, then remove moves an observation into the
     recycle bin, even if it was already there. If recycle_bin is False,
     then remove deletes the entry completely.
+
+    Parameters:
+        opus_id_list: The OPUS IDs to remove; a single one may be given on its
+            own.
+        session_id: The session whose cart is being removed from.
+        recycle_bin: Non-zero to move the observations into the recycle bin,
+            zero to delete their rows outright.
+
+    Returns:
+        False once the removal has been done, or a message for the user saying
+        why nothing was removed.
     """
     cursor = connection.cursor()
     if not isinstance(opus_id_list, (list, tuple)): # pragma: no cover -
@@ -1150,9 +1218,35 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin):
         cursor.execute(sql, values)
     return False
 
-def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
-    "Add or remove a range of opus_ids based on the current sort order."
-    id_range = request.GET.get('range', False)
+def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
+                     recycle_bin: int,
+                     api_code: int) -> str | Literal[False] | HttpResponse:
+    """Add or remove a range of opus_ids based on the current sort order.
+
+    The range's two endpoints are the `range=<OPUS_ID>,<OPUS_ID>` parameter, and
+    the observations between them are those the sort order puts there: the cart's
+    own order for `view=cart`, and the search results' order otherwise.
+
+    Parameters:
+        request: The request being served, read for `range`, `view`, `order`, and
+            the search parameters.
+        session_id: The session whose cart is being edited.
+        action: Either `'addrange'` or `'removerange'`.
+        recycle_bin: For `removerange`, non-zero to move the observations into the
+            recycle bin instead of deleting their rows. Ignored for `addrange`.
+        api_code: The API call number, for the search helpers' logging.
+
+    Returns:
+        False once the edit has been done, a message for the user saying why it
+        was not, or a 500 response when a database statement failed or `action`
+        was neither of the two above.
+
+    Raises:
+        Http400Error: If the range parameter is missing or malformed, if the sort
+            order names a slug that does not exist, or if the search parameters
+            cannot be parsed.
+    """
+    id_range: str | Literal[False] = request.GET.get('range', False)
     if not id_range:
         log.error('_edit_cart_range: No range given: %s', request.GET)
         raise Http400Error(http400_bad_or_missing_range(request))
@@ -1162,8 +1256,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         log.error('_edit_cart_range: Bad range format: %s', request.GET)
         raise Http400Error(http400_bad_or_missing_range(request))
 
-    temp_table_name = None
+    temp_table_name: str | None = None
 
+    user_query_table: str | None
     if request.GET.get('view', 'browse') == 'cart':
         # This is for the cart page - we don't have any pre-done sort order
         # so we have to do it ourselves here
@@ -1175,6 +1270,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         if order_params is None:
             log.error('_edit_cart_range: Could not parse order %r', all_order)
             raise Http400Error(http400_unknown_slug(None, request))
+        # parse_order_slug returns both lists or neither, and the check above has
+        # ruled out "neither".
+        assert order_descending_params is not None
         (order_terms, order_mult_tables,
          order_obs_tables) = create_order_by_terms(order_params,
                                                    order_descending_params)
@@ -1185,6 +1283,10 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             log.error('_edit_cart_range: Could not build order terms for %r',
                       all_order)
             raise Http400Error(http400_unknown_slug(None, request))
+        # create_order_by_terms returns all three values or none of them, and the
+        # check above has ruled out "none".
+        assert order_mult_tables is not None
+        assert order_obs_tables is not None
 
         cursor = connection.cursor()
 
@@ -1195,6 +1297,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         pid_sfx = str(os.getpid())
         time1 = time.time()
         time_sfx = (f'{time1:.6f}').replace('.', '_')
+        # The table name embeds the session id, which get_session_id leaves None
+        # only where Django could not create a session key at all.
+        assert session_id is not None
         temp_table_name = 'temp_'+session_id+'_'+pid_sfx+'_'+time_sfx
         temp_select = sql_builder.Select()
         temp_select.add_column(sql_builder.column('id', 'obs_general'))
@@ -1238,6 +1343,9 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
                       +' request %s', request.GET)
             raise Http400Error(http400_search_params_invalid(request))
 
+        # url_to_search_params returns both values or neither, and the check above
+        # has ruled out "neither".
+        assert extras is not None
         user_query_table = get_user_query_table(selections, extras,
                                                 api_code=api_code)
         if not user_query_table: # pragma: no cover - database error
@@ -1248,7 +1356,8 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
 
     cursor = connection.cursor()
 
-    def cache_table_join_condition():
+    def cache_table_join_condition() -> sql_builder.Expr:
+        """Return the condition matching obs_general rows to those of the query table."""
         return sql_builder.columns_equal(
             sql_builder.column('id', user_query_table),
             sql_builder.column('id', 'obs_general'))
@@ -1286,7 +1395,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
          sql_builder.binary_op(sort_order_column, '<=',
                                sql_builder.value(max(sort_orders)))], 'AND')
 
-    def range_from_source(restrict_to_cart):
+    def range_from_source(restrict_to_cart: bool) -> sql_builder.FromSource:
         """Return the FROM clause selecting the observations in the range."""
         from_source = sql_builder.FromSource('obs_general')
         # INNER JOIN because we only want rows that exist in the
@@ -1422,8 +1531,31 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
     return False
 
 
-def _edit_cart_addall(request, session_id, recycle_bin, api_code):
-    "Add all results from a search into the cart table."
+def _edit_cart_addall(request: HttpRequest, session_id: str | None,
+                      recycle_bin: int,
+                      api_code: int) -> str | Literal[False] | HttpResponse:
+    """Add all results from a search into the cart table.
+
+    With view=browse the search results are the source of "all". With view=cart
+    the cart itself is, and recycle_bin decides whether the observations in the
+    recycle bin are moved back into it.
+
+    Parameters:
+        request: The request being served, read for `view` and the search
+            parameters.
+        session_id: The session whose cart is being added to.
+        recycle_bin: For view=cart, non-zero to move everything in the recycle
+            bin back into the cart. Ignored for view=browse.
+        api_code: The API call number, for the search helpers' logging.
+
+    Returns:
+        False once the observations have been added, a message for the user
+        saying why none of them were, or a 500 response when a database
+        statement failed.
+
+    Raises:
+        Http400Error: If the search parameters cannot be parsed.
+    """
     cursor = connection.cursor()
     view = request.GET.get('view', 'browse')
     if view == 'browse':
@@ -1431,6 +1563,11 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
         count, user_query_table, err = get_result_count_helper(request, api_code)
         if err is not None: # pragma: no cover - database errors
             return err
+
+        # get_result_count_helper returns a count and a table name whenever it
+        # returns no error.
+        assert count is not None
+        assert user_query_table is not None
 
         num_cart_and_recycle = (Cart.objects
                                 .filter(session_id__exact=session_id)
@@ -1510,8 +1647,26 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 ################################################################################
 
 
-def _csv_helper(request, opus_id, api_code=None):
-    "Create the data for a CSV file containing the cart data."
+def _csv_helper(request: HttpRequest, opus_id: str | None,
+                api_code: int | None = None
+                ) -> tuple[list[str] | None, list[list[Any]] | None,
+                           tuple[int, str] | None]:
+    """Create the data for a CSV file containing the cart data.
+
+    Parameters:
+        request: The request being served, read for the columns to include and
+            for the sort order the rows follow.
+        opus_id: A single observation to write instead of the cart. None writes
+            the cart, leaving out what is in the recycle bin.
+        api_code: The API call number, for the search helpers' logging.
+
+    Returns:
+        A (column_labels, page, error) triple. `error` is the (status, message)
+        pair `get_search_results_chunk_error_handler` takes, and is None when the
+        rows were read successfully; `page` holds the rows, and is None when
+        `error` is set. `column_labels` is None when the request names a column
+        slug that does not exist.
+    """
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     (_page_no, _start_obs, _limit,
      page, _order, _aux, error) = get_search_results_chunk(
@@ -1527,8 +1682,30 @@ def _csv_helper(request, opus_id, api_code=None):
     return labels_for_slugs(slug_list), page, error
 
 
-def _create_csv_file(request, csv_file_name, opus_id, api_code=None):
-    "Create a CSV file containing the cart data."
+def _create_csv_file(request: HttpRequest, csv_file_name: str,
+                     opus_id: str | None,
+                     api_code: int | None = None) -> HttpResponse | None:
+    """Create a CSV file containing the cart data.
+
+    The header row and the data rows are appended to the named file, which is
+    created if it does not already exist.
+
+    Parameters:
+        request: The request being served, read for the columns to include and
+            for the sort order the rows follow.
+        csv_file_name: The file to append the CSV to.
+        opus_id: A single observation to write instead of the cart. None writes
+            the cart, leaving out what is in the recycle bin.
+        api_code: The API call number, for the search helpers' logging.
+
+    Returns:
+        None once the file has been written, or a 500 response when the rows
+        could not be read.
+
+    Raises:
+        Http400Error: If the request names a column slug that does not exist, or
+            is otherwise malformed.
+    """
     column_labels, page, error = _csv_helper(request, opus_id, api_code)
     if error is not None:
         return get_search_results_chunk_error_handler(error)
@@ -1541,4 +1718,11 @@ def _create_csv_file(request, csv_file_name, opus_id, api_code=None):
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)
         wr.writerow(column_labels)
+        # _csv_helper returns a page whenever it returns no error.
+        assert page is not None
         wr.writerows(page)
+    # Written out rather than left implicit: mypy requires an explicit return
+    # when another path returns a value, and stating it is cheaper than
+    # suppressing the diagnostic on the def, which would silence every return
+    # check in the function rather than this one.
+    return None
