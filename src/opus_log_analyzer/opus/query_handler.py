@@ -389,7 +389,9 @@ class QueryHandler:
                 elif value not in new_value_set:
                     marked_changes.append(self.safe_format('<mark><del>{}</del></mark>', formatted_value))
                 else:
-                    marked_changes.append(Markup(formatted_value))
+                    # formatted_value comes from this class's own safe_format helper above,
+                    # which escaped it already; re-wrapping keeps it from being escaped twice.
+                    marked_changes.append(Markup(formatted_value))  # nosec B704
             joined_values = Markup(',').join(marked_changes)
             result.append(self.safe_format('Change Search: "{}" = {}', name, joined_values))
         elif old_value_set.intersection(new_value_set):

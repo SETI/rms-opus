@@ -122,7 +122,9 @@ def api_faq(request, fmt):
     with open(os.path.join(path, faq_content_file)) as stream:
         text = stream.read()
         try:
-            faq = yaml.load(text, Loader=yaml.FullLoader)
+            # FullLoader (not the unsafe default) over apps/help/faq.yaml, which
+            # ships inside this package. No request data reaches this parser.
+            faq = yaml.load(text, Loader=yaml.FullLoader)  # nosec B506
         except yaml.YAMLError as exc: # pragma: no cover -
             # This can only happen if there is a problem with the YAML in the
             # FAQ.YAML file

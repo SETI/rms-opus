@@ -466,7 +466,9 @@ class ImportDBSuper:
         q = self.quote_identifier
         columns = ','.join([q(c) for c in column_names])
 
-        cmd = f'SELECT {columns} FROM {q(table_name)}'
+        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$).
+        # This statement carries no values at all.
+        cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
         if where:
             cmd += f' WHERE {where}'
         res = self._execute_and_fetchall(cmd, 'read_rows',

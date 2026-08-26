@@ -146,7 +146,9 @@ def main(arguments: list[str] | None = None) -> None:
 
 def handle_cached_log_entries(args: argparse.Namespace) -> list[LogEntry]:
     import hashlib
-    import pickle
+
+    # Imported for the self-written entry cache; see the pickle.load below.
+    import pickle  # nosec B403
 
     log_files = sorted(args.log_files)
     hash_key = hashlib.sha256(':'.join(log_files).encode()).hexdigest()
@@ -155,7 +157,9 @@ def handle_cached_log_entries(args: argparse.Namespace) -> list[LogEntry]:
     try:
         with open(filename, "rb") as data:
             print(f"Reading logs from {filename}")
-            return cast(list[LogEntry], pickle.load(data))
+            # A parsed-log-entry cache this process wrote itself, under the hidden
+            # --xxcached_log_entry flag. The input is never attacker-supplied.
+            return cast(list[LogEntry], pickle.load(data))  # nosec B301
     except FileNotFoundError as _e:
         pass
 

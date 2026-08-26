@@ -49,7 +49,9 @@ def parse_time(iso: object, unit: str | None = None, **kwargs: object) -> float:
     try:
         et = float(iso)
     except Exception:
-        pass
+        # Not a plain number, which is not an error here: the else branch below
+        # is skipped and the caller falls through to the next parse strategy.
+        pass  # nosec B110
     else:
         if not math.isfinite(et):
             raise ValueError(f'Invalid time syntax: {iso}')

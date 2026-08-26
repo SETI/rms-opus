@@ -745,7 +745,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         param_list: list[Any] = []
         placeholders = self._row_placeholders(row, sorted_column_names,
                                               param_list)
-        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
+        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+        # every row value is a %s placeholder bound through param_list.
+        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
                f'({self._quoted_column_list(sorted_column_names)}) '
                f'VALUES({placeholders})')
 
@@ -840,7 +842,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         for column_name in sorted_column_names:
             set_cmds.append(f'{self.quote_identifier(column_name)}=%s')
             param_list.append(row[column_name])
-        cmd = (f'UPDATE {self.quote_identifier(table_name)} SET '
+        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+        # every assigned value is a %s placeholder bound through param_list.
+        cmd = (f'UPDATE {self.quote_identifier(table_name)} SET '  # nosec B608
                + ','.join(set_cmds) + f' WHERE {where}')
         param_list += list(where_params or [])
 
@@ -885,7 +889,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 assign_list.append(f'{self.quote_identifier(column_name)}=%s')
                 dup_param_list.append(row[column_name])
 
-        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
+        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+        # every row value is a %s placeholder bound through param_list.
+        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
                f'({self._quoted_column_list(sorted_column_names)}) '
                f'VALUES({placeholders})')
         if assign_list:
@@ -996,7 +1002,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = f'DELETE FROM {self.quote_identifier(table_name)}'
+        # The table name is the only interpolation and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+        # the caller's WHERE values arrive separately as where_params.
+        cmd = f'DELETE FROM {self.quote_identifier(table_name)}'  # nosec B608
         if where:
             cmd += f' WHERE {where}'
 
@@ -1038,7 +1046,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         dest_table_name = self.convert_raw_to_namespace(dest_namespace,
                                                         raw_table_name)
 
-        cmd = (f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '
+        # Both table names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+        # the caller's WHERE values arrive separately as where_params.
+        cmd = (f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '  # nosec B608
                f'FROM {self.quote_identifier(src_table_name)}')
         if where:
             cmd += f' WHERE {where}'
@@ -1097,7 +1107,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        cmd = (f'SELECT MAX({self.quote_identifier(column_name)}) '
+        # Column and table names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$).
+        # This statement carries no values at all.
+        cmd = (f'SELECT MAX({self.quote_identifier(column_name)}) '  # nosec B608
                f'FROM {self.quote_identifier(table_name)}')
         res = self._execute_and_fetchall(cmd, 'find_column_max')
         self._exit()

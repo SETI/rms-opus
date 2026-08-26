@@ -3,7 +3,9 @@ from __future__ import annotations
 import abc
 import atexit
 import datetime
-import shelve
+
+# Imported for the self-written DNS cache; see the shelve.open below.
+import shelve  # nosec B403
 import socket
 from collections.abc import Callable
 from ipaddress import IPv4Address
@@ -70,7 +72,9 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         super().__init__()
         # Long-lived persistent shelf: kept open for the object's lifetime and
         # closed via the atexit handler below, so a context manager does not fit.
-        self._database = shelve.open(file_name)  # noqa: SIM115
+        # A reverse-DNS cache this process wrote itself, under the hidden
+        # --xxdns-cache flag. The input is never attacker-supplied.
+        self._database = shelve.open(file_name)  # noqa: SIM115  # nosec B301
         self._expired = self.__purge_old_database_entries()
         self._cached = self._created = 0
         atexit.register(self.__close)
@@ -83,7 +87,9 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
             return name
         self._created += 1
         name = super()._convert(ip)
-        expiration = datetime.datetime.now() + datetime.timedelta(days=uniform(25.0, 30.0))
+        # Jitter that spreads DNS-cache expiry over a few days so the whole
+        # cache does not lapse at once. Not a secret.
+        expiration = datetime.datetime.now() + datetime.timedelta(days=uniform(25.0, 30.0))  # nosec B311
         self._database[str(ip)] = (name, expiration)
         return name
 

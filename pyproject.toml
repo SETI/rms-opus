@@ -344,59 +344,46 @@ exclude_dirs = [
   "perf_test", "venv", ".venv",
   "integration_tests/test_api", "integration_tests/test_perf",
   "integration_tests/test_db_data",
+  # Django's own vendored asset script, marked linguist-vendored in
+  # .gitattributes. It is third-party code we do not edit, so its subprocess use
+  # is not ours to annotate; skipping it here is what retired the B404/B603
+  # category skips. Named exactly rather than excluding the whole static tree, so
+  # any Python placed there later is scanned rather than silently skipped -- the
+  # same choice [tool.mypy] exclude makes about this file.
+  "src/opus_app/static/admin/js/compress.py",
 ]
 targets = ["src", "integration_tests", "manage.py"]
-# Burn-down skip list (plan PR-01): category-level skips for existing patterns,
-# each justified below. PR-17 shrinks these to individually-justified `# nosec`
-# lines. B324 (weak MD5) was fixed in-code via usedforsecurity=False.
-# B105 (hardcoded_password_string) has left this list: its only hit was the 'XXX'
-# placeholder in the dictionary app's secrets template, which the TOML
-# configuration replaced, and the check passes unskipped.
-# B610 (django_extra_used) has left this list too: PR-12 removed all four
-# QuerySet.extra() call sites, and `bandit -t B610,B611` over the same targets
-# now reports 0 of each (it reported 4 B610 and 0 B611 before). Three of the four
-# joined the search cache table, which has no model, and are raw SQL built by
-# opus_app.apps.tools.sql_builder now; the fourth became an ORM __isnull filter.
+# PR-01 opened this list with fourteen category skips as a burn-down valve, and
+# PR-17a closed it down to the one entry that is irreducible. Everything else is
+# a per-line `# nosec <ID> - <reason>` at the statement it covers; regenerate the
+# set with `grep -rn "# nosec" src integration_tests manage.py`, and re-derive
+# what the list is holding back by emptying it and re-running bandit.
+#
+# B105 left in PR-08 (the 'XXX' placeholder went with the dictionary app's
+# secrets template) and B610 in PR-12 (all four QuerySet.extra() sites are gone).
+# B607 left here: it fired zero times, and a skip that suppresses nothing is a
+# claim about the code that is no longer true.
+#
+# Expect bandit to log "nosec encountered (Bxxx), but no failed test on
+# file X:N" lines on a clean run. That is not a misplaced marker: bandit runs
+# each check against every candidate node, attaches a `# nosec` to the whole
+# statement's line range, and warns for each node in that range the check did
+# not fire on -- so a statement holding several string or call nodes emits one
+# warning per node that was fine. A bare `# nosec` silences the warnings by
+# suppressing every check on the line, which is worse, so the markers name their
+# test id and the warnings stand. The exit status is what gates.
 skips = [
-  "B101",  # assert_used: asserts are internal invariants, not input validation.
-  "B110",  # try_except_pass: legacy best-effort cleanup paths.
-  "B113",  # request_without_timeout: internal log-analyzer API client.
-  "B301",  # pickle: shelve/pickle over the tool's own locally-produced cache data.
-  "B311",  # random: non-cryptographic fault injection (throw_random_*).
-  "B403",  # import pickle/subprocess modules (imports alone are not the risk).
-  "B404",
-  "B506",  # yaml.load: parses a trusted, repo-bundled FAQ file via FullLoader.
-  "B603",  # subprocess without shell: fixed, internal command invocations.
-  "B607",  # start_process_with_partial_path: same internal invocations.
-  "B608",  # hardcoded_sql. PR-12 formalized SQL assembly, so this now covers
-           # only the two modules that are allowed to build SQL text -- the web
-           # side's opus_app.apps.tools.sql_builder and the import side's
-           # importdb/{mysql,super}.py -- plus two identifier-only queries in
-           # steps/do_validate.py. Both validate every identifier against
-           # ^[A-Za-z0-9_]+$, which is what the check cannot see.
-           #
-           # Values are a weaker claim than an earlier version of this comment
-           # made, so state it by where the value comes from rather than by an
-           # exhaustive list of exceptions:
-           #   - DML (SELECT/INSERT/UPDATE/DELETE) binds its values as %s
-           #     parameters on both sides. That is the path request data and
-           #     command-line data travel.
-           #   - LIMIT/OFFSET and the MAX_EXECUTION_TIME hint are rendered as
-           #     literals, after an isinstance(..., int) check. They are row and
-           #     millisecond counts, not data.
-           #   - DDL on the import side renders literals: create_table formats a
-           #     column's field_default and its field_enum_options straight into
-           #     the CREATE TABLE text. Those come from the table_schemas JSON
-           #     packaged with opus_import, not from request or command-line
-           #     input. The default is hand-quoted by string concatenation with
-           #     no escaping, so a schema default containing a quote would emit
-           #     broken DDL; nothing in the repository has one.
-           #
-           # Measured at PR-12 over the same targets: 16 findings in 7 files
-           # before, 12 in 4 after, none in a view. PR-17 turns these into
-           # per-line `# nosec` -- carry the three cases above into them rather
-           # than the shorter claim they replace.
-  "B704",  # markupsafe_markup_xss: internal log-analyzer HTML report generation.
+  # assert_used. These are not input validation and never were: they are the
+  # narrowing assertions PR-14, PR-15 and PR-16 added so that mypy strict could
+  # follow an invariant the code already relied on, plus a few pre-existing
+  # invariant checks. Measured at PR-17a by emptying this list: 246 findings, of
+  # which 199 are in src/opus_import and 16 in src/opus_support -- trees whose
+  # annotation PRs put them there deliberately. A per-line `# nosec` on each
+  # would be 246 comments restating one fact, which is the noise this list was
+  # shrunk to avoid. Python's -O strips asserts, and nothing here is deployed
+  # with -O; if that ever changes, these become real checks and this skip has to
+  # be revisited rather than kept.
+  "B101",
 ]
 
 # Enabled in PR-02 (after the dead-code removal). Genuine dead code is

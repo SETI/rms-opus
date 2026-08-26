@@ -346,7 +346,10 @@ def api_string_search_choices(request, slug, *, api_code):
                 final_results = [pattern.sub('<b>\\1</b>', x)
                                  for x in final_results]
             except Exception:
-                pass
+                # Match highlighting is cosmetic. A query that will not compile as a
+                # regular expression leaves the text unhighlighted rather than failing
+                # the search the user asked for.
+                pass  # nosec B110
 
     if len(final_results) > limit:
         final_results = final_results[:limit]

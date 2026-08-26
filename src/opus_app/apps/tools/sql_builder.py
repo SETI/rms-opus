@@ -612,7 +612,9 @@ def delete_from(table_name, where):
             that empties a table, and making it optional would let a caller emit
             one by leaving an argument out.
     """
-    return (f'DELETE FROM {quote_identifier(table_name)} WHERE {where.sql}',
+    # The table name is the only interpolation and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+    # the WHERE clause's own values are %s placeholders in where.params.
+    return (f'DELETE FROM {quote_identifier(table_name)} WHERE {where.sql}',  # nosec B608
             list(where.params))
 
 
@@ -628,7 +630,9 @@ def delete_joined(target_table, from_source, where):
         where: The WHERE condition.
     """
     from_sql, from_params = from_source.render()
-    return (f'DELETE {quote_identifier(target_table)} FROM {from_sql}'
+    # Every interpolation is an identifier or an already-rendered clause, and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+    # all values travel in from_params and where.params as %s placeholders.
+    return (f'DELETE {quote_identifier(target_table)} FROM {from_sql}'  # nosec B608
             f' WHERE {where.sql}',
             from_params + list(where.params))
 
@@ -675,6 +679,8 @@ def update(table_name, assignments, where):
     for column_name, val in assignments:
         sets.append(f'{quote_identifier(column_name)}=%s')
         params.append(val)
-    return (f'UPDATE {quote_identifier(table_name)} SET '
+    # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+    # every assigned value is a %s placeholder appended to params above.
+    return (f'UPDATE {quote_identifier(table_name)} SET '  # nosec B608
             f'{_SEPARATOR.join(sets)} WHERE {where.sql}',
             params + list(where.params))

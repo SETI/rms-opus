@@ -91,6 +91,8 @@ COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
     # Every param_info entry should have a unique disp_order
     # This is a hideous query that looks for duplicate disp_order fields
     # within a given category as long as the field is displayed
+    # Every interpolation is an identifier produced by quote_identifier
+    # (^[A-Za-z0-9_]+$); the statement carries no values at all.
     cmd = f"""
 {q('category_name')}, {q('name')} FROM {q(pi_table_name)} {q('pi1')} WHERE EXISTS
     (SELECT 1 FROM {q(pi_table_name)} {q('pi2')} WHERE
@@ -99,19 +101,21 @@ COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
         ({q('pi1')}.{q('display')}=1 OR {q('pi1')}.{q('display_results')}=1) AND
         ({q('pi2')}.{q('display')}=1 OR {q('pi2')}.{q('display_results')}=1) AND
         {q('pi1')}.{q('id')}!={q('pi2')}.{q('id')}
-        LIMIT 1,1)"""
+        LIMIT 1,1)"""  # nosec B608
     res = db.general_select(cmd)
     for cat_name, field_name in res:
         logger.log('error',
     f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate disp_order')
 
     # Every param_info entry should have a unique slug. Period.
+    # Every interpolation is an identifier produced by quote_identifier
+    # (^[A-Za-z0-9_]+$); the statement carries no values at all.
     cmd = f"""
 {q('category_name')}, {q('name')} FROM {q(pi_table_name)} {q('pi1')} WHERE EXISTS
     (SELECT 1 FROM {q(pi_table_name)} {q('pi2')} WHERE
         {q('pi1')}.{q('slug')}={q('pi2')}.{q('slug')} AND
         {q('pi1')}.{q('id')}!={q('pi2')}.{q('id')}
-        LIMIT 1,1)"""
+        LIMIT 1,1)"""  # nosec B608
     res = db.general_select(cmd)
     for cat_name, field_name in res:
         logger.log('error',

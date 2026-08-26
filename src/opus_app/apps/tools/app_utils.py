@@ -47,7 +47,9 @@ def json_response(data):
 
 def download_filename(opus_id, file_type):
     """Create a unique filename for a user's cart or CSV file."""
-    random_ascii = random.choice(string.ascii_letters).lower()
+    # A salt that keeps two downloads in the same second from colliding.
+    # It names a temporary file; it guards nothing and is not a secret.
+    random_ascii = random.choice(string.ascii_letters).lower()  # nosec B311
     timestamp = "T".join(str(datetime.datetime.now()).split(' '))
     # Windows doesn't like ':' in filenames
     timestamp = timestamp.replace(':', '-')
@@ -139,7 +141,9 @@ def exit_api_call(api_code, ret):
         if settings.OPUS_FAKE_API_DELAYS > 0:
             delay_amount = settings.OPUS_FAKE_API_DELAYS / 1000.
         elif settings.OPUS_FAKE_API_DELAYS < 0:
-            delay_amount = random.uniform(0.,
+            # Fault injection: a jittered artificial delay, off unless a
+            # configuration file asks for it.
+            delay_amount = random.uniform(0.,  # nosec B311
                                           -settings.OPUS_FAKE_API_DELAYS/1000.)
     if settings.OPUS_LOG_API_CALLS: # pragma: no cover - internal debugging
         s = 'API ' + str(api_code) + ' EXIT'
@@ -275,10 +279,13 @@ def _injected_fault_response(request):
     Raises:
         Http404: When a 404 was injected.
     """
-    if random.random() < settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY:
+    # Fault injection: rolls against a configured probability that is 0
+    # in every deployment except a deliberate error-handling test.
+    if random.random() < settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY:  # nosec B311
         _log_injected_fault('HTTP404')
         raise Http404(HTTP404_FAKE_ERROR(request))
-    if random.random() < settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY:
+    # Fault injection, as directly above.
+    if random.random() < settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY:  # nosec B311
         _log_injected_fault('HTTP500')
         return HttpResponseServerError(HTTP500_FAKE_ERROR(request))
     return None

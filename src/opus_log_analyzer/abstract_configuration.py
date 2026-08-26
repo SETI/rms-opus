@@ -49,7 +49,10 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
 
     @staticmethod
     def safe_format(format_string: str, *args: Any) -> str:
-        return Markup(format_string).format(*args)
+        # Markup() wraps the format string, which every caller passes as a
+        # literal; Markup.format then escapes each argument as it substitutes it.
+        # The arguments are what could carry log data, and they are escaped.
+        return Markup(format_string).format(*args)  # nosec B704
 
 
 class AbstractBatchHtmlGenerator(metaclass=abc.ABCMeta):
