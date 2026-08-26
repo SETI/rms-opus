@@ -5772,20 +5772,41 @@ body; never rewrite or delete earlier notes.*
     database is created** -- verified by the run itself, which reads and writes the
     imported schema. `integration_tests/conftest.py` unblocks the database for the
     session (`django_db_blocker.unblock()`) and a collection hook refuses **every way
-    of asking pytest-django to manage the database**, naming the node: the
-    `@pytest.mark.django_db` marker the plan names, the `db`/`transactional_db`
-    fixtures that are the same request spelled differently, and a
-    `django.test.SimpleTestCase` subclass -- which is the dangerous one, because it
-    needs neither marker nor fixture and pytest-django manages it on sight, running
-    `django_db_setup` against a `TEST['NAME']` that *is* the live schema.
-    `tests/integration_tests/test_conftest.py` drives that hook with a stub item,
-    because a real test asking for a managed database could not be checked in; nine
-    mutations of the hook each fail it, with no survivors.
+    of asking pytest-django to manage the database**, naming the node:
+    `@pytest.mark.django_db` (the marker the plan names, in its function, class and
+    module spellings); the `db`, `transactional_db` and `live_server` fixtures; a
+    direct request for `django_db_setup`; and a `django.test.SimpleTestCase` subclass,
+    which pytest-django manages on sight with neither marker nor fixture.
+    **Two things about that list are worth carrying, because both were wrong on the
+    first attempt and an adversarial pass caught them by running the thing rather than
+    reading it.**
+    1. **`live_server` is the trap.** It declares no database fixture, so it collects
+       looking harmless and then calls `getfixturevalue('transactional_db')` at run
+       time. `pytest_django.fixtures._get_databases_for_test` enumerates exactly `db`,
+       `transactional_db` and `live_server`; **read that function rather than trusting
+       any list, here or in the conftest.** A test in
+       `tests/integration_tests/test_conftest.py` re-derives the set from the installed
+       library and fails if it grows a fourth.
+    2. **The refusal is session-wide, not path-scoped**, because the hazard is.
+       `_get_databases_for_setup` iterates *every* item in the session, and the coverage
+       invocation runs `tests/` and `integration_tests/` as one session -- so a
+       managed-database test in `tests/` would rebuild the live schema just as surely as
+       one in this tree. The conftest is only loaded when a command line reaches into
+       this directory, so a bare `pytest` leaves `tests/` free.
+    **A bare `SimpleTestCase` is in fact harmless** -- its `databases` is empty, so
+    pytest-django skips the setup; `TestCase` and `TransactionTestCase` both declare
+    `{'default'}` (measured). Refusing the shared base is the rule that covers the two
+    dangerous subclasses without enumerating subclasses, and the conftest says so.
+    `tests/integration_tests/test_conftest.py` drives the hook with a stub item, because
+    a real test asking for a managed database could not be checked in; **24 mutations --
+    each refusal branch independently, the session scope, the markers, the warning
+    concession, and five ways a collectible test could creep into the timing script --
+    each fail it, with no survivors.**
     **Note the drift, which changes no instruction:** PR-01's note and the PR-18 plan
     text call these `django.test.TestCase` subclasses. They are `unittest.TestCase`
-    subclasses -- PR-17b already recorded this -- and that is exactly what makes the
-    rule work: pytest-django's unittest support keys on `django.test.SimpleTestCase`,
-    so it never runs `django_db_setup` for them.
+    subclasses -- PR-17b already recorded this -- and that is what makes the rule work:
+    pytest-django's unittest support keys on `django.test.SimpleTestCase`, which these
+    are not, so it never looks at them at all.
   - **`manage.py`'s `api-*` verbs are two environment variables now, and one Django
     setting is gone.** `OPUS_TEST_GO_LIVE` (`dev`, `production`, or unset for the
     locally imported database) replaces the undeclared `TEST_GO_LIVE` setting that
@@ -5946,7 +5967,7 @@ body; never rewrite or delete earlier notes.*
     than wrapping a declared setting, and the setting it feeds is still read directly.
   - **Verification evidence, all on the shipping tree.** `scripts/run-all-checks.sh`
     clean (ruff, mypy over `src integration_tests tests manage.py` -- 215 source files
-    -- pytest **1313 passed**, pyroma 10/10, bandit, vulture, pymarkdown). The
+    -- pytest **1320 passed**, pyroma 10/10, bandit, vulture, pymarkdown). The
     integration chain ran against a 33-bundle import into a fresh MySQL schema
     (`ERRORS.log` empty, import exit 0) and reported
     **`2574 passed` / `TOTAL 22284 stmts, 0 missing, 1884 branches, 0 partial, 100%`**,
@@ -5956,7 +5977,7 @@ body; never rewrite or delete earlier notes.*
     which is how the +2 was caught rather than accepted.** Baseline measured locally on
     `6e422c34` before any change, reproducing PR-17b's figures exactly:
     `Ran 1645 tests` / 22282 / 1884 / 100%, and 1173 unit tests.
-    - **Unit 1173 -> 1313**: +29 in the new `tests/integration_tests/` (18 for the
+    - **Unit 1173 -> 1320**: +36 in the new `tests/integration_tests/` (25 for the
       collection rules, 11 for the go-live accessor), +62 moved in, +49 new
       `app_utils` tests.
     - **Integration 1645 -> 1583**: -62, the two moved modules, and

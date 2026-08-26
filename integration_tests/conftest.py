@@ -12,18 +12,34 @@ pytest collects natively and which pytest-django therefore does not manage. That
 fixed by the plan rather than chosen here -- the suites read and write the freshly
 imported schema with no create, no teardown and no surrounding transaction.
 
-**Three ways of asking pytest-django to manage the database are therefore refused**,
-and the collection hook below rejects all of them by name: `@pytest.mark.django_db`,
-the `db`/`transactional_db` fixtures, and a `django.test.SimpleTestCase` subclass.
-Each would either wrap a test in a transaction that is rolled back or, worse, run
-`django_db_setup` -- and `DATABASES['default']['TEST']['NAME']` is the live schema
-itself, so that would rebuild the database the import just filled.
+**Asking pytest-django to manage the database is refused, and refused for the whole
+session rather than only for this tree.** `DATABASES['default']['TEST']['NAME']` is the
+live schema itself, so anything that reaches `setup_databases` rebuilds the database
+the import just filled -- and pytest-django decides whether to call it by looking at
+*every* item in the session, not at the ones under this directory. Since the coverage
+invocation runs `tests/` and `integration_tests/` as a single session, one
+managed-database test anywhere in that session would destroy the schema. The collection
+hook below therefore refuses, wherever the test lives:
 
-**Markers.** The hook gives every test collected here `integration`, which is what the
-whole tree has in common. The two narrower markers name one module each and are
-declared on those modules: `test_api/test_cart_api.py` carries `holdings`, because
-building a download archive copies real product files out of the PDS holdings tree,
-and `test_api/test_result_counts.py` carries `livetest`, because it queries a server
+* `@pytest.mark.django_db`, including the module-level and class-level spellings;
+* the `db`, `transactional_db` and `live_server` fixtures -- the three
+  `pytest_django.fixtures._get_databases_for_test` treats as a database request,
+  reached directly or through a fixture that requests one of them;
+* `django_db_setup` requested directly;
+* a `django.test.SimpleTestCase` subclass, which pytest-django manages on sight. A
+  bare `SimpleTestCase` is in fact harmless -- its `databases` is empty, so
+  pytest-django skips the setup -- but `TestCase` and `TransactionTestCase` both set
+  `databases` to `{'default'}`, and any subclass may. Refusing the base is the rule
+  that covers them without enumerating subclasses.
+
+This file's own conftest is loaded only when a command line reaches into this
+directory, so a bare `pytest` leaves `tests/` free to use any of the above.
+
+**Markers.** The hook gives every test collected *here* `integration`, which is what
+the tree has in common. The two narrower markers name one module each and are declared
+on those modules: `test_api/test_cart_api.py` carries `holdings`, because building a
+download archive copies real product files out of the PDS holdings tree, and
+`test_api/test_result_counts.py` carries `livetest`, because it queries a server
 outside this process. All three select *within* an explicit invocation
 (``pytest integration_tests -m "not livetest"``); the default run is directory-scoped
 and never reaches this tree at all.
@@ -47,7 +63,9 @@ from .test_api.api_test_helper import go_live_target
 
 #: `test_perf/` holds a hand-run timing script rather than tests: `test_perf_target.py`
 #: measures a server the suite does not start. Ignoring the directory is what lets it
-#: keep the name the directory gives it without a runner picking it up.
+#: keep the name the directory gives it without a runner picking it up. It is not the
+#: only guard -- naming the file directly on the command line bypasses `collect_ignore`
+#: -- so the module itself also defines nothing collectable.
 collect_ignore = ['test_perf']
 
 #: Environment variable that makes `test_result_counts` compare against the locally
@@ -55,10 +73,17 @@ collect_ignore = ['test_perf']
 #: api-internal-db-result-counts` was the verb it replaces.
 INTERNAL_DB_ENV_VAR = 'OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB'
 
-#: The ways of asking pytest-django to manage the database, none of which this tree may
-#: use. `django_db_setup` is what makes them dangerous rather than merely wrong.
+#: The marker that asks pytest-django to manage the database.
 FORBIDDEN_DB_MARKER = 'django_db'
-FORBIDDEN_DB_FIXTURES = ('db', 'transactional_db')
+
+#: The fixtures that ask for the same thing. The first three are what
+#: `pytest_django.fixtures._get_databases_for_test` inspects -- read that function
+#: rather than trusting this tuple, and see
+#: `tests/integration_tests/test_conftest.py`, which fails if the library grows a
+#: fourth. `django_db_setup` is added because it is the fixture the other three
+#: ultimately reach, and requesting it directly should be refused for the same reason
+#: even though it is inert on its own.
+FORBIDDEN_DB_FIXTURES = ('db', 'transactional_db', 'live_server', 'django_db_setup')
 
 #: Warning filters this tree adds back on top of `filterwarnings = ["error"]`, which
 #: pyproject.toml sets for every run. They are applied as markers on this tree's items
@@ -118,7 +143,7 @@ def _is_ours(item: pytest.Item) -> bool:
     return _SUITE_ROOT in Path(item.path).parents
 
 
-def _managed_database_request(item: pytest.Item) -> str | None:
+def managed_database_request(item: pytest.Item) -> str | None:
     """Return how a test asks pytest-django to manage the database, if it does.
 
     Parameters:
@@ -141,7 +166,7 @@ def _managed_database_request(item: pytest.Item) -> str | None:
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Mark every test in this tree `integration`, and refuse a managed database.
+    """Refuse a managed database anywhere in the session, and mark this tree.
 
     The narrower markers are not applied here: `holdings` and `livetest` describe two
     named modules and sit on those modules, where a reader meets them.
@@ -150,20 +175,27 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         items: Every test the session collected, from this tree and any other.
 
     Raises:
-        pytest.UsageError: If a test here asks pytest-django to manage the database.
+        pytest.UsageError: If any test in the session asks pytest-django to manage the
+            database.
     """
     for item in items:
+        asked_for = managed_database_request(item)
+        if asked_for is not None:
+            where = ('in integration_tests/' if _is_ours(item) else
+                     'in a session that also collects integration_tests/')
+            raise pytest.UsageError(
+                f'{item.nodeid} uses {asked_for}, which is forbidden {where}: those '
+                f'suites run against the imported schema itself, and '
+                f"DATABASES['default']['TEST']['NAME'] is that same schema, so letting "
+                f'pytest-django manage the database would wrap the test in a '
+                f'transaction that is rolled back or rebuild the schema outright. '
+                f'pytest-django decides that from every item in the session, not just '
+                f'the ones under integration_tests/, which is why this applies to '
+                f'yours. Use a plain unittest.TestCase, as everything in '
+                f'integration_tests/ does, or run your suite without naming '
+                f'integration_tests/ on the same command line.')
         if not _is_ours(item):
             continue
-        asked_for = _managed_database_request(item)
-        if asked_for is not None:
-            raise pytest.UsageError(
-                f'{item.nodeid} uses {asked_for}, which is forbidden in '
-                f'integration_tests/: these suites run against the imported schema '
-                f'itself, and letting pytest-django manage the database would wrap '
-                f'the test in a transaction that is rolled back or rebuild that '
-                f'schema outright. Use a plain unittest.TestCase, as everything else '
-                f'here does.')
         item.add_marker(pytest.mark.integration)
         for warning_filter in SUPPRESSED_WARNINGS:
             item.add_marker(pytest.mark.filterwarnings(warning_filter))
