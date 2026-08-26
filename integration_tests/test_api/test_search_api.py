@@ -10,10 +10,10 @@ from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_LIMIT,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_SLUG,
+    http400_bad_limit,
+    http400_bad_or_missing_reqno,
+    http400_search_params_invalid,
+    http400_unknown_slug,
 )
 
 from .api_test_helper import ApiTestHelper
@@ -82,7 +82,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: empty no reqno"
         url = '/__api/normalizeinput.json'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
+                               http400_bad_or_missing_reqno('/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_empty_reqno(self):
         "[test_search_api.py] /api/normalizeinput: empty"
@@ -94,13 +94,13 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: empty reqno bad"
         url = '/__api/normalizeinput.json?reqno=X'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO('/__api/normalizeinput.json'))
+                               http400_bad_or_missing_reqno('/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_bad_slug(self):
         "[test_search_api.py] /api/normalizeinput: bad slug"
         url = '/__api/normalizeinput.json?fredethel=1234&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_string_empty(self):
@@ -437,7 +437,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/normalizeinput: sourceunit with numeric suffix"
         url = '/__api/normalizeinput.json?sourceunit-wavelength1=cm&wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/__api/normalizeinput.json'))
 
     def test__api_normalizeinput_unit10(self):
@@ -467,49 +467,49 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/stringsearchchoices: bad slug"
         url = '/__api/stringsearchchoices/fredethel.json?reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_UNKNOWN_SLUG('fredethel',
+                               http400_unknown_slug('fredethel',
                                    '/__api/stringsearchchoices/fredethel.json'))
 
     def test__api_stringsearchchoices_bad_limit(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit"
         url = '/__api/stringsearchchoices/bundleid.json?limit=0A&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_LIMIT('0A',
+                               http400_bad_limit('0A',
                                    '/__api/stringsearchchoices/bundleid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_n1(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit -1"
         url = '/__api/stringsearchchoices/bundleid.json?limit=-1&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_LIMIT('-1',
+                               http400_bad_limit('-1',
                                    '/__api/stringsearchchoices/bundleid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_0(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 0"
         url = '/__api/stringsearchchoices/bundleid.json?limit=0&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_LIMIT('0',
+                               http400_bad_limit('0',
                                    '/__api/stringsearchchoices/bundleid.json'))
 
     def test__api_stringsearchchoices_bad_limit_val_1000000000001(self):
         "[test_search_api.py] /api/stringsearchchoices: bad limit 1000000000001"
         url = '/__api/stringsearchchoices/bundleid.json?limit=1000000000001&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_LIMIT('1000000000001',
+                               http400_bad_limit('1000000000001',
                                    '/__api/stringsearchchoices/bundleid.json'))
 
     def test__api_stringsearchchoices_bad_search(self):
         "[test_search_api.py] /api/stringsearchchoices: bad search"
         url = '/__api/stringsearchchoices/bundleid.json?fredethel=2&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/__api/stringsearchchoices/bundleid.json'))
 
     def test__api_stringsearchchoices_bad_search2(self):
         "[test_search_api.py] /api/stringsearchchoices: bad search2"
         url = '/__api/stringsearchchoices/bundleid.json?missionid=A&reqno=123'
         self._run_status_equal(url, 400,
-                               HTTP400_SEARCH_PARAMS_INVALID(
+                               http400_search_params_invalid(
                                    '/__api/stringsearchchoices/bundleid.json'))
 
     def test__api_stringsearchchoices_opusid_COISS_2002_regex_good(self):
@@ -558,7 +558,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/stringsearchchoices: bundleid none no reqno"
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=BAD_VOLUME'
         self._run_status_equal(url, 400,
-                               HTTP400_BAD_OR_MISSING_REQNO(
+                               http400_bad_or_missing_reqno(
                                    '/__api/stringsearchchoices/bundleid.json'))
 
     def test__api_stringsearchchoices_bundleid_GO_0017(self):

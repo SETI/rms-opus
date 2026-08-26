@@ -32,17 +32,17 @@ from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import UserSearches
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_LIMIT,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP404_NO_REQUEST,
-    HTTP500_DATABASE_ERROR,
-    HTTP500_SEARCH_CACHE_FAILED,
     Http400Error,
     api_view,
     get_mult_name,
     get_reqno,
+    http400_bad_limit,
+    http400_bad_or_missing_reqno,
+    http400_search_params_invalid,
+    http400_unknown_slug,
+    http404_no_request,
+    http500_database_error,
+    http500_search_cache_failed,
     json_response,
     sort_dictionary,
     strip_numeric_suffix,
@@ -86,7 +86,7 @@ def api_normalize_input(request):
          "reqno": N}
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__api/normalizeinput.json'))
+        raise Http404(http404_no_request('/__api/normalizeinput.json'))
     (selections, _extras) = url_to_search_params(request.GET,
                                                 allow_errors=True,
                                                 return_slugs=True,
@@ -94,12 +94,12 @@ def api_normalize_input(request):
     if selections is None:
         log.error('api_normalize_input: Could not find selections for'
                   +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+        raise Http400Error(http400_search_params_invalid(request))
 
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_normalize_input: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
     selections['reqno'] = reqno
 
     return json_response(selections)
@@ -138,19 +138,19 @@ def api_string_search_choices(request, slug, *, api_code):
     specified limit. Only the limit number will be returned.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(
+        raise Http404(http404_no_request(
                                 f'/__api/stringsearchchoices/{slug}.json'))
 
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_string_search_choices: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
 
     param_info = get_param_info_by_slug(slug, 'search')
     if not param_info:
         log.error('api_string_search_choices: unknown slug "%s"',
                   slug)
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))
+        raise Http400Error(http400_unknown_slug(slug, request))
 
     param_qualified_name = param_info.param_qualified_name()
     param_category = param_info.category_name
@@ -174,7 +174,7 @@ def api_string_search_choices(request, slug, *, api_code):
     if selections is None:
         log.error('api_string_search_choices: Could not find selections for'
                   +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+        raise Http400Error(http400_search_params_invalid(request))
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -212,7 +212,7 @@ def api_string_search_choices(request, slug, *, api_code):
         log.error('api_string_search_choices: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        return HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
+        return HttpResponseServerError(http500_search_cache_failed(request))
 
     limit = request.GET.get('limit', settings.DEFAULT_STRINGCHOICE_LIMIT)
     try:
@@ -220,12 +220,12 @@ def api_string_search_choices(request, slug, *, api_code):
     except ValueError as err:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_BAD_LIMIT(limit, request)) from err
+        raise Http400Error(http400_bad_limit(limit, request)) from err
 
     if limit < 1 or limit > settings.SQL_MAX_LIMIT:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
-        raise Http400Error(HTTP400_BAD_LIMIT(limit, request))
+        raise Http400Error(http400_bad_limit(limit, request))
 
     # We do this because the user may have included characters that aren't
     # allowed in a cache key
@@ -258,7 +258,7 @@ def api_string_search_choices(request, slug, *, api_code):
     results = cursor.fetchall()
     if len(results) != 1 or len(results[0]) != 1: # pragma: no cover - database error
         log.error('api_string_search_choices: SQL failure: %s', sql)
-        return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+        return HttpResponseServerError(http500_database_error(request))
 
     final_results = None
     truncated_results = False
@@ -293,7 +293,7 @@ def api_string_search_choices(request, slug, *, api_code):
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
                 # database error
                 log.exception('api_string_search_choices: "%s" failed', sql)
-                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+                return HttpResponseServerError(http500_database_error(request))
             do_simple_search = True
 
     if do_simple_search:
@@ -318,7 +318,7 @@ def api_string_search_choices(request, slug, *, api_code):
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover -
                 # database error
                 log.exception('api_string_search_choices: "%s" failed', sql)
-                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+                return HttpResponseServerError(http500_database_error(request))
             final_results = []
 
     if final_results is None: # pragma: no cover - can't trigger during testing

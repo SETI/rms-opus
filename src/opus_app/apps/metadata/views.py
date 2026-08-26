@@ -43,21 +43,21 @@ from opus_app.apps.search.views import (
 )
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_COLLAPSE,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP400_UNKNOWN_UNITS,
-    HTTP404_NO_REQUEST,
-    HTTP404_UNKNOWN_FORMAT,
-    HTTP500_DATABASE_ERROR,
-    HTTP500_INTERNAL_ERROR,
-    HTTP500_SEARCH_CACHE_FAILED,
     Http400Error,
     api_view,
     csv_response,
     get_mult_name,
     get_reqno,
+    http400_bad_collapse,
+    http400_bad_or_missing_reqno,
+    http400_search_params_invalid,
+    http400_unknown_slug,
+    http400_unknown_units,
+    http404_no_request,
+    http404_unknown_format,
+    http500_database_error,
+    http500_internal_error,
+    http500_search_cache_failed,
     json_response,
     strip_numeric_suffix,
 )
@@ -111,7 +111,7 @@ def api_get_result_count(request, fmt, internal=False, *, api_code):
         result count,47
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/api/meta/result_count.{fmt}'))
+        raise Http404(http404_no_request(f'/api/meta/result_count.{fmt}'))
 
     count, _, err = get_result_count_helper(request, api_code)
     if err is not None: # pragma: no cover - database error
@@ -122,7 +122,7 @@ def api_get_result_count(request, fmt, internal=False, *, api_code):
         reqno = get_reqno(request)
         if reqno is None:
             log.error('api_get_result_count: Missing or badly formatted reqno')
-            raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(
+            raise Http400Error(http400_bad_or_missing_reqno(
                                         '/__api/meta/result_count.json'))
         data['reqno'] = reqno
 
@@ -136,7 +136,7 @@ def api_get_result_count(request, fmt, internal=False, *, api_code):
         ret = csv_response('result_count', [['result count', count]])
     else: # pragma: no cover - error catchall
         log.error('api_get_result_count: Unknown format "%s"', fmt)
-        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
+        raise Http404(http404_unknown_format(fmt, request))
 
     return ret
 
@@ -179,24 +179,24 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
         number1,number2,number3
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/api/meta/mults/{slug}.{fmt}'))
+        raise Http404(http404_no_request(f'/api/meta/mults/{slug}.{fmt}'))
 
     if fmt not in ('json', 'html', 'csv'):
         log.error('api_get_mult_counts: Unknown format "%s"', fmt)
-        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
+        raise Http404(http404_unknown_format(fmt, request))
 
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('api_get_mult_counts: Failed to get selections for slug %s, '
                   +'URL %s', str(slug), request.GET)
-        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+        raise Http400Error(http400_search_params_invalid(request))
 
     param_info = get_param_info_by_slug(slug, 'col', allow_units_override=False)
     if not param_info:
         log.error('api_get_mult_counts: Could not find param_info entry for '
                   +'slug %s *** Selections %s *** Extras %s', str(slug),
                   str(selections), str(extras))
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))
+        raise Http400Error(http400_unknown_slug(slug, request))
 
     table_name = param_info.category_name
     param_qualified_name = param_info.param_qualified_name()
@@ -211,7 +211,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
         log.error('api_get_mult_counts: Failed to create user_selections entry'
                   +' for *** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+        return HttpResponseServerError(http500_database_error(request))
 
     # Note we don't actually care here if the cache table even exists, because
     # if it's in the cache, it must exist, and if it's not in the cache, it
@@ -231,7 +231,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
         except LookupError: # pragma: no cover - configuration error
             log.exception('api_get_mult_counts: Could not get_model for %s',
                           mult_name.title().replace('_',''))
-            return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+            return HttpResponseServerError(http500_internal_error(request))
 
         try:
             table_model = apps.get_model('search',
@@ -239,7 +239,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
         except LookupError: # pragma: no cover - configuration error
             log.exception('api_get_mult_counts: Could not get_model for %s',
                           table_name.title().replace('_',''))
-            return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+            return HttpResponseServerError(http500_internal_error(request))
 
         cursor = connection.cursor()
 
@@ -274,7 +274,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
             log.error('api_get_mult_counts: has selections but no user_table '
                       +'found *** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            return HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
+            return HttpResponseServerError(http500_search_cache_failed(request))
 
         if selections:
             # selections are constrained so join in the user_table
@@ -300,7 +300,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
                 log.exception('api_get_mult_counts: Could not find mult entry '
                               +'for mult_model %s id %s', str(mult_model),
                               str(mult_id))
-                return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+                return HttpResponseServerError(http500_internal_error(request))
 
             mult_result_list.append((mult_disp_order,
                                      (mult_label, row[1])))
@@ -318,7 +318,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False, *,
         reqno = get_reqno(request)
         if reqno is None:
             log.error('api_get_mult_counts: Missing or badly formatted reqno')
-            raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+            raise Http400Error(http400_bad_or_missing_reqno(request))
         data['reqno'] = reqno
 
     if fmt == 'json':
@@ -382,18 +382,18 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
         0.0000,50000.0000,11,km
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(
+        raise Http404(http404_no_request(
                                     f'/api/meta/range/endpoints/{slug}.{fmt}'))
 
     if fmt not in ('json', 'html', 'csv'):
         log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
-        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
+        raise Http404(http404_unknown_format(fmt, request))
 
     param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
         log.error('api_get_range_endpoints: Could not find param_info entry '
                   +'for slug %r', slug)
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(slug, request))
+        raise Http400Error(http400_unknown_slug(slug, request))
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
@@ -401,7 +401,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
     if form_type_unit_id and not is_valid_unit(form_type_unit_id, units):
         log.error('api_get_range_endpoints: Bad units %r for '
                   +'slug %r', units, slug)
-        raise Http400Error(HTTP400_UNKNOWN_UNITS(units, slug, request))
+        raise Http400Error(http400_unknown_units(units, slug, request))
 
     param_name = param_info.name # Just name
     param_qualified_name = param_info.param_qualified_name() # category.name
@@ -414,7 +414,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
     except LookupError: # pragma: no cover - configuration error
         log.exception('api_get_range_endpoints: Could not get_model for %s',
                       table_name.title().replace('_',''))
-        return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+        return HttpResponseServerError(http500_internal_error(request))
 
     param_no_num = strip_numeric_suffix(param_name)
     param1 = param_no_num + '1'
@@ -428,7 +428,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
     if selections is None:
         log.error('api_get_range_endpoints: Could not find selections for '
                   +'request %s', str(request.GET))
-        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+        raise Http400Error(http400_search_params_invalid(request))
 
     # Remove this param from the user's query if it is constrained.
     # This keeps the green hinting numbers from reacting to changes to its
@@ -445,7 +445,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            return HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
+            return HttpResponseServerError(http500_search_cache_failed(request))
     else:
         user_table = None
 
@@ -535,7 +535,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False, *,
         if reqno is None:
             log.error(
                 'api_get_range_endpoints: Missing or badly formatted reqno')
-            raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+            raise Http400Error(http400_bad_or_missing_reqno(request))
         range_endpoints['reqno'] = reqno
 
     range_endpoints['units'] = units
@@ -605,7 +605,7 @@ def api_get_fields(request, fmt, slug=None):
     <TARGET> version based on the Saturn prototype.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/api/fields/{slug}.{fmt}'))
+        raise Http404(http404_no_request(f'/api/fields/{slug}.{fmt}'))
 
     collapse = request.GET.get('collapse', '0')
     try:
@@ -614,7 +614,7 @@ def api_get_fields(request, fmt, slug=None):
         # %r for the same reason api_edit_cart uses it on recyclebin: this is
         # still the raw request string when int() raised.
         log.error('api_get_fields: Bad value for collapse %r', collapse)
-        raise Http400Error(HTTP400_BAD_COLLAPSE(collapse, request)) from err
+        raise Http400Error(http400_bad_collapse(collapse, request)) from err
 
     return get_fields_info(fmt, request, slug=slug, collapse=collapse)
 
@@ -632,14 +632,14 @@ def get_result_count_helper(request, api_code):
     if selections is None:
         log.error('get_result_count_helper: Could not find selections for '
                   +'request %s', str(request.GET))
-        raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+        raise Http400Error(http400_search_params_invalid(request))
 
     table = get_user_query_table(selections, extras, api_code=api_code)
 
     if not table: # pragma: no cover - internal or database failure
         log.error('get_result_count_helper: Could not find/create query table '
                   +'for request %s', str(request.GET))
-        ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
+        ret = HttpResponseServerError(http500_search_cache_failed(request))
         return None, None, ret
 
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
@@ -654,7 +654,7 @@ def get_result_count_helper(request, api_code):
         except DatabaseError: # pragma: no cover - database error
             log.exception('get_result_count_helper: SQL query failed for '
                           +'request %s: SQL "%s"', str(request.GET), sql)
-            ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+            ret = HttpResponseServerError(http500_database_error(request))
             return None, None, ret
 
         cache.set(cache_key, count)
@@ -813,6 +813,6 @@ def get_fields_info(fmt, request, slug=None, collapse=False):
         ret = csv_response('fields', rows, labels)
     else: # pragma: no cover - error catchall
         log.error('get_fields_info: Unknown format "%s"', fmt)
-        raise Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
+        raise Http404(http404_unknown_format(fmt, request))
 
     return ret

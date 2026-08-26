@@ -42,9 +42,6 @@ from opus_app.apps.search.views import (
     url_to_search_params,
 )
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP404_NO_REQUEST,
     Http400Error,
     api_view,
     cols_to_slug_list,
@@ -53,6 +50,9 @@ from opus_app.apps.tools.app_utils import (
     get_mult_name,
     get_reqno,
     get_session_id,
+    http400_bad_or_missing_reqno,
+    http400_unknown_slug,
+    http404_no_request,
     json_response,
     strip_numeric_suffix,
 )
@@ -77,7 +77,7 @@ from opus_support import (
 log = logging.getLogger(__name__)
 
 @method_decorator(never_cache, name='dispatch')
-class main_site(TemplateView): # pragma: no cover - only accessed from browser
+class MainSite(TemplateView): # pragma: no cover - only accessed from browser
     template_name = "ui/base.html"
 
     def get_context_data(self, **kwargs):
@@ -112,7 +112,7 @@ def api_notifications(request):
         }
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__notifications.json'))
+        raise Http404(http404_no_request('/__notifications.json'))
 
     lastupdate = None
     try:
@@ -166,7 +166,7 @@ def api_get_menu(request):
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_get_menu: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO('/__menu.json'))
+        raise Http400Error(http400_bad_or_missing_reqno('/__menu.json'))
 
     menu_context = _get_menu_labels(request, 'search')
     menu_context['which'] = 'search' # Used to create DOM IDs
@@ -224,7 +224,7 @@ def api_get_metadata_selector(request):
     if reqno is None:
         log.error('api_get_metadata_selector: Missing or badly formatted reqno')
         raise Http400Error(
-                    HTTP400_BAD_OR_MISSING_REQNO('/__metadata_selector.json'))
+                    http400_bad_or_missing_reqno('/__metadata_selector.json'))
 
     menu_context = _get_menu_labels(request, 'selector', search_slugs_info)
 
@@ -313,7 +313,7 @@ def api_get_widget(request, **kwargs):
         # forge a log line.
         log.error('api_get_widget: Could not find param_info entry for slug %r',
                   requested_slug)
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(requested_slug, request))
+        raise Http400Error(http400_unknown_slug(requested_slug, request))
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
@@ -755,7 +755,7 @@ def api_normalize_url(request):
         return escape(old_slug) # pragma: no cover
 
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
+        raise Http404(http404_no_request('/__normalizeurl.json'))
 
     original_slugs = dict(list(request.GET.items())) # Make it mutable
 

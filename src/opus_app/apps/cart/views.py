@@ -46,18 +46,6 @@ from opus_app.apps.search.views import (
 )
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
-    HTTP400_BAD_DOWNLOAD,
-    HTTP400_BAD_OR_MISSING_RANGE,
-    HTTP400_BAD_OR_MISSING_REQNO,
-    HTTP400_BAD_RECYCLEBIN,
-    HTTP400_MISSING_OPUS_ID,
-    HTTP400_SEARCH_PARAMS_INVALID,
-    HTTP400_UNKNOWN_DOWNLOAD_FILE_FORMAT,
-    HTTP400_UNKNOWN_SLUG,
-    HTTP404_NO_REQUEST,
-    HTTP500_DATABASE_ERROR,
-    HTTP500_INTERNAL_ERROR,
-    HTTP500_SEARCH_CACHE_FAILED,
     Http400Error,
     api_view,
     cols_to_slug_list,
@@ -65,6 +53,18 @@ from opus_app.apps.tools.app_utils import (
     download_filename,
     get_reqno,
     get_session_id,
+    http400_bad_download,
+    http400_bad_or_missing_range,
+    http400_bad_or_missing_reqno,
+    http400_bad_recyclebin,
+    http400_missing_opus_id,
+    http400_search_params_invalid,
+    http400_unknown_download_file_format,
+    http400_unknown_slug,
+    http404_no_request,
+    http500_database_error,
+    http500_internal_error,
+    http500_search_cache_failed,
     json_response,
 )
 from opus_app.apps.tools.dictionary import Definitions
@@ -102,14 +102,14 @@ def api_view_cart(request):
                Normal search arguments
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__cart/view.html'))
+        raise Http404(http404_no_request('/__cart/view.html'))
 
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_view_cart: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
 
     get_not_selected_product_types_str = request.GET.get('unselected_types', '')
     not_selected_product_types = get_not_selected_product_types_str.split(',')
@@ -189,14 +189,14 @@ def api_cart_status(request):
 
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__cart/status.json'))
+        raise Http404(http404_no_request('/__cart/status.json'))
 
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_cart_status: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
 
     download_str = request.GET.get('download', 0)
     try:
@@ -205,7 +205,7 @@ def api_cart_status(request):
         download = None
     if download != 0 and download != 1:
         log.error('api_cart_status: Badly formatted download %s', download_str)
-        raise Http400Error(HTTP400_BAD_DOWNLOAD(download_str, request))
+        raise Http400Error(http400_bad_download(download_str, request))
 
     if download:
         product_types_str = request.GET.get('types', 'all')
@@ -236,7 +236,7 @@ def api_get_cart_csv(request, *, api_code):
             Normal selected-column arguments
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__cart/data.csv'))
+        raise Http404(http404_no_request('/__cart/data.csv'))
 
     column_labels, page, error = _csv_helper(request, None, api_code)
     if error is not None:
@@ -245,7 +245,7 @@ def api_get_cart_csv(request, *, api_code):
     if column_labels is None: # pragma: no cover -
         # This should never happen because the bad slugs are caught inside
         # _csv_helper
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
+        raise Http400Error(http400_unknown_slug(None, request))
 
     csv_filename = download_filename(None, 'cart')
 
@@ -315,7 +315,7 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
     can be used to move everything from the recycle bin back into the main cart.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__cart/{action}.json'))
+        raise Http404(http404_no_request(f'/__cart/{action}.json'))
 
     session_id = get_session_id(request)
 
@@ -323,7 +323,7 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
     if reqno is None:
         log.error('api_edit_cart: Missing or badly formatted reqno: %s',
                   request.GET)
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
 
     opus_id = None
     if action in ('add', 'remove'):
@@ -331,7 +331,7 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
         if not opus_id: # Also catches empty string
             log.error('api_edit_cart: Missing opusid: %s',
                       request.GET)
-            raise Http400Error(HTTP400_MISSING_OPUS_ID(request))
+            raise Http400Error(http400_missing_opus_id(request))
         opus_id = opus_id.split(',')
 
     recycle_bin = request.GET.get('recyclebin', 0)
@@ -353,7 +353,7 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
         # characters in the values.)
         log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin,
                   request.GET)
-        raise Http400Error(HTTP400_BAD_RECYCLEBIN(recycle_bin,
+        raise Http400Error(http400_bad_recyclebin(recycle_bin,
                                                   request)) from None
 
     if action == 'add':
@@ -368,7 +368,7 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
     else: # pragma: no cover - error catchall
         log.error('api_edit_cart: Unknown action %s: %s', action,
                   request.GET)
-        return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+        return HttpResponseServerError(http500_internal_error(request))
 
     if isinstance(err, HttpResponse): # pragma: no cover - database error
         return err
@@ -380,7 +380,7 @@ def api_edit_cart(request, action, *, api_code, **kwargs):
         download = None
     if download != 0 and download != 1:
         log.error('api_edit_cart: Badly formatted download %s', download_str)
-        raise Http400Error(HTTP400_BAD_DOWNLOAD(download_str, request))
+        raise Http400Error(http400_bad_download(download_str, request))
     if download:
         product_types_str = request.GET.get('types', 'all')
         product_types = product_types_str.split(',')
@@ -446,14 +446,14 @@ def api_reset_session(request):
 
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__cart/reset.json'))
+        raise Http404(http404_no_request('/__cart/reset.json'))
 
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_reset_session: Missing or badly formatted reqno')
-        raise Http400Error(HTTP400_BAD_OR_MISSING_REQNO(request))
+        raise Http400Error(http400_bad_or_missing_reqno(request))
 
     recycle_str = request.GET.get('recyclebin', 0)
     try:
@@ -463,7 +463,7 @@ def api_reset_session(request):
     if recycle_bin not in (0, 1):
         log.error('api_reset_session: Badly formatted recyclebin %s',
                   recycle_str)
-        raise Http400Error(HTTP400_BAD_RECYCLEBIN(recycle_str, request))
+        raise Http400Error(http400_bad_recyclebin(recycle_str, request))
 
     download_str = request.GET.get('download', 0)
     try:
@@ -472,7 +472,7 @@ def api_reset_session(request):
         download = None
     if download not in (0, 1):
         log.error('api_reset_session: Badly formatted download %r', download_str)
-        raise Http400Error(HTTP400_BAD_DOWNLOAD(download_str, request))
+        raise Http400Error(http400_bad_download(download_str, request))
 
     conditions = [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
                                         '=', sql_builder.value(session_id))]
@@ -519,8 +519,8 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
     """
     if not request or request.GET is None or request.META is None:
         if opus_id:
-            raise Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.{fmt}'))
-        raise Http404(HTTP404_NO_REQUEST('/__cart/download.json'))
+            raise Http404(http404_no_request(f'/api/download/{opus_id}.{fmt}'))
+        raise Http404(http404_no_request('/__cart/download.json'))
 
     url_file_only = request.GET.get('urlonly', 0)
 
@@ -588,7 +588,7 @@ def api_create_download(request, opus_id=None, fmt=None, *, api_code):
         # the raw query-string value, and a CR/LF in it must not be able to forge
         # a log line.
         log.error('api_create_download: Unknown download format %r', fmt)
-        raise Http400Error(HTTP400_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, request))
+        raise Http400Error(http400_unknown_download_file_format(fmt, request))
 
     archive_root = download_filename(opus_id, file_type)
     archive_base_file_name = archive_root + f'.{fmt}'
@@ -1155,12 +1155,12 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
     id_range = request.GET.get('range', False)
     if not id_range:
         log.error('_edit_cart_range: No range given: %s', request.GET)
-        raise Http400Error(HTTP400_BAD_OR_MISSING_RANGE(request))
+        raise Http400Error(http400_bad_or_missing_range(request))
 
     ids = id_range.split(',')
     if len(ids) != 2 or not ids[0] or not ids[1]:
         log.error('_edit_cart_range: Bad range format: %s', request.GET)
-        raise Http400Error(HTTP400_BAD_OR_MISSING_RANGE(request))
+        raise Http400Error(http400_bad_or_missing_range(request))
 
     temp_table_name = None
 
@@ -1174,7 +1174,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         # `assert order_params`, so the caller sees an AssertionError.
         if order_params is None:
             log.error('_edit_cart_range: Could not parse order %r', all_order)
-            raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
+            raise Http400Error(http400_unknown_slug(None, request))
         (order_terms, order_mult_tables,
          order_obs_tables) = create_order_by_terms(order_params,
                                                    order_descending_params)
@@ -1184,7 +1184,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             # documents the return, not because a route reaches it.
             log.error('_edit_cart_range: Could not build order terms for %r',
                       all_order)
-            raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
+            raise Http400Error(http400_unknown_slug(None, request))
 
         cursor = connection.cursor()
 
@@ -1221,7 +1221,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             cursor.execute(temp_sql, params)
         except DatabaseError: # pragma: no cover - database error
             log.exception('_edit_cart_range: "%s" "%s" failed', temp_sql, params)
-            return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+            return HttpResponseServerError(http500_database_error(request))
         log.debug('_edit_cart_range SQL (%.2f secs): %s %s',
                   time.time()-time1, temp_sql, params)
 
@@ -1236,7 +1236,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         if selections is None:
             log.error('_edit_cart_range: Could not find selections for'
                       +' request %s', request.GET)
-            raise Http400Error(HTTP400_SEARCH_PARAMS_INVALID(request))
+            raise Http400Error(http400_search_params_invalid(request))
 
         user_query_table = get_user_query_table(selections, extras,
                                                 api_code=api_code)
@@ -1244,7 +1244,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             log.error('_edit_cart_range: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            return HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
+            return HttpResponseServerError(http500_search_cache_failed(request))
 
     cursor = connection.cursor()
 
@@ -1335,7 +1335,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             except DatabaseError: # pragma: no cover - database error
                 log.exception('_edit_cart_range: SQL query failed for request '
                               +'%s: SQL "%s"', request.GET, sql)
-                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+                return HttpResponseServerError(http500_database_error(request))
 
             # Subtract the number of observations that are already in the cart.
             # We are on the addrange path here (asserted above), so the FROM
@@ -1352,7 +1352,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             except DatabaseError: # pragma: no cover - database error
                 log.exception('_edit_cart_range: SQL query failed for request '
                               +'%s: SQL "%s"', request.GET, sql)
-                return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+                return HttpResponseServerError(http500_database_error(request))
 
             num_wanted = num_new-num_old
             if (num_cart_and_recycle+num_wanted >
@@ -1406,7 +1406,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
     else: # pragma: no cover - error catchall
         log.error('_edit_cart_range: Unknown action %s: %s', action,
                   request.GET)
-        return HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+        return HttpResponseServerError(http500_internal_error(request))
 
     log.debug('_edit_cart_range SQL: %s %s', sql, sql_params)
     cursor.execute(sql, sql_params)
@@ -1417,7 +1417,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             cursor.execute(sql)
         except DatabaseError: # pragma: no cover - database error
             log.exception('_edit_cart_range: "%s" failed', sql)
-            return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+            return HttpResponseServerError(http500_database_error(request))
 
     return False
 
@@ -1457,7 +1457,7 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
         except DatabaseError: # pragma: no cover - database error
             log.exception('_edit_cart_addall: SQL query failed for request %s: '
                           +'SQL "%s"', request.GET, sql)
-            return HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
+            return HttpResponseServerError(http500_database_error(request))
 
         if num_cart_and_recycle+count-num_dup > settings.MAX_SELECTIONS_ALLOWED:
             return (f'Your request to add all {count:,d} observations '
@@ -1536,7 +1536,7 @@ def _create_csv_file(request, csv_file_name, opus_id, api_code=None):
     if column_labels is None: # pragma: no cover -
         # This should never happen because the bad slugs are caught inside
         # _csv_helper
-        raise Http400Error(HTTP400_UNKNOWN_SLUG(None, request))
+        raise Http400Error(http400_unknown_slug(None, request))
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)

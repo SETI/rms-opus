@@ -36,9 +36,9 @@ from django.views.decorators.cache import never_cache
 from opus_app.apps.metadata.views import get_fields_info
 from opus_app.apps.search.models import MultObsGeneralInstrumentId, ObsGeneral
 from opus_app.apps.tools.app_utils import (
-    HTTP404_NO_REQUEST,
     api_view,
     get_git_version,
+    http404_no_request,
 )
 
 log = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def api_about(request, fmt):
     Format: __help/about.(?P<fmt>html|pdf)
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/about.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/about.{fmt}'))
 
     git_id = get_git_version()
     database_schema = settings.DB_SCHEMA_NAME
@@ -87,7 +87,7 @@ def api_bundles(request, fmt):
     Format: __help/bundles.(?P<fmt>html|pdf)
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/bundles.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/bundles.{fmt}'))
 
     all_bundles = {}
     for d in (ObsGeneral.objects.values('instrument_id','bundle_id')
@@ -115,7 +115,7 @@ def api_faq(request, fmt):
     Format: __help/faq.(?P<fmt>html|pdf)
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/faq.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/faq.{fmt}'))
 
     path = os.path.dirname(os.path.abspath(__file__))
     faq_content_file = 'faq.yaml'
@@ -148,7 +148,7 @@ def api_gettingstarted(request, fmt):
     Format: __help/gettingstarted.(?P<fmt>html|pdf)
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/gettingstarted.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/gettingstarted.{fmt}'))
 
     return _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
                                'getting_started',
@@ -165,7 +165,7 @@ def api_splash(request):
     Format: __help/splash.html
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST('/__help/splash.html'))
+        raise Http404(http404_no_request('/__help/splash.html'))
 
     return render(request, 'help/splash.html')
 
@@ -180,7 +180,7 @@ def api_citing_opus(request, fmt):
     Format: __help/citing.(?P<fmt>html|pdf)
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/citing.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/citing.{fmt}'))
 
     opus_search_url = request.GET.get('searchurl', None)
     opus_state_url = request.GET.get('stateurl', None)
@@ -226,7 +226,7 @@ def api_api_guide(request, fmt):
     To edit guide content edit api_guide.md
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(HTTP404_NO_REQUEST(f'/__help/apiguide.{fmt}'))
+        raise Http404(http404_no_request(f'/__help/apiguide.{fmt}'))
 
     uri = HttpRequest.build_absolute_uri(request)
     prefix = '/'.join(uri.split('/')[:3])

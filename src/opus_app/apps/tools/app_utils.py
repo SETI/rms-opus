@@ -283,11 +283,11 @@ def _injected_fault_response(request):
     # in every deployment except a deliberate error-handling test.
     if random.random() < settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY:  # nosec B311
         _log_injected_fault('HTTP404')
-        raise Http404(HTTP404_FAKE_ERROR(request))
+        raise Http404(http404_fake_error(request))
     # Fault injection, as directly above.
     if random.random() < settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY:  # nosec B311
         _log_injected_fault('HTTP500')
-        return HttpResponseServerError(HTTP500_FAKE_ERROR(request))
+        return HttpResponseServerError(http500_fake_error(request))
     return None
 
 
@@ -344,7 +344,7 @@ def api_view(handler):
             return ret
         except Exception:
             log.exception('%s: Unhandled exception', handler.__name__)
-            ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
+            ret = HttpResponseServerError(http500_internal_error(request))
             exit_api_call(api_code, ret)
             return ret
         exit_api_call(api_code, ret)
@@ -410,96 +410,96 @@ def cols_to_slug_list(slugs):
 #
 # ERROR MESSAGES
 #
-# The message text an error page shows the user. The HTTP400_/HTTP404_/HTTP500_
-# prefix records which status the message is raised with: an HTTP400_ message
-# accompanies `Http400Error` (the request itself was malformed), an HTTP404_
+# The message text an error page shows the user. The http400_/http404_/http500_
+# prefix records which status the message is raised with: an http400_ message
+# accompanies `Http400Error` (the request itself was malformed), an http404_
 # message accompanies `Http404` (something named in the URL path does not exist),
-# and an HTTP500_ message accompanies `HttpResponseServerError`. Each takes the
+# and an http500_ message accompanies `HttpResponseServerError`. Each takes the
 # request, or a path given as a string when the request is not available.
 #
 ################################################################################
 
-def HTTP404_NO_REQUEST(s):
+def http404_no_request(s):
     """The handler was called with no request, or one with no GET or META."""
     return f'Internal error (No request was provided) for {_request_path(s)}'
 
-def HTTP400_BAD_OR_MISSING_REQNO(r):
+def http400_bad_or_missing_reqno(r):
     """The reqno parameter is absent or is not a non-negative integer."""
     return f'Internal error (Bad or missing reqno) for {_request_path(r)}'
 
-def HTTP400_MISSING_OPUS_ID(r):
+def http400_missing_opus_id(r):
     """An OPUS ID is required but none was given."""
     return f'Missing OPUSID for {_request_path(r)}'
 
-def HTTP404_UNKNOWN_FORMAT(fmt, r):
+def http404_unknown_format(fmt, r):
     """The requested return format is not one this endpoint can produce."""
     return f'Internal error (Unknown return format "{fmt}") for {_request_path(r)}'
 
-def HTTP400_BAD_OR_MISSING_RANGE(r):
+def http400_bad_or_missing_range(r):
     """The range parameter is absent or is not a pair of OPUS IDs."""
     return f'Internal error (Bad or missing range) for {_request_path(r)}'
 
-def HTTP400_BAD_DOWNLOAD(download, r):
+def http400_bad_download(download, r):
     """The download parameter is not 0 or 1."""
     return f'Badly formatted download argument "{download}" for {_request_path(r)}'
 
-def HTTP400_BAD_RECYCLEBIN(recyclebin, r):
+def http400_bad_recyclebin(recyclebin, r):
     """The recyclebin parameter is not 0 or 1."""
     return (f'Internal error (Badly formatted recyclebin argument '
             f'"{recyclebin}") for {_request_path(r)}')
 
-def HTTP400_BAD_COLLAPSE(collapse, r):
+def http400_bad_collapse(collapse, r):
     """The collapse parameter is not an integer."""
     return f'Badly formatted collapse argument "{collapse}" for {_request_path(r)}'
 
-def HTTP400_BAD_LIMIT(limit, r):
+def http400_bad_limit(limit, r):
     """The limit parameter is not an integer in the permitted range."""
     return f'Badly formatted limit "{limit}" for {_request_path(r)}'
 
-def HTTP400_BAD_STARTOBS(startobs, r):
+def http400_bad_startobs(startobs, r):
     """The startobs parameter is not an integer."""
     return f'Badly formatted startobs "{startobs}" for {_request_path(r)}'
 
-def HTTP400_BAD_PAGENO(pageno, r):
+def http400_bad_pageno(pageno, r):
     """The page parameter is not an integer."""
     return f'Badly formatted page number "{pageno}" for {_request_path(r)}'
 
-def HTTP400_BAD_OFFSET(offset, r):
+def http400_bad_offset(offset, r):
     """The offset computed from startobs or page is outside the permitted range."""
     return f'Bad computed offset "{offset}" for {_request_path(r)}'
 
-def HTTP400_SEARCH_PARAMS_INVALID(r):
+def http400_search_params_invalid(r):
     """The search parameters in the query string could not be parsed."""
     return f'Search parameters invalid for {_request_path(r)}'
 
-def HTTP400_UNKNOWN_SLUG(slug, r):
+def http400_unknown_slug(slug, r):
     """A metadata field slug the caller supplied does not exist."""
     if slug is None:
         return f'Unknown metadata field slug for {_request_path(r)}'
     return f'Unknown metadata field "{slug}" for {_request_path(r)}'
 
-def HTTP400_UNKNOWN_UNITS(units, slug, r):
+def http400_unknown_units(units, slug, r):
     """The requested units are not valid for the given metadata field."""
     return (f'Unknown units "{units}" for metadata field "{slug}" for '
             f'{_request_path(r)}')
 
-def HTTP404_UNKNOWN_RING_OBS_ID(ringobsid, r):
+def http404_unknown_ring_obs_id(ringobsid, r):
     """The old-format ringobsid in the URL path names no observation."""
     return f'Unknown RINGOBSID "{ringobsid}" for {_request_path(r)}'
 
-def HTTP404_UNKNOWN_OPUS_ID(opusid, r):
+def http404_unknown_opus_id(opusid, r):
     """The OPUS ID in the URL path names no observation."""
     return f'Unknown OPUSID "{opusid}" for {_request_path(r)}'
 
-def HTTP400_UNKNOWN_CATEGORY(r):
+def http400_unknown_category(r):
     """A category named in the cats parameter does not exist."""
     return f'Unknown category for {_request_path(r)}'
 
-def HTTP400_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, r):
+def http400_unknown_download_file_format(fmt, r):
     """The requested archive format is not one OPUS can create."""
     return f'Unknown DOWNLOAD FILE FORMAT "{fmt}" for {_request_path(r)}'
 
-def HTTP404_FAKE_ERROR(r):
+def http404_fake_error(r):
     """A 404 injected by OPUS_FAKE_SERVER_ERROR404_PROBABILITY."""
     return f'Fake HTTP404 error for {_request_path(r)}'
 
@@ -524,19 +524,19 @@ def wrap_http500_string(s):
     """
     return f'<div id="info">{escape(s)}</div>'
 
-def HTTP500_SEARCH_CACHE_FAILED(r): # pragma: no cover - database error
+def http500_search_cache_failed(r): # pragma: no cover - database error
     """The search cache table could not be found or created."""
     return wrap_http500_string(f'Internal database error for {_request_path(r)}')
 
-def HTTP500_DATABASE_ERROR(r): # pragma: no cover - database error
+def http500_database_error(r): # pragma: no cover - database error
     """A database query failed."""
     return wrap_http500_string(f'Internal database error for {_request_path(r)}')
 
-def HTTP500_INTERNAL_ERROR(r):
+def http500_internal_error(r):
     """Something failed that is not the caller's fault and has no better message."""
     return wrap_http500_string(
                 f'Unspecified internal server error for {_request_path(r)}')
 
-def HTTP500_FAKE_ERROR(r):
+def http500_fake_error(r):
     """A 500 injected by OPUS_FAKE_SERVER_ERROR500_PROBABILITY."""
     return wrap_http500_string(f'Fake HTTP500 error for {_request_path(r)}')

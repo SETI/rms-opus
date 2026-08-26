@@ -315,15 +315,18 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 # E501 left this table for the documented global ignore above rather than being
 # burned down; the reasoning and its measurement are stated there.
 #
-# `src/opus_log_analyzer` has no row any more: E501 was the only code that
-# fired there, and it is globally ignored now.
+# `src/opus_app` and `src/opus_log_analyzer` have no row any more: E501 was the
+# only code that fired in the log analyzer and it is globally ignored now, and
+# the Django app's 24 SCREAMING_CASE message helpers and one lower-case view
+# class were renamed.
 #
-# The Django app and the live-DB suites keep the two naming codes: PR-17a
-# renames the app's, PR-17b the suites'.
+# The live-DB suites keep the two naming codes until PR-17b, which annotates
+# them. Their names are unittest test methods and classes carrying PDS bundle
+# identifiers (test__api_meta_mults_COISS_2111), so renaming them belongs with
+# the PR that reads every one of those files rather than as a drive-by here.
 #
 # `src/opus_support`, `src/opus_config`, `src/opus_import`, `tests` and
 # `manage.py` have no row at all: they meet the full rule set.
-"src/opus_app/**/*.py" = ["N801", "N802"]
 "integration_tests/**/*.py" = ["N801", "N802"]
 #
 # The PT015/B011 (`assert False`) and B006 (mutable default argument) sites
