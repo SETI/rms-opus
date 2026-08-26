@@ -1,10 +1,11 @@
 """Tests for the SQL assembly helpers in opus_app.apps.tools.sql_builder.
 
 These need no database: they check what the builder renders, not what the server
-does with it. They live in this suite rather than in `tests/` because the 100%
-branch-coverage gate measures `src/opus_app/apps/*`, and every branch of the
-builder has to be exercised by the suite that gate reads. PR-18 creates the
-holdings-free Django suite these could later move to.
+does with it. The 100% branch-coverage gate measures `src/opus_app/apps/*`, so every
+branch of the builder has to be exercised by the suite that gate reads --
+which is why the integration coverage invocation runs `tests/opus_app` alongside
+`integration_tests` in a single pass. Living here rather than in `integration_tests/`
+is what also puts them in the holdings-free run on the GitHub-hosted CI.
 
 What is worth pinning here, and why:
 

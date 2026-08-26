@@ -1,70 +1,25 @@
 #!/usr/bin/env python
+"""Django's command-line utility for this checkout.
 
-##########################################################################
-### See integration_tests/test_api/TEST_API_README.md for instructions ###
-##########################################################################
+It is a development convenience -- `check`, `migrate`, `shell`, `collectstatic` -- and
+carries no OPUS-specific commands of its own.
 
-import cProfile
-import io
+**The test suites are run with pytest, not through this script.** `pytest` runs the
+holdings-free unit suite and `pytest integration_tests` runs the live-database suites;
+the invocations, including how to point the API suite at a deployed server and how to
+profile a run, are in `integration_tests/test_api/TEST_API_README.md`. `manage.py test`
+is Django's own command and nothing here configures it: a bare `manage.py test`
+discovers the whole repository, and pytest selects by path and by marker instead.
+
+Every command needs `OPUS_CONFIG` set, because `opus_app.settings` reads the OPUS
+configuration file and there is no default location for it.
+"""
+
 import os
-import pstats
 import sys
 
 from django.core.management import execute_from_command_line
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'opus_app.settings')
-
-    # Imported here, not at module scope: reading django.conf.settings loads
-    # opus_app.settings, which needs DJANGO_SETTINGS_MODULE set first.
-    from django.conf import settings
-
-    settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
-    settings.TEST_GO_LIVE = None
-
-    do_profiling = False
-
-    new_argv = []
-    for command in sys.argv:
-        if command == 'api-all':
-            # Test API only
-            new_argv.append('integration_tests.test_api')
-        elif command == 'api-result-counts':
-            # Test result_counts only (external server)
-            new_argv.append('integration_tests.test_api.test_result_counts')
-        elif command == 'api-internal-db-result-counts':
-            # Test result_counts only (internal server)
-            new_argv.append('integration_tests.test_api.test_result_counts')
-            settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = True
-        elif command == 'api-livetest-pro':
-            # Test against production server opus.pds-rings.seti.org
-            # (No VPN required)
-            new_argv.append('integration_tests.test_api.enable_livetests_pro')
-        elif command == 'api-livetest-dev':
-            # Test against dev server dev.pds.seti.org
-            # (VPN required)
-            new_argv.append('integration_tests.test_api.enable_livetests_dev')
-        elif command == 'api-internal-db':
-            # The default - use internal DB
-            new_argv.append('integration_tests.test_api.enable_livetests_internal')
-        elif command == 'profile':
-            # Turn on performance profiling
-            do_profiling = True
-        else:
-            new_argv.append(command)
-
-    if do_profiling:
-        pr = cProfile.Profile()
-        pr.enable()
-
-    execute_from_command_line(new_argv)
-
-    if do_profiling:
-        pr.disable()
-        s = io.StringIO()
-        sortby = 'cumulative'
-        ps = pstats.Stats(pr, stream=s).strip_dirs().sort_stats(sortby)
-        ps.print_stats()
-        ps.print_callers()
-        with open('profile.txt', 'w') as fp:
-            fp.write('Profile results:\n'+s.getvalue())
+    execute_from_command_line(sys.argv)

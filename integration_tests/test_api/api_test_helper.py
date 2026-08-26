@@ -5,8 +5,7 @@ response against a value written into the test or a file under `responses/`. The
 comparison is what varies -- JSON, HTML, CSV, an archive's member list, an embedded
 PNG -- so it lives here once and the suites mix it in.
 
-The mix-in is also where `TEST_GO_LIVE` is read; see `go_live_target` for why that
-one setting goes through a function rather than off `django.conf.settings` directly.
+Which server the suite drives is read here too; see `go_live_target`.
 """
 
 import base64
@@ -26,31 +25,48 @@ from PIL import Image, ImageChops
 from PIL.Image import Image as PILImage
 
 # Relative to the working directory: the whole suite is run from the repository
-# root (see run_coverage.sh and integration_tests/test_api/TEST_API_README.md).
+# root (see integration_tests/test_api/TEST_API_README.md).
 _RESPONSES_FILE_ROOT = 'integration_tests/test_api/responses/'
+
+#: Environment variable naming the deployed server this run checks against.
+GO_LIVE_ENV_VAR = 'OPUS_TEST_GO_LIVE'
+
+#: The servers `GO_LIVE_ENV_VAR` may name.
+GO_LIVE_TARGETS = ('dev', 'production')
 
 
 def go_live_target() -> str | None:
-    """Which remote server the API suite runs against, or None for the local one.
+    """Which deployed server the API suite runs against, or None for the local one.
 
-    `TEST_GO_LIVE` is the one OPUS setting the settings module does not declare:
-    `manage.py` sets it to None before handing off to the test runner, and the
-    `api-livetest-*` verbs load `enable_livetests_dev`/`enable_livetests_pro`, whose
-    module bodies set it to ``'dev'`` or ``'production'``. It is therefore absent
-    from the module django-stubs resolves attribute types against, and reading it
-    through `getattr` is what states that -- the alternative is thirty identical
-    suppressions saying the same thing thirty times. (Its sibling
-    `TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` *is* declared, in `opus_app.settings`,
-    and is read directly; do not wrap that one, or the checker stops looking at it.)
+    The target is `GO_LIVE_ENV_VAR` in the environment. An **unset or empty** variable
+    selects the locally imported database, which is what an ordinary run wants;
+    `'dev'` and `'production'` select the two servers `_get_response` knows how to
+    build a URL for.
 
-    Reading this one through a function rather than caching it in a module constant
-    is load-bearing: the value is assigned after this module is imported.
+    Any **other** value is refused rather than quietly read as "run locally". The two
+    outcomes are otherwise indistinguishable to the caller -- a suite pointed at
+    nothing and a suite pointed at the local application both pass -- so a run started
+    with a misspelled target would report success for something nobody asked for.
+
+    This is a function rather than a module constant because the environment may be
+    set after the module is imported.
 
     Returns:
-        The target name a live test run was started with, or None when the suite is
-        running against the locally imported database.
+        `'dev'`, `'production'`, or None for the locally imported database.
+
+    Raises:
+        RuntimeError: If the variable holds a value that names no server. The message
+            gives the variable, the value, and the values that would work.
     """
-    return getattr(settings, 'TEST_GO_LIVE', None)
+    target = os.environ.get(GO_LIVE_ENV_VAR, '')
+    if not target:
+        return None
+    if target not in GO_LIVE_TARGETS:
+        raise RuntimeError(
+            f'{GO_LIVE_ENV_VAR}={target!r} names no server: it must be one of '
+            f'{", ".join(GO_LIVE_TARGETS)}, or be unset to run against the locally '
+            f'imported database.')
+    return target
 
 
 if TYPE_CHECKING:
@@ -296,33 +312,14 @@ class ApiTestHelper(_ApiTestHelperBase):
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
-        # There should be the same number of images, and they should decode identically.
-        self.assertEqual(len(expected), len(resp))
-        # strict=False: a length mismatch between the two image lists is
-        # ignored rather than raising.
+        # The loop below pairs the images off, so it needs the two lists to be the
+        # same length. That cannot fail once the bodies compare equal --
+        # __extract_images replaces every image with the same fixed marker, so equal
+        # bodies hold equal numbers of markers -- which is also why zip() stays
+        # strict=False: a mismatch is caught here, with both counts named.
+        self.assertEqual(len(expected_images), len(resp_images))
         for image1, image2 in zip(expected_images, resp_images, strict=False):
             self.__assert_images_identical(image1, image2)
-
-    def _run_html_startswith(self, url: str, expected: str) -> None:
-        """Assert one URL answers 200 with an HTML body starting with given text.
-
-        Parameters:
-            url: Path of the API endpoint.
-            expected: The text the normalized body must begin with.
-        """
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(200, response.status_code)
-        expected = self._clean_string(expected)
-        resp = self._clean_string(str(response.content))
-        resp = resp[:len(expected)]
-        print('Got:')
-        print(resp)
-        print('Expected:')
-        print(expected)
-        if resp != expected:
-            self._print_clean_diffs(resp, expected)
-        self.assertEqual(expected, resp)
 
     @staticmethod
     def _remove_range(s: str, start_str: str, end_str: str | None) -> str:
@@ -381,50 +378,6 @@ class ApiTestHelper(_ApiTestHelperBase):
         if resp != expected:
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
-
-    def _run_html_contains(self, url: str, expected: str) -> None:
-        """Assert one URL answers 200 with a body whose start is given text.
-
-        Parameters:
-            url: Path of the API endpoint.
-            expected: The text sought. Note that the response is truncated to this
-                text's length first, so this asserts the body *starts with* it.
-        """
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(200, response.status_code)
-        expected = self._clean_string(expected)
-        resp = self._clean_string(str(response.content))
-        resp = resp[:len(expected)]
-        print('Got:')
-        print(resp)
-        print('Expected:')
-        print(expected)
-        if expected not in resp:
-            self._print_clean_diffs(resp, expected)
-            self.assertTrue(False)
-
-    def _run_html_not_contains(self, url: str, expected: str) -> None:
-        """Assert one URL answers 200 with a body whose start is not given text.
-
-        Parameters:
-            url: Path of the API endpoint.
-            expected: The text that must be absent. As in `_run_html_contains`, the
-                response is truncated to this text's length before the check.
-        """
-        print(url)
-        response = self._get_response(url)
-        self.assertEqual(200, response.status_code)
-        expected = self._clean_string(expected)
-        resp = self._clean_string(str(response.content))
-        resp = resp[:len(expected)]
-        print('Got:')
-        print(resp)
-        print('Expected:')
-        print(expected)
-        if expected in resp:
-            self._print_clean_diffs(resp, expected)
-            self.assertTrue(False)
 
     @staticmethod
     def _cleanup_csv(text: object) -> str:

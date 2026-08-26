@@ -1,10 +1,12 @@
 """Tests for the @api_view decorator in opus_app.apps.tools.app_utils.
 
 These need no database: they drive the decorator with handlers written here, not
-with real API endpoints. They live in this suite rather than in `tests/` because
-the 100% branch-coverage gate measures `src/opus_app/apps/*`, and every branch of
-the decorator has to be exercised by the suite that gate reads. PR-18 creates the
-holdings-free Django suite these could later move to.
+with real API endpoints. The 100% branch-coverage gate measures
+`src/opus_app/apps/*`, so every branch of the decorator has to be exercised by
+the suite that gate reads -- which is why the integration coverage invocation runs
+`tests/opus_app` alongside `integration_tests` in a single pass. Living here rather
+than in `integration_tests/` is what also puts them in the holdings-free run on the
+GitHub-hosted CI.
 
 What is worth pinning here, and why:
 

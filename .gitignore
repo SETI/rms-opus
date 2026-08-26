@@ -26,8 +26,9 @@ migrations/
 coverage.xml
 coverage_report.txt
 htmlcov/
+# Written by the profiling recipe in integration_tests/test_api/TEST_API_README.md
+profile.out
 
-profile.txt
 
 # Packaging (setuptools-scm writes the version file at build time)
 build/
