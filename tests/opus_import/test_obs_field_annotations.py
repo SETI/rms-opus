@@ -15,7 +15,7 @@ Two layers, because either one alone can be satisfied by a mistake:
 
 **What layer 2 does not cover, so nobody reads its green as more than it is.** It drives
 6 of the 25 leaf classes in `opus_import.config_bundle_info`, whose method resolution
-orders between them reach 27 of the 57 modules here: **669 of the 1188 field method
+orders between them reach 27 of the 57 modules here: **669 of the 1185 field method
 definitions, 56%, are in modules it cannot instantiate** -- the whole PDS4 branch and all
 three ``obs_bundle_*`` leaves among them. A wrong runtime type in one of those is caught
 by layer 1 only insofar as the schema can see it, which is not at all. Widening this is
