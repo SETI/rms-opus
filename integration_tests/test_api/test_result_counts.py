@@ -4,12 +4,15 @@ The recorded counts are in `data/result_counts.csv`. They are counts over the wh
 archive rather than over whatever this installation imported, so the comparison only
 runs when something says which archive to ask.
 
-`api-result-counts` is the verb that selects this module, and on its own it checks
-nothing: both flags are off and the guard around the comparison is false. It is
-combined with a verb that sets one -- `manage.py test api-livetest-pro
-api-result-counts` for the public server, `api-livetest-dev` for the development one
-(see TEST_API_README.md) -- or replaced by `api-internal-db-result-counts`, which
-selects this module and sets the internal-database flag by itself.
+Selecting this module on its own checks nothing: both flags below are off and the
+guard around the comparison is false. One of two environment variables turns it on --
+`OPUS_TEST_GO_LIVE` for a deployed server or
+`OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB` for the locally imported database (see
+TEST_API_README.md).
+
+This is the one module in the tree that talks to a server outside this process, which
+is what the `livetest` marker below names; `pytest integration_tests -m "not
+livetest"` is how a run leaves it out.
 """
 
 import csv
@@ -17,11 +20,14 @@ import json
 import logging
 from unittest import TestCase
 
+import pytest
 import requests
 from django.conf import settings
 from rest_framework.test import RequestsClient
 
 from .api_test_helper import go_live_target
+
+pytestmark = pytest.mark.livetest
 
 
 ##################

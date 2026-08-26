@@ -108,13 +108,33 @@ docs = [
 ]
 
 [tool.pytest.ini_options]
+# The default run is directory-scoped, not marker-filtered: `pytest` alone collects the
+# holdings-free unit suite and nothing else, so it never reaches integration_tests/,
+# which needs an imported database and the PDS holdings behind it. That tree is a
+# root-level sibling of this one precisely so this selection works; asking for it by
+# name (`pytest integration_tests`) is the only way to run it. Nothing is filtered out
+# of the default run with -m, so a test that lands in tests/ runs there whatever it is
+# marked.
 testpaths = ["tests"]
+# pytest-django configures Django once per session, which is what lets a unittest.TestCase
+# under integration_tests/ reach the imported schema and what lets tests/opus_app/ import
+# the app's views. It reads the OPUS configuration through opus_app.settings, so every
+# pytest run needs OPUS_CONFIG set: tests/fixtures/opus_ci.toml for the holdings-free
+# suite (the GitHub-hosted workflow and scripts/run-all-checks.sh both set it), the real
+# installation's file for the integration suites.
+DJANGO_SETTINGS_MODULE = "opus_app.settings"
 # importlib import mode: the per-package test directories carry no __init__.py, and the
 # default "prepend" mode then requires test module basenames to be unique tree-wide.
 # tests/opus_import/test_package_data.py and tests/opus_log_analyzer/test_package_data.py
 # are exactly that collision, and both collect under this mode.
 addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib"]
-markers = []
+# --strict-markers is on, so every marker used anywhere has to be declared here.
+# integration_tests/conftest.py applies all three; nothing in tests/ is marked.
+markers = [
+  "integration: needs the OPUS database a full import populated (integration_tests/ only)",
+  "holdings: reads a product file out of the PDS holdings tree, not just the database row naming it",
+  "livetest: queries an OPUS server outside this process rather than the in-process application",
+]
 # Warnings are errors so a third-party deprecation cannot rot unnoticed. Add a
 # narrowly-scoped "default::"/"ignore::" entry (with a comment) only for a
 # warning coming from code we cannot fix.

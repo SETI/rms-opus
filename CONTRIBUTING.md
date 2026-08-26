@@ -99,8 +99,16 @@ The maintainers will merge your PR once it meets all requirements.
 We use pytest for testing. To run the tests:
 
 ```bash
-pytest
+OPUS_CONFIG=tests/fixtures/opus_ci.toml pytest
 ```
+
+`OPUS_CONFIG` names the OPUS configuration file, and OPUS has no default location
+for one; `tests/fixtures/opus_ci.toml` is the checked-in dummy configuration the CI
+jobs use, and `scripts/run-all-checks.sh` sets it for you.
+
+A bare `pytest` runs the holdings-free suite in `tests/` and nothing else. The
+suites in `integration_tests/` need a database populated by the import pipeline and
+are asked for by name; see `integration_tests/test_api/TEST_API_README.md`.
 
 For more verbose output:
 

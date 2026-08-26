@@ -18,10 +18,28 @@ DATA_DIR=$TEST_CAT_DIR/data
 export OPUS_CONFIG="$(pwd)/opus.toml"
 
 # The integration suite's 100% coverage gate has its own configuration; without
-# this, coverage would pick up the unit-coverage settings in pyproject.toml.
+# this, coverage would pick up the unit-coverage settings in pyproject.toml, which
+# measure a different set of packages against a different gate (plan §5a). It is
+# exported as well as passed to pytest below because the `coverage` commands after
+# the run read it too.
 export COVERAGE_RCFILE=integration_tests/.coveragerc
 
-./run_coverage.sh
+# pytest-cov measures under a per-process data suffix and combines afterwards, so a
+# fragment left behind by an interrupted run would be combined into this run's
+# totals -- coverage no test in this run produced, which can only make the gate look
+# better. Its own erase() removes `.coverage` alone, because this configuration is
+# not `parallel`, so remove the fragments here.
+rm -f .coverage .coverage.*
+
+# The suites in one run, because the 100% gate measures src/opus_app/apps,
+# integration_tests/test_api and src/opus_support together (see the include list in
+# integration_tests/.coveragerc). tests/opus_support and tests/opus_app are the only
+# directories under tests/ that reach any of that source: they exercise opus_support
+# in full and the two parts of the Django app -- the @api_view decorator and the SQL
+# builder -- that need no database. Dropping either would deflate the gate rather
+# than fail it.
+pytest --cov --cov-config=integration_tests/.coveragerc \
+       tests/opus_support tests/opus_app integration_tests
 if [ $? -ne 0 ]; then
     echo
     echo "******************************"
@@ -29,6 +47,11 @@ if [ $? -ne 0 ]; then
     echo "******************************"
     exit -1
 fi
+
+coverage xml
+if [ $? -ne 0 ]; then exit -1; fi
+coverage html
+if [ $? -ne 0 ]; then exit -1; fi
 coverage report -m >& $TEST_LOG_DIR/coverage_report.txt
 cp $TEST_LOG_DIR/coverage_report.txt .
 echo

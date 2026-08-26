@@ -1,9 +1,20 @@
-"""Golden-response tests for the cart API."""
+"""Golden-response tests for the cart API.
+
+This is the one module in the tree that reads product files out of the PDS holdings
+tree rather than only the database rows naming them: `/__cart/download` copies real
+products into a zip or tar archive, and the `test__api_cart_download_*` tests then
+compare its member list against a recorded one. Everywhere else the application
+reports a product's path and size from the imported `obs_files` table without opening
+anything. Hence the `holdings` marker below, which covers the module because that is
+where the marker is legible; the download tests are what actually need the tree
+mounted.
+"""
 
 import logging
 from typing import Any
 from unittest import TestCase
 
+import pytest
 import requests
 from django.conf import settings
 from django.core.cache import cache
@@ -22,6 +33,8 @@ from opus_app.apps.tools.app_utils import (
 )
 
 from .api_test_helper import ApiTestHelper, go_live_target
+
+pytestmark = pytest.mark.holdings
 
 # The two sessions the cross-session removerange tests drive, supplied with the
 # __sessionid override that get_session_id documents for exactly this purpose.

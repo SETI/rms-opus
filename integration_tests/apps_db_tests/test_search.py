@@ -15,6 +15,7 @@ from collections.abc import Mapping
 from typing import Any
 from unittest import TestCase
 
+import pytest
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
@@ -3280,6 +3281,14 @@ class SearchTests(TestCase):
         self.assertIsNone(sql)
         self.assertIsNone(params)
 
+    # The overflow is what this test drives: converting 1e307 degrees to radians
+    # multiplies by opus_support's numpy DEG_RAD, numpy warns that the result went to
+    # infinity, and convert_to_default_unit's math.isfinite check is what turns that
+    # into the rejection asserted below. `filterwarnings = ["error"]` would otherwise
+    # make the warning itself the failure. Scoped to this test rather than to the
+    # suite, so an unintended overflow anywhere else still fails.
+    @pytest.mark.filterwarnings('ignore:overflow encountered in scalar multiply'
+                                ':RuntimeWarning')
     def test__construct_query_string_longitude_range_unit_overflow(self) -> None:
         "[test_search.py] construct_query_string: a single column range, unit overflow"
         selections = {'obs_ring_geometry.J2000_longitude1': [1e307],
