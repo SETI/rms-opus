@@ -15,7 +15,7 @@ from opus_app.apps.ui.views import api_normalize_url, api_notifications
 
 class uiTests(TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
         settings.OPUS_FAKE_API_DELAYS = 0
@@ -25,7 +25,7 @@ class uiTests(TestCase):
         cache.clear()
         self.factory = RequestFactory()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
@@ -34,7 +34,7 @@ class uiTests(TestCase):
             ######### api_notifications UNIT TESTS #########
             ################################################
 
-    def test__api_notifications_no_meta(self):
+    def test__api_notifications_no_meta(self) -> None:
         "[test_ui.py] api_notifications: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -42,7 +42,7 @@ class uiTests(TestCase):
             r'Internal error \(No request was provided\) for /__notifications.json'):
             api_notifications(request)
 
-    def test__api_notifications_no_get(self):
+    def test__api_notifications_no_get(self) -> None:
         "[test_ui.py] api_notifications: no GET"
         request = self.factory.get('__notifications.json')
         request.GET = None
@@ -50,7 +50,7 @@ class uiTests(TestCase):
             api_notifications(request)
 
     # tests specific for blog update file
-    def test__api_notifications_blog_update_file_ok(self):
+    def test__api_notifications_blog_update_file_ok(self) -> None:
         "[test_ui.py] api_notifications: blog update file ok"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'integration_tests/test_api/data/lastblogupdate.txt'
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/xyxyxyxyxyx.html'
@@ -59,7 +59,7 @@ class uiTests(TestCase):
         print(ret)
         self.assertEqual(ret.content, b'{"lastupdate": "2019-JAN-01", "notification": null, "notification_mdate": null}')
 
-    def test__api_notifications_blog_update_file_empty(self):
+    def test__api_notifications_blog_update_file_empty(self) -> None:
         "[test_ui.py] api_notifications: blog update file empty"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'integration_tests/test_api/data/lastblogupdate_empty.txt'
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/xyxyxyxyxyx.html'
@@ -69,7 +69,7 @@ class uiTests(TestCase):
         self.assertEqual(ret.content, b'{"lastupdate": null, "notification": null, "notification_mdate": null}')
 
     # tests specific for notification file
-    def test__api_notifications_notification_file_empty(self):
+    def test__api_notifications_notification_file_empty(self) -> None:
         "[test_ui.py] api_notifications: notification file empty"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'integration_tests/test_api/data/lastblogupdate.txt'
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/notification.html'
@@ -81,7 +81,7 @@ class uiTests(TestCase):
         self.assertIsNone(data['notification'])
         self.assertIsNotNone(data['notification_mdate'])
 
-    def test__api_notifications_notification_not_empty(self):
+    def test__api_notifications_notification_not_empty(self) -> None:
         "[test_ui.py] api_notifications: notification file not empty"
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/test_ui_notification.html'
         request = self.factory.get('__notifications.json')
@@ -92,7 +92,7 @@ class uiTests(TestCase):
         self.assertIsNotNone(data['notification_mdate'])
 
     # a few combination tests
-    def test__api_notifications_files_missing(self):
+    def test__api_notifications_files_missing(self) -> None:
         "[test_ui.py] api_notifications: missing last blog update and notification files"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'integration_tests/test_api/data/xyxyxyxyxyx.txt'
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/xyxyxyxyxyx.html'
@@ -101,7 +101,7 @@ class uiTests(TestCase):
         print(ret)
         self.assertEqual(ret.content, b'{"lastupdate": null, "notification": null, "notification_mdate": null}')
 
-    def test__api_notifications_blog_update_file_empty_notification_file_not_empty(self):
+    def test__api_notifications_blog_update_file_empty_notification_file_not_empty(self) -> None:
         "[test_ui.py] api_notifications: blog update file empty, notification file not empty"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'integration_tests/test_api/data/lastblogupdate_empty.txt'
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/test_ui_notification.html'
@@ -113,7 +113,7 @@ class uiTests(TestCase):
         self.assertEqual(data['notification'], "<div><p>test</p></div>")
         self.assertIsNotNone(data['notification_mdate'])
 
-    def test__api_notifications_blog_update_file_missing_notification_file_empty(self):
+    def test__api_notifications_blog_update_file_missing_notification_file_empty(self) -> None:
         "[test_ui.py] api_notifications: blog update missing, notification file empty"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'integration_tests/test_api/data/xyxyxyxyxyx.txt'
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/notification.html'
@@ -125,7 +125,7 @@ class uiTests(TestCase):
         self.assertIsNone(data['notification'])
         self.assertIsNotNone(data['notification_mdate'])
 
-    def test__api_notifications_blog_update_file_missing_notification_file_not_empty(self):
+    def test__api_notifications_blog_update_file_missing_notification_file_not_empty(self) -> None:
         "[test_ui.py] api_notifications: blog update missing, notification file empty"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'integration_tests/test_api/data/xyxyxyxyxyx.txt'
         settings.OPUS_NOTIFICATION_FILE = 'integration_tests/test_api/data/test_ui_notification.html'
@@ -142,7 +142,7 @@ class uiTests(TestCase):
             ######### api_normalize_url UNIT TESTS #########
             ################################################
 
-    def test__api_normalize_url_no_meta(self):
+    def test__api_normalize_url_no_meta(self) -> None:
         "[test_ui.py] api_normalize_url: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -150,7 +150,7 @@ class uiTests(TestCase):
             r'Internal error \(No request was provided\) for /__normalizeurl.json'):
             api_normalize_url(request)
 
-    def test__api_normalize_url_no_get(self):
+    def test__api_normalize_url_no_get(self) -> None:
         "[test_ui.py] api_normalize_url: no GET"
         request = self.factory.get('__normalizeurl.json')
         request.GET = None

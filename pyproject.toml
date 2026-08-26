@@ -231,9 +231,14 @@ django_settings_module = "opus_app.settings"
 # Only the packages imported by annotated code need an entry; the rest are reported
 # inside modules the burn-down below silences, so each annotation PR adds whatever the
 # checker then reports as import-untyped or import-not-found for the tree it annotates.
+# `rest_framework` is here rather than in the dev extras because typeshed carries no
+# stub package for it: the stubs that exist are a separate third-party distribution
+# that re-types Django's own request and response classes, which would put a second
+# opinion about them beside django-stubs for the sake of the one name the suite
+# imports (`RequestsClient`, used only on the live-server path).
 [[tool.mypy.overrides]]
 module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
-          "pdstable.*"]
+          "pdstable.*", "rest_framework.*"]
 ignore_missing_imports = true
 
 # Type burn-down list. `strict = true` applies to the whole repository; these

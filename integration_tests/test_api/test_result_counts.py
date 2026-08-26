@@ -9,6 +9,8 @@ import requests
 from django.conf import settings
 from rest_framework.test import RequestsClient
 
+from .api_test_helper import go_live_target, result_counts_against_internal_db
+
 
 ##################
 ### Test cases ###
@@ -17,7 +19,7 @@ class APIResultCountsTests(TestCase):
     filename = "integration_tests/test_api/data/result_counts.csv"
 
     # disable error logging and trace output before test
-    def setUp(self):
+    def setUp(self) -> None:
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -26,10 +28,10 @@ class APIResultCountsTests(TestCase):
         logging.disable(logging.DEBUG)
 
     # enable error logging and trace output after test
-    def tearDown(self):
+    def tearDown(self) -> None:
         logging.disable(logging.NOTSET)
 
-    def test_api_result_counts_from_csv(self):
+    def test_api_result_counts_from_csv(self) -> None:
         """[test_result_counts.py] Compare result counts of API calls between csv and live server
            Result counts from live server should always be greater or equal.
            Expected values in csv is obtain from production site on 12/12/18.
@@ -42,13 +44,13 @@ class APIResultCountsTests(TestCase):
                ]
            }
         """
-        api_public = ApiForResultCounts(target=settings.TEST_GO_LIVE)
-        if settings.TEST_GO_LIVE:
+        api_public = ApiForResultCounts(target=go_live_target())
+        if go_live_target():
             client = requests.Session()
         else:
             client = RequestsClient()
 
-        if settings.TEST_GO_LIVE or settings.TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB:
+        if go_live_target() or result_counts_against_internal_db():
             error_flag = []
             count = 0
             with open(self.filename) as csvfile:
@@ -124,7 +126,7 @@ class ApiForResultCounts:
     # we need https and no need to specify port number
     api_base_url = "{}://{}.seti.org/opus/api/meta/result_count.json?"
 
-    def __init__(self, target="production"):
+    def __init__(self, target="production") -> None:
         self.target = target
         if not self.target or self.target == "production":
             self.result_counts_api = self.api_base_url.format("https", "opus.pds-rings")

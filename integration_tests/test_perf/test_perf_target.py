@@ -21,7 +21,7 @@ TARGET_LIST = [
     # 'Atlas,Calypso,Daphnis,Dione,Enceladus,Epimetheus,Helene,Hyperion,Hyrrokkin,Iapetus,Pandora,Pan,Pallene,Mimas,Methone,Janus,Phoebe,Polydeuces,Prometheus,Rhea,Saturn,Titan,Tethys,Telesto,Saturn+Rings,Io,Adrastea,Amalthea,Jupiter,Jupiter+Rings,Callisto,Europa,Thebe,Ganymede',
 ]
 
-def run_one_test(search_params, columns, num_iterations, randomize_search=False):
+def run_one_test(search_params, columns, num_iterations, randomize_search=False) -> None:
     """Run one test multiple times and collect statistics."""
     # We have to randomize the starting date to avoid the search results being cached
     # from run to run

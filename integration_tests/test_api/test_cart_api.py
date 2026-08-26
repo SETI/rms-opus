@@ -20,7 +20,7 @@ from opus_app.apps.tools.app_utils import (
     http400_unknown_slug,
 )
 
-from .api_test_helper import ApiTestHelper
+from .api_test_helper import ApiTestHelper, go_live_target
 
 # The two sessions the cross-session removerange tests drive, supplied with the
 # __sessionid override that get_session_id documents for exactly this purpose.
@@ -39,9 +39,9 @@ _CROSS_SESSION_RANGE = 'co-vims-v1488642557_ir,co-vims-v1488646261_ir'
 _CROSS_SESSION_RANGE_COUNT = 17
 
 
-class ApiCartTests(TestCase, ApiTestHelper):
+class ApiCartTests(ApiTestHelper, TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         # self.UPDATE_FILES = True
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
@@ -54,13 +54,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self.data_download_maximum = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
         self.max_download_size = settings.MAX_DOWNLOAD_SIZE
         self.max_cum_download_size = settings.MAX_CUM_DOWNLOAD_SIZE
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
         cache.clear()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         logging.disable(logging.NOTSET)
         settings.MAX_SELECTIONS_ALLOWED = self.cart_maximum
         settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD = self.url_download_maximum
@@ -73,13 +73,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/view.json: API TESTS #########
             ##################################################
 
-    def test__api_cart_view_no_reqno(self):
+    def test__api_cart_view_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/view: no reqno"
         url = '/__cart/view.json'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/view.json'))
 
-    def test__api_cart_view_types_default(self):
+    def test__api_cart_view_types_default(self) -> None:
         "[test_cart_api.py] /__cart/view: types default"
         url = '/__cart/reset.json?reqno=42'
         expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
@@ -90,7 +90,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/view.json?reqno=710'
         self._run_json_equal_file(url, 'test__api_cart_view_types_default.json')
 
-    def test__api_cart_view_types_selected(self):
+    def test__api_cart_view_types_selected(self) -> None:
         "[test_cart_api.py] /__cart/view: types selected"
         url = '/__cart/reset.json?reqno=42'
         expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
@@ -101,7 +101,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/view.json?types=inventory,planet_geometry,moon_geometry,ring_geometry,browse_full&reqno=710'
         self._run_json_equal_file(url, 'test__api_cart_view_types_selected.json')
 
-    def test__api_cart_view_types_unselected(self):
+    def test__api_cart_view_types_unselected(self) -> None:
         "[test_cart_api.py] /__cart/view: types unselected"
         url = '/__cart/reset.json?reqno=42'
         expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
@@ -117,19 +117,19 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/status.json: API TESTS #########
             ##################################################
 
-    def test__api_cart_status_no_reqno(self):
+    def test__api_cart_status_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/status: no reqno"
         url = '/__cart/status.json'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/status.json'))
 
-    def test__api_cart_status_bad_download(self):
+    def test__api_cart_status_bad_download(self) -> None:
         "[test_cart_api.py] /__cart/status: bad download"
         url = '/__cart/status.json?download=inf&reqno=456'
         self._run_status_equal(url, 400,
                                http400_bad_download('inf', '/__cart/status.json'))
 
-    def test__api_cart_status_download_ver(self):
+    def test__api_cart_status_download_ver(self) -> None:
         "[test_cart_api.py] /__cart/status: download=1, types is set to version 2 calib"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -148,31 +148,31 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/reset.json: API TESTS #########
             #################################################
 
-    def test__api_cart_reset_no_reqno(self):
+    def test__api_cart_reset_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/reset: no reqno"
         url = '/__cart/reset.json'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/reset.json'))
 
-    def test__api_cart_reset_download0(self):
+    def test__api_cart_reset_download0(self) -> None:
         "[test_cart_api.py] /__cart/reset: download 0"
         url = '/__cart/reset.json?download=0&reqno=456'
         expected = {"count": 0, "recycled_count": 0, "reqno": 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_reset_download1(self):
+    def test__api_cart_reset_download1(self) -> None:
         "[test_cart_api.py] /__cart/reset: download 1"
         url = '/__cart/reset.json?download=1&reqno=456'
         expected = {"total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_dict": {}, "count": 0, "recycled_count": 0, "reqno": 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_reset_bad_download(self):
+    def test__api_cart_reset_bad_download(self) -> None:
         "[test_cart_api.py] /__cart/reset: bad download"
         url = '/__cart/reset.json?download=inf&reqno=456'
         self._run_status_equal(url, 400,
                                http400_bad_download('inf', '/__cart/reset.json'))
 
-    def test__api_cart_reset_recyclebin0(self):
+    def test__api_cart_reset_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/reset: recyclebin 0"
         url = '/__cart/reset.json?recyclebin=0&reqno=456'
         expected = {"count": 0, "recycled_count": 0, "reqno": 456}
@@ -187,7 +187,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {"count": 0, "recycled_count": 0, "reqno": 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_reset_recyclebin1(self):
+    def test__api_cart_reset_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/reset: recyclebin 1"
         url = '/__cart/reset.json?recyclebin=0&reqno=456'
         expected = {"count": 0, "recycled_count": 0, "reqno": 456}
@@ -205,13 +205,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {"count": 1, "recycled_count": 0, "reqno": 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_reset_bad_recyclebin(self):
+    def test__api_cart_reset_bad_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/reset: bad download"
         url = '/__cart/reset.json?recyclebin=1e38&reqno=456'
         self._run_status_equal(url, 400,
                                http400_bad_recyclebin('1e38', '/__cart/reset.json'))
 
-    def test__api_cart_reset(self):
+    def test__api_cart_reset(self) -> None:
         "[test_cart_api.py] /__cart/reset"
         url = '/__cart/reset.json?reqno=5'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 5}
@@ -225,13 +225,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/add.json: API TESTS #########
             ###############################################
 
-    def test__api_cart_add_no_reqno(self):
+    def test__api_cart_add_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/add: no reqno"
         url = '/__cart/add.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/add.json'))
 
-    def test__api_cart_add_missing(self):
+    def test__api_cart_add_missing(self) -> None:
         "[test_cart_api.py] /__cart/add: missing OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -243,7 +243,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_empty(self):
+    def test__api_cart_add_empty(self) -> None:
         "[test_cart_api.py] /__cart/add: empty OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -255,7 +255,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_one(self):
+    def test__api_cart_add_one(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -264,7 +264,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_one_recyclebin0(self):
+    def test__api_cart_add_one_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID no download recyclebin=0"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -273,7 +273,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_one_recyclebin1(self):
+    def test__api_cart_add_one_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -282,7 +282,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_duplicate(self):
+    def test__api_cart_add_duplicate(self) -> None:
         "[test_cart_api.py] /__cart/add: duplicate OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -294,7 +294,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_duplicate_multi(self):
+    def test__api_cart_add_duplicate_multi(self) -> None:
         "[test_cart_api.py] /__cart/add: duplicate OPUSID no download multi"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -303,7 +303,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_bad(self):
+    def test__api_cart_add_bad(self) -> None:
         "[test_cart_api.py] /__cart/add: bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -312,7 +312,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_good_bad(self):
+    def test__api_cart_add_good_bad(self) -> None:
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -324,7 +324,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_good_bad_multi(self):
+    def test__api_cart_add_good_bad_multi(self) -> None:
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download multi"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -333,7 +333,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_good_bad_multi_2(self):
+    def test__api_cart_add_good_bad_multi_2(self) -> None:
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download multi 2"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -342,7 +342,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_good_bad_multi_3(self):
+    def test__api_cart_add_good_bad_multi_3(self) -> None:
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download multi 3"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -351,7 +351,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_good_bad_multi_4(self):
+    def test__api_cart_add_good_bad_multi_4(self) -> None:
         "[test_cart_api.py] /__cart/add: good+bad OPUSID no download multi 4"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -360,7 +360,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_mixture(self):
+    def test__api_cart_add_mixture(self) -> None:
         "[test_cart_api.py] /__cart/add: mixture no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -384,7 +384,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_mixture_multi(self):
+    def test__api_cart_add_mixture_multi(self) -> None:
         "[test_cart_api.py] /__cart/add: mixture no download multi"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -405,7 +405,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_missing_download(self):
+    def test__api_cart_add_missing_download(self) -> None:
         "[test_cart_api.py] /__cart/add: missing OPUSID with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -417,7 +417,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_bad_download(self):
+    def test__api_cart_add_bad_download(self) -> None:
         "[test_cart_api.py] /__cart/add: bad download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -429,7 +429,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_download_ver(self):
+    def test__api_cart_add_download_ver(self) -> None:
         "[test_cart_api.py] /__cart/add: download=1, types set to version 2 calib, total size & count only count on verion 2 calib"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -437,7 +437,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-cirs-0408161433-fp4&download=1&reqno=101010101&types=coiss_calib@2'
         self._run_json_equal_file(url, 'api_cart_add_download_ver.json')
 
-    def test__api_cart_add_download_one(self):
+    def test__api_cart_add_download_one(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -445,7 +445,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460960653&download=1&reqno=101010101'
         self._run_json_equal_file(url, 'api_cart_add_download_one.json')
 
-    def test__api_cart_add_download_two(self):
+    def test__api_cart_add_download_two(self) -> None:
         "[test_cart_api.py] /__cart/add: two OPUSIDs with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -456,25 +456,25 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/add.json?opusid=co-iss-n1460960653&download=1&reqno=101010101'
         self._run_json_equal_file(url, 'test__api_cart_add_download_two.json')
 
-    def test__api_cart_add_one_too_many_0(self):
+    def test__api_cart_add_one_too_many_0(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID no download too many 1"
         settings.MAX_SELECTIONS_ALLOWED = 0
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 0.', 'reqno': 456}
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_one_too_many_1(self):
+    def test__api_cart_add_one_too_many_1(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID no download too many 1"
         settings.MAX_SELECTIONS_ALLOWED = 1
         url = '/__cart/reset.json?reqno=42'
@@ -484,7 +484,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_one_too_many_2_multi(self):
+    def test__api_cart_add_one_too_many_2_multi(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID no download too many 2 multi"
         settings.MAX_SELECTIONS_ALLOWED = 2
         url = '/__cart/reset.json?reqno=42'
@@ -494,14 +494,14 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_one_too_many_1_multi(self):
+    def test__api_cart_add_one_too_many_1_multi(self) -> None:
         "[test_cart_api.py] /__cart/add: good OPUSID no download too many 1 multi"
         settings.MAX_SELECTIONS_ALLOWED = 1
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,hst-11559-wfc3-ib4v22guq&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add multiple OPUS IDs to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
@@ -510,7 +510,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_duplicate_too_many_1(self):
+    def test__api_cart_add_duplicate_too_many_1(self) -> None:
         "[test_cart_api.py] /__cart/add: duplicate OPUSID no download too many 1"
         settings.MAX_SELECTIONS_ALLOWED = 1
         url = '/__cart/reset.json?reqno=42'
@@ -523,7 +523,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=hst-11559-wfc3-ib4v22guq&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 1, 'error': 'Your request to add OPUS ID hst-11559-wfc3-ib4v22guq to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
@@ -532,7 +532,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_mixture_too_many_2(self):
+    def test__api_cart_add_mixture_too_many_2(self) -> None:
         "[test_cart_api.py] /__cart/add: mixture no download too many 2"
         settings.MAX_SELECTIONS_ALLOWED = 2
         url = '/__cart/reset.json?reqno=42'
@@ -551,13 +551,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360018&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID vg-iss-2-s-c4360018 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
@@ -568,13 +568,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/remove.json: API TESTS #########
             ##################################################
 
-    def test__api_cart_remove_no_reqno(self):
+    def test__api_cart_remove_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/remove: no reqno"
         url = '/__cart/remove.json?opusid=co-iss-n1460961026'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/remove.json'))
 
-    def test__api_cart_remove_missing(self):
+    def test__api_cart_remove_missing(self) -> None:
         "[test_cart_api.py] /__cart/remove: missing OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -586,7 +586,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_empty(self):
+    def test__api_cart_remove_empty(self) -> None:
         "[test_cart_api.py] /__cart/remove: empty OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -598,7 +598,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_one(self):
+    def test__api_cart_remove_one(self) -> None:
         "[test_cart_api.py] /__cart/remove: add+remove good OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -610,7 +610,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_one_recyclebin0(self):
+    def test__api_cart_remove_one_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/remove: add+remove good OPUSID no download recyclebin=0"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -622,7 +622,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_one_recyclebin1(self):
+    def test__api_cart_remove_one_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/remove: add+remove good OPUSID no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -634,13 +634,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_one_recyclebinx(self):
+    def test__api_cart_remove_one_recyclebinx(self) -> None:
         "[test_cart_api.py] /__cart/remove: recyclebin=x"
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456&recyclebin=x'
         self._run_status_equal(url, 400,
                                http400_bad_recyclebin('x', '/__cart/remove.json'))
 
-    def test__api_cart_remove_duplicate(self):
+    def test__api_cart_remove_duplicate(self) -> None:
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -655,7 +655,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_duplicate_recyclebin1(self):
+    def test__api_cart_remove_duplicate_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -670,7 +670,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_duplicate_multi(self):
+    def test__api_cart_remove_duplicate_multi(self) -> None:
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download multi"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -682,7 +682,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_bad(self):
+    def test__api_cart_remove_bad(self) -> None:
         "[test_cart_api.py] /__cart/remove: bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -692,7 +692,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_bad_recyclebin1(self):
+    def test__api_cart_remove_bad_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/remove: bad OPUSID no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -705,7 +705,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_good_bad(self):
+    def test__api_cart_remove_good_bad(self) -> None:
         "[test_cart_api.py] /__cart/remove: good+bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -720,7 +720,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_good_bad_multi(self):
+    def test__api_cart_remove_good_bad_multi(self) -> None:
         "[test_cart_api.py] /__cart/remove: good+bad OPUSID no download multi"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -732,7 +732,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_mixture(self):
+    def test__api_cart_remove_mixture(self) -> None:
         "[test_cart_api.py] /__cart/remove: mixture no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -765,7 +765,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_mixture_recyclebin1(self):
+    def test__api_cart_remove_mixture_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/remove: mixture no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -795,7 +795,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_mixture_multi(self):
+    def test__api_cart_remove_mixture_multi(self) -> None:
         "[test_cart_api.py] /__cart/remove: mixture no download multi"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -822,7 +822,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_add_bad(self):
+    def test__api_cart_remove_add_bad(self) -> None:
         "[test_cart_api.py] /__cart/remove: add+remove bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -835,7 +835,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 101010101}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_missing_download(self):
+    def test__api_cart_remove_missing_download(self) -> None:
         "[test_cart_api.py] /__cart/remove: missing OPUSID with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -847,7 +847,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_one_download(self):
+    def test__api_cart_remove_one_download(self) -> None:
         "[test_cart_api.py] /__cart/remove: good OPUSID with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -859,7 +859,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 123456, "total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_dict": {}}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_remove_download_ver(self):
+    def test__api_cart_remove_download_ver(self) -> None:
         "[test_cart_api.py] /__cart/remove: good OPUSID with download=1, types set to version 2 calib"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -873,7 +873,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1&types=coiss_calib@2'
         self._run_json_equal_file(url, 'api_cart_remove_download_ver.json')
 
-    def test__api_cart_remove_one_download_recyclebin1(self):
+    def test__api_cart_remove_one_download_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/remove: good OPUSID with download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -884,7 +884,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1&recyclebin=1'
         self._run_json_equal_file(url, 'api_cart_remove_one_download_recyclebin1.json')
 
-    def test__api_cart_add_two_remove_one_download(self):
+    def test__api_cart_add_two_remove_one_download(self) -> None:
         "[test_cart_api.py] /__cart/remove: two OPUSIDs remove one with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -898,7 +898,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-iss-n1460960868&download=1&reqno=101010102'
         self._run_json_equal_file(url, 'api_cart_add_two_remove_one_download.json')
 
-    def test__api_cart_add_two_remove_one_download_recyclebin1(self):
+    def test__api_cart_add_two_remove_one_download_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/remove: two OPUSIDs remove one with download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -912,7 +912,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/remove.json?opusid=co-iss-n1460960868&download=1&reqno=101010102&recyclebin=1'
         self._run_json_equal_file(url, 'api_cart_add_two_remove_one_download_recyclebin1.json')
 
-    def test__api_cart_unselect_option_one_download_recyclebin0(self):
+    def test__api_cart_unselect_option_one_download_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/unselect option: good OPUSID with download recyclebin=0"
         url = '/__cart/reset.json?reqno=42'
         expected = {'count': 0, 'recycled_count': 0, 'reqno': 42}
@@ -931,13 +931,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/addrange.json (browse): API TESTS #########
             #############################################################
 
-    def test__api_cart_addrange_no_reqno(self):
+    def test__api_cart_addrange_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/addrange: no reqno"
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/addrange.json'))
 
-    def test__api_cart_addrange_missing(self):
+    def test__api_cart_addrange_missing(self) -> None:
         "[test_cart_api.py] /__cart/addrange: missing range no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -949,7 +949,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_empty(self):
+    def test__api_cart_addrange_empty(self) -> None:
         "[test_cart_api.py] /__cart/addrange: empty range no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -961,7 +961,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_range1(self):
+    def test__api_cart_addrange_bad_range1(self) -> None:
         "[test_cart_api.py] /__cart/addrange: bad range 1 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -973,7 +973,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_range2(self):
+    def test__api_cart_addrange_bad_range2(self) -> None:
         "[test_cart_api.py] /__cart/addrange: bad range 2 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -985,7 +985,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_range3(self):
+    def test__api_cart_addrange_bad_range3(self) -> None:
         "[test_cart_api.py] /__cart/addrange: bad range 3 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -997,7 +997,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_range4(self):
+    def test__api_cart_addrange_bad_range4(self) -> None:
         "[test_cart_api.py] /__cart/addrange: bad range 4 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1009,7 +1009,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_one(self):
+    def test__api_cart_addrange_one(self) -> None:
         "[test_cart_api.py] /__cart/addrange: one good OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1018,7 +1018,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_one_browse(self):
+    def test__api_cart_addrange_one_browse(self) -> None:
         "[test_cart_api.py] /__cart/addrange: one good OPUSID no download browse"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1027,7 +1027,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate(self):
+    def test__api_cart_addrange_duplicate(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1039,7 +1039,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate_browse(self):
+    def test__api_cart_addrange_duplicate_browse(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate OPUSID no download browse"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1051,7 +1051,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate2(self):
+    def test__api_cart_addrange_duplicate2(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate 2 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1063,7 +1063,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate3(self):
+    def test__api_cart_addrange_duplicate3(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate 3 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1075,7 +1075,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 22, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate4(self):
+    def test__api_cart_addrange_duplicate4(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate 4 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1087,7 +1087,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 22, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate5(self):
+    def test__api_cart_addrange_duplicate5(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate 5 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1099,7 +1099,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate6(self):
+    def test__api_cart_addrange_duplicate6(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate 6 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1111,7 +1111,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_opusid(self):
+    def test__api_cart_addrange_bad_opusid(self) -> None:
         "[test_cart_api.py] /__cart/addrange: bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1123,7 +1123,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_opusid2(self):
+    def test__api_cart_addrange_bad_opusid2(self) -> None:
         "[test_cart_api.py] /__cart/addrange: bad OPUSID 2 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1135,7 +1135,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_not_search(self):
+    def test__api_cart_addrange_not_search(self) -> None:
         "[test_cart_api.py] /__cart/addrange: OPUSID not in search no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1147,7 +1147,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_search(self):
+    def test__api_cart_addrange_bad_search(self) -> None:
         "[test_cart_api.py] /__cart/addrange: bad search no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1159,7 +1159,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_multi(self):
+    def test__api_cart_addrange_multi(self) -> None:
         "[test_cart_api.py] /__cart/addrange: multiple no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1168,7 +1168,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_multi_recyclebin0(self):
+    def test__api_cart_addrange_multi_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/addrange: multiple no download recyclebin=0"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1177,7 +1177,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_multi_recyclebin1(self):
+    def test__api_cart_addrange_multi_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/addrange: multiple no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1186,7 +1186,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_multi_reverse(self):
+    def test__api_cart_addrange_multi_reverse(self) -> None:
         "[test_cart_api.py] /__cart/addrange: multiple reversed no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1195,7 +1195,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_multi_sort(self):
+    def test__api_cart_addrange_multi_sort(self) -> None:
         "[test_cart_api.py] /__cart/addrange: multiple nonstandard sort no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1204,7 +1204,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_missing_download(self):
+    def test__api_cart_addrange_missing_download(self) -> None:
         "[test_cart_api.py] /__cart/addrange: missing range with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1216,7 +1216,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_multi_download(self):
+    def test__api_cart_addrange_multi_download(self) -> None:
         "[test_cart_api.py] /__cart/addrange: multiple with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1224,26 +1224,26 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=1234567&download=1'
         self._run_json_equal_file(url, 'api_cart_addrange_multi_download.json')
 
-    def test__api_cart_addrange_one_too_many_0(self):
+    def test__api_cart_addrange_one_too_many_0(self) -> None:
         "[test_cart_api.py] /__cart/addrange: one good OPUSID no download too many 0"
         settings.MAX_SELECTIONS_ALLOWED = 0
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add 1 observations (OPUS IDs co-vims-v1484504505_ir to co-vims-v1484504505_ir) to the cart failed. The resulting cart and recycle bin would have more than the maximum (0) allowed. None of the observations were added.', 'reqno': 567}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_one_too_many_1(self):
+    def test__api_cart_addrange_one_too_many_1(self) -> None:
         "[test_cart_api.py] /__cart/addrange: one good OPUSID no download too many 1"
         settings.MAX_SELECTIONS_ALLOWED = 1
         url = '/__cart/reset.json?reqno=42'
@@ -1253,7 +1253,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate2_too_many_17(self):
+    def test__api_cart_addrange_duplicate2_too_many_17(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate 2 no download too many 17"
         settings.MAX_SELECTIONS_ALLOWED = 17
         url = '/__cart/reset.json?reqno=42'
@@ -1271,13 +1271,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/removerange.json (browse): API TESTS #########
             ################################################################
 
-    def test__api_cart_removerange_no_reqno(self):
+    def test__api_cart_removerange_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/removerange: no reqno"
         url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/removerange.json'))
 
-    def test__api_cart_removerange_missing(self):
+    def test__api_cart_removerange_missing(self) -> None:
         "[test_cart_api.py] /__cart/removerange: missing range no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1290,7 +1290,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_empty(self):
+    def test__api_cart_removerange_empty(self) -> None:
         "[test_cart_api.py] /__cart/removerange: empty range no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1302,7 +1302,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_bad_range1(self):
+    def test__api_cart_removerange_bad_range1(self) -> None:
         "[test_cart_api.py] /__cart/removerange: bad range 1 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1314,7 +1314,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_bad_range2(self):
+    def test__api_cart_removerange_bad_range2(self) -> None:
         "[test_cart_api.py] /__cart/removerange: bad range 2 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1326,7 +1326,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_bad_range3(self):
+    def test__api_cart_removerange_bad_range3(self) -> None:
         "[test_cart_api.py] /__cart/removerange: bad range 3 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1338,7 +1338,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_bad_range4(self):
+    def test__api_cart_removerange_bad_range4(self) -> None:
         "[test_cart_api.py] /__cart/removerange: bad range 4 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1350,7 +1350,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_add_one(self):
+    def test__api_cart_removerange_add_one(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1362,7 +1362,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_add_one_recyclebin0(self):
+    def test__api_cart_removerange_add_one_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download recyclebin=0"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1374,7 +1374,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_add_one_recyclebin1(self):
+    def test__api_cart_removerange_add_one_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1386,7 +1386,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_duplicate(self):
+    def test__api_cart_removerange_duplicate(self) -> None:
         "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1401,7 +1401,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_duplicate_recyclebin1(self):
+    def test__api_cart_removerange_duplicate_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1416,7 +1416,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_duplicate2(self):
+    def test__api_cart_removerange_duplicate2(self) -> None:
         "[test_cart_api.py] /__cart/removerange: duplicate 2 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1431,7 +1431,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_duplicate3(self):
+    def test__api_cart_removerange_duplicate3(self) -> None:
         "[test_cart_api.py] /__cart/removerange: duplicate 3 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1446,7 +1446,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 11, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_bad_opusid(self):
+    def test__api_cart_removerange_bad_opusid(self) -> None:
         "[test_cart_api.py] /__cart/removerange: bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1458,7 +1458,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_bad_opusid2(self):
+    def test__api_cart_removerange_bad_opusid2(self) -> None:
         "[test_cart_api.py] /__cart/removerange: bad OPUSID 2 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1470,7 +1470,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_not_search(self):
+    def test__api_cart_removerange_not_search(self) -> None:
         "[test_cart_api.py] /__cart/removerange: OPUSID not in search no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1482,7 +1482,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_bad_search(self):
+    def test__api_cart_removerange_bad_search(self) -> None:
         "[test_cart_api.py] /__cart/removerange: bad search no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1494,7 +1494,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi(self):
+    def test__api_cart_removerange_multi(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1509,7 +1509,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_reverse(self):
+    def test__api_cart_removerange_multi_reverse(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple reversed no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1521,7 +1521,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_sort(self):
+    def test__api_cart_removerange_multi_sort(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple nonstandard sort no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1536,7 +1536,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_one(self):
+    def test__api_cart_removerange_one(self) -> None:
         "[test_cart_api.py] /__cart/removerange: one good OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1545,7 +1545,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 567}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_missing_download(self):
+    def test__api_cart_removerange_missing_download(self) -> None:
         "[test_cart_api.py] /__cart/removerange: missing range with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1557,7 +1557,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_download(self):
+    def test__api_cart_removerange_multi_download(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1568,7 +1568,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1488642135_ir,co-vims-v1488643823_ir&reqno=12345678&download=1'
         self._run_json_equal_file(url, 'api_cart_removerange_multi_download.json')
 
-    def test__api_cart_removerange_sort_multigroup(self):
+    def test__api_cart_removerange_sort_multigroup(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange OPUSIDs with order by multigroup field"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1585,7 +1585,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/addrange.json (cart): API TESTS #########
             ###########################################################
 
-    def test__api_cart_addrange_one_cart_missing(self):
+    def test__api_cart_addrange_one_cart_missing(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart missing"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1597,7 +1597,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_range1_cart(self):
+    def test__api_cart_addrange_bad_range1_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart bad range 1 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1609,7 +1609,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_range4_cart(self):
+    def test__api_cart_addrange_bad_range4_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart bad range 4 no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1621,7 +1621,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_order_cart(self):
+    def test__api_cart_addrange_bad_order_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart bad order slug"
         # view=cart makes _edit_cart_range sort the cart itself, so it resolves
         # the order slug; an unresolvable slug used to reach
@@ -1634,7 +1634,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 400,
                                http400_unknown_slug(None, '/__cart/addrange.json'))
 
-    def test__api_cart_addrange_duplicate_cart(self):
+    def test__api_cart_addrange_duplicate_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1646,7 +1646,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate_cart_recyclebin0(self):
+    def test__api_cart_addrange_duplicate_cart_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download recyclebin=0"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1658,7 +1658,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate_cart_recyclebin1(self):
+    def test__api_cart_addrange_duplicate_cart_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1670,7 +1670,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_bad_opusid_cart(self):
+    def test__api_cart_addrange_bad_opusid_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart bad OPUSID no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1685,7 +1685,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_multi_not_cart_cart(self):
+    def test__api_cart_addrange_multi_not_cart_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart OPUSID not in cart no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1700,7 +1700,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 6, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_duplicate2_too_many_17_cart(self):
+    def test__api_cart_addrange_duplicate2_too_many_17_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart_duplicate 2 no download too many 17"
         settings.MAX_SELECTIONS_ALLOWED = 17
         url = '/__cart/reset.json?reqno=42'
@@ -1718,7 +1718,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/removerange.json (cart): API TESTS #########
             ##############################################################
 
-    def test__api_cart_removerange_add_one_cart(self):
+    def test__api_cart_removerange_add_one_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download cart"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1730,7 +1730,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_add_one_cart_recyclebin1(self):
+    def test__api_cart_removerange_add_one_cart_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download cart recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1742,7 +1742,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_duplicate_cart(self):
+    def test__api_cart_removerange_duplicate_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download cart"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1760,7 +1760,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_duplicate_cart_recyclebin1(self):
+    def test__api_cart_removerange_duplicate_cart_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download cart recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1775,7 +1775,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_cart(self):
+    def test__api_cart_removerange_multi_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple no download cart"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1787,7 +1787,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_cart_recyclebin1(self):
+    def test__api_cart_removerange_multi_cart_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple no download cart recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1799,7 +1799,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 7, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_reverse_cart(self):
+    def test__api_cart_removerange_multi_reverse_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple reversed no download cart"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1811,7 +1811,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_reverse_cart_recyclebin1(self):
+    def test__api_cart_removerange_multi_reverse_cart_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple reversed no download cart recyclebin=1"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1823,7 +1823,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 7, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_sort_cart(self):
+    def test__api_cart_removerange_multi_sort_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple nonstandard sort no download cart"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1843,7 +1843,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 13, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_sort2_cart(self):
+    def test__api_cart_removerange_multi_sort2_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple nonstandard sort 2 no download cart"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1862,7 +1862,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 106, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_multi_sort3_cart(self):
+    def test__api_cart_removerange_multi_sort3_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: multiple nonstandard sort 3 no download cart"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1881,7 +1881,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 12, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_removerange_sort_multigroup_cart(self):
+    def test__api_cart_removerange_sort_multigroup_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange OPUSIDs with order by multigroup field"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1967,13 +1967,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/addall.json: API TESTS #########
             ##################################################
 
-    def test__api_cart_addall_no_reqno(self):
+    def test__api_cart_addall_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/addall: no reqno"
         url = '/__cart/addall.json?bundleid=VGISS_6210'
         self._run_status_equal(url, 400,
                                http400_bad_or_missing_reqno('/__cart/addall.json'))
 
-    def test__api_cart_addall_one(self):
+    def test__api_cart_addall_one(self) -> None:
         "[test_cart_api.py] /__cart/addall: one time no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1982,7 +1982,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_one_browse(self):
+    def test__api_cart_addall_one_browse(self) -> None:
         "[test_cart_api.py] /__cart/addall: one time no download browse"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -1991,7 +1991,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_duplicate(self):
+    def test__api_cart_addall_duplicate(self) -> None:
         "[test_cart_api.py] /__cart/addall: twice no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2003,7 +2003,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_duplicate2(self):
+    def test__api_cart_addall_duplicate2(self) -> None:
         "[test_cart_api.py] /__cart/addall: addrange plus addall no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2015,7 +2015,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_duplicate3(self):
+    def test__api_cart_addall_duplicate3(self) -> None:
         "[test_cart_api.py] /__cart/addall: add plus addall no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2027,7 +2027,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_bad_search(self):
+    def test__api_cart_addall_bad_search(self) -> None:
         "[test_cart_api.py] /__cart/addall: bad search no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2039,7 +2039,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_multi(self):
+    def test__api_cart_addall_multi(self) -> None:
         "[test_cart_api.py] /__cart/addall: multiple no download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2057,7 +2057,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 4393, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_one_download(self):
+    def test__api_cart_addall_one_download(self) -> None:
         "[test_cart_api.py] /__cart/addall: one time with download"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2065,26 +2065,26 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/__cart/addall.json?bundleid=VGISS_8201&productid=12&reqno=9878&download=1'
         self._run_json_equal_file(url, 'api_cart_addall_one_download.json')
 
-    def test__api_cart_addall_one_too_many_905(self):
+    def test__api_cart_addall_one_too_many_905(self) -> None:
         "[test_cart_api.py] /__cart/addall: one time no download too many 905"
         settings.MAX_SELECTIONS_ALLOWED = 905
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (905) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_one_too_many_906(self):
+    def test__api_cart_addall_one_too_many_906(self) -> None:
         "[test_cart_api.py] /__cart/addall: one time no download too many 906"
         settings.MAX_SELECTIONS_ALLOWED = 906
         url = '/__cart/reset.json?reqno=42'
@@ -2094,7 +2094,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_duplicate_too_many_906(self):
+    def test__api_cart_addall_duplicate_too_many_906(self) -> None:
         "[test_cart_api.py] /__cart/addall: twice no download"
         settings.MAX_SELECTIONS_ALLOWED = 906
         url = '/__cart/reset.json?reqno=42'
@@ -2107,7 +2107,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_duplicate3_too_many_906(self):
+    def test__api_cart_addall_duplicate3_too_many_906(self) -> None:
         "[test_cart_api.py] /__cart/addall: add plus addall no download too many 906"
         settings.MAX_SELECTIONS_ALLOWED = 906
         url = '/__cart/reset.json?reqno=42'
@@ -2125,7 +2125,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/<all> recyclebin API TESTS #########
             ######################################################
 
-    def test__api_cart_add_remove_recyclebin(self):
+    def test__api_cart_add_remove_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/add&remove: recyclebin"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2149,7 +2149,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 3, 'count': 3488, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_recyclebin_reset(self):
+    def test__api_cart_recyclebin_reset(self) -> None:
         "[test_cart_api.py] /__cart/reset: recyclebin"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2178,7 +2178,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_reset_download_ver(self):
+    def test__api_cart_reset_download_ver(self) -> None:
         "[test_cart_api.py] /__cart/reset: download=1, types set to version 2 calib"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2195,7 +2195,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_recyclebin(self):
+    def test__api_cart_addall_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/addall: recyclebin"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2219,7 +2219,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 3495, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_too_many_2_recyclebin(self):
+    def test__api_cart_add_too_many_2_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/add: add&remove too many 2 recyclebin"
         settings.MAX_SELECTIONS_ALLOWED = 2
         url = '/__cart/reset.json?reqno=42'
@@ -2234,7 +2234,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         # Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
@@ -2242,7 +2242,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1484509868_ir&recyclebin=1&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'error': False, 'reqno': 456}
@@ -2251,7 +2251,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
@@ -2260,13 +2260,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_add_too_many_3_recyclebin(self):
+    def test__api_cart_add_too_many_3_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/add: add&remove too many 3 recyclebin"
         settings.MAX_SELECTIONS_ALLOWED = 3
         url = '/__cart/reset.json?reqno=42'
@@ -2292,7 +2292,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addrange_too_many_17_recyclebin(self):
+    def test__api_cart_addrange_too_many_17_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/addrange: duplicate no download too many 17 recyclebin"
         settings.MAX_SELECTIONS_ALLOWED = 17
         url = '/__cart/reset.json?reqno=42'
@@ -2305,13 +2305,13 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 16, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=vg-iss-2-s-c4360018,vg-iss-2-s-c4360018&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 17, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 16, 'error': 'Your request to add 1 observations (OPUS IDs vg-iss-2-s-c4360018 to vg-iss-2-s-c4360018) to the cart failed. The resulting cart and recycle bin would have more than the maximum (17) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1488642557_ir&reqno=456&recyclebin=0'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 16, 'error': False, 'reqno': 456}
@@ -2320,7 +2320,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_too_many_906_recyclebin_2(self):
+    def test__api_cart_addall_too_many_906_recyclebin_2(self) -> None:
         "[test_cart_api.py] /__cart/addall: addall no download too many 906 recyclebin 2"
         settings.MAX_SELECTIONS_ALLOWED = 906
         url = '/__cart/reset.json?reqno=42'
@@ -2333,19 +2333,19 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if settings.TEST_GO_LIVE: # pragma: no cover - remote server
+        if go_live_target(): # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_too_many_906_recyclebin(self):
+    def test__api_cart_addall_too_many_906_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/addall: addall no download too many 906 recyclebin"
         settings.MAX_SELECTIONS_ALLOWED = 906
         url = '/__cart/reset.json?reqno=42'
@@ -2366,7 +2366,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/data.csv: API TESTS #########
             ###############################################
 
-    def test__api_cart_datacsv_empty(self):
+    def test__api_cart_datacsv_empty(self) -> None:
         "[test_cart_api.py] /__cart/datacsv: empty"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2375,7 +2375,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = b'OPUS ID,Instrument Name,Planet\n'
         self._run_csv_equal(url, expected)
 
-    def test__api_cart_datacsv_multi(self):
+    def test__api_cart_datacsv_multi(self) -> None:
         "[test_cart_api.py] /__cart/datacsv: multiple"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2390,7 +2390,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 3, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_datacsv_bad_cols(self):
+    def test__api_cart_datacsv_bad_cols(self) -> None:
         "[test_cart_api.py] /__cart/datacsv: bad search"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2404,7 +2404,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/download.json: API TESTS #########
             ####################################################
 
-    def test__api_cart_download_single_hierarchical_zip_all_types(self):
+    def test__api_cart_download_single_hierarchical_zip_all_types(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip all types"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2416,7 +2416,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'documents/COISS_0xxx/Archive-SIS.pdf', 'documents/COISS_0xxx/Archive-SIS.txt', 'documents/COISS_0xxx/CISSCAL-Users-Guide.pdf', 'documents/COISS_0xxx/Calibration-Plan.pdf', 'documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf', 'documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf', 'documents/COISS_0xxx/Data-Product-SIS.pdf', 'documents/COISS_0xxx/Data-Product-SIS.txt', 'documents/COISS_0xxx/ISS-Users-Guide.docx', 'documents/COISS_0xxx/ISS-Users-Guide.pdf', 'documents/COISS_0xxx/Owen-2003-ISS-Distortion-Model.pdf', 'documents/COISS_0xxx/VICAR-File-Format.pdf', 'manifest.csv', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_med.jpg', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_small.jpg', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_thumb.jpg', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/extras/browse/1462783195_1462915477/N1462840881_1.IMG.jpeg', 'volumes/COISS_2xxx/COISS_2002/extras/full/1462783195_1462915477/N1462840881_1.IMG.png', 'volumes/COISS_2xxx/COISS_2002/extras/thumbnail/1462783195_1462915477/N1462840881_1.IMG.jpeg_small', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
         self._run_archive_file_equal(url, expected)
 
-    def test__api_cart_download_single_no_hierarchical_zip(self):
+    def test__api_cart_download_single_no_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2428,7 +2428,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected)
 
-    def test__api_cart_download_single_no_hierarchical_zip_cols(self):
+    def test__api_cart_download_single_no_hierarchical_zip_cols(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip w/cols"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2440,7 +2440,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected)
 
-    def test__api_cart_download_single_no_hierarchical_zip_bad_cols(self):
+    def test__api_cart_download_single_no_hierarchical_zip_bad_cols(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip w/bad cols"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2452,7 +2452,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 400,
                                http400_unknown_slug('targetx', '/__cart/download.json'))
 
-    def test__api_cart_download_single_no_hierarchical_tar(self):
+    def test__api_cart_download_single_no_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2464,7 +2464,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected, fmt='tar')
 
-    def test__api_cart_download_single_no_hierarchical_tgz(self):
+    def test__api_cart_download_single_no_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2477,7 +2477,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with duplicated file names from different versions, no hierarchical
-    def test__api_cart_download_single_different_vers_no_hierarchical_zip(self):
+    def test__api_cart_download_single_different_vers_no_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id, files from different versions & no hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2490,7 +2490,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # One opus id with duplicated file names from different versions, no hierarchical
-    def test__api_cart_download_single_different_vers_no_hierarchical_tar(self):
+    def test__api_cart_download_single_different_vers_no_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id, files from different versions & no hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2503,7 +2503,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with duplicated file names from different versions, no hierarchical
-    def test__api_cart_download_single_different_vers_no_hierarchical_tgz(self):
+    def test__api_cart_download_single_different_vers_no_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id, files from different versions & no hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2515,7 +2515,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
-    def test__api_cart_download_single_hierarchical_zip(self):
+    def test__api_cart_download_single_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2527,7 +2527,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected)
 
-    def test__api_cart_download_single_hierarchical_tar(self):
+    def test__api_cart_download_single_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2539,7 +2539,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected, fmt='tar')
 
-    def test__api_cart_download_single_hierarchical_tgz(self):
+    def test__api_cart_download_single_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2552,7 +2552,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with duplicated file names from different versions
-    def test__api_cart_download_single_different_vers_hierarchical_zip(self):
+    def test__api_cart_download_single_different_vers_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & files from different versions & hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2565,7 +2565,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # One opus id with duplicated file names from different versions
-    def test__api_cart_download_single_different_vers_hierarchical_tar(self):
+    def test__api_cart_download_single_different_vers_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & files from different versions & hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2578,7 +2578,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with duplicated file names from different versions
-    def test__api_cart_download_single_different_vers_hierarchical_tgz(self):
+    def test__api_cart_download_single_different_vers_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & files from different versions & hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2591,7 +2591,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with version name "1.0" that doesn't match version name "1" in db
-    def test__api_cart_download_single_unmatched_ver_1_0_zip(self):
+    def test__api_cart_download_single_unmatched_ver_1_0_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & unmatched versions '1.0'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2604,7 +2604,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # One opus id with version name "1.0" that doesn't match version name "1" in db
-    def test__api_cart_download_single_unmatched_ver_1_0_tar(self):
+    def test__api_cart_download_single_unmatched_ver_1_0_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & unmatched versions '1.0'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2617,7 +2617,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with version name "1.0" that doesn't match version name "1" in db
-    def test__api_cart_download_single_unmatched_ver_1_0_tgz(self):
+    def test__api_cart_download_single_unmatched_ver_1_0_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & unmatched versions '1.0'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2630,7 +2630,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with version name "v1" that doesn't match version name "1" in db
-    def test__api_cart_download_single_unmatched_ver_v1_zip(self):
+    def test__api_cart_download_single_unmatched_ver_v1_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & unmatched versions 'v1'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2643,7 +2643,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # One opus id with version name "v1" that doesn't match version name "1" in db
-    def test__api_cart_download_single_unmatched_ver_v1_tar(self):
+    def test__api_cart_download_single_unmatched_ver_v1_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & unmatched versions 'v1'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2656,7 +2656,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with version name "v1" that doesn't match version name "1" in db
-    def test__api_cart_download_single_unmatched_ver_v1_tgz(self):
+    def test__api_cart_download_single_unmatched_ver_v1_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & unmatched versions 'v1'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2669,7 +2669,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with version name "all"
-    def test__api_cart_download_single_ver_all_zip(self):
+    def test__api_cart_download_single_ver_all_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & version 'all'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2682,7 +2682,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # One opus id with version name "all"
-    def test__api_cart_download_single_ver_all_tar(self):
+    def test__api_cart_download_single_ver_all_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & version 'all'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2695,7 +2695,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with version name "all"
-    def test__api_cart_download_single_ver_all_tgz(self):
+    def test__api_cart_download_single_ver_all_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & version 'all'"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2708,7 +2708,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with no version, this will return the current version
-    def test__api_cart_download_single_no_ver_zip(self):
+    def test__api_cart_download_single_no_ver_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no version specified"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2721,7 +2721,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # One opus id with no version, this will return the current version
-    def test__api_cart_download_single_no_ver_tar(self):
+    def test__api_cart_download_single_no_ver_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no version specified"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2734,7 +2734,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with no version, this will return the current version
-    def test__api_cart_download_single_no_ver_tgz(self):
+    def test__api_cart_download_single_no_ver_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no version specified"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2747,7 +2747,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids with duplicated file names from different versions
-    def test__api_cart_download_multiple_different_vers_no_hierarchical_zip(self):
+    def test__api_cart_download_multiple_different_vers_no_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & no hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2763,7 +2763,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids with duplicated file names from different versions
-    def test__api_cart_download_multiple_different_vers_no_hierarchical_tar(self):
+    def test__api_cart_download_multiple_different_vers_no_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & no hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2779,7 +2779,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids with duplicated file names from different versions
-    def test__api_cart_download_multiple_different_vers_no_hierarchical_tgz(self):
+    def test__api_cart_download_multiple_different_vers_no_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & no hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2795,7 +2795,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids with duplicated file names from different versions
-    def test__api_cart_download_multiple_different_vers_hierarchical_zip(self):
+    def test__api_cart_download_multiple_different_vers_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2811,7 +2811,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids with duplicated file names from different versions
-    def test__api_cart_download_multiple_different_vers_hierarchical_tar(self):
+    def test__api_cart_download_multiple_different_vers_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2827,7 +2827,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids with duplicated file names from different versions
-    def test__api_cart_download_multiple_different_vers_hierarchical_tgz(self):
+    def test__api_cart_download_multiple_different_vers_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids & files from different versions & hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2843,7 +2843,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_duplicated_no_hierarchical_zip(self):
+    def test__api_cart_download_multiple_duplicated_no_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & no hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2859,7 +2859,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_duplicated_no_hierarchical_tar(self):
+    def test__api_cart_download_multiple_duplicated_no_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & no hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2875,7 +2875,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_duplicated_no_hierarchical_tgz(self):
+    def test__api_cart_download_multiple_duplicated_no_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & no hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2891,7 +2891,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_duplicated_hierarchical_zip(self):
+    def test__api_cart_download_multiple_duplicated_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2907,7 +2907,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_duplicated_hierarchical_tar(self):
+    def test__api_cart_download_multiple_duplicated_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2923,7 +2923,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_duplicated_hierarchical_tgz(self):
+    def test__api_cart_download_multiple_duplicated_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2939,7 +2939,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_no_hierarchical_zip(self):
+    def test__api_cart_download_multiple_no_duplicated_no_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & no hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2955,7 +2955,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_no_hierarchical_tar(self):
+    def test__api_cart_download_multiple_no_duplicated_no_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & no hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2971,7 +2971,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_no_hierarchical_tgz(self):
+    def test__api_cart_download_multiple_no_duplicated_no_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & no hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -2987,7 +2987,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_hierarchical_zip(self):
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=zip"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3003,7 +3003,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_hierarchical_tar(self):
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3019,7 +3019,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz(self):
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3035,7 +3035,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # A PDS4 bundle
-    def test__api_cart_download_pds4_uranus_occs_earthbased_tgz(self):
+    def test__api_cart_download_pds4_uranus_occs_earthbased_tgz(self) -> None:
         "[test_cart_api.py] /__cart/download.json: PDS4 multiple opus ids with duplicated files & hierarchical & fmt=tgz"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3067,7 +3067,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
                     'data.csv', 'manifest.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
-    def test__api_cart_download_multiple_tar_urlonly(self):
+    def test__api_cart_download_multiple_tar_urlonly(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tar & urlonly"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3082,7 +3082,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['data.csv', 'manifest.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected, fmt='tar')
 
-    def test__api_cart_download_multiple_tar_urlonly_toomany(self):
+    def test__api_cart_download_multiple_tar_urlonly_toomany(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz & urlonly toomany"
         settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD = 1
         url = '/__cart/reset.json?reqno=42'
@@ -3099,7 +3099,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toomany(self):
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toomany(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz toomany"
         settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 1
         url = '/__cart/reset.json?reqno=42'
@@ -3116,7 +3116,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toobig(self):
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toobig(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz toobig"
         settings.MAX_DOWNLOAD_SIZE = 1000
         url = '/__cart/reset.json?reqno=42'
@@ -3133,7 +3133,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
-    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toobig_cum(self):
+    def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz_toobig_cum(self) -> None:
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical & fmt=tgz toobig_cum"
         settings.MAX_CUM_DOWNLOAD_SIZE = 2000
         url = '/__cart/reset.json?reqno=42'
@@ -3149,7 +3149,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'error': 'Sorry, maximum cumulative download size (2,000 bytes) reached for this session'}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_download_unsupported_format(self):
+    def test__api_cart_download_unsupported_format(self) -> None:
         "[test_cart_api.py] /__cart/download.json: fmt=xxx not supported"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3161,7 +3161,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 400,
                                http400_unknown_download_file_format('xxx', '/__cart/download.json'))
 
-    def test__api_cart_download_empty_tar(self):
+    def test__api_cart_download_empty_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: empty fmt=tar"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3175,7 +3175,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /api/download/<opusid>.<fmt>: API TESTS #########
             ###########################################################
 
-    def test__api_download_no_hierarchical_zip(self):
+    def test__api_download_no_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & no hierarchical"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3184,7 +3184,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
         self._run_archive_file_equal(url, expected, response_type='binary')
 
-    def test__api_download_no_hierarchical_tar(self):
+    def test__api_download_no_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.tar: one opus id & no hierarchical"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3193,7 +3193,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
-    def test__api_download_no_hierarchical_urlonly_tar(self):
+    def test__api_download_no_hierarchical_urlonly_tar(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.tar: one opus id & no hierarchical urlonly"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3202,7 +3202,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['data.csv', 'manifest.csv', 'urls.txt']
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
-    def test__api_download_no_hierarchical_tgz(self):
+    def test__api_download_no_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.tgz: one opus id & no hierarchical"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3211,7 +3211,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tgz')
 
-    def test__api_download_hierarchical_zip(self):
+    def test__api_download_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & hierarchical"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3220,7 +3220,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
         self._run_archive_file_equal(url, expected, response_type='binary')
 
-    def test__api_download_hierarchical_tar(self):
+    def test__api_download_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.tar: one opus id & hierarchical"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
@@ -3229,7 +3229,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
-    def test__api_download_hierarchical_tgz(self):
+    def test__api_download_hierarchical_tgz(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.tgz: one opus id & hierarchical"
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}

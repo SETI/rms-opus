@@ -20,7 +20,7 @@ from opus_app.apps.cart.views import (
 
 class cartTests(TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -29,7 +29,7 @@ class cartTests(TestCase):
         cache.clear()
         self.factory = RequestFactory()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         logging.disable(logging.NOTSET)
 
 
@@ -37,7 +37,7 @@ class cartTests(TestCase):
             ######### api_view_cart UNIT TESTS #########
             ############################################
 
-    def test__api_view_cart_no_meta(self):
+    def test__api_view_cart_no_meta(self) -> None:
         "[test_cart.py] api_view_cart: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -45,7 +45,7 @@ class cartTests(TestCase):
             r'Internal error \(No request was provided\) for /__cart/view.html'):
             api_view_cart(request)
 
-    def test__api_view_cart_no_get(self):
+    def test__api_view_cart_no_get(self) -> None:
         "[test_cart.py] api_view_cart: no GET"
         request = self.factory.get('/__cart/view.html')
         request.GET = None
@@ -58,7 +58,7 @@ class cartTests(TestCase):
             ######### api_cart_status UNIT TESTS #########
             ##############################################
 
-    def test__api_cart_status_no_meta(self):
+    def test__api_cart_status_no_meta(self) -> None:
         "[test_cart.py] api_cart_status: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -66,7 +66,7 @@ class cartTests(TestCase):
             r'Internal error \(No request was provided\) for /__cart/status.json'):
             api_cart_status(request)
 
-    def test__api_cart_status_no_get(self):
+    def test__api_cart_status_no_get(self) -> None:
         "[test_cart.py] api_cart_status: no GET"
         request = self.factory.get('/__cart/status.json')
         request.GET = None
@@ -79,7 +79,7 @@ class cartTests(TestCase):
             ######### api_get_cart_csv UNIT TESTS #########
             ###############################################
 
-    def test__api_get_cart_csv_no_meta(self):
+    def test__api_get_cart_csv_no_meta(self) -> None:
         "[test_cart.py] api_get_cart_csv: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -87,7 +87,7 @@ class cartTests(TestCase):
             r'Internal error \(No request was provided\) for /__cart/data.csv'):
             api_get_cart_csv(request)
 
-    def test__api_get_cart_csv_no_get(self):
+    def test__api_get_cart_csv_no_get(self) -> None:
         "[test_cart.py] api_get_cart_csv: no GET"
         request = self.factory.get('/__cart/data.csv')
         request.GET = None
@@ -100,7 +100,7 @@ class cartTests(TestCase):
             ######### api_edit_cart UNIT TESTS #########
             ############################################
 
-    def test__api_edit_cart_no_meta(self):
+    def test__api_edit_cart_no_meta(self) -> None:
         "[test_cart.py] api_edit_cart: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -108,7 +108,7 @@ class cartTests(TestCase):
             r'Internal error \(No request was provided\) for /__cart/add.json'):
             api_edit_cart(request, 'add')
 
-    def test__api_edit_cart_no_get(self):
+    def test__api_edit_cart_no_get(self) -> None:
         "[test_cart.py] api_edit_cart: no GET"
         request = self.factory.get('/__cart/add.json')
         request.GET = None
@@ -121,7 +121,7 @@ class cartTests(TestCase):
             ######### api_reset_session UNIT TESTS #########
             ################################################
 
-    def test__api_reset_session_no_meta(self):
+    def test__api_reset_session_no_meta(self) -> None:
         "[test_cart.py] api_reset_session: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -129,7 +129,7 @@ class cartTests(TestCase):
             r'Internal error \(No request was provided\) for /__cart/reset.json'):
             api_reset_session(request)
 
-    def test__api_reset_session_no_get(self):
+    def test__api_reset_session_no_get(self) -> None:
         "[test_cart.py] api_reset_session: no GET"
         request = self.factory.get('/__cart/reset.json')
         request.GET = None
@@ -142,7 +142,7 @@ class cartTests(TestCase):
             ######### api_create_download UNIT TESTS #########
             ##################################################
 
-    def test__api_create_download_no_meta(self):
+    def test__api_create_download_no_meta(self) -> None:
         "[test_cart.py] api_create_download: no META"
         request = self.factory.get('dummy')
         request.META = None
@@ -150,7 +150,7 @@ class cartTests(TestCase):
             r'Internal error \(No request was provided\) for /__cart/download.json'):
             api_create_download(request)
 
-    def test__api_create_download_no_get(self):
+    def test__api_create_download_no_get(self) -> None:
         "[test_cart.py] api_create_download: no GET"
         request = self.factory.get('/__cart/download.json')
         request.GET = None
@@ -158,7 +158,7 @@ class cartTests(TestCase):
             r'Internal error \(No request was provided\) for /__cart/download.json'):
             api_create_download(request)
 
-    def test__api_create_download_opusid_no_get(self):
+    def test__api_create_download_opusid_no_get(self) -> None:
         "[test_cart.py] api_create_download: no GET"
         request = self.factory.get('/api/download/testopusid.zip')
         request.GET = None

@@ -43,7 +43,7 @@ class DBIntegrityTest(TestCase):
     ######### DATABASE INTEGRITY CHECKS #########
     #############################################
 
-    def test__pds_image_wl_bundle_counts_match_obs_general(self):
+    def test__pds_image_wl_bundle_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_pds, obs_type_image, obs_wavelength, obs_profile
            Test that the observation count per bundle is the same in
            obs_general, obs_pds, obs_type_image, and obs_wavelength, since
@@ -70,7 +70,7 @@ class DBIntegrityTest(TestCase):
                .order_by('bundle_id'))
         self.assertEqual(list(obs), list(wl))
 
-    def test__cassini_counts_match_obs_general(self):
+    def test__cassini_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_mission_cassini
            Test that the observation count per bundle is the same in
            obs_general for mission_id='CO' and obs_mission_cassini.
@@ -90,7 +90,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__galileo_counts_match_obs_general(self):
+    def test__galileo_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_mission_galileo
            Test that the observation count per bundle is the same in
            obs_general for mission_id='GO' and obs_mission_galileo.
@@ -110,7 +110,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__hubble_counts_match_obs_general(self):
+    def test__hubble_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_mission_hubble
            Test that the observation count per bundle is the same in
            obs_general for mission_id='HST' and obs_mission_hubble.
@@ -130,7 +130,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__nh_counts_match_obs_general(self):
+    def test__nh_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_mission_new_horizons
            Test that the observation count per bundle is the same in
            obs_general for mission_id='NH' and obs_mission_newhorizons.
@@ -150,7 +150,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__voyager_counts_match_obs_general(self):
+    def test__voyager_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_mission_voyager
            Test that the observation count per bundle is the same in
            obs_general for mission_id='VG' and obs_mission_voyager.
@@ -170,7 +170,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__cocirs_counts_match_obs_general(self):
+    def test__cocirs_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_cocirs
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='COCIRS' and obs_instrument_cocirs.
@@ -190,7 +190,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__coiss_counts_match_obs_general(self):
+    def test__coiss_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_coiss
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='COISS' and obs_instrument_coiss.
@@ -210,7 +210,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__couvis_counts_match_obs_general(self):
+    def test__couvis_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_couvis
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='COUVIS' and obs_instrument_couvis.
@@ -231,7 +231,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__covims_counts_match_obs_general(self):
+    def test__covims_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_covims
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='COVIMS' and obs_instrument_covims.
@@ -251,7 +251,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__gossi_counts_match_obs_general(self):
+    def test__gossi_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_gossi
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='GOSSI' and obs_instrument_gossi.
@@ -271,7 +271,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__nhlorri_counts_match_obs_general(self):
+    def test__nhlorri_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_nhlorri
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='NHLORRI' and obs_instrument_nhlorri.
@@ -291,7 +291,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__nhmvic_counts_match_obs_general(self):
+    def test__nhmvic_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_nhmvic
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='NHMVIC' and obs_instrument_nhmvic.
@@ -311,7 +311,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__vgiss_counts_match_obs_general(self):
+    def test__vgiss_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_instrument_vgiss
            Test that the observation count per bundle is the same in
            obs_general for instrument_id='VGISS' and obs_instrument_vgiss.
@@ -331,7 +331,7 @@ class DBIntegrityTest(TestCase):
             if e.args[0] != MYSQL_TABLE_NOT_EXISTS:
                 raise
 
-    def test__mult_field_matches_id_fields_in_mult_tables(self):
+    def test__mult_field_matches_id_fields_in_mult_tables(self) -> None:
         """DB Integrity: instrument mults exist
            Check the obs_general instrument_id mult to make sure there are no
            references to an id in the mult table that don't have entries.
@@ -345,7 +345,7 @@ class DBIntegrityTest(TestCase):
         cursor.close()
         self.assertEqual(result[0], 0)
 
-    def test__all_sfc_geo_models_should_have_same_fields_as_each_other(self):
+    def test__all_sfc_geo_models_should_have_same_fields_as_each_other(self) -> None:
         """DB Integrity: all surface geometry tables have same fields
            Find all surface geo models by inspecting the param_info table and
            check that they each have the same parameters defined in the
@@ -364,7 +364,7 @@ class DBIntegrityTest(TestCase):
             print(f'Found {len(fields)} fields expected {len(expected_fields)}')
             self.assertEqual(expected_fields, fields)
 
-    def test__partables_has_all_surface_geo_tables(self):
+    def test__partables_has_all_surface_geo_tables(self) -> None:
         """DB Integrity: partables table has an entry for each surface_geo table
         """
         count_partables = (Partables.objects
@@ -374,7 +374,7 @@ class DBIntegrityTest(TestCase):
                              .values('target_name').distinct().count())
         self.assertEqual(count_partables, count_surface_geo)
 
-    def test__tablenames_has_all_surface_geo_tables(self):
+    def test__tablenames_has_all_surface_geo_tables(self) -> None:
         """DB Integrity: table_names table has an entry for each surface_geo table
         """
         count_partables = (Partables.objects
@@ -385,7 +385,7 @@ class DBIntegrityTest(TestCase):
                             .values('table_name').distinct().count())
         self.assertEqual(count_partables, count_tablenames)
 
-    def test__planets_properly_ordered(self):
+    def test__planets_properly_ordered(self) -> None:
         "DB Integrity: planets are properly ordered in the planet mult table"
         the_planets = [planet['label']
                        for planet in MultObsGeneralPlanetId.objects
@@ -395,7 +395,7 @@ class DBIntegrityTest(TestCase):
                   'Neptune', 'Pluto', 'Other']
         self.assertEqual(expect, the_planets)
 
-    def test__surface_geometry_table_label_is_correct(self):
+    def test__surface_geometry_table_label_is_correct(self) -> None:
         "DB Integrity: label of the obs_surface_geometry table in table_names"
         label = TableNames.objects.get(table_name='obs_surface_geometry').label
         self.assertEqual(label, 'Surface Geometry Constraints')
