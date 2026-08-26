@@ -175,7 +175,8 @@ class SessionInfo(AbstractSessionInfo):
         """Raise the session's gallery icon."""
         self._icon_flags |= IconFlags.FETCHED_GALLERY
 
-    def get_slug_info(self) -> Sequence[list[tuple[str, bool]]]:
+    def get_slug_info(self) -> tuple[list[tuple[str, bool]],
+                                     list[tuple[str, bool]]]:
         """The search slugs and the metadata slugs this session used.
 
         A search slug whose name ends in an underscore followed by two or more digits is
