@@ -4629,7 +4629,29 @@ body; never rewrite or delete earlier notes.*
     one that does not exist, and a transposition inside `MultOption` all left it green.
     The set it now survives is in the PR description; the lesson is that **the mutations
     worth running are the ones you did not think of**, so hand the job to someone who
-    is trying to break it.
+    is trying to break it. A second reviewer, briefed only to break them, then ran 51
+    more and found six further classes; the file survives 21 recorded mutations now.
+    **The four blind spots worth knowing in advance**, because any schema-versus-code
+    test will have them:
+    1. **A type check cannot see a wrong value.** A unit conversion, a transposed pair,
+       an inverted branch and a column swapped for a *different real one* all keep the
+       type. That is closed here by recording every value all six missions produce in
+       `tests/opus_import/fixtures/obs_field_values.json` and comparing -- regenerate it
+       with ``pytest ... --regenerate-obs-values`` and read the diff, because every line
+       of it is a change in what the import would store.
+    2. **A test that re-implements the rule it is checking checks nothing.** Layer 1 had
+       its own copy of how `import_run_field_function` builds a method name, so changing
+       the production rule left every test green. The rule is
+       `opus_import.steps.do_import_obs.field_function_name` now and the test calls it.
+       That change also exposed a fault in the test: matching a method name **by prefix**
+       also matches a longer table's, so `obs_surface_geometry` was claiming the
+       `obs_surface_geometry_name` and `obs_surface_geometry_target` methods and driving
+       66 methods twice under the wrong table.
+    3. **A stub that logs before raising is still a stub.** A check that counts
+       statements calls it covered.
+    4. **An AST scan sees only what it walks.** ``glob('*.py')`` misses a subpackage and
+       ``cls.body`` misses a method nested in an ``if``; both make a definition invisible
+       to every source-level check.
     The behavioral layer found a real defect on its first run, which is the argument for
     keeping it: `field_obs_instrument_coiss_image_number` declared an integer for an
     `int4` column and returned the index column verbatim, which COISS_2002's own

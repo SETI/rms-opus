@@ -17,8 +17,11 @@ Two layers, because either one alone can be satisfied by a mistake:
 6 of the 25 leaf classes in `opus_import.config_bundle_info`, whose method resolution
 orders between them reach 27 of the 57 modules here: **669 of the 1185 field method
 definitions, 56%, are in modules it cannot instantiate** -- the whole PDS4 branch and all
-three ``obs_bundle_*`` leaves among them. A wrong runtime type in one of those is caught
-by layer 1 only insofar as the schema can see it, which is not at all. Widening this is
+three ``obs_bundle_*`` leaves among them. A further **49** are inside modules it does
+reach but are shadowed by an override in every driven leaf, so **718 definitions are
+never executed here**, and the module count is the optimistic way to say it. A wrong
+runtime type in one of those is caught by layer 1 only insofar as the schema can see it,
+which is not at all. Widening this is
 what PR-19's fixture work is for; until then the honest claim is that layer 2 covers the
 missions, not the hierarchy.
 
