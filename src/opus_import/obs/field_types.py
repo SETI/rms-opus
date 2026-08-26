@@ -75,14 +75,27 @@ def as_int(value: Any) -> IntField:
         The value as an `int`, or None if there was none.
 
     Raises:
-        ValueError: If the value is not an integer at all. The column's schema says it
-            is one, so that is a fault in the data rather than something to paper over;
+        ValueError: If the value is not an integer at all -- either unparseable, or a
+            number with a fractional part. The column's schema says it is an integer,
+            so both are a fault in the data rather than something to paper over;
             `opus_import.steps.do_import_obs.import_run_field_function` reports it and
-            leaves the column empty.
+            leaves the column empty. Truncating instead would store a value the source
+            never held and pass every check downstream, which is the failure this
+            annotation work exists to make impossible.
+        OverflowError: If the value is an infinity, which `int` refuses to convert.
     """
     if value is None:
         return None
-    return int(value)
+    if isinstance(value, str):
+        # `int` already rejects a non-integral string ('3.7' raises), so the round-trip
+        # check below would be wrong here: `12 != '12'`.
+        return int(value)
+    converted = int(value)
+    if converted != value:
+        raise ValueError(
+            f'{value!r} is not an integer; converting it would store {converted!r}, '
+            f'a value the source data does not contain')
+    return converted
 
 
 class MultField(TypedDict):
