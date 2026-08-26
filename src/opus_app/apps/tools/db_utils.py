@@ -45,9 +45,7 @@ def table_model_from_name(table_name: str) -> type[Any]:
 
     Returns:
         The model class the `search` app registers for that table. Which class it
-        is depends on the table name, so it carries no static type of its own --
-        `type[Any]` is what `django.apps.apps.get_model` itself is declared to
-        return.
+        is depends on the table name, so it carries no static type of its own.
 
     Raises:
         LookupError: If the `search` app has no model for that table.

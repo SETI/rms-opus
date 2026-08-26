@@ -57,10 +57,10 @@ def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
         opus_id with no matching file maps to an empty dict. Each entry maps a
         version name to a dict keyed by
         `(category, sort_order, short_name, full_name)`, whose value is the list of
-        that product type's files. What each file is reported as follows `loc_type`:
-        a URL, a path, or a dict. Versions and product types appear in the order the
-        query returns them, which is version number descending and then the
-        product's sort order.
+        that product type's files. What each file is reported as is chosen by
+        `loc_type`: a URL, a path, or a dict. Versions and product types appear in
+        the order the query returns them, which is version number descending and
+        then the product's sort order.
     """
     assert loc_type in ('path', 'url', 'raw'), loc_type
     assert opus_id_list is not None
@@ -141,7 +141,7 @@ def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
     select.add_order_by(obs_files_column('id'))
 
     sql, values = select.build()
-    log.debug('get_pds_products SQL: %s %s', sql, values)
+    log.debug('get_pds_products SQL: %r %r', sql, values)
     cursor.execute(sql, values)
 
     # We do this here so if there aren't any products, there's still an empty
@@ -254,7 +254,7 @@ def get_pds_preview_images(opus_id_list: str | list[str] | tuple[str, ...] | Non
             try:
                 preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
             except ObjectDoesNotExist:  # pragma: no cover - import error
-                log.error('get_pds_preview_images: Failed to find opus_id "%s" '
+                log.error('get_pds_preview_images: Failed to find opus_id "%r" '
                           +'in obs_general', opus_id)
         viewset = None
         if preview_json:  # pragma: no cover - import error
@@ -272,10 +272,10 @@ def get_pds_preview_images(opus_id_list: str | list[str] | tuple[str, ...] | Non
                 elif size == 'full':
                     viewable = viewset.full_size
                 else:  # pragma: no cover - error catchall
-                    log.error('Unknown image size "%s"', size)
+                    log.error('Unknown image size "%r"', size)
             if not preview_json or not viewset:  # pragma: no cover
-                # log.error('No preview image size "%s" found for '
-                #           +'opus_id "%s"', size, opus_id)
+                # log.error('No preview image size %r found for '
+                #           +'opus_id %r', size, opus_id)
                 if ignore_missing:
                     continue
                 url = settings.THUMBNAIL_NOT_FOUND

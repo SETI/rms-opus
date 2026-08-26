@@ -115,10 +115,10 @@ class ParamInfo(models.Model):
     def body_qualified_label(self) -> str | None:
         """Return the field's search label with the body it describes appended.
 
-        A geometry or mission field is one of many with the same label, so the body,
-        mission or instrument its category names is appended in brackets. Nothing is
-        appended for the surface-geometry category, whose body is chosen by the user
-        rather than fixed, or to a label that already carries the bracketed name.
+        Many fields share a label and differ only in the body, mission or instrument
+        they describe, so the name of the field's category is appended in brackets.
+        Nothing is appended where that name comes out as `Surface`, nor to a label
+        that already carries the bracketed name.
 
         Returns:
             The label to show for the field on the Search tab.
@@ -148,11 +148,11 @@ class ParamInfo(models.Model):
     def body_qualified_label_results(self, referred: bool = False) -> str | None:
         """Return the field's results label with the body it describes appended.
 
-        This is `body_qualified_label` for the label shown beside a result: the
-        body, mission or instrument the field's category names is appended in
-        brackets. Nothing is appended for the categories that describe an
-        observation as a whole, unless the field is reached through another field's
-        referred slug, nor to a label that already carries the bracketed name.
+        This is `body_qualified_label` for the label shown beside a result: the name
+        of the field's category is appended in brackets. Nothing is appended where
+        that name comes out as General, PDS, Wavelength, Image,
+        Occultation/Reflectance Profiles or Surface and `referred` is false, nor to
+        a label that already carries the bracketed name.
 
         Parameters:
             referred: True when the label is for a field reached through another
@@ -287,14 +287,16 @@ class ParamInfo(models.Model):
          _form_type_unit_id) = parse_form_type(self.form_type)
         return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
 
-    def get_ranges_info(self) -> dict[str, Any]:
+    def get_ranges_info(self) -> list[dict[str, Any]]:
         """Get the ranges info except units & qtype.
 
         Returns:
             The ranges the Search tab offers for this field, decoded from the
-            field's `ranges` column, or an empty dict when it holds nothing.
+            field's `ranges` column, or an empty list when it holds nothing.
+            Each entry is one category, carrying a display `format` and a
+            `ranges` list of named min/max pairs.
         """
-        ranges: dict[str, Any] = {}
+        ranges: list[dict[str, Any]] = []
         if self.ranges:
             ranges = json.loads(self.ranges)
         return ranges

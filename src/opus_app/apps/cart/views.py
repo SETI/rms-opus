@@ -222,7 +222,7 @@ def api_cart_status(request: HttpRequest) -> HttpResponse:
     except ValueError:
         download = None
     if download != 0 and download != 1:
-        log.error('api_cart_status: Badly formatted download %s', download_str)
+        log.error('api_cart_status: Badly formatted download %r', download_str)
         raise Http400Error(http400_bad_download(download_str, request))
 
     if download:
@@ -343,7 +343,7 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
 
     reqno = get_reqno(request)
     if reqno is None:
-        log.error('api_edit_cart: Missing or badly formatted reqno: %s',
+        log.error('api_edit_cart: Missing or badly formatted reqno: %r',
                   request.GET)
         raise Http400Error(http400_bad_or_missing_reqno(request))
 
@@ -351,7 +351,7 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
     if action in ('add', 'remove'):
         opus_id_str = request.GET.get('opusid', None)
         if not opus_id_str: # Also catches empty string
-            log.error('api_edit_cart: Missing opusid: %s',
+            log.error('api_edit_cart: Missing opusid: %r',
                       request.GET)
             raise Http400Error(http400_missing_opus_id(request))
         opus_id = opus_id_str.split(',')
@@ -393,7 +393,7 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
     elif action == 'addall':
         err = _edit_cart_addall(request, session_id, recycle_bin, api_code)
     else: # pragma: no cover - error catchall
-        log.error('api_edit_cart: Unknown action %s: %s', action,
+        log.error('api_edit_cart: Unknown action %r: %r', action,
                   request.GET)
         return HttpResponseServerError(http500_internal_error(request))
 
@@ -406,7 +406,7 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
     except ValueError:
         download = None
     if download != 0 and download != 1:
-        log.error('api_edit_cart: Badly formatted download %s', download_str)
+        log.error('api_edit_cart: Badly formatted download %r', download_str)
         raise Http400Error(http400_bad_download(download_str, request))
     if download:
         product_types_str = request.GET.get('types', 'all')
@@ -488,7 +488,7 @@ def api_reset_session(request: HttpRequest) -> HttpResponse:
     except ValueError:
         recycle_bin = None
     if recycle_bin not in (0, 1):
-        log.error('api_reset_session: Badly formatted recyclebin %s',
+        log.error('api_reset_session: Badly formatted recyclebin %r',
                   recycle_str)
         raise Http400Error(http400_bad_recyclebin(recycle_str, request))
 
@@ -510,7 +510,7 @@ def api_reset_session(request: HttpRequest) -> HttpResponse:
                                   sql_builder.value(1)))
     sql, values = sql_builder.delete_from(
         'cart', sql_builder.join_exprs(conditions, 'AND'))
-    log.debug('api_reset_session SQL: %s %s', sql, values)
+    log.debug('api_reset_session SQL: %r %r', sql, values)
     cursor = connection.cursor()
     cursor.execute(sql, values)
 
@@ -769,8 +769,8 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
                             except Exception: # pragma: no cover - internal error
                                 log.exception(
                                     'api_create_download threw exception for '
-                                    +'opus_id %s, product_type %s, file %s, '
-                                    +'pretty_name %s',
+                                    +'opus_id %r, product_type %r, file %r, '
+                                    +'pretty_name %r',
                                     f_opus_id, product_type, path, pretty_name)
                                 errors.append('Error adding: ' + pretty_name)
                         added.append(logical_path)
@@ -890,7 +890,7 @@ def _get_download_info(product_types: list[str],
     select.add_order_by(sql_builder.column('ver_num'), descending=True)
 
     sql, values = select.build()
-    log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
+    log.debug('_get_download_info SQL DISTINCT product_type list: %r %r', sql, values)
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
@@ -929,7 +929,7 @@ def _get_download_info(product_types: list[str],
                                             term=short_name)
             tooltip = entry.definition
         except Definitions.DoesNotExist: # pragma: no cover - import error
-            log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
+            log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"',
                       short_name)
             tooltip = None
         product_dict_entry = {
@@ -1044,7 +1044,7 @@ def _get_download_info(product_types: list[str],
     select.add_order_by(sql_builder.column('sort'))
 
     sql, values = select.build()
-    log.debug('_get_download_info SQL: %s %s', sql, values)
+    log.debug('_get_download_info SQL: %r %r', sql, values)
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
@@ -1161,7 +1161,7 @@ def _add_to_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
     # will override that entry and set the recycled field to 0.
     values = [(session_id, obs_id, opus_id, 0) for opus_id, obs_id in general_res]
     sql = sql_builder.replace_into_values('cart', _CART_COLUMNS)
-    log.debug('_add_to_cart_table SQL: %s %s', sql, values)
+    log.debug('_add_to_cart_table SQL: %r %r', sql, values)
     cursor.executemany(sql, values)
 
     return False
@@ -1203,7 +1203,7 @@ def _remove_from_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
         values = [(session_id, obs_general_id, opus_id, 1)
                   for opus_id, obs_general_id in res]
         sql = sql_builder.replace_into_values('cart', _CART_COLUMNS)
-        log.debug('_remove_from_cart_table SQL: %s %s', sql, values)
+        log.debug('_remove_from_cart_table SQL: %r %r', sql, values)
         cursor.executemany(sql, values)
     else:
         # Otherwise we remove the entries completely.
@@ -1214,7 +1214,7 @@ def _remove_from_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
                                        '=', sql_builder.value(session_id)),
                  sql_builder.in_sequence(sql_builder.column('opus_id', 'cart'),
                                          list(opus_id_list))], 'AND'))
-        log.debug('_remove_from_cart_table SQL: %s %s', sql, values)
+        log.debug('_remove_from_cart_table SQL: %r %r', sql, values)
         cursor.execute(sql, values)
     return False
 
@@ -1248,12 +1248,12 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
     """
     id_range: str | Literal[False] = request.GET.get('range', False)
     if not id_range:
-        log.error('_edit_cart_range: No range given: %s', request.GET)
+        log.error('_edit_cart_range: No range given: %r', request.GET)
         raise Http400Error(http400_bad_or_missing_range(request))
 
     ids = id_range.split(',')
     if len(ids) != 2 or not ids[0] or not ids[1]:
-        log.error('_edit_cart_range: Bad range format: %s', request.GET)
+        log.error('_edit_cart_range: Bad range format: %r', request.GET)
         raise Http400Error(http400_bad_or_missing_range(request))
 
     temp_table_name: str | None = None
@@ -1325,9 +1325,9 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         try:
             cursor.execute(temp_sql, params)
         except DatabaseError: # pragma: no cover - database error
-            log.exception('_edit_cart_range: "%s" "%s" failed', temp_sql, params)
+            log.exception('_edit_cart_range: "%r" "%r" failed', temp_sql, params)
             return HttpResponseServerError(http500_database_error(request))
-        log.debug('_edit_cart_range SQL (%.2f secs): %s %s',
+        log.debug('_edit_cart_range SQL (%.2f secs): %r %r',
                   time.time()-time1, temp_sql, params)
 
         user_query_table = temp_table_name
@@ -1340,7 +1340,7 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         (selections, extras) = url_to_search_params(request.GET)
         if selections is None:
             log.error('_edit_cart_range: Could not find selections for'
-                      +' request %s', request.GET)
+                      +' request %r', request.GET)
             raise Http400Error(http400_search_params_invalid(request))
 
         # url_to_search_params returns both values or neither, and the check above
@@ -1350,7 +1350,7 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
                                                 api_code=api_code)
         if not user_query_table: # pragma: no cover - database error
             log.error('_edit_cart_range: get_user_query_table failed '
-                      +'*** Selections %s *** Extras %s',
+                      +'*** Selections %r *** Extras %r',
                       str(selections), str(extras))
             return HttpResponseServerError(http500_search_cache_failed(request))
 
@@ -1374,11 +1374,11 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
             sql_builder.column('opus_id', 'obs_general'), '=',
             sql_builder.value(opus_id)))
         sql, values = sort_order_select.build()
-        log.debug('_edit_cart_range SQL: %s %s', sql, values)
+        log.debug('_edit_cart_range SQL: %r %r', sql, values)
         cursor.execute(sql, values)
         results = cursor.fetchall()
         if len(results) == 0:
-            log.error('_edit_cart_range: No OPUS ID "%s" in obs_general',
+            log.error('_edit_cart_range: No OPUS ID "%r" in obs_general',
                       opus_id)
             if request.GET.get('view', 'browse') == 'cart':
                 return (f'An OPUS ID was given to {action} that was not found '
@@ -1443,7 +1443,7 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
                 num_new = cursor.fetchone()[0]
             except DatabaseError: # pragma: no cover - database error
                 log.exception('_edit_cart_range: SQL query failed for request '
-                              +'%s: SQL "%s"', request.GET, sql)
+                              +'%r: SQL "%r"', request.GET, sql)
                 return HttpResponseServerError(http500_database_error(request))
 
             # Subtract the number of observations that are already in the cart.
@@ -1460,7 +1460,7 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
                 num_old = cursor.fetchone()[0]
             except DatabaseError: # pragma: no cover - database error
                 log.exception('_edit_cart_range: SQL query failed for request '
-                              +'%s: SQL "%s"', request.GET, sql)
+                              +'%r: SQL "%r"', request.GET, sql)
                 return HttpResponseServerError(http500_database_error(request))
 
             num_wanted = num_new-num_old
@@ -1513,11 +1513,11 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         sql, sql_params = sql_builder.delete_joined('cart', delete_from_source,
                                                     delete_condition)
     else: # pragma: no cover - error catchall
-        log.error('_edit_cart_range: Unknown action %s: %s', action,
+        log.error('_edit_cart_range: Unknown action %r: %r', action,
                   request.GET)
         return HttpResponseServerError(http500_internal_error(request))
 
-    log.debug('_edit_cart_range SQL: %s %s', sql, sql_params)
+    log.debug('_edit_cart_range SQL: %r %r', sql, sql_params)
     cursor.execute(sql, sql_params)
 
     if temp_table_name:
@@ -1525,7 +1525,7 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         try:
             cursor.execute(sql)
         except DatabaseError: # pragma: no cover - database error
-            log.exception('_edit_cart_range: "%s" failed', sql)
+            log.exception('_edit_cart_range: "%r" failed', sql)
             return HttpResponseServerError(http500_database_error(request))
 
     return False
@@ -1592,8 +1592,8 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
             cursor.execute(sql, values)
             num_dup = cursor.fetchone()[0]
         except DatabaseError: # pragma: no cover - database error
-            log.exception('_edit_cart_addall: SQL query failed for request %s: '
-                          +'SQL "%s"', request.GET, sql)
+            log.exception('_edit_cart_addall: SQL query failed for request %r: '
+                          +'SQL "%r"', request.GET, sql)
             return HttpResponseServerError(http500_database_error(request))
 
         if num_cart_and_recycle+count-num_dup > settings.MAX_SELECTIONS_ALLOWED:
@@ -1619,7 +1619,7 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
         sql, values = sql_builder.replace_into_select('cart', _CART_COLUMNS,
                                                       addall_select)
 
-        log.debug('_edit_cart_addall SQL: %s %s', sql, values)
+        log.debug('_edit_cart_addall SQL: %r %r', sql, values)
         cursor.execute(sql, values)
 
     elif view == 'cart':
@@ -1631,11 +1631,11 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
                 'cart', [('recycled', 0)],
                 sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
                                       '=', sql_builder.value(session_id)))
-            log.debug('_edit_cart_addall SQL: %s %s', sql, values)
+            log.debug('_edit_cart_addall SQL: %r %r', sql, values)
             cursor.execute(sql, values)
 
     else: # pragma: no cover - error catchall
-        log.error('_edit_cart_addall: Bad view %s', view)
+        log.error('_edit_cart_addall: Bad view %r', view)
 
     return False
 

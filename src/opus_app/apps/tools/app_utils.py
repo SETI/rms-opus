@@ -46,10 +46,6 @@ if TYPE_CHECKING:
 
     from django.http import HttpRequest
 
-#: What an error-message helper accepts in place of a request: the request
-#: itself, a path already rendered as a string, or nothing at all.
-RequestOrPath = "HttpRequest | str | None"
-
 log = logging.getLogger(__name__)
 
 
@@ -493,7 +489,7 @@ def api_view(handler: Callable[..., HttpResponse]) -> Callable[..., HttpResponse
             exit_api_call(api_code, ret)
             return ret
         except Exception:
-            log.exception('%s: Unhandled exception', handler.__name__)
+            log.exception('%r: Unhandled exception', handler.__name__)
             ret = HttpResponseServerError(http500_internal_error(request))
             exit_api_call(api_code, ret)
             return ret

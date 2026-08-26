@@ -208,7 +208,7 @@ def api_get_data_and_images(request: HttpRequest, *, api_code: int) -> HttpRespo
                                         ['thumb', 'small', 'med', 'full'])
 
     if not image_list and len(opus_ids) > 0: # pragma: no cover - bad import or data
-        log.error('api_get_data_and_images: No image found for: %s',
+        log.error('api_get_data_and_images: No image found for: %r',
                   str(opus_ids[:50]))
 
     new_image_list = []
@@ -412,7 +412,7 @@ def api_get_data(request: HttpRequest, fmt: str, *, api_code: int) -> HttpRespon
     elif fmt == 'json':
         ret = json_response(data)
     else: # pragma: no cover - error catchall
-        log.error('api_get_data: Unknown format "%s"', fmt)
+        log.error('api_get_data: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
     return ret
@@ -555,7 +555,7 @@ def get_metadata(request: HttpRequest, opus_id: str, fmt: str, internal: bool,
         log.exception('get_metadata: Could not find data model for obs_general')
         return HttpResponseServerError(http500_internal_error(request))
     if len(results) == 0:
-        log.error('get_metadata: Error searching for opus_id "%s"',
+        log.error('get_metadata: Error searching for opus_id "%r"',
                   opus_id)
         raise Http404(http404_unknown_opus_id(opus_id, request))
 
@@ -584,7 +584,7 @@ def get_metadata(request: HttpRequest, opus_id: str, fmt: str, internal: bool,
                                                  display='Y'))
                                          .order_by('disp_order'))
         if len(all_tables) != len(cat_list):
-            log.error('get_metadata: Unknown category name in "%s"',
+            log.error('get_metadata: Unknown category name in "%r"',
                       cats)
             raise Http400Error(http400_unknown_category(request))
 
@@ -625,7 +625,7 @@ def get_metadata(request: HttpRequest, opus_id: str, fmt: str, internal: bool,
                 results = query_table_for_opus_id(table_name, opus_id)
             except LookupError: # pragma: no cover - configuration error
                 log.exception('get_metadata: Could not find data model for '
-                              +'category %s', model_name)
+                              +'category %r', model_name)
                 return HttpResponseServerError(http500_internal_error(request))
 
             result_rows = results.values(*all_param_names)
@@ -739,7 +739,7 @@ def get_metadata(request: HttpRequest, opus_id: str, fmt: str, internal: bool,
     elif fmt == 'json':
         ret = json_response(data)
     else: # pragma: no cover - error catchall
-        log.error('get_metadata: Unknown format "%s"', fmt)
+        log.error('get_metadata: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
     return ret
@@ -862,7 +862,7 @@ def _api_get_images(request: HttpRequest, fmt: str, api_code: int, size: str | N
                                             sizes=[size])
 
     if not image_list:
-        log.error('_api_get_images: No image found for: %s', str(opus_ids[:50]))
+        log.error('_api_get_images: No image found for: %r', str(opus_ids[:50]))
 
     # Backwards compatibility
     ring_obs_ids = aux['ring_obs_ids']
@@ -1082,7 +1082,7 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
             results = query_table_for_opus_id(table_name, opus_id)
         except LookupError: # pragma: no cover - configuration error
             log.exception('api_get_categories_for_opus_id: Unable to find '
-                          +'table %s', table_name)
+                          +'table %r', table_name)
             continue
         opus_id_rows = results.values('opus_id')
         if opus_id_rows:
@@ -1109,7 +1109,7 @@ def api_get_categories_for_search(request: HttpRequest, *, api_code: int) -> Htt
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('api_get_categories_for_search: Could not find selections for'
-                  +' request %s', str(request.GET))
+                  +' request %r', str(request.GET))
         raise Http400Error(http400_search_params_invalid(request))
 
     # url_to_search_params returns both of these or neither.
@@ -1171,7 +1171,7 @@ def api_get_product_types_for_opus_id(request: HttpRequest, opus_id: str) -> Htt
         sql_builder.value(opus_id)))
 
     sql, values = select.build()
-    log.debug('get_product_types_for_opus_id SQL: %s %s', sql, values)
+    log.debug('get_product_types_for_opus_id SQL: %r %r', sql, values)
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
@@ -1201,7 +1201,7 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('api_get_product_types_for_search: Could not find selections '
-                  +'for request %s', str(request.GET))
+                  +'for request %r', str(request.GET))
         raise Http400Error(http400_search_params_invalid(request))
 
     # url_to_search_params returns both of these or neither.
@@ -1210,7 +1210,7 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
     user_query_table = get_user_query_table(selections, extras, api_code)
     if not user_query_table: # pragma: no cover - internal or database failure
         log.error('api_get_product_types_for_search: get_user_query_table '
-                  +'failed *** Selections %s *** Extras %s',
+                  +'failed *** Selections %r *** Extras %r',
                   str(selections), str(extras))
         return HttpResponseServerError(http500_search_cache_failed(request))
 
@@ -1232,7 +1232,7 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
                 sql_builder.column('id', user_query_table)))
 
     sql, values = select.build()
-    log.debug('get_product_types_for_search SQL: %s %s', sql, values)
+    log.debug('get_product_types_for_search SQL: %r %r', sql, values)
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
@@ -1395,11 +1395,11 @@ def get_search_results_chunk(request: HttpRequest,
         try:
             limit = int(limit)
         except ValueError:
-            log.error('get_search_results_chunk: Unable to parse limit %s',
+            log.error('get_search_results_chunk: Unable to parse limit %r',
                       limit)
             return error_return(400, http400_bad_limit(limit, request))
         if limit < 0 or limit > settings.SQL_MAX_LIMIT:
-            log.error('get_search_results_chunk: Bad limit %s', str(limit))
+            log.error('get_search_results_chunk: Bad limit %r', str(limit))
             return error_return(400, http400_bad_limit(limit, request))
 
     if cols is None:
@@ -1418,13 +1418,10 @@ def get_search_results_chunk(request: HttpRequest,
     for slug in cols_to_slug_list(cols):
         # First try the full name, which might include a trailing 1 or 2
         # Allow the caller to specify desired units for the retrieved metadata
-        # The declared return covers every mode of the lookup; this one, with
-        # source 'col' and allow_units_override, is the pair of the ParamInfo and
-        # the requested unit.
-        pi, desired_units = get_param_info_by_slug(slug, 'col',  # type: ignore[misc]
+        pi, desired_units = get_param_info_by_slug(slug, 'col',
                                                    allow_units_override=True)
         if not pi:
-            log.error('get_search_results_chunk: Slug "%s" not found', slug)
+            log.error('get_search_results_chunk: Slug "%r" not found', slug)
             return error_return(400, http400_unknown_slug(slug, request))
         column = pi.param_qualified_name()
         table = pi.category_name
@@ -1502,7 +1499,7 @@ def get_search_results_chunk(request: HttpRequest,
                 start_obs = int(raw_start_obs)
             except ValueError:
                 log.error('get_search_results_chunk: Unable to parse '
-                          +'startobs "%s"', raw_start_obs)
+                          +'startobs "%r"', raw_start_obs)
                 return error_return(400, http400_bad_startobs(raw_start_obs, request))
             offset = start_obs-1
         else:
@@ -1511,7 +1508,7 @@ def get_search_results_chunk(request: HttpRequest,
             try:
                 page_no = int(raw_page_no)
             except ValueError:
-                log.error('get_search_results_chunk: Unable to parse page_no "%s"',
+                log.error('get_search_results_chunk: Unable to parse page_no "%r"',
                           raw_page_no)
                 return error_return(400, http400_bad_pageno(raw_page_no, request))
             offset = (page_no-1)*page_size
@@ -1519,7 +1516,7 @@ def get_search_results_chunk(request: HttpRequest,
         offset = start_obs-1
 
     if offset < 0 or offset > settings.SQL_MAX_LIMIT:
-        log.error('get_search_results_chunk: Bad offset %s', str(offset))
+        log.error('get_search_results_chunk: Bad offset %r', str(offset))
         return error_return(400, http400_bad_offset(offset, request))
 
     temp_table_name: str | None = None
@@ -1540,7 +1537,7 @@ def get_search_results_chunk(request: HttpRequest,
             (selections, extras) = url_to_search_params(request.GET)
         if selections is None:
             log.error('get_search_results_chunk: Could not find selections for'
-                      +' request %s', str(request.GET))
+                      +' request %r', str(request.GET))
             return error_return(400, http400_search_params_invalid(request))
 
         # url_to_search_params returns both of these or neither.
@@ -1551,7 +1548,7 @@ def get_search_results_chunk(request: HttpRequest,
         if not user_query_table: # pragma: no cover -
             # internal or database failure
             log.error('get_search_results_chunk: get_user_query_table failed '
-                      +'*** Selections %s *** Extras %s',
+                      +'*** Selections %r *** Extras %r',
                       str(selections), str(extras))
             return error_return(500, http500_search_cache_failed(request))
 
@@ -1582,9 +1579,9 @@ def get_search_results_chunk(request: HttpRequest,
         try:
             cursor.execute(temp_sql)
         except DatabaseError: # pragma: no cover - database error
-            log.exception('get_search_results_chunk: "%s" failed', temp_sql)
+            log.exception('get_search_results_chunk: "%r" failed', temp_sql)
             return error_return(500, http500_database_error(request))
-        log.debug('get_search_results_chunk SQL (%.2f secs): %s',
+        log.debug('get_search_results_chunk SQL (%.2f secs): %r',
                   time.time()-time1, temp_sql)
 
         select = _results_column_select(column_names)
@@ -1705,7 +1702,7 @@ def get_search_results_chunk(request: HttpRequest,
     try:
         cursor.execute(sql, params)
     except DatabaseError: # pragma: no cover - database error
-        log.exception('get_search_results_chunk: "%s" + "%s" failed',
+        log.exception('get_search_results_chunk: "%r" + "%r" failed',
                       sql, params)
         return error_return(500, http500_database_error(request))
     results = []
@@ -1715,7 +1712,7 @@ def get_search_results_chunk(request: HttpRequest,
         results += part_results
         more = cursor.nextset()
 
-    log.debug('get_search_results_chunk SQL (%.2f secs): %s',
+    log.debug('get_search_results_chunk SQL (%.2f secs): %r',
               time.time()-time1, sql)
 
     if drop_temp_table:
@@ -1725,7 +1722,7 @@ def get_search_results_chunk(request: HttpRequest,
         try:
             cursor.execute(sql)
         except DatabaseError: # pragma: no cover - database error
-            log.exception('get_search_results_chunk: "%s" failed', sql)
+            log.exception('get_search_results_chunk: "%r" failed', sql)
             return error_return(500, http500_database_error(request))
 
     if return_opusids:
@@ -1843,7 +1840,7 @@ def _get_metadata_by_slugs(request: HttpRequest, opus_id: str, cols: str, fmt: s
     assert page is not None
 
     if len(page) != 1: # pragma: no cover - internal error
-        log.error('_get_metadata_by_slugs: Error searching for opus_id "%s"',
+        log.error('_get_metadata_by_slugs: Error searching for opus_id "%r"',
                   opus_id)
         raise Http404(http404_unknown_opus_id(opus_id, request))
 
@@ -1875,9 +1872,7 @@ def _get_metadata_by_slugs(request: HttpRequest, opus_id: str, cols: str, fmt: s
             # we ignore them because they were already processed earlier during
             # get_search_results_chunk.
             for slug, label, result in zip(slug_list, labels, page[0], strict=False):
-                # The declared return covers every mode of the lookup; this one is
-                # the pair of the ParamInfo and the requested unit.
-                pi, _desired_units = get_param_info_by_slug(slug, 'col',  # type: ignore[misc]
+                pi, _desired_units = get_param_info_by_slug(slug, 'col',
                                                            allow_units_override=True)
                 data.append({label: (result, pi)})
             context = {'data': data,
@@ -1896,7 +1891,7 @@ def _get_metadata_by_slugs(request: HttpRequest, opus_id: str, cols: str, fmt: s
             data.append({slug: result})
         return data
     else: # pragma: no cover - error catchall
-        log.error('_get_metadata_by_slugs: Unknown format "%s"', fmt)
+        log.error('_get_metadata_by_slugs: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
 
@@ -1921,7 +1916,7 @@ def get_triggered_tables(selections: dict[str, list[Any]], extras: dict[str, Any
                                             api_code=api_code)
     if not user_query_table: # pragma: no cover - database error
         log.error('get_triggered_tables: get_user_query_table failed '
-                  +'*** Selections %s *** Extras %s',
+                  +'*** Selections %r *** Extras %r',
                   str(selections), str(extras))
         return None
 
@@ -1988,7 +1983,7 @@ def get_triggered_tables(selections: dict[str, list[Any]], extras: dict[str, Any
                 select.add_where(search_cache_join_condition(trigger_tab,
                                                              user_query_table))
                 sql, sql_params = select.build()
-                log.debug('get_triggered_tables SQL: %s *** PARAMS %s',
+                log.debug('get_triggered_tables SQL: %r *** PARAMS %r',
                           sql, str(sql_params))
                 cursor = connection.cursor()
                 cursor.execute(sql, sql_params)
@@ -2024,9 +2019,7 @@ def labels_for_slugs(slugs: list[str], units: bool = True) -> list[str] | None:
     labels: list[str] = []
 
     for slug in slugs:
-        # The declared return covers every mode of the lookup; this one is the pair
-        # of the ParamInfo and the requested unit.
-        pi, desired_units = get_param_info_by_slug(slug, 'col',  # type: ignore[misc]
+        pi, desired_units = get_param_info_by_slug(slug, 'col',
                                                    allow_units_override=True)
         if not pi:
             log.error('labels_for_slugs: Could not find param_info '

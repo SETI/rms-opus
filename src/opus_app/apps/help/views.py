@@ -180,7 +180,7 @@ def api_faq(request: HttpRequest, fmt: str) -> HttpResponse:
         except yaml.YAMLError as exc: # pragma: no cover -
             # This can only happen if there is a problem with the YAML in the
             # FAQ.YAML file
-            log.exception('api_faq: Unable to parse %s', faq_content_file)
+            log.exception('api_faq: Unable to parse %r', faq_content_file)
             raise Http404 from exc
 
     context = {'faq': faq,

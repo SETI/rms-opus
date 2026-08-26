@@ -82,7 +82,7 @@ def get_def_for_tooltip(term: str | None, context: str | None) -> str | None:
         # nullable, so that is a real fault rather than a typing artifact, and it is
         # recorded here instead of being annotated away.
         if not context.startswith('MULT_'): # type: ignore[union-attr] # pragma: no cover - import error
-            log.error('No tooltip definition for context "%s" term "%s"',
+            log.error('No tooltip definition for context "%r" term "%r"',
                       context, term)
         return None
     return entry.definition

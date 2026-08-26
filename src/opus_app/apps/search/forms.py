@@ -37,11 +37,15 @@ class SearchForm(forms.Form):
 
     Each slug's `param_info` row says how its field is searched, and the matching
     text input, range endpoint, dropdown or checkbox group is added to the form
-    under that slug. A field searched as text or as a range also gets the qtype
-    dropdown that goes beside it.
+    under that slug. A text field also gets the qtype dropdown that goes beside it,
+    and so does a range field whose two endpoints are separate columns.
     """
     def __init__(self, form_vals: Mapping[str, Any], *args: Any, **kwargs: Any) -> None:
         """Build the inputs for every slug in the mapping.
+
+        Where the last slug built was a range endpoint, the form is then reduced to
+        that field's two endpoints, in min then max order, followed by its qtype
+        dropdown if it has one.
 
         Parameters:
             form_vals: The initial value for each field to build, keyed by slug.
@@ -58,11 +62,8 @@ class SearchForm(forms.Form):
             param_info = get_param_info_by_slug(slug, 'search')
             # Everything below dereferences param_info unconditionally, so a slug
             # that names no field is a fault rather than an input case. The one
-            # caller resolves each slug before it builds the mapping. The tuple
-            # form of the return is produced only for allow_units_override, which
-            # this call leaves off.
+            # caller resolves each slug before it builds the mapping.
             assert param_info is not None
-            assert not isinstance(param_info, tuple)
             (form_type, _form_type_format,
              _form_type_unit_id) = parse_form_type(param_info.form_type)
 
@@ -100,7 +101,6 @@ class SearchForm(forms.Form):
                     # The same reliance as above: the hints of the field's other
                     # endpoint are read without checking that it was found.
                     assert pi_slug1 is not None
-                    assert not isinstance(pi_slug1, tuple)
                     hints = pi_slug1.field_hints2 if pi_slug1.field_hints2 else ''
                 else:
                     hints = param_info.field_hints1 if param_info.field_hints1 else ''

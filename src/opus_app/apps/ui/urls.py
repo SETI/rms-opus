@@ -1,4 +1,5 @@
 # ui/urls.py
+"""The routes of the interface's own API, and of the Django admin site."""
 from django.contrib import admin
 from django.urls import re_path
 

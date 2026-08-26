@@ -168,7 +168,7 @@ def api_get_result_count(request: HttpRequest, fmt: str, internal: bool = False,
     elif fmt == 'csv':
         ret = csv_response('result_count', [['result count', count]])
     else: # pragma: no cover - error catchall
-        log.error('api_get_result_count: Unknown format "%s"', fmt)
+        log.error('api_get_result_count: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
     return ret
@@ -250,13 +250,13 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
         raise Http404(http404_no_request(f'/api/meta/mults/{slug}.{fmt}'))
 
     if fmt not in ('json', 'html', 'csv'):
-        log.error('api_get_mult_counts: Unknown format "%s"', fmt)
+        log.error('api_get_mult_counts: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
-        log.error('api_get_mult_counts: Failed to get selections for slug %s, '
-                  +'URL %s', str(slug), request.GET)
+        log.error('api_get_mult_counts: Failed to get selections for slug %r, '
+                  +'URL %r', str(slug), request.GET)
         raise Http400Error(http400_search_params_invalid(request))
     # url_to_search_params returns both of them or neither.
     assert extras is not None
@@ -264,12 +264,9 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
     param_info = get_param_info_by_slug(slug, 'col', allow_units_override=False)
     if not param_info:
         log.error('api_get_mult_counts: Could not find param_info entry for '
-                  +'slug %s *** Selections %s *** Extras %s', str(slug),
+                  +'slug %r *** Selections %r *** Extras %r', str(slug),
                   str(selections), str(extras))
         raise Http400Error(http400_unknown_slug(slug, request))
-    # allow_units_override is off, so this is the ParamInfo itself rather than
-    # the (ParamInfo, units) pair that mode returns.
-    assert isinstance(param_info, ParamInfo)
 
     table_name = param_info.category_name
     param_qualified_name = param_info.param_qualified_name()
@@ -282,7 +279,7 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
     cache_num, _cache_new_flag = set_user_search_number(selections, extras)
     if cache_num is None: # pragma: no cover - database error
         log.error('api_get_mult_counts: Failed to create user_selections entry'
-                  +' for *** Selections %s *** Extras %s',
+                  +' for *** Selections %r *** Extras %r',
                   str(selections), str(extras))
         return HttpResponseServerError(http500_database_error(request))
 
@@ -302,7 +299,7 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
             mult_model = apps.get_model('search',
                                         mult_name.title().replace('_',''))
         except LookupError: # pragma: no cover - configuration error
-            log.exception('api_get_mult_counts: Could not get_model for %s',
+            log.exception('api_get_mult_counts: Could not get_model for %r',
                           mult_name.title().replace('_',''))
             return HttpResponseServerError(http500_internal_error(request))
 
@@ -310,7 +307,7 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
             table_model = apps.get_model('search',
                                          table_name.title().replace('_',''))
         except LookupError: # pragma: no cover - configuration error
-            log.exception('api_get_mult_counts: Could not get_model for %s',
+            log.exception('api_get_mult_counts: Could not get_model for %r',
                           table_name.title().replace('_',''))
             return HttpResponseServerError(http500_internal_error(request))
 
@@ -345,7 +342,7 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
 
         if selections and not user_table: # pragma: no cover - database corruption
             log.error('api_get_mult_counts: has selections but no user_table '
-                      +'found *** Selections %s *** Extras %s',
+                      +'found *** Selections %r *** Extras %r',
                       str(selections), str(extras))
             return HttpResponseServerError(http500_search_cache_failed(request))
 
@@ -359,7 +356,7 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
         select.add_group_by(counted_column)
 
         sql, values = select.build()
-        log.debug('MULT COUNTS SQL: %s *** PARAMS %s', sql, str(values))
+        log.debug('MULT COUNTS SQL: %r *** PARAMS %r', sql, str(values))
 
         cursor.execute(sql, values)
         results = cursor.fetchall()
@@ -373,7 +370,7 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
                 mult_label = mult.label
             except ObjectDoesNotExist: # pragma: no cover - import error
                 log.exception('api_get_mult_counts: Could not find mult entry '
-                              +'for mult_model %s id %s', str(mult_model),
+                              +'for mult_model %r id %r', str(mult_model),
                               str(mult_id))
                 return HttpResponseServerError(http500_internal_error(request))
 
@@ -497,7 +494,7 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
                                     f'/api/meta/range/endpoints/{slug}.{fmt}'))
 
     if fmt not in ('json', 'html', 'csv'):
-        log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
+        log.error('api_get_range_endpoints: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
     param_info = get_param_info_by_slug(slug, 'widget')
@@ -505,9 +502,6 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
         log.error('api_get_range_endpoints: Could not find param_info entry '
                   +'for slug %r', slug)
         raise Http400Error(http400_unknown_slug(slug, request))
-    # Source 'widget' returns the ParamInfo itself; the pair form belongs to
-    # source 'col' with allow_units_override.
-    assert isinstance(param_info, ParamInfo)
 
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
@@ -528,7 +522,7 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
         table_model = apps.get_model('search',
                                      table_name.title().replace('_',''))
     except LookupError: # pragma: no cover - configuration error
-        log.exception('api_get_range_endpoints: Could not get_model for %s',
+        log.exception('api_get_range_endpoints: Could not get_model for %r',
                       table_name.title().replace('_',''))
         return HttpResponseServerError(http500_internal_error(request))
 
@@ -545,7 +539,7 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('api_get_range_endpoints: Could not find selections for '
-                  +'request %s', str(request.GET))
+                  +'request %r', str(request.GET))
         raise Http400Error(http400_search_params_invalid(request))
     # url_to_search_params returns both of them or neither.
     assert extras is not None
@@ -563,7 +557,7 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
         user_table = get_user_query_table(selections, extras, api_code=api_code)
         if user_table is None: # pragma: no cover - database corruption
             log.error('api_get_range_endpoints: Count not retrieve query table'
-                      +' for *** Selections %s *** Extras %s',
+                      +' for *** Selections %r *** Extras %r',
                       str(selections), str(extras))
             return HttpResponseServerError(http500_search_cache_failed(request))
     else:
@@ -577,7 +571,7 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
         cache_num, _cache_new_flag = set_user_search_number(selections, extras)
         if cache_num is None: # pragma: no cover - database error
             log.error('api_get_range_endpoints: Failed to create cache table '
-                      +'for *** Selections %s *** Extras %s',
+                      +'for *** Selections %r *** Extras %r',
                       str(selections), str(extras))
             raise Http404
         # We're guaranteed the table actually exists here, since
@@ -618,13 +612,13 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
 
             cursor = connection.cursor()
             sql, params = endpoints_select.build()
-            log.debug('RANGE ENDPOINTS SQL: %s *** PARAMS %s', sql, str(params))
+            log.debug('RANGE ENDPOINTS SQL: %r *** PARAMS %r', sql, str(params))
             cursor.execute(sql, params)
             (endpoint_min, endpoint_max) = cursor.fetchone()
             range_endpoints = {'min': endpoint_min, 'max': endpoint_max}
 
             sql, params = nulls_select.build()
-            log.debug('RANGE ENDPOINTS NULLS SQL: %s *** PARAMS %s', sql, str(params))
+            log.debug('RANGE ENDPOINTS NULLS SQL: %r *** PARAMS %r', sql, str(params))
             cursor.execute(sql, params)
             range_endpoints['nulls'] = cursor.fetchone()[0]
         else:
@@ -803,7 +797,7 @@ def get_result_count_helper(request: HttpRequest,
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
         log.error('get_result_count_helper: Could not find selections for '
-                  +'request %s', str(request.GET))
+                  +'request %r', str(request.GET))
         raise Http400Error(http400_search_params_invalid(request))
     # url_to_search_params returns both of them or neither.
     assert extras is not None
@@ -812,7 +806,7 @@ def get_result_count_helper(request: HttpRequest,
 
     if not table: # pragma: no cover - internal or database failure
         log.error('get_result_count_helper: Could not find/create query table '
-                  +'for request %s', str(request.GET))
+                  +'for request %r', str(request.GET))
         ret = HttpResponseServerError(http500_search_cache_failed(request))
         return None, None, ret
 
@@ -827,7 +821,7 @@ def get_result_count_helper(request: HttpRequest,
             count = cursor.fetchone()[0]
         except DatabaseError: # pragma: no cover - database error
             log.exception('get_result_count_helper: SQL query failed for '
-                          +'request %s: SQL "%s"', str(request.GET), sql)
+                          +'request %r: SQL "%r"', str(request.GET), sql)
             ret = HttpResponseServerError(http500_database_error(request))
             return None, None, ret
 
@@ -894,10 +888,8 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
                 # A referred slug will never contain a unit specifier
                 referred_f = get_param_info_by_slug(referred_slug, 'col',
                                                     allow_units_override=False)
-                # The lines below already require the referred field to exist,
-                # and allow_units_override is off, so this is the ParamInfo
-                # itself rather than the pair that mode returns.
-                assert isinstance(referred_f, ParamInfo)
+                # The lines below already require the referred field to exist.
+                assert referred_f is not None
                 f = referred_f
                 f.label = f.body_qualified_label()
                 f.label_results = f.body_qualified_label_results(True)
@@ -953,7 +945,7 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
                 elif form_type_format[-1] == 'f':
                     f_type = 'range_float'
                 else: # pragma: no cover - error catchall
-                    log.warning('Unparseable form type '+str(f.form_type))
+                    log.warning('Unparseable form type %r', f.form_type)
             elif form_type_unit_id == 'datetime':
                 f_type = 'range_time'
             elif form_type_unit_id is not None:
@@ -965,7 +957,7 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
         elif form_type == 'STRING':
             f_type = 'string'
         else: # pragma: no cover - error catchall
-            log.warning('Unparseable form type '+str(f.form_type))
+            log.warning('Unparseable form type %r', f.form_type)
         entry['type'] = f_type
         entry['label'] = f.label_results
         entry['search_label'] = f.label
@@ -1023,7 +1015,7 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
                 rows += row_data
         ret = csv_response('fields', rows, labels)
     else: # pragma: no cover - error catchall
-        log.error('get_fields_info: Unknown format "%s"', fmt)
+        log.error('get_fields_info: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
     return ret
