@@ -198,6 +198,24 @@ def get_reqno(request: HttpRequest) -> int | None:
 _API_CALL_NUMBER = 0
 _API_START_TIMES: dict[int, float] = {}
 
+
+def _log_api_call_line(s: str) -> None:
+    """Write one line to the API-call log, if that log is enabled.
+
+    Parameters:
+        s: The line to write. It is logged at the level `[django] log_api_calls`
+            names, and dropped entirely when that key is false.
+    """
+    if not settings.OPUS_LOG_API_CALLS:
+        return
+    # settings.OPUS_LOG_API_CALLS is `bool | str`, and a configuration file
+    # saying `log_api_calls = true` reaches here as True, where `.lower()`
+    # raises. That is issue #1468: a real crash rather than a typing artifact,
+    # and deciding what `true` should mean belongs to opus_config rather than
+    # here, so the declaration is left honest and the fault recorded instead of
+    # being cast away. This is the only place that fix has to land.
+    getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)  # type: ignore[union-attr]
+
 def enter_api_call(name: str, request: HttpRequest | None,
                    kwargs: dict[str, Any] | None = None) -> int:
     """Record the entry into an API.
@@ -215,6 +233,9 @@ def enter_api_call(name: str, request: HttpRequest | None,
     """
     global _API_CALL_NUMBER
     _API_CALL_NUMBER += 1
+    # Guarded here as well as inside the helper: building this line means
+    # json.dumps of the whole query string, which is not worth doing to throw
+    # away.
     if settings.OPUS_LOG_API_CALLS: # pragma: no cover - internal debugging
         s = 'API ' + str(_API_CALL_NUMBER) + ' '
         if request and request.path:
@@ -225,13 +246,7 @@ def enter_api_call(name: str, request: HttpRequest | None,
             s += ' ' + json.dumps(request.GET, sort_keys=True,
                                   indent=4,
                                   separators=(',', ': '))
-            # settings.OPUS_LOG_API_CALLS is `bool | str`, and a configuration
-            # file saying `log_api_calls = true` reaches here as True, where
-            # `.lower()` raises. That is issue #1468, a real crash rather than a
-            # typing artifact, and deciding what `true` should mean belongs to
-            # opus_config rather than here, so the declaration is left honest and
-            # the fault is recorded instead of being cast away.
-        getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)  # type: ignore[union-attr]
+        _log_api_call_line(s)
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER
 
@@ -278,13 +293,7 @@ def exit_api_call(api_code: int, ret: Any) -> None:
                 s += '\n(Binary content not displayed)'
         if delay_amount: # pragma: no cover - internal debugging
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
-            # settings.OPUS_LOG_API_CALLS is `bool | str`, and a configuration
-            # file saying `log_api_calls = true` reaches here as True, where
-            # `.lower()` raises. That is issue #1468, a real crash rather than a
-            # typing artifact, and deciding what `true` should mean belongs to
-            # opus_config rather than here, so the declaration is left honest and
-            # the fault is recorded instead of being cast away.
-        getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)  # type: ignore[union-attr]
+        _log_api_call_line(s)
     _API_START_TIMES.pop(api_code, None)
     if delay_amount: # pragma: no cover - internal debugging
         time.sleep(delay_amount)
@@ -376,16 +385,7 @@ def _log_injected_fault(kind: str) -> None:
     Parameters:
         kind: The kind of fault being injected, for the log line.
     """
-    if settings.OPUS_LOG_API_CALLS:
-        # settings.OPUS_LOG_API_CALLS is `bool | str`, and a configuration
-        # file saying `log_api_calls = true` reaches here as True, where
-        # `.lower()` raises. That is issue #1468, a real crash rather than a
-        # typing artifact, and deciding what `true` should mean belongs to
-        # opus_config rather than here, so the declaration is left honest and
-        # the fault is recorded instead of being cast away.
-        getattr(log,
-                settings.OPUS_LOG_API_CALLS.lower())(  # type: ignore[union-attr]
-                    f'Faking {kind} error')
+    _log_api_call_line(f'Faking {kind} error')
 
 
 def _injected_fault_response(request: HttpRequest | None) -> HttpResponse | None:

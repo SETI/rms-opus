@@ -466,8 +466,10 @@ class ImportDBSuper:
         q = self.quote_identifier
         columns = ','.join([q(c) for c in column_names])
 
-        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$).
-        # This statement carries no values at all.
+        # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$). The
+        # caller's `where` fragment is appended verbatim below and is not
+        # validated; only the values inside it are bound, through where_params.
+        # This method is for trusted callers.
         cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
         if where:
             cmd += f' WHERE {where}'

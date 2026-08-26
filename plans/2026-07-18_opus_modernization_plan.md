@@ -5235,6 +5235,19 @@ body; never rewrite or delete earlier notes.*
     run's start and end times settles it in one command, and is the first thing
     to try. The don't-touch-the-tree rule covers **source files first**; applying
     it only to the coverage data file, as happened here, is not enough.
+  - **A bandit justification in `importdb/mysql.py` overclaimed for the second
+    time.** PR-15 corrected the pyproject comment for the same reason; PR-17a's
+    per-line replacements then repeated the shape. Four methods -- `read_rows`,
+    `update_row`, `delete_rows`, `copy_rows_between_namespaces` -- append the
+    caller's `where` fragment **verbatim**, so "identifiers are the only
+    interpolations" was false at all four, and `read_rows` additionally claimed
+    to carry "no values at all" while passing `where_params`. Corrected to state
+    the contract: identifiers are validated, only the values inside `where` are
+    bound, the fragment itself is not, and the API is for trusted callers. **The
+    pattern to watch: a suppression comment that lists what is safe is one edit
+    away from being read as a list of everything that is interpolated.** Say what
+    is true and stop -- do not append a reassurance that it is therefore safe,
+    because safety here rests on the caller rather than on this code.
   - **A latent coverage hazard, not the cause of the above but worth knowing:**
     `parallel = true` is set in `[tool.coverage.run]` in `pyproject.toml` and is
     *not* set in `integration_tests/.coveragerc`. Any coverage invocation that
@@ -5292,6 +5305,26 @@ body; never rewrite or delete earlier notes.*
     trailing block reads two names leaked from a `for` loop, so an empty mapping
     raises `NameError` and several slugs silently reduce the form to the last
     range field.
+  - **PR-13's 400-vs-404 sweep missed two sites, and the blind spot is worth
+    knowing because it is structural rather than careless.** CodeRabbit found
+    that an unknown `cols` or `widgets` slug on `__metadata_selector.json`
+    dereferenced a None `ParamInfo` and answered **500 where PR-13's rule 2
+    requires 400**. Established rather than assumed: both call sites are present
+    at PR-13's base `101bc511`, and PR-13 **edited that very handler** -- it
+    applied the decorator and converted the `reqno` validation ten lines below.
+    So they were missed, not introduced.
+    **Why its sweep could not see them:** PR-13's scope was "status codes +
+    logging only" over the endpoints' *existing* error paths, reclassifying a 404
+    that should have been a 400. Both of these sites had **no error path at all**
+    -- an `Optional` dereferenced with no check, which raises rather than
+    returning a status. A sweep over error returns cannot find a missing check;
+    it can only reclassify one that is there. What surfaced them was annotation:
+    /seti/newnav/capped-run.sh mypy reporting the `Optional` dereference.
+    **The general point for PR-17b and PR-19:** the two sweeps are complementary,
+    not overlapping. Anywhere PR-13 declared an endpoint's status codes settled,
+    a later annotation pass can still find an unguarded dereference that answers
+    500 on the same input class, and the decision table already decides what it
+    should answer. Fixing one is applying a ratified rule, not making a call.
   - **Three claims in the tree were false and were corrected rather than
     restated**: `SessionInfo`'s "This is an abstract class" (it declares none and
     is instantiated directly), `get_pds_products`' warning that its result is not

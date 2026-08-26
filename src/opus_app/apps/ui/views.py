@@ -289,17 +289,16 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
         # desired_unit is displayed.
         p, desired_unit = get_param_info_by_slug(col_slug, 'col',
                                                  allow_units_override=True)
-        # `cols` is whatever the caller sent, and get_param_info_by_slug answers
-        # None for a slug that names no field, so an unknown one raises
-        # AttributeError here and the decorator answers 500 where the rest of the
-        # API answers 400 for a bad slug -- the same fault as the `widgets` loop
-        # below. disp_unit, default_unit and units are not fields of ParamInfo
-        # either: they are attached to the row for the menu templates to read.
-        (p.disp_unit, p.default_unit, # type: ignore[union-attr]
-         p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[union-attr]
+        if p is None:
+            log.error('api_get_metadata_selector: unknown cols slug %r', col_slug)
+            raise Http400Error(http400_unknown_slug(col_slug, request))
+        # disp_unit, default_unit and units are not fields of ParamInfo: they are
+        # attached to the row for the menu templates to read.
+        (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
+         p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
 
         if desired_unit is not None:
-            p.disp_unit = p.units[desired_unit] # type: ignore[union-attr]
+            p.disp_unit = p.units[desired_unit] # type: ignore[attr-defined]
 
         if ':' in col_slug:
             col_slug, _, _ = col_slug.partition(':')
@@ -315,16 +314,14 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
         search_slugs = filter(None, search_slugs) # Eliminate empty slugs
         for search_slug in search_slugs:
             pi = get_param_info_by_slug(search_slug, 'widget')
-            # get_param_info_by_slug returns None for a slug that names no field,
-            # and `widgets` is whatever the caller sent, so an unknown widget slug
-            # raises AttributeError here and the decorator answers 500 where the
-            # rest of the API answers 400 for a bad slug. That is a fault in the
-            # code rather than an artifact of typing it, so the two ignores below
-            # record it instead of an assertion claiming it cannot happen.
-            if pi.display_results: # type: ignore[union-attr] # pragma: no cover -
+            if pi is None:
+                log.error('api_get_metadata_selector: unknown widgets slug %r',
+                          search_slug)
+                raise Http400Error(http400_unknown_slug(search_slug, request))
+            if pi.display_results: # pragma: no cover -
                 # We don't currently support any search slugs that aren't also
                 # displayed
-                search_slugs_info.append(pi) # type: ignore[arg-type]
+                search_slugs_info.append(pi)
 
     reqno = get_reqno(request)
     if reqno is None:

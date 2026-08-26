@@ -842,8 +842,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         for column_name in sorted_column_names:
             set_cmds.append(f'{self.quote_identifier(column_name)}=%s')
             param_list.append(row[column_name])
-        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
-        # every assigned value is a %s placeholder bound through param_list.
+        # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$) and every
+        # row value is a %s placeholder bound through param_list. The caller's
+        # `where` fragment, however, is appended verbatim and is not validated:
+        # only the values inside it are bound. This method is for trusted callers.
         cmd = (f'UPDATE {self.quote_identifier(table_name)} SET '  # nosec B608
                + ','.join(set_cmds) + f' WHERE {where}')
         param_list += list(where_params or [])
@@ -1002,8 +1004,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        # The table name is the only interpolation and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
-        # the caller's WHERE values arrive separately as where_params.
+        # The table name is validated by quote_identifier (^[A-Za-z0-9_]+$). The
+        # caller's `where` fragment is appended verbatim below and is not
+        # validated; only the values inside it are bound, through where_params.
+        # This method is for trusted callers.
         cmd = f'DELETE FROM {self.quote_identifier(table_name)}'  # nosec B608
         if where:
             cmd += f' WHERE {where}'
@@ -1046,8 +1050,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         dest_table_name = self.convert_raw_to_namespace(dest_namespace,
                                                         raw_table_name)
 
-        # Both table names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
-        # the caller's WHERE values arrive separately as where_params.
+        # Both table names are validated by quote_identifier (^[A-Za-z0-9_]+$).
+        # The caller's `where` fragment is appended verbatim below and is not
+        # validated; only the values inside it are bound, through where_params.
+        # This method is for trusted callers.
         cmd = (f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '  # nosec B608
                f'FROM {self.quote_identifier(src_table_name)}')
         if where:
