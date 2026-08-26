@@ -1,3 +1,9 @@
+"""The log analyzer's configuration for OPUS.
+
+`Configuration` is the class `--configuration` names by default.  It reads the OPUS
+field definitions, holds the settings the OPUS-specific code needs for a run, and
+builds the per-session parser and the HTML generator the analyzer asks it for.
+"""
 import collections
 import textwrap
 from collections.abc import Sequence
@@ -36,6 +42,24 @@ class Configuration(AbstractConfiguration):
                  sessions_relative_directory: str | None,
                  manifests: Sequence[str],
                  **_: Any):
+        """Read the OPUS field definitions and keep the settings for one run.
+
+        Parameters:
+            api_host_url: Base URL of the OPUS server.  Its field definitions are
+                read here, and the report's links to the site are built on it.
+            debug_show_all: The hidden `--xxshowall` debugging setting, handed to
+                each session this creates.
+            no_sessions: Whether to leave the detailed per-session information out
+                of the report.
+            ip_to_host_converter: The converter from host address to host name.  It
+                is stored, but nothing in this class reads it.
+            sessions_relative_directory: Directory the per-session pages are written
+                into, taken relative to the report, or None to keep every session in
+                the report itself.
+            manifests: Paths of the download manifests to summarize.
+            **_: The rest of the parsed arguments, ignored.  The caller passes the
+                whole argument namespace.
+        """
         self._slug_map = slug.ToInfoMap(api_host_url)
         self._default_column_slug_info = QueryHandler.get_metadata_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
         self._api_host_url = api_host_url
@@ -52,29 +76,64 @@ class Configuration(AbstractConfiguration):
                            self._sessionless_downloads)
 
     def create_batch_html_generator(self, host_infos_by_ip: list[HostInfo]) -> HtmlGenerator:
+        """Create the generator that renders a batch run.
+
+        Parameters:
+            host_infos_by_ip: The run's sessions, grouped by host.
+
+        Returns:
+            An `HtmlGenerator` that reads its settings from this configuration.
+        """
         return HtmlGenerator(self, host_infos_by_ip)
 
     @property
     def api_host_url(self) -> str:
+        """Base URL of the OPUS server; the links to the site are built on it."""
         return self._api_host_url
 
     @property
     def elide_session_info(self) -> bool:
+        """Whether the report leaves out the detailed per-session information."""
         return self._elide_session_info
 
     @property
     def sessions_relative_directory(self) -> str | None:
+        """Directory for the per-session pages, relative to the report, or None."""
         return self._sessions_relative_directory
 
     @property
     def sessionless_downloads(self) -> list[tuple[str, LogEntry]]:
+        """The `/downloads/` requests seen, as file name and log entry.
+
+        The list is shared with every session this configuration creates, and grows
+        as they parse their entries.
+        """
         return self._sessionless_downloads
 
     @property
     def manifests(self) -> Sequence[str]:
+        """Paths of the download manifests to summarize."""
         return self._manifests
 
     def show_summary(self, sessions: list[Session], output: TextIO) -> None:
+        """Implement the `--summary` operation for OPUS.
+
+        Gathers the search slugs and the column slugs the sessions used and prints
+        them: the search slugs, a blank line, then the column slugs.
+
+        The gathering step unpacks three values from the two that `get_slug_info`
+        returns, so nothing is printed for a run that has any session at all.
+        Log-analyzer behavior is out of scope for this modernization (plan rev
+        7.14), so this is recorded rather than fixed; issue #1451 records that
+        `--summary` already fails before reaching this method.
+
+        Parameters:
+            sessions: The sessions to summarize.
+            output: The stream to write to.
+
+        Raises:
+            ValueError: `sessions` is not empty, as described above.
+        """
         all_info: dict[str, dict[str, bool]] = collections.defaultdict(dict)
         for session in sessions:
             session_info = cast(SessionInfo, session.session_info)
@@ -84,6 +143,16 @@ class Configuration(AbstractConfiguration):
                     all_info[info_type][slug_name] = is_obsolete
 
         def show_info(info_type: str) -> None:
+            """Print the slugs of one kind.
+
+            The names are sorted case-insensitively, joined with commas, and wrapped
+            to 100 columns with continuation lines indented four spaces.  The output
+            opens with `info_type` capitalized, as in `Search slugs: `, unless there
+            are no names, in which case it is a blank line.
+
+            Parameters:
+                info_type: Which kind of slug to print, `search` or `column`.
+            """
             result = ', '.join(
                 # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
                 (slug + '~[OBSOLETE]') if all_info[slug] else slug

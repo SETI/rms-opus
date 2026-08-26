@@ -45,6 +45,17 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
         dates = [run_date]
 
     def expand_and_glob_filenames(file_patterns: Sequence[str]) -> Sequence[str]:
+        """Expand date patterns, then glob, over the run's dates.
+
+        Parameters:
+            file_patterns: `strftime` patterns, which may also contain glob
+                metacharacters.
+
+        Returns:
+            Every distinct file matched by any pattern on any of the run's
+            dates, sorted by name. A pattern matching nothing contributes
+            nothing.
+        """
         all_patterns = {date.strftime(file_pattern) for file_pattern in file_patterns for date in dates}
         all_files = sorted(file for pattern in all_patterns for file in glob.glob(pattern))
         return all_files

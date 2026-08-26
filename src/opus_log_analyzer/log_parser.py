@@ -109,6 +109,7 @@ class Session(NamedTuple):
         return isinstance(other, Session) and self.id == id  # type: ignore[comparison-overlap]
 
     def __repr__(self) -> str:
+        """Render the session as its id, host and start time."""
         return f"<Session#{self.id} {self.host_ip} @ {self.start_time()}>"
 
 

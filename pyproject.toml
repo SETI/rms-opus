@@ -230,13 +230,14 @@ ignore_missing_imports = true
 # per-file-ignores table above, and PR-17's exit criterion is that this list is empty
 # as well. There is no repository-wide exclusion: everything outside these packages
 # is checked strictly today.
-#     opus_app                 - annotated in PR-17
-#     opus_log_analyzer        - partly annotated already; completed in PR-17
-#     integration_tests        - PR-17, like the rest: the plan body gives that PR
-#                                every temporary override. It is listed here rather
-#                                than left out of the checked paths, because a path
-#                                that is never passed to the checker is an exclusion
+#     opus_app                 - annotated in PR-17a
+#     integration_tests        - PR-17b, like the rest: the plan body gives PR-17
+#                                every temporary override, and rev 7.20 splits that
+#                                between 17a and 17b. It is listed here rather than
+#                                left out of the checked paths, because a path that
+#                                is never passed to the checker is an exclusion
 #                                nothing can see.
+# opus_log_analyzer left this list in PR-17a and is checked strictly now.
 # A package's tests are silenced with it where they need it, since a test's
 # annotations follow the signatures of the code it drives, and a call into a silenced
 # package is reported in the caller's own file rather than in the callee's.

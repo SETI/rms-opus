@@ -126,13 +126,16 @@ class Manifest(NamedTuple):
         return sum(file_to_size.values())
 
     def __repr__(self) -> str:
+        """Render the manifest as its file's base name."""
         name = os.path.basename(self.file_name)
         return f'<Manifest {name}>'
 
     def __hash__(self) -> int:
+        """Hash on the file name, so manifests can key the per-file totals."""
         return hash(self.file_name)
 
     def __eq__(self, other: Any) -> bool:
+        """Compare on the file name, ignoring the entries read from it."""
         return isinstance(other, Manifest) and other.file_name == self.file_name
 
 
