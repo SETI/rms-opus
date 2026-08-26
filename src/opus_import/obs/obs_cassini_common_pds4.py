@@ -79,7 +79,8 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         return self._create_mult(self._index_col('cassini:shutter_state_id'))
 
     def field_obs_instrument_coiss_image_number(self) -> IntField:
-        return cast(IntField, self._index_col('cassini:image_number'))
+        image_number = self._index_col('cassini:image_number')
+        return None if image_number is None else int(image_number)
 
     def field_obs_instrument_coiss_instrument_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('cassini:instrument_mode_id'))

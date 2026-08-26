@@ -156,7 +156,10 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
         return self._create_mult(self._index_col('SHUTTER_STATE_ID'))
 
     def field_obs_instrument_coiss_image_number(self) -> IntField:
-        return cast(IntField, self._index_col('IMAGE_NUMBER'))
+        # The index declares this CHARACTER, and the column is int4: the digits are the
+        # seconds part of the spacecraft clock.
+        image_number = self._index_col('IMAGE_NUMBER')
+        return None if image_number is None else int(image_number)
 
     def field_obs_instrument_coiss_instrument_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))
