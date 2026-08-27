@@ -1,4 +1,19 @@
 #!/bin/bash
+#
+# The whole integration chain: set up the environment and opus.toml, import the
+# test bundles into a fresh opus_test_db_<id> schema, run the suites under the
+# integration coverage configuration, then drop the schema.
+#
+# THIS SCRIPT DOES NOT APPLY THE 100% COVERAGE GATE. It exits 0 on a run whose
+# coverage is 99%. opus_run_unittests_coverage.sh only measures; the gate is
+# opus_check_coverage.sh, which .github/workflows/run-integration.yml runs as a
+# separate step so that a coverage failure still reaches codecov first. Run
+#
+#     scripts/automated_tests/opus_check_coverage.sh
+#
+# yourself after this script if you are using it to reproduce CI locally. The
+# plan's Execution notes record this trap being met more than once, each time by
+# reading this script's exit status as the gate's verdict.
 
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi

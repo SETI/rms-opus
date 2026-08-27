@@ -1,5 +1,26 @@
-name: Test OPUS
-run-name: "Run Import and Application Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
+# Holdings-dependent integration workflow (plan §4 Phase E, PR-20; successor of
+# run-app-tests.yml). It runs on the RMS self-hosted Linux runner because it is
+# the only environment with the real PDS3/PDS4 holdings and a MySQL server: it
+# imports a fixed bundle list into a fresh opus_test_db_<id> schema, then runs
+# the golden-response API suite and the live-database Django suites under the
+# integration coverage configuration.
+#
+# Which command establishes which gate, because none of them is implied by an
+# earlier step exiting 0:
+#   * the import succeeded          -> scripts/automated_tests/opus_import_test_database.sh
+#                                      (checks import_for_tests.sh's exit status AND its
+#                                      ERRORS.log), called by opus_main_test.sh
+#   * the database is self-consistent -> `opus_import --validate-perm`, the last import
+#                                      step in scripts/import/import_for_tests.sh, which
+#                                      runs under `set -e`
+#   * the suites passed             -> the pytest call in
+#                                      scripts/automated_tests/opus_run_unittests_coverage.sh
+#   * coverage is 100%              -> scripts/automated_tests/opus_check_coverage.sh, the
+#                                      "Check coverage level" step below. opus_main_test.sh
+#                                      does NOT call it: the check is deliberately after the
+#                                      codecov upload so a coverage failure still reports.
+name: Run Integration Tests
+run-name: "Run Integration Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
 
 on:
   workflow_dispatch:
@@ -15,8 +36,8 @@ defaults:
     shell: bash
 
 jobs:
-  test:
-    name: Test OPUS
+  integration:
+    name: Integration Tests
     runs-on: ${{ matrix.os }}
     # Without this, a hung run occupies the self-hosted runner for GitHub's
     # 6-hour default, blocking every other job queued for it. A full import +
