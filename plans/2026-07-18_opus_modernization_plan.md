@@ -6418,6 +6418,24 @@ body; never rewrite or delete earlier notes.*
     developer guide documents `--cov-fail-under=0` and says plainly that the 90 is a
     target PR-19 would have made real. **PR-19, whenever it runs, owns removing or
     meeting it**; until then no PR should read a `pytest --cov` failure as a regression.
+  - **Two configuration facts a later PR will trip on, both found by re-reviewing a
+    fix rather than the original.** `config_bundle_info.BundleInfo.primary_index` is a
+    **tuple**, not a single name: COCIRS_0402 onwards names three, and
+    `do_import.import_one_bundle` runs `import_one_index` once per index it finds. And
+    `do_table_names.build_table_names_rows` **already emits a row for every mission and
+    instrument table** by looping `config_data`'s maps, so adding one by hand for a new
+    mission or instrument produces a duplicate row with a second `disp_order`; only a
+    table of a new *kind* needs a row written. (`do_table_names.py`'s own module
+    docstring still says otherwise -- "a table added to `opus_import.config_data` needs
+    a row adding here too" -- which is wrong for exactly the mission and instrument
+    cases. Left alone here, because this PR does not otherwise touch that prose:
+    **candidate for a later PR.**)
+  - **A review pass has to verify the fixes, not only the original claims.** Pass 2 of
+    this PR's §4a loop found six blocking defects, and **four of them were introduced by
+    pass 1's fixes** -- a corrected sentence that was corrected wrongly, a claim fixed in
+    one chapter and left standing in another, and two counts that the fix commit itself
+    made stale. Prose rewritten in a hurry is not safer than the prose it replaced; it
+    is newer, and nothing in this repository checks it.
   - **Executing a documented recipe is how three of this PR's defects were found.**
     Every command the guide tells a reader to run was run: the check-script invocations,
     the five pytest forms, both entry points, the docs build, `pyroma`, and the
@@ -6427,8 +6445,8 @@ body; never rewrite or delete earlier notes.*
     `pkgutil.walk_packages` imports only packages, so a plain module's failure surfaces
     later, when autodoc imports it, which `-W` does catch. A recipe that cannot be run
     should not be published.
-  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, mypy over 221
-    files, pytest **1334 passed**, pyroma 10/10, bandit, vulture, Sphinx under `-W -n`,
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, mypy over 222
+    files, pytest **1339 passed**, pyroma 10/10, bandit, vulture, Sphinx under `-W -n`,
     PyMarkdown). The Sphinx build is clean with **zero** warnings, and that number is
     trustworthy only because of the logging finding above -- it was zero before the fix
     too, for the wrong reason. The full local chain

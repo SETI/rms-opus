@@ -91,8 +91,9 @@ not enforced, and again the contract has to be met either way.
     show the reader roughly what the user saw.
 
 ``get_icon_flags()``
-    Called once, after the session has ended, both to collect the actions the session
-    performed and to mark it complete.
+    Called once, after the session has ended, to collect the actions the session
+    performed. Returning nothing is meaningful: a session with no flags is dropped
+    from the report rather than shown empty.
 
 Markup
 ------

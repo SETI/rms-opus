@@ -39,9 +39,11 @@ means editing them:
 :mod:`opus_import.config_bundle_info`
     ``BUNDLE_INFO``: a list of (regular expression matching a bundle id, details)
     pairs, and the only thing that makes a bundle importable at all. The details are
-    the obs class that computes its rows, the PDS version, the primary index file, and
-    two flags. Nothing here maps a bundle-id *prefix* to an instrument -- the regular
-    expression selects the class directly.
+    the obs class that computes its rows, the PDS version, the primary index file
+    names -- ``primary_index`` is a tuple, and a bundle set may name several, as
+    COCIRS_0402 onwards does with three -- and two flags. Nothing here maps a
+    bundle-id *prefix* to an instrument: the regular expression selects the class
+    directly.
 
 :mod:`opus_import.config_targets`
     Target names, the class each target belongs to, and the alias mapping that folds
@@ -110,12 +112,15 @@ The steps
 How one observation becomes a row
 ---------------------------------
 
-:func:`opus_import.steps.do_import_index.import_one_index` reads a bundle's primary
-index with ``pdstable`` -- the one file ``BUNDLE_INFO`` names -- then **discovers** the
-supplemental indexes rather than being told about them, by scanning the bundle's
-metadata directory for the file-name endings it knows (``SUMMARY.LBL``,
-``SUPPLEMENTAL_INDEX.LBL``, ``INVENTORY.LBL``). It joins each row to what it found and
-hands the assembled ``metadata`` dictionary to the bundle's obs class
+:func:`opus_import.steps.do_import.import_one_bundle` looks through the bundle's
+metadata and index directories for each of the primary index names ``BUNDLE_INFO``
+gives it, and runs
+:func:`opus_import.steps.do_import_index.import_one_index` once per index it finds.
+That function reads the index with ``pdstable``, then **discovers** the supplemental
+indexes rather than being told about them, by scanning the same directories for the
+file-name endings it knows (``SUMMARY.LBL``, ``SUPPLEMENTAL_INDEX.LBL``,
+``INVENTORY.LBL``). It joins each row to what it found and hands the assembled
+``metadata`` dictionary to the bundle's obs class
 instance -- **replacing it in place**, once per row. That is why no obs method may
 cache anything derived from ``metadata``:
 :attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows the pattern that is allowed,

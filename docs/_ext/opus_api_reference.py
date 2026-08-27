@@ -198,7 +198,7 @@ def render_index_page() -> str:
              '=' * len(title),
              '',
              'Every module of every OPUS package, generated from the docstrings in',
-             'the source, apart from the two named at the bottom of this page. These',
+             'the source, apart from those named at the bottom of this page. These',
              'pages are written before each build by walking the packages, so a module',
              'added to one of them appears here without anything having to be listed by',
              'hand, and a package that stops importing fails the build rather than',
@@ -211,10 +211,12 @@ def render_index_page() -> str:
               '   :maxdepth: 2',
               '']
     lines += [f'   api_{entry.name}' for entry in PACKAGES]
+    count = 'One module is' if len(EXCLUDED_MODULES) == 1 else \
+        f'{len(EXCLUDED_MODULES)} modules are'
     lines += ['', 'What is left out', '----------------', '',
-              'Two modules are deliberately absent. autodoc documents a module by',
-              'importing it, and each of these would do something during the build that',
-              'a documentation build must not do:', '']
+              f'{count} deliberately absent. autodoc documents a module by importing',
+              'it, and each of these would do something during the build that a',
+              'documentation build must not do:', '']
     for name, reason in sorted(EXCLUDED_MODULES.items()):
         lines += [f'``{name}``', f'    It {reason}.', '']
     return '\n'.join(lines)

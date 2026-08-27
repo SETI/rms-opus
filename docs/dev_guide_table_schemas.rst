@@ -12,7 +12,10 @@ derives from it what the web application's search form contains.
 The schemas ship inside the wheel and are read through :mod:`importlib.resources`, so
 an installed OPUS finds them without a checkout.
 
-Four files are not tables, and reading any of them as a column list will not work:
+Four files are not tables. Two of them are not even column lists --
+``param_info_ranges.json`` is a dictionary of range sets and
+``internal_def_product_types.json`` names no columns -- while the other two are
+perfectly good column lists that simply do not describe a table of their own:
 
 ``param_info_ranges.json``
     The named range sets a column's ``pi_ranges`` refers to.
@@ -29,7 +32,7 @@ Four files are not tables, and reading any of them as a column list will not wor
     A dictionary source rather than a table. Its entries carry only ``definition``,
     ``pi_dict_name`` and ``pi_dict_context`` -- no ``field_name``, no ``field_type``
     -- and :mod:`opus_import.steps.do_dictionary` reads them alongside the PDS data
-    dictionary. It is the only file in the directory that names no columns.
+    dictionary.
 
 Reading a schema is :func:`opus_import.import_util.read_schema_for_table`, and it is
 the only place that substitution happens.
@@ -190,10 +193,11 @@ for it and no value is computed.
 ``obs_files`` is filled by :mod:`opus_import.steps.do_import_index` rather than by the
 dispatch above: it builds each row from a literal, and takes the row id by calling
 :func:`opus_import.import_util.find_max_table_id` directly rather than through
-``MAX_ID``. Its schema's five list-valued ``data_source`` entries -- the only
-``TAB:`` values left in the repository -- are therefore **dead data**: nothing reads
-them, and a ``TAB:`` written into any schema would be reported as an unknown data
-source. They are a survival of a vocabulary the pipeline no longer dispatches on.
+``MAX_ID``. Its schema's list-valued ``data_source`` entries are therefore **dead
+data** -- nothing reads them. The ``TAB:`` values among them are the only ones left in
+the repository, and a ``TAB:`` written into any other schema would be reported as an
+unknown data source: they are a survival of a vocabulary the pipeline no longer
+dispatches on.
 
 Validating the value
 ~~~~~~~~~~~~~~~~~~~~

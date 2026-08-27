@@ -112,10 +112,17 @@ def test_every_walked_module_reaches_a_page() -> None:
 
 
 def test_excluded_modules_are_named_on_the_landing_page() -> None:
-    """A reader is told what was left out, rather than left to notice the absence."""
+    """A reader is told what was left out, rather than left to notice the absence.
+
+    Both the count and the names come from `EXCLUDED_MODULES`, so neither can drift
+    from what the generator actually excludes.
+    """
     index = opus_api_reference.render_index_page()
-    for name in opus_api_reference.EXCLUDED_MODULES:
+    excluded = opus_api_reference.EXCLUDED_MODULES
+    for name, reason in excluded.items():
         assert name in index
+        assert reason.split(' -- ')[0][:40] in index
+    assert f'{len(excluded)} modules are deliberately absent' in index
 
 
 def test_excluded_modules_reach_no_automodule_directive() -> None:

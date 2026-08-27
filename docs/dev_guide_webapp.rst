@@ -28,7 +28,8 @@ Project modules
 ``opus_app.clear_django_cache``
     A deployment helper, run as ``python -m opus_app.clear_django_cache``. It calls
     ``settings.configure()`` in its module body, so it must never be imported by
-    anything -- which is why it is the one module the API reference leaves out.
+    anything -- which is why the API reference leaves it out. The reference's landing
+    page names every module it omits, and why.
 
 The apps
 --------
@@ -137,8 +138,11 @@ Three layers, and they fail differently:
 * **The** ``cache_NNN`` **tables**, which are real tables in the OPUS database. Losing
   one costs the time to rebuild it.
 * **Process-local dictionaries**, notably the ``param_info`` lookup, which is read
-  once and kept. A change to ``param_info`` therefore needs the application restarted
-  or the cache cleared -- which is what ``clear_django_cache`` is for.
+  once and kept. These are module-level dictionaries private to each worker process,
+  so **nothing running outside a worker can clear them** -- ``clear_django_cache``
+  included, which empties the shared Django cache and nothing else. A change to
+  ``param_info`` needs the application restarted. See :ref:`dev_guide_deployment` for
+  what that means after an import.
 
 Static files and templates
 --------------------------

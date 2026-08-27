@@ -75,16 +75,23 @@ This is the bundle recipe plus the configuration data that says the instrument e
    instrument needs no change to it.
 2. **Add the table schemas** the new mission and instrument tables need -- one JSON
    file per table, named after the table.
-3. **Add a row to** :mod:`opus_import.steps.do_table_names` for each new table. That
-   module's set of tables is written out by hand rather than derived from the
-   schemas, so a table with no row there has no "Constraints" section and its fields
-   are invisible.
+3. **Usually nothing to do in** :mod:`opus_import.steps.do_table_names`.
+   ``build_table_names_rows`` already loops the mission and instrument maps you edited
+   in step 1 and emits a row for every one of those tables that exists, so adding one
+   by hand would give the table a **second** row and a second display position. A row
+   has to be written there only for a table of a *new kind* -- neither a mission nor an
+   instrument table, as ``obs_wavelength`` is -- because those are written out
+   individually. A table of a new kind with no row has no "Constraints" section and
+   its fields are invisible.
 4. **Add any label parsing** the instrument needs to
    :mod:`opus_import.instruments`.
 5. **Add the mission class**, and follow the majority spelling for its file name:
-   four of the five missions use ``obs_volume_<mission>_common.py`` and only Cassini
-   uses ``obs_<mission>_common.py``. Add its ``_pds3``/``_pds4`` halves if the mission
-   has both, then the leaf classes for its bundles as above.
+   the mission modules that exist are ``obs_volume_<mission>_common.py``, except
+   Cassini's, which is ``obs_cassini_common.py``. Not every entry in the mission map
+   has a module -- ground-based observations have none -- so read the names off
+   ``opus_import/obs/`` rather than assuming one per mission. Add its
+   ``_pds3``/``_pds4`` halves if the mission has both, then the leaf classes for its
+   bundles as above.
 6. **Regenerate the Django models**: ``scripts/models/create_opus_models.sh`` rewrites
    ``src/opus_app/apps/search/models.py`` from a populated database. New tables do not
    exist to the web application until it has been run.

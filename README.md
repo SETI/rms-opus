@@ -65,17 +65,19 @@ pip install rms-opus
 
 OPUS reads one TOML configuration file and has **no default location for it**: the
 `OPUS_CONFIG` environment variable must name the file in the environment of every OPUS
-process. `opus.toml.template` documents every key; it lives in the repository rather
-than in the installed package, so fetch it alongside the install:
+process. `opus.toml.template` documents every key. It lives in the repository rather
+than in the installed package, so copy it out of a checkout, or fetch it -- with `-f`,
+so that a failed download stops rather than leaving the error page in the file:
 
 ```bash
-curl -O https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
+curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
 cp opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
 export OPUS_CONFIG=$PWD/opus.toml
 ```
 
-Running the web application also needs `memcached`; running the import pipeline needs
-the PDS holdings mounted. The
+Running the import pipeline needs the PDS holdings mounted. `memcached` and its
+`pymemcache` client are optional and are not installed by the line above -- without
+them OPUS falls back to Django's per-process local-memory cache. The
 [deployment guide](https://rms-opus.readthedocs.io/en/latest/dev_guide_deployment.html)
 covers both.
 
