@@ -1364,7 +1364,7 @@ fixture removal + redirect).
 End-to-end acceptance (PR-22/PR-24, on a clean venv, no repo checkout on path):
 1. `pip install <built wheel>`; `OPUS_CONFIG=/path/to/opus.toml python -m opus_import --do-it-all <test bundles>` against a fresh MySQL schema → zero ERRORS.log entries; `--validate-perm` clean.
 2. `python -m opus_import --help` surface identical to the old CLI (documented diff otherwise).
-3. `django-admin migrate` (`DJANGO_SETTINGS_MODULE=opus_app.settings`) + serve `opus_app.wsgi` (mod_wsgi or gunicorn smoke run) against that schema; golden API suite passes against the live server, including `api/metadata_v2/...` and ringobsid conversions; `apiguide.pdf` returns HTTP 302 with its `Location` pointing at the RTD guide URL (asserted **without** the RTD site being live). **Manual, post-merge (RTD only goes live after PR-24):** confirm the live RTD guide resolves and the GUI "API Guide" menu item opens it.
+3. `django-admin migrate` (`DJANGO_SETTINGS_MODULE=opus_app.settings`) + serve `opus_app.wsgi` (mod_wsgi or gunicorn smoke run) against that schema; golden API suite passes against the live server, including `api/metadata_v2/...` and ringobsid conversions; `apiguide.pdf` returns HTTP 302 with its `Location` pointing at the RTD guide URL (asserted **without** the RTD site being live). **Manual, post-merge (these only become true once PR-24 merges `rewrite` into `main`):** confirm the live RTD guide resolves; confirm the GUI "API Guide" menu item opens it; and confirm the README's Quick Start config download works, because it points at `main` and 404s until then -- run `curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template` and check it exits 0 and writes a file whose first line is a `#` comment. (The `-f` is load-bearing: without it `curl` exits 0 on a 404 and writes the error page into the file the next line copies to `opus.toml`.)
 4. The installed `opus_log_analyzer` and `opus_error_analyzer` console commands both run; `opus_log_analyzer` produces a report from a sample log using packaged templates and the packaged default configuration module.
 5. `pytest` (default, no holdings, no DB beyond the container) green with `-n auto`; coverage ≥90% over the four non-Django packages.
 6. `sphinx-build -W -n` clean; `mypy` strict clean; `ruff check` clean with an empty per-file-ignores table; `ruff format --check` clean (enabled in PR-23); `bandit` and `vulture` clean.
@@ -6430,6 +6430,17 @@ body; never rewrite or delete earlier notes.*
     a row adding here too" -- which is wrong for exactly the mission and instrument
     cases. Left alone here, because this PR does not otherwise touch that prose:
     **candidate for a later PR.**)
+  - **The README's Quick Start config download is post-merge acceptance, and it is in
+    section 6 now.** `opus.toml.template` lives in the repository rather than in the
+    wheel, so the Quick Start fetches it from `main` -- where it does not exist until
+    PR-24 merges `rewrite`. The URL stays pointed at `main` deliberately, and `curl -f`
+    makes the failure loud instead of silent, but that leaves the step unverifiable
+    until the merge. **It was added to section 6's post-merge manual list** beside the
+    RTD checks, with the command to run, because otherwise it is a broken quick start
+    nobody has an assigned reason to check and a new contributor finds it first. This is
+    the one plan-body edit this PR makes, and it was made on the orchestrator's explicit
+    instruction. **If PR-22 decides to ship `opus.toml.template` as package data, this
+    acceptance item goes away** and the Quick Start should stop downloading anything.
   - **A review pass has to verify the fixes, not only the original claims.** Pass 2 of
     this PR's §4a loop found six blocking defects, and **four of them were introduced by
     pass 1's fixes** -- a corrected sentence that was corrected wrongly, a claim fixed in
