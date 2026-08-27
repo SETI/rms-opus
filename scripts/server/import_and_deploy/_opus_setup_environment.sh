@@ -89,8 +89,21 @@ export DJANGO_SETTINGS_MODULE=opus_app.settings
 #     WSGIScriptAlias / ${OPUS_SRC_DIR}/rms-opus/wsgi.py
 #
 # See docs/dev_guide_deployment.rst for the whole vhost stanza.
-ln -sfn "$(python -c 'import opus_app.wsgi; print(opus_app.wsgi.__file__)')" \
-        ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/wsgi.py
+#
+# find_spec locates the file WITHOUT importing it. Importing opus_app.wsgi runs
+# get_wsgi_application(), which calls django.setup() and opens the log file, so it
+# fails whenever the environment is not fully ready -- and this step runs before the
+# log directory is guaranteed to exist. That failure was silent in the worst way: the
+# command substitution returned empty, `ln` was handed an empty target, and the deploy
+# died here with Apache already stopped.
+OPUS_WSGI_PATH=$(python -c \
+    'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
+if [[ -z ${OPUS_WSGI_PATH} || ! -f ${OPUS_WSGI_PATH} ]]; then
+    echo "ERROR: cannot locate opus_app/wsgi.py in the installed distribution."
+    echo "       Apache's WSGIScriptAlias target cannot be created."
+    exit 1
+fi
+ln -sfn "${OPUS_WSGI_PATH}" ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/wsgi.py
 
 echo
 echo

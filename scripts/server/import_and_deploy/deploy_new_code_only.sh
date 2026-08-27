@@ -85,9 +85,17 @@ python -m pip install --upgrade "rms-opus${OPUS_VERSION_SPEC}"
 
 # The wsgi module moves with the Python version inside site-packages, so the symlink
 # Apache's vhost points at is re-pointed on every upgrade rather than only on a full
-# deploy.
-ln -sfn "$(python -c 'import opus_app.wsgi; print(opus_app.wsgi.__file__)')" \
-        ${INSTALL_DIR}/wsgi.py
+# deploy. find_spec locates it without importing it -- importing opus_app.wsgi builds
+# the application and opens the log file, which is not what asking for a path should
+# do, and whose failure would leave `ln` with an empty target.
+OPUS_WSGI_PATH=$(python -c \
+    'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
+if [[ -z ${OPUS_WSGI_PATH} || ! -f ${OPUS_WSGI_PATH} ]]; then
+    echo "ERROR: cannot locate opus_app/wsgi.py in the installed distribution."
+    echo "       Apache's WSGIScriptAlias target cannot be created."
+    exit 1
+fi
+ln -sfn "${OPUS_WSGI_PATH}" ${INSTALL_DIR}/wsgi.py
 
 echo "Installed rms-opus $(python -c 'import importlib.metadata as m; print(m.version("rms-opus"))')"
 
