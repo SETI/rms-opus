@@ -102,7 +102,7 @@ echo "Installed rms-opus $(python -c 'import importlib.metadata as m; print(m.ve
 django-admin collectstatic --noinput
 python -m opus_app.clear_django_cache
 
-opus_import --create-param-info --create-partables --create-table-names --import-dict
+opus_import --create-param-info --create-partables --create-table-names --import-dictionary
 
 sudo systemctl start memcached
 sudo systemctl start apache2
