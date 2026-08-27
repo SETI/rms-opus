@@ -2,7 +2,8 @@
 #
 # `make html` builds under both gates the documentation has to pass: -W turns every
 # warning into an error and -n reports every cross-reference that does not resolve.
-# scripts/run-all-checks.sh runs `make html SPHINXOPTS="-W"` on top of that.
+# scripts/run-all-checks.sh names the same pair explicitly, so the gate does not
+# depend on this default.
 
 SPHINXOPTS    ?= -W -n
 SPHINXBUILD   ?= sphinx-build

@@ -68,24 +68,40 @@ The steps
     so a new table needs a row adding.
 
 :mod:`opus_import.steps.do_partables`
-    Builds ``partables``, which records which categories a given search can produce
-    results in, so the user interface can hide the ones that cannot.
+    Builds ``partables``, which maps a value a user can search for onto the table of
+    further search parameters that value makes relevant -- choosing the Cassini
+    mission reveals the Cassini mission table. The web application reads it to decide
+    which sections of the search form to offer, so a mission or instrument with no row
+    here has no searchable columns of its own.
 
 :mod:`opus_import.steps.do_update_mult_info`
     Writes the display details a schema pins for a ``mult_`` table -- the label, the
-    sort order, the grouping -- back over the table the import discovered.
+    sort order, the grouping -- back over the table the import discovered, so that
+    editing a schema changes a label without a re-import. It runs only under
+    ``--update-mult-info``; ``--do-it-all`` does not imply it.
 
 :mod:`opus_import.steps.do_validate`
-    Cross-checks the permanent tables against the schemas: every column has a
-    ``param_info`` row, every referenced ``mult_`` row exists, and so on.
+    Checks the invariants no database constraint can express: that every user-visible
+    column is described in ``param_info``, that a paired minimum and maximum are
+    really in that order, and that observations sharing a filter agree about that
+    filter's wavelengths. It changes nothing and it is not fatal -- see *Errors and
+    warnings* below for what that means for an automated run.
 
 :mod:`opus_import.steps.do_dictionary`
-    Loads the PDS data dictionary and the packaged ``contexts.csv`` into the
-    ``contexts`` and ``definitions`` tables, which is where every tooltip comes from.
+    Fills the ``contexts`` and ``definitions`` tables, which is where every tooltip
+    comes from. The terms come from two places: the PDS data dictionary that ships
+    with the package, and the ``definition`` entries in the table schemas, which is
+    where OPUS's own parameters and mult values are described. It runs only under
+    ``--import-dictionary``, and it is the last thing a run does.
 
-:mod:`opus_import.steps.do_cart` and :mod:`opus_import.steps.do_django`
-    Clean up the ``cart`` table and Django's own session and cache tables around a
-    rebuild.
+:mod:`opus_import.steps.do_cart`
+    Creates the ``cart`` table empty, directly in the permanent namespace: there is
+    nothing to import into it, and it starts empty on every run.
+
+:mod:`opus_import.steps.do_django`
+    Drops the ``cache_*`` tables the web application holds search results in, and the
+    ``user_searches`` table they are keyed by, recreating the latter empty. An import
+    changes what a search returns, so every cached result is stale once it finishes.
 
 How one observation becomes a row
 ---------------------------------

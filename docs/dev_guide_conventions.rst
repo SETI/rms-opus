@@ -4,8 +4,9 @@ Coding Conventions
 ==================
 
 The rules this repository follows are checked in, in ``.cursor/rules/``, and they are
-the specification rather than this summary. Each is a Markdown file with a short
-description at the top:
+the specification rather than this summary. **That directory listing is the authority
+on which rules exist**; the table below is a reading aid, and each rule file carries a
+one-line description at its top.
 
 .. list-table::
    :header-rows: 1

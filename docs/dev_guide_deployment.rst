@@ -92,12 +92,16 @@ one directory that the web server serves directly::
     DJANGO_SETTINGS_MODULE=opus_app.settings \
     django-admin collectstatic
 
-``static_root`` in the configuration is where they go, and ``opus_static_root`` is the
-URL path they are served from. A development installation runs neither: it leaves
-``static_root`` out of the configuration and points ``opus_static_root`` at
+``static_root`` in the configuration is where they go; a development installation
+leaves it out, because it never runs ``collectstatic``, and Django's own default
+applies.
+
+``opus_static_root`` is a different thing and is easy to confuse with it: it is the
+directory the help pages' PDF renderer reads assets out of, and on a server it is the
+same directory as ``static_root``. In a development installation it points at
 ``.../src/opus_app/static``.
 
-The public URL prefix is ``/static_media/`` regardless, which is long-standing and
+The public URL prefix is ``/static_media/`` either way, which is long-standing and
 deliberate.
 
 Running the application

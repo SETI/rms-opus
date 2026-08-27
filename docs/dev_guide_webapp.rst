@@ -125,9 +125,12 @@ Caching
 
 Three layers, and they fail differently:
 
-* **memcached**, through Django's cache framework, keyed with the
-  ``cache_server_prefix`` from the configuration so that several OPUS installations
-  can share one memcached. Losing it costs speed and nothing else.
+* **memcached**, through Django's cache framework, when it is available; Django's
+  local-memory cache stands in when it is not. Every key is built as
+  ``CACHE_SERVER_PREFIX + CACHE_KEY_PREFIX + ...`` -- the first from the
+  configuration's ``cache_server_prefix``, the second ``'opus:'`` and the database
+  schema name -- which is what lets several OPUS installations share one memcached.
+  Losing the cache costs speed and nothing else.
 * **The** ``cache_NNN`` **tables**, which are real tables in the OPUS database. Losing
   one costs the time to rebuild it.
 * **Process-local dictionaries**, notably the ``param_info`` lookup, which is read

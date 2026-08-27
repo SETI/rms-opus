@@ -3254,10 +3254,6 @@ at the right of -- OR -- label. */
         font-family: Arial, Helvetica, sans-serif;
         page-break-after: avoid;
     }
-
-    .op-new-page {
-        page-break-before: always;
-    }
 }
 
 /* Make sure label names & hints in widgets have a caret cursor when users mouseover */

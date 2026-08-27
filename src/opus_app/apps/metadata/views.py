@@ -24,8 +24,8 @@
 The first three describe what a search matches -- how many observations it finds,
 how those divide among the values of a mult field, and the smallest and largest
 values a range field takes over them -- and each is served as JSON, HTML or CSV.
-The fourth describes the searchable fields themselves; `get_fields_info`, which
-serves it, is also where the API guide's field list comes from.
+The fourth describes the searchable fields themselves, and `get_fields_info` is what
+serves it.
 """
 
 from __future__ import annotations
@@ -788,9 +788,7 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
         log.error('api_get_fields: Bad value for collapse %r', collapse)
         raise Http400Error(http400_bad_collapse(collapse, request)) from err
 
-    # The URL patterns bring only json and csv here, and for those get_fields_info
-    # answers with a response rather than the dictionary its 'raw' format returns.
-    return get_fields_info(fmt, request, slug=slug, collapse=collapse_flag)  # type: ignore[return-value]
+    return get_fields_info(fmt, request, slug=slug, collapse=collapse_flag)
 
 
 ################################################################################
@@ -874,14 +872,12 @@ def get_cart_count(session_id: str | None) -> tuple[int, int]:
              .count())
     return count, recycled_count
 
-# This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
-                    collapse: bool = False) -> dict[str, dict[str, Any]] | HttpResponse:
-    """Describe the searchable fields, for api_get_fields and the API guide.
+                    collapse: bool = False) -> HttpResponse:
+    """Describe the searchable fields, for `api_get_fields`.
 
     Parameters:
-        fmt: `raw` to return the description itself, or `json` or `csv` to return
-            it as a response in that format.
+        fmt: The format to answer in: `json` or `csv`.
         request: The request being served, which is named in the error raised for
             an unknown format.
         slug: Describe only the field with this slug; when it is absent, every
@@ -890,9 +886,8 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
             name appears as `<TARGET>` in the labels and slugs.
 
     Returns:
-        For `raw`, a dictionary of category label to a dictionary of field id to
-        that field's description, both in display order. For the other formats, a
-        response carrying the same descriptions.
+        A response describing the fields, with the categories in the order
+        `table_names` gives them and each category's fields in display order.
 
     Raises:
         Http404: If fmt is not one of the formats above.
@@ -1011,10 +1006,8 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
         for _key, val in cat_data.items():
             del val['disp_order']
 
-    ret: dict[str, dict[str, Any]] | HttpResponse
-    if fmt == 'raw':
-        ret = return_obj
-    elif fmt == 'json':
+    ret: HttpResponse
+    if fmt == 'json':
         ret = json_response({'data': return_obj})
     elif fmt == 'csv':
         labels = ['Field ID', 'Category', 'Type',
