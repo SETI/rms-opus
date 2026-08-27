@@ -196,8 +196,9 @@ namespaces = false
 #       print('\n'.join(zipfile.ZipFile(sys.argv[1]).namelist()))" dist/*.whl
 #
 # Everything inside a package directory that git tracks is included, because
-# setuptools-scm's file finder supplies the file list and `namespaces = false`
-# (below) keeps the data directories from becoming importable packages. The
+# setuptools-scm's file finder supplies the file list and `namespaces = false` in
+# [tool.setuptools.packages.find] above keeps the data directories from becoming
+# importable packages. The
 # explicit entries below exist for the directories a *source* build would
 # otherwise leave out. Two categories were audited and deliberately kept:
 #

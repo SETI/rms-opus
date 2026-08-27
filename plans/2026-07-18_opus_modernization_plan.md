@@ -6654,7 +6654,13 @@ body; never rewrite or delete earlier notes.*
   - **An unset `OPUS_SECRET_KEY` used to reach `opus.toml` as an empty string.** The old
     reader validated seven variables and not that one, and `opus_config` does not require
     a non-empty `secret_key`, so Django would have started with none. Both the reader and
-    the generator now reject unset, empty and still-`<PLACEHOLDER>` values by name.
+    the generator now reject unset, empty and still-`<PLACEHOLDER>` values by name --
+    **the generator checks placeholders too, deliberately duplicating the reader**,
+    because `_write_opus_toml.sh` is shipped as a standalone program a later executor may
+    call directly rather than through the reader. (The first version of this note claimed
+    both checked when only the reader did; the review caught it by running the generator
+    with an unfilled value, which wrote `password = "<OPUS_DB_PASSWORD>"` into a file that
+    then loaded perfectly well.)
     Related, for anyone writing a similar guard: **`set -u` alone is not a usable check
     here** -- `${!var}` on an unset name reports `!var: unbound variable`, naming the loop
     variable rather than the one the operator has to fix.
@@ -6701,6 +6707,17 @@ body; never rewrite or delete earlier notes.*
     hand-maintained list rev 7.17 bans. (c) **`opus.toml.template` is deliberately NOT
     package data**, so PR-21's post-merge acceptance item for the README's Quick Start
     download **stands** and section 6 keeps it.
+  - **The deployed servers' MySQL version was NOT confirmed, and the question is still
+    open.** PR-09's note (2026-08-23) says "PR-22 owns the deploy chain and must confirm
+    it before `rewrite` merges", and PR-12's (2026-08-24) says its `VALUES(col)` ->
+    `AS new` switch waits on "whoever holds it after PR-22 establishes the server
+    version". **PR-22 could not establish it**: `tools.pds-rings.seti.org:3306` is not
+    reachable from the development machine (the TCP connect times out), and no
+    credential or tunnel is available here. So the `AS new` alias is **still blocked**
+    and this is not closed -- **owner: PR-24**, or rfrench directly, who has server
+    access; one `SELECT VERSION()` on `tools` and `tools2` answers it. The floor that
+    matters is unchanged either way: Django 5.2 requires MySQL >= 8.0.11, the `AS new`
+    alias requires >= 8.0.19, and the local runner that gates every PR is MySQL 8.0.46.
   - **`fetch-depth: 0` was added to the integration checkout**, which PR-20 left to PR-22.
     The runner was installing `rms-opus 0.1.dev1`, setuptools-scm's fallback. Nothing gates
     on the version -- no golden fixture embeds it and the unit test asserts only its shape
@@ -6732,11 +6749,17 @@ body; never rewrite or delete earlier notes.*
     (the back-compat conversion), `apiguide.pdf` as a 302 to the RTD guide, the UI page,
     and the About page **rendering the installed version string**. Both log-analyzer
     console commands run.
-  - **`--do-it-all` does not import the dictionary**, which is why the deploy scripts run
-    `opus_import --import-dict` of their own. Found the hard way: the acceptance run's UI
+  - **`--do-it-all` does not import the dictionary**, which is why the deploy scripts run a
+    separate dictionary import of their own. Found the hard way: the acceptance run's UI
     page returned HTTP 500 with `Table '<schema>.definitions' doesn't exist` until
     `--import-dictionary` was run separately. Anyone building an OPUS database by hand
     needs both.
+  - **`scripts/import/*` deliberately keeps `python -m opus_import`.** PR-22's section
+    bans repo-relative paths and bare `python -m` **in the server chain**, and those
+    wrappers are not the server chain: `import_for_tests.sh` and `import_all.sh` run from
+    a developer's or the integration runner's checkout, where the editable install and
+    `python -m` are the same thing and no console script may be on PATH. The
+    `scripts/server/*` and `scripts/automated_tests/*` chains are the ones that changed.
   - **`django-admin check` reports one pre-existing warning** from a clean-venv install,
     `urls.W005: URL namespace 'admin' isn't unique`. It is a warning, `check` exits 0, and
     nothing here introduced it. Recorded as a candidate for a later PR, not fixed.
@@ -6758,16 +6781,30 @@ body; never rewrite or delete earlier notes.*
     `actions/checkout` v6.1.0 and `actions/setup-python` v6.3.0 (lightweight tags),
     `codecov/codecov-action` v5.5.5 and `pypa/gh-action-pypi-publish` v1.14.2 (annotated,
     dereferenced). Regenerate the inventory with `grep -rn 'uses:' .github/workflows/`.
-  - **Two checks worth stealing, both of which found real defects here.** (1) `bash -n`
-    over every tracked shell file -- that is what found the broken import chain, and it now
-    covers `deploy.env.template` too, whose placeholders are quoted so that an unfilled
-    copy is at least parseable. (2) Extracting every `run:` block from the parsed workflow
-    YAML and running `bash -n` on it: a heredoc terminator left indented inside a YAML
-    block scalar produces shell that does not parse, and nothing reports that until the job
-    runs.
+  - **Two checks worth stealing, both of which found real defects here, and both now
+    institutionalized** in `tests/opus_packaging/test_shell_scripts_parse.py` rather than
+    left as something an executor happened to run by hand. (1) `bash -n` over every shell
+    file, found **by rule** (suffix or shell shebang) rather than from a list -- that is
+    what found the broken import chain, and it covers `deploy.env.template` too, whose
+    placeholders are quoted so an unfilled copy is at least parseable. (2) Every `run:`
+    block extracted from the parsed workflow YAML and parsed the same way: a heredoc
+    terminator left indented inside a YAML block scalar produces shell that does not
+    parse.
+  - **`bash -n` EXITS ZERO on an unterminated heredoc**, warning only on stderr
+    (`warning: here-document at line N delimited by end-of-file`). A parse check that
+    tests the exit status alone therefore **cannot catch the workflow defect it exists
+    to catch** -- which is exactly what the first version of this PR's check did, and
+    what its commit message claimed it had verified. The gate asserts `stderr == ''` as
+    well as a zero status, because a clean parse is silent. Found by constructing the
+    failure and watching the check pass: mutation-checking is the cheap form, and this
+    is the **fourth** instance of the class PR-21 named, in a PR that quoted PR-21's
+    warning about it.
   - **Verification evidence, measured at this PR's head and not maintained after it.**
-    `scripts/run-all-checks.sh` clean (ruff, mypy, pytest **1411 passed**, pyroma 10/10,
-    bandit, vulture, Sphinx under `-W -n`, PyMarkdown). The full local chain
+    `scripts/run-all-checks.sh` clean: ruff, mypy, pytest, pyroma 10/10, bandit,
+    vulture, Sphinx under `-W -n`, PyMarkdown. **The test count is deliberately not
+    written here.** The first draft of this bullet said "1411 passed" and a later commit
+    in this same PR made it 1414 -- a number made stale by the work it was describing,
+    which is the third time this plan has recorded that failure. Run the script. The full local chain
     (`scripts/automated_tests/opus_main_test.sh`) exited 0 at **2576 tests / TOTAL 22240
     statements, 1874 branches, 100%**, with `opus_check_coverage.sh` invoked separately
     afterwards and exiting 0 -- because the chain does not apply the gate -- and zero

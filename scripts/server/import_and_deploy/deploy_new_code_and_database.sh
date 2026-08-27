@@ -86,7 +86,7 @@ django-admin migrate
 django-admin collectstatic --noinput
 python -m opus_app.clear_django_cache
 
-opus_import --import-dictionary --clean
+opus_import --import-dictionary --cleanup-aux-tables
 
 sudo systemctl start memcached
 sudo systemctl start apache2

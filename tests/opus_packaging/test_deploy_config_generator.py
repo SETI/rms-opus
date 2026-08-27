@@ -147,8 +147,10 @@ def test_an_unset_variable_stops_the_generator(tmp_path: Path, missing: str) -> 
 
     This is the failure the old chain did not have: its reader validated seven
     variables and not ``OPUS_SECRET_KEY``, so an unset one reached opus.toml as an
-    empty string and Django ran with no secret key. ``set -u`` in the generator makes
-    every one of them fatal.
+    empty string and Django ran with no secret key. The explicit ``[[ ! -v ]]`` loop is
+    what makes each one fatal *by name*; ``set -u`` alone would stop the run too, but
+    reporting ``!_toml_var: unbound variable`` -- this script's own loop variable rather
+    than the one the operator has to fix.
     """
     env = dict(BASE_ENV)
     del env[missing]
@@ -179,6 +181,22 @@ def test_an_empty_variable_stops_the_generator(tmp_path: Path, empty: str) -> No
     assert not (tmp_path / 'opus.toml').exists()
 
 
+@pytest.mark.parametrize('placeholder', ['OPUS_SECRET_KEY', 'OPUS_DB_PASSWORD', 'OPUS_DIR'])
+def test_an_unfilled_placeholder_is_refused(tmp_path: Path, placeholder: str) -> None:
+    """A value still carrying the template's ``<PLACEHOLDER>`` is refused by name.
+
+    The reader catches this too, but this program is deliberately runnable on its own,
+    so it cannot assume it was called through the reader. Without the check a direct
+    invocation writes ``password = "<OPUS_DB_PASSWORD>"`` into a file that then loads
+    perfectly well -- a configuration that is wrong in a way nothing downstream objects
+    to.
+    """
+    result = _generate(tmp_path, **{placeholder: f'<{placeholder}>'})
+    assert result.returncode == 1
+    assert f'{placeholder} is still the <PLACEHOLDER>' in result.stderr
+    assert not (tmp_path / 'opus.toml').exists()
+
+
 @pytest.mark.parametrize('bad', ['True', 'yes', '1', 'false '])
 def test_a_non_boolean_debug_value_is_refused(tmp_path: Path, bad: str) -> None:
     """``debug`` is a TOML boolean, so anything but ``true``/``false`` is refused.
@@ -193,10 +211,50 @@ def test_a_non_boolean_debug_value_is_refused(tmp_path: Path, bad: str) -> None:
 
 
 def test_the_generated_file_is_not_readable_by_anyone_else(tmp_path: Path) -> None:
-    """The file holds the database password and the Django secret key, so it is 0600."""
+    """The file holds the database password and the Django secret key, so it ends 0600."""
     assert _generate(tmp_path).returncode == 0
     mode = stat.S_IMODE((tmp_path / 'opus.toml').stat().st_mode)
     assert mode == 0o600, oct(mode)
+
+
+def test_the_file_is_never_world_readable_even_briefly(tmp_path: Path) -> None:
+    """``umask 077`` guards the *write*, not just the final mode.
+
+    The trailing ``chmod 600`` fixes the mode after the fact, so the test above passes
+    with the ``( umask 077; ... )`` subshell deleted -- while the file spends the whole
+    of its write world-readable with the password already in it. That window is the
+    property PR-08's note cared about, and this is what defends it: the temporary file
+    is created under a deliberately permissive umask and its mode is read before the
+    chmod can hide the difference.
+
+    Race-free, and without needing to catch the file mid-write: the destination is
+    pre-created as a directory the process cannot write into, so the rename fails while
+    the temporary file -- written in the parent, which is writable -- is left on disk
+    carrying exactly the mode it was created with. (A *writable* directory would not
+    do: ``mv file dir`` moves the file into it and succeeds.)
+    """
+    destination = tmp_path / 'opus.toml'
+    destination.mkdir(mode=0o500)
+
+    env = {'PATH': os.environ.get('PATH', '/usr/bin:/bin'), **BASE_ENV}
+    result = subprocess.run(
+        ['bash', '-c', 'umask 000; exec "$0" "$1"', str(SCRIPT), str(destination)],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+    # The rename fails, so the run fails -- what matters is the mode of what it left.
+    assert result.returncode != 0
+    leftover = Path(f'{destination}.tmp')
+    assert leftover.exists(), 'the generator did not get as far as writing the temp file'
+    mode = stat.S_IMODE(leftover.stat().st_mode)
+    assert mode & 0o077 == 0, (
+        f'temp file created {oct(mode)} under a permissive umask: the umask 077 '
+        f'subshell is not protecting the write'
+    )
+    # Leave tmp_path removable.
+    destination.chmod(0o700)
 
 
 def test_no_temporary_file_survives_a_successful_run(tmp_path: Path) -> None:

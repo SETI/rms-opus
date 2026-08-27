@@ -21,9 +21,16 @@ imports nothing.
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.name != 'posix', reason='the deploy chain is bash, and runs only on the servers'
+)
 
 
 def test_the_wsgi_module_can_be_located() -> None:

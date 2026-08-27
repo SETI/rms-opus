@@ -49,6 +49,15 @@ for _toml_var in \
         echo "ERROR: $_toml_var is empty in the deploy environment." >&2
         exit 1
     fi
+    # deploy.env.template ships every value as a quoted <PLACEHOLDER>. The reader
+    # catches an unfilled copy too, but this program is deliberately runnable on its
+    # own, so it cannot rely on having been called through the reader: without this
+    # check a direct invocation writes `password = "<OPUS_DB_PASSWORD>"` into a file
+    # that then loads perfectly well.
+    if [[ ${!_toml_var} == \<*\> ]]; then
+        echo "ERROR: $_toml_var is still the <PLACEHOLDER> from deploy.env.template." >&2
+        exit 1
+    fi
     case "${!_toml_var}" in
         *[[:cntrl:]]*)
             echo "ERROR: $_toml_var contains a control character (newline, tab or" >&2

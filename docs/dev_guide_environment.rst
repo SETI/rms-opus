@@ -313,8 +313,10 @@ the golden-response API suite, the live-database Django suites, and
 coverage gate measures what all of them reach together. It is what proves that a
 refactor did not change what OPUS answers.
 
-Every job in both workflows installs the same thing a developer does,
-``pip install -e ".[dev]"``. That is worth stating because it was not always so: the
+The lint, unit and integration jobs all install the same thing a developer does,
+``pip install -e ".[dev]"`` -- **Docs** installs ``".[docs]"`` and **Package**
+deliberately installs the built wheel instead of the project. That is worth stating
+because it was not always so: the
 self-hosted runner used to install a compiled ``requirements.txt`` while the
 GitHub-hosted jobs installed the declared dependencies, so the two resolved different
 versions and a check could pass on one side and fail on the other for no reason

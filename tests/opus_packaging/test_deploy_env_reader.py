@@ -137,7 +137,10 @@ def test_an_unfilled_placeholder_is_refused(tmp_path: Path, key: str) -> None:
     """
     result = _read(_make_environment(tmp_path, **{key: f'<{key}>'}))
     assert result.returncode != 0
-    assert key in result.stdout + result.stderr
+    # The distinguishing wording, not just the key name: three of these keys name
+    # directories, and the later existence checks echo the same key, so asserting only
+    # that the name appears somewhere passes with this branch deleted.
+    assert f'{key} is still the <PLACEHOLDER>' in result.stdout
 
 
 def test_a_missing_file_is_reported_rather_than_ignored(tmp_path: Path) -> None:

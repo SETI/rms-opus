@@ -99,6 +99,11 @@ ln -sfn "${OPUS_WSGI_PATH}" ${INSTALL_DIR}/wsgi.py
 
 echo "Installed rms-opus $(python -c 'import importlib.metadata as m; print(m.version("rms-opus"))')"
 
+# Django's own contrib tables. A no-op when there is nothing to apply, and the
+# reason it is not optional: this deploy upgrades to the newest release by default,
+# so it can cross a Django version that adds a contrib migration, and without this
+# the session and auth tables would silently stay behind.
+django-admin migrate
 django-admin collectstatic --noinput
 python -m opus_app.clear_django_cache
 

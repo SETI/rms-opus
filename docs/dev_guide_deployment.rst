@@ -168,8 +168,8 @@ and a Python upgrade::
 
 ``deploy_new_code_and_database.sh <database name> [<version spec>]`` stops Apache and
 memcached, builds a new installation directory with that release in it, writes its
-``opus.toml``, migrates and collects static files, moves the link, and starts them
-again. ``deploy_new_code_only.sh [<version spec>]`` upgrades the existing installation
+``opus.toml``, moves the link, then migrates, collects static files and imports the
+dictionary, and starts Apache and memcached again. ``deploy_new_code_only.sh [<version spec>]`` upgrades the existing installation
 in place with ``pip install --upgrade`` instead, reusing its ``opus.toml`` because only
 a full deploy knows which database to name in one.
 
