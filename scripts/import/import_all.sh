@@ -37,6 +37,6 @@ if [ "$yn" != "YES" ]; then
     exit 1
 fi
 # source ~/src/rms-opus/p3venv/activate
-# pip install -r requirements.txt
+# pip install -e ".[dev]"
 echo "Running import with nohup - check nohup.out for status"
 nohup ./scripts/import/_import_all_internal.sh "$1" "$2" "$3" &

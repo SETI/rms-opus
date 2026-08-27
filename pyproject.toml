@@ -22,7 +22,13 @@ dependencies = [
   "qrcode",
   "regex",
   "requests",
-  "rms-julian",
+  # Floor, not a pin. rms-julian 3.0.1 built its date grammar with pyparsing's
+  # deprecated camelCase synonym `setParseAction`, so merely importing julian raised
+  # a DeprecationWarning -- which [tool.pytest.ini_options] filterwarnings turns into
+  # an error. Until this PR a lockfile pinned 3.0.1 and a named ignore covered the
+  # warning; with the lockfile gone nothing constrains the resolution, so the floor
+  # is what makes removing that ignore safe rather than lucky.
+  "rms-julian>=3.0.2",
   "rms-pdsfile>=0.0.18",
   "rms-pdslogger",
   "rms-pdstable",
@@ -86,10 +92,9 @@ dev = [
   # rather than silenced by an ignore_missing_imports entry.
   "types-mysqlclient",
   # typeshed's stubs for requests, needed by opus_import/util/retrieve_ra_dec.py
-  # and opus_log_analyzer/opus/slug.py. requests ships py.typed from 2.33 but the
-  # requirements.txt pin the integration runner installs is older and does not,
-  # so without this entry the type gate passes on the GitHub job and fails on a
-  # venv built from the pins. See the dependency-skew note in the plan.
+  # and opus_log_analyzer/opus/slug.py. requests ships py.typed only from 2.33, and
+  # nothing here floors it there, so the stubs are what makes the type gate
+  # independent of which requests a resolve happens to pick.
   "types-requests",
   # typeshed's stubs for pytz, which opus_log_analyzer/cronjob_utils.py imports
   # to fix the cron reports' timezone.
@@ -107,11 +112,9 @@ dev = [
   # Floor set by CVE-2025-71176: pytest through 9.0.2 creates
   # /tmp/pytest-of-<user> with predictable permissions, so a local user on a
   # shared UNIX box can cause a denial of service or possibly gain privileges.
-  # This floor governs `pip install -e ".[dev]"` -- the GitHub-hosted jobs and
-  # developer installs -- which the lockfile does not constrain at all.
-  # requirements.in carries the same floor; the requirements.txt compiled from
-  # it pins an exact version, and the self-hosted runner installs from that
-  # lockfile rather than from these extras.
+  # This floor now governs every environment that runs the suite -- the
+  # GitHub-hosted jobs, the self-hosted integration runner and developer
+  # installs -- because all three install `-e ".[dev]"`.
   "pytest>=9.0.3",
   "pytest-cov>=4.0",
   "pytest-django>=4.5",
@@ -165,17 +168,16 @@ markers = [
 # Warnings are errors so a third-party deprecation cannot rot unnoticed. Add a
 # narrowly-scoped "default::"/"ignore::" entry (with a comment) only for a
 # warning coming from code we cannot fix.
+# There are no entries, and that is the claim: nothing this suite imports raises a
+# warning that has to be tolerated. The one entry this list used to carry named
+# rms-julian 3.0.1's `setParseAction` DeprecationWarning; [project].dependencies now
+# floors rms-julian at 3.0.2, where it is fixed, so the suppression suppressed
+# nothing and a suppression that suppresses nothing is a claim about the code that is
+# no longer true. Add a narrowly-scoped "default::"/"ignore::" entry -- with a comment
+# saying which package raises it and why it cannot be fixed -- only for a warning
+# coming from code this project does not control.
 filterwarnings = [
   "error",
-  # rms-julian 3.0.1 builds its date grammar with pyparsing's deprecated
-  # camelCase synonym `setParseAction`, so importing julian at all raises this.
-  # Third-party on both sides and unavoidable. This is the only warning julian
-  # raises on import (verified by capturing them all under
-  # rms-julian==3.0.1 + pyparsing==3.3.1), so the filter names that one message
-  # rather than the whole category. Fixed upstream in rms-julian 3.0.2;
-  # requirements.txt still pins 3.0.1 for the integration runner, so this entry
-  # goes away when that pin moves.
-  "ignore:'setParseAction' deprecated - use 'set_parse_action':DeprecationWarning",
 ]
 
 [tool.setuptools]

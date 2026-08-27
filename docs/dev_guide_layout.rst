@@ -23,8 +23,6 @@ The tree below annotates the directories and files a developer works in.
     │                             #   bandit, vulture, pymarkdown, setuptools-scm
     ├── opus.toml.template        # the installation configuration file to copy and fill in
     ├── manage.py                 # Django's management command, for development only
-    ├── requirements.in           # the dependency floors the lockfile is compiled from
-    ├── requirements.txt          # the exact versions the self-hosted runner installs
     ├── vulture_whitelist.py      # names vulture cannot see are used, so it stops
     │                             #   reporting them
     ├── codecov.yml, .readthedocs.yaml
