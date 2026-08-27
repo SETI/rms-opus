@@ -48,13 +48,14 @@
 #     ENABLE_PYROMA       (default: true)
 #     ENABLE_BANDIT       (default: true)
 #     ENABLE_VULTURE      (default: true)
-#     ENABLE_SPHINX       (default: false — until PR-21 creates docs/)
+#     ENABLE_SPHINX       (default: true)
 #     ENABLE_PYMARKDOWN   PyMarkdown scan (default: true)
 #
 # Checks (each run separately; -d runs both Sphinx and Markdown):
 #   Code:     optional: ruff check, ruff format --check, mypy, pytest, pyroma,
 #             bandit, vulture (see ENABLE_* above)
-#   Sphinx:   make -C docs html SPHINXOPTS="-W"
+#   Sphinx:   make -C docs html (docs/Makefile passes -W and -n: warnings are
+#             errors, and every unresolved cross-reference is a warning)
 #   Markdown: pymarkdown scan docs/ .cursor/ README.md CONTRIBUTING.md
 #
 # Exit codes:
@@ -89,10 +90,10 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS check state (plan §4): bandit, vulture, mypy and pytest are on now;
-# ruff-format waits for PR-23; sphinx for PR-21 (no docs/ yet). Each flag flips
-# true in its owning PR. mypy runs strict over the whole repository; [tool.mypy]'s
-# burn-down list is empty, while its exclude and ignore_missing_imports remain.
+# OPUS check state (plan §4): every check is on except ruff-format, which waits for
+# the format-only PR (PR-23) and flips true there. mypy runs strict over the whole
+# repository; [tool.mypy]'s burn-down list is empty, while its exclude and
+# ignore_missing_imports remain.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=false}"
 : "${ENABLE_MYPY:=true}"
@@ -100,35 +101,37 @@ SCOPE_SPECIFIED=false
 : "${ENABLE_PYROMA:=true}"
 : "${ENABLE_BANDIT:=true}"
 : "${ENABLE_VULTURE:=true}"
-: "${ENABLE_SPHINX:=false}"
+: "${ENABLE_SPHINX:=true}"
 : "${ENABLE_PYMARKDOWN:=true}"
 
 # Every code tree now lives under src/, with the live-DB suites in
-# integration_tests/, the unit suite in tests/ and manage.py at the root.
+# integration_tests/, the unit suite in tests/, the documentation build's own
+# extensions in docs/ and manage.py at the root.
 # Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
 # names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
 # never scans tests.
-: "${OPUS_RUFF_PATHS:=src integration_tests tests manage.py}"
+: "${OPUS_RUFF_PATHS:=src integration_tests tests docs manage.py}"
 # mypy covers the same trees, and integration_tests/ is checked strictly like
 # every other one: no tree carries a burn-down entry any more.
-: "${OPUS_MYPY_PATHS:=src integration_tests tests manage.py}"
+: "${OPUS_MYPY_PATHS:=src integration_tests tests docs manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
-: "${OPUS_VULTURE_PATHS:=src integration_tests tests manage.py vulture_whitelist.py}"
-
-# OPUS has no default location for its configuration file, so anything that reads
-# OPUS settings (pytest and mypy's django-stubs plugin here, the Sphinx build
-# later) is given one. The checked-in dummy configuration holds dummy credentials
-# and paths under /tmp; it is relative to PROJECT_ROOT, which every check below
-# runs from.
-# Export an absolute OPUS_CONFIG before invoking this script to check against a
-# real installation's configuration instead.
-: "${OPUS_CONFIG:=tests/fixtures/opus_ci.toml}"
-export OPUS_CONFIG
+: "${OPUS_VULTURE_PATHS:=src integration_tests tests docs manage.py vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 VENV="${VENV:-${VENV_PATH:-$PROJECT_ROOT/venv}}"
+
+# OPUS has no default location for its configuration file, so anything that reads
+# OPUS settings (pytest, mypy's django-stubs plugin and the Sphinx build) is given
+# one. The checked-in dummy configuration holds dummy credentials and paths under
+# /tmp. The path is made absolute for clarity rather than out of necessity: Sphinx
+# evaluates docs/conf.py with the working directory set to docs/, and conf.py resolves
+# a relative OPUS_CONFIG against the repository root itself, so either form works.
+# Export an absolute OPUS_CONFIG before invoking this script to check against a
+# real installation's configuration instead.
+: "${OPUS_CONFIG:=$PROJECT_ROOT/tests/fixtures/opus_ci.toml}"
+export OPUS_CONFIG
 
 # Track failures and final exit code
 FAILED_CHECKS=()
@@ -499,8 +502,11 @@ run_sphinx_build() {
     # shellcheck source=/dev/null
     source "$VENV/bin/activate"
 
-    print_info "Building documentation (warnings treated as errors)..."
-    if (cd docs && make clean && make html SPHINXOPTS="-W"); then
+    # -W turns every warning into an error and -n reports every cross-reference that
+    # does not resolve. docs/Makefile defaults to the same pair; they are named here
+    # too so that the gate does not depend on that default.
+    print_info "Building documentation (warnings are errors, nitpicky)..."
+    if (cd docs && make clean && make html SPHINXOPTS="-W -n"); then
         print_success "Sphinx build passed"
         deactivate 2>/dev/null || true
         return 0

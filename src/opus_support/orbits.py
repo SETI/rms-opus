@@ -30,7 +30,7 @@ def parse_cassini_orbit(orbit: str, **kwargs: object) -> int:
             called through one uniform dispatch.
 
     Returns:
-        The internal orbit number: -1 for orbit 0, 0, 1 and 2 for A, B and C, and
+        The internal orbit number -- -1 for orbit 0, 0, 1 and 2 for A, B and C, and
         the orbit's own number for every orbit of 3 or more.
 
     Raises:
@@ -62,7 +62,7 @@ def format_cassini_orbit(value: int, **kwargs: object) -> str:
             be called through one uniform dispatch.
 
     Returns:
-        The orbit name: "000", "00A", "00B" and "00C" for -1, 0, 1 and 2, and the
+        The orbit name -- "000", "00A", "00B" and "00C" for -1, 0, 1 and 2, and the
         number itself zero-padded to three digits for every value of 3 or more.
 
     Raises:

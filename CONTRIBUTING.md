@@ -5,7 +5,7 @@ Thank you for your interest in contributing to rms-opus! This document provides 
 ## Code of Conduct
 
 We expect all contributors to follow our Code of Conduct, which ensures a welcoming and inclusive environment for everyone.
-See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+See [the code of conduct](https://github.com/SETI/rms-opus/blob/main/docs/code_of_conduct.md).
 
 ## Getting Started
 

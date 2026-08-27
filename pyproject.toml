@@ -12,7 +12,6 @@ dependencies = [
   "django>=5.2,<6",
   "jinja2",
   "markupsafe",
-  "mistune",
   "mysqlclient",
   "numpy>=1.26",
   "pdfkit",
@@ -86,8 +85,11 @@ dev = [
   # user-supplied regular expressions a string search accepts.
   "types-regex",
   # typeshed's stubs for qrcode, which apps/help/views.py renders into the
-  # printable API guide.
+  # "How to Cite OPUS" page.
   "types-qrcode",
+  # typeshed's stubs for docutils, whose node types docs/conf.py annotates its
+  # missing-reference handler with. Sphinx itself ships py.typed.
+  "types-docutils",
   "pymarkdownlnt>=0.9.35",
   # Floor set by CVE-2025-71176: pytest through 9.0.2 creates
   # /tmp/pytest-of-<user> with predictable permissions, so a local user on a
@@ -166,34 +168,23 @@ filterwarnings = [
 [tool.setuptools]
 [tool.setuptools.packages.find]
 where = ["src"]
-# Only directories with an __init__.py are packages. Without this, the data and
-# documentation directories inside opus_import (table_schemas, dictionary_data, docs)
-# would each be picked up as a PEP 420 namespace package, making them importable and
-# putting their contents outside the package-data rules below.
+# Only directories with an __init__.py are packages. Without this, the data
+# directories inside opus_import (table_schemas, dictionary_data) would each be picked
+# up as a PEP 420 namespace package, making them importable and putting their contents
+# outside the package-data rules below.
 namespaces = false
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
 # The import pipeline reads these at run time through importlib.resources, so they have
-# to be inside the wheel: the JSON schemas that define every OPUS table (plus the README
-# describing their format and the two lists of values deliberately left unmapped), and
-# the PDS data dictionary sources that `--import-dictionary` reads.
+# to be inside the wheel: the JSON schemas that define every OPUS table (plus the two
+# lists of values deliberately left unmapped), and the PDS data dictionary sources that
+# `--import-dictionary` reads.
 "opus_import" = ["table_schemas/*", "dictionary_data/*"]
 # The log analyzer's Jinja report templates, loaded by package name (jinja2's
 # PackageLoader) rather than from the working directory, so an installed analyzer can
 # render HTML reports.
 "opus_log_analyzer" = ["templates/*"]
-
-[tool.setuptools.exclude-package-data]
-# include-package-data is on by default, which would otherwise ship the import
-# pipeline's developer notes inside the wheel. They document how to add an instrument
-# and how the database is laid out; PR-21 ports them into the Sphinx developer guide and
-# deletes them.
-"opus_import" = ["README.md", "docs/*.md"]
-# Configuration.md documents how to write a log-analyzer configuration class; it is a
-# developer note, not something the installed analyzer reads. PR-21 decides whether to
-# port it into the Sphinx developer guide or drop it.
-"opus_log_analyzer" = ["Configuration.md"]
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
@@ -235,11 +226,15 @@ plugins = ["mypy_django_plugin.main"]
 # name, and the burn-down list below could not name a test package at all. It also
 # means mypy has to run from the repository root, which run-all-checks.sh and the
 # lint job both do.
-mypy_path = "src"
+# `docs/_ext` is here so that the documentation build's own extensions are checked
+# like everything else, and so that the tests importing them resolve.
+mypy_path = "src:docs/_ext"
 explicit_package_bases = true
 exclude = [
   # Out of scope for this plan, like every other tool's configuration.
   "perf_test/",
+  # Sphinx's build output, which is git-ignored and holds nothing written here.
+  "docs/_build/",
   # Written by setuptools-scm at build time and git-ignored, so it is present only
   # after an install and would make the checked set depend on that. Nothing imports it.
   "src/opus_config/_version\\.py$",
@@ -278,10 +273,10 @@ ignore_missing_imports = true
 # applies to the whole repository and no module is silenced by an `ignore_errors`
 # entry, because that list is empty. **That is the whole of the claim.** Suppression
 # has not vanished from this file and nobody should read it that way: `exclude` above
-# still holds the three paths that are not project source (`perf_test/`,
-# setuptools-scm's `_version.py`, Django's vendored `compress.py`), and the
-# `ignore_missing_imports` override above still covers the seven third-party packages
-# that ship neither annotations nor a typeshed stub. Each is documented where it sits.
+# still holds the paths that are not project source, and the `ignore_missing_imports`
+# override above still covers the third-party packages that ship neither annotations
+# nor a typeshed stub. Read both lists above rather than trusting a count here; each
+# entry is documented where it sits.
 #
 # Nothing belongs here again. A tree that cannot pass the checker yet is not a
 # configuration problem: annotate it in the PR that owns it, or say at the site --
@@ -294,6 +289,8 @@ target-version = "py312"
 line-length = 100
 exclude = [
   "perf_test",
+  # Sphinx's build output. Nothing in it is written here.
+  "docs/_build",
   # Written by setuptools-scm at build time and git-ignored; not our code.
   "src/opus_config/_version.py",
   # The Django app's served static assets (JS/CSS/images). The one Python file
@@ -347,10 +344,10 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
 # Empty, and that is PR-01's exit criterion met (plan PR-17, finished by PR-17b).
-# Every tree in RUFF_PATHS -- src, integration_tests, tests, manage.py -- passes
-# with no *per-file* exception. That is what an empty table means and all it means:
-# the six codes in `extend-ignore` above are still ignored globally and four paths
-# are still in `exclude`. What the burn-down held, and where each entry went:
+# Every tree in RUFF_PATHS passes with no *per-file* exception. That is what an empty table means and all it means:
+# the codes in `extend-ignore` above are still ignored globally, and `exclude` above
+# still lists the paths that are not project source. What the burn-down held, and
+# where each entry went:
 #
 #   E722, F403/F405   the bare `except:` and the star imports were refactored away
 #                     by the PRs that owned those trees.
@@ -446,7 +443,10 @@ skips = [
 # tests/ is scanned too: its own dead imports are caught, and names that only
 # the suite uses then count as used.
 [tool.vulture]
-paths = ["src", "integration_tests", "tests", "manage.py",
+paths = ["src", "integration_tests", "tests", "docs", "manage.py",
          "vulture_whitelist.py"]
-exclude = ["*/perf_test/*"]
+# Vulture is invoked with relative paths, so a pattern needing a component before
+# the directory name would never match. These are written both ways for that
+# reason.
+exclude = ["*/perf_test/*", "perf_test/*", "*/docs/_build/*", "docs/_build/*"]
 min_confidence = 70

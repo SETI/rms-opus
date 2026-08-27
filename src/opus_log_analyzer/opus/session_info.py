@@ -410,7 +410,7 @@ class SessionInfo(AbstractSessionInfo):
         """The files this session downloaded.
 
         Returns:
-            A mapping from a file's name to a pair: a one-element list holding the total
+            A mapping from a file's name to a pair -- a one-element list holding the total
             number of bytes tallied for that name, and the log entries that fetched it.
         """
         return self._sessioned_downloads_usage

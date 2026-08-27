@@ -24,8 +24,8 @@
 The first three describe what a search matches -- how many observations it finds,
 how those divide among the values of a mult field, and the smallest and largest
 values a range field takes over them -- and each is served as JSON, HTML or CSV.
-The fourth describes the searchable fields themselves; `get_fields_info`, which
-serves it, is also where the API guide's field list comes from.
+The fourth describes the searchable fields themselves, and `get_fields_info` is what
+serves it.
 """
 
 from __future__ import annotations
@@ -104,26 +104,31 @@ def api_get_result_count(request: HttpRequest, fmt: str, internal: bool = False,
 
     This is a PUBLIC API.
 
-    Format: api/meta/result_count.(?P<fmt>json|html|csv)
-            __api/meta/result_count.json
-    Arguments: Normal search arguments
-               reqno=<N> (Required for internal, ignored for external)
+    ::
+
+        Format: api/meta/result_count.(?P<fmt>json|html|csv)
+                __api/meta/result_count.json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required for internal, ignored for external)
 
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
-    Returned JSON:
+    Returned JSON::
+
         {"data": [{"result_count": 47}]}
       or
         {"data": [{"result_count": 47, "reqno": 1}]}
 
-    Returned HTML:
+    Returned HTML::
+
         <body>
             <dl>
                 <dt>result_count</dt><dd>47</dd>
             </dl>
         </body>
 
-    Returned CSV:
+    Returned CSV::
+
         result count,47
 
     Parameters:
@@ -178,9 +183,11 @@ def api_get_result_count_internal(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __api/meta/result_count.json
-    Arguments: Normal search arguments
-               reqno=<N> (Required)
+    ::
+
+        Format: __api/meta/result_count.json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required)
 
     Parameters:
         request: The request whose query string describes the search.
@@ -201,21 +208,25 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
 
     This is a PUBLIC API.
 
-    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
-            __api/meta/mults/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               reqno=<N> (Required for internal, ignored for external)
+    ::
+
+        Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
+                __api/meta/mults/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required for internal, ignored for external)
 
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
-    Returned JSON:
+    Returned JSON::
+
         {'field_id': slug, 'mults': mults}
       or:
         {'field_id': slug, 'mults': mults, 'reqno': reqno}
 
         mult is a list of entries pairing mult name and result count.
 
-    Returned HTML:
+    Returned HTML::
+
         <body>
             <dl>
                 <dt>Atlas</dt><dd>2</dd>
@@ -223,7 +234,8 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
             </dl>
         </body>
 
-    Returned CSV:
+    Returned CSV::
+
         name1,name2,name3
         number1,number2,number3
 
@@ -409,9 +421,11 @@ def api_get_mult_counts_internal(request: HttpRequest, slug: str) -> HttpRespons
 
     This is a PRIVATE API.
 
-    Format: __api/meta/mults/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               reqno=<N> (Required)
+    ::
+
+        Format: __api/meta/mults/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required)
 
     Parameters:
         request: The request whose query string describes the search.
@@ -436,15 +450,18 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
     Compute and return range widget endpoints (min, max, nulls) for the
     widget defined by [slug] based on current search defined in request.
 
-    Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
-            __api/meta/range/endpoints/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               units=<unit> (Optional, gives units to return in)
-               reqno=<N>    (Required for internal, ignored for external)
+    ::
+
+        Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
+                __api/meta/range/endpoints/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   units=<unit> (Optional, gives units to return in)
+                   reqno=<N>    (Required for internal, ignored for external)
 
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
-    Returned JSON:
+    Returned JSON::
+
         {"min": 63.592, "max": 88.637, "nulls": 2365, units: "km"}
       or
         {"min": 63.592, "max": 88.637, "nulls": 2365, units: "km", "reqno": 123}
@@ -456,7 +473,8 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
 
         {"min": "0.0000", "max": "50000.0000", "nulls": 11}
 
-    Returned HTML:
+    Returned HTML::
+
         <body>
             <dl>
                 <dt>min</dt><dd>0.0000</dd>
@@ -466,7 +484,8 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
             </dl>
         </body>
 
-    Returned CSV:
+    Returned CSV::
+
         min,max,nulls,units
         0.0000,50000.0000,11,km
 
@@ -677,10 +696,12 @@ def api_get_range_endpoints_internal(request: HttpRequest, slug: str) -> HttpRes
 
     This is a PRIVATE API.
 
-    Format: __api/meta/range/endpoints/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               units=<unit> (Optional, gives units to return in)
-               reqno=<N>    (Required)
+    ::
+
+        Format: __api/meta/range/endpoints/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   units=<unit> (Optional, gives units to return in)
+                   reqno=<N>    (Required)
 
     Parameters:
         request: The request whose query string describes the search.
@@ -704,13 +725,16 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
     It's provides a list of all slugs in the database and helpful info
     about each one like label, dict/more_info links, etc.
 
-    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|csv)
-        or: api/fields.(?P<fmt>json|csv)
-    Arguments: [collapse=1]  Collapse surface geo slugs into one
+    ::
+
+        Format: api/fields/(?P<slug>\w+).(?P<fmt>json|csv)
+            or: api/fields.(?P<fmt>json|csv)
+        Arguments: [collapse=1]  Collapse surface geo slugs into one
 
     Can return JSON or CSV.
 
-    Returned JSON:
+    Returned JSON::
+
       {
         "General Constraints": {
           "time1": {
@@ -730,7 +754,8 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
         }
       }
 
-    Returned CSV:
+    Returned CSV::
+
         Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
         time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1,0
 
@@ -763,9 +788,7 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
         log.error('api_get_fields: Bad value for collapse %r', collapse)
         raise Http400Error(http400_bad_collapse(collapse, request)) from err
 
-    # The URL patterns bring only json and csv here, and for those get_fields_info
-    # answers with a response rather than the dictionary its 'raw' format returns.
-    return get_fields_info(fmt, request, slug=slug, collapse=collapse_flag)  # type: ignore[return-value]
+    return get_fields_info(fmt, request, slug=slug, collapse=collapse_flag)
 
 
 ################################################################################
@@ -849,14 +872,12 @@ def get_cart_count(session_id: str | None) -> tuple[int, int]:
              .count())
     return count, recycled_count
 
-# This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
-                    collapse: bool = False) -> dict[str, dict[str, Any]] | HttpResponse:
-    """Describe the searchable fields, for api_get_fields and the API guide.
+                    collapse: bool = False) -> HttpResponse:
+    """Describe the searchable fields, for `api_get_fields`.
 
     Parameters:
-        fmt: `raw` to return the description itself, or `json` or `csv` to return
-            it as a response in that format.
+        fmt: The format to answer in: `json` or `csv`.
         request: The request being served, which is named in the error raised for
             an unknown format.
         slug: Describe only the field with this slug; when it is absent, every
@@ -865,9 +886,8 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
             name appears as `<TARGET>` in the labels and slugs.
 
     Returns:
-        For `raw`, a dictionary of category label to a dictionary of field id to
-        that field's description, both in display order. For the other formats, a
-        response carrying the same descriptions.
+        A response describing the fields, with the categories in the order
+        `table_names` gives them and each category's fields in display order.
 
     Raises:
         Http404: If fmt is not one of the formats above.
@@ -986,10 +1006,8 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
         for _key, val in cat_data.items():
             del val['disp_order']
 
-    ret: dict[str, dict[str, Any]] | HttpResponse
-    if fmt == 'raw':
-        ret = return_obj
-    elif fmt == 'json':
+    ret: HttpResponse
+    if fmt == 'json':
         ret = json_response({'data': return_obj})
     elif fmt == 'csv':
         labels = ['Field ID', 'Category', 'Type',

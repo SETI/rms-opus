@@ -10,7 +10,6 @@ from django.test import RequestFactory
 
 from opus_app.apps.help.views import (
     api_about,
-    api_api_guide,
     api_bundles,
     api_citing_opus,
     api_faq,
@@ -103,24 +102,6 @@ class HelpTests(TestCase):
             r'Internal error \(No request was provided\) for /__help/faq.html'):
             api_faq(request, 'html')
 
-
-            ########################################
-            ######### api_guide UNIT TESTS #########
-            ########################################
-
-    def test__api_api_guide_no_meta(self) -> None:
-        "[test_help.py] api_api_guide: no META"
-        request = request_without_meta(self.factory, 'dummy')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/apiguide.html'):
-            api_api_guide(request, 'html')
-
-    def test__api_api_guide_no_get(self) -> None:
-        "[test_help.py] api_api_guide: no GET"
-        request = request_without_get(self.factory, '__help/apiguide.html')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/apiguide.html'):
-            api_api_guide(request, 'html')
 
 
             #################################################

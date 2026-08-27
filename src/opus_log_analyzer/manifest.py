@@ -210,7 +210,7 @@ class ManifestStatus:
         """Build the whole manifest section of the report.
 
         Returns:
-            The template context: `tables` (the three summaries),
+            The template context -- `tables` (the three summaries),
             `manifest_count`, `opus_id_count` counted across all manifests, and
             `data`, the per-manifest byte totals.
         """

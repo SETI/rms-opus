@@ -552,7 +552,7 @@ def get_mult_name(param_qualified_name: str) -> str:
         param_qualified_name: The field's `<table>.<column>` name.
 
     Returns:
-        The name of the `mult_` table holding that field's values.
+        The name of the ``mult_`` table holding that field's values.
     """
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
 
@@ -693,7 +693,7 @@ def wrap_http500_string(s: str) -> str:
     The messages it wraps name the request path, which the caller controls.
 
     Escaping here rather than in `_request_path` is deliberate: that helper also
-    feeds the http400_/http404_ builders, whose messages are rendered by
+    feeds the ``http400_``/``http404_`` builders, whose messages are rendered by
     `400.html` and Django's `404.html` and are therefore escaped by the template
     engine - escaping them a second time at the source would show the user
     `&amp;lt;` where they typed `<`.

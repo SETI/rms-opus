@@ -35,8 +35,8 @@ by inspection:
   text. There are exactly **two** exceptions, and both are numbers that shape the
   statement rather than data it operates on, so both are checked with
   ``isinstance(..., int)`` before being rendered literally: ``LIMIT``/``OFFSET``
-  (see :meth:`Select.limit`) and the ``MAX_EXECUTION_TIME`` optimizer hint (see
-  :meth:`Select.__init__`). A third raw-text path exists for one caller -- see
+  (see :meth:`Select.limit`) and the ``MAX_EXECUTION_TIME`` optimizer hint (given to
+  the :class:`Select` constructor). A third raw-text path exists for one caller -- see
   :func:`create_table_from_select_sql` -- and takes no values at all.
 
   Note that "MySQL will not accept a placeholder there" would be the wrong reason,

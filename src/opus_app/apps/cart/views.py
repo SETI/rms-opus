@@ -115,9 +115,11 @@ def api_view_cart(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __cart/view.json
-    Arguments: reqno=<reqno>
-               Normal search arguments
+    ::
+
+        Format: __cart/view.json
+        Arguments: reqno=<reqno>
+                   Normal search arguments
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request('/__cart/view.html'))
@@ -169,12 +171,15 @@ def api_cart_status(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __cart/status.json
-    Arguments: reqno=<N>
-               [types=<list of types>]
-               [download=<N>]
+    ::
 
-    Returns a JSON dict containing:
+        Format: __cart/status.json
+        Arguments: reqno=<N>
+                   [types=<list of types>]
+                   [download=<N>]
+
+    Returns a JSON dict containing::
+
         In all cases:
             'count':                      Total number of items in cart NOT in
                                               recycle bin
@@ -250,8 +255,10 @@ def api_get_cart_csv(request: HttpRequest, *, api_code: int) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __cart/data.csv
-            Normal selected-column arguments
+    ::
+
+        Format: __cart/data.csv
+                Normal selected-column arguments
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request('/__cart/data.csv'))
@@ -281,49 +288,50 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
 
     This is a PRIVATE API.
 
-    Format: __cart/
-            (?P<action>add|remove|addrange|removerange|addall).json
-    Arguments: opusid=<ID>                  (add, remove)
-               range=<OPUS_ID>,<OPUS_ID>    (addrange, removerange)
-               recyclebin=0/1               (remove, removerange, addall)
-               reqno=<N>
-               [download=<N>]
+    ::
 
-    Returns the new number of items in the cart.
-    If download=1, also returns all the data returned by
-        /__cart/status.json
+        Format: __cart/
+                (?P<action>add|remove|addrange|removerange|addall).json
+        Arguments: opusid=<ID>                  (add, remove)
+                   range=<OPUS_ID>,<OPUS_ID>    (addrange, removerange)
+                   recyclebin=0/1               (remove, removerange, addall)
+                   reqno=<N>
+                   [download=<N>]
 
-    State transitions:
+    Returns the new number of items in the cart. If download=1, it also returns
+    everything ``/__cart/status.json`` returns.
 
-    add/addrange (recyclebin option ignored):
-        Not previously in cart                  Add to cart recycled=0
-        Previously in cart recycled=0           No effect
-        Previously in cart recycled=1           Set recycled=0
-        Bad opus_id                             Error
+    State transitions::
 
-    addall recyclebin=0 (this means to take "all" from browse results or cart
-                         depending on "view=")
-        Not previously in cart                  Add to cart recycled=0
-        Previously in cart recycled=0           No effect
-        Previously in cart recycled=1           Set recycled=0
+        add/addrange (recyclebin option ignored)
+            Not previously in cart                  Add to cart recycled=0
+            Previously in cart recycled=0           No effect
+            Previously in cart recycled=1           Set recycled=0
+            Bad opus_id                             Error
 
-    addall recyclebin=1 (this means to take "all" from browse results or
-                         cart+recycle bin depending on "view=")
-        Not previously in cart                  Add to cart recycled=0
-        Previously in cart recycled=0           No effect
-        Previously in cart recycled=1           Set recycled=0
+        addall recyclebin=0 (this means to take "all" from browse results or cart
+                             depending on "view=")
+            Not previously in cart                  Add to cart recycled=0
+            Previously in cart recycled=0           No effect
+            Previously in cart recycled=1           Set recycled=0
 
-    remove/removerange recyclebin=0
-        Not in cart                             No effect
-        In cart recycled=0                      Remove from cart
-        In cart recycled=1                      Remove from cart
-        Bad opus_id                             No effect
+        addall recyclebin=1 (this means to take "all" from browse results or
+                             cart+recycle bin depending on "view=")
+            Not previously in cart                  Add to cart recycled=0
+            Previously in cart recycled=0           No effect
+            Previously in cart recycled=1           Set recycled=0
 
-    remove/removerange recyclebin=1
-        Not in cart                             No effect
-        In cart recycled=0                      Set recycled=1
-        In cart recycled=1                      No effect
-        Bad opus_id                             Error
+        remove/removerange recyclebin=0
+            Not in cart                             No effect
+            In cart recycled=0                      Remove from cart
+            In cart recycled=1                      Remove from cart
+            Bad opus_id                             No effect
+
+        remove/removerange recyclebin=1
+            Not in cart                             No effect
+            In cart recycled=0                      Set recycled=1
+            In cart recycled=1                      No effect
+            Bad opus_id                             Error
 
     For addrange/removerange/addall, if view=browse then the search parameters
     are used to determine the opus_ids to operate on. If view=cart then the
@@ -332,8 +340,10 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
     For addall, view=browse and view=cart change the source of "all".
     For view=browse, ?recyclebin is ignored. For view=cart, recyclebin is
     used to decide if only observations in the cart, or observations in the
-    cart+recycle bin, are used. This means that:
-                addall.json?view=cart&recyclebin=1
+    cart+recycle bin, are used. This means that::
+
+        addall.json?view=cart&recyclebin=1
+
     can be used to move everything from the recycle bin back into the main cart.
     """
     if not request or request.GET is None or request.META is None:
@@ -432,15 +442,18 @@ def api_reset_session(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __cart/reset.json
-    Arguments: reqno=<N>
-               recyclebin=0/1
-               [download=<N>]
+    ::
+
+        Format: __cart/reset.json
+        Arguments: reqno=<N>
+                   recyclebin=0/1
+                   [download=<N>]
 
     If recyclebin=1, then only remove items from the recycle bin and leave the
     normal cart alone.
 
-    Returns dict containing:
+    Returns dict containing::
+
         In all cases:
             'count':                    Total number of items in cart NOT in
                                             recycle bin
@@ -538,12 +551,14 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
 
     This is a PRIVATE API.
 
-    Format: __cart/download.json
-        or: [__]api/download/(?P<opus_id>[-\w]+).(?P<fmt>zip|tar|tgz)
-    Arguments: types=<PRODUCT_TYPES>
-               urlonly=1 (optional) means to not include the actual data products
-               hierarchical=1 (optional) means files in archive are stored with
-               hierarchy tree
+    ::
+
+        Format: __cart/download.json
+            or: [__]api/download/(?P<opus_id>[-\w]+).(?P<fmt>zip|tar|tgz)
+        Arguments: types=<PRODUCT_TYPES>
+                   urlonly=1 (optional) means to not include the actual data products
+                   hierarchical=1 (optional) means files in archive are stored with
+                   hierarchy tree
     """
     if not request or request.GET is None or request.META is None:
         if opus_id:
@@ -829,7 +844,8 @@ def _get_download_info(product_types: list[str],
             `'all'`.
         session_id: The session whose cart is described.
 
-    Returns dict containing:
+    Returns dict containing::
+
         'total_download_count':       Total number of unique files
         'total_download_size':        Total size of unique files (bytes)
         'total_download_size_pretty': Total size of unique files (pretty format)

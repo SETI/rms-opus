@@ -463,6 +463,11 @@ MAX_CUM_DOWNLOAD_SIZE = 50*1024*1024*1024 # 50 gigs max cum downloads for a sess
 
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
+# Where the public API guide is published. The Help menu opens it, and the
+# apiguide.pdf entry point -- which used to render a PDF of the guide from inside the
+# application -- redirects to it.
+API_GUIDE_URL = 'https://rms-opus.readthedocs.io/en/latest/api_guide.html'
+
 OPUS_FILE_VERSION = ''
 
 # OPUS supported cart download formats, a dictionary keyed by format, and value

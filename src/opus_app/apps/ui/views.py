@@ -113,7 +113,8 @@ class MainSite(TemplateView): # pragma: no cover - only accessed from browser
         On top of what `TemplateView` supplies, the context carries the front
         end's start-up defaults -- the default columns, widgets, sort order,
         selection limit and preview guides from the settings -- the search menu
-        as already-rendered HTML, and `VERSION_SUFFIX`, a query string the
+        as already-rendered HTML, the URL the Help menu's API Guide item opens,
+        and `VERSION_SUFFIX`, a query string the
         templates append to static asset URLs so a release invalidates whatever
         the browser cached. The suffix comes from the `OPUS_FILE_VERSION`
         setting, which is filled in from the git version the first time this
@@ -134,6 +135,7 @@ class MainSite(TemplateView): # pragma: no cover - only accessed from browser
         context['max_selections_allowed'] = settings.MAX_SELECTIONS_ALLOWED
         context['preview_guides'] = str(settings.PREVIEW_GUIDES).strip('"')
         context['menu'] = menu['menu']
+        context['api_guide_url'] = settings.API_GUIDE_URL
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_git_version()
         context['VERSION_SUFFIX'] = '?version='+settings.OPUS_FILE_VERSION
@@ -148,9 +150,12 @@ def api_notifications(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __notifications.json
+    ::
 
-    JSON return:
+        Format: __notifications.json
+
+    JSON return::
+
         {'lastupdate': '2019-01-31',               (or if none available 'None')
          'notification': '<html code>',            (or if none available 'None')
          'notification_mdate': '<file mod str>'    (ie: 1614648616.5189033)
@@ -217,9 +222,11 @@ def api_get_menu(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __menu.json
-    Arguments: reqno=<reqno>
-               Normal search arguments
+    ::
+
+        Format: __menu.json
+        Arguments: reqno=<reqno>
+                   Normal search arguments
 
     The menu lists the search categories the current search makes available, so
     the search terms in the query string change what comes back.
@@ -255,9 +262,11 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __metadata_selector.json
-    Arguments: reqno=<reqno>
-               Normal search arguments
+    ::
+
+        Format: __metadata_selector.json
+        Arguments: reqno=<reqno>
+                   Normal search arguments
 
     The selector lists the metadata fields the current search makes available.
     The fields named by `cols` are passed to the template as the current
@@ -349,9 +358,11 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __widget/<slug>.html
-    Arguments: slug=<slug>
-               addlink=true|false XXX???
+    ::
+
+        Format: __widget/<slug>.html
+        Arguments: slug=<slug>
+                   addlink=true|false XXX???
 
     The widget comes back with the search terms already in the query string
     filled in, so a range field constrained more than once comes back with one
@@ -735,8 +746,10 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __initdetail/(?P<opus_id>[-\w]+).html
-    Arguments: cols=<columns>
+    ::
+
+        Format: __initdetail/(?P<opus_id>[-\w]+).html
+        Arguments: cols=<columns>
 
     This returns the initial parts of the detail page. These are the things that
     are fast to compute while other parts of the page are handled with AJAX
@@ -890,7 +903,9 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __normalizeurl.json?<slugs>
+    ::
+
+        Format: __normalizeurl.json?<slugs>
 
     JSON return:
         {'new_url': '...',
@@ -1826,7 +1841,9 @@ def api_dummy(request: HttpRequest, *args: str, **kwargs: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __dummy.json
+    ::
+
+        Format: __dummy.json
 
     JSON return:
         {}

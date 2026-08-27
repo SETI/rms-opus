@@ -139,16 +139,18 @@ def api_get_data_and_images(request: HttpRequest, *, api_code: int) -> HttpRespo
     the starting observation for backwards compatibility. A "page" is 100
     observations long.
 
-    Format: __api/dataimages.json
-    Arguments: limit=<N>
-               page=<N>  OR  startobs=<N> (1-based)
-               order=<column>[,<column>...]
-               reqno=<N>
-               Normal search and selected-column arguments
+    ::
+
+        Format: __api/dataimages.json
+        Arguments: limit=<N>
+                   page=<N>  OR  startobs=<N> (1-based)
+                   order=<column>[,<column>...]
+                   reqno=<N>
+                   Normal search and selected-column arguments
 
     Returns JSON.
 
-    Returned JSON:
+    Returned JSON::
 
         {'page': [
             {'opus_id': OPUS_ID,
@@ -308,16 +310,19 @@ def api_get_data(request: HttpRequest, fmt: str, *, api_code: int) -> HttpRespon
     observation for backwards compatibility. A "page" is 100 observations long.
     "page" is not documented in the API Guide.
 
-    Format: api/data.(?P<fmt>json|html|csv)
-            __api/data.(?P<fmt>csv)
-    Arguments: limit=<N>
-               page=<N>  OR  startobs=<N> (1-based)
-               order=<column>[,<column>...]
-               Normal search and selected-column arguments
+    ::
+
+        Format: api/data.(?P<fmt>json|html|csv)
+                __api/data.(?P<fmt>csv)
+        Arguments: limit=<N>
+                   page=<N>  OR  startobs=<N> (1-based)
+                   order=<column>[,<column>...]
+                   Normal search and selected-column arguments
 
     Can return JSON, HTML, or CSV.
 
-    Returned JSON:
+    Returned JSON::
+
         {
             'page_no':             page_no, # If page=<N> given
             'start_obs':           start_obs, # If start_obs=<N> given
@@ -329,11 +334,13 @@ def api_get_data(request: HttpRequest, fmt: str, *, api_code: int) -> HttpRespon
             'page':                tabular page data
         }
 
-    Returned CSV:
+    Returned CSV::
+
         OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)
         vg-iss-2-s-c4360001,Voyager ISS,Saturn,Titan,1981-08-12T14:55:10.080,1.9200
 
-    Returned HTML:
+    Returned HTML::
+
         <table>
             <tr>
                 <th>OPUS ID</th>
@@ -426,16 +433,18 @@ def api_get_metadata(request: HttpRequest, opus_id: str, fmt: str, *,
 
     This is a PUBLIC API.
 
-    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+    ::
 
-    Arguments: cols=<columns>
-                    Limit results to particular columns.
-                    This is a list of slugs separated by commas.
-                    If cols is supplied, cats is ignored.
-               cats=<cats>
-                    Limit results to particular categories. Categories can be
-                    given as "pretty names" as displayed on the Details page,
-                    or can be given as table names.
+        Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+
+        Arguments: cols=<columns>
+                        Limit results to particular columns.
+                        This is a list of slugs separated by commas.
+                        If cols is supplied, cats is ignored.
+                   cats=<cats>
+                        Limit results to particular categories. Categories can be
+                        given as "pretty names" as displayed on the Details page,
+                        or can be given as table names.
 
     Can return JSON, HTML, or CSV.
 
@@ -453,25 +462,27 @@ def api_get_metadata_internal(request: HttpRequest, opus_id: str, fmt: str, *,
 
     This is a PRIVATE API.
 
-    Format: __api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+    ::
 
-    Arguments: cols=<columns>
-                    Limit results to particular columns.
-                    This is a list of slugs separated by commas. Note that the
-                    return will be indexed by slug name. If cols is supplied, cats is
-                    ignored. The slugs in cols may contain optional desired return units
-                    of the form "slug:unit". If no unit is specified, the default units
-                    are used. If the cols= parameter is not included at all, then all
-                    results are returned using their default units, if applicable.
-               cats=<cats>
-                    Limit results to particular categories. Categories can be
-                    given as "pretty names" as displayed on the Details page,
-                    or can be given as table names. All results are returned using their
-                    default units, if applicable.
-               url_cols=<cols>
-                    If given, include these column names in the URLs for each
-                    search icon for mults/strings in the internal HTML output.
-                    This is used on the Detail tab.
+        Format: __api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+
+        Arguments: cols=<columns>
+                        Limit results to particular columns.
+                        This is a list of slugs separated by commas. Note that the
+                        return will be indexed by slug name. If cols is supplied, cats is
+                        ignored. The slugs in cols may contain optional desired return units
+                        of the form "slug:unit". If no unit is specified, the default units
+                        are used. If the cols= parameter is not included at all, then all
+                        results are returned using their default units, if applicable.
+                   cats=<cats>
+                        Limit results to particular categories. Categories can be
+                        given as "pretty names" as displayed on the Details page,
+                        or can be given as table names. All results are returned using their
+                        default units, if applicable.
+                   url_cols=<cols>
+                        If given, include these column names in the URLs for each
+                        search icon for mults/strings in the internal HTML output.
+                        This is used on the Detail tab.
 
     Can return JSON, HTML, or CSV.
 
@@ -753,12 +764,14 @@ def api_get_images_by_size(request: HttpRequest, size: str, fmt: str, *,
 
     This is a PUBLIC API.
 
-    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
-            __api/images/(?P<size>thumb|small|med|full).(?P<fmt>json)
-    Arguments: limit=<N>
-               page=<N>  OR  startobs=<N> (1-based)
-               order=<column>[,<column>...]
-               Normal search arguments
+    ::
+
+        Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
+                __api/images/(?P<size>thumb|small|med|full).(?P<fmt>json)
+        Arguments: limit=<N>
+                   page=<N>  OR  startobs=<N> (1-based)
+                   order=<column>[,<column>...]
+                   Normal search arguments
 
     Can return JSON, HTML, or CSV.
     """
@@ -771,11 +784,13 @@ def api_get_images(request: HttpRequest, fmt: str, *, api_code: int) -> HttpResp
 
     This is a PUBLIC API.
 
-    Format: api/images.(?P<fmt>json|csv)
-    Arguments: limit=<N>
-               page=<N>  OR  startobs=<N> (1-based)
-               order=<column>[,<column>...]
-               Normal search arguments
+    ::
+
+        Format: api/images.(?P<fmt>json|csv)
+        Arguments: limit=<N>
+                   page=<N>  OR  startobs=<N> (1-based)
+                   order=<column>[,<column>...]
+                   Normal search arguments
 
     Can return JSON or CSV.
     """
@@ -789,8 +804,10 @@ def api_get_image(request: HttpRequest, opus_id: str, size: str, fmt: str, *,
 
     This is a PUBLIC API.
 
-    Format: api/image/(?P<size>[thumb|small|med|full])/(?P<opus_id>[-\w]+).
-            (?P<fmt>json|html|csv)
+    ::
+
+        Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+).
+                (?P<fmt>json|html|csv)
 
     Can return JSON, HTML, or CSV.
     """
@@ -965,13 +982,15 @@ def api_get_files(request: HttpRequest, opus_id: str | None = None, *,
 
     This is a PUBLIC API.
 
-    Format: api/files/(?P<opus_id>[-\w]+).json
-            api/files.json
-    Arguments: types=<types>   Product types
-               limit=<N>
-               page=<N>  OR  startobs=<N> (1-based)
-               order=<column>[,<column>...]
-               Normal search arguments
+    ::
+
+        Format: api/files/(?P<opus_id>[-\w]+).json
+                api/files.json
+        Arguments: types=<types>   Product types
+                   limit=<N>
+                   page=<N>  OR  startobs=<N> (1-based)
+                   order=<column>[,<column>...]
+                   Normal search arguments
 
     Only returns JSON.
     """
@@ -1050,7 +1069,9 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
 
     This is a PUBLIC API.
 
-    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
+    ::
+
+        Format: [__]api/categories/(?P<opus_id>[-\w]+).json
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/api/categories/{opus_id}.json'))
@@ -1099,9 +1120,11 @@ def api_get_categories_for_search(request: HttpRequest, *, api_code: int) -> Htt
 
     This is a PUBLIC API.
 
-    Format: api/categories.json
+    ::
 
-    Arguments: Normal search arguments
+        Format: api/categories.json
+
+        Arguments: Normal search arguments
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request('/api/categories.json'))
@@ -1146,7 +1169,9 @@ def api_get_product_types_for_opus_id(request: HttpRequest, opus_id: str) -> Htt
 
     This is a PUBLIC API.
 
-    Format: api/product_types/(?P<opus_id>[-\w]+).json
+    ::
+
+        Format: api/product_types/(?P<opus_id>[-\w]+).json
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/api/product_types/{opus_id}.json'))
@@ -1191,9 +1216,11 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
 
     This is a PUBLIC API.
 
-    Format: api/product_types.json
+    ::
 
-    Arguments: Normal search arguments
+        Format: api/product_types.json
+
+        Arguments: Normal search arguments
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request('/api/product_types.json'))
