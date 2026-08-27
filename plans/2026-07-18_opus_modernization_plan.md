@@ -6097,7 +6097,9 @@ body; never rewrite or delete earlier notes.*
     `main`: `main` carries its own protection with the old contexts on it.
   - **Every `uses:` is a full commit SHA with the release in a trailing comment, and
     that is a documented deviation from `.cursor/rules/environment.mdc`**, which
-    advises pinning to a major tag. The reason is specific to this repository:
+    advises pinning to a major tag. **Ratified as rev 7.22**: the major-tag rule is
+    waived for this repository, binding on PR-21/PR-22/PR-24, and rev 7.22 is the
+    answer to give CodeRabbit if it raises the rule -- do not re-argue it per PR. The reason is specific to this repository:
     `run-integration.yml` runs on hardware the RMS Node owns, so a moved tag executes
     unreviewed third-party code there rather than on a disposable cloud VM. The
     rationale and the update recipe live in `run-integration.yml` next to the pins;
@@ -6148,7 +6150,8 @@ body; never rewrite or delete earlier notes.*
     checkout is the change, and it was deliberately left out of PR-20 as a behavior
     change the plan did not ask for.
   - **`--validate-perm` does not fail anything by exiting, and the adversarial review
-    caught PR-20 claiming it did.** `steps/do_validate.py` contains no `raise` at all --
+    caught PR-20 claiming it did (ratified as rev 7.22, which also rules that §6's
+    acceptance item 1 must be read as log-gated rather than status-gated).** `steps/do_validate.py` contains no `raise` at all --
     every check calls `logger.log('error', ...)` -- and `cli.py` runs it as
     `do_validate.do_validate(ctx, 'perm')` with no status handling, so a database that
     fails validation still exits 0. `cli.py`'s `main()` docstring already said this ("a
