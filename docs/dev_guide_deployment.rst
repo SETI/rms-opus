@@ -53,10 +53,10 @@ release. To reproduce one installation exactly on another machine, generate a co
 file from a known-good one and install against it::
 
     # on the known-good installation
-    /seti/newnav/capped-run.sh python -m pip freeze > constraints.txt
+    python -m pip freeze > constraints.txt
 
     # on the new one
-    /seti/newnav/capped-run.sh pip install rms-opus -c constraints.txt
+    pip install rms-opus -c constraints.txt
 
 Nothing in the deploy chain maintains such a file; it is there for the case where ops
 wants a reproducible install rather than the newest one.
@@ -68,8 +68,15 @@ Copy ``opus.toml.template``, fill in every ``<PLACEHOLDER>``, and export
 ``OPUS_CONFIG`` in the environment of **every** OPUS process -- the WSGI server, the
 import pipeline, and any management command::
 
+    curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
     cp opus.toml.template /etc/opus/opus.toml
     export OPUS_CONFIG=/etc/opus/opus.toml
+
+The template is **repository** infrastructure and is deliberately not inside the wheel:
+nothing in the code reads it, and shipping it would mean extracting it through
+``importlib.resources`` instead of opening a file. A ``pip``-installed server therefore
+fetches it as above, or copies it from a checkout. (``-f`` is load-bearing: without it
+``curl`` exits 0 on a 404 and writes the error page into the file the next line copies.)
 
 There is no default location for the file. A server running several OPUS
 installations gives each one its own file, its own ``OPUS_CONFIG``, its own database
@@ -180,6 +187,22 @@ and a Python upgrade::
 
     WSGIScriptAlias / /opus/src/rms-opus/wsgi.py
     WSGIDaemonProcess opus python-home=/opus/src/rms-opus/opus_venv
+    WSGIProcessGroup opus
+
+``OPUS_CONFIG`` has to reach that daemon process, and **the deploy scripts' export does
+not**: they run in a shell, and Apache starts from init. mod_wsgi has no directive for
+per-process environment variables either, so ``SetEnv`` in the vhost will not do it --
+that populates the WSGI *request* environ, long after ``opus_app.wsgi`` has imported
+settings. What works is putting it in the environment Apache itself starts with. On
+Debian and Ubuntu ``apache2ctl`` sources ``/etc/apache2/envvars`` before starting the
+server, and daemon processes inherit from there::
+
+    # /etc/apache2/envvars
+    export OPUS_CONFIG=/opus/src/rms-opus/opus.toml
+
+A server running several OPUS installations cannot share one such variable; give each
+its own Apache instance, or set the variable from a wrapper ``wsgi.py`` of its own that
+assigns ``os.environ['OPUS_CONFIG']`` before importing :mod:`opus_app.wsgi`.
 
 ``deploy_new_code_and_database.sh <database name> [<version spec>]`` stops Apache and
 memcached, builds a new installation directory with that release in it, writes its
