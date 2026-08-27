@@ -37,3 +37,9 @@ dist/
 src/opus_config/_version.py
 # Agent isolation worktrees (created by Claude Code; never part of the tree)
 .claude/worktrees/
+
+# Sphinx: the build output, and the pages docs/_ext/ writes before each build.
+docs/_build/
+docs/api_reference.rst
+docs/api_opus_*.rst
+docs/api_guide_fields_table.rst

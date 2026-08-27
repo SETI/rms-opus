@@ -14,8 +14,8 @@ defaults:
   run:
     shell: bash
 
-# The repository's default workflow token permission is write; neither job here
-# writes anything back to GitHub, so both are narrowed to reading the repository.
+# The repository's default workflow token permission is write; no job here writes
+# anything back to GitHub, so all of them are narrowed to reading the repository.
 permissions:
   contents: read
 
@@ -41,19 +41,20 @@ jobs:
       # scripts/run-all-checks.sh. PR-23 flips this to 'true'.
       ENABLE_RUFF_FORMAT: 'false'
       # Every code tree lives under src/ now; the live-DB suites are in
-      # integration_tests/, the unit suite in tests/, manage.py at the root.
+      # integration_tests/, the unit suite in tests/, the documentation build's
+      # own extensions in docs/, manage.py at the root.
       # Vulture also scans vulture_whitelist.py so whitelisted names count as
       # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
-      # tests/ is linted and vulture-scanned but never bandit-scanned.
-      RUFF_PATHS: "src integration_tests tests manage.py"
+      # tests/ and docs/ are linted and vulture-scanned but never bandit-scanned.
+      RUFF_PATHS: "src integration_tests tests docs manage.py"
       # The type gate covers every tree the other tools scan, and none of them
       # carries a burn-down entry any more: [tool.mypy]'s ignore_errors list is
       # empty. That is the whole claim -- three non-source paths remain in its
       # exclude, and seven third-party packages remain in ignore_missing_imports.
       # See [tool.mypy] in pyproject.toml.
-      MYPY_PATHS: "src integration_tests tests manage.py"
+      MYPY_PATHS: "src integration_tests tests docs manage.py"
       BANDIT_PATHS: "src integration_tests manage.py"
-      VULTURE_PATHS: "src integration_tests tests manage.py vulture_whitelist.py"
+      VULTURE_PATHS: "src integration_tests tests docs manage.py vulture_whitelist.py"
     steps:
       # Third-party actions are pinned to a full commit SHA with the release in a
       # trailing comment, in every workflow in this repository. See the longer
@@ -121,7 +122,7 @@ jobs:
 
       - name: PyMarkdown
         run: |
-          pymarkdown scan README.md CONTRIBUTING.md .cursor/
+          pymarkdown scan README.md CONTRIBUTING.md .cursor/ docs/
 
   test:
     # Holdings-free unit tests. No database is needed yet; a MySQL service
@@ -169,3 +170,48 @@ jobs:
         # testpaths (= tests/) and the strict options come from pyproject.toml.
         run: |
           pytest -n auto --dist loadscope
+
+  docs:
+    # The Sphinx build. It imports every OPUS module to generate the API reference,
+    # which is why it installs the package rather than Sphinx on its own, and why it
+    # needs OPUS_CONFIG: importing opus_app.settings reads the configuration file.
+    name: Docs
+    runs-on: ubuntu-latest
+    # The build itself takes a couple of minutes; the apt-get and pip steps take the
+    # rest, and they are the network-dependent ones.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # conf.py reads the distribution version from the installed metadata, which
+          # setuptools-scm derives from tags a shallow clone does not fetch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: 3.13
+
+      - name: Install MySQL client headers
+        # mysqlclient is a runtime dependency and ships no Linux wheel, so it is
+        # compiled here and needs the MySQL/MariaDB client development files.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Install package and docs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[docs]"
+
+      - name: Sphinx
+        # -W turns every warning into an error and -n reports every cross-reference
+        # that does not resolve: both gates in one build, matching what
+        # scripts/run-all-checks.sh runs locally. OPUS_CONFIG comes from the
+        # workflow-level env above.
+        run: |
+          sphinx-build -W -n -b html docs docs/_build
