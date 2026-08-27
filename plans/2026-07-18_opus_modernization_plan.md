@@ -6025,3 +6025,48 @@ body; never rewrite or delete earlier notes.*
     The moves cost nothing because neither `integration_tests/apps_db_tests/*` nor
     `tests/*` is in that include list -- the same reason PR-13's 20 decorator tests
     contributed no statements.
+- **2026-08-26 (orchestrator measurement for PR-19, which rev 7.21 deferred to after
+  PR-24):** the mini-holdings fixture's footprint, measured rather than estimated,
+  because §8 calls this the plan's largest unknown and nobody had costed it. Taken
+  against the live holdings on the self-hosted machine
+  (`.../Shared-OPUS/pdsdata/holdings` and `.../pdsdata/pds4-holdings`) by building a
+  real N=20 subset in a scratch directory and committing it to a throwaway repo.
+  **Re-derive rather than quote these**: the holdings tree is not version-controlled and
+  the bundle contents can change under you. The regenerating procedure is: truncate each
+  fixed-record `.tab` with `head -c $((N * ROW_BYTES))` reading `ROW_BYTES` from its own
+  `.lbl`, `head -n $((N+1))` the `.csv`, copy the `.lbl` files whole, then
+  `git add && git gc` and read `du -sb .git/objects`.
+  - **At N=20: ~340 files, ~475 KB raw, ~45 KB packed.** The PDS3 metadata subset is
+    327,794 raw bytes packing to **38,367** (8.5:1 -- fixed-width ASCII with heavy space
+    padding); the three PDS4 index `.csv` files are 156,690 raw and ~6,800 compressed;
+    the 1-byte stand-ins contribute 1,179.
+  - **Scaling is linear and cheap.** One observation costs ~5,474 raw bytes across the
+    five PDS3 tables -- `index.tab` 3069 + `moon_summary` ~3.05 rows x 404 +
+    `ring_summary` ~0.99 x 658 + `saturn_summary` ~0.99 x 404 + `inventory.csv` ~117 --
+    or ~640 bytes packed. N=50 is ~640 KB raw / ~60 KB packed; N=100 ~915 KB / ~85 KB.
+    **Under 1 MB raw and under 100 KB packed at any plausible N**, so repository size is
+    not a reason to keep N small.
+  - **Three costs the byte count hides.** (a) **Git deduplicates the stand-ins** -- all
+    324 one-byte files are the same blob, so they cost one object plus tree entries, but
+    **on disk they occupy 1.3 MB** because each takes a full filesystem block, ~4000x
+    their content; that is the largest single line item in a working tree and it never
+    appears in a diff. (b) **The `.lbl` files dominate and cannot be trimmed**: 218,370
+    bytes across five labels, 67% of the PDS3 subset at N=20 and larger than the data
+    they describe, because they define every column and the fixture spec permits editing
+    only `ROWS` and `FILE_RECORDS`. Below roughly N=40 the fixture is mostly label.
+    (c) **File count is set by the PDS4 bundle, not by N** -- 284 of the ~340 files are
+    `uranus_occ_u0_kao_91cm`'s data collection (320 files, 520 MB real), against 10 PDS3
+    metadata files and 1-2 stand-ins per observation.
+  - **PR-19 will therefore exceed CodeRabbit's 100-file cap**, so rev 7.2's **wide-PR
+    exception applies automatically**: the skip is accepted, the §4a adversarial review
+    substitutes, and the accepted skip plus file count goes in the PR description. The
+    lever if that is unwanted is subsetting the PDS4 **data collection** as well -- the
+    fixture spec currently subsets only its index.
+  - **One open question the stand-in count turns on.** The PDS3 index names only the
+    `.IMG` (`FILE_SPECIFICATION_NAME` = `data/<range>/<id>.IMG`), so the fixture may need
+    1 stand-in per observation rather than 2. Whether the sibling `.LBL` is also required
+    depends on `pdsfile`'s `opus_products`, which is exactly the residual risk the
+    time-boxed fallback covers. Per observation the real tree holds 2 files under
+    `volumes/`, 2 under `calibrated/` and 4 under `previews/`; the last two groups are
+    **not** needed, since the spike criterion accepts warnings for missing previews and
+    calibrated products.
