@@ -6070,3 +6070,143 @@ body; never rewrite or delete earlier notes.*
     `volumes/`, 2 under `calibrated/` and 4 under `previews/`; the last two groups are
     **not** needed, since the spike criterion accepts warnings for missing previews and
     calibrated products.
+- **2026-08-26 (PR-20 executed):** the self-hosted workflow is
+  `.github/workflows/run-integration.yml`, and every workflow in the repository pins
+  its actions to a commit SHA and runs with a least-privilege token. Facts later PRs
+  rely on:
+  - **The required-status-check contexts changed, and the orchestrator sets them at
+    merge time.** The workflow name is `Run Integration Tests`, the job id is
+    `integration` and the job name is `Integration Tests`; with the one-entry
+    `include` matrix that composes the context
+    **`Integration Tests (self-hosted-linux, 3.12)`**, retiring
+    `Test OPUS (self-hosted-linux, 3.12)`. **The context is composed from the *job*
+    name plus the matrix values, not from the workflow name or the file name** --
+    renaming the file alone would have changed nothing, and renaming the job is what
+    does it. Read the name off a real run
+    (`gh api repos/SETI/rms-opus/commits/<sha>/check-runs --jq '.check_runs[].name'`)
+    rather than predicting it from the YAML. Rev 7.21 also assigns this PR the
+    `Unit Tests (3.12)` / `Unit Tests (3.13)` contexts that PR-14 created and PR-19
+    would have added, so the full set `rewrite` should require is `Run Lint`,
+    `Unit Tests (3.12)`, `Unit Tests (3.13)` and
+    `Integration Tests (self-hosted-linux, 3.12)`. Use the `checks` form rather than
+    the deprecated `contexts` form, because `contexts` drops the app pinning the
+    branch already carries (`app_id` 15368, GitHub Actions):
+    `gh api -X PATCH repos/SETI/rms-opus/branches/rewrite/protection/required_status_checks`
+    with `{"strict": true, "checks": [{"context": "<name>", "app_id": 15368}, ...]}`.
+    **PR-24 owns the same job again** when it narrows the branch filters back to
+    `main`: `main` carries its own protection with the old contexts on it.
+  - **Every `uses:` is a full commit SHA with the release in a trailing comment, and
+    that is a documented deviation from `.cursor/rules/environment.mdc`**, which
+    advises pinning to a major tag. **Ratified as rev 7.22**: the major-tag rule is
+    waived for this repository, binding on PR-21/PR-22/PR-24, and rev 7.22 is the
+    answer to give CodeRabbit if it raises the rule -- do not re-argue it per PR. The reason is specific to this repository:
+    `run-integration.yml` runs on hardware the RMS Node owns, so a moved tag executes
+    unreviewed third-party code there rather than on a disposable cloud VM. The
+    rationale and the update recipe live in `run-integration.yml` next to the pins;
+    the other three workflows point at it. **To move a pin**, resolve the release with
+    `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha` and change the SHA *and* the
+    comment together; cross-check with
+    `git ls-remote <url> 'refs/tags/<tag>^{}'`, which dereferences an annotated tag
+    (codecov-action and the PyPI publisher are annotated, the two `actions/*` tags are
+    lightweight, and the API call already returns the dereferenced commit). Regenerate
+    the inventory rather than trusting a count: `grep -rn 'uses:' .github/workflows/`
+    is the whole set, and a pin is wrong if the SHA and its comment disagree.
+    **Every pin is bit-identical to the ref it replaced, except in the self-hosted
+    workflow**: `release/v1`'s head *is* v1.14.2, v5 *is* v5.5.5, and `@v6` resolved to
+    v6.1.0 / v6.3.0 for `run-tests.yml` and both publish workflows. The only usage whose
+    resolved code actually changes is the self-hosted job's, because the two test
+    workflows had disagreed -- `run-app-tests.yml` was on `checkout@v4`/`setup-python@v5`
+    while `run-tests.yml` was on `@v6`.
+    Bumping the self-hosted pair was safe *and* wanted: the runner is **2.336.0** and
+    already forces Node 24, and its own log named those two v4/v5 actions as Node-20
+    actions being forced onto it.
+  - **All four workflows now declare `permissions: contents: read` at workflow level,
+    which is a real reduction: `gh api repos/SETI/rms-opus/actions/permissions/workflow`
+    reports the repository default as `write`.** A job that needs more must say so.
+    Two things a later PR must not undo by accident: codecov-action needs no GitHub API
+    access when it is given an upload token (its only `GITHUB_TOKEN` consumer is an
+    OIDC step that returns immediately unless `use_oidc` is set), and **both publish
+    workflows publish with an API token, not Trusted Publishing** (`password:` is
+    supplied), so neither needs `id-token: write`. **PR-22, which takes PyPI publishing
+    live, must add `id-token: write` if it switches either workflow to Trusted
+    Publishing** -- a `permissions:` block that omits it fails the publish at a moment
+    nobody is watching.
+  - **Every checkout carries `persist-credentials: false`.** checkout's default is
+    still `true` at v6.1.0 (read from its `action.yml`), and the last pre-PR run logged
+    `persist-credentials: true`. Nothing in any workflow pushes or reaches the GitHub
+    API through git. A future step that *does* need to push must set it back on that
+    job alone and say why.
+  - **The integration job checks out shallow and without tags, so the version it
+    installs is setuptools-scm's fallback.** `fetch-depth` is left at the default `1`
+    (the four GitHub-hosted checkouts across the other three workflows set `0`, for two
+    different reasons: the lint and unit jobs install the package, and the publish jobs
+    need the tag setuptools-scm derives the released version from), and the runner's log
+    reads `Successfully installed rms-opus-0.1.dev1`.
+    Nothing depends on it being real today -- no golden fixture under
+    `integration_tests/test_api/responses/` embeds a version (grep for the installed
+    value returns nothing), and `tests/opus_app/test_app_utils.py`'s shape assertion
+    passes on `0.1.dev1` -- but the About page renders that string, and **PR-22 owns
+    packaging**: if it wants a true version on the runner, `fetch-depth: 0` on that
+    checkout is the change, and it was deliberately left out of PR-20 as a behavior
+    change the plan did not ask for.
+  - **`--validate-perm` does not fail anything by exiting, and the adversarial review
+    caught PR-20 claiming it did (ratified as rev 7.22, which also rules that §6's
+    acceptance item 1 must be read as log-gated rather than status-gated).** `steps/do_validate.py` contains no `raise` at all --
+    every check calls `logger.log('error', ...)` -- and `cli.py` runs it as
+    `do_validate.do_validate(ctx, 'perm')` with no status handling, so a database that
+    fails validation still exits 0. `cli.py`'s `main()` docstring already said this ("a
+    zero status" does not mean the run "was clean"; "every validation error" among the
+    steps that "report failure through the log and leave the status zero"), which is the
+    authority to trust over any reading of the shell. **The consequence for anyone
+    touching this chain:** `import_for_tests.sh`'s `set -e` cannot see a validation
+    failure, so `opus_import_test_database.sh`'s `[ -s ERRORS.log ]` is the *only* thing
+    that gates validation, and its companion exit-status check (added by `d796e632`) is
+    the *only* thing that catches an import that died before writing a log -- because a
+    missing `ERRORS.log` is not `-s` either. **Neither check is redundant and neither
+    covers the other's case; removing either one opens a hole that reports success.**
+    The workflow header in `run-integration.yml` now says so at the point of use.
+    **That one `ERRORS.log` covers every bundle, not just the last command run --
+    measured by PR-20's executor by reading `pdslogger`'s source, and stated here
+    because the wrong reading is the alarming one.** `cli.py:435` asks for
+    `rotation='none'`; in `pdslogger/__init__.py`, `error_handler` forwards that to
+    `file_handler`, whose `rotation == 'number'` branch (which renames) and
+    `rotation == 'replace'` branch (which unlinks) are both skipped for `'none'`, and
+    whose non-`midnight` path constructs `logging.FileHandler(local_logpath,
+    mode='a')` -- append. The library's own docstring agrees: *"none": No rotation;
+    append to an existing log of the same name.* `opus_main_test.sh` creates the log
+    directory fresh under a new `UNIQUE_ID` per run, so the file starts empty and then
+    accumulates across every `opus_import` invocation. **Someone who assumed truncation
+    would conclude the bundle imports are ungated and only the final command is
+    checked, which is both frightening and false.** Re-derive rather than trust this:
+    the deciding line is the `mode='a'` in `file_handler`, and the pin that governs
+    which `pdslogger` you get is in `requirements.txt`.
+  - **The 100% coverage gate is two steps, not one, and the split is deliberate.**
+    `opus_run_unittests_coverage.sh` measures and writes `coverage_report.txt`;
+    `opus_check_coverage.sh` is the only thing that fails on anything under 100%, and
+    the workflow runs it as a separate step *after* the codecov upload so a coverage
+    failure still reaches codecov. The consequence -- `opus_main_test.sh` exits 0 on a
+    99% run -- is the trap PR-16 recorded and PR-17a met. It is now written where each
+    script is used: a header block in `opus_main_test.sh` and the Coverage section of
+    `integration_tests/test_api/TEST_API_README.md`, which also gains the check-script
+    step in its reproduce recipe. **A later PR that changes this chain keeps the
+    ordering** (measure, upload, then gate) or the upload stops happening on the runs
+    that most need it.
+  - **The gate scope is unchanged from PR-18** and this PR did not touch it:
+    `integration_tests/.coveragerc` still includes `src/opus_app/apps/*`,
+    `integration_tests/test_api/*` and `src/opus_support/*`, and
+    `opus_run_unittests_coverage.sh` still names `tests/opus_support tests/opus_app
+    integration_tests` in one run. The workflow header now names, per gate, the command
+    whose output establishes it, because no step's exit status implies an earlier one's.
+  - **README's build badge follows the file name** and now points at
+    `run-integration.yml`. **PR-21 rewrites the README** per `doc_readme.mdc` and should
+    decide then whether "Test Status" is better served by `run-tests.yml`, which runs on
+    every push on GitHub-hosted runners, than by the self-hosted integration workflow the
+    badge has always tracked; PR-20 preserved the existing intent rather than making that
+    call. The badge's `?branch=main` only starts reporting this workflow after PR-24
+    merges `rewrite`.
+  - **Mechanical drift, noted and proceeded with:** the PR-14 execution note says
+    "all twelve `uses:` references ... are mutable tags" and lists `actions/checkout@v6`
+    / `actions/setup-python@v6`. There were **13**, and two of them were `@v4`/`@v5` --
+    `git grep -n 'uses:' f17422e4 -- .github/workflows/` at that note's own merge commit
+    returns 13 lines including the v4/v5 pair, so the miscount was the note's, not drift
+    since. It changed no instruction: the work assigned was "pin them all".

@@ -1,0 +1,155 @@
+# Holdings-dependent integration workflow (plan §4 Phase E, PR-20; successor of
+# run-app-tests.yml). It runs on the RMS self-hosted Linux runner because it is
+# the only environment with the real PDS3/PDS4 holdings and a MySQL server: it
+# imports a fixed bundle list into a fresh opus_test_db_<id> schema, then runs
+# the golden-response API suite, the live-database Django suites and the
+# tests/opus_support + tests/opus_app suites that reach the same source, as one
+# session under the integration coverage configuration.
+#
+# Which command establishes which gate -- because a step exiting 0 implies
+# nothing about the step before it and, in this chain, sometimes nothing about
+# itself:
+#   * the import ran, and neither the import nor the validation step logged an
+#     error -> scripts/automated_tests/opus_import_test_database.sh, called by
+#     opus_main_test.sh. It needs BOTH of its checks and neither is redundant.
+#     `opus_import --validate-perm` -- the last step in
+#     scripts/import/import_for_tests.sh -- reports every validation failure
+#     through the log and STILL EXITS ZERO (steps/do_validate.py raises nothing,
+#     and cli.py's main() docstring says so in as many words), so `set -e` cannot
+#     see a validation failure and the non-empty ERRORS.log test is the only
+#     thing that can. The converse hole is why the exit-status check joined it:
+#     `[ -s ERRORS.log ]` is also false for a MISSING file, so an import that
+#     died before logging once reported success.
+#     That one ERRORS.log covers every bundle, not just the last command run:
+#     cli.py asks for rotation='none', which pdslogger implements by skipping
+#     both its renaming and its unlinking branch and opening the file with
+#     logging.FileHandler(..., mode='a'), while opus_main_test.sh creates the
+#     log directory fresh under a new UNIQUE_ID each run. So the file starts
+#     empty and accumulates. Reading it as truncating would make the bundle
+#     imports look ungated, which is the frightening and wrong conclusion.
+#   * the suites passed -> the pytest call in
+#     scripts/automated_tests/opus_run_unittests_coverage.sh
+#   * coverage is 100% -> scripts/automated_tests/opus_check_coverage.sh, the
+#     "Check coverage level" step below. opus_main_test.sh does NOT call it: the
+#     check is deliberately after the codecov upload so a coverage failure still
+#     reports.
+name: Run Integration Tests
+run-name: "Run Integration Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main, rewrite ]
+  push:
+    branches: [ main, rewrite ]
+  schedule:
+    - cron: "00 11 * * *"  # 3am PST, 4am PDT
+
+defaults:
+  run:
+    shell: bash
+
+# The repository's default workflow token permission is write; this job only
+# reads the repository, so it is narrowed here. codecov/codecov-action needs no
+# GitHub API access when it is given an upload token (its only GITHUB_TOKEN
+# consumer is an OIDC step that is inert unless use_oidc is set).
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: Integration Tests
+    runs-on: ${{ matrix.os }}
+    # Without this, a hung run occupies the self-hosted runner for GitHub's
+    # 6-hour default, blocking every other job queued for it. A full import +
+    # test cycle is ~32 min; 90 absorbs a slow import without masking a hang.
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        # Because we can run multiple imports at the same time
+        # under Linux, we can do our multi-Python-version test
+        # there, and then just run a single version under
+        # Windows and MacOS to make sure the code still works there.
+        #
+        # Windows: We can't efficiently run multiple Windows tests because
+        # a GitHub Windows runner can only run a single version
+        # of Python at a time and thus we don't get any
+        # parallelism.
+        #
+        # MacOS: Our current self-hosted runner is very slow with little
+        # memory and it would be prohibitive to run many versions. Also
+        # Python 3.8-3.10 does not currently work on MacOS.
+        include:
+          - os: self-hosted-linux
+            python-version: "3.12"
+          # - os: self-hosted-windows
+          #   python-version: "3.12"
+          # - os: self-hosted-macos
+          #   python-version: "3.12"
+      fail-fast: true
+    steps:
+      # Third-party actions are pinned to a full commit SHA with the release in
+      # a trailing comment, here and in every workflow in this repository. This
+      # is a deliberate, documented deviation from .cursor/rules/environment.mdc,
+      # which advises pinning to a major tag: a major tag is mutable, and this
+      # job runs on hardware the RMS Node owns rather than a disposable cloud VM,
+      # so a moved tag would execute unreviewed third-party code there. Update a
+      # pin by resolving the new release with
+      # `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha` and changing both
+      # the SHA and the comment.
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Nothing in this workflow pushes or reaches the GitHub API through
+          # git, so it never needs the token persisted. checkout's post step
+          # normally removes it, which leaves the window that matters here: a
+          # cancelled or crashed job skips that step, and this runner keeps its
+          # workspace between runs. (At v6 the credential lives in a file under
+          # RUNNER_TEMP that .git/config includes, not inline in .git/config as
+          # it did at v4 -- persisted either way.)
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Test with coverage
+        # Because self-hosted runners keep a global Python environment that
+        # isn't wiped between runs, the various requirements.txt files will
+        # interfere with each other. As a result, we use a venv for cases
+        # where it matters.
+        run: |
+          echo
+          env
+          echo
+          python -m venv venv
+          if [[ ${{ matrix.os }} == self-hosted-windows ]]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+          python -m pip install -r requirements.txt
+          # opus_support is imported as an installed package now that the
+          # RMS_OPUS_LIB_PATH sys.path insert is gone. Dependencies are already
+          # satisfied by requirements.txt, so this only wires up src/.
+          python -m pip install -e .
+          echo
+          python -m pip freeze
+          echo
+          scripts/automated_tests/opus_main_test.sh
+
+      - name: Upload coverage report to codecov
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac  # v5.5.5
+        if: matrix.os == 'self-hosted-linux' && matrix.python-version == '3.12'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          verbose: true
+
+      - name: Check coverage level
+        run: |
+          scripts/automated_tests/opus_check_coverage.sh

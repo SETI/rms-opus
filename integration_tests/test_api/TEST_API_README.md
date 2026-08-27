@@ -82,14 +82,32 @@ which archive to ask:
 
 ## Coverage
 
-The self-hosted workflow gates this tree at 100% through
-`scripts/automated_tests/opus_run_unittests_coverage.sh`, which runs the same suites
-under the coverage configuration in `integration_tests/.coveragerc`. To reproduce it:
+`.github/workflows/run-integration.yml` gates this tree at 100%, in two steps rather
+than one. `scripts/automated_tests/opus_run_unittests_coverage.sh` *measures*: it runs
+the suites under the coverage configuration in `integration_tests/.coveragerc` and
+writes `coverage_report.txt`. `scripts/automated_tests/opus_check_coverage.sh` is what
+*fails the build* on anything under 100%, and the workflow runs it as a separate step
+after the codecov upload -- so `opus_main_test.sh` exiting 0 is not evidence the gate
+passed, and a local run has to invoke the check script itself. To reproduce the
+measurement:
 
+        rm -f .coverage .coverage.*
         COVERAGE_RCFILE=integration_tests/.coveragerc \
             pytest --cov --cov-config=integration_tests/.coveragerc \
                    tests/opus_support tests/opus_app integration_tests
-        COVERAGE_RCFILE=integration_tests/.coveragerc coverage report -m
+        COVERAGE_RCFILE=integration_tests/.coveragerc coverage report -m \
+            >& coverage_report.txt
+
+and then to apply the gate to it, from the repository root:
+
+        scripts/automated_tests/opus_check_coverage.sh
+
+The `rm` is not optional, and the script does it too, as its last step before the
+pytest call: pytest-cov measures under a per-process data suffix and combines
+afterwards, and its own `erase()` removes only `.coverage`, because this configuration
+is not `parallel`. A fragment left behind by an interrupted run would be combined into
+the totals -- coverage no test in this run produced, which can only make the result look
+*better*. Skipping it can therefore produce a local 100% that CI would not.
 
 That configuration measures `src/opus_app/apps`, `integration_tests/test_api` and
 `src/opus_support`, and `tests/opus_support` and `tests/opus_app` are the directories
