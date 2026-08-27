@@ -6624,6 +6624,12 @@ body; never rewrite or delete earlier notes.*
     certainly does not exist (`definitely-not-a-real-pkg-xyz`), because a bot challenge
     is served with a 200 status, so a status-code check there agrees with every name --
     the check-that-cannot-fail shape again. The simple and JSON endpoints distinguish.
+    **RULED 2026-08-27 (rfrench): this is the intended state, not a blocker.**
+    Registration on both indexes happens with the first release -- the first upload
+    claims the name -- so the 404 is expected and needs no action before then. The plan
+    body's "PyPI ownership ... confirmed in place" should be read as "the name is
+    available and will be claimed on first publish", not as a precondition already
+    satisfied. **Do not re-raise this as a defect.**
   - **`scripts/server/import_and_deploy/_opus_import_volumes.sh` did not parse -- on
     `main` and on `rewrite` alike.** A `#` comment placed inside a backslash-continued list ends
     the continuation, so `bash -n` fails and `_run_full_opus_import.sh`, which sources it,
@@ -6632,9 +6638,13 @@ body; never rewrite or delete earlier notes.*
     the note above the `for`. It reached `rewrite` untouched through PR-04's and PR-05's
     moves, and a sweep of every `.sh` on `origin/main` through `bash -n` found it to be
     **the only broken script on either branch**, failing at line 42. **`main` still
-    carries it**, so the production import chain is broken on the deployed branch until
-    `rewrite` merges or someone backports the fix -- **owner: rfrench**, who holds the
-    backport decision.
+    carries it**, so the production import chain is broken on the deployed branch.
+    **RULED 2026-08-27 (rfrench): no backport.** The fix is not being cherry-picked to
+    `main`; `main` receives it when PR-24 merges `rewrite`, and until that merge
+    **`main` cannot run its server import chain at all** -- `run_full_opus_import.sh`
+    dies on the parse error before importing anything. That is accepted, recorded here
+    so it is not rediscovered as a surprise, and is a reason not to attempt a production
+    import off `main` in the meantime.
     Two lessons: a disabled entry cannot be commented out inside a continuation, and
     `bash -n` over every tracked shell script is a check this repository did not have.
   - **The deployed installation is no longer a checkout, and the vhost path changed.**
@@ -6718,13 +6728,17 @@ body; never rewrite or delete earlier notes.*
     open.** PR-09's note (2026-08-23) says "PR-22 owns the deploy chain and must confirm
     it before `rewrite` merges", and PR-12's (2026-08-24) says its `VALUES(col)` ->
     `AS new` switch waits on "whoever holds it after PR-22 establishes the server
-    version". **PR-22 could not establish it**: `tools.pds-rings.seti.org:3306` is not
-    reachable from the development machine (the TCP connect times out), and no
-    credential or tunnel is available here. So the `AS new` alias is **still blocked**
-    and this is not closed -- **owner: PR-24**, or rfrench directly, who has server
-    access; one `SELECT VERSION()` on `tools` and `tools2` answers it. The floor that
-    matters is unchanged either way: Django 5.2 requires MySQL >= 8.0.11, the `AS new`
-    alias requires >= 8.0.19, and the local runner that gates every PR is MySQL 8.0.46.
+    version". **PR-22 could not establish it from here**: `tools.pds-rings.seti.org:3306`
+    is not reachable from the development machine (the TCP connect times out), and no
+    credential or tunnel is available.
+    **ANSWERED 2026-08-27 (rfrench): the deployed MySQL is 8.x.** That is enough for
+    Django 5.2, whose floor is 8.0.11, so the upgrade PR-09 shipped is on a supported
+    server. **It is NOT enough to unblock PR-12's `VALUES(col)` -> `AS new` switch**,
+    which needs **8.0.19 or later**: 8.0.11 is also 8.x, so "8.x" does not distinguish
+    the cases and the alias question stays open pending a specific version. Whoever
+    picks it up needs `SELECT VERSION()` on `tools` and `tools2`, not a major-version
+    answer. **Do not record the alias decision as unblocked.** For reference, the local
+    runner that gates every PR is MySQL 8.0.46.
   - **`fetch-depth: 0` was added to the integration checkout**, which PR-20 left to PR-22.
     The runner was installing `rms-opus 0.1.dev1`, setuptools-scm's fallback. Nothing gates
     on the version -- no golden fixture embeds it and the unit test asserts only its shape
