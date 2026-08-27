@@ -6249,3 +6249,137 @@ body; never rewrite or delete earlier notes.*
     cap -- and separate nulls from real values rather than trusting a plausible total. This
     is the same shape as the CodeRabbit matcher rule at rev 7.18, where "no `up to` token
     found" has to be distinguishable from "the matcher is broken."
+- **2026-08-27 (PR-21 executed):** the documentation is `docs/`, built by Sphinx and
+  published on ReadTheDocs, and the public API guide is part of it. Facts later PRs rely
+  on:
+  - **Two Sphinx extensions write pages before each build, and those pages are
+    git-ignored.** `docs/_ext/opus_field_tables.py` writes
+    `docs/api_guide_fields_table.rst`, the API guide's metadata-field table, from
+    `opus_import/table_schemas/*.json`; `docs/_ext/opus_api_reference.py` writes
+    `docs/api_reference.rst` and `docs/api_opus_*.rst` by walking the packages. Changing
+    what either contains means changing the generator. `.gitignore` names them, and
+    `conf.py`'s `exclude_patterns` keeps the field table out of the toctree because it is
+    included into a page rather than being one.
+  - **`django.setup()` silences Sphinx unless it is stopped from configuring logging, and
+    the failure is invisible.** `opus_app.settings.LOGGING` sets
+    `disable_existing_loggers: True`, and `logging.config.dictConfig` then disables every
+    logger created before it ran -- which includes Sphinx's, because Sphinx imports
+    `conf.py` after building its own. Measured: with `django.setup()` called plainly, a
+    build with a deliberately broken `:doc:` reference and a deliberately broken
+    `:class:` reference reported **zero** warnings and `-W` exited 0. `conf.py` sets
+    `settings.LOGGING_CONFIG = None` before `django.setup()`, which makes Django's
+    `configure_logging` a no-op. **Any future job that calls `django.setup()` and then
+    relies on a logger created earlier has this problem**, and it presents as silence
+    rather than as an error.
+  - **Sphinx evaluates `conf.py` with the working directory set to `docs/`.** A relative
+    `OPUS_CONFIG` -- which is what both `scripts/run-all-checks.sh` and `run-tests.yml`
+    set, relative to the repository root -- is therefore looked for under `docs/` and not
+    found, and the build dies in `conf.py` rather than reporting a documentation problem.
+    `conf.py` resolves a relative value against the repository root;
+    `run-all-checks.sh` now also exports an absolute default. Both are needed: either one
+    alone leaves the other path broken.
+  - **`docs/` joined the ruff, mypy and vulture scopes**, in `run-all-checks.sh`,
+    `run-tests.yml` and `[tool.vulture]`, and `[tool.mypy] mypy_path` is now
+    `"src:docs/_ext"` so the extensions type-check and `tests/opus_docs/` can import them.
+    `docs/_build` is excluded in all three configurations. bandit's targets are
+    deliberately unchanged: nothing under `docs/` is installed or served. `types-docutils`
+    is a new dev dependency, for the node types `conf.py`'s `missing-reference` handler
+    annotates.
+  - **Cross-references are repaired by a `missing-reference` handler, not by
+    `nitpick_ignore`.** Django and the standard library document a class under the path it
+    is imported from while autodoc names the module it is defined in, so
+    `django.http.response.HttpResponse` resolves against nothing. `conf.py`'s
+    `REFERENCE_ALIASES` maps each such spelling to the one that resolves and the handler
+    rewrites the target ahead of intersphinx, which links them instead of silencing them.
+    Measured on this tree: without it, 77 Django references failed; with it, none do.
+    `autodoc_type_aliases` was tried first and rejected -- it fixed the plain cases but
+    left `TypeAliasForwardRef` and quoted names behind wherever an alias appeared inside a
+    union. `nitpick_ignore` holds five entries, each for a symbol with no target at all,
+    and `suppress_warnings` holds exactly one class, `myst.header`, for the README and
+    CONTRIBUTING fragments that are included from below their own title.
+  - **The API guide's field table was verified against the golden fixture before that
+    fixture was deleted**, and the technique is worth keeping. The generator's 313 rows
+    were compared with the 313 rows of the `<h1 id="availablefields">` table inside
+    `integration_tests/test_api/responses/api_help_apiguide.html`, which the application
+    had produced from a real imported database. **312 of 313 matched exactly** in
+    category, label, units and field id, in order. The one difference is the generator's
+    doing and is deliberate: `CASSINIrevno` has `pi_label_results: null` in
+    `obs_mission_cassini.json`, and the application's template rendered that as the
+    literal text `None`; the generator falls back to `pi_label`, giving "Saturn Orbit
+    Number (By Checkbox)". **A PR that fixes that schema's missing label changes what
+    `api/fields` returns**, so it was left alone here.
+  - **The ported API guide has full content parity, verified mechanically.** The original
+    was rendered exactly as `api_api_guide` rendered it (same substitutions, same Markdown
+    library), the port was rendered by Sphinx, both were reduced to word tokens, and the
+    difference was inspected. **Nine tokens are in the original and not in the port, and
+    all nine are accounted for**: four are typographic (`"AND"ed`, `"OR"ed`, `field's`,
+    `parameter's` -- docutils' smart quotes), two are the `%DATE%`/`%VERSION%`
+    placeholders now supplied by Sphinx substitutions, and three (`Table`, `O`, `PUS`)
+    come from the hand-written table of contents that the Sphinx toctree replaced,
+    including its own `O  PUS` typo. A heading-by-heading checklist is in the PR.
+  - **One link in the source guide was broken and is fixed in the port.**
+    `api_guide.md:757` linked to `#fileopusidjson`; the section's anchor is
+    `filesopusidjson`, so the link went nowhere. Sphinx's nitpicky build is what found it.
+  - **`apiguide.pdf` is `settings.API_GUIDE_URL`**, currently
+    `https://rms-opus.readthedocs.io/en/latest/api_guide.html`. The route is
+    `RedirectView.as_view(url=settings.API_GUIDE_URL, permanent=False)` and keeps the
+    `(?P<fmt>pdf)` capture group it has always had, so the set of URLs it matches is
+    unchanged; `RedirectView` passes the captured group through `url % kwargs`, which
+    leaves a URL with no format specifier alone. The Help menu reads the same setting
+    through `MainSite.get_context_data`'s `api_guide_url`. **PR-24's post-merge acceptance
+    is the only thing that can check the target resolves**, because ReadTheDocs cannot go
+    live until `rewrite` reaches `main`.
+  - **`_get_response` in `integration_tests/test_api/api_test_helper.py` takes an
+    `allow_redirects` argument now.** Both clients follow a redirect by default, and this
+    one leaves the site -- without it the 302 test would have fetched readthedocs.io. That
+    file is in the integration coverage config's `omit` list, so the new helper is not
+    measured.
+  - **The `[tool.setuptools.exclude-package-data]` table is gone**, because every entry in
+    it named a file this PR deletes. **The Django app's per-directory `README.md` and
+    `README.txt` files still ship in the wheel** (13 of them, measured from a built
+    wheel), which PR-05's note left to "PR-21/PR-22". Excluding them was attempted and
+    does not work the obvious way: `"opus_app" = ["**/README.md"]` and
+    `"*" = ["README.md", ...]` both left every one of them in the wheel, because each app
+    is its own package and `exclude-package-data` matches per package. Excluding them
+    would mean one entry per subpackage -- a hand-maintained list of 13 -- so **PR-22 owns
+    the decision**, along with the `linguist-vendored` asset trees the same note names.
+  - **Three schema facts, found while writing the table-schemas chapter and left alone.**
+    `data_source_order` (5 occurrences) and `pi_units` (3) are read by no code in the
+    repository -- the chapter says so rather than documenting them as if they worked.
+    `obs_instrument_couvis.json:70` spells a key `field_defalut`; its value is `null` and
+    the default for a missing `field_default` is `NULL`, so the typo changes nothing
+    today, but a future non-null default written under that spelling would be silently
+    ignored.
+  - **The README's build badge became two.** PR-20's note asked this PR to decide whether
+    "Test Status" is better served by `run-tests.yml` than by the self-hosted
+    `run-integration.yml`. Neither alone: the block carries a `tests` badge for
+    `run-tests.yml`, which reports on every push, and an `integration` badge for
+    `run-integration.yml`, which is the behavior-preservation gate. Both read `?branch=main`
+    and start reporting after PR-24.
+  - **`doc_readme.mdc` and PyMarkdown disagree about the README's section headings, and
+    MyST is the third opinion.** The rule permits several `#` headings with a file-scoped
+    linter disable; PyMarkdown has no file-scoped disable comment, only a repository-wide
+    plugin switch. The sections are `##` instead, which satisfies both, and MyST's
+    resulting "headings start at H2" -- the fragment is included from below the title --
+    is the one entry in `suppress_warnings`.
+  - **Mechanical drift, noted and proceeded with.** PR-05's execution note says
+    "`manage.py` and `run_coverage.sh` are at the **repository root**". There is no
+    `run_coverage.sh` anywhere in the tree; `scripts/automated_tests/` drives coverage
+    now. The repository-layout chapter describes what is there.
+  - **What later PRs have to touch in `docs/`.** `dev_guide_layout.rst` annotates
+    `requirements.in` and `requirements.txt`, which **PR-22 deletes**, and describes the
+    deploy scripts PR-22 rewrites; `dev_guide_environment.rst` and
+    `dev_guide_deployment.rst` describe `python -m opus_import` and
+    `python -m opus_log_analyzer`, which **PR-22 gives console-script equivalents**;
+    `dev_guide_environment.rst` describes the two workflows' triggers, which **PR-24
+    narrows to `main`**. Each is a documentation change belonging to the PR that makes the
+    code change, per `doc_python.mdc` section 7.
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, mypy over 220
+    files, pytest **1329 passed**, pyroma 10/10, bandit, vulture, Sphinx under `-W -n`,
+    PyMarkdown). The Sphinx build is clean with **zero** warnings, and that number is
+    trustworthy only because of the logging finding above -- it was zero before the fix
+    too, for the wrong reason. The full local chain
+    (`scripts/automated_tests/opus_main_test.sh`: the 30-bundle import into a fresh MySQL
+    schema, then the suites under the integration coverage configuration) ran end to end,
+    followed by `opus_check_coverage.sh` invoked separately, because the chain does not
+    apply the gate.
