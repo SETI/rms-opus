@@ -9,8 +9,6 @@
 #    Format: __help/faq.(?P<fmt>html|pdf)
 #    Format: __help/gettingstarted.(?P<fmt>html|pdf)
 #    Format: __help/splash.html
-#    Format: apiguide.(?P<fmt>pdf)
-#    Format: __help/apiguide.(?P<fmt>html|pdf)
 #    Format: __help/citing.(?P<fmt>html|pdf)
 #
 ################################################################################
@@ -19,22 +17,22 @@
 
 Every page but the splash page is rendered by `_render_html_or_pdf`, which returns
 it either as HTML or as a PDF built from the template it is given, according to the
-format named in the URL. Two pages take their text from files that ship inside this
-package: the FAQ from `faq.yaml`, and the API guide from `api_guide.md`.
+format named in the URL. One page takes its text from a file that ships inside this
+package: the FAQ, from `faq.yaml`.
+
+The API guide is not here. It is published as documentation, and the ``apiguide.pdf``
+entry point redirects to it; `opus_app.settings.API_GUIDE_URL` is where the URL lives.
 """
 
 from __future__ import annotations
 
 import base64
-import datetime
 import logging
 import os
 import platform
-import re
 from io import BytesIO
 from typing import Any
 
-import mistune
 import pdfkit
 import qrcode
 import yaml
@@ -44,7 +42,6 @@ from django.shortcuts import render
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 
-from opus_app.apps.metadata.views import get_fields_info
 from opus_app.apps.search.models import MultObsGeneralInstrumentId, ObsGeneral
 from opus_app.apps.tools.app_utils import (
     api_view,
@@ -325,95 +322,6 @@ def api_citing_opus(request: HttpRequest, fmt: str) -> HttpResponse:
     return _render_html_or_pdf(request, 'help/citing.html', fmt, 'citing',
                                'How to Cite OPUS',
                                context)
-
-
-@never_cache
-@api_view
-def api_api_guide(request: HttpRequest, fmt: str) -> HttpResponse:
-    """Render the API guide.
-
-    ::
-
-        Format: apiguide.(?P<fmt>pdf)
-                __help/apiguide.(?P<fmt>html|pdf)
-
-    The guide is written as Markdown in `api_guide.md`, which ships inside this
-    package, and is rendered to HTML here with the scheme and host this request
-    arrived on, the current date, and the OPUS version substituted into it. The
-    page also describes the searchable metadata fields, with the surface geometry
-    fields collapsed onto a single target.
-
-    To edit guide content edit api_guide.md
-
-    Parameters:
-        request: The request being served.
-        fmt: `html` for the page itself, `pdf` for a PDF download, which is built
-            from its own print template.
-
-    Returns:
-        The API guide in the requested format.
-
-    Raises:
-        Http404: If there is no request, or it has no GET or META.
-    """
-    if not request or request.GET is None or request.META is None:
-        raise Http404(http404_no_request(f'/__help/apiguide.{fmt}'))
-
-    uri = HttpRequest.build_absolute_uri(request)
-    prefix = '/'.join(uri.split('/')[:3])
-    git_id = get_git_version()
-    current_date = datetime.datetime.today().strftime('%d-%B-%Y')
-
-    path = os.path.dirname(os.path.abspath(__file__))
-    guide_content_file = 'api_guide.md'
-    with open(os.path.join(path, guide_content_file)) as stream:
-        text = stream.read()
-        text = text.replace('%HOST%', prefix)
-        text = text.replace('%DATE%', current_date)
-        text = text.replace('%VERSION%', git_id)
-        text = re.sub(
-            r'%EXTLINK%(.*)%ENDEXTLINK%',
-            r'<a target="_blank" href="\1"><span class="op-api-guide-code">'
-            +r'<code>\1</code></span></a>',
-            text)
-        text = re.sub(r'%CODE%\n', r'<div class="op-api-guide-code-block '
-                      +r'op-api-guide-code"><pre><code>',
-                      text)
-        text = re.sub(r'%ENDCODE%', r'</code></pre></div>', text)
-        guide = mistune.html(text)
-        # mistune.html carries an HTML renderer, so it returns the rendered text.
-        # The token list its return type also admits is what a Markdown object
-        # built with no renderer produces instead.
-        assert isinstance(guide, str)
-        guide = guide.replace('%ADDCLASS%', '<div class="')
-        guide = guide.replace('%ENDADDCLASS%', '">')
-        guide = guide.replace('%ENDCLASS%', '</div>')
-        guide = guide.replace('<table>',
-                 '<table class="table table-sm table-striped table-hover '
-                +'op-table-indent op-table-nonfluid">')
-        guide = guide.replace('<thead>', '<thead class="thead-dark">')
-        guide = guide.replace('<td>', '<td class="op-table-padding">')
-
-    # 'raw' is the format for which get_fields_info returns the dictionary itself
-    # rather than a response.
-    fields_dict: dict[str, dict[str, Any]] = get_fields_info('raw', request, collapse=True)  # type: ignore[assignment]
-    fields = []
-    for _cat, cat_data in fields_dict.items():
-        for _field_name, field in cat_data.items():
-            field['pretty_units'] = None
-            available_units = field['available_units']
-            if available_units:
-                field['pretty_units'] = ', '.join(available_units)
-            fields.append(field)
-
-    template_name = 'help/apiguide.html'
-    if fmt == 'pdf':  # pragma: no cover
-        template_name = 'help/apiguide_print.html'
-
-    context = {'guide': guide,
-               'fields': fields}
-    return _render_html_or_pdf(request, template_name, fmt, 'api_guide',
-                               None, context)
 
 
 def _render_html_or_pdf(request: HttpRequest, template: str, fmt: str, filename: str,

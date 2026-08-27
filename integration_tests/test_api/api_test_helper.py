@@ -96,11 +96,15 @@ class ApiTestHelper(_ApiTestHelperBase):
     # Use with extreme caution!
     UPDATE_FILES = False
 
-    def _get_response(self, url: str) -> requests.Response:
+    def _get_response(self, url: str,
+                      allow_redirects: bool = True) -> requests.Response:
         """Fetch one API URL, from the local test client or a live server.
 
         Parameters:
             url: Path of the API endpoint, beginning with a slash.
+            allow_redirects: False to return the redirect itself rather than what it
+                points at. A redirect off this site would otherwise be followed to
+                whatever host it names.
 
         Returns:
             The response, whichever client answered it.
@@ -110,7 +114,25 @@ class ApiTestHelper(_ApiTestHelperBase):
             url = "https://opus.pds-rings.seti.org" + url
         else:
             url = "http://dev.pds.seti.org" + url
-        return self.client.get(url)
+        return self.client.get(url, allow_redirects=allow_redirects)
+
+    def _run_redirect_equal(self, url: str, expected_location: str,
+                            expected_status: int = 302) -> None:
+        """Assert that one URL redirects, with the status and target it should.
+
+        The redirect is not followed: what is being checked is the response itself,
+        and its target is off this site.
+
+        Parameters:
+            url: Path of the API endpoint.
+            expected_location: The URL the response must name in its `Location`
+                header.
+            expected_status: The status code the endpoint must answer with.
+        """
+        print(url)
+        response = self._get_response(url, allow_redirects=False)
+        self.assertEqual(expected_status, response.status_code)
+        self.assertEqual(expected_location, response.headers['Location'])
 
     def _run_status_equal(self, url: str, expected: int,
                           err_string: str | None = None) -> None:

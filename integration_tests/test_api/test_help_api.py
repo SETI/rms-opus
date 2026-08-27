@@ -115,25 +115,19 @@ class ApiHelpTests(ApiTestHelper, TestCase):
             url = '/__help/citing.pdf'
             self._run_status_equal(url, 200)
 
-    def test__api_help_apiguide(self) -> None:
-        "[test_help_api.py] /__help: apiguide"
-        url = '/__help/apiguide.html'
-        # Remove the "produced on" date
-        self._run_html_range_file(url, 'api_help_apiguide.html',
-                    'It was produced on ',
-                    '<h1 class="op-help-api-guide-no-count">Table of Contents</h1>')
+    def test__api_help_apiguide_redirect(self) -> None:
+        """[test_help_api.py] /apiguide.pdf: redirects to the published guide
 
-    def test__api_help_apiguide_exp(self) -> None:
-        "[test_help_api.py] /help: apiguide pdf"
-        if platform.system() == 'Linux': # pragma: no cover
-            url = '/apiguide.pdf'
-            self._run_status_equal(url, 200)
+        The guide is documentation rather than a page this application renders, so
+        the entry point that used to return a PDF of it answers 302 instead. The
+        target is a setting, and it is asserted here rather than being spelled out
+        again, so that moving the guide is one edit.
+        """
+        self._run_redirect_equal('/apiguide.pdf', settings.API_GUIDE_URL)
 
-    def test__api_help_apiguide_pdf(self) -> None:
-        "[test_help_api.py] /__help: apiguide pdf"
-        if platform.system() == 'Linux': # pragma: no cover
-            url = '/__help/apiguide.pdf'
-            self._run_status_equal(url, 200)
+    def test__api_help_apiguide_internal_gone(self) -> None:
+        """[test_help_api.py] /__help/apiguide.html: no longer served"""
+        self._run_status_equal('/__help/apiguide.html', 404)
 
     def test__api_help_bad(self) -> None:
         "[test_help_api.py] /__help: bad"

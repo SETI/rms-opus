@@ -1035,11 +1035,6 @@ var opus = {
                 pdfURL = baseURL + "faq.pdf";
                 header = "Frequently Asked Questions (FAQ) About OPUS";
                 break;
-            case "apiguide":
-                url = baseURL + "apiguide.html";
-                pdfURL = baseURL + "apiguide.pdf";
-                header = "OPUS API Guide";
-                break;
             case "citing":
                 let searchHash = o_hash.getHashStrFromSelections();
                 url = baseURL + "citing.html?stateurl=" + encodeURIComponent(window.location);

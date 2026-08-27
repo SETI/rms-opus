@@ -6,7 +6,6 @@ djangorestframework
 flake8
 jinja2
 markupsafe
-mistune
 mysqlclient
 numpy >= 1.26
 pdfkit

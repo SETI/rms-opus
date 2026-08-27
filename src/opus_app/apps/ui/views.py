@@ -113,7 +113,8 @@ class MainSite(TemplateView): # pragma: no cover - only accessed from browser
         On top of what `TemplateView` supplies, the context carries the front
         end's start-up defaults -- the default columns, widgets, sort order,
         selection limit and preview guides from the settings -- the search menu
-        as already-rendered HTML, and `VERSION_SUFFIX`, a query string the
+        as already-rendered HTML, the URL the Help menu's API Guide item opens,
+        and `VERSION_SUFFIX`, a query string the
         templates append to static asset URLs so a release invalidates whatever
         the browser cached. The suffix comes from the `OPUS_FILE_VERSION`
         setting, which is filled in from the git version the first time this
@@ -134,6 +135,7 @@ class MainSite(TemplateView): # pragma: no cover - only accessed from browser
         context['max_selections_allowed'] = settings.MAX_SELECTIONS_ALLOWED
         context['preview_guides'] = str(settings.PREVIEW_GUIDES).strip('"')
         context['menu'] = menu['menu']
+        context['api_guide_url'] = settings.API_GUIDE_URL
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_git_version()
         context['VERSION_SUFFIX'] = '?version='+settings.OPUS_FILE_VERSION
