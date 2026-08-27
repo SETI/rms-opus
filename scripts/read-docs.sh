@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 #
-# REPONAME - Build Sphinx documentation and open the HTML index
+# rms-opus - Build Sphinx documentation and open the HTML index
 #
-# Runs `make html` in docs/ with SPHINXOPTS=-W (warnings fail the build),
-# then opens docs/_build/html/index.html using the platform default handler.
+# Runs `make html` in docs/ with SPHINXOPTS="-W -n" -- warnings are errors and
+# every unresolved cross-reference is a warning -- then opens
+# docs/_build/html/index.html using the platform default handler.
+#
+# A developer convenience with no CI role: the `Docs` job in run-tests.yml and
+# scripts/run-all-checks.sh are what gate the documentation.
+#
+# The pair is named here rather than left to docs/Makefile because passing
+# SPHINXOPTS on the `make` command line OVERRIDES the Makefile's `?=` default
+# instead of adding to it. (docs/conf.py sets nitpicky = True, so dropping -n
+# would in fact change nothing today -- which is a reason to state the pair, not
+# a reason to make the next reader re-derive that.)
 #
 # Usage:
 #   ./scripts/read-docs.sh
@@ -35,8 +45,8 @@ fi
 # shellcheck source=/dev/null
 source "$VENV/bin/activate"
 
-echo "Building documentation (warnings treated as errors, SPHINXOPTS=-W)..."
-make -C "$DOCS_DIR" html SPHINXOPTS="-W"
+echo "Building documentation (warnings are errors, nitpicky)..."
+make -C "$DOCS_DIR" html SPHINXOPTS="-W -n"
 
 if [ ! -f "$HTML_INDEX" ]; then
     echo "Error: built HTML not found at $HTML_INDEX" >&2

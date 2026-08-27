@@ -19,6 +19,9 @@ test_out*
 coverage_out*
 opus.toml
 opus.toml.tmp
+# The deploy chain's own configuration, holding a database password and the Django
+# secret key. scripts/server/deploy.env.template is the checked-in contract for it.
+scripts/server/secrets/
 
 migrations/
 

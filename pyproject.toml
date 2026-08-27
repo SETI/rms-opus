@@ -22,7 +22,13 @@ dependencies = [
   "qrcode",
   "regex",
   "requests",
-  "rms-julian",
+  # Floor, not a pin. rms-julian 3.0.1 built its date grammar with pyparsing's
+  # deprecated camelCase synonym `setParseAction`, so merely importing julian raised
+  # a DeprecationWarning -- which [tool.pytest.ini_options] filterwarnings turns into
+  # an error. Until this PR a lockfile pinned 3.0.1 and a named ignore covered the
+  # warning; with the lockfile gone nothing constrains the resolution, so the floor
+  # is what makes removing that ignore safe rather than lucky.
+  "rms-julian>=3.0.2",
   "rms-pdsfile>=0.0.18",
   "rms-pdslogger",
   "rms-pdstable",
@@ -58,6 +64,19 @@ Repository = "https://github.com/SETI/rms-opus"
 Source = "https://github.com/SETI/rms-opus"
 Issues = "https://github.com/SETI/rms-opus/issues"
 
+[project.scripts]
+# The installed commands the server chains invoke by name. `python -m opus_import`
+# and `python -m opus_log_analyzer` keep working alongside them: each module's
+# `main()` is the shared entry point, so the two forms cannot drift.
+#
+# The error analyzer has no `python -m` package form -- a package has one
+# `__main__` and the log analyzer holds it -- so `opus_error_analyzer` is the only
+# short way to run it. Both log-analyzer parsers set `prog` explicitly for the same
+# reason `opus_import.cli` does: argparse otherwise names the executed file.
+opus_import = "opus_import.cli:main"
+opus_log_analyzer = "opus_log_analyzer.log_analyzer:main"
+opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
+
 [project.optional-dependencies]
 dev = [
   "rms-opus",
@@ -73,10 +92,9 @@ dev = [
   # rather than silenced by an ignore_missing_imports entry.
   "types-mysqlclient",
   # typeshed's stubs for requests, needed by opus_import/util/retrieve_ra_dec.py
-  # and opus_log_analyzer/opus/slug.py. requests ships py.typed from 2.33 but the
-  # requirements.txt pin the integration runner installs is older and does not,
-  # so without this entry the type gate passes on the GitHub job and fails on a
-  # venv built from the pins. See the dependency-skew note in the plan.
+  # and opus_log_analyzer/opus/slug.py. requests ships py.typed only from 2.33, and
+  # nothing here floors it there, so the stubs are what makes the type gate
+  # independent of which requests a resolve happens to pick.
   "types-requests",
   # typeshed's stubs for pytz, which opus_log_analyzer/cronjob_utils.py imports
   # to fix the cron reports' timezone.
@@ -94,11 +112,9 @@ dev = [
   # Floor set by CVE-2025-71176: pytest through 9.0.2 creates
   # /tmp/pytest-of-<user> with predictable permissions, so a local user on a
   # shared UNIX box can cause a denial of service or possibly gain privileges.
-  # This floor governs `pip install -e ".[dev]"` -- the GitHub-hosted jobs and
-  # developer installs -- which the lockfile does not constrain at all.
-  # requirements.in carries the same floor; the requirements.txt compiled from
-  # it pins an exact version, and the self-hosted runner installs from that
-  # lockfile rather than from these extras.
+  # This floor now governs every environment that runs the suite -- the
+  # GitHub-hosted jobs, the self-hosted integration runner and developer
+  # installs -- because all three install `-e ".[dev]"`.
   "pytest>=9.0.3",
   "pytest-cov>=4.0",
   "pytest-django>=4.5",
@@ -152,17 +168,16 @@ markers = [
 # Warnings are errors so a third-party deprecation cannot rot unnoticed. Add a
 # narrowly-scoped "default::"/"ignore::" entry (with a comment) only for a
 # warning coming from code we cannot fix.
+# There are no entries, and that is the claim: nothing this suite imports raises a
+# warning that has to be tolerated. The one entry this list used to carry named
+# rms-julian 3.0.1's `setParseAction` DeprecationWarning; [project].dependencies now
+# floors rms-julian at 3.0.2, where it is fixed, so the suppression suppressed
+# nothing and a suppression that suppresses nothing is a claim about the code that is
+# no longer true. Add a narrowly-scoped "default::"/"ignore::" entry -- with a comment
+# saying which package raises it and why it cannot be fixed -- only for a warning
+# coming from code this project does not control.
 filterwarnings = [
   "error",
-  # rms-julian 3.0.1 builds its date grammar with pyparsing's deprecated
-  # camelCase synonym `setParseAction`, so importing julian at all raises this.
-  # Third-party on both sides and unavoidable. This is the only warning julian
-  # raises on import (verified by capturing them all under
-  # rms-julian==3.0.1 + pyparsing==3.3.1), so the filter names that one message
-  # rather than the whole category. Fixed upstream in rms-julian 3.0.2;
-  # requirements.txt still pins 3.0.1 for the integration runner, so this entry
-  # goes away when that pin moves.
-  "ignore:'setParseAction' deprecated - use 'set_parse_action':DeprecationWarning",
 ]
 
 [tool.setuptools]
@@ -174,6 +189,40 @@ where = ["src"]
 # outside the package-data rules below.
 namespaces = false
 
+# Package-data audit (plan PR-22). What ships in the wheel, and why -- re-derive
+# the inventory rather than trusting a description of it:
+#
+#     python -m build --wheel && python -c "import zipfile,sys; \
+#       print('\n'.join(zipfile.ZipFile(sys.argv[1]).namelist()))" dist/*.whl
+#
+# Everything inside a package directory that git tracks is included, because
+# setuptools-scm's file finder supplies the file list and `namespaces = false` in
+# [tool.setuptools.packages.find] above keeps the data directories from becoming
+# importable packages. The
+# explicit entries below exist for the directories a *source* build would
+# otherwise leave out. Two categories were audited and deliberately kept:
+#
+#   * The Django app's served static assets, including the four third-party trees
+#     .gitattributes marks linguist-vendored (static/{admin,coreui,cdn_fallback,
+#     perfect-scrollbar}). They ship because `collectstatic` is what a deployed
+#     server runs to populate its static root, and a pip-deployed server has no
+#     checkout to collect them from: excluding them serves the site with no CSS or
+#     JavaScript. They are the largest single share of the wheel.
+#   * The per-directory README.md/README.txt files under the Django app. They are
+#     developer documentation that nothing reads at run time, and they are kept
+#     because the alternatives are worse, not because they earn their place:
+#     `exclude-package-data` matches per package, so a wildcard entry does not
+#     reach them (measured -- `"*" = ["README.md", "**/README.md"]` leaves every
+#     one of them in the wheel), and naming each package would be exactly the
+#     hand-maintained list of code sites this project does not write. Their total
+#     is a few kilobytes against a wheel measured in megabytes; run the inventory
+#     command above if that ratio ever looks worth revisiting.
+#
+# `opus.toml.template` is deliberately NOT package data. It is repository
+# infrastructure like `scripts/server/deploy.env.template`: the deploy chain writes
+# opus.toml itself rather than copying the template, nothing in the code reads it,
+# and shipping it inside a package would make an operator extract it through
+# importlib.resources instead of opening a file.
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
 # The import pipeline reads these at run time through importlib.resources, so they have

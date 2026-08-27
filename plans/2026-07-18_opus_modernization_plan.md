@@ -6597,3 +6597,303 @@ body; never rewrite or delete earlier notes.*
     with a clear missing-Sphinx error instead. The actual fix is the one
     `docs/dev_guide_environment.rst:33` already documents correctly: `pip install -e ".[dev]"`,
     whose `dev` extra includes `rms-opus[docs]`.
+- **2026-08-27 (PR-22 executed):** the distribution declares its console scripts, the
+  lockfile is gone, and the server deploy chain installs `rms-opus` from PyPI instead of
+  building a checkout. **Nothing was published**: on rfrench's instruction, relayed by the
+  orchestrator mid-PR, every publish is blocked pending rfrench's explicit approval --
+  no publish workflow run, no `twine upload`, no version tag, no GitHub Release, and
+  **the Test PyPI dry-run the PR-22 section calls for was not performed**. What replaces
+  it is recorded below. Facts later PRs need:
+  - **The PyPI API-token secrets did not exist when this PR was written, and were added
+    during it.** `PYPI_API_TOKEN` and `TEST_PYPI_API_TOKEN` were created 2026-08-27
+    21:44 UTC, after the executor reported them missing; before that
+    `repos/SETI/rms-opus/actions/secrets` returned only `CODECOV_TOKEN`, with zero
+    organization secrets and zero environments. **They are present now**, and their
+    names match what the workflows reference (`publish_to_pypi.yml`,
+    `publish_to_test_pypi.yml`). The standing plan claim that they were "confirmed in
+    place" was simply wrong until then, which is why it is worth checking a claimed
+    precondition rather than inheriting it.
+  - **The distribution name `rms-opus` is UNCLAIMED on both indexes -- not owned.** The
+    plan's "PyPI ownership of the `rms-opus` name ... confirmed in place" is wrong on
+    that half, and nothing in this PR could make it right: the **first upload claims the
+    name**, and no upload has happened. `pypi.org/simple/rms-opus/`,
+    `pypi.org/pypi/rms-opus/json` and `test.pypi.org/simple/rms-opus/` all return
+    **404**, while the controls `rms-julian` and `rms-pdsparser` return 200 -- so this is
+    genuine absence rather than a broken query. **Do not check this with the project
+    page**: `https://pypi.org/project/<name>/` returns HTTP **200** for a name that
+    certainly does not exist (`definitely-not-a-real-pkg-xyz`), because a bot challenge
+    is served with a 200 status, so a status-code check there agrees with every name --
+    the check-that-cannot-fail shape again. The simple and JSON endpoints distinguish.
+    **RULED 2026-08-27 (rfrench): this is the intended state, not a blocker.**
+    Registration on both indexes happens with the first release -- the first upload
+    claims the name -- so the 404 is expected and needs no action before then. The plan
+    body's "PyPI ownership ... confirmed in place" should be read as "the name is
+    available and will be claimed on first publish", not as a precondition already
+    satisfied. **Do not re-raise this as a defect.**
+  - **`scripts/server/import_and_deploy/_opus_import_volumes.sh` did not parse -- on
+    `main` and on `rewrite` alike.** A `#` comment placed inside a backslash-continued list ends
+    the continuation, so `bash -n` fails and `_run_full_opus_import.sh`, which sources it,
+    aborts before importing a single bundle. Introduced in `1e6b091c` (#1437) when
+    `cassini_iss_fring_mosaics_rsfrench2025` was disabled in place. Fixed here by moving
+    the note above the `for`. **The defect survived PR-04's and PR-05's moves, though
+    the file did not**: `main`'s copy still says `python main_opus_import.py` after a
+    `cd` into the checkout where `rewrite`'s said `python -m opus_import`, so a backport
+    is not a cherry-pick of this commit -- the surrounding lines differ. Sweeping every
+    shell file on both branches through `bash -n` found this to be **the only broken one
+    on either**, failing at line 42 in both. **`main` still
+    carries it**, so the production import chain is broken on the deployed branch.
+    **RULED 2026-08-27 (rfrench): no backport.** The fix is not being cherry-picked to
+    `main`; `main` receives it when PR-24 merges `rewrite`, and until that merge
+    **`main` cannot run its server import chain at all** -- `run_full_opus_import.sh`
+    dies on the parse error before importing anything. That is accepted, recorded here
+    so it is not rediscovered as a surprise, and is a reason not to attempt a production
+    import off `main` in the meantime.
+    Two lessons: a disabled entry cannot be commented out inside a continuation, and
+    `bash -n` over every tracked shell script is a check this repository did not have.
+  - **The deployed installation is no longer a checkout, and the vhost path changed.**
+    `<OPUS_DIR>/src/rms-opus_<db>/` now holds `opus_venv/` (with `rms-opus` installed from
+    PyPI), `opus.toml`, and **`wsgi.py`, a symlink into the venv's site-packages** that
+    both deploy scripts re-point on every run. The vhost names the symlink
+    (`WSGIScriptAlias / <OPUS_DIR>/src/rms-opus/wsgi.py`), which is what retires PR-05's
+    note that the vhost points at a generated path: the path is stable across both a
+    release upgrade and a Python upgrade, where the site-packages path is not.
+    **The second positional argument of both deploy scripts changed meaning**, from a git
+    branch to a PEP 440 version specifier (`==3.23.0`, or omitted for the newest release).
+  - **`deploy_new_code_only.sh` cannot carry a pre-PR-22 server across.** It refuses to run
+    against a git checkout, a missing `opus_venv` or a missing `opus.toml`, naming the full
+    deploy as the way over. That is the answer to PR-08's "PR-22 owns making this
+    automatic": the one-time `opus_secrets.py` -> `opus.toml` migration is not automated,
+    it is *eliminated* -- the first deploy after this change must be
+    `deploy_new_code_and_database.sh`, which builds the installation from nothing, and the
+    old checkout is not upgraded in place at all.
+  - **`deploy.env` replaces `opus_secrets` for the shell chain.** `_read_opus_secrets.sh`
+    is now `_read_deploy_env.sh`, reading `scripts/server/secrets/deploy.env`;
+    `scripts/server/deploy.env.template` is its checked-in contract and
+    `scripts/server/secrets/` is git-ignored, which it was not. The four
+    `scripts/server/database/*.sh` read the same file.
+  - **An unset `OPUS_SECRET_KEY` used to reach `opus.toml` as an empty string.** The old
+    reader validated seven variables and not that one, and `opus_config` does not require
+    a non-empty `secret_key`, so Django would have started with none. Both the reader and
+    the generator now reject unset, empty and still-`<PLACEHOLDER>` values by name --
+    **the generator checks placeholders too, deliberately duplicating the reader**,
+    because `_write_opus_toml.sh` is shipped as a standalone program a later executor may
+    call directly rather than through the reader. (The first version of this note claimed
+    both checked when only the reader did; the review caught it by running the generator
+    with an unfilled value, which wrote `password = "<OPUS_DB_PASSWORD>"` into a file that
+    then loaded perfectly well.)
+    Related, for anyone writing a similar guard: **`set -u` alone is not a usable check
+    here** -- `${!var}` on an unset name reports `!var: unbound variable`, naming the loop
+    variable rather than the one the operator has to fix.
+  - **The deploy chain's config generation is testable now, and is tested.** PR-08's note
+    told PR-22 to reuse its generator-verification technique; rather than extracting a
+    heredoc from a larger script, the generation moved into
+    `_write_opus_toml.sh`, a standalone program taking its output path as an argument, so
+    `tests/opus_packaging/test_deploy_config_generator.py` runs **the shipped script** and
+    loads its output through `opus_config.load_config`.
+    `test_deploy_env_reader.py` does the same for the reader. **Fourteen mutations were
+    constructed and all are killed** -- and two of them were not, at first, which is the
+    part worth carrying: atomicity was asserted only on the failing path (a `cp` in place
+    of the `mv` passed), and the missing-key and empty-value tests both asserted only that
+    the key name appeared somewhere in the output, so deleting either check left the suite
+    green while the operator was told the wrong thing. **A parametrized test that asserts
+    on a substring both branches contain does not test either branch.**
+  - **The lockfile is deleted and both CI sides now install `-e ".[dev]"`.** This retires
+    the dependency-skew class rev 7.20 named rather than papering over another instance:
+    the runner and the GitHub-hosted jobs resolve the same tree, which is also what a
+    developer installs. The integration job logs `pip freeze`, which is where to look when
+    a check that passed yesterday fails today. **Measured consequence of unpinning, on a
+    full local integration run**: `rms-pdsfile` 0.0.18 -> 0.1.2, `rms-pdsparser` 2.0.0 ->
+    2.1.2, `rms-filecache` 3.0.0 -> 3.1.1, `rms-julian` 3.0.1 -> 3.0.2, `requests` 2.32.5
+    -> 2.34.2, `mysqlclient` 2.2.7 -> 2.2.8, `numpy` 2.4.0 -> 2.5.2, `pyparsing` 3.3.1 ->
+    3.3.2 -- and the chain still passed at **2576 tests / TOTAL 100%** with zero
+    golden-fixture diffs. **`requirements.txt` was holding back eight packages, and none of
+    them needed holding.**
+  - **What constrains each dependency now that the lockfile is gone.** This is the
+    single largest change to the repository's dependency story, so it is recorded in
+    measured terms rather than left for a reader to work out. `requirements.txt` pinned
+    **70 packages** -- 23 direct and 47 transitive -- and nothing replaces those pins.
+    Measured by comparing `git show 394d9ce9:requirements.txt` against the current
+    `[project]` tables rather than by reading either; **re-run the comparison rather
+    than trusting the names below**, which go stale the moment a dependency moves:
+    * Of the **23 direct** dependencies the lockfile pinned, **only `django` carries an
+      upper bound** (`>=5.2,<6`). Of the other 22, eight carry a floor only -- `coverage`,
+      `numpy`, `pillow`, `pytest`, `pytest-cov`, `pytest-django`, `pyyaml`, `rms-julian`
+      -- and the remaining fourteen carry **no specifier at all**.
+    * The **47 transitive** pins are gone entirely; each of those packages is now
+      constrained only by whatever its parent asks for.
+    * `rms-pdsfile` is the only **pre-1.0** direct dependency (`>=0.0.18`, pinned at
+      `0.0.18`). Six other RMS packages are unbounded too: `rms-pdslogger`,
+      `rms-pdstable` and `rms-translator` directly, `rms-filecache`, `rms-pdsparser` and
+      `rms-textkernel` transitively.
+    * The plan's stated replacement is "deploy pins via a `constraints.txt` generated at
+      release **if ops wants one**" -- optional by design. `docs/dev_guide_deployment.rst`
+      now records how to produce one from a known-good installation, which it did not
+      before; nothing requires it.
+  - **RULED 2026-08-27 (rfrench): no upper bounds on dependencies.** This is a standing
+    decision, not a PR-22 omission -- **a later PR seeing an open floor does not need to
+    re-litigate it.** The specific worry that prompted the question was `rms-pdsfile`
+    being pre-1.0 with a major rewrite pending, and the answer retires it:
+    **rms-pdsfile 3 is behavior-identical to 0.0.18**, adding typing and internal changes
+    only. rfrench is that package's author, so this is authoritative rather than an
+    estimate, and the eventual upgrade is low-risk rather than a breaking major.
+  - **For whoever adopts rms-pdsfile 3: remove `pdsfile.*` from the
+    `ignore_missing_imports` list in `[[tool.mypy.overrides]]` at the same time.**
+    pdsfile 3 ships typing, and that override would go on silencing it, so the new
+    annotations would buy nothing while looking as though they had. Read the module list
+    out of the table rather than from here -- it covers several third-party packages that
+    ship neither annotations nor a typeshed stub. **Not changed now**: the override is
+    correct for 0.0.18, which ships no types (confirmed: no `py.typed` in the installed
+    distribution).
+  - **The `filterwarnings` julian entry is gone and `[project].dependencies` floors
+    `rms-julian>=3.0.2`.** PR-03's note said the entry becomes removable when the pin moves
+    past 3.0.1; deleting the lockfile moved it past nothing in particular, so the floor is
+    what makes the removal safe rather than lucky. Verified under the resolved tree:
+    importing `julian` 3.0.2 with `pyparsing` 3.3.2 raises no warning at all.
+    `filterwarnings` is now `["error"]` and nothing else.
+  - **The wheel's contents, and the two deferred decisions taken.** Regenerate the
+    inventory rather than trusting a description of it -- the command is in a comment
+    beside `[tool.setuptools.package-data]`. (a) The Django app's **served static assets
+    ship, including the four `linguist-vendored` trees**, because `collectstatic` is what
+    populates a server's static root and a pip-deployed server has no checkout to collect
+    from; excluding them serves the site with no CSS or JavaScript. (b) The per-directory
+    **README files ship**, and that is a decision rather than an oversight:
+    `exclude-package-data` matches per package, so a wildcard does not reach them --
+    **re-measured here, not taken on trust: `"*" = ["README.md", "**/README.md"]` leaves
+    every one of them in the wheel** -- and naming each package would be the
+    hand-maintained list rev 7.17 bans. (c) **`opus.toml.template` is deliberately NOT
+    package data**, so PR-21's post-merge acceptance item for the README's Quick Start
+    download **stands** and section 6 keeps it.
+  - **The deployed servers' MySQL version was NOT confirmed, and the question is still
+    open.** PR-09's note (2026-08-23) says "PR-22 owns the deploy chain and must confirm
+    it before `rewrite` merges", and PR-12's (2026-08-24) says its `VALUES(col)` ->
+    `AS new` switch waits on "whoever holds it after PR-22 establishes the server
+    version". **PR-22 could not establish it from here**: `tools.pds-rings.seti.org:3306`
+    is not reachable from the development machine (the TCP connect times out), and no
+    credential or tunnel is available.
+    **ANSWERED 2026-08-27 (rfrench): the deployed MySQL is 8.x.** That is enough for
+    Django 5.2, whose floor is 8.0.11, so the upgrade PR-09 shipped is on a supported
+    server. **It is NOT enough to unblock PR-12's `VALUES(col)` -> `AS new` switch**,
+    which needs **8.0.19 or later**: 8.0.11 is also 8.x, so "8.x" does not distinguish
+    the cases and the alias question stays open pending a specific version. Whoever
+    picks it up needs `SELECT VERSION()` on `tools` and `tools2`, not a major-version
+    answer. **Do not record the alias decision as unblocked.** For reference, the local
+    runner that gates every PR is MySQL 8.0.46.
+  - **`fetch-depth: 0` was added to the integration checkout**, which PR-20 left to PR-22.
+    The runner was installing `rms-opus 0.1.dev1`, setuptools-scm's fallback. Nothing gates
+    on the version -- no golden fixture embeds it and the unit test asserts only its shape
+    -- but the About page renders it and the static assets carry it as a cache-busting
+    suffix, so the one place the whole stack runs together was running against a version
+    that cannot occur in production. The runner keeps its workspace, so the full history is
+    fetched once.
+  - **A new CI job, `Package`, is the release path minus the upload**, added because
+    nothing exercised that path until a release ran it: `python -m build` and `twine check`
+    lived only in `publish_to_pypi.yml`, and `pyroma` lived only in `run-all-checks.sh` and
+    in no workflow at all. It builds both distributions, validates with
+    `twine check --strict` and `pyroma`, then installs the wheel into a venv **outside the
+    checkout** and runs all three console scripts and the package data they read. **Its
+    context name must be read off a real run** before anyone adds it to the required
+    checks; it is not required today. Both publish workflows gained `twine check --strict`
+    (plain `twine check` exits 0 on a rendering warning, and `publish_to_test_pypi.yml` had
+    no validation step at all).
+  - **The release path is CONFIGURED BUT NEVER EXECUTED, and that distinction is the
+    whole of what this PR can claim.** Both workflows are complete, SHA-pinned, and now
+    have the tokens they reference; everything up to the upload -- build, `twine check
+    --strict`, `pyroma`, a clean-venv install of the wheel, and running every console
+    script and package-data file it ships -- runs on every push through the `Package`
+    job. **Nothing beyond that has ever run.** Specifically untested, so that green CI is
+    not misread as covering it: the upload step itself, whether either API token is valid
+    or correctly scoped, whatever PyPI makes of the metadata on receipt, and the
+    name-claiming that the first upload performs. The first real publish is the first
+    execution of any of it.
+  - **Section 6's end-to-end acceptance was run and passed, from the built wheel in a venv
+    holding nothing else, with the working directory outside the checkout.** COISS_2002
+    imported into a fresh MySQL 8.0 schema (3296 `obs_general` rows) with **ERRORS.log
+    empty**; `--validate-perm` **log**-clean (its exit status is not the gate, per rev
+    7.22); `django-admin migrate` clean; `opus_app.wsgi:application` served through
+    `wsgiref.simple_server` -- the object mod_wsgi loads, not a development server --
+    answering `api/meta/result_count.json` with a count matching the row count,
+    `api/metadata_v2` **byte-identical whether addressed by `opus_id` or by `ring_obs_id`**
+    (the back-compat conversion), `apiguide.pdf` as a 302 to the RTD guide, the UI page,
+    and the About page **rendering the installed version string**. Both log-analyzer
+    console commands run.
+  - **`--do-it-all` does not import the dictionary**, which is why the deploy scripts run a
+    separate dictionary import of their own. Found the hard way: the acceptance run's UI
+    page returned HTTP 500 with `Table '<schema>.definitions' doesn't exist` until
+    `--import-dictionary` was run separately. Anyone building an OPUS database by hand
+    needs both.
+  - **`scripts/import/*` deliberately keeps `python -m opus_import`.** PR-22's section
+    bans repo-relative paths and bare `python -m` **in the server chain**, and those
+    wrappers are not the server chain: `import_for_tests.sh` and `import_all.sh` run from
+    a developer's or the integration runner's checkout, where the editable install and
+    `python -m` are the same thing and no console script may be on PATH. The
+    **`scripts/server/*` is the only chain this PR changed** -- `git diff -- scripts/automated_tests/`
+    is empty, and that chain still reaches the pipeline through those same `python -m`
+    wrappers, deliberately.
+  - **`django-admin check` reports one pre-existing warning** from a clean-venv install,
+    `urls.W005: URL namespace 'admin' isn't unique`. It is a warning, `check` exits 0, and
+    nothing here introduced it. Recorded as a candidate for a later PR, not fixed.
+  - **`CONTRIBUTING.md:68` says "Python 3.10+"** where `README.md`, `dev_guide_environment`
+    and `dev_guide_introduction` all say 3.12+ and `requires-python` is `>=3.12`.
+    Pre-existing and unrelated to this PR's changes, so it was recorded rather than fixed;
+    a candidate for PR-23 or PR-24.
+  - **There is no `.github/dependabot.yml`, and no organization-level dependabot
+    configuration is visible to this repository.** That matters because rev 7.22's
+    rationale for pinning actions to SHAs says the rule's intent "is served by dependabot,
+    which updates SHA pins" -- with nothing configured, the pins are frozen until someone
+    moves them by hand, and `.cursor/rules/dependency_management.mdc` section 5 asks for
+    automated update tooling as well as `pip-audit` in CI, neither of which exists.
+    **Recorded, not added**: opening dependabot PRs is a repository-policy change that no
+    PR in this plan is assigned, and it is rfrench's call.
+  - **Every action pin was re-verified two independent ways** (rev 7.22's recipe):
+    `gh api repos/<repo>/commits/<tag> --jq .sha` and
+    `git ls-remote <url> 'refs/tags/<tag>^{}'`. All four match their trailing comments --
+    `actions/checkout` v6.1.0 and `actions/setup-python` v6.3.0 (lightweight tags),
+    `codecov/codecov-action` v5.5.5 and `pypa/gh-action-pypi-publish` v1.14.2 (annotated,
+    dereferenced). Regenerate the inventory with `grep -rn 'uses:' .github/workflows/`.
+  - **Two checks worth stealing, both of which found real defects here, and both now
+    institutionalized** in `tests/opus_packaging/test_shell_scripts_parse.py` rather than
+    left as something an executor happened to run by hand. (1) `bash -n` over every shell
+    file, found **by rule** (suffix or shell shebang) rather than from a list -- that is
+    what found the broken import chain. The rule reaches everything executed **or
+    `source`d** as shell, which is why it covers `deploy.env.template` as well as `.sh`
+    and `.sh_template`: `deploy.env` is read with `source`, so a syntax error in it
+    breaks every deploy just as surely as one in a script, and its placeholders are
+    quoted so an unfilled copy is at least parseable. (An earlier draft of this bullet
+    claimed that coverage before the rule provided it -- caught by a reviewer
+    enumerating what the rule actually matched.) (2) Every `run:`
+    block extracted from the parsed workflow YAML and parsed the same way: a heredoc
+    terminator left indented inside a YAML block scalar produces shell that does not
+    parse.
+  - **`bash -n` EXITS ZERO on an unterminated heredoc**, warning only on stderr
+    (`warning: here-document at line N delimited by end-of-file`). A parse check that
+    tests the exit status alone therefore **cannot catch the workflow defect it exists
+    to catch** -- which is exactly what the first version of this PR's check did, and
+    what its commit message claimed it had verified. The gate asserts `stderr == ''` as
+    well as a zero status, because a clean parse is silent. Found by constructing the
+    failure and watching the check pass: mutation-checking is the cheap form, and this
+    is the **fourth** instance of the class PR-21 named, in a PR that quoted PR-21's
+    warning about it.
+  - **A transient property cannot be tested through an end state, and this PR proved it
+    twice.** `_write_opus_toml.sh` writes a temporary file under `umask 077`, renames it,
+    then `chmod 600`s it. Two separate tests were written to defend the *window* before
+    that chmod, and both first asserted the *final* mode -- which is 0600 either way, so
+    both passed with the guard they were written for deleted. The working technique, used
+    by both now: make the destination a directory the process cannot write into, so `mv`
+    fails and the temporary file is stranded on disk carrying the mode it was actually
+    created with. Two related traps found the same way: `cat >` truncates an existing
+    file **without changing its mode**, so writing over a world-readable leftover leaves
+    the password world-readable until the chmod (the generator `rm -f`s first now); and a
+    stale leftover makes such a test measure the wrong file, which is a false **pass** in
+    one direction and a false failure in the other. **Five instances of the
+    check-that-cannot-fail class in this PR** -- the fifth found by mutating a guard that
+    had itself been added in response to the fourth.
+  - **Verification evidence, measured at this PR's head and not maintained after it.**
+    `scripts/run-all-checks.sh` clean: ruff, mypy, pytest, pyroma 10/10, bandit,
+    vulture, Sphinx under `-W -n`, PyMarkdown. **The test count is deliberately not
+    written here.** The first draft of this bullet said "1411 passed" and a later commit
+    in this same PR made it 1414 -- a number made stale by the work it was describing,
+    which is the third time this plan has recorded that failure. Run the script. The full local chain
+    (`scripts/automated_tests/opus_main_test.sh`) exited 0 at **2576 tests / TOTAL 22240
+    statements, 1874 branches, 100%**, with `opus_check_coverage.sh` invoked separately
+    afterwards and exiting 0 -- because the chain does not apply the gate -- and zero
+    golden-fixture diffs. Re-measure rather than citing these.

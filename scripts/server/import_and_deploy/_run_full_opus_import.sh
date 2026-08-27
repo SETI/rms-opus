@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-export OPUS_BRANCH=${1:-main}
+# A PEP 440 version specifier appended to the distribution name ("==3.23.0"),
+# or empty for the newest release. This used to name a git branch, back when the
+# chain built a checkout.
+export OPUS_VERSION_SPEC=${1:-}
 
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -9,7 +12,7 @@ export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 export DATABASE_SCRIPT_DIR=${SCRIPT_DIR}/database
 
-source ${IMPORT_SCRIPT_DIR}/_read_opus_secrets.sh
+source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
 
 export DATETIMEPID="`date +%Y%m%dT%H%M%S`_$$"
 export OPUS_LOG_DIR=${OPUS_DIR}/import/${DATETIMEPID}/logs
@@ -30,7 +33,7 @@ echo "Start time:" `date`
 echo
 echo "Hostname:" ${HOSTNAME}
 echo
-echo "OPUS branch:" ${OPUS_BRANCH}
+echo "Version spec:" "${OPUS_VERSION_SPEC:-(newest release)}"
 echo
 echo "PDS3_HOLDINGS_DIR: ${PDS3_HOLDINGS_DIR}"
 echo "PDS4_HOLDINGS_DIR: ${PDS4_HOLDINGS_DIR}"

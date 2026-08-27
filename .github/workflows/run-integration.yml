@@ -101,6 +101,16 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm derives the version from tags, which the default
+          # shallow clone does not fetch: without this the runner installed
+          # rms-opus 0.1.dev1, the fallback. Nothing here gates on the version --
+          # no golden fixture embeds it, and the unit test asserts only its shape
+          # -- but the About page renders it and the static assets carry it as a
+          # cache-busting suffix, so this is the one place the whole stack runs
+          # together and it was running against a version that could not occur in
+          # production. The runner keeps its workspace between runs, so the full
+          # history is fetched once and updated incrementally after that.
+          fetch-depth: 0
           # Nothing in this workflow pushes or reaches the GitHub API through
           # git, so it never needs the token persisted. checkout's post step
           # normally removes it, which leaves the window that matters here: a
@@ -116,10 +126,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Test with coverage
-        # Because self-hosted runners keep a global Python environment that
-        # isn't wiped between runs, the various requirements.txt files will
-        # interfere with each other. As a result, we use a venv for cases
-        # where it matters.
+        # A self-hosted runner keeps its Python environment between runs, so each
+        # job builds a throwaway venv rather than installing into a shared one.
         run: |
           echo
           env
@@ -132,12 +140,19 @@ jobs:
           fi
           python -m pip install --upgrade pip
           python -m pip install wheel
-          python -m pip install -r requirements.txt
-          # opus_support is imported as an installed package now that the
-          # RMS_OPUS_LIB_PATH sys.path insert is gone. Dependencies are already
-          # satisfied by requirements.txt, so this only wires up src/.
-          python -m pip install -e .
+          # The same install command the GitHub-hosted lint and unit jobs run.
+          # This job used to install a compiled requirements.txt instead, which
+          # made the two sides resolve different dependency trees: mypy was green
+          # on GitHub and red here purely because the pins were older (plan
+          # rev 7.20). Installing the declared dependencies on both sides removes
+          # that class of failure rather than working around an instance of it.
+          # `-e` is what wires up src/, since opus_support and the rest are
+          # imported as installed packages rather than through a sys.path insert.
+          python -m pip install -e ".[dev]"
           echo
+          # The resolved tree, logged so that a failure caused by a new release of
+          # a dependency can be read off the run that first saw it -- which is the
+          # cost of declaring floors rather than pinning, paid deliberately.
           python -m pip freeze
           echo
           scripts/automated_tests/opus_main_test.sh

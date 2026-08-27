@@ -18,13 +18,13 @@ The tree below annotates the directories and files a developer works in.
 ::
 
     rms-opus/
-    ├── pyproject.toml            # project metadata, dependencies, and the configuration
-    │                             #   of every tool: ruff, mypy, pytest, coverage,
-    │                             #   bandit, vulture, pymarkdown, setuptools-scm
+    ├── pyproject.toml            # project metadata, every dependency, the three
+    │                             #   console scripts the distribution declares, and the
+    │                             #   configuration of every tool: ruff, mypy, pytest,
+    │                             #   coverage, bandit, vulture, pymarkdown,
+    │                             #   setuptools-scm
     ├── opus.toml.template        # the installation configuration file to copy and fill in
     ├── manage.py                 # Django's management command, for development only
-    ├── requirements.in           # the dependency floors the lockfile is compiled from
-    ├── requirements.txt          # the exact versions the self-hosted runner installs
     ├── vulture_whitelist.py      # names vulture cannot see are used, so it stops
     │                             #   reporting them
     ├── codecov.yml, .readthedocs.yaml
@@ -73,8 +73,11 @@ The tree below annotates the directories and files a developer works in.
     │       └── templates/                # package data: the Jinja report templates
     ├── tests/                    # the holdings-free suite; `pytest` alone runs this and
     │                             #   nothing else, because testpaths names it
-    │   └── fixtures/opus_ci.toml # the dummy configuration the GitHub-hosted jobs use
-    │                             #   (the self-hosted one writes a real opus.toml)
+    │   ├── fixtures/opus_ci.toml # the dummy configuration the GitHub-hosted jobs use
+    │   │                         #   (the self-hosted one writes a real opus.toml)
+    │   └── opus_packaging/       # what the distribution promises rather than what the
+    │                             #   code computes: the console-script entry points, and
+    │                             #   the deploy chain's two shell scripts, run as shell
     ├── integration_tests/        # the suites that need an imported database and the
     │   │                         #   holdings behind it; run them by naming this directory
     │   ├── .coveragerc           # the 100% gate's coverage configuration
@@ -83,11 +86,15 @@ The tree below annotates the directories and files a developer works in.
     │   └── test_db_data/, test_perf/
     ├── scripts/
     │   ├── run-all-checks.sh     # every check this repository gates on, in one command
+    │   ├── read-docs.sh          # builds the docs with -W -n and opens the HTML index;
+    │   │                         #   a developer convenience, not a gate
     │   ├── automated_tests/      # what the self-hosted integration workflow runs
     │   ├── import/               # wrappers around the import pipeline
     │   ├── models/               # regenerates apps/search/models.py from the database
     │   ├── releases/             # the version-tag flow
-    │   └── server/               # deployment, database dumps, log-analyzer cron templates
+    │   └── server/               # the pip-install deploy flow, database dumps and the
+    │                             #   log-analyzer cron templates; deploy.env.template is
+    │                             #   the contract for the git-ignored secrets/deploy.env
     ├── docs/                     # this documentation
     │   └── _ext/                 # the two build-time generators, described below
     └── perf_test/                # a standalone performance experiment, outside every gate

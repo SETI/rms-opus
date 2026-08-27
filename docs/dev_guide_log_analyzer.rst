@@ -9,9 +9,13 @@ and site-specific knowledge so that the generic half could analyze another site'
 logs.
 
 * :mod:`opus_log_analyzer.log_analyzer` summarizes user sessions from access logs.
-  ``python -m opus_log_analyzer`` runs it.
+  The ``opus_log_analyzer`` console script runs it, and ``python -m opus_log_analyzer``
+  runs the same ``main``.
 * :mod:`opus_log_analyzer.error_analyzer` pairs error-log entries with the requests
-  that caused them. ``python -m opus_log_analyzer.error_analyzer`` runs it.
+  that caused them. The ``opus_error_analyzer`` console script runs it, and
+  ``python -m opus_log_analyzer.error_analyzer`` runs the same ``main``. It names the
+  module rather than the package because a package has one ``__main__`` and the log
+  analyzer holds it.
 
 The modules directly under the package are the generic half. The
 :mod:`opus_log_analyzer.opus` subpackage is the OPUS-specific half: it knows what a
@@ -49,7 +53,7 @@ for a class named ``Configuration`` in the module ``--configuration`` names, whi
 defaults to :mod:`opus_log_analyzer.opus.configuration`. Naming another module by its
 full dotted path is what analyzing a different site looks like::
 
-    python -m opus_log_analyzer --configuration myproject.configuration ...
+    opus_log_analyzer --configuration myproject.configuration ...
 
 A configuration should subclass
 :class:`~opus_log_analyzer.abstract_configuration.AbstractConfiguration`. That is not

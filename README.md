@@ -87,7 +87,7 @@ Import a volume into a fresh database:
 
 ```bash
 export OPUS_CONFIG=/path/to/opus.toml
-python -m opus_import --do-it-all COISS_2002
+opus_import --do-it-all COISS_2002
 ```
 
 Serve the site against it, from a checkout:
@@ -95,6 +95,13 @@ Serve the site against it, from a checkout:
 ```bash
 python manage.py migrate     # Django's own tables; OPUS's come from the import
 python manage.py runserver   # then open http://127.0.0.1:8000/opus/
+```
+
+From a `pip install` there is no `manage.py`; `django-admin` does the same work:
+
+```bash
+export DJANGO_SETTINGS_MODULE=opus_app.settings
+django-admin migrate
 ```
 
 Ask the public API how many Cassini ISS observations of Pan there are:
@@ -106,7 +113,7 @@ curl 'https://opus.pds-rings.seti.org/opus/api/meta/result_count.json?target=Pan
 Summarize a day of access logs:
 
 ```bash
-python -m opus_log_analyzer --batch /var/log/apache2/access_log-2026-08-01
+opus_log_analyzer --batch /var/log/apache2/access_log-2026-08-01
 ```
 
 Each command has a `--help` describing the rest of its surface.
