@@ -6109,10 +6109,12 @@ body; never rewrite or delete earlier notes.*
     lightweight, and the API call already returns the dereferenced commit). Regenerate
     the inventory rather than trusting a count: `grep -rn 'uses:' .github/workflows/`
     is the whole set, and a pin is wrong if the SHA and its comment disagree.
-    **Two of the four pins are bit-identical to what was running**: the publisher's
-    `release/v1` head *is* v1.14.2, and codecov-action v5.5.5 is the current v5. The
-    other two are version bumps -- the two test workflows had disagreed, with
-    `run-app-tests.yml` on `checkout@v4`/`setup-python@v5` and `run-tests.yml` on `@v6`.
+    **Every pin is bit-identical to the ref it replaced, except in the self-hosted
+    workflow**: `release/v1`'s head *is* v1.14.2, v5 *is* v5.5.5, and `@v6` resolved to
+    v6.1.0 / v6.3.0 for `run-tests.yml` and both publish workflows. The only usage whose
+    resolved code actually changes is the self-hosted job's, because the two test
+    workflows had disagreed -- `run-app-tests.yml` was on `checkout@v4`/`setup-python@v5`
+    while `run-tests.yml` was on `@v6`.
     Bumping the self-hosted pair was safe *and* wanted: the runner is **2.336.0** and
     already forces Node 24, and its own log named those two v4/v5 actions as Node-20
     actions being forced onto it.
@@ -6134,8 +6136,10 @@ body; never rewrite or delete earlier notes.*
     job alone and say why.
   - **The integration job checks out shallow and without tags, so the version it
     installs is setuptools-scm's fallback.** `fetch-depth` is left at the default `1`
-    (the two GitHub-hosted workflows set `0` because they install the package for the
-    type gate), and the runner's log reads `Successfully installed rms-opus-0.1.dev1`.
+    (the four GitHub-hosted checkouts across the other three workflows set `0`, for two
+    different reasons: the lint and unit jobs install the package, and the publish jobs
+    need the tag setuptools-scm derives the released version from), and the runner's log
+    reads `Successfully installed rms-opus-0.1.dev1`.
     Nothing depends on it being real today -- no golden fixture under
     `integration_tests/test_api/responses/` embeds a version (grep for the installed
     value returns nothing), and `tests/opus_app/test_app_utils.py`'s shape assertion
@@ -6143,6 +6147,21 @@ body; never rewrite or delete earlier notes.*
     packaging**: if it wants a true version on the runner, `fetch-depth: 0` on that
     checkout is the change, and it was deliberately left out of PR-20 as a behavior
     change the plan did not ask for.
+  - **`--validate-perm` does not fail anything by exiting, and the adversarial review
+    caught PR-20 claiming it did.** `steps/do_validate.py` contains no `raise` at all --
+    every check calls `logger.log('error', ...)` -- and `cli.py` runs it as
+    `do_validate.do_validate(ctx, 'perm')` with no status handling, so a database that
+    fails validation still exits 0. `cli.py`'s `main()` docstring already said this ("a
+    zero status" does not mean the run "was clean"; "every validation error" among the
+    steps that "report failure through the log and leave the status zero"), which is the
+    authority to trust over any reading of the shell. **The consequence for anyone
+    touching this chain:** `import_for_tests.sh`'s `set -e` cannot see a validation
+    failure, so `opus_import_test_database.sh`'s `[ -s ERRORS.log ]` is the *only* thing
+    that gates validation, and its companion exit-status check (added by `d796e632`) is
+    the *only* thing that catches an import that died before writing a log -- because a
+    missing `ERRORS.log` is not `-s` either. **Neither check is redundant and neither
+    covers the other's case; removing either one opens a hole that reports success.**
+    The workflow header in `run-integration.yml` now says so at the point of use.
   - **The 100% coverage gate is two steps, not one, and the split is deliberate.**
     `opus_run_unittests_coverage.sh` measures and writes `coverage_report.txt`;
     `opus_check_coverage.sh` is the only thing that fails on anything under 100%, and

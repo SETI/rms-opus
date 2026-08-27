@@ -2,23 +2,30 @@
 # run-app-tests.yml). It runs on the RMS self-hosted Linux runner because it is
 # the only environment with the real PDS3/PDS4 holdings and a MySQL server: it
 # imports a fixed bundle list into a fresh opus_test_db_<id> schema, then runs
-# the golden-response API suite and the live-database Django suites under the
-# integration coverage configuration.
+# the golden-response API suite, the live-database Django suites and the
+# tests/opus_support + tests/opus_app suites that reach the same source, as one
+# session under the integration coverage configuration.
 #
-# Which command establishes which gate, because none of them is implied by an
-# earlier step exiting 0:
-#   * the import succeeded          -> scripts/automated_tests/opus_import_test_database.sh
-#                                      (checks import_for_tests.sh's exit status AND its
-#                                      ERRORS.log), called by opus_main_test.sh
-#   * the database is self-consistent -> `opus_import --validate-perm`, the last import
-#                                      step in scripts/import/import_for_tests.sh, which
-#                                      runs under `set -e`
-#   * the suites passed             -> the pytest call in
-#                                      scripts/automated_tests/opus_run_unittests_coverage.sh
-#   * coverage is 100%              -> scripts/automated_tests/opus_check_coverage.sh, the
-#                                      "Check coverage level" step below. opus_main_test.sh
-#                                      does NOT call it: the check is deliberately after the
-#                                      codecov upload so a coverage failure still reports.
+# Which command establishes which gate -- because a step exiting 0 implies
+# nothing about the step before it and, in this chain, sometimes nothing about
+# itself:
+#   * the import ran, and neither the import nor the validation step logged an
+#     error -> scripts/automated_tests/opus_import_test_database.sh, called by
+#     opus_main_test.sh. It needs BOTH of its checks and neither is redundant.
+#     `opus_import --validate-perm` -- the last step in
+#     scripts/import/import_for_tests.sh -- reports every validation failure
+#     through the log and STILL EXITS ZERO (steps/do_validate.py raises nothing,
+#     and cli.py's main() docstring says so in as many words), so `set -e` cannot
+#     see a validation failure and the non-empty ERRORS.log test is the only
+#     thing that can. The converse hole is why the exit-status check joined it:
+#     `[ -s ERRORS.log ]` is also false for a MISSING file, so an import that
+#     died before logging once reported success.
+#   * the suites passed -> the pytest call in
+#     scripts/automated_tests/opus_run_unittests_coverage.sh
+#   * coverage is 100% -> scripts/automated_tests/opus_check_coverage.sh, the
+#     "Check coverage level" step below. opus_main_test.sh does NOT call it: the
+#     check is deliberately after the codecov upload so a coverage failure still
+#     reports.
 name: Run Integration Tests
 run-name: "Run Integration Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
 
@@ -87,9 +94,13 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # The self-hosted runner keeps its workspace between runs, so leaving
-          # the token in .git/config outlives the job that earned it. Nothing in
-          # this workflow pushes or calls the GitHub API through git.
+          # Nothing in this workflow pushes or reaches the GitHub API through
+          # git, so it never needs the token persisted. checkout's post step
+          # normally removes it, which leaves the window that matters here: a
+          # cancelled or crashed job skips that step, and this runner keeps its
+          # workspace between runs. (At v6 the credential lives in a file under
+          # RUNNER_TEMP that .git/config includes, not inline in .git/config as
+          # it did at v4 -- persisted either way.)
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}

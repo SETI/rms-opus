@@ -91,15 +91,23 @@ after the codecov upload -- so `opus_main_test.sh` exiting 0 is not evidence the
 passed, and a local run has to invoke the check script itself. To reproduce the
 measurement:
 
+        rm -f .coverage .coverage.*
         COVERAGE_RCFILE=integration_tests/.coveragerc \
             pytest --cov --cov-config=integration_tests/.coveragerc \
                    tests/opus_support tests/opus_app integration_tests
         COVERAGE_RCFILE=integration_tests/.coveragerc coverage report -m \
-            | tee coverage_report.txt
+            >& coverage_report.txt
 
 and then to apply the gate to it, from the repository root:
 
         scripts/automated_tests/opus_check_coverage.sh
+
+The `rm` is not optional and is the first thing the script itself does: pytest-cov
+measures under a per-process data suffix and combines afterwards, and its own `erase()`
+removes only `.coverage`, because this configuration is not `parallel`. A fragment left
+behind by an interrupted run would be combined into the totals -- coverage no test in
+this run produced, which can only make the result look *better*. Skipping it can
+therefore produce a local 100% that CI would not.
 
 That configuration measures `src/opus_app/apps`, `integration_tests/test_api` and
 `src/opus_support`, and `tests/opus_support` and `tests/opus_app` are the directories
