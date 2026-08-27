@@ -61,6 +61,9 @@ installations gives each one its own file, its own ``OPUS_CONFIG``, its own data
 schema and its own ``cache_server_prefix``, which is what keeps them from colliding in
 the shared memcached.
 
+That is the hand-built case. On the Node's own servers the deploy chain writes
+``opus.toml`` itself, from a separate file; see :ref:`deployment_server`.
+
 Set ``debug = false`` and a real ``secret_key`` on any installation that is reachable
 from outside the machine, and make sure every directory the ``[paths]`` section names
 exists and is writable by the user OPUS runs as. The web application opens its log
@@ -80,7 +83,7 @@ migration::
 Every OPUS table comes from an import instead, so there are no OPUS migrations to run
 and none to write::
 
-    OPUS_CONFIG=/etc/opus/opus.toml python -m opus_import --do-it-all COISS_2002
+    OPUS_CONFIG=/etc/opus/opus.toml opus_import --do-it-all COISS_2002
 
 ``--do-it-all`` imports the named bundles, copies the result over the permanent
 tables, and rebuilds the auxiliary tables. :mod:`opus_import.cli` documents the
@@ -97,7 +100,10 @@ one directory that the web server serves directly::
 
     OPUS_CONFIG=/etc/opus/opus.toml \
     DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin collectstatic
+    django-admin collectstatic --noinput
+
+``--noinput`` is what the deploy scripts pass: ``collectstatic`` asks for confirmation
+before overwriting, and a deploy has nobody to ask.
 
 ``static_root`` in the configuration is where they go; a development installation
 leaves it out, because it never runs ``collectstatic``, and Django's own default
@@ -119,6 +125,12 @@ needs ``WSGIScriptAlias`` pointing at the installed ``opus_app/wsgi.py``, and it
 ``OPUS_CONFIG`` in the WSGI process's environment -- ``WSGIDaemonProcess`` does not
 inherit the shell's.
 
+The installed module lives inside the virtual environment's ``site-packages``, whose
+path contains the Python minor version, so naming it directly in the vhost means
+editing the vhost after every Python upgrade. On the Node's servers the deploy chain
+avoids that by writing a symlink to it at a fixed path and re-pointing that symlink on
+every deploy; see :ref:`deployment_server` for the path and the stanza.
+
 Any other WSGI server works the same way; ``gunicorn opus_app.wsgi:application`` is
 enough for a smoke test. For development, ``python manage.py runserver`` serves the
 site at ``http://127.0.0.1:8000/opus/``.
@@ -129,24 +141,78 @@ The Node's production arrangement
 ---------------------------------
 
 ``scripts/server/import_and_deploy/`` holds the scripts that deploy a new database or
-a new checkout on the Node's servers. They assume a layout in which the served
-directory is a symbolic link to a per-database directory, so that swapping databases
-is a link change rather than a copy:
+a new release on the Node's servers.
+
+**A deployed installation is not a checkout.** It is a directory holding a virtual
+environment with the released ``rms-opus`` distribution installed from PyPI, the
+``opus.toml`` that installation reads, and the ``wsgi.py`` symlink Apache points at.
+Nothing on the server builds from source. The one checkout a server keeps is the one
+holding these scripts, which is also where ``deploy.env`` lives.
+
+The layout makes the served directory a symbolic link to a per-database directory, so
+that swapping databases is a link change rather than a copy:
 
 ::
 
     /opus/src/rms-opus            -> rms-opus_<database name>
     /opus/src/rms-opus_<database name>/
+        opus_venv/                # the virtual environment; rms-opus is installed here
+        opus.toml                 # this installation's configuration, mode 0600
+        wsgi.py                   # a symlink to opus_venv/.../site-packages/opus_app/wsgi.py
 
-``deploy_new_code_and_database.sh <database name> [<branch>]`` stops Apache and
-memcached, replaces the checkout, moves the link, and starts them again.
-``deploy_new_code_only.sh`` updates the existing checkout in place with fetch and pull
-rather than replacing it, and refuses to run against a dirty working tree.
+``wsgi.py`` is the fixed path the vhost names, so it survives both a release upgrade
+and a Python upgrade::
+
+    WSGIScriptAlias / /opus/src/rms-opus/wsgi.py
+    WSGIDaemonProcess opus python-home=/opus/src/rms-opus/opus_venv
+
+``deploy_new_code_and_database.sh <database name> [<version spec>]`` stops Apache and
+memcached, builds a new installation directory with that release in it, writes its
+``opus.toml``, migrates and collects static files, moves the link, and starts them
+again. ``deploy_new_code_only.sh [<version spec>]`` upgrades the existing installation
+in place with ``pip install --upgrade`` instead, reusing its ``opus.toml`` because only
+a full deploy knows which database to name in one.
+
+The optional argument of both is a **PEP 440 version specifier** appended to the
+distribution name -- ``==3.23.0`` for a particular release, omitted for the newest. It
+used to be a git branch name; there is no branch to choose any more.
+
+``deploy_new_code_only.sh`` refuses to run against anything that is not an installation
+this chain created -- a git checkout at that path, a missing ``opus_venv``, or a missing
+``opus.toml`` -- and names the full deploy as the way across. That refusal is what
+carries a server over from the pre-pip arrangement: the first deploy after this change
+has to be ``deploy_new_code_and_database.sh``, which builds the installation from
+nothing.
+
 ``run_full_opus_import.sh`` runs a complete import into a new database, which is the
 first half of bringing up a new one.
 
 ``scripts/server/database/`` holds the dump and load scripts used to move a database
 between machines.
+
+Deploy configuration
+~~~~~~~~~~~~~~~~~~~~
+
+The deploy chain has its own configuration, separate from the application's, and the
+separation is deliberate:
+
+``scripts/server/secrets/deploy.env``
+    Shell syntax, read by the scripts **before any OPUS code exists on the machine**.
+    It says where to install, which database credentials to use, where the PDS holdings
+    are, and what Django's secret key is. Copy ``scripts/server/deploy.env.template``,
+    fill in every ``<PLACEHOLDER>``, and ``chmod 600`` it; the directory is git-ignored.
+
+``opus.toml``
+    Read by the installed application and the import pipeline at run time.
+    ``_write_opus_toml.sh`` **generates it** per installation from the values above, and
+    the deploy exports ``OPUS_CONFIG`` pointing at it. On a Node server, do not
+    hand-write this file from ``opus.toml.template`` as the section above describes: the
+    next deploy overwrites it. Change ``deploy.env`` instead.
+
+``_read_deploy_env.sh`` refuses to continue if any value is missing, empty, or still the
+``<PLACEHOLDER>`` the template ships, and the generator refuses a value containing a
+control character, because TOML cannot represent one inside a quoted string. Both
+failures name the variable at fault, and both happen before the deploy stops Apache.
 
 Two things always have to happen after a database changes, and both are easy to
 forget:
@@ -172,9 +238,9 @@ the placeholders (the virtual environment, the Apache log directory and its file
 prefix, and the web directory the reports are published to) and installs the result in
 its own crontab. Nothing substitutes or runs them automatically.
 
-They invoke the analyzer as ``opus_log_analyzer``, a console script the distribution
-does not yet install -- until it does, the equivalent is ``python -m
-opus_log_analyzer`` with the same arguments. For example, the nightly update is::
+They invoke the analyzer as ``opus_log_analyzer``, the console script the
+distribution installs; ``python -m opus_log_analyzer`` runs the same ``main`` and takes
+the same arguments. For example, the nightly update is::
 
     #!/bin/bash
     source <VENV>/bin/activate

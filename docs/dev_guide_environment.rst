@@ -101,8 +101,8 @@ pipeline instead, so there are no OPUS migrations to run.
 
 **The import pipeline**::
 
-    python -m opus_import --help
-    python -m opus_import --do-it-all COISS_2002
+    opus_import --help
+    opus_import --do-it-all COISS_2002
 
 ``--do-it-all`` runs the whole sequence -- import, copy to the permanent tables, and
 rebuild the auxiliary tables -- for the bundles named on the command line. Every step
@@ -111,11 +111,29 @@ can also be asked for on its own; :mod:`opus_import.cli` documents the surface a
 
 A smoke test that needs neither holdings nor a database::
 
-    python -m opus_import --help
+    opus_import --help
 
 **The log analyzer**::
 
-    python -m opus_log_analyzer --help
+    opus_log_analyzer --help
+    opus_error_analyzer --help
+
+**Both forms of every command.** The installation declares three console scripts --
+``opus_import``, ``opus_log_analyzer`` and ``opus_error_analyzer`` -- and each is
+equivalent to a ``python -m`` invocation, because both reach the same ``main``:
+
+=========================  =========================================
+Console script             Equivalent module form
+=========================  =========================================
+``opus_import``            ``python -m opus_import``
+``opus_log_analyzer``      ``python -m opus_log_analyzer``
+``opus_error_analyzer``    ``python -m opus_log_analyzer.error_analyzer``
+=========================  =========================================
+
+The error analyzer names a module rather than a package because a package has one
+``__main__`` and the log analyzer holds it. The console scripts are what the server
+chains invoke, by name; ``tests/opus_packaging/test_console_scripts.py`` runs both
+forms of each and compares them.
 
 Running the tests
 -----------------
@@ -231,6 +249,15 @@ Building the documentation
 
     cd docs && make html
 
+``scripts/read-docs.sh`` does the same build and then opens
+``docs/_build/html/index.html`` with the platform's default handler. It activates the
+virtual environment first (``VENV`` or ``VENV_PATH``, defaulting to ``venv/`` beside
+``pyproject.toml``), which is worth knowing when ``make html`` fails on ``import
+django``: that error usually means ``sphinx-build`` was found somewhere other than the
+project's environment, and the fix is ``pip install -e ".[dev]"`` rather than anything
+to do with Django. It is a developer convenience with no CI role -- the ``Docs`` job
+and ``run-all-checks.sh`` are the gates.
+
 ``docs/Makefile`` passes ``-W`` and ``-n`` by default, which is the gate the
 documentation has to pass: ``-W`` turns every warning into an error, and ``-n``
 reports every cross-reference that does not resolve. ``make clean`` before ``make
@@ -266,9 +293,18 @@ Both trigger the same way: on a push or a pull request against the branches thei
 ``on:`` block names, on a daily schedule, and on demand through
 ``workflow_dispatch``. Read the branch list out of the workflow rather than from here.
 
-``run-tests.yml`` runs on GitHub-hosted runners and has three jobs: **Run Lint** (ruff,
-bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 and 3.13, and **Docs**
-(the same ``-W -n`` Sphinx build as above). None of them needs holdings or a database.
+``run-tests.yml`` runs on GitHub-hosted runners and has four jobs: **Run Lint** (ruff,
+bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 and 3.13, **Docs**
+(the same ``-W -n`` Sphinx build as above), and **Package**. None of them needs
+holdings or a database.
+
+**Package** is the release path minus the upload: it builds the source distribution and
+the wheel, validates them with ``twine check --strict`` and ``pyroma``, then installs
+the wheel into a fresh virtual environment outside the checkout and runs all three
+console scripts and the package data they read. Running it on every push is what keeps
+the release from being the first thing to discover a packaging change. What it cannot
+cover is the upload itself, the API tokens, and what PyPI makes of the metadata on
+receipt; only a real publish exercises those.
 
 ``run-integration.yml`` runs on the Node's self-hosted runner, which has the real PDS
 holdings mounted. It imports a fixed set of bundles into a fresh database and then runs
@@ -276,6 +312,14 @@ the golden-response API suite, the live-database Django suites, and
 ``tests/opus_support`` and ``tests/opus_app`` -- all in one session, because the 100%
 coverage gate measures what all of them reach together. It is what proves that a
 refactor did not change what OPUS answers.
+
+Every job in both workflows installs the same thing a developer does,
+``pip install -e ".[dev]"``. That is worth stating because it was not always so: the
+self-hosted runner used to install a compiled ``requirements.txt`` while the
+GitHub-hosted jobs installed the declared dependencies, so the two resolved different
+versions and a check could pass on one side and fail on the other for no reason
+visible in the diff. There is no lock file now; the integration job logs
+``pip freeze``, which is where to look when a check that passed yesterday fails today.
 
 Third-party actions are pinned to a full commit SHA with the release in a trailing
 comment, in every workflow. ``run-integration.yml`` carries the reasoning and the
@@ -289,7 +333,14 @@ The version comes from the git tag, through setuptools-scm, and is written to
 string. Tags continue the zero-padded ``v3.x`` scheme
 (``scripts/releases/add_release_tag.sh`` creates one, and
 ``scripts/releases/show_version_tags.sh`` lists them). Publishing a tagged release on
-GitHub triggers ``publish_to_pypi.yml``.
+GitHub triggers ``publish_to_pypi.yml``, which builds the distributions, validates them
+and uploads them to PyPI with an API token. ``publish_to_test_pypi.yml`` does the same
+against Test PyPI and runs only on demand, through ``workflow_dispatch``.
+
+Neither workflow uses Trusted Publishing -- both supply a ``password`` -- so neither
+needs ``id-token: write``, and both declare ``permissions: contents: read``. A change
+to publish through OIDC instead would have to add that permission explicitly, and a
+``permissions:`` block that omits it fails the publish at a moment nobody is watching.
 
 Contributing
 ------------

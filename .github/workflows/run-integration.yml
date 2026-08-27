@@ -101,6 +101,16 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm derives the version from tags, which the default
+          # shallow clone does not fetch: without this the runner installed
+          # rms-opus 0.1.dev1, the fallback. Nothing here gates on the version --
+          # no golden fixture embeds it, and the unit test asserts only its shape
+          # -- but the About page renders it and the static assets carry it as a
+          # cache-busting suffix, so this is the one place the whole stack runs
+          # together and it was running against a version that could not occur in
+          # production. The runner keeps its workspace between runs, so the full
+          # history is fetched once and updated incrementally after that.
+          fetch-depth: 0
           # Nothing in this workflow pushes or reaches the GitHub API through
           # git, so it never needs the token persisted. checkout's post step
           # normally removes it, which leaves the window that matters here: a

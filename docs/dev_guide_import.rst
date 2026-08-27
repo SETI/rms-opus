@@ -5,7 +5,8 @@ The Import Pipeline
 
 :mod:`opus_import` reads PDS3 volumes and PDS4 bundles and writes every OPUS table.
 It is a program rather than a library: nothing outside the distribution imports it,
-and its only entry point is ``python -m opus_import``.
+and it is run as ``opus_import``, the console script the distribution installs, or
+equivalently as ``python -m opus_import``.
 
 Overview
 --------

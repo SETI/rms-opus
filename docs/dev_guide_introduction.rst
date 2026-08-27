@@ -31,7 +31,7 @@ database -- and two supporting packages:
 :mod:`opus_import`
     The import pipeline. It reads PDS3 volumes and PDS4 bundles out of the Node's
     holdings, computes one row of metadata per observation, and writes the OPUS
-    database. It runs as ``python -m opus_import``.
+    database. It runs as ``opus_import``, or equivalently ``python -m opus_import``.
 
 :mod:`opus_app`
     The Django project. It serves the OPUS user interface and the public web API out
@@ -47,7 +47,8 @@ database -- and two supporting packages:
 
 :mod:`opus_log_analyzer`
     A separate program that turns a server's Apache access logs into reports on how
-    OPUS is being used. It runs as ``python -m opus_log_analyzer``.
+    OPUS is being used. It runs as ``opus_log_analyzer``, or equivalently
+    ``python -m opus_log_analyzer``; its error-log companion is ``opus_error_analyzer``.
 
 Runtime and dependencies
 ------------------------
