@@ -28,8 +28,11 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.skipif(
-    os.name != 'posix', reason='the deploy chain is bash, and runs only on the servers'
+# Not module-wide: only the two subprocess tests below build a POSIX-shaped environment
+# (`env={'PATH': '/usr/bin:/bin'}`). Locating the module is pure importlib and platform
+# independent, so skipping it everywhere would hide a real regression on Windows.
+_posix_only = pytest.mark.skipif(
+    os.name != 'posix', reason='these two build a POSIX environment for the subprocess'
 )
 
 
@@ -46,6 +49,7 @@ def test_the_wsgi_module_can_be_located() -> None:
     assert Path(spec.origin).name == 'wsgi.py'
 
 
+@_posix_only
 def test_locating_it_neither_imports_it_nor_configures_django() -> None:
     """Resolving the path has no side effects.
 
@@ -78,6 +82,7 @@ def test_locating_it_neither_imports_it_nor_configures_django() -> None:
     assert result.stdout.strip() == 'clean'
 
 
+@_posix_only
 def test_importing_the_wsgi_module_really_does_need_a_configured_environment() -> None:
     """The reason for the above: importing it without OPUS_CONFIG fails.
 

@@ -86,6 +86,13 @@ toml_escape() {
 # On a deployed server collectstatic gathers the static files into
 # ${OPUS_DIR}/static_media, which is unrelated to the source directory inside the
 # installed distribution, and both static_root and opus_static_root point there.
+# Removed first, deliberately: `cat >` truncates an existing file but does NOT change
+# its mode, so writing over a leftover temporary file would keep whatever permissions
+# that file had and the `umask 077` below would protect nothing -- the password and the
+# secret key would sit in a world-readable file until the `chmod 600` at the end. The
+# same trap was found in the test that checks this property, one layer up.
+rm -f "${OUTPUT_PATH}.tmp"
+
 ( umask 077; cat > "${OUTPUT_PATH}.tmp" <<EOF
 [database]
 brand = "MySQL"

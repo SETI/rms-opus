@@ -46,6 +46,21 @@ Installing
 A development installation uses an editable install of a checkout instead; see
 :ref:`dev_guide_environment`.
 
+Dependencies are declared in ``pyproject.toml`` with **floors, not pins** -- only
+``django`` carries an upper bound, because 5.2 is the LTS this application targets. There
+is no lock file: a fresh install resolves each dependency to its newest compatible
+release. To reproduce one installation exactly on another machine, generate a constraints
+file from a known-good one and install against it::
+
+    # on the known-good installation
+    /seti/newnav/capped-run.sh python -m pip freeze > constraints.txt
+
+    # on the new one
+    /seti/newnav/capped-run.sh pip install rms-opus -c constraints.txt
+
+Nothing in the deploy chain maintains such a file; it is there for the case where ops
+wants a reproducible install rather than the newest one.
+
 Configuring
 -----------
 
@@ -158,7 +173,7 @@ that swapping databases is a link change rather than a copy:
     /opus/src/rms-opus_<database name>/
         opus_venv/                # the virtual environment; rms-opus is installed here
         opus.toml                 # this installation's configuration, mode 0600
-        wsgi.py                   # a symlink to opus_venv/.../site-packages/opus_app/wsgi.py
+        wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
 
 ``wsgi.py`` is the fixed path the vhost names, so it survives both a release upgrade
 and a Python upgrade::
@@ -169,9 +184,11 @@ and a Python upgrade::
 ``deploy_new_code_and_database.sh <database name> [<version spec>]`` stops Apache and
 memcached, builds a new installation directory with that release in it, writes its
 ``opus.toml``, moves the link, then migrates, collects static files and imports the
-dictionary, and starts Apache and memcached again. ``deploy_new_code_only.sh [<version spec>]`` upgrades the existing installation
-in place with ``pip install --upgrade`` instead, reusing its ``opus.toml`` because only
-a full deploy knows which database to name in one.
+dictionary, and starts Apache and memcached again.
+
+``deploy_new_code_only.sh [<version spec>]`` upgrades the existing installation in place
+with ``pip install --upgrade`` instead, reusing its ``opus.toml`` because only a full
+deploy knows which database to name in one.
 
 The optional argument of both is a **PEP 440 version specifier** appended to the
 distribution name -- ``==3.23.0`` for a particular release, omitted for the newest. It

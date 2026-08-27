@@ -217,6 +217,10 @@ def test_the_generated_file_is_not_readable_by_anyone_else(tmp_path: Path) -> No
     assert mode == 0o600, oct(mode)
 
 
+@pytest.mark.skipif(
+    hasattr(os, 'geteuid') and os.geteuid() == 0,
+    reason='root ignores the directory permissions this test uses to strand the temp file',
+)
 def test_the_file_is_never_world_readable_even_briefly(
     tmp_path: Path, request: pytest.FixtureRequest
 ) -> None:
@@ -266,6 +270,54 @@ def test_the_file_is_never_world_readable_even_briefly(
     assert mode & 0o077 == 0, (
         f'temp file created {oct(mode)} under a permissive umask: the umask 077 '
         f'subshell is not protecting the write'
+    )
+
+
+@pytest.mark.skipif(
+    hasattr(os, 'geteuid') and os.geteuid() == 0,
+    reason='root ignores the directory permissions this test uses to strand the temp file',
+)
+def test_a_stale_temporary_file_does_not_keep_its_permissions(
+    tmp_path: Path, request: pytest.FixtureRequest
+) -> None:
+    """A leftover temporary file is removed before the write, not written over.
+
+    ``cat >`` truncates an existing file but does not change its mode, so writing over a
+    world-readable leftover would keep those permissions and ``umask 077`` would protect
+    nothing -- the password and the secret key would sit in a readable file until the
+    trailing ``chmod``. This is the production twin of the trap found in the umask test
+    one layer up, and it is why the generator ``rm -f``s first.
+
+    It has to inspect the file *mid-flight*, for the same reason that test does: on a
+    successful run the mode is renamed away and then chmod'd, so the end state is
+    identical whether or not the leftover was removed. The first version of this test
+    asserted the end state and passed with the ``rm -f`` deleted -- the same
+    check-that-cannot-fail shape, caught by mutating the guard it was written for. So
+    the destination is again a directory the process cannot write into, stranding the
+    temporary file with the mode it was actually created with.
+    """
+    destination = tmp_path / 'opus.toml'
+    destination.mkdir(mode=0o500)
+    request.addfinalizer(lambda: destination.chmod(0o700))
+
+    stale = Path(f'{destination}.tmp')
+    stale.write_text('left over from an earlier run\n')
+    stale.chmod(0o666)
+
+    env = {'PATH': os.environ.get('PATH', '/usr/bin:/bin'), **BASE_ENV}
+    result = subprocess.run(
+        ['bash', str(SCRIPT), str(destination)],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+    assert result.returncode != 0
+    assert stale.exists(), 'the generator did not get as far as writing the temp file'
+    mode = stat.S_IMODE(stale.stat().st_mode)
+    assert mode & 0o077 == 0, (
+        f'the temporary file kept the stale mode {oct(mode)}: `cat >` truncated an '
+        f'existing file instead of the generator removing it first'
     )
 
 

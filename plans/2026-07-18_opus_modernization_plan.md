@@ -6635,9 +6635,12 @@ body; never rewrite or delete earlier notes.*
     the continuation, so `bash -n` fails and `_run_full_opus_import.sh`, which sources it,
     aborts before importing a single bundle. Introduced in `1e6b091c` (#1437) when
     `cassini_iss_fring_mosaics_rsfrench2025` was disabled in place. Fixed here by moving
-    the note above the `for`. It reached `rewrite` untouched through PR-04's and PR-05's
-    moves, and a sweep of every `.sh` on `origin/main` through `bash -n` found it to be
-    **the only broken script on either branch**, failing at line 42. **`main` still
+    the note above the `for`. **The defect survived PR-04's and PR-05's moves, though
+    the file did not**: `main`'s copy still says `python main_opus_import.py` after a
+    `cd` into the checkout where `rewrite`'s said `python -m opus_import`, so a backport
+    is not a cherry-pick of this commit -- the surrounding lines differ. Sweeping every
+    shell file on both branches through `bash -n` found this to be **the only broken one
+    on either**, failing at line 42 in both. **`main` still
     carries it**, so the production import chain is broken on the deployed branch.
     **RULED 2026-08-27 (rfrench): no backport.** The fix is not being cherry-picked to
     `main`; `main` receives it when PR-24 merges `rewrite`, and until that merge
@@ -6705,38 +6708,42 @@ body; never rewrite or delete earlier notes.*
     3.3.2 -- and the chain still passed at **2576 tests / TOTAL 100%** with zero
     golden-fixture diffs. **`requirements.txt` was holding back eight packages, and none of
     them needed holding.**
-  - **OPEN DECISION (owner: rfrench, raised 2026-08-27): deleting the lockfile removes
-    every upper bound, and `rms-pdsfile` is the sharp case.** `requirements.txt` pinned
+  - **What constrains each dependency now that the lockfile is gone.** This is the
+    single largest change to the repository's dependency story, so it is recorded in
+    measured terms rather than left for a reader to work out. `requirements.txt` pinned
     **70 packages** -- 23 direct and 47 transitive -- and nothing replaces those pins.
     Measured by comparing `git show 394d9ce9:requirements.txt` against the current
-    `[project]` tables rather than by reading either:
+    `[project]` tables rather than by reading either; **re-run the comparison rather
+    than trusting the names below**, which go stale the moment a dependency moves:
     * Of the **23 direct** dependencies the lockfile pinned, **only `django` carries an
-      upper bound** (`>=5.2,<6`). The other **22 have none**: `coverage`, `numpy`,
-      `pillow`, `pytest`, `pytest-cov`, `pytest-django`, `pyyaml` and `rms-julian` carry
-      a floor only, and `djangorestframework`, `jinja2`, `markupsafe`, `mysqlclient`,
-      `pdfkit`, `pyparsing`, `pytz`, `qrcode`, `regex`, `requests`, `rms-pdslogger`,
-      `rms-pdstable` and `rms-translator` carry **no specifier at all**.
-    * **`rms-pdsfile` is the only PRE-1.0 direct dependency** (`>=0.0.18`, pinned at
-      `0.0.18`), and it is the one that matters most: **rms-pdsfile 3 is a major rewrite
-      on a branch**. Below 1.0 semver promises nothing, so an unbounded floor on a
-      package with a known major rewrite pending means a fresh `pip install rms-opus`
-      on a server resolves to 3.x the day it releases. Five further RMS packages ride
-      along unbounded -- `rms-pdslogger`, `rms-pdstable`, `rms-translator` directly, and
-      `rms-filecache`, `rms-pdsparser`, `rms-textkernel` transitively.
+      upper bound** (`>=5.2,<6`). Of the other 22, eight carry a floor only -- `coverage`,
+      `numpy`, `pillow`, `pytest`, `pytest-cov`, `pytest-django`, `pyyaml`, `rms-julian`
+      -- and the remaining fourteen carry **no specifier at all**.
+    * The **47 transitive** pins are gone entirely; each of those packages is now
+      constrained only by whatever its parent asks for.
+    * `rms-pdsfile` is the only **pre-1.0** direct dependency (`>=0.0.18`, pinned at
+      `0.0.18`). Six other RMS packages are unbounded too: `rms-pdslogger`,
+      `rms-pdstable` and `rms-translator` directly, `rms-filecache`, `rms-pdsparser` and
+      `rms-textkernel` transitively.
     * The plan's stated replacement is "deploy pins via a `constraints.txt` generated at
-      release **if ops wants one**" -- optional, and therefore **not a guarantee**. The
-      deployment guide documents how to produce one from a known-good server; nothing
-      requires it.
-    **Nothing was capped here**, because capping a dependency is rfrench's call and it
-    was open when this PR was written. Whoever picks this up should decide deliberately
-    rather than by default, and the measurement above is the input; re-run it rather
-    than trusting the lists, which go stale the moment a dependency is added.
+      release **if ops wants one**" -- optional by design. `docs/dev_guide_deployment.rst`
+      now records how to produce one from a known-good installation, which it did not
+      before; nothing requires it.
+  - **RULED 2026-08-27 (rfrench): no upper bounds on dependencies.** This is a standing
+    decision, not a PR-22 omission -- **a later PR seeing an open floor does not need to
+    re-litigate it.** The specific worry that prompted the question was `rms-pdsfile`
+    being pre-1.0 with a major rewrite pending, and the answer retires it:
+    **rms-pdsfile 3 is behavior-identical to 0.0.18**, adding typing and internal changes
+    only. rfrench is that package's author, so this is authoritative rather than an
+    estimate, and the eventual upgrade is low-risk rather than a breaking major.
   - **For whoever adopts rms-pdsfile 3: remove `pdsfile.*` from the
-    `[[tool.mypy.overrides]]` `ignore_missing_imports` list at the same time.** pdsfile 3
-    ships typing, and that override -- which today also covers `julian.*`, `pdslogger.*`,
-    `pdsparser.*`, `pdstable.*` and `rest_framework.*` -- would go on silencing it, so
-    the new annotations would buy nothing while looking as though they had. **Not
-    changed here**: the override is correct for 0.0.18, which ships no types.
+    `ignore_missing_imports` list in `[[tool.mypy.overrides]]` at the same time.**
+    pdsfile 3 ships typing, and that override would go on silencing it, so the new
+    annotations would buy nothing while looking as though they had. Read the module list
+    out of the table rather than from here -- it covers several third-party packages that
+    ship neither annotations nor a typeshed stub. **Not changed now**: the override is
+    correct for 0.0.18, which ships no types (confirmed: no `py.typed` in the installed
+    distribution).
   - **The `filterwarnings` julian entry is gone and `[project].dependencies` floors
     `rms-julian>=3.0.2`.** PR-03's note said the entry becomes removable when the pin moves
     past 3.0.1; deleting the lockfile moved it past nothing in particular, so the floor is
@@ -6819,7 +6826,9 @@ body; never rewrite or delete earlier notes.*
     wrappers are not the server chain: `import_for_tests.sh` and `import_all.sh` run from
     a developer's or the integration runner's checkout, where the editable install and
     `python -m` are the same thing and no console script may be on PATH. The
-    `scripts/server/*` and `scripts/automated_tests/*` chains are the ones that changed.
+    **`scripts/server/*` is the only chain this PR changed** -- `git diff -- scripts/automated_tests/`
+    is empty, and that chain still reaches the pipeline through those same `python -m`
+    wrappers, deliberately.
   - **`django-admin check` reports one pre-existing warning** from a clean-venv install,
     `urls.W005: URL namespace 'admin' isn't unique`. It is a warning, `check` exits 0, and
     nothing here introduced it. Recorded as a candidate for a later PR, not fixed.
@@ -6845,8 +6854,13 @@ body; never rewrite or delete earlier notes.*
     institutionalized** in `tests/opus_packaging/test_shell_scripts_parse.py` rather than
     left as something an executor happened to run by hand. (1) `bash -n` over every shell
     file, found **by rule** (suffix or shell shebang) rather than from a list -- that is
-    what found the broken import chain, and it covers `deploy.env.template` too, whose
-    placeholders are quoted so an unfilled copy is at least parseable. (2) Every `run:`
+    what found the broken import chain. The rule reaches everything executed **or
+    `source`d** as shell, which is why it covers `deploy.env.template` as well as `.sh`
+    and `.sh_template`: `deploy.env` is read with `source`, so a syntax error in it
+    breaks every deploy just as surely as one in a script, and its placeholders are
+    quoted so an unfilled copy is at least parseable. (An earlier draft of this bullet
+    claimed that coverage before the rule provided it -- caught by a reviewer
+    enumerating what the rule actually matched.) (2) Every `run:`
     block extracted from the parsed workflow YAML and parsed the same way: a heredoc
     terminator left indented inside a YAML block scalar produces shell that does not
     parse.
@@ -6859,6 +6873,20 @@ body; never rewrite or delete earlier notes.*
     failure and watching the check pass: mutation-checking is the cheap form, and this
     is the **fourth** instance of the class PR-21 named, in a PR that quoted PR-21's
     warning about it.
+  - **A transient property cannot be tested through an end state, and this PR proved it
+    twice.** `_write_opus_toml.sh` writes a temporary file under `umask 077`, renames it,
+    then `chmod 600`s it. Two separate tests were written to defend the *window* before
+    that chmod, and both first asserted the *final* mode -- which is 0600 either way, so
+    both passed with the guard they were written for deleted. The working technique, used
+    by both now: make the destination a directory the process cannot write into, so `mv`
+    fails and the temporary file is stranded on disk carrying the mode it was actually
+    created with. Two related traps found the same way: `cat >` truncates an existing
+    file **without changing its mode**, so writing over a world-readable leftover leaves
+    the password world-readable until the chmod (the generator `rm -f`s first now); and a
+    stale leftover makes such a test measure the wrong file, which is a false **pass** in
+    one direction and a false failure in the other. **Five instances of the
+    check-that-cannot-fail class in this PR** -- the fifth found by mutating a guard that
+    had itself been added in response to the fourth.
   - **Verification evidence, measured at this PR's head and not maintained after it.**
     `scripts/run-all-checks.sh` clean: ruff, mypy, pytest, pyroma 10/10, bandit,
     vulture, Sphinx under `-W -n`, PyMarkdown. **The test count is deliberately not

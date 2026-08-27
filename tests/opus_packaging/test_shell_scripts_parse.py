@@ -29,7 +29,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Directories that hold no shell script of ours: build output, virtual environments,
 # git internals, and the working documents for the modernization.
-SKIP_DIRECTORIES = {'.git', 'venv', '.venv', 'opus_venv', '_build', 'node_modules', '__pycache__'}
+SKIP_DIRECTORIES = {
+    '.git', 'venv', '.venv', 'opus_venv', '_build', 'node_modules', '__pycache__',
+    # Build and tool output. Nothing here is ours, and `dist/` in particular holds
+    # unpacked distributions during a release check.
+    'build', 'dist', 'htmlcov', '.mypy_cache', '.pytest_cache', '.ruff_cache',
+    '.eggs',
+}
 
 # GitHub substitutes an expression's *value* into the script before bash ever sees it,
 # so replacing `${{ ... }}` with a placeholder is what models the shell that actually
@@ -61,11 +67,22 @@ def _shell_files() -> list[Path]:
     """
     found: list[Path] = []
     for path in REPO_ROOT.rglob('*'):
-        if any(part in SKIP_DIRECTORIES for part in path.parts):
+        # Relative to the repository, not absolute: a checkout living under a directory
+        # that happens to be called `build` or `venv` would otherwise match nothing.
+        if any(part in SKIP_DIRECTORIES for part in path.relative_to(REPO_ROOT).parts):
             continue
         if not path.is_file():
             continue
-        if path.suffix in {'.sh'} or path.name.endswith('.sh_template'):
+        # Everything that is executed or `source`d as shell. `deploy.env` is shell
+        # syntax read with `source`, so a syntax error in it breaks every deploy just
+        # as surely as one in a `.sh` -- it belongs in the same gate, and its checked-in
+        # template is the only copy this repository has.
+        if (
+            path.suffix == '.sh'
+            or path.name.endswith('.sh_template')
+            or path.name.endswith('.env')
+            or path.name.endswith('.env.template')
+        ):
             found.append(path)
             continue
         # An extensionless script is still a script.
@@ -80,18 +97,39 @@ def _shell_files() -> list[Path]:
     return sorted(found)
 
 
+def _workflow_files() -> list[Path]:
+    """Every workflow file, both extensions GitHub accepts."""
+    directory = REPO_ROOT / '.github' / 'workflows'
+    return sorted(set(directory.glob('*.yml')) | set(directory.glob('*.yaml')))
+
+
 def _workflow_run_blocks() -> list[tuple[str, str]]:
-    """Every ``run:`` block in every workflow, as ``(label, script)``."""
+    """Every bash ``run:`` block in every workflow, as ``(label, script)``.
+
+    A step may set ``shell:`` to something that is not bash -- ``python`` and ``pwsh``
+    are the common ones -- and feeding those to ``bash -n`` would report a defect that
+    is not there. Only steps that will actually run under bash are collected; the
+    workflows set ``defaults.run.shell: bash``, so an unset ``shell:`` means bash here.
+    """
     blocks: list[tuple[str, str]] = []
-    for workflow in sorted((REPO_ROOT / '.github' / 'workflows').glob('*.yml')):
+    for workflow in _workflow_files():
         data = yaml.safe_load(workflow.read_text())
-        for job_id, job in data['jobs'].items():
+        for job_id, job in data.get('jobs', {}).items():
             for index, step in enumerate(job.get('steps', [])):
                 script = step.get('run')
-                if script:
-                    name = step.get('name', f'step {index}')
-                    blocks.append((f'{workflow.name}:{job_id}:{name}', script))
+                if not script:
+                    continue
+                shell = step.get('shell', 'bash')
+                if shell not in {'bash', 'sh'}:
+                    continue
+                name = step.get('name', f'step {index}')
+                blocks.append((f'{workflow.name}:{job_id}:{name}', script))
     return blocks
+
+
+# Computed once: `@parametrize` needs both the values and the ids, and calling the
+# discovery twice would let them disagree.
+WORKFLOW_RUN_BLOCKS = _workflow_run_blocks()
 
 
 def test_some_shell_files_were_found() -> None:
@@ -103,8 +141,12 @@ def test_some_shell_files_were_found() -> None:
     found = _shell_files()
     assert len(found) > 20, [str(p) for p in found]
     names = {p.name for p in found}
+    # Canaries rather than an inventory: one from each family the rule is meant to
+    # reach, so a rule that silently narrows fails here instead of passing vacuously.
     assert 'run-all-checks.sh' in names
     assert '_opus_import_volumes.sh' in names
+    assert 'run_log_analyzer_update.sh_template' in names
+    assert 'deploy.env.template' in names
 
 
 def _parse(script: str | None = None, path: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -180,13 +222,25 @@ def test_expressions_are_substituted_before_parsing() -> None:
 
 
 def test_some_workflow_run_blocks_were_found() -> None:
-    """The workflow extraction finds something, for the same reason as above."""
-    blocks = _workflow_run_blocks()
-    assert len(blocks) > 10, [label for label, _ in blocks]
+    """The extraction reaches every workflow, not merely some of them.
+
+    A count alone is not enough: a glob narrowed to ``run-*.yml`` still returns 20-odd
+    blocks and would leave **both publish workflows** -- this PR's own subject --
+    unchecked while the suite stayed green. So the assertion is on the set of files
+    covered, which is what would actually change.
+    """
+    assert {path.name for path in _workflow_files()} == {
+        'run-tests.yml',
+        'run-integration.yml',
+        'publish_to_pypi.yml',
+        'publish_to_test_pypi.yml',
+    }
+    covered = {label.split(':', 1)[0] for label, _ in WORKFLOW_RUN_BLOCKS}
+    assert covered == {path.name for path in _workflow_files()}, covered
 
 
 @pytest.mark.parametrize(
-    ('label', 'script'), _workflow_run_blocks(), ids=[label for label, _ in _workflow_run_blocks()]
+    ('label', 'script'), WORKFLOW_RUN_BLOCKS, ids=[label for label, _ in WORKFLOW_RUN_BLOCKS]
 )
 def test_workflow_run_block_parses(label: str, script: str) -> None:
     """The shell inside each workflow step parses once expressions are substituted."""
