@@ -6374,12 +6374,28 @@ body; never rewrite or delete earlier notes.*
     `dev_guide_environment.rst` describes the two workflows' triggers, which **PR-24
     narrows to `main`**. Each is a documentation change belonging to the PR that makes the
     code change, per `doc_python.mdc` section 7.
-  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, mypy over 220
-    files, pytest **1329 passed**, pyroma 10/10, bandit, vulture, Sphinx under `-W -n`,
+  - **Deleting a view can uncover a branch elsewhere, and only the 100% gate says so.**
+    Removing `api_api_guide` left two branches of `src/opus_app/apps/*` with no consumer
+    at all: `get_fields_info`'s `raw` format, whose only caller it was, and
+    `StripWhitespaceMiddleware`'s `<!--NOSTRIP-->` escape hatch, whose only users were
+    the two `apiguide` templates. The first local chain **exited 0 with coverage at 99%**
+    (2 statements, 2 partial branches); `opus_check_coverage.sh`, run separately, is what
+    reported it. `raw` was deleted as dead code -- which also collapsed
+    `get_fields_info`'s return type from `dict | HttpResponse` to `HttpResponse` and
+    retired the `# type: ignore[return-value]` the union forced on its caller -- and the
+    middleware's escape hatch was kept and given
+    `tests/opus_app/test_opus_middleware.py`, because it is documented behavior and the
+    only way a view can ask for its content back untouched. **This is the same shape as
+    the PR-03a note about a fix making an unreachable branch reachable, in the other
+    direction: after removing a caller, re-check what stopped being covered.**
+  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, mypy over 221
+    files, pytest **1334 passed**, pyroma 10/10, bandit, vulture, Sphinx under `-W -n`,
     PyMarkdown). The Sphinx build is clean with **zero** warnings, and that number is
     trustworthy only because of the logging finding above -- it was zero before the fix
     too, for the wrong reason. The full local chain
     (`scripts/automated_tests/opus_main_test.sh`: the 30-bundle import into a fresh MySQL
-    schema, then the suites under the integration coverage configuration) ran end to end,
-    followed by `opus_check_coverage.sh` invoked separately, because the chain does not
-    apply the gate.
+    schema, then the suites under the integration coverage configuration) ran end to end
+    twice: the first run found the coverage regression above, and the second passed with
+    **2576 tests and TOTAL 100%** (0 statements missed, 0 partial branches), with
+    `opus_check_coverage.sh` invoked separately afterwards and exiting 0 -- because the
+    chain does not apply the gate.
