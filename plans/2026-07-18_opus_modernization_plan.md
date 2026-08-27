@@ -6450,6 +6450,22 @@ body; never rewrite or delete earlier notes.*
     claim in one place is what leaves its twin behind, and that is the failure mode to
     watch for. Prose rewritten in a hurry is not safer than the prose it replaced; it is
     newer, and nothing in this repository checks it.
+  - **Measured on this PR: roughly one correction in five is itself wrong.** Pass 1 found
+    19 blocking defects, all prose; the commit fixing them introduced or left behind six
+    more, which pass 2 found; pass 3, scoped only to those corrections, found none. The
+    rate is worth carrying to PR-22, PR-23, PR-24 and the deferred PR-19, because it
+    means **a fix commit needs reviewing as much as the code it fixes** -- and because a
+    review budget spent re-reading the original diff is spent in the wrong place. The
+    three kinds of failure pass 3's archaeology separated have different preventions,
+    and conflating them loses that:
+    * **New prose that is simply wrong** (one of the six). Prevention: verify the fix
+      against the artifact, exactly as the original claim should have been.
+    * **Fixed here, left standing there** (two of the six). The same claim appeared in
+      two chapters and only one was corrected. Prevention: grep for the claim, not for
+      the line -- when a fix corrects a fact, the fact is usually stated more than once.
+    * **Counts the fix commit made stale** (two of the six). Adding a test file moved
+      "221 files / 1334 tests". Prevention: do not write the number; derive it or drop
+      it.
   - **A claim that has been wrong twice gets derived or deleted, not corrected again.**
     rfrench's ruling after pass 3 (2026-08-27), and this PR acted on it: the API
     reference's excluded-module count is computed from `len(EXCLUDED_MODULES)` and a test

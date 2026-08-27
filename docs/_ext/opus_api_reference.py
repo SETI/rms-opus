@@ -185,17 +185,17 @@ def render_package_page(name: str, modules: list[str], subpackages: list[str],
 def absent_phrase() -> str:
     """Return the sentence opening that says how many modules are left out.
 
-    The count comes from `EXCLUDED_MODULES` rather than being written beside it, so
-    it cannot disagree with what the generator actually excludes. It is a function so
-    that the test asserting the rendered page can compare against this rather than
-    against a copy of the wording.
+    The count comes from `EXCLUDED_MODULES` rather than being written beside it, so it
+    cannot disagree with what the generator actually excludes. It is always rendered as
+    a numeral, never spelled out, so that the test checking the page can read the number
+    back out of it whatever the count happens to be.
 
     Returns:
         The opening of the sentence, ending in a full stop.
     """
-    if len(EXCLUDED_MODULES) == 1:
-        return 'One module is deliberately absent.'
-    return f'{len(EXCLUDED_MODULES)} modules are deliberately absent.'
+    count = len(EXCLUDED_MODULES)
+    return f'{count} module{"" if count == 1 else "s"} ' \
+           f'{"is" if count == 1 else "are"} deliberately absent.'
 
 
 def render_index_page() -> str:

@@ -131,11 +131,10 @@ def test_excluded_modules_are_named_on_the_landing_page() -> None:
     # Read the count back out of the rendered page and compare it with the data,
     # rather than with the function that phrased it -- comparing the page against
     # `absent_phrase()` would agree with any wording, including a hardcoded one.
-    stated = re.search(r'(\S+) modules? (?:is|are) deliberately absent',
+    stated = re.search(r'(\d+) modules? (?:is|are) deliberately absent',
                        ' '.join(index.split()))
-    assert stated is not None, 'the page states no count'
-    spelled = {'One': 1}.get(stated.group(1))
-    assert (spelled or int(stated.group(1))) == len(excluded)
+    assert stated is not None, 'the page states no count as a numeral'
+    assert int(stated.group(1)) == len(excluded)
 
 
 def test_excluded_modules_reach_no_automodule_directive() -> None:
