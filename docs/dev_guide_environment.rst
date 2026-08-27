@@ -152,11 +152,11 @@ the invocation above passes ``--cov-fail-under=0``:
   :mod:`opus_config`, :mod:`opus_import` and :mod:`opus_log_analyzer` -- the Django
   application is excluded. Its ``fail_under = 90`` is a **target, not a gate that
   anything runs today**: nothing measures coverage against *this* configuration --
-  neither workflow does, and the one script that runs ``--cov`` selects the other
-  configuration below -- the holdings-free suite reaches roughly 42%, and a bare
-  ``pytest --cov`` therefore exits non-zero on a perfectly healthy tree. Pass
-  ``--cov-fail-under=0`` to see the report without the target, or raise the number the
-  suite reaches rather than the target.
+  neither workflow does, and the automated-test scripts select the other configuration
+  below -- and the holdings-free suite reaches well under it, so a bare ``pytest --cov``
+  exits non-zero on a perfectly healthy tree. Pass ``--cov-fail-under=0`` to see the
+  report without the target, or raise the number the suite reaches rather than the
+  target.
 * ``integration_tests/.coveragerc`` measures ``src/opus_app/apps``,
   ``integration_tests/test_api`` and ``src/opus_support``, and **is** gated, at 100%.
   ``scripts/automated_tests/opus_run_unittests_coverage.sh`` measures it and

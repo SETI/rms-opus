@@ -85,13 +85,11 @@ This is the bundle recipe plus the configuration data that says the instrument e
    its fields are invisible.
 4. **Add any label parsing** the instrument needs to
    :mod:`opus_import.instruments`.
-5. **Add the mission class**, and follow the majority spelling for its file name:
-   the mission modules that exist are ``obs_volume_<mission>_common.py``, except
-   Cassini's, which is ``obs_cassini_common.py``. Not every entry in the mission map
-   has a module -- ground-based observations have none -- so read the names off
-   ``opus_import/obs/`` rather than assuming one per mission. Add its
-   ``_pds3``/``_pds4`` halves if the mission has both, then the leaf classes for its
-   bundles as above.
+5. **Add the mission class**, naming its file the way the existing mission modules
+   are named -- read those off ``opus_import/obs/`` rather than from here, because
+   they do not all follow one spelling and not every entry in the mission map has a
+   module at all. Add its ``_pds3``/``_pds4`` halves if the mission has both, then the
+   leaf classes for its bundles as above.
 6. **Regenerate the Django models**: ``scripts/models/create_opus_models.sh`` rewrites
    ``src/opus_app/apps/search/models.py`` from a populated database. New tables do not
    exist to the web application until it has been run.

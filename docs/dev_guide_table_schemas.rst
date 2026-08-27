@@ -4,8 +4,9 @@ Table Schemas
 =============
 
 ``src/opus_import/table_schemas/`` holds one JSON file per OPUS table, named after the
-table. A file is a list of objects, one per column, in the order the columns appear in
-the table. This is the single description of the database: the import pipeline creates
+table. A file is a list of objects in the order the columns appear in the table --
+mostly one per column, plus the occasional entry that deliberately defines no column:
+a ``constraint``, or a ``pi_referred_slug`` link to a field defined in another table. This is the single description of the database: the import pipeline creates
 every table from it, computes every value from it, validates the result against it, and
 derives from it what the web application's search form contains.
 

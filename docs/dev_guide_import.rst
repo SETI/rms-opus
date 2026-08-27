@@ -40,8 +40,8 @@ means editing them:
     ``BUNDLE_INFO``: a list of (regular expression matching a bundle id, details)
     pairs, and the only thing that makes a bundle importable at all. The details are
     the obs class that computes its rows, the PDS version, the primary index file
-    names -- ``primary_index`` is a tuple, and a bundle set may name several, as
-    COCIRS_0402 onwards does with three -- and two flags. Nothing here maps a
+    names -- ``primary_index`` is a tuple, and a bundle set may name more than one --
+    and two flags. Nothing here maps a
     bundle-id *prefix* to an instrument: the regular expression selects the class
     directly.
 

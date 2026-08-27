@@ -6442,11 +6442,28 @@ body; never rewrite or delete earlier notes.*
     instruction. **If PR-22 decides to ship `opus.toml.template` as package data, this
     acceptance item goes away** and the Quick Start should stop downloading anything.
   - **A review pass has to verify the fixes, not only the original claims.** Pass 2 of
-    this PR's §4a loop found six blocking defects, and **four of them were introduced by
-    pass 1's fixes** -- a corrected sentence that was corrected wrongly, a claim fixed in
-    one chapter and left standing in another, and two counts that the fix commit itself
-    made stale. Prose rewritten in a hurry is not safer than the prose it replaced; it
-    is newer, and nothing in this repository checks it.
+    this PR's §4a loop found six blocking defects, and **four of them existed only
+    because of how pass 1's fixes were made**: one was new prose the fix commit wrote and
+    got wrong; two were claims the fix corrected in one chapter and left standing in
+    another; and two counts the fix commit itself made stale by adding a test file. Only
+    the first is strictly "introduced", and the distinction is worth keeping -- fixing a
+    claim in one place is what leaves its twin behind, and that is the failure mode to
+    watch for. Prose rewritten in a hurry is not safer than the prose it replaced; it is
+    newer, and nothing in this repository checks it.
+  - **A claim that has been wrong twice gets derived or deleted, not corrected again.**
+    rfrench's ruling after pass 3 (2026-08-27), and this PR acted on it: the API
+    reference's excluded-module count is computed from `len(EXCLUDED_MODULES)` and a test
+    reads the number back out of the rendered page (mutation-checked: a hardcoded "Two"
+    and a wrong "7" are both killed); the table-schemas chapter's claims about `TAB:`,
+    about which files are not tables, and about the keys nothing reads are now asserted
+    by `tests/opus_docs/test_documented_schema_claims.py`, which names the sentence each
+    test defends; and the enumerations that carried no weight -- a specific bundle set,
+    the mission-module spellings, a coverage percentage -- were **deleted**, leaving the
+    instruction to read the current answer off the tree. Writing those tests immediately
+    found the chapter's own opening sentence imprecise: a schema entry carrying
+    `constraint` or `pi_referred_slug` defines no column, so "a list of objects, one per
+    column" was not quite true. **That is the argument for deriving rather than
+    correcting**: the derivation is checkable and the sentence was not.
   - **Executing a documented recipe is how three of this PR's defects were found.**
     Every command the guide tells a reader to run was run: the check-script invocations,
     the five pytest forms, both entry points, the docs build, `pyroma`, and the
@@ -6456,9 +6473,11 @@ body; never rewrite or delete earlier notes.*
     `pkgutil.walk_packages` imports only packages, so a plain module's failure surfaces
     later, when autodoc imports it, which `-W` does catch. A recipe that cannot be run
     should not be published.
-  - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, mypy over 222
-    files, pytest **1339 passed**, pyroma 10/10, bandit, vulture, Sphinx under `-W -n`,
-    PyMarkdown). The Sphinx build is clean with **zero** warnings, and that number is
+  - **Verification evidence, measured at this PR's head and not maintained after it.**
+    `scripts/run-all-checks.sh` clean (ruff, mypy, pytest, pyroma 10/10, bandit, vulture,
+    Sphinx under `-W -n`, PyMarkdown). The figures at the time were 222 files checked and
+    1339 tests passing; they are a record of this run rather than a claim about the
+    repository, and a later executor should re-measure rather than cite them. The Sphinx build is clean with **zero** warnings, and that number is
     trustworthy only because of the logging finding above -- it was zero before the fix
     too, for the wrong reason. The full local chain
     (`scripts/automated_tests/opus_main_test.sh`: the 30-bundle import into a fresh MySQL

@@ -9,6 +9,7 @@ subtree looks exactly like one that is complete.
 
 from __future__ import annotations
 
+import re
 import sys
 from collections.abc import Iterator
 from pathlib import Path
@@ -115,14 +116,26 @@ def test_excluded_modules_are_named_on_the_landing_page() -> None:
     """A reader is told what was left out, rather than left to notice the absence.
 
     Both the count and the names come from `EXCLUDED_MODULES`, so neither can drift
-    from what the generator actually excludes.
+    from what the generator actually excludes. The count is compared against the
+    generator's own phrasing rather than a copy of it, so this holds for one excluded
+    module as well as for several.
     """
     index = opus_api_reference.render_index_page()
     excluded = opus_api_reference.EXCLUDED_MODULES
     for name, reason in excluded.items():
         assert name in index
-        assert reason.split(' -- ')[0][:40] in index
-    assert f'{len(excluded)} modules are deliberately absent' in index
+        # The reason is rendered wrapped, so compare on its first few words rather
+        # than on the whole sentence.
+        assert ' '.join(reason.split()[:4]) in ' '.join(index.split())
+
+    # Read the count back out of the rendered page and compare it with the data,
+    # rather than with the function that phrased it -- comparing the page against
+    # `absent_phrase()` would agree with any wording, including a hardcoded one.
+    stated = re.search(r'(\S+) modules? (?:is|are) deliberately absent',
+                       ' '.join(index.split()))
+    assert stated is not None, 'the page states no count'
+    spelled = {'One': 1}.get(stated.group(1))
+    assert (spelled or int(stated.group(1))) == len(excluded)
 
 
 def test_excluded_modules_reach_no_automodule_directive() -> None:

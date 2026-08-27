@@ -182,6 +182,22 @@ def render_package_page(name: str, modules: list[str], subpackages: list[str],
     return '\n'.join(lines)
 
 
+def absent_phrase() -> str:
+    """Return the sentence opening that says how many modules are left out.
+
+    The count comes from `EXCLUDED_MODULES` rather than being written beside it, so
+    it cannot disagree with what the generator actually excludes. It is a function so
+    that the test asserting the rendered page can compare against this rather than
+    against a copy of the wording.
+
+    Returns:
+        The opening of the sentence, ending in a full stop.
+    """
+    if len(EXCLUDED_MODULES) == 1:
+        return 'One module is deliberately absent.'
+    return f'{len(EXCLUDED_MODULES)} modules are deliberately absent.'
+
+
 def render_index_page() -> str:
     """Render the API reference's landing page.
 
@@ -211,12 +227,10 @@ def render_index_page() -> str:
               '   :maxdepth: 2',
               '']
     lines += [f'   api_{entry.name}' for entry in PACKAGES]
-    count = 'One module is' if len(EXCLUDED_MODULES) == 1 else \
-        f'{len(EXCLUDED_MODULES)} modules are'
     lines += ['', 'What is left out', '----------------', '',
-              f'{count} deliberately absent. autodoc documents a module by importing',
-              'it, and each of these would do something during the build that a',
-              'documentation build must not do:', '']
+              f'{absent_phrase()} autodoc documents a module by importing it, and',
+              'each of these would do something during the build that a documentation',
+              'build must not do:', '']
     for name, reason in sorted(EXCLUDED_MODULES.items()):
         lines += [f'``{name}``', f'    It {reason}.', '']
     return '\n'.join(lines)
