@@ -216,3 +216,90 @@ jobs:
         # workflow-level env above.
         run: |
           sphinx-build -W -n -b html docs docs/_build
+
+  package:
+    # The release path, minus the upload. publish_to_pypi.yml builds the
+    # distributions and validates them, then hands them to the PyPI publisher; that
+    # workflow runs only when a release is published, so until this job existed
+    # nothing exercised the build or the metadata until release day -- and a
+    # packaging change that breaks either looks exactly like one that does not.
+    # This runs the same build and the same validation on every push, and then does
+    # what neither publish workflow can: installs the built wheel into a venv with
+    # no checkout in sight and runs the commands the distribution promises.
+    #
+    # What is still NOT covered here, deliberately and unavoidably: the upload step
+    # itself, the API tokens, and whatever PyPI decides about the metadata when it
+    # receives it. Those are only exercised by a real publish.
+    name: Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm derives the version from tags, and the version is part
+          # of what is being validated here.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        # The version both publish workflows build with, so this job builds the
+        # same artifact they would.
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: 3.12
+
+      - name: Install MySQL client headers
+        # mysqlclient is a runtime dependency and ships no Linux wheel, so
+        # installing the built distribution below compiles it.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Build
+        # The same two commands publish_to_pypi.yml runs.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build && python -m build
+
+      - name: Validate package
+        # `twine check --strict` is what publish_to_pypi.yml runs; --strict makes a
+        # rendering warning about the long description an error rather than a note
+        # nobody reads in a release log.
+        run: |
+          python -m pip install twine pyroma
+          python -m twine check --strict dist/*
+          python -m pyroma .
+
+      - name: Install the wheel into a clean environment and run what it promises
+        # Run from a directory that is not the checkout: with the repository as the
+        # working directory, `import opus_import` resolves through src/ for the
+        # wrong reason and a wheel missing a package would still pass.
+        run: |
+          python -m venv "$RUNNER_TEMP/clean"
+          "$RUNNER_TEMP/clean/bin/pip" install --upgrade pip
+          "$RUNNER_TEMP/clean/bin/pip" install dist/*.whl
+          cd "$RUNNER_TEMP"
+          export OPUS_CONFIG="$GITHUB_WORKSPACE/tests/fixtures/opus_ci.toml"
+          "$RUNNER_TEMP/clean/bin/opus_import" --help > /dev/null
+          "$RUNNER_TEMP/clean/bin/opus_log_analyzer" --help > /dev/null
+          "$RUNNER_TEMP/clean/bin/opus_error_analyzer" --help > /dev/null
+          # The package data the code reads at run time, resolved through
+          # importlib.resources from the installed distribution rather than from a
+          # source tree. A wheel that omits any of it installs and imports fine and
+          # fails on the first real run.
+          "$RUNNER_TEMP/clean/bin/python" - <<'PY'
+          import importlib.resources as res
+
+          for package, name in [
+              ('opus_import.table_schemas', 'obs_general.json'),
+              ('opus_import.dictionary_data', 'pdsdd.full'),
+              ('opus_import.dictionary_data', 'contexts.csv'),
+              ('opus_log_analyzer.templates', 'log_analysis.html'),
+          ]:
+              assert res.files(package).joinpath(name).is_file(), f'{package}/{name} missing'
+          import opus_app.wsgi  # noqa: F401  -- what mod_wsgi imports on the server
+          print('package data and the wsgi entry point are present')
+          PY
