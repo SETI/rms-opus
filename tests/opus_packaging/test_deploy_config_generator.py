@@ -217,7 +217,9 @@ def test_the_generated_file_is_not_readable_by_anyone_else(tmp_path: Path) -> No
     assert mode == 0o600, oct(mode)
 
 
-def test_the_file_is_never_world_readable_even_briefly(tmp_path: Path) -> None:
+def test_the_file_is_never_world_readable_even_briefly(
+    tmp_path: Path, request: pytest.FixtureRequest
+) -> None:
     """``umask 077`` guards the *write*, not just the final mode.
 
     The trailing ``chmod 600`` fixes the mode after the fact, so the test above passes
@@ -235,6 +237,19 @@ def test_the_file_is_never_world_readable_even_briefly(tmp_path: Path) -> None:
     """
     destination = tmp_path / 'opus.toml'
     destination.mkdir(mode=0o500)
+    # Restored unconditionally: a mode-0500 directory left behind by a *failing*
+    # assertion below defeats pytest's tmp_path cleanup, which then fails unrelated
+    # tests in later runs. Observed, not theorised.
+    request.addfinalizer(lambda: destination.chmod(0o700))
+
+    # A pre-existing temporary file would make this measure the wrong thing, and
+    # silently: `cat > file` truncates without changing the mode of a file that already
+    # exists, so a stale 0600 leftover would report success while the umask was broken.
+    # (Observed: a leftover from a run with the subshell deliberately removed inverted
+    # this test's result.) tmp_path is fresh per test, so this asserts an invariant
+    # rather than papering over one.
+    leftover = Path(f'{destination}.tmp')
+    assert not leftover.exists(), 'a stale temporary file would invalidate this measurement'
 
     env = {'PATH': os.environ.get('PATH', '/usr/bin:/bin'), **BASE_ENV}
     result = subprocess.run(
@@ -246,15 +261,12 @@ def test_the_file_is_never_world_readable_even_briefly(tmp_path: Path) -> None:
     )
     # The rename fails, so the run fails -- what matters is the mode of what it left.
     assert result.returncode != 0
-    leftover = Path(f'{destination}.tmp')
     assert leftover.exists(), 'the generator did not get as far as writing the temp file'
     mode = stat.S_IMODE(leftover.stat().st_mode)
     assert mode & 0o077 == 0, (
         f'temp file created {oct(mode)} under a permissive umask: the umask 077 '
         f'subshell is not protecting the write'
     )
-    # Leave tmp_path removable.
-    destination.chmod(0o700)
 
 
 def test_no_temporary_file_survives_a_successful_run(tmp_path: Path) -> None:

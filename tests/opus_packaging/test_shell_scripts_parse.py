@@ -31,8 +31,22 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # git internals, and the working documents for the modernization.
 SKIP_DIRECTORIES = {'.git', 'venv', '.venv', 'opus_venv', '_build', 'node_modules', '__pycache__'}
 
-# GitHub Actions expression syntax is not shell; bash cannot parse `${{ ... }}`.
-GHA_EXPRESSION = re.compile(r'\$\{\{[^}]*\}\}')
+# GitHub substitutes an expression's *value* into the script before bash ever sees it,
+# so replacing `${{ ... }}` with a placeholder is what models the shell that actually
+# runs. It is NOT because bash chokes on the raw form: every expression shape in these
+# workflows -- and every other one tried, including `fromJSON('{"a":1}').a` and
+# quote-bearing `format(...)` calls -- parses unchanged. So this substitution is
+# faithfulness, not a workaround, and removing it would not currently fail anything;
+# `test_expressions_are_substituted_before_parsing` is what keeps it from being removed
+# silently anyway.
+#
+# What it deliberately does NOT do: catch a script that breaks because an expression's
+# *value* contains a quote or a newline at run time. That is a real hazard and a
+# different check -- this one sees the template, never the value.
+# Non-greedy to the closing `}}` rather than `[^}]*`: an expression may contain a
+# brace of its own -- `${{ format('{0}', x) }}` is the common shape -- and the
+# character-class form stopped at the first one, leaving `${{` behind.
+GHA_EXPRESSION = re.compile(r'\$\{\{.*?\}\}', re.DOTALL)
 
 pytestmark = pytest.mark.skipif(
     os.name != 'posix', reason='bash is what these scripts are written for'
@@ -149,6 +163,20 @@ def test_an_unterminated_heredoc_is_caught_despite_a_zero_exit_status(tmp_path: 
     assert 'delimited by end-of-file' in result.stderr
     with pytest.raises(AssertionError):
         _assert_parses(result, str(broken))
+
+
+def test_expressions_are_substituted_before_parsing() -> None:
+    """The substitution replaces every expression, leaving no ``${{`` behind.
+
+    Pinned on its own because its removal is otherwise undetectable: no expression in
+    these workflows fails to parse in its raw form, so the parametrized tests below
+    would stay green without it. What it buys is that the string handed to bash is the
+    shape bash really receives -- a value, not a template.
+    """
+    raw = "echo ${{ matrix.os }} && echo ${{ format('{0}', x) }}"
+    substituted = GHA_EXPRESSION.sub('PLACEHOLDER', raw)
+    assert '${{' not in substituted
+    assert substituted == 'echo PLACEHOLDER && echo PLACEHOLDER'
 
 
 def test_some_workflow_run_blocks_were_found() -> None:
