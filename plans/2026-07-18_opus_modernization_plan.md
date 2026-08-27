@@ -6210,3 +6210,42 @@ body; never rewrite or delete earlier notes.*
     `git grep -n 'uses:' f17422e4 -- .github/workflows/` at that note's own merge commit
     returns 13 lines including the v4/v5 pair, so the miscount was the note's, not drift
     since. It changed no instruction: the work assigned was "pin them all".
+- **2026-08-27 (orchestrator, after PR-20 merged as `156956d3`):** two facts later PRs need.
+  - **Branch protection on `rewrite` was swapped when PR-20 renamed the workflow**, and the
+    new required contexts are `Run Lint`, `Integration Tests (self-hosted-linux, 3.12)`,
+    `Unit Tests (3.12)`, `Unit Tests (3.13)`, with `strict: true` preserved.
+    `Test OPUS (self-hosted-linux, 3.12)` is retired and no longer reports at all -- verified
+    by its **absence** from a real run's `check-runs`, not merely by the new name appearing,
+    which is what distinguishes a true swap from a rename leaving a duplicate. The two
+    `Unit Tests` contexts became required here because the PR-14 note assigned that to
+    "PR-19/PR-20" and rev 7.21 deferred PR-19 past the merge. **PR-24 must do this again**
+    when it narrows the triggers back to `main`: a context name is composed from the job name
+    plus its matrix values, so read it off a real run rather than predicting it from YAML.
+  - **Fork pull requests execute on the self-hosted runner, and withholding Actions secrets
+    from forks buys nothing**, because `opus_main_test.sh`,
+    `opus_import_test_database.sh`, `opus_run_unittests_coverage.sh` and
+    `opus_setup_environment.sh` each `source ~/opus_runner_secrets` **off the runner's own
+    filesystem**. `actions/permissions/fork-pr-contributor-approval` is
+    `first_time_contributors`, which gates newcomers only; a **returning** contributor runs
+    automatically. Measured over the complete history (552 PRs against a cap of 1000, so the
+    window is provably complete; zero null head-repos): **421 of 552 -- 76% -- are
+    fork-originated**, across seven non-SETI accounts, all project collaborators. The
+    pattern is **dormant**, not absent: the newest fork PR is #1311 (2023-06-28) and
+    everything since comes from a SETI branch. Dormancy is practice, not a control.
+    **rfrench's disposition (2026-08-27): record only, decide later** -- no setting change,
+    no issue, no advisory. **PR-20 deliberately did not patch it**, and the reason is worth
+    preserving: gating the job on `head.repo.full_name == github.repository` would deadlock
+    fork PRs against branch protection, because a **skipped job never reports its context**
+    and that context is required -- reintroducing exactly the stale-required-context failure
+    the bullet above exists to prevent. A real fix must pair the gate with something that
+    satisfies the context for forks, which is a decision about how the project accepts
+    outside contributions rather than a workflow edit.
+  - **Method note, because this one produced three different wrong answers in one thread.**
+    The fork count was reported first as 0 (`--limit 60`), then as 9 (`--limit 100`), then
+    correctly as 421 (`--limit 1000`). Every command ran, exited 0, and printed a true answer
+    to the question its **window** posed. **A truncated listing is indistinguishable from an
+    empty one**, and neither errors. So: before reporting that a query found nothing,
+    establish that it *could* have found something -- here, that the row count sits below the
+    cap -- and separate nulls from real values rather than trusting a plausible total. This
+    is the same shape as the CodeRabbit matcher rule at rev 7.18, where "no `up to` token
+    found" has to be distinguishable from "the matcher is broken."
