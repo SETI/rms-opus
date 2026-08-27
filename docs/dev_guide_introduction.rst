@@ -25,8 +25,8 @@ under :ref:`dev_guide_contributing`, describes how to propose a change.
 What the distribution contains
 ------------------------------
 
-``rms-opus`` is one Python distribution holding two programs that share a database and
-three supporting packages:
+``rms-opus`` is one Python distribution holding three programs -- two of which share a
+database -- and two supporting packages:
 
 :mod:`opus_import`
     The import pipeline. It reads PDS3 volumes and PDS4 bundles out of the Node's

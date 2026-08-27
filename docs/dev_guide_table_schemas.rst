@@ -7,8 +7,10 @@ Table Schemas
 table. A file is a list of objects in the order the columns appear in the table --
 mostly one per column, plus the occasional entry that deliberately defines no column:
 a ``constraint``, or a ``pi_referred_slug`` link to a field defined in another table. This is the single description of the database: the import pipeline creates
-every table from it, computes every value from it, validates the result against it, and
-derives from it what the web application's search form contains.
+every table from it, computes its schema-driven values from it, validates the result
+against it, and derives from it what the web application's search form contains.
+``obs_files`` is the exception to the second of those -- its rows are built from
+literals rather than computed from the schema; see `Filling the column`_ below.
 
 The schemas ship inside the wheel and are read through :mod:`importlib.resources`, so
 an installed OPUS finds them without a checkout.
@@ -60,12 +62,13 @@ collects the keys the schemas actually use and prints the ones no Python file me
     print('\n'.join(sorted(keys)))
     EOF
     while read -r key; do
-        grep -rqF "'$key'" src --include='*.py' || echo "no literal reader: $key"
+        grep -rqE "['\"]$key['\"]" src --include='*.py' \
+            || echo "no literal reader: $key"
     done
 
-It greps for the key as a literal, so it has one blind spot worth knowing before you
-read its output: a key assembled at the point of use does not appear as a literal
-anywhere. ``definition_results`` is the only one today --
+It greps for the key as a literal in either quote style, so it has one blind spot worth
+knowing before you read its output: a key assembled at the point of use does not appear
+as a literal anywhere. ``definition_results`` is the only one today --
 :mod:`opus_import.steps.do_dictionary` reads it as ``column['definition'+suffix]`` --
 so the recipe reports it and it is nonetheless read. Everything else the recipe reports
 really is unread; see `Keys nothing reads`_ below.

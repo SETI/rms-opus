@@ -45,19 +45,28 @@ tables that observation belongs to.
         F --> G[(Permanent tables: obs_*, mult_*)]
         G --> H[(Auxiliary tables:<br/>param_info, table_names, partables)]
 
-Everything is written to the **import** tables first -- the ones whose names carry the
-``table_temp_prefix`` from the configuration -- and copied over the permanent tables
-only once the whole run has succeeded. A failed import therefore cannot leave the web
-application serving half a bundle.
+Every **imported** table is written to the import tables first -- the ones whose names
+carry the ``table_temp_prefix`` from the configuration -- and copied over the permanent
+tables only once the whole run has succeeded. A failed import therefore cannot leave the
+web application serving half a bundle of observation metadata.
+
+The protection covers the imported tables and no others. ``cart`` is created directly in
+the permanent namespace, and the ``cache_*`` and ``user_searches`` tables are dropped
+there outright; a failed run can leave those already reset. They hold no imported data --
+see :mod:`opus_import.steps.do_cart` and :mod:`opus_import.steps.do_django` in
+:doc:`dev_guide_import` -- which is why they are outside the copy.
 
 The auxiliary tables come last because each needs the permanent tables to be there,
 but only one of them is really derived from what was imported:
 
 * ``param_info`` comes from the ``pi_*`` metadata in the schemas of the permanent
   tables -- so it does follow the import, but its content is the schemas'.
-* ``table_names`` comes from a list **written out by hand** in
-  :mod:`opus_import.steps.do_table_names`; which permanent tables exist only filters
-  that list. A new table with no row there gets no section, however much data it holds.
+* ``table_names`` is built by ``build_table_names_rows`` in
+  :mod:`opus_import.steps.do_table_names`, which **generates** the mission and instrument
+  rows by looping the configuration maps and **enumerates every other table by hand**;
+  which permanent tables exist filters the result. A table of a new kind with no row
+  there gets no section, however much data it holds -- but a new mission or instrument
+  table must *not* be added by hand, because it is generated already.
 * ``partables`` comes from static configuration too: it enumerates every trigger OPUS
   knows, from the mission, instrument and host maps in
   :mod:`opus_import.config_data`. A mission that was never imported still gets a row.

@@ -806,7 +806,7 @@ def api_get_image(request: HttpRequest, opus_id: str, size: str, fmt: str, *,
 
     ::
 
-        Format: api/image/(?P<size>[thumb|small|med|full])/(?P<opus_id>[-\w]+).
+        Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+).
                 (?P<fmt>json|html|csv)
 
     Can return JSON, HTML, or CSV.

@@ -74,7 +74,10 @@ they apply rather than only here:
 
 * **Public web API backwards compatibility is preserved**, against the general
   no-back-compat policy. An OPUS URL that worked before has to keep working; the
-  guide in :ref:`api_guide` is what it has to keep matching.
+  guide in :ref:`api_guide` is what it has to keep matching. The one deliberate
+  exception is ``/apiguide.pdf``, which served a generated PDF and now redirects
+  (302) to the published guide, since the PDF is no longer built here; the URL still
+  resolves, and ``test_help_api.py`` pins the redirect.
 * **GitHub Actions are pinned to a full commit SHA**, not to a major tag, because a
   major tag is mutable by design and one of the workflows runs on hardware the Node
   owns. Each pin carries its release in a trailing comment.

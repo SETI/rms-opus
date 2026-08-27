@@ -6451,21 +6451,30 @@ body; never rewrite or delete earlier notes.*
     watch for. Prose rewritten in a hurry is not safer than the prose it replaced; it is
     newer, and nothing in this repository checks it.
   - **Measured on this PR: roughly one correction in five is itself wrong.** Pass 1 found
-    19 blocking defects, all prose; the commit fixing them introduced or left behind six
-    more, which pass 2 found; pass 3, scoped only to those corrections, found none. The
-    rate is worth carrying to PR-22, PR-23, PR-24 and the deferred PR-19, because it
-    means **a fix commit needs reviewing as much as the code it fixes** -- and because a
-    review budget spent re-reading the original diff is spent in the wrong place. The
-    three kinds of failure pass 3's archaeology separated have different preventions,
-    and conflating them loses that:
-    * **New prose that is simply wrong** (one of the six). Prevention: verify the fix
-      against the artifact, exactly as the original claim should have been.
-    * **Fixed here, left standing there** (two of the six). The same claim appeared in
-      two chapters and only one was corrected. Prevention: grep for the claim, not for
-      the line -- when a fix corrects a fact, the fact is usually stated more than once.
-    * **Counts the fix commit made stale** (two of the six). Adding a test file moved
-      "221 files / 1334 tests". Prevention: do not write the number; derive it or drop
-      it.
+    19 blocking defects, all prose. Pass 2 found 6, of which **4 were introduced or left
+    behind by the commit that fixed pass 1** -- 4 defective corrections out of 19, near
+    enough one in five. Pass 3, scoped to those corrections alone, found none. The rate
+    is worth carrying to PR-22, PR-23, PR-24 and the deferred PR-19, because it means
+    **a fix commit needs reviewing as much as the code it fixes** -- and because a review
+    budget spent re-reading the original diff is spent in the wrong place. The four split
+    into three kinds with different preventions, and conflating them loses that:
+    * **New prose that is simply wrong** (2 of the 4). New text called `primary_index` one
+      file when it is a tuple; the extending recipe told readers to add a `table_names`
+      row that `build_table_names_rows` already emits, which would have produced a
+      duplicate. Prevention: verify the fix against the artifact, exactly as the original
+      claim should have been.
+    * **Fixed here, left standing there** (1 of the 4). The cache defect was corrected in
+      the deployment chapter and left standing four files away in the web-application
+      chapter. Prevention: grep for the claim, not for the line -- when a fix corrects a
+      fact, the fact is usually stated in more than one place.
+    * **A claim the fix commit itself made stale** (1 of the 4). "The one module the
+      reference leaves out" was made false by the very commit that took the count to two.
+      Prevention: do not write the number; derive it or drop it.
+    The same failure recurred a third time and was caught by CodeRabbit rather than by a
+    review pass: the first version of *this bullet* said the fix commit introduced "six"
+    defects and then broke them down as 1 + 2 + 2, which is five, and neither figure was
+    the real 4. A note about corrections being wrong was itself a wrong correction. Derive
+    the breakdown from the pass records; do not restate it from memory.
   - **A claim that has been wrong twice gets derived or deleted, not corrected again.**
     rfrench's ruling after pass 3 (2026-08-27), and this PR acted on it: the API
     reference's excluded-module count is computed from `len(EXCLUDED_MODULES)` and a test

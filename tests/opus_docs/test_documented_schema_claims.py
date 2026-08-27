@@ -131,6 +131,9 @@ def test_the_keys_said_to_be_unread_are_present_and_unread(key: str) -> None:
     assert any(key in path.read_text() for path in _schema_files()), (
         f'{key} is no longer in any schema; the chapter should stop naming it')
     source = _schema_dir().parents[1]
+    # Both quote styles: a reader spelled entry["pi_units"] would otherwise slip past
+    # this scan and leave the chapter claiming nothing reads the key.
+    literals = (f"'{key}'", f'"{key}"')
     readers = [str(path) for path in source.rglob('*.py')
-               if f"'{key}'" in path.read_text()]
+               if any(literal in path.read_text() for literal in literals)]
     assert not readers, f'{key} is now read by {readers}; the chapter is out of date'

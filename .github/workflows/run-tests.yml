@@ -118,6 +118,7 @@ jobs:
         # and ignore_missing_imports, for third-party packages that ship no types.
         # OPUS_CONFIG comes from the workflow-level env above.
         run: |
+          # shellcheck disable=SC2086  # MYPY_PATHS is a path list; splitting is intended
           mypy $MYPY_PATHS
 
       - name: PyMarkdown

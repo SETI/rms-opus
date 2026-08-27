@@ -69,9 +69,11 @@ The steps
     into it.
 
 :mod:`opus_import.steps.do_table_names`
-    Builds ``table_names``, which names and orders the "Constraints" categories. The
-    set of tables is written out by hand there rather than derived from the schemas,
-    so a new table needs a row adding.
+    Builds ``table_names``, which names and orders the "Constraints" categories.
+    ``build_table_names_rows`` generates the mission and instrument rows from the
+    configuration maps and enumerates the rest individually, so only a table of a *new
+    kind* needs a row adding; adding a mission or instrument table by hand would give it
+    a second row. See :doc:`dev_guide_extending` for the recipe.
 
 :mod:`opus_import.steps.do_partables`
     Builds ``partables``, which maps a value a user can search for onto the table of

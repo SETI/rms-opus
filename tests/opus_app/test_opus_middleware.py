@@ -71,7 +71,15 @@ def test_a_non_text_response_is_untouched() -> None:
 
 
 def test_a_response_without_a_content_type_raises() -> None:
-    """The middleware reads Content-Type unconditionally, as its docstring says."""
+    """The middleware reads Content-Type unconditionally, as its docstring says.
+
+    This pins current behaviour, it does not endorse it: a 304 carries no
+    Content-Type, so one reaching this middleware raises rather than passing
+    through. The source has carried a commented-out status-code guard for that
+    case for years. Fixing it changes production response handling, which is out
+    of scope for a documentation PR -- issue #1475 tracks it, and this test is
+    what will fail, informatively, when it is fixed.
+    """
     response = HttpResponse(status=304)
     del response.headers['Content-Type']
     with pytest.raises(KeyError):
