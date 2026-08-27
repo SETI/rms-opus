@@ -6705,6 +6705,38 @@ body; never rewrite or delete earlier notes.*
     3.3.2 -- and the chain still passed at **2576 tests / TOTAL 100%** with zero
     golden-fixture diffs. **`requirements.txt` was holding back eight packages, and none of
     them needed holding.**
+  - **OPEN DECISION (owner: rfrench, raised 2026-08-27): deleting the lockfile removes
+    every upper bound, and `rms-pdsfile` is the sharp case.** `requirements.txt` pinned
+    **70 packages** -- 23 direct and 47 transitive -- and nothing replaces those pins.
+    Measured by comparing `git show 394d9ce9:requirements.txt` against the current
+    `[project]` tables rather than by reading either:
+    * Of the **23 direct** dependencies the lockfile pinned, **only `django` carries an
+      upper bound** (`>=5.2,<6`). The other **22 have none**: `coverage`, `numpy`,
+      `pillow`, `pytest`, `pytest-cov`, `pytest-django`, `pyyaml` and `rms-julian` carry
+      a floor only, and `djangorestframework`, `jinja2`, `markupsafe`, `mysqlclient`,
+      `pdfkit`, `pyparsing`, `pytz`, `qrcode`, `regex`, `requests`, `rms-pdslogger`,
+      `rms-pdstable` and `rms-translator` carry **no specifier at all**.
+    * **`rms-pdsfile` is the only PRE-1.0 direct dependency** (`>=0.0.18`, pinned at
+      `0.0.18`), and it is the one that matters most: **rms-pdsfile 3 is a major rewrite
+      on a branch**. Below 1.0 semver promises nothing, so an unbounded floor on a
+      package with a known major rewrite pending means a fresh `pip install rms-opus`
+      on a server resolves to 3.x the day it releases. Five further RMS packages ride
+      along unbounded -- `rms-pdslogger`, `rms-pdstable`, `rms-translator` directly, and
+      `rms-filecache`, `rms-pdsparser`, `rms-textkernel` transitively.
+    * The plan's stated replacement is "deploy pins via a `constraints.txt` generated at
+      release **if ops wants one**" -- optional, and therefore **not a guarantee**. The
+      deployment guide documents how to produce one from a known-good server; nothing
+      requires it.
+    **Nothing was capped here**, because capping a dependency is rfrench's call and it
+    was open when this PR was written. Whoever picks this up should decide deliberately
+    rather than by default, and the measurement above is the input; re-run it rather
+    than trusting the lists, which go stale the moment a dependency is added.
+  - **For whoever adopts rms-pdsfile 3: remove `pdsfile.*` from the
+    `[[tool.mypy.overrides]]` `ignore_missing_imports` list at the same time.** pdsfile 3
+    ships typing, and that override -- which today also covers `julian.*`, `pdslogger.*`,
+    `pdsparser.*`, `pdstable.*` and `rest_framework.*` -- would go on silencing it, so
+    the new annotations would buy nothing while looking as though they had. **Not
+    changed here**: the override is correct for 0.0.18, which ships no types.
   - **The `filterwarnings` julian entry is gone and `[project].dependencies` floors
     `rms-julian>=3.0.2`.** PR-03's note said the entry becomes removable when the pin moves
     past 3.0.1; deleting the lockfile moved it past nothing in particular, so the floor is
