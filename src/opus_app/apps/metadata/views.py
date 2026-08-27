@@ -104,26 +104,31 @@ def api_get_result_count(request: HttpRequest, fmt: str, internal: bool = False,
 
     This is a PUBLIC API.
 
-    Format: api/meta/result_count.(?P<fmt>json|html|csv)
-            __api/meta/result_count.json
-    Arguments: Normal search arguments
-               reqno=<N> (Required for internal, ignored for external)
+    ::
+
+        Format: api/meta/result_count.(?P<fmt>json|html|csv)
+                __api/meta/result_count.json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required for internal, ignored for external)
 
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
-    Returned JSON:
+    Returned JSON::
+
         {"data": [{"result_count": 47}]}
       or
         {"data": [{"result_count": 47, "reqno": 1}]}
 
-    Returned HTML:
+    Returned HTML::
+
         <body>
             <dl>
                 <dt>result_count</dt><dd>47</dd>
             </dl>
         </body>
 
-    Returned CSV:
+    Returned CSV::
+
         result count,47
 
     Parameters:
@@ -178,9 +183,11 @@ def api_get_result_count_internal(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __api/meta/result_count.json
-    Arguments: Normal search arguments
-               reqno=<N> (Required)
+    ::
+
+        Format: __api/meta/result_count.json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required)
 
     Parameters:
         request: The request whose query string describes the search.
@@ -201,21 +208,25 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
 
     This is a PUBLIC API.
 
-    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
-            __api/meta/mults/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               reqno=<N> (Required for internal, ignored for external)
+    ::
+
+        Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
+                __api/meta/mults/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required for internal, ignored for external)
 
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
-    Returned JSON:
+    Returned JSON::
+
         {'field_id': slug, 'mults': mults}
       or:
         {'field_id': slug, 'mults': mults, 'reqno': reqno}
 
         mult is a list of entries pairing mult name and result count.
 
-    Returned HTML:
+    Returned HTML::
+
         <body>
             <dl>
                 <dt>Atlas</dt><dd>2</dd>
@@ -223,7 +234,8 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
             </dl>
         </body>
 
-    Returned CSV:
+    Returned CSV::
+
         name1,name2,name3
         number1,number2,number3
 
@@ -409,9 +421,11 @@ def api_get_mult_counts_internal(request: HttpRequest, slug: str) -> HttpRespons
 
     This is a PRIVATE API.
 
-    Format: __api/meta/mults/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               reqno=<N> (Required)
+    ::
+
+        Format: __api/meta/mults/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   reqno=<N> (Required)
 
     Parameters:
         request: The request whose query string describes the search.
@@ -436,15 +450,18 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
     Compute and return range widget endpoints (min, max, nulls) for the
     widget defined by [slug] based on current search defined in request.
 
-    Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
-            __api/meta/range/endpoints/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               units=<unit> (Optional, gives units to return in)
-               reqno=<N>    (Required for internal, ignored for external)
+    ::
+
+        Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
+                __api/meta/range/endpoints/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   units=<unit> (Optional, gives units to return in)
+                   reqno=<N>    (Required for internal, ignored for external)
 
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
-    Returned JSON:
+    Returned JSON::
+
         {"min": 63.592, "max": 88.637, "nulls": 2365, units: "km"}
       or
         {"min": 63.592, "max": 88.637, "nulls": 2365, units: "km", "reqno": 123}
@@ -456,7 +473,8 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
 
         {"min": "0.0000", "max": "50000.0000", "nulls": 11}
 
-    Returned HTML:
+    Returned HTML::
+
         <body>
             <dl>
                 <dt>min</dt><dd>0.0000</dd>
@@ -466,7 +484,8 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
             </dl>
         </body>
 
-    Returned CSV:
+    Returned CSV::
+
         min,max,nulls,units
         0.0000,50000.0000,11,km
 
@@ -677,10 +696,12 @@ def api_get_range_endpoints_internal(request: HttpRequest, slug: str) -> HttpRes
 
     This is a PRIVATE API.
 
-    Format: __api/meta/range/endpoints/(?P<slug>[-\w]+).json
-    Arguments: Normal search arguments
-               units=<unit> (Optional, gives units to return in)
-               reqno=<N>    (Required)
+    ::
+
+        Format: __api/meta/range/endpoints/(?P<slug>[-\w]+).json
+        Arguments: Normal search arguments
+                   units=<unit> (Optional, gives units to return in)
+                   reqno=<N>    (Required)
 
     Parameters:
         request: The request whose query string describes the search.
@@ -704,13 +725,16 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
     It's provides a list of all slugs in the database and helpful info
     about each one like label, dict/more_info links, etc.
 
-    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|csv)
-        or: api/fields.(?P<fmt>json|csv)
-    Arguments: [collapse=1]  Collapse surface geo slugs into one
+    ::
+
+        Format: api/fields/(?P<slug>\w+).(?P<fmt>json|csv)
+            or: api/fields.(?P<fmt>json|csv)
+        Arguments: [collapse=1]  Collapse surface geo slugs into one
 
     Can return JSON or CSV.
 
-    Returned JSON:
+    Returned JSON::
+
       {
         "General Constraints": {
           "time1": {
@@ -730,7 +754,8 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
         }
       }
 
-    Returned CSV:
+    Returned CSV::
+
         Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
         time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1,0
 

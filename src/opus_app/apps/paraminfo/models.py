@@ -104,8 +104,8 @@ class ParamInfo(models.Model):
             A sentence naming the category the field is really part of.
 
         Raises:
-            TableNames.DoesNotExist: If no table is registered under the field's
-                category name.
+            django.core.exceptions.ObjectDoesNotExist: If no table is registered
+                under the field's category name.
         """
         table_label = (TableNames.objects
                       .get(table_name=self.category_name).label)
@@ -124,8 +124,8 @@ class ParamInfo(models.Model):
             The label to show for the field on the Search tab.
 
         Raises:
-            TableNames.DoesNotExist: If no table is registered under the field's
-                category name.
+            django.core.exceptions.ObjectDoesNotExist: If no table is registered
+                under the field's category name.
         """
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         pretty_name = (TableNames.objects
@@ -164,8 +164,8 @@ class ParamInfo(models.Model):
             label at all.
 
         Raises:
-            TableNames.DoesNotExist: If no table is registered under the field's
-                category name.
+            django.core.exceptions.ObjectDoesNotExist: If no table is registered
+                under the field's category name.
         """
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label_results is None:

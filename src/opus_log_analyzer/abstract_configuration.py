@@ -18,7 +18,11 @@ from markupsafe import Markup
 from opus_log_analyzer.log_entry import LogEntry
 
 SESSION_INFO = tuple[list[str], str | None]
+"""What a session info returns for one log entry -- the actions it stands for, and a
+relative URL that reproduces what the user saw, or None."""
+
 LogId = NewType('LogId', int)
+"""Identifies one log file within a run, so an entry can be traced back to it."""
 
 
 class AbstractConfiguration(metaclass=abc.ABCMeta):

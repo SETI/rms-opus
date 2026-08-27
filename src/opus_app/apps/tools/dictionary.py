@@ -66,7 +66,7 @@ def get_def_for_tooltip(term: str | None, context: str | None) -> str | None:
 
     Returns:
         The definition text, or None when the term is not defined in that context.
-        A missing definition is logged as an error except for the MULT_ contexts,
+        A missing definition is logged as an error except for the ``MULT_`` contexts,
         where a mult value is allowed to carry no tooltip.
     """
     try:

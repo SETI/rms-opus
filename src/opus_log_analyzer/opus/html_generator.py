@@ -373,7 +373,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         per address and file name, timed at the earliest such request.
 
         Returns:
-            One entry per file name: the name, the total bytes across all
+            One entry per file name -- the name, the total bytes across all
             sessions, and each session with the bytes it fetched, ordered by
             session start time; plus the file-name-to-CSS-class map the
             template highlights with.
@@ -430,7 +430,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         """How long the run's sessions lasted.
 
         Returns:
-            The template context: the durations themselves, their count, sum,
+            The template context -- the durations themselves, their count, sum,
             mean and median, the last two rounded to whole seconds.
 
         Raises:
@@ -453,7 +453,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         together.
 
         Returns:
-            The template context for one statistics block: the values
+            The template context for one statistics block -- the values
             themselves, their count, sum, zero count, arithmetic mean, geometric
             mean and median.
         """
@@ -493,7 +493,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             data: The byte counts.
 
         Returns:
-            The template context for one statistics block: the values
+            The template context for one statistics block -- the values
             themselves, their count, sum, zero count, arithmetic mean, geometric
             mean and median.
         """

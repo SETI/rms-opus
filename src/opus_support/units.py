@@ -56,7 +56,7 @@ ParseFunc = Callable[..., float]
 #: it has no use for.
 FormatFunc = Callable[..., str]
 
-#: One unit of a unit_id: its display name (None for a unit that is never shown), the
+#: One unit of a unit_id -- its display name (None for a unit that is never shown), the
 #: factor that converts a value in this unit to the unit_id's default unit, the
 #: function that parses text in this unit (None to read it as a plain number), the
 #: function that formats a value in this unit (None to format it as a plain number),

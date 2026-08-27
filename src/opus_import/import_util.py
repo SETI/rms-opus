@@ -53,7 +53,7 @@ IndexRow = dict[str, Any]
 """One row of a PDS index table, keyed by column name."""
 
 TableSchema = list[dict[str, Any]]
-"""One OPUS table's definition: its columns, in order, as the JSON schema lists them.
+"""One OPUS table's definition -- its columns, in order, as the JSON schema lists them.
 
 An element is the same thing as an `opus_import.importdb.super.SchemaColumn`; the two
 aliases are spelled separately so that neither package has to import the other.
@@ -658,7 +658,7 @@ def read_schema_for_table(ctx: ImportContext, table_name: str,
         no schema file of that name.
 
     Raises:
-        json.decoder.JSONDecodeError: If the schema is not valid JSON. The table being
+        json.JSONDecodeError: If the schema is not valid JSON. The table being
             read is logged first, since the parser's own message names no file.
     """
     table_name = table_name.replace(get_config().import_.table_temp_prefix, '').lower()

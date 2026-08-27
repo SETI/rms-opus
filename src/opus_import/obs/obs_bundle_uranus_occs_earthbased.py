@@ -7,32 +7,36 @@
 # bundleset.
 ################################################################################
 
-r"""
-PDS4TODO Temporary comment
+r"""The leaf class for the PDS4 bundleset ``uranus_occs_earthbased``.
 
-To create the index files:
+The bundleset holds Earth-based stellar occultations of Uranus and its rings, taken
+by many ground-based telescopes, so one class covers several instruments.
 
-for i in `(cd /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased; ls -d
-*_u[0-9]*)`
-do
-echo Processing $i
-mkdir -p /data/new-pds4-holdings/metadata/uranus_occs_earthbased/$i
-python pds4_create_xml_index.py \
-    /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
-    "${i}/data/rings/*_*00m.xml" \
-    --extra-file-info filename filepath --sort-by filepath --output-file \
-    /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_rings_index.csv
-python pds4_create_xml_index.py \
-    /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
-    "${i}/data/global/*_*00m.xml" \
-    --extra-file-info filename filepath --sort-by filepath --output-file \
-    /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_global_index.csv
-python pds4_create_xml_index.py \
-    /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
-    "${i}/data/atmosphere/*_atmos_*.xml" \
-    --extra-file-info filename filepath --sort-by filepath --output-file \
-    /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_atmosphere_index.csv
-done
+The index files this bundleset is imported from are not archived with it. They are
+built from the bundles with ``pds4_create_xml_index.py``, three per bundle -- rings,
+global and atmosphere::
+
+    for i in `(cd /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased; ls -d
+    *_u[0-9]*)`
+    do
+    echo Processing $i
+    mkdir -p /data/new-pds4-holdings/metadata/uranus_occs_earthbased/$i
+    python pds4_create_xml_index.py \
+        /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
+        "${i}/data/rings/*_*00m.xml" \
+        --extra-file-info filename filepath --sort-by filepath --output-file \
+        /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_rings_index.csv
+    python pds4_create_xml_index.py \
+        /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
+        "${i}/data/global/*_*00m.xml" \
+        --extra-file-info filename filepath --sort-by filepath --output-file \
+        /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_global_index.csv
+    python pds4_create_xml_index.py \
+        /mnt/rms-holdings/pds4-holdings/bundles/uranus_occs_earthbased \
+        "${i}/data/atmosphere/*_atmos_*.xml" \
+        --extra-file-info filename filepath --sort-by filepath --output-file \
+        /data/new-pds4-holdings/metadata/uranus_occs_earthbased/${i}/${i}_atmosphere_index.csv
+    done
 """
 
 from typing import cast

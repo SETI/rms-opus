@@ -95,9 +95,11 @@ def api_normalize_input(request: HttpRequest) -> HttpResponse:
     If it can be, return a normalized value by parsing it and then un-parsing
     it. If it can't be, return false.
 
-    Format: __api/normalizeinput.json
-    Arguments: reqno=<N>
-               Normal search arguments
+    ::
+
+        Format: __api/normalizeinput.json
+        Arguments: reqno=<N>
+                   Normal search arguments
 
     Returned JSON is of the format:
         {"slug1": "normalizedval1", "slug2": "normalizedval2",
@@ -134,10 +136,12 @@ def api_string_search_choices(request: HttpRequest, slug: str, *,
     search value entered for that slug, its q-type, and the remainder of the
     normal search parameters.
 
-    Format: __api/stringsearchchoices/<slug>.json
-    Arguments: limit=<N>
-               reqno=<N>
-               Normal search arguments
+    ::
+
+        Format: __api/stringsearchchoices/<slug>.json
+        Arguments: limit=<N>
+                   reqno=<N>
+                   Normal search arguments
 
     Returned JSON is of the format:
         {"choices": ["choice1", "choice2"],
@@ -411,7 +415,8 @@ def url_to_search_params(request_get: Mapping[str, str],
     rather than "planet_id=3".
 
     This function takes the URL params and translates them into a list that
-    contains 2 dictionaries:
+    contains 2 dictionaries::
+
         The first dict is the user selections: keys of the dictionary are
             param_names of data columns in the data table; values represent
             the user's selections.
@@ -429,9 +434,8 @@ def url_to_search_params(request_get: Mapping[str, str],
     `pretty_results` a mult value is the joined string rather than the list, and
     a numeric value is the text it formats to rather than the number.
 
-    NOTE: Pass request_get = request.GET to this func please
-    (This func doesn't return an http response so unit tests freak if you
-     pass it an HTTP request)
+    NOTE: Pass request_get = request.GET to this func please (This func doesn't
+    return an http response so unit tests freak if you pass it an HTTP request)
 
     If allow_errors is True, then even if a value can't be parsed, the rest
     of the slugs are processed and the bad slug is just marked with None.
@@ -449,25 +453,25 @@ def url_to_search_params(request_get: Mapping[str, str],
     If allow_empty is True, then search terms that have no values for either
     min or max are kept. This is used to create UI forms for search widgets.
 
-    Example command line usage:
+    Example command line usage::
 
-    from opus_app.apps.search.views import *
-    from django.http import QueryDict
-    q = QueryDict("planet=Saturn&bundleid=COISS_2&qtype-bundleid=begins&rightasc1=10&order=time1,-RINGGEOringcenterdistance")
-    (selections,extras) = url_to_search_params(q)
-    selections
-        {'obs_general.planet_id': ['Saturn'],
-         'obs_pds.bundle_id': ['COISS_2'],
-         'obs_general.right_asc1': [10.0],
-         'obs_general.right_asc2': [None]}
-    extras
-        {'order': (['obs_general.time1',
-                    'obs_ring_geometry.ring_center_distance',
-                    'obs_general.opus_id'],
-                   [False, True, False]),
-         'qtypes': {'obs_pds.bundle_id': ['begins'],
-                    'obs_general.right_asc': ['any']},
-         'units': {'obs_general.right_asc': ['degrees']}}
+        from opus_app.apps.search.views import *
+        from django.http import QueryDict
+        q = QueryDict("planet=Saturn&bundleid=COISS_2&qtype-bundleid=begins&rightasc1=10&order=time1,-RINGGEOringcenterdistance")
+        (selections,extras) = url_to_search_params(q)
+        selections
+            {'obs_general.planet_id': ['Saturn'],
+             'obs_pds.bundle_id': ['COISS_2'],
+             'obs_general.right_asc1': [10.0],
+             'obs_general.right_asc2': [None]}
+        extras
+            {'order': (['obs_general.time1',
+                        'obs_ring_geometry.ring_center_distance',
+                        'obs_general.opus_id'],
+                       [False, True, False]),
+             'qtypes': {'obs_pds.bundle_id': ['begins'],
+                        'obs_general.right_asc': ['any']},
+             'units': {'obs_general.right_asc': ['degrees']}}
     """
     # selections is deliberately `Any`-valued: what a value holds is decided by
     # this function's mode flags, and the docstring above states the shape each
@@ -964,24 +968,29 @@ def get_user_query_table(selections: dict[str, Any], extras: dict[str, Any],
       create the entry in "user_searches", which assigns a cache table number.
     - See if the cache table name has been cached in memory. (This means that
       we are SURE the table actually exists and don't have to check again)
+
       - If so, return the cached table name.
+
     - Otherwise, try to perform the search and store the results in the
       cache_NNN table.
+
       - If the table already existed, or was in the process of being created
         by another process, this will throw an error (after possibly waiting for
         the lock to clear), which we ignore.
+
     - Store the cache table name in the memory cache and return it. (At this
       point we KNOW the table exists and has been fully populated)
 
-    The cache_NNN table has two columns:
+    The cache_NNN table has two columns::
+
         1) sort_order: A unique, monotonically increasing id that gives the
            order of the results based on the sort order requested when the
            search was done.
         2) id: A unique is corresponding to the obs_general.id of the
            observation.
 
-    Note: The function url_to_search_params takes the user HTTP request object
-          and creates the data objects that are passed to this function.
+    Note: `url_to_search_params` takes the user HTTP request object and creates the
+    data objects that are passed to this function.
     """
     cursor = connection.cursor()
 
@@ -1907,7 +1916,7 @@ def get_user_search_table_name(num: int | str) -> str:
 
 def add_obs_table_joins(from_source: sql_builder.FromSource,
                         obs_tables: Iterable[str]) -> None:
-    """LEFT JOIN each obs_ table onto obs_general.
+    """LEFT JOIN each ``obs_`` table onto ``obs_general``.
 
     The joins are LEFT because an observation that has no row in one of these
     tables must still appear in the result, with that table's columns NULL.
@@ -1929,7 +1938,7 @@ def add_obs_table_joins(from_source: sql_builder.FromSource,
 
 def add_mult_table_joins(from_source: sql_builder.FromSource,
                          mult_tables: Iterable[tuple[str, bool, str, str]]) -> None:
-    """LEFT JOIN each mult_ table onto the obs_ column that holds its id.
+    """LEFT JOIN each ``mult_`` table onto the ``obs_`` column that holds its id.
 
     Parameters:
         from_source: The `sql_builder.FromSource` to hang the joins on.
@@ -1954,14 +1963,14 @@ def search_cache_join_condition(table_name: str,
 
     A search cache table holds one row per matching observation, keyed by
     obs_general.id. obs_general therefore joins to it on its own primary key,
-    while every other obs_ table joins on the obs_general_id it carries.
+    while every other ``obs_`` table joins on the ``obs_general_id`` it carries.
 
     The cache table is created by raw DDL under a name computed at runtime and has
     no Django model, which is why the queries that need this condition cannot be
     written with the ORM.
 
     Parameters:
-        table_name: The obs_ table being tied to the search.
+        table_name: The ``obs_`` table being tied to the search.
         cache_table_name: The cache table holding the search results.
     """
     if table_name == 'obs_general':
@@ -2050,7 +2059,7 @@ def create_order_by_terms(order_params: list[str], descending_params: list[bool]
     """Given params and descending lists, make the ORDER BY terms.
 
     Returns a list of (expression, descending) pairs ready for
-    `sql_builder.Select.add_order_by`, plus the mult_ and obs_ tables the terms
+    `sql_builder.Select.add_order_by`, plus the ``mult_`` and ``obs_`` tables the terms
     require the caller to join in.
     """
     order_mult_tables = set()

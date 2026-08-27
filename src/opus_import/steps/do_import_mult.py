@@ -106,7 +106,7 @@ def read_or_create_mult_table(ctx: ImportContext, mult_table_name: str,
         table_column: The definition of the column the table belongs to.
 
     Returns:
-        The table's rows, which are the cache itself: appending to the returned list is
+        The table's rows, which are the cache itself -- appending to the returned list is
         how `update_mult_table` adds a value.
     """
     if mult_table_name in ctx.mult_table_cache:
@@ -219,7 +219,7 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
         group_disp_order: The group's sort key, or None to sort groups by name.
 
     Returns:
-        The row id: the existing one if the table already had the value, the new one if
+        The row id -- the existing one if the table already had the value, the new one if
         a row was added, and 0 if the value is missing from a preprogrammed table, which
         is reported as an error because such a table cannot be added to.
     """

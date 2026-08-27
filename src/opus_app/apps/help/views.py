@@ -68,7 +68,9 @@ def api_about(request: HttpRequest, fmt: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __help/about.(?P<fmt>html|pdf)
+    ::
+
+        Format: __help/about.(?P<fmt>html|pdf)
 
     The page is given the OPUS version, the schema and host name of the database
     being served, and the name of the machine serving it.
@@ -108,7 +110,9 @@ def api_bundles(request: HttpRequest, fmt: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __help/bundles.(?P<fmt>html|pdf)
+    ::
+
+        Format: __help/bundles.(?P<fmt>html|pdf)
 
     The page lists the bundles that hold observations in the database, grouped under
     the name of the instrument each was taken with.
@@ -150,7 +154,9 @@ def api_faq(request: HttpRequest, fmt: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __help/faq.(?P<fmt>html|pdf)
+    ::
+
+        Format: __help/faq.(?P<fmt>html|pdf)
 
     The questions and answers are read from `faq.yaml`, which ships inside this
     package. The HTML page offers them collapsed; the PDF does not.
@@ -197,7 +203,9 @@ def api_gettingstarted(request: HttpRequest, fmt: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __help/gettingstarted.(?P<fmt>html|pdf)
+    ::
+
+        Format: __help/gettingstarted.(?P<fmt>html|pdf)
 
     Parameters:
         request: The request being served.
@@ -224,7 +232,9 @@ def api_splash(request: HttpRequest) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __help/splash.html
+    ::
+
+        Format: __help/splash.html
 
     Parameters:
         request: The request being served.
@@ -248,9 +258,11 @@ def api_citing_opus(request: HttpRequest, fmt: str) -> HttpResponse:
 
     This is a PRIVATE API.
 
-    Format: __help/citing.(?P<fmt>html|pdf)
-    Arguments: searchurl=<URL> (Optional, a search to be cited)
-               stateurl=<URL>  (Optional, a page state to be cited)
+    ::
+
+        Format: __help/citing.(?P<fmt>html|pdf)
+        Arguments: searchurl=<URL> (Optional, a search to be cited)
+                   stateurl=<URL>  (Optional, a page state to be cited)
 
     The page carries a QR code for the public OPUS URL, plus one for each URL given
     as an argument.
@@ -320,8 +332,10 @@ def api_citing_opus(request: HttpRequest, fmt: str) -> HttpResponse:
 def api_api_guide(request: HttpRequest, fmt: str) -> HttpResponse:
     """Render the API guide.
 
-    Format: apiguide.(?P<fmt>pdf)
-            __help/apiguide.(?P<fmt>html|pdf)
+    ::
+
+        Format: apiguide.(?P<fmt>pdf)
+                __help/apiguide.(?P<fmt>html|pdf)
 
     The guide is written as Markdown in `api_guide.md`, which ships inside this
     package, and is rendered to HTML here with the scheme and host this request

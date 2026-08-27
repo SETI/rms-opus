@@ -38,7 +38,7 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
         a failure leaves the import table empty rather than partly built.
 
     Raises:
-        json.decoder.JSONDecodeError: If ``param_info_ranges.json`` is not valid JSON.
+        json.JSONDecodeError: If ``param_info_ranges.json`` is not valid JSON.
     """
     db = ctx.db
     assert db is not None
