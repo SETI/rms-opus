@@ -58,6 +58,19 @@ Repository = "https://github.com/SETI/rms-opus"
 Source = "https://github.com/SETI/rms-opus"
 Issues = "https://github.com/SETI/rms-opus/issues"
 
+[project.scripts]
+# The installed commands the server chains invoke by name. `python -m opus_import`
+# and `python -m opus_log_analyzer` keep working alongside them: each module's
+# `main()` is the shared entry point, so the two forms cannot drift.
+#
+# The error analyzer has no `python -m` package form -- a package has one
+# `__main__` and the log analyzer holds it -- so `opus_error_analyzer` is the only
+# short way to run it. Both log-analyzer parsers set `prog` explicitly for the same
+# reason `opus_import.cli` does: argparse otherwise names the executed file.
+opus_import = "opus_import.cli:main"
+opus_log_analyzer = "opus_log_analyzer.log_analyzer:main"
+opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
+
 [project.optional-dependencies]
 dev = [
   "rms-opus",
@@ -174,6 +187,39 @@ where = ["src"]
 # outside the package-data rules below.
 namespaces = false
 
+# Package-data audit (plan PR-22). What ships in the wheel, and why -- re-derive
+# the inventory rather than trusting a description of it:
+#
+#     python -m build --wheel && python -c "import zipfile,sys; \
+#       print('\n'.join(zipfile.ZipFile(sys.argv[1]).namelist()))" dist/*.whl
+#
+# Everything inside a package directory that git tracks is included, because
+# setuptools-scm's file finder supplies the file list and `namespaces = false`
+# (below) keeps the data directories from becoming importable packages. The
+# explicit entries below exist for the directories a *source* build would
+# otherwise leave out. Two categories were audited and deliberately kept:
+#
+#   * The Django app's served static assets, including the four third-party trees
+#     .gitattributes marks linguist-vendored (static/{admin,coreui,cdn_fallback,
+#     perfect-scrollbar}). They ship because `collectstatic` is what a deployed
+#     server runs to populate its static root, and a pip-deployed server has no
+#     checkout to collect them from: excluding them serves the site with no CSS or
+#     JavaScript. They are the largest single share of the wheel.
+#   * The per-directory README.md/README.txt files under the Django app. They are
+#     developer documentation that nothing reads at run time, and they are kept
+#     because the alternatives are worse, not because they earn their place:
+#     `exclude-package-data` matches per package, so a wildcard entry does not
+#     reach them (measured -- `"*" = ["README.md", "**/README.md"]` leaves every
+#     one of them in the wheel), and naming each package would be exactly the
+#     hand-maintained list of code sites this project does not write. Their total
+#     is a few kilobytes against a wheel measured in megabytes; run the inventory
+#     command above if that ratio ever looks worth revisiting.
+#
+# `opus.toml.template` is deliberately NOT package data. It is repository
+# infrastructure like `scripts/server/deploy.env.template`: the deploy chain writes
+# opus.toml itself rather than copying the template, nothing in the code reads it,
+# and shipping it inside a package would make an operator extract it through
+# importlib.resources instead of opening a file.
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
 # The import pipeline reads these at run time through importlib.resources, so they have
