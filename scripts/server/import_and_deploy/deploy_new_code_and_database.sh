@@ -1,10 +1,15 @@
-#/bin/sh
+#!/bin/bash
+#
+# Deploy a new OPUS installation against a newly imported database.
 #
 # We assume a directory structure like:
-#    /opus/src/rms-opus
-#    /opus/src/rms-opus/opus_venv
-# where /opus/src/rms-opus is a symlink to
-#    /opus/src/rms-opus_<databasename>
+#    /opus/src/rms-opus_<databasename>          the installation: opus_venv,
+#                                               opus.toml and the wsgi.py symlink
+#    /opus/src/rms-opus                         a symlink to the current one
+#
+# The installation is a virtualenv with the released rms-opus distribution in it,
+# not a checkout: nothing here builds from source. The only checkout on the server
+# is the one holding these scripts, which is where deploy.env lives too.
 #
 set -e
 
@@ -12,19 +17,24 @@ echo "*** Starting CODE & DATABASE OPUS deploy ***"
 echo
 
 if [[ $# < 1 || $# > 2 ]]; then
-    echo "Usage: deploy_new_code_and_database.sh <database_name> [<branch_name>]"
-    exit -1
+    echo "Usage: deploy_new_code_and_database.sh <database_name> [<version_spec>]"
+    echo
+    echo "  <version_spec>  a PEP 440 specifier appended to the distribution name,"
+    echo "                  for example '==3.23.0'. Omit it to install the newest"
+    echo "                  release. (This argument used to name a git branch; the"
+    echo "                  deploy installs from PyPI now.)"
+    exit 1
 fi
 
 export OPUS_DB_NAME=$1
-export OPUS_BRANCH=${2:-main}
+export OPUS_VERSION_SPEC=${2:-}
 
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
-source ${IMPORT_SCRIPT_DIR}/_read_opus_secrets.sh
+source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
 
 export OPUS_LOG_DIR=${OPUS_DIR}/opus_logs
 export OPUS_SRC_DIR=${OPUS_DIR}/src
@@ -38,7 +48,7 @@ mkdir -p ${OPUS_SRC_DIR}
 
 echo "Hostname:" ${HOSTNAME}
 echo
-echo "OPUS branch:" ${OPUS_BRANCH}
+echo "Version spec:" "${OPUS_VERSION_SPEC:-(newest release)}"
 echo
 echo "PDS3_HOLDINGS_DIR: ${PDS3_HOLDINGS_DIR}"
 echo "PDS4_HOLDINGS_DIR: ${PDS4_HOLDINGS_DIR}"
@@ -63,16 +73,20 @@ pip install mod-wsgi
 
 ln -s ${OPUS_SRC_DIR}/${OPUS_DIR_NAME} ${OPUS_SRC_DIR}/rms-opus
 
-cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
-# The WSGI application is opus_app/wsgi.py inside the installed distribution,
-# so nothing is generated here. The Apache vhost's WSGIScriptAlias must point at
-# ${OPUS_SRC_DIR}/rms-opus/src/opus_app/wsgi.py; PR-22 rewrites this deploy
-# chain around `pip install rms-opus` and owns that vhost change.
-python manage.py migrate
-yes yes | python manage.py collectstatic
+# Apache's vhost points at ${OPUS_SRC_DIR}/rms-opus/wsgi.py, the symlink
+# _opus_setup_environment.sh wrote into this installation. That path is stable
+# across deploys; the file it points at is inside the virtualenv's site-packages
+# and moves with the Python version. docs/dev_guide_deployment.rst has the stanza.
+
+# Django's contrib tables (sessions, auth, contenttypes, admin). The OPUS tables
+# are created from scratch by the import and have no migrations. django-admin
+# reads DJANGO_SETTINGS_MODULE and OPUS_CONFIG, both exported above; the installed
+# distribution ships no manage.py.
+django-admin migrate
+django-admin collectstatic --noinput
 python -m opus_app.clear_django_cache
 
-python -m opus_import --import-dict --clean
+opus_import --import-dict --clean
 
 sudo systemctl start memcached
 sudo systemctl start apache2

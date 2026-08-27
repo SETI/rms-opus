@@ -9,7 +9,7 @@ export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 export DATABASE_SCRIPT_DIR=${SCRIPT_DIR}/database
 
-source ${IMPORT_SCRIPT_DIR}/_read_opus_secrets.sh
+source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
 
 export DATETIMEPID="`date +%Y%m%dT%H%M%S`_$$"
 export OPUS_LOG_DIR=${OPUS_DIR}/import/${DATETIMEPID}/logs

@@ -1,6 +1,9 @@
 # This file should only be used via "source"
-
-cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
+#
+# `opus_import` is the console script the installed distribution declares, found on
+# PATH through the activated virtualenv. There is no `cd` into a source tree here:
+# the pipeline is an installed package and locates its configuration through
+# OPUS_CONFIG, which _opus_setup_environment.sh exported.
 
 set +e
 
@@ -8,7 +11,7 @@ echo "** DESTROY NEW DATABASE **"
 echo
 echo "Start time:" `date`
 echo
-python -m opus_import --drop-permanent-tables --scorched-earth > /dev/null 2>&1
+opus_import --drop-permanent-tables --scorched-earth > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -25,7 +28,7 @@ do
     echo
     echo "Start time:" `date`
     echo
-    python -m opus_import --import-check-duplicate-id --do-all-import ${VOLUME} > /dev/null 2>&1
+    opus_import --import-check-duplicate-id --do-all-import ${VOLUME} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         cat ${OPUS_LOG_DIR}/ERRORS.log
         exit -1
@@ -33,12 +36,18 @@ do
     echo
 done
 
-# Other normal volumes, more or less in reverse order of time to import
+# Other normal volumes, more or less in reverse order of time to import.
+#
+# cassini_iss_fring_mosaics_rsfrench2025 is deliberately absent from the list below;
+# it is disabled until its PDS4 shelf files exist. It cannot be commented out in
+# place: a `#` line in the middle of a backslash continuation ENDS the continuation,
+# which is a bash syntax error and made this entire script -- and with it the whole
+# server import chain that sources it -- fail to parse. `bash -n` on this file is the
+# check that catches it.
 
 for VOLUME in \
   EBROCC \
   uranus_occs_earthbased \
-# cassini_iss_fring_mosaics_rsfrench2025 (temporarily disabled)
   cassini_uvis_solarocc_beckerjarmak2023 \
   COUVIS_8xxx \
   COVIMS_8xxx \
@@ -54,7 +63,7 @@ do
     echo
     echo "Start time:" `date`
     echo
-    python -m opus_import --do-all-import ${VOLUME} > /dev/null 2>&1
+    opus_import --do-all-import ${VOLUME} > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         cat ${OPUS_LOG_DIR}/ERRORS.log
         exit -1
@@ -66,7 +75,7 @@ echo "** CREATE AUX TABLES **"
 echo
 echo "Start time:" `date`
 echo
-python -m opus_import --cleanup-aux-tables > /dev/null 2>&1
+opus_import --cleanup-aux-tables > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -77,7 +86,7 @@ echo "** IMPORT DICTIONARY **"
 echo
 echo "Start time:" `date`
 echo
-python -m opus_import --import-dictionary > /dev/null 2>&1
+opus_import --import-dictionary > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -88,7 +97,7 @@ echo "** VALIDATE TABLES **"
 echo
 echo "Start time:" `date`
 echo
-python -m opus_import --validate-perm > /dev/null 2>&1
+opus_import --validate-perm > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
@@ -101,7 +110,10 @@ echo "** MIGRATE **"
 echo
 echo "Start time:" `date`
 echo
-python manage.py migrate 2>&1
+# Django's own contrib tables. `django-admin` rather than `manage.py`: there is no
+# checkout here and the wheel ships no manage.py, so the settings module is named by
+# DJANGO_SETTINGS_MODULE, which _opus_setup_environment.sh exported.
+django-admin migrate 2>&1
 echo
 
 echo
