@@ -6165,6 +6165,21 @@ body; never rewrite or delete earlier notes.*
     missing `ERRORS.log` is not `-s` either. **Neither check is redundant and neither
     covers the other's case; removing either one opens a hole that reports success.**
     The workflow header in `run-integration.yml` now says so at the point of use.
+    **That one `ERRORS.log` covers every bundle, not just the last command run --
+    measured by PR-20's executor by reading `pdslogger`'s source, and stated here
+    because the wrong reading is the alarming one.** `cli.py:435` asks for
+    `rotation='none'`; in `pdslogger/__init__.py`, `error_handler` forwards that to
+    `file_handler`, whose `rotation == 'number'` branch (which renames) and
+    `rotation == 'replace'` branch (which unlinks) are both skipped for `'none'`, and
+    whose non-`midnight` path constructs `logging.FileHandler(local_logpath,
+    mode='a')` -- append. The library's own docstring agrees: *"none": No rotation;
+    append to an existing log of the same name.* `opus_main_test.sh` creates the log
+    directory fresh under a new `UNIQUE_ID` per run, so the file starts empty and then
+    accumulates across every `opus_import` invocation. **Someone who assumed truncation
+    would conclude the bundle imports are ungated and only the final command is
+    checked, which is both frightening and false.** Re-derive rather than trust this:
+    the deciding line is the `mode='a'` in `file_handler`, and the pin that governs
+    which `pdslogger` you get is in `requirements.txt`.
   - **The 100% coverage gate is two steps, not one, and the split is deliberate.**
     `opus_run_unittests_coverage.sh` measures and writes `coverage_report.txt`;
     `opus_check_coverage.sh` is the only thing that fails on anything under 100%, and

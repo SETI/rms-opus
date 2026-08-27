@@ -20,6 +20,13 @@
 #     thing that can. The converse hole is why the exit-status check joined it:
 #     `[ -s ERRORS.log ]` is also false for a MISSING file, so an import that
 #     died before logging once reported success.
+#     That one ERRORS.log covers every bundle, not just the last command run:
+#     cli.py asks for rotation='none', which pdslogger implements by skipping
+#     both its renaming and its unlinking branch and opening the file with
+#     logging.FileHandler(..., mode='a'), while opus_main_test.sh creates the
+#     log directory fresh under a new UNIQUE_ID each run. So the file starts
+#     empty and accumulates. Reading it as truncating would make the bundle
+#     imports look ungated, which is the frightening and wrong conclusion.
 #   * the suites passed -> the pytest call in
 #     scripts/automated_tests/opus_run_unittests_coverage.sh
 #   * coverage is 100% -> scripts/automated_tests/opus_check_coverage.sh, the
