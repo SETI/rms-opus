@@ -14,6 +14,11 @@ defaults:
   run:
     shell: bash
 
+# The repository's default workflow token permission is write; neither job here
+# writes anything back to GitHub, so both are narrowed to reading the repository.
+permissions:
+  contents: read
+
 env:
   # OPUS has no default location for its configuration file, so every process
   # that reads OPUS settings is given one. This dummy configuration (dummy
@@ -50,16 +55,22 @@ jobs:
       BANDIT_PATHS: "src integration_tests manage.py"
       VULTURE_PATHS: "src integration_tests tests manage.py vulture_whitelist.py"
     steps:
+      # Third-party actions are pinned to a full commit SHA with the release in a
+      # trailing comment, in every workflow in this repository. See the longer
+      # note in run-integration.yml for why, and for how to move a pin.
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm derives the version from tags, which a shallow clone
           # does not fetch; this job installs the package, so it needs them.
           fetch-depth: 0
+          # Nothing here pushes or calls the GitHub API through git, so the token
+          # does not need to be left behind in .git/config.
+          persist-credentials: false
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: 3.13
 
@@ -128,15 +139,16 @@ jobs:
         python-version: ["3.12", "3.13"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm derives the version from tags, which a shallow
           # clone does not fetch.
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
 
