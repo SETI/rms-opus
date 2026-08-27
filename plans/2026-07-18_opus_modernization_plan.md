@@ -6604,30 +6604,37 @@ body; never rewrite or delete earlier notes.*
   no publish workflow run, no `twine upload`, no version tag, no GitHub Release, and
   **the Test PyPI dry-run the PR-22 section calls for was not performed**. What replaces
   it is recorded below. Facts later PRs need:
-  - **The PyPI API-token secrets are NOT present on this repository, which contradicts
-    the standing claim that they are.** `gh api repos/SETI/rms-opus/actions/secrets`
-    returns exactly one secret, `CODECOV_TOKEN`;
-    `repos/SETI/rms-opus/actions/organization-secrets` returns `total_count: 0`; and
-    `repos/SETI/rms-opus/environments` is empty. The token doing the asking has `repo`
-    scope and did read the repo-secret list, so this is an answer rather than a
-    permission failure. **Neither `PYPI_API_TOKEN` nor `TEST_PYPI_API_TOKEN` exists**,
-    and `publish_to_pypi.yml` would fail at its upload step with an empty password.
-  - **Nothing has ever been published under the name `rms-opus`, on either index.**
-    `https://pypi.org/simple/rms-opus/` and `https://test.pypi.org/simple/rms-opus/` both
-    return **404**, where `simple/rms-julian/` returns 200 on both. Name *ownership* is a
-    different question and cannot be answered without logging in. **Do not check this with
-    the project page**: `https://pypi.org/project/<name>/` returns HTTP **200** for a name
-    that certainly does not exist (`definitely-not-a-real-pkg-xyz`), because a bot
-    challenge is served with a 200 status. A status-code check against that URL agrees
-    with every name -- the check-that-cannot-fail shape again. The simple index is the
-    endpoint that distinguishes.
-  - **`scripts/server/import_and_deploy/_opus_import_volumes.sh` did not parse, and does
-    not on `main` either.** A `#` comment placed inside a backslash-continued list ends
+  - **The PyPI API-token secrets did not exist when this PR was written, and were added
+    during it.** `PYPI_API_TOKEN` and `TEST_PYPI_API_TOKEN` were created 2026-08-27
+    21:44 UTC, after the executor reported them missing; before that
+    `repos/SETI/rms-opus/actions/secrets` returned only `CODECOV_TOKEN`, with zero
+    organization secrets and zero environments. **They are present now**, and their
+    names match what the workflows reference (`publish_to_pypi.yml`,
+    `publish_to_test_pypi.yml`). The standing plan claim that they were "confirmed in
+    place" was simply wrong until then, which is why it is worth checking a claimed
+    precondition rather than inheriting it.
+  - **The distribution name `rms-opus` is UNCLAIMED on both indexes -- not owned.** The
+    plan's "PyPI ownership of the `rms-opus` name ... confirmed in place" is wrong on
+    that half, and nothing in this PR could make it right: the **first upload claims the
+    name**, and no upload has happened. `pypi.org/simple/rms-opus/`,
+    `pypi.org/pypi/rms-opus/json` and `test.pypi.org/simple/rms-opus/` all return
+    **404**, while the controls `rms-julian` and `rms-pdsparser` return 200 -- so this is
+    genuine absence rather than a broken query. **Do not check this with the project
+    page**: `https://pypi.org/project/<name>/` returns HTTP **200** for a name that
+    certainly does not exist (`definitely-not-a-real-pkg-xyz`), because a bot challenge
+    is served with a 200 status, so a status-code check there agrees with every name --
+    the check-that-cannot-fail shape again. The simple and JSON endpoints distinguish.
+  - **`scripts/server/import_and_deploy/_opus_import_volumes.sh` did not parse -- on
+    `main` and on `rewrite` alike.** A `#` comment placed inside a backslash-continued list ends
     the continuation, so `bash -n` fails and `_run_full_opus_import.sh`, which sources it,
     aborts before importing a single bundle. Introduced in `1e6b091c` (#1437) when
     `cassini_iss_fring_mosaics_rsfrench2025` was disabled in place. Fixed here by moving
-    the note above the `for`. **`main` still carries it**, so the production import chain
-    is broken on the deployed branch until `rewrite` merges or someone backports the fix.
+    the note above the `for`. It reached `rewrite` untouched through PR-04's and PR-05's
+    moves, and a sweep of every `.sh` on `origin/main` through `bash -n` found it to be
+    **the only broken script on either branch**, failing at line 42. **`main` still
+    carries it**, so the production import chain is broken on the deployed branch until
+    `rewrite` merges or someone backports the fix -- **owner: rfrench**, who holds the
+    backport decision.
     Two lessons: a disabled entry cannot be commented out inside a continuation, and
     `bash -n` over every tracked shell script is a check this repository did not have.
   - **The deployed installation is no longer a checkout, and the vhost path changed.**
@@ -6735,9 +6742,16 @@ body; never rewrite or delete earlier notes.*
     checks; it is not required today. Both publish workflows gained `twine check --strict`
     (plain `twine check` exits 0 on a rendering warning, and `publish_to_test_pypi.yml` had
     no validation step at all).
-  - **What the release path is still untested on, stated so green CI is not misread**: the
-    upload step itself, the API tokens, and whatever PyPI makes of the metadata on receipt.
-    Everything before the upload is now exercised on every push.
+  - **The release path is CONFIGURED BUT NEVER EXECUTED, and that distinction is the
+    whole of what this PR can claim.** Both workflows are complete, SHA-pinned, and now
+    have the tokens they reference; everything up to the upload -- build, `twine check
+    --strict`, `pyroma`, a clean-venv install of the wheel, and running every console
+    script and package-data file it ships -- runs on every push through the `Package`
+    job. **Nothing beyond that has ever run.** Specifically untested, so that green CI is
+    not misread as covering it: the upload step itself, whether either API token is valid
+    or correctly scoped, whatever PyPI makes of the metadata on receipt, and the
+    name-claiming that the first upload performs. The first real publish is the first
+    execution of any of it.
   - **Section 6's end-to-end acceptance was run and passed, from the built wheel in a venv
     holding nothing else, with the working directory outside the checkout.** COISS_2002
     imported into a fresh MySQL 8.0 schema (3296 `obs_general` rows) with **ERRORS.log
