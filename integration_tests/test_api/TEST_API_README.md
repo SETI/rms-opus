@@ -102,12 +102,12 @@ and then to apply the gate to it, from the repository root:
 
         scripts/automated_tests/opus_check_coverage.sh
 
-The `rm` is not optional and is the first thing the script itself does: pytest-cov
-measures under a per-process data suffix and combines afterwards, and its own `erase()`
-removes only `.coverage`, because this configuration is not `parallel`. A fragment left
-behind by an interrupted run would be combined into the totals -- coverage no test in
-this run produced, which can only make the result look *better*. Skipping it can
-therefore produce a local 100% that CI would not.
+The `rm` is not optional, and the script does it too, as its last step before the
+pytest call: pytest-cov measures under a per-process data suffix and combines
+afterwards, and its own `erase()` removes only `.coverage`, because this configuration
+is not `parallel`. A fragment left behind by an interrupted run would be combined into
+the totals -- coverage no test in this run produced, which can only make the result look
+*better*. Skipping it can therefore produce a local 100% that CI would not.
 
 That configuration measures `src/opus_app/apps`, `integration_tests/test_api` and
 `src/opus_support`, and `tests/opus_support` and `tests/opus_app` are the directories
