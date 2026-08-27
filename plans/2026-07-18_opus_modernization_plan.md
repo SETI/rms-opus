@@ -6511,3 +6511,57 @@ body; never rewrite or delete earlier notes.*
     **2576 tests and TOTAL 100%** (0 statements missed, 0 partial branches), with
     `opus_check_coverage.sh` invoked separately afterwards and exiting 0 -- because the
     chain does not apply the gate.
+- **2026-08-27 (orchestrator, after PR-21 merged as `f8df41d5`):** six facts later PRs need.
+  - **`Docs` was added to `rewrite`'s required status checks.** The job is unmatrixed, so the
+    context is the bare job name -- read off run `33105333724` two ways (`jobs[].name` and the
+    check-run name on the head commit), never predicted from the YAML. Required contexts are
+    now `Run Lint`, `Integration Tests (self-hosted-linux, 3.12)`, `Unit Tests (3.12)`,
+    `Unit Tests (3.13)`, `Docs`, with `strict: true` preserved. **PR-24 must redo this** when
+    it narrows the triggers back to `main`, per the PR-20 note above.
+  - **Reviewer diversity beats reviewer iteration, measured.** The §4a loop converged --
+    pass 1 found 19 blocking defects, pass 2 found 6, pass 3 found 0 -- and CodeRabbit then
+    found **ten more real defects in this PR's own new material**. A clean pass therefore means
+    *that reviewer, at that scope, is exhausted*; it is not evidence the material is correct.
+    The ten were structurally invisible to iteration: a claim contradicted by another chapter
+    four files away, three chapters stating three different rules for one operation, and the
+    back-compat rule failing to record `/apiguide.pdf` -- the exception **this PR created**.
+    Related and measured on the same PR: **roughly one correction in five is itself wrong**
+    (four of pass 2's six blocking findings were introduced by pass 1's fixes). The three
+    kinds have different preventions: new wrong prose (verify the fix against the artifact);
+    fixed-here-left-standing-there (**grep for the claim, not the line** -- a fact is usually
+    stated more than once); and counts made stale (**derive the number or drop it**).
+  - **The rev 7.18 `up to` marker is in the ISSUE COMMENTS, not the review bodies.** Searching
+    `pulls/<n>/reviews[].body` returned nothing across 30,582 bytes; the token is in
+    `issues/<n>/comments[].body`. **A matcher pointed at the wrong object type reads as "never
+    reviewed" exactly as convincingly as one using a seven-character abbreviation** -- the same
+    false-negative shape rev 7.18 already warns about, one level up. Verified here: marker
+    ``up to `6c39a``` matched head `6c39ad8a`.
+  - **`@coderabbitai review` can answer "Already reviewed the last commit."** An ack comment
+    posted *after* a completion status is not evidence of a new in-flight review; this one was
+    an `Action not completed` notice. **Read the ack's body, not its timestamp** -- PR-21's
+    executor held a 12-minute settle window on a comment that said the review was already done.
+  - **The check-that-cannot-fail class: four instances in one PR**, each found by *executing*
+    something rather than reading it. (a) `django.setup()` applied `LOGGING` with
+    `disable_existing_loggers`, killing Sphinx's own loggers, so `-W` could never fail however
+    broken the docs were; (b) `curl -O` exits 0 on a 404 and writes the error page into the
+    file the next line copies (`-f` gives exit 22 and no file); (c) a test comparing the
+    rendered page against the function that phrased it agreed with **any** wording, including a
+    hardcoded one; (d) a recipe and the test enforcing it both searched only single-quoted
+    literals, so a double-quoted reader produced a false negative *and* a passing test.
+    **Standing lens for every later PR: for any gate you add, construct the failure it is
+    supposed to catch and confirm it actually fails.** Mutation-checking is the cheap form.
+  - **Two issues carry work deliberately excluded from PR-21.** **#1475**: a 304 reaching
+    `StripWhitespaceMiddleware` raises `KeyError` and 500s; the source has carried a
+    commented-out guard for exactly that case for years, and the guard belongs on the **missing
+    header**, not on `status_code == 200`, since a response with no content type is not text
+    whatever its status. **#1476**: seven pre-existing API-guide defects carried verbatim
+    through the port, two of them genuinely wrong about the API (`get_range_query` builds an
+    **AND** where the guide says "either...or", admitting disjoint ranges; `get_fields_info`
+    builds `return_obj[cat][...]`, not field-ID-first). They were **not** fixed inside PR-21
+    because editing ported body text would falsify its content-parity artifact, which is the
+    PR's acceptance criterion. **#1476's natural deadline is PR-24**, which is what makes the
+    RTD guide public -- fixing it after that ships two wrong API descriptions to a live site.
+  - **PR-21 reviewed at 85 changed files**, under CodeRabbit's 100-file cap, so **neither**
+    exception was invoked: rev 7.2 (hard skip over the cap) and rev 7.18 (quota exhaustion,
+    status `success` with reason `Review rate limited`) both remained unavailable and the
+    review was genuine.
