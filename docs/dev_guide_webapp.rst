@@ -5,8 +5,9 @@ The Web Application
 
 :mod:`opus_app` is the Django project that serves the OPUS user interface and the
 public web API out of the database an import wrote. It reads that database and never
-writes an ``obs_`` table; the only tables it creates are the per-search ``cache_*``
-tables and the ones Django's own contrib apps own.
+writes an ``obs_`` table. What it does create is temporary: the per-search ``cache_*``
+tables, a few short-lived tables the results and cart queries build, and the tables
+Django's own contrib apps own.
 
 Project modules
 ---------------
@@ -55,13 +56,15 @@ The apps
     The user's cart and recycle bin, and the zipped downloads built from them.
 
 :mod:`opus_app.apps.help`
-    The About, Bundles, FAQ, Getting Started, Welcome and Citing pages, each of which
-    can be returned as HTML or as a PDF.
+    The About, Bundles, FAQ, Getting Started, Welcome and Citing pages. All but the
+    Welcome page can be returned as HTML or as a PDF; the Welcome page's route carries
+    no format at all and its view takes none.
 
 :mod:`opus_app.apps.paraminfo`
-    The models over ``param_info`` and ``table_names`` -- the description of every
-    field and category -- and the label logic that qualifies a field's name with the
-    body, mission or instrument it belongs to.
+    The ``param_info`` model -- the description of every searchable field -- and the
+    label logic that qualifies a field's name with the body, mission or instrument it
+    belongs to. The ``table_names`` model it reads alongside lives in the generated
+    ``search/models.py`` with the rest of the tables.
 
 :mod:`opus_app.apps.tools`
     What the other apps share: the ``api_view`` decorator, the SQL builder, the

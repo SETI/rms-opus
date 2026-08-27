@@ -80,10 +80,12 @@ Environment variables
        ``scripts/automated_tests/opus_run_unittests_coverage.sh``.
 
 ``tests/fixtures/opus_ci.toml`` is a checked-in configuration holding dummy
-credentials and paths under ``/tmp``. Nothing it names is ever connected to or read;
-it exists so that a job which has to import :mod:`opus_app.settings` -- the type
-check, the unit tests, the documentation build -- has a valid configuration without
-needing a database.
+credentials and paths under ``/tmp``. No database it names is ever connected to and no
+holdings are ever read, but it is not entirely inert: Django's logging configuration
+opens ``paths.opus_log_file`` for writing as :mod:`opus_app.settings` is imported, which
+is why every path in it that is opened sits directly under ``/tmp``. It exists so that a
+job which has to import those settings -- the type check, the unit tests, the
+documentation build -- has a valid configuration without needing a database.
 
 Running the programs
 --------------------
@@ -135,13 +137,29 @@ marker so that it cannot be defeated by a test that forgets one:
     pytest -n auto --dist loadscope          # the same, in parallel, as CI runs it
     pytest tests/opus_support/test_units.py  # one file
     pytest -k parse_form_type                # one test by name
-    pytest --cov                             # with coverage, configured in pyproject.toml
+    pytest --cov --cov-fail-under=0          # with coverage; see the note below
     pytest integration_tests                 # the live-database suites, serially
 
 ``--dist loadscope`` keeps each test module on one worker, which matters for the
 modules that mock time or share a fixture. The live-database suites are deliberately
 **not** run in parallel: they share one database and one of them drops the cache
 tables between tests.
+
+**Two coverage configurations exist and they measure different things**, which is why
+the invocation above passes ``--cov-fail-under=0``:
+
+* ``[tool.coverage]`` in ``pyproject.toml`` measures :mod:`opus_support`,
+  :mod:`opus_config`, :mod:`opus_import` and :mod:`opus_log_analyzer` -- the Django
+  application is excluded. Its ``fail_under = 90`` is a **target, not a gate that
+  anything runs today**: no workflow and no check script passes ``--cov``, the
+  holdings-free suite reaches roughly 42%, and a bare ``pytest --cov`` therefore exits
+  non-zero on a perfectly healthy tree. Pass ``--cov-fail-under=0`` to see the report
+  without the target, or raise the number the suite reaches rather than the target.
+* ``integration_tests/.coveragerc`` measures ``src/opus_app/apps``,
+  ``integration_tests/test_api`` and ``src/opus_support``, and **is** gated, at 100%.
+  ``scripts/automated_tests/opus_run_unittests_coverage.sh`` measures it and
+  ``scripts/automated_tests/opus_check_coverage.sh`` is what fails the build below
+  100% -- two steps, and only the second one is the gate.
 
 Three markers are declared, and every marker used anywhere has to be declared because
 ``--strict-markers`` is on: ``integration`` (applied to everything
@@ -195,7 +213,7 @@ What it runs, and what each one is configured by:
      - ``vulture``
      - ``[tool.vulture]`` plus ``vulture_whitelist.py``
    * - Documentation
-     - ``make -C docs html``
+     - ``make clean && make html SPHINXOPTS="-W -n"``, from ``docs/``
      - ``docs/conf.py``
    * - Markdown
      - ``pymarkdown scan``
@@ -231,23 +249,31 @@ Both are idempotent and rewrite a page only when its content changes. The pages 
 write are git-ignored; to change what they contain, change the generator.
 
 The build imports every OPUS module, and the Django application's modules cannot be
-imported until Django is configured, so ``conf.py`` sets ``OPUS_CONFIG`` (if it is not
-already set) and calls ``django.setup()`` before Sphinx reads anything.
+imported until Django is configured, so ``conf.py`` settles ``OPUS_CONFIG`` and calls
+``django.setup()`` before Sphinx reads anything. It always assigns the variable: an
+existing value is resolved against the repository root -- Sphinx runs ``conf.py`` from
+``docs/``, where a relative path would not be found -- and an absent one falls back to
+``tests/fixtures/opus_ci.toml``.
 
 Continuous integration
 ----------------------
 
 Two workflows gate every pull request.
 
-``run-tests.yml`` runs on GitHub-hosted runners, on every push and pull request and
-nightly. It has three jobs: **Run Lint** (ruff, bandit, vulture, mypy, PyMarkdown),
-**Unit Tests** on Python 3.12 and 3.13, and **Docs** (the same ``-W -n`` Sphinx build
-as above). None of them needs holdings or a database.
+Both trigger the same way: on a push or a pull request against the branches their
+``on:`` block names, on a daily schedule, and on demand through
+``workflow_dispatch``. Read the branch list out of the workflow rather than from here.
+
+``run-tests.yml`` runs on GitHub-hosted runners and has three jobs: **Run Lint** (ruff,
+bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 and 3.13, and **Docs**
+(the same ``-W -n`` Sphinx build as above). None of them needs holdings or a database.
 
 ``run-integration.yml`` runs on the Node's self-hosted runner, which has the real PDS
-holdings mounted. It imports a fixed set of bundles into a fresh database, runs the
-golden-response API suite against it, and gates on 100% coverage of the code that
-suite reaches. It is what proves that a refactor did not change what OPUS answers.
+holdings mounted. It imports a fixed set of bundles into a fresh database and then runs
+the golden-response API suite, the live-database Django suites, and
+``tests/opus_support`` and ``tests/opus_app`` -- all in one session, because the 100%
+coverage gate measures what all of them reach together. It is what proves that a
+refactor did not change what OPUS answers.
 
 Third-party actions are pinned to a full commit SHA with the release in a trailing
 comment, in every workflow. ``run-integration.yml`` carries the reasoning and the

@@ -43,18 +43,27 @@ tables that observation belongs to.
         D --> E[For each index row:<br/>replace the metadata, then call one<br/>field_obs_table_column method per column]
         E --> F[(Import tables: imp_obs_*, imp_mult_*)]
         F --> G[(Permanent tables: obs_*, mult_*)]
-        G --> H[(Auxiliary tables:<br/>param_info, table_names, partables, cart)]
+        G --> H[(Auxiliary tables:<br/>param_info, table_names, partables)]
 
 Everything is written to the **import** tables first -- the ones whose names carry the
 ``table_temp_prefix`` from the configuration -- and copied over the permanent tables
 only once the whole run has succeeded. A failed import therefore cannot leave the web
 application serving half a bundle.
 
-The auxiliary tables come last because they are derived from the permanent ones:
-``param_info`` from the ``pi_*`` metadata in the table schemas,
-``table_names`` from which permanent tables exist, and ``partables`` from what the
-imported observations actually contain. :mod:`opus_import.steps` documents the order
-the steps run in and what forces it; :ref:`dev_guide_import` walks the pieces.
+The auxiliary tables come last because each needs the permanent tables to be there,
+but only one of them is really derived from what was imported:
+
+* ``param_info`` comes from the ``pi_*`` metadata in the schemas of the permanent
+  tables -- so it does follow the import, but its content is the schemas'.
+* ``table_names`` comes from a list **written out by hand** in
+  :mod:`opus_import.steps.do_table_names`; which permanent tables exist only filters
+  that list. A new table with no row there gets no section, however much data it holds.
+* ``partables`` comes from static configuration too: it enumerates every trigger OPUS
+  knows, from the mission, instrument and host maps in
+  :mod:`opus_import.config_data`. A mission that was never imported still gets a row.
+
+:mod:`opus_import.steps` documents the order the steps run in and what forces it;
+:ref:`dev_guide_import` walks the pieces.
 
 The obs class hierarchy
 -----------------------
@@ -70,7 +79,7 @@ Everything about the hierarchy exists to decide which class that call lands on.
     classDiagram
         class ObsBase {
             <<abstract>>
-            +metadata
+            #_metadata
             +opus_id
             +instrument_id()*
             +inst_host_id()*
@@ -93,6 +102,9 @@ Everything about the hierarchy exists to decide which class that call lands on.
         class ObsRingGeometry {
             field_obs_ring_geometry_*()
         }
+        class ObsGeneralPDS3 {
+            the PDS3 half of obs_general
+        }
         class ObsCommonPDS3 {
             <<abstract>>
             combines every table module
@@ -111,15 +123,23 @@ Everything about the hierarchy exists to decide which class that call lands on.
         ObsBase <|-- ObsBasePDS4
         ObsBase <|-- ObsGeneral
         ObsBase <|-- ObsRingGeometry
-        ObsGeneral <|-- ObsCommonPDS3
+        ObsGeneral <|-- ObsGeneralPDS3
+        ObsBasePDS3 <|-- ObsGeneralPDS3
+        ObsGeneralPDS3 <|-- ObsCommonPDS3
         ObsRingGeometry <|-- ObsCommonPDS3
-        ObsBasePDS3 <|-- ObsCommonPDS3
         ObsBase <|-- ObsCassiniCommon
         ObsCommonPDS3 <|-- ObsCassiniCommonPDS3
         ObsCassiniCommon <|-- ObsCassiniCommonPDS3
         ObsCassiniCommonPDS3 <|-- ObsVolumeCOISS12xxx
 
-The diagram shows one path through the tree; the modules come in five kinds.
+Every edge above is a direct base, and the diagram shows **one path** through the
+tree: the real ``ObsCommonPDS3`` combines nine table modules rather than the two drawn
+here, and each mission and bundle has siblings the diagram leaves out. Read the base
+list off the class statement -- ``obs_common_pds3.py`` -- rather than counting edges
+here, because the order that list is written in is what decides the resolution order
+described below.
+
+The modules come in five kinds.
 
 **The root.** :class:`~opus_import.obs.obs_base.ObsBase` owns the per-observation
 metadata, the helpers that read a value out of a PDS index table, and
@@ -180,9 +200,10 @@ Three parts of that flow are worth knowing before changing any of it.
 handler into an HTTP 400, turns any other unhandled exception into an HTTP 500 logged
 with its traceback, and applies the fault-injection knobs the configuration file
 carries. Exceptions Django answers specifically -- :exc:`django.http.Http404`,
-:exc:`~django.core.exceptions.PermissionDenied`,
+:exc:`~django.core.exceptions.BadRequest`,
+:exc:`~django.core.exceptions.PermissionDenied` and
 :exc:`~django.core.exceptions.SuspiciousOperation` -- are re-raised rather than
-absorbed. A view that needs the API call number declares an ``api_code`` parameter and
+absorbed, so each keeps the response and the logging Django gives it. A view that needs the API call number declares an ``api_code`` parameter and
 the wrapper supplies it.
 
 **A search becomes a cache table.**

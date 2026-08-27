@@ -3588,8 +3588,11 @@ when wrapping into the 2nd line */
         padding-bottom: 0.1em;
     }
 
-    /* Reduce spaces between each item in the help menu when screen is short */
-    .op-help-item, #op-interpret-image-menu {
+    /* Reduce spaces between each item in the help menu when screen is short.
+       op-help-external-item is for the entries that leave the site rather than
+       opening the help pane: they carry no op-help-item, because that class is
+       what the click handler binds preventDefault to. */
+    .op-help-item, .op-help-external-item, #op-interpret-image-menu {
         padding-top: 0.1em !important;
         padding-bottom: 0.1em !important;
         font-size: 81%;

@@ -62,8 +62,9 @@ implementation, not what to import.
     Spacecraft clock counts, whose format differs per mission and per instrument.
 
 :mod:`opus_support.angles`
-    Degrees, radians, and the sexagesimal spellings a right ascension or declination
-    is written in.
+    The sexagesimal spellings a right ascension or declination is written in, and the
+    conversions between them. The degree-to-radian factor itself is a unit conversion
+    and lives with the others in :mod:`opus_support.units`.
 
 :mod:`opus_support.orbits`
     The Cassini orbit ("rev") numbering, whose first few orbits are named rather than

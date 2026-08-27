@@ -31,13 +31,17 @@ Three modules answer "what exists", and adding a mission, an instrument or a bun
 means editing them:
 
 :mod:`opus_import.config_data`
-    Which missions and instruments there are, which mission an instrument belongs to,
-    and which instrument a bundle-id prefix implies. It also names the tables an
-    instrument populates.
+    Which missions, spacecraft and instruments there are, and which mission each
+    belongs to. It also holds ``TABLES_TO_POPULATE``, the kinds of table an
+    observation can fill, whose mission, instrument and surface-geometry entries carry
+    placeholders substituted per bundle.
 
 :mod:`opus_import.config_bundle_info`
-    Per bundle: which obs class computes its rows, which PDS version it is, which
-    index file is the primary one and which supplemental indexes go with it.
+    ``BUNDLE_INFO``: a list of (regular expression matching a bundle id, details)
+    pairs, and the only thing that makes a bundle importable at all. The details are
+    the obs class that computes its rows, the PDS version, the primary index file, and
+    two flags. Nothing here maps a bundle-id *prefix* to an instrument -- the regular
+    expression selects the class directly.
 
 :mod:`opus_import.config_targets`
     Target names, the class each target belongs to, and the alias mapping that folds
@@ -107,8 +111,11 @@ How one observation becomes a row
 ---------------------------------
 
 :func:`opus_import.steps.do_import_index.import_one_index` reads a bundle's primary
-index with ``pdstable``, joins each row to whatever supplemental indexes the bundle
-declares, and hands the assembled ``metadata`` dictionary to the bundle's obs class
+index with ``pdstable`` -- the one file ``BUNDLE_INFO`` names -- then **discovers** the
+supplemental indexes rather than being told about them, by scanning the bundle's
+metadata directory for the file-name endings it knows (``SUMMARY.LBL``,
+``SUPPLEMENTAL_INDEX.LBL``, ``INVENTORY.LBL``). It joins each row to what it found and
+hands the assembled ``metadata`` dictionary to the bundle's obs class
 instance -- **replacing it in place**, once per row. That is why no obs method may
 cache anything derived from ``metadata``:
 :attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows the pattern that is allowed,
@@ -158,8 +165,9 @@ Authoring tools
 ---------------
 
 :mod:`opus_import.util` holds tools that are run by hand while authoring a schema, not
-during an import: ``dump_pds_definitions`` prints what the PDS data dictionary says
-about a term, and ``retrieve_ra_dec`` queries SIMBAD for a star's coordinates. Both do
+during an import: ``dump_pds_definitions`` takes the path of a **PDS index label** and
+prints that label's field definitions in the form a table schema's ``definition``
+entries want, and ``retrieve_ra_dec`` queries SIMBAD for a star's coordinates. Both do
 their work inside a ``main()`` behind an ``if __name__ == '__main__':`` guard, so
 importing either one -- which the documentation build does -- runs nothing and reaches
 no network.

@@ -23,8 +23,14 @@ urlpatterns = [
     # Public entrypoint. The API guide is published as documentation rather than
     # rendered here, so this answers 302 and points at it. The pattern keeps the
     # capture group it has always had so that the set of URLs it matches does not
-    # change; RedirectView passes the captured group through `url % kwargs`, which
-    # leaves a URL with no format specifier alone.
+    # change.
+    #
+    # RedirectView passes the captured group through `url % kwargs`, so
+    # API_GUIDE_URL must contain no `%` at all -- not merely no format specifier. A
+    # percent-encoded target would raise ValueError when this route is requested,
+    # which no test of another URL would catch. RedirectView also drops the query
+    # string by default, which is right here: nothing meaningful can be passed on to
+    # a guide.
     re_path(r'^apiguide.(?P<fmt>pdf)$',
             RedirectView.as_view(url=settings.API_GUIDE_URL, permanent=False)),
     re_path(r'^__help/citing.(?P<fmt>html|pdf)$', api_citing_opus),

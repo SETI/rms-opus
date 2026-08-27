@@ -6275,9 +6275,12 @@ body; never rewrite or delete earlier notes.*
     `OPUS_CONFIG` -- which is what both `scripts/run-all-checks.sh` and `run-tests.yml`
     set, relative to the repository root -- is therefore looked for under `docs/` and not
     found, and the build dies in `conf.py` rather than reporting a documentation problem.
-    `conf.py` resolves a relative value against the repository root;
-    `run-all-checks.sh` now also exports an absolute default. Both are needed: either one
-    alone leaves the other path broken.
+    `conf.py` resolves a relative value against the repository root, and that alone is
+    sufficient -- it covers every caller, verified by building with a relative
+    `OPUS_CONFIG` from the repository root. `run-all-checks.sh` also exports an absolute
+    default, which is belt-and-braces rather than a second half of the fix; the comment
+    there originally claimed a relative path "would not resolve", which is wrong, and has
+    been corrected.
   - **`docs/` joined the ruff, mypy and vulture scopes**, in `run-all-checks.sh`,
     `run-tests.yml` and `[tool.vulture]`, and `[tool.mypy] mypy_path` is now
     `"src:docs/_ext"` so the extensions type-check and `tests/opus_docs/` can import them.
@@ -6310,13 +6313,18 @@ body; never rewrite or delete earlier notes.*
     `api/fields` returns**, so it was left alone here.
   - **The ported API guide has full content parity, verified mechanically.** The original
     was rendered exactly as `api_api_guide` rendered it (same substitutions, same Markdown
-    library), the port was rendered by Sphinx, both were reduced to word tokens, and the
-    difference was inspected. **Nine tokens are in the original and not in the port, and
-    all nine are accounted for**: four are typographic (`"AND"ed`, `"OR"ed`, `field's`,
-    `parameter's` -- docutils' smart quotes), two are the `%DATE%`/`%VERSION%`
-    placeholders now supplied by Sphinx substitutions, and three (`Table`, `O`, `PUS`)
-    come from the hand-written table of contents that the Sphinx toctree replaced,
-    including its own `O  PUS` typo. A heading-by-heading checklist is in the PR.
+    library), the port was rendered by Sphinx, **both renderings** were reduced to word
+    tokens, and the difference was inspected. Nine tokens differ, and all nine are
+    accounted for -- but **be precise about what "differ" means here, because the first
+    version of this note was not**: only five are absent from the port. Two are the
+    `%DATE%`/`%VERSION%` placeholders, now supplied by Sphinx substitutions, and three
+    (`Table`, `O`, `PUS`) come from the hand-written table of contents the Sphinx toctree
+    replaced, including its own `O  PUS` typo. The other four -- `"AND"ed`, `"OR"ed`,
+    `field's`, `parameter's` -- **are present in the ported source** and differ only in
+    the *rendering*, because docutils' smart quotes turn `"` and `'` into typographic
+    quotes. A comparison of two rendered outputs cannot tell those two cases apart, so a
+    later PR repeating this technique should diff sources, or normalize quotes first. A
+    heading-by-heading checklist is in the PR.
   - **One link in the source guide was broken and is fixed in the port.**
     `api_guide.md:757` linked to `#fileopusidjson`; the section's anchor is
     `filesopusidjson`, so the link went nowhere. Sphinx's nitpicky build is what found it.
@@ -6388,6 +6396,37 @@ body; never rewrite or delete earlier notes.*
     only way a view can ask for its content back untouched. **This is the same shape as
     the PR-03a note about a fix making an unreachable branch reachable, in the other
     direction: after removing a caller, re-check what stopped being covered.**
+  - **The two orphaned Markdown files were both dispositioned, as the plan requires.**
+    `src/opus_log_analyzer/Configuration.md` was **ported** into the log-analyzer
+    chapter's "Writing a configuration", "Writing a session info" and "Markup" sections,
+    corrected in two places against the code: `AbstractConfiguration` declares
+    `create_batch_html_generator`, not the `additional_template_info` the note described,
+    and the session flags come from `get_icon_flags`, not `get_session_flags`. Its final
+    `## The Template` section was an empty heading.
+    `src/opus_import/README.md` was **deleted**: its two apt-get lines are now in the
+    environment and deployment chapters, and its wishlist -- which is the only copy that
+    existed anywhere -- was **filed as issue #1473** before the file was removed, per
+    rev 7.14's precedent for the log-analyzer defects. Two of its items were already
+    done (the table_schemas README, rewritten by this PR; commenting the import
+    pipeline, done by PR-15/PR-16).
+  - **`pytest --cov` cannot succeed, and it is the plan's `fail_under = 90` that is why.**
+    `[tool.coverage.report] fail_under = 90` is inert in CI and in `run-all-checks.sh`
+    because neither passes `--cov`, so nothing had exercised it until this PR documented
+    the command. Measured: the holdings-free suite reaches **42%**, and a bare
+    `pytest --cov` therefore exits non-zero on a healthy tree. This is the figure rev 7.21
+    says nothing produces, sitting in the configuration as though it were a gate. The
+    developer guide documents `--cov-fail-under=0` and says plainly that the 90 is a
+    target PR-19 would have made real. **PR-19, whenever it runs, owns removing or
+    meeting it**; until then no PR should read a `pytest --cov` failure as a regression.
+  - **Executing a documented recipe is how three of this PR's defects were found.**
+    Every command the guide tells a reader to run was run: the check-script invocations,
+    the five pytest forms, both entry points, the docs build, `pyroma`, and the
+    table-schemas key census. That is what caught the `pytest --cov` failure above, and
+    the same discipline applied to the API-reference generator caught that its
+    `onerror` fix covers a broken **subpackage** but not a broken plain module --
+    `pkgutil.walk_packages` imports only packages, so a plain module's failure surfaces
+    later, when autodoc imports it, which `-W` does catch. A recipe that cannot be run
+    should not be published.
   - **Verification evidence.** `scripts/run-all-checks.sh` clean (ruff, mypy over 221
     files, pytest **1334 passed**, pyroma 10/10, bandit, vulture, Sphinx under `-W -n`,
     PyMarkdown). The Sphinx build is clean with **zero** warnings, and that number is

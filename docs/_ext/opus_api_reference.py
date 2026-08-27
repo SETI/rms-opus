@@ -55,20 +55,22 @@ PACKAGES = (
                  'Turns Apache access logs into reports on how OPUS is being used.'),
 )
 
-#: Modules kept out of the reference, each for a reason autodoc cannot work around.
+#: Modules kept out of the reference, mapped to the reason each one is out.
 #:
-#: autodoc documents a module by importing it, so a module that does work when it is
-#: imported does that work during the documentation build.
-EXCLUDED_MODULES = frozenset({
-    # Calls settings.configure() in its module body, which would configure Django a
-    # second time and from a different source than conf.py's django.setup().
-    'opus_app.clear_django_cache',
-    # Machine-written by scripts/models/create_opus_models.sh: one class per database
-    # table plus a nested Meta class each, none of them docstringed and none of them
-    # surviving the next regeneration. The tables themselves are described in
-    # :doc:`dev_guide_database`, which is where a reader should look.
-    'opus_app.apps.search.models',
-})
+#: The reasons are rendered onto the reference's landing page rather than living only
+#: here, because a reader who cannot find a module needs to be told it was left out --
+#: silence would look like an oversight, or like the module not existing.
+EXCLUDED_MODULES = {
+    'opus_app.clear_django_cache':
+        'calls ``settings.configure()`` in its module body, which autodoc would run '
+        'during the build -- configuring Django a second time, from a different '
+        'source than the build has already used',
+    'opus_app.apps.search.models':
+        'is machine-written by ``scripts/models/create_opus_models.sh`` from a '
+        'populated database: one class per database table plus a nested ``Meta`` '
+        'class each, none docstringed and none surviving the next regeneration. The '
+        'tables themselves are described in :doc:`dev_guide_database`',
+}
 
 #: The name of the page listing the packages.
 INDEX_PAGE = 'api_reference'
@@ -88,10 +90,26 @@ def walk_package(package_name: str) -> dict[str, list[str]]:
     Raises:
         ModuleNotFoundError: If the package is not importable, which means the
             documentation is being built without OPUS installed.
+        ImportError: If a subpackage fails to import. `pkgutil.walk_packages` imports
+            each package it finds, in order to recurse into it, and catches and
+            ignores an ImportError from that unless it is given an ``onerror`` -- so
+            without one a broken subpackage takes its whole subtree out of the
+            reference silently, emitting no warning for ``-W`` to promote. A plain
+            module is never imported by the walk, so a broken one is still listed
+            here and surfaces when autodoc imports it, which ``-W`` does catch.
     """
+    def reraise(name: str) -> None:
+        """Re-raise whatever stopped a subpackage importing.
+
+        Parameters:
+            name: The subpackage that failed, which the propagating exception names.
+        """
+        raise
+
     package = importlib.import_module(package_name)
     grouped: dict[str, list[str]] = {package_name: []}
-    for info in sorted(pkgutil.walk_packages(package.__path__, f'{package_name}.'),
+    for info in sorted(pkgutil.walk_packages(package.__path__, f'{package_name}.',
+                                             onerror=reraise),
                        key=lambda info: info.name):
         if info.name in EXCLUDED_MODULES:
             continue
@@ -180,9 +198,11 @@ def render_index_page() -> str:
              '=' * len(title),
              '',
              'Every module of every OPUS package, generated from the docstrings in',
-             'the source. These pages are written before each build by walking the',
-             'packages, so a module added to one of them appears here without',
-             'anything having to be listed by hand.',
+             'the source, apart from the two named at the bottom of this page. These',
+             'pages are written before each build by walking the packages, so a module',
+             'added to one of them appears here without anything having to be listed by',
+             'hand, and a package that stops importing fails the build rather than',
+             'disappearing from the reference.',
              '']
     for entry in PACKAGES:
         lines += [f':doc:`api_{entry.name}`', f'    {entry.summary}', '']
@@ -191,7 +211,12 @@ def render_index_page() -> str:
               '   :maxdepth: 2',
               '']
     lines += [f'   api_{entry.name}' for entry in PACKAGES]
-    lines += ['']
+    lines += ['', 'What is left out', '----------------', '',
+              'Two modules are deliberately absent. autodoc documents a module by',
+              'importing it, and each of these would do something during the build that',
+              'a documentation build must not do:', '']
+    for name, reason in sorted(EXCLUDED_MODULES.items()):
+        lines += [f'``{name}``', f'    It {reason}.', '']
     return '\n'.join(lines)
 
 

@@ -48,9 +48,11 @@ the list and what configures each one). Three of them are worth knowing about be
 writing code:
 
 * **mypy runs strict over the whole repository**, with no module silenced by an
-  ``ignore_errors`` entry -- that list is empty. What remains is ``exclude`` for three
-  paths that are not project source, and ``ignore_missing_imports`` for the
-  third-party packages that ship neither annotations nor a typeshed stub. A tree that
+  ``ignore_errors`` entry -- that list is empty. What remains is ``exclude``, for the
+  paths that are not project source, and ``ignore_missing_imports``, for the
+  third-party packages that ship neither annotations nor a typeshed stub. Read the
+  current contents of both out of ``[tool.mypy]``; each entry is documented where it
+  sits, and counting them here would only go stale. A tree that
   cannot pass the checker is not a configuration problem: annotate it, or say at the
   site -- with the reason -- what the checker cannot see, which is what
   ``# type: ignore[...]`` is for. ``warn_unused_ignores`` is on, so each of those has
@@ -58,8 +60,8 @@ writing code:
 * **ruff's per-file-ignores table is empty**, and adding a row to it is not the way to
   land code that does not pass. Fix the code, or suppress the one rule on the one line
   with ``# noqa: <CODE>`` and the reason, which ``RUF100`` then keeps honest by
-  failing when the suppression stops being needed. Six codes are ignored globally and
-  ``pyproject.toml`` says why for each.
+  failing when the suppression stops being needed. A handful of codes are ignored
+  globally instead, listed in ``extend-ignore`` with a reason for each.
 * **bandit's skip list is one entry** (``B101``, the narrowing assertions the type
   annotations rest on); everything else is a per-line ``# nosec <ID> - <reason>`` at
   the statement it covers.

@@ -49,9 +49,10 @@ jobs:
       RUFF_PATHS: "src integration_tests tests docs manage.py"
       # The type gate covers every tree the other tools scan, and none of them
       # carries a burn-down entry any more: [tool.mypy]'s ignore_errors list is
-      # empty. That is the whole claim -- three non-source paths remain in its
-      # exclude, and seven third-party packages remain in ignore_missing_imports.
-      # See [tool.mypy] in pyproject.toml.
+      # empty. That is the whole claim -- its exclude still lists the non-source
+      # paths and ignore_missing_imports still lists the untyped third-party
+      # packages. See [tool.mypy] in pyproject.toml for both, and for why each
+      # entry is there.
       MYPY_PATHS: "src integration_tests tests docs manage.py"
       BANDIT_PATHS: "src integration_tests manage.py"
       VULTURE_PATHS: "src integration_tests tests docs manage.py vulture_whitelist.py"
@@ -113,9 +114,8 @@ jobs:
       - name: Mypy
         # Strict over the whole repository, with no module silenced by an
         # ignore_errors entry -- that list is empty. What remains is [tool.mypy]'s
-        # own configuration: the out-of-scope perf_test/ directory, two generated
-        # or vendored files, and ignore_missing_imports for the third-party
-        # packages that ship no types.
+        # own configuration: its exclude, for paths that are not project source,
+        # and ignore_missing_imports, for third-party packages that ship no types.
         # OPUS_CONFIG comes from the workflow-level env above.
         run: |
           mypy $MYPY_PATHS

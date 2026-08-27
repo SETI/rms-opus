@@ -12,12 +12,24 @@ derives from it what the web application's search form contains.
 The schemas ship inside the wheel and are read through :mod:`importlib.resources`, so
 an installed OPUS finds them without a checkout.
 
-Three files are not tables. ``param_info_ranges.json`` holds the named range sets a
-column's ``pi_ranges`` refers to, ``mult_template.json`` is the shape every ``mult_``
-table is created with, and ``obs_surface_geometry_target.json`` is a *template* rather
-than a table: one surface-geometry table is created from it per target, with
-``<TARGET>`` replaced by the target's encoded name and ``<SLUGTARGET>`` by its slug
-name.
+Four files are not tables, and reading any of them as a column list will not work:
+
+``param_info_ranges.json``
+    The named range sets a column's ``pi_ranges`` refers to.
+
+``mult_template.json``
+    The shape every ``mult_`` table is created with.
+
+``obs_surface_geometry_target.json``
+    A *template*: one surface-geometry table is created from it per target, with
+    ``<TARGET>`` replaced by the target's encoded name and ``<SLUGTARGET>`` by its
+    slug name.
+
+``internal_def_product_types.json``
+    A dictionary source rather than a table. Its entries carry only ``definition``,
+    ``pi_dict_name`` and ``pi_dict_context`` -- no ``field_name``, no ``field_type``
+    -- and :mod:`opus_import.steps.do_dictionary` reads them alongside the PDS data
+    dictionary. It is the only file in the directory that names no columns.
 
 Reading a schema is :func:`opus_import.import_util.read_schema_for_table`, and it is
 the only place that substitution happens.
@@ -25,12 +37,34 @@ the only place that substitution happens.
 Column keys
 -----------
 
-A key not described below is not read by anything. To regenerate that claim rather
-than trusting it, collect the keys the JSON files actually use and look each one up in
-``src/``: everything the pipeline consumes is read through ``column.get(...)`` or
-``column[...]`` in :mod:`opus_import.importdb.mysql`,
-:mod:`opus_import.steps.do_import_obs`, :mod:`opus_import.steps.do_import_tables` or
-:mod:`opus_import.steps.do_param_info`.
+Every key below is read by something. **Do not take that on trust and do not take a
+list of the modules that read them on trust either** -- an enumeration of code sites is
+wrong the moment somebody edits the code. Run this from the repository root instead: it
+collects the keys the schemas actually use and prints the ones no Python file mentions.
+
+.. code-block:: bash
+
+    python - <<'EOF' |
+    import json
+    from pathlib import Path
+
+    keys = set()
+    for path in sorted(Path('src/opus_import/table_schemas').glob('*.json')):
+        data = json.loads(path.read_text())
+        if isinstance(data, list):
+            keys.update(key for entry in data for key in entry)
+    print('\n'.join(sorted(keys)))
+    EOF
+    while read -r key; do
+        grep -rqF "'$key'" src --include='*.py' || echo "no literal reader: $key"
+    done
+
+It greps for the key as a literal, so it has one blind spot worth knowing before you
+read its output: a key assembled at the point of use does not appear as a literal
+anywhere. ``definition_results`` is the only one today --
+:mod:`opus_import.steps.do_dictionary` reads it as ``column['definition'+suffix]`` --
+so the recipe reports it and it is nonetheless read. Everything else the recipe reports
+really is unread; see `Keys nothing reads`_ below.
 
 Defining the column
 ~~~~~~~~~~~~~~~~~~~
@@ -154,10 +188,22 @@ another table rather than defining a column of this one, so no SQL column is cre
 for it and no value is computed.
 
 ``obs_files`` is filled by :mod:`opus_import.steps.do_import_index` rather than by the
-per-column dispatch above, and its ``TAB:`` data sources are read there.
+dispatch above: it builds each row from a literal, and takes the row id by calling
+:func:`opus_import.import_util.find_max_table_id` directly rather than through
+``MAX_ID``. Its schema's five list-valued ``data_source`` entries -- the only
+``TAB:`` values left in the repository -- are therefore **dead data**: nothing reads
+them, and a ``TAB:`` written into any schema would be reported as an unknown data
+source. They are a survival of a vocabulary the pipeline no longer dispatches on.
 
 Validating the value
 ~~~~~~~~~~~~~~~~~~~~
+
+**All four of these keys are honoured only on a numeric column** -- one whose
+``field_type`` starts with ``int``, ``uint`` or ``real``. Every one of them is read
+inside that single branch of
+:func:`opus_import.steps.do_import_obs.import_observation_table`, so putting
+``val_max`` on a ``charNNN`` or a ``mult_idx`` column silently enforces nothing.
+Several shipping columns already do exactly that.
 
 .. list-table::
    :header-rows: 1
@@ -238,10 +284,30 @@ what writes the pinned display details back over the table after an import.
 Keys nothing reads
 ------------------
 
-Two keys appear in the schemas and are read by no code: ``data_source_order`` and
-``pi_units``. They are left where they are rather than removed, because deleting a key
-from a schema is a change to the definition of the database rather than documentation
-work. Do not add either to a new column.
+The recipe above is the authority; this is what it reports today, with what each one
+is.
+
+``comment``, ``comments``
+    Notes to whoever reads the schema. Nothing consumes them, and that is what they
+    are for.
+
+``data_source_order``, ``pi_units``
+    Read by no code at all. They are left where they are rather than removed, because
+    deleting a key from a schema is a change to the definition of the database rather
+    than documentation work. Do not add either to a new column.
+
+``field_defalut``
+    A misspelling of ``field_default``, on one column. It changes nothing today,
+    because a missing ``field_default`` already means SQL ``NULL`` and that column's
+    value is ``null`` -- but a non-null default written under this spelling would be
+    ignored without complaint.
+
+``definition_results``
+    Reported by the recipe and nonetheless read, for the reason given above.
+
+The ``data_source`` entries in ``obs_files.json`` are unread too, for a different
+reason: the key is read everywhere else, so no key-level check can see it. See
+`Filling the column`_.
 
 Adding a column
 ---------------

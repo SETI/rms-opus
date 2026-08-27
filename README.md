@@ -65,9 +65,11 @@ pip install rms-opus
 
 OPUS reads one TOML configuration file and has **no default location for it**: the
 `OPUS_CONFIG` environment variable must name the file in the environment of every OPUS
-process.
+process. `opus.toml.template` documents every key; it lives in the repository rather
+than in the installed package, so fetch it alongside the install:
 
 ```bash
+curl -O https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
 cp opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
 export OPUS_CONFIG=$PWD/opus.toml
 ```
@@ -96,7 +98,7 @@ python manage.py runserver   # then open http://127.0.0.1:8000/opus/
 Ask the public API how many Cassini ISS observations of Pan there are:
 
 ```bash
-curl 'https://opus.pds-rings.seti.org/opus/api/meta/result_count.json?target=Pan'
+curl 'https://opus.pds-rings.seti.org/opus/api/meta/result_count.json?target=Pan&instrument=Cassini+ISS'
 ```
 
 Summarize a day of access logs:

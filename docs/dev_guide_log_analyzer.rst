@@ -30,10 +30,12 @@ Reading an access log is a pipeline:
 3. The configuration interprets each session in the vocabulary of the site being
    analyzed, and renders the report from the packaged Jinja templates.
 
-:mod:`opus_log_analyzer.manifest` and :mod:`opus_log_analyzer.jinga_environment`
-supply the template environment; :mod:`opus_log_analyzer.ip_to_host_converter` resolves
-client addresses; :mod:`opus_log_analyzer.cronjob_utils` expands the dated log-file
-globs the cron jobs pass.
+:mod:`opus_log_analyzer.jinga_environment` builds the Jinja environment the report
+templates are rendered in; :mod:`opus_log_analyzer.ip_to_host_converter` resolves client
+addresses; :mod:`opus_log_analyzer.cronjob_utils` expands the dated log-file globs the
+cron jobs pass. :mod:`opus_log_analyzer.manifest` reads OPUS download manifests and
+summarizes what they contain -- it sits with the generic modules but is OPUS-specific,
+and its only importer is :mod:`opus_log_analyzer.opus.html_generator`.
 
 ``--batch`` and ``--cronjob`` are the modes that work. The other three modes read an
 argument the parser never defines and fail before doing any work; they are recorded as
@@ -67,9 +69,11 @@ The three methods that matter:
     base URL the report's links are built from.
 
 ``show_summary(sessions, output)``
-    Renders the summary the ``--summary`` mode asks for. A
-    :class:`~opus_log_analyzer.log_parser.Session` carries the client's address, the
-    time the session started, its log entries, and the session info built for it.
+    Renders the summary the ``--summary`` mode asks for -- which is one of the three
+    modes that crash before reaching it, so this method is part of the contract but is
+    not reachable today. A :class:`~opus_log_analyzer.log_parser.Session` carries the
+    client's address, the time the session started, its log entries, and the session
+    info built for it.
 
 Writing a session info
 ----------------------

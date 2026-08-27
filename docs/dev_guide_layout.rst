@@ -8,8 +8,10 @@ The importable distribution is everything under ``src/``. Everything else --
 root files -- is supporting code that is not installed, with two deliberate
 exceptions: ``manage.py`` at the root is a development convenience, and the package
 data inside ``src/`` (table schemas, dictionary sources, templates, static assets)
-ships in the wheel because the code reads it at run time through
-:mod:`importlib.resources`.
+ships in the wheel because the code reads it at run time. How it is found differs by
+package: :mod:`opus_import` uses :mod:`importlib.resources`, the log analyzer loads its
+Jinja templates by package name, and the Django app's templates and static files are
+found by Django's own loaders.
 
 The tree below annotates the directories and files a developer works in.
 
@@ -27,6 +29,13 @@ The tree below annotates the directories and files a developer works in.
     │                             #   reporting them
     ├── codecov.yml, .readthedocs.yaml
     ├── README.md, CONTRIBUTING.md, LICENSE
+    ├── CLAUDE.md                 # the executor guide for this modernization branch;
+    │                             #   it names plans/ as the binding specification
+    ├── plans/, critiques/        # working documents for the modernization, not the
+    │                             #   software; removed when the branch merges
+    ├── .gitattributes            # marks the vendored asset trees linguist-vendored
+    ├── .gitmodules, .vscode/     # submodule pins and editor settings
+    ├── browserstack-logo-600x315.png   # used by the README's acknowledgment
     ├── .cursor/rules/            # the coding and documentation standards this repository follows
     ├── .github/workflows/
     │   ├── run-tests.yml         # GitHub-hosted: lint, type check, unit tests, docs build
@@ -43,9 +52,12 @@ The tree below annotates the directories and files a developer works in.
     │   │   ├── config_targets/           # target names, classes and aliases
     │   │   ├── instruments.py            # per-instrument label parsing helpers
     │   │   ├── import_util.py            # helpers shared by the steps and the obs classes
-    │   │   ├── importdb/                 # the SQL backend: mysql.py, postgresql.py stub
+    │   │   ├── importdb/                 # the SQL backend: super.py (the abstract base
+    │   │   │                             #   both brands inherit), mysql.py, and the
+    │   │   │                             #   postgresql.py stub kept for a future one
     │   │   ├── obs/                      # the obs_* class hierarchy, one row per observation
-    │   │   ├── steps/                    # the do_* steps, one per command-line option
+    │   │   ├── steps/                    # the do_* steps; four do_import_* modules are
+    │   │   │                             #   internals of do_import, not steps
     │   │   ├── table_schemas/            # package data: the JSON that defines every OPUS table
     │   │   ├── dictionary_data/          # package data: the PDS data dictionary sources
     │   │   └── util/                     # hand-run authoring tools, not part of a run
@@ -61,7 +73,8 @@ The tree below annotates the directories and files a developer works in.
     │       └── templates/                # package data: the Jinja report templates
     ├── tests/                    # the holdings-free suite; `pytest` alone runs this and
     │                             #   nothing else, because testpaths names it
-    │   └── fixtures/opus_ci.toml # the dummy configuration every CI job runs against
+    │   └── fixtures/opus_ci.toml # the dummy configuration the GitHub-hosted jobs use
+    │                             #   (the self-hosted one writes a real opus.toml)
     ├── integration_tests/        # the suites that need an imported database and the
     │   │                         #   holdings behind it; run them by naming this directory
     │   ├── .coveragerc           # the 100% gate's coverage configuration

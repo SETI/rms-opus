@@ -81,9 +81,10 @@ This is the bundle recipe plus the configuration data that says the instrument e
    are invisible.
 4. **Add any label parsing** the instrument needs to
    :mod:`opus_import.instruments`.
-5. **Add the mission class**, in ``obs_<mission>_common.py`` and its
-   ``_pds3``/``_pds4`` halves if the mission has both, then the leaf classes for its
-   bundles as above.
+5. **Add the mission class**, and follow the majority spelling for its file name:
+   four of the five missions use ``obs_volume_<mission>_common.py`` and only Cassini
+   uses ``obs_<mission>_common.py``. Add its ``_pds3``/``_pds4`` halves if the mission
+   has both, then the leaf classes for its bundles as above.
 6. **Regenerate the Django models**: ``scripts/models/create_opus_models.sh`` rewrites
    ``src/opus_app/apps/search/models.py`` from a populated database. New tables do not
    exist to the web application until it has been run.
@@ -99,6 +100,9 @@ whether the set is complete and what each method must return.
 
 .. code-block:: python
 
+    # INST and MISSION are placeholders, carried over from the template this
+    # skeleton replaced. A real class is named for its bundle or volume set -- see
+    # the file names in opus_import/obs/ -- rather than for the instrument alone.
     class ObsInstrumentINST(ObsMissionMISSION):
         """One-line description of the instrument this class imports."""
 
@@ -147,7 +151,11 @@ units, each unit's conversion factor to the id's default unit, and the functions
 parse and format a value in it.
 
 1. **Add the unit** to the unit id's ``conversions``, in the order it should be
-   offered to the user. The first entry is the default.
+   offered to the user. **Order does not decide the default**: each unit id carries an
+   explicit ``'default'`` key naming the unit its values are stored in, and
+   :func:`opus_support.units.get_default_unit` returns that. The two happen to agree
+   for every unit id today, which is exactly why inserting a new unit at the front
+   will not change the default and will not look like it failed.
 2. **Add tests.** :mod:`opus_support` carries a standing demand for 100% coverage, and
    a unit needs its parse and its format tested in both directions, including the
    values it rejects.

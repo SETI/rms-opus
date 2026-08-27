@@ -17,6 +17,15 @@ build:
     # below fails while compiling it.
     - pkg-config
     - default-libmysqlclient-dev
+  jobs:
+    post_checkout:
+      # Read the Docs clones shallow, and setuptools-scm derives the version from
+      # the tags a shallow clone does not fetch -- so conf.py, which reads the
+      # version out of the installed metadata, would render a fallback development
+      # version in the page titles. The CI docs job sets fetch-depth: 0 for the
+      # same reason.
+      - git fetch --unshallow || true
+      - git fetch --tags || true
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:

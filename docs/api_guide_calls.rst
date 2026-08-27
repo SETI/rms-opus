@@ -24,7 +24,6 @@ All API calls take a suffix ``.[fmt]`` specifying the format in which to return 
 
 Not all API calls provide results in all formats. The formats supported are listed with each call.
 
----
 
 .. _errorresponses:
 
@@ -39,7 +38,6 @@ When a request cannot be answered, OPUS returns an HTML page describing what wen
 
 Requests that supply a bad field, value, unit, or query type answer with 400 rather than the 404 that earlier versions of OPUS returned for every kind of error. Client code that treats 404 as "my request was wrong" should be updated to look at 400 for that.
 
----
 
 .. _gettingmetadata:
 

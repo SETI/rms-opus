@@ -125,9 +125,9 @@ VENV="${VENV:-${VENV_PATH:-$PROJECT_ROOT/venv}}"
 # OPUS has no default location for its configuration file, so anything that reads
 # OPUS settings (pytest, mypy's django-stubs plugin and the Sphinx build) is given
 # one. The checked-in dummy configuration holds dummy credentials and paths under
-# /tmp. The path is made absolute because Sphinx evaluates docs/conf.py with the
-# working directory set to docs/, where a path relative to PROJECT_ROOT would not
-# resolve.
+# /tmp. The path is made absolute for clarity rather than out of necessity: Sphinx
+# evaluates docs/conf.py with the working directory set to docs/, and conf.py resolves
+# a relative OPUS_CONFIG against the repository root itself, so either form works.
 # Export an absolute OPUS_CONFIG before invoking this script to check against a
 # real installation's configuration instead.
 : "${OPUS_CONFIG:=$PROJECT_ROOT/tests/fixtures/opus_ci.toml}"

@@ -12,11 +12,18 @@ Prerequisites
 
 * **MySQL 8**, with a user allowed to create and drop databases -- the import pipeline
   creates every OPUS table itself.
-* **memcached**, which the web application caches through. On Debian or Ubuntu::
+* **memcached**, plus the ``pymemcache`` Python client. **Neither is a declared
+  dependency**: :mod:`opus_app.settings` tries to import ``pymemcache`` and falls back
+  to Django's local-memory cache when it is absent, so an installation that skips this
+  step runs -- slowly, per process, and with the cache-flushing step below doing
+  nothing at all. Install both deliberately::
 
-      sudo apt-get install libmemcached-dev zlib1g-dev memcached
+      sudo apt-get install memcached libmemcached-tools
+      pip install pymemcache
       # watch it while OPUS runs:
       watch -n1 -d 'memcstat --servers localhost'
+
+  ``memcstat`` is in ``libmemcached-tools``, not in ``memcached``.
 
 * **The MySQL client development headers**, because ``mysqlclient`` is compiled
   during the install::
@@ -133,7 +140,8 @@ is a link change rather than a copy:
 
 ``deploy_new_code_and_database.sh <database name> [<branch>]`` stops Apache and
 memcached, replaces the checkout, moves the link, and starts them again.
-``deploy_new_code_only.sh`` does the same without changing the database.
+``deploy_new_code_only.sh`` updates the existing checkout in place with fetch and pull
+rather than replacing it, and refuses to run against a dirty working tree.
 ``run_full_opus_import.sh`` runs a complete import into a new database, which is the
 first half of bringing up a new one.
 
@@ -143,11 +151,17 @@ between machines.
 Two things always have to happen after a database changes, and both are easy to
 forget:
 
-* **memcached has to be flushed**, because the application caches ``param_info`` and
-  the search results by key. Restarting memcached is what the deploy scripts do.
-* **The application's process-local caches have to go**, which happens when Apache
-  restarts. ``python -m opus_app.clear_django_cache`` clears Django's cache without a
-  restart.
+* **The shared Django cache has to be emptied**, because it holds search results
+  keyed by a search that now means something else.
+  ``python -m opus_app.clear_django_cache`` does exactly this and nothing else: it
+  configures ``CACHES`` and calls ``cache.clear()``. Restarting memcached has the same
+  effect, and is what the deploy scripts do.
+* **Every worker process has to be restarted**, because some caches are module-level
+  dictionaries private to a process -- the ``param_info`` lookup in
+  :mod:`opus_app.apps.search.views` and the mult-value lookup in
+  :mod:`opus_app.apps.tools.db_utils`. Nothing running outside a worker can reach
+  those, ``clear_django_cache`` included, so restarting Apache is the only thing that
+  clears them.
 
 The log analyzer
 ----------------
@@ -156,8 +170,11 @@ The log analyzer
 end-of-month report and a full refresh. They are templates: each installation fills in
 the placeholders (the virtual environment, the Apache log directory and its file
 prefix, and the web directory the reports are published to) and installs the result in
-its own crontab. Nothing substitutes or runs them automatically. For example, the
-nightly update is::
+its own crontab. Nothing substitutes or runs them automatically.
+
+They invoke the analyzer as ``opus_log_analyzer``, a console script the distribution
+does not yet install -- until it does, the equivalent is ``python -m
+opus_log_analyzer`` with the same arguments. For example, the nightly update is::
 
     #!/bin/bash
     source <VENV>/bin/activate
@@ -182,8 +199,10 @@ what users see, so it is done deliberately:
 2. **Read the error log.** The import's own exit status is not the whole story:
    ``--validate-perm`` reports through the log rather than through its status, so an
    automated run gates on the error log being empty.
-3. **Compare counts** against the database currently being served, which is what
-   ``import_all.sh`` prints before it starts.
+3. **Compare the new database against the one being served.** ``import_all.sh``
+   prints the name of each before it asks for confirmation, so that the erase cannot
+   be aimed at the wrong one; it prints no row counts, and comparing those is a
+   separate query you run yourself.
 4. **Point an installation at the new database** and exercise it before switching the
    public one over.
 5. **Flush memcached and restart the application**, as above.
