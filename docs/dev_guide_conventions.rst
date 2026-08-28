@@ -69,8 +69,8 @@ writing code:
 Deviations
 ----------
 
-Two rules are deliberately waived for this repository, and both are written down where
-they apply rather than only here:
+**One** rule is deliberately waived for this repository, and it is written down where
+it applies rather than only here:
 
 * **Public web API backwards compatibility is preserved**, against the general
   no-back-compat policy. An OPUS URL that worked before has to keep working; the
@@ -78,13 +78,14 @@ they apply rather than only here:
   exception is ``/apiguide.pdf``, which served a generated PDF and now redirects
   (302) to the published guide, since the PDF is no longer built here; the URL still
   resolves, and ``test_help_api.py`` pins the redirect.
-* **GitHub Actions are referenced by major tag**, per
-  ``.cursor/rules/environment.mdc``, and that is the whole of the convention: there
-  is no repository-specific exception to it. The workflows briefly pinned full
-  commit SHAs instead, on the argument that a major tag is mutable and one workflow
-  runs on hardware the Node owns. That was retired once it was established that the
-  self-hosted runners are disposable, so there is no durable credential on them for
-  a moved tag to reach.
+
+There used to be a second, recorded here because a reader who remembers it should be
+able to find out that it is gone: **GitHub Actions were pinned to full commit SHAs**
+rather than to the major tag ``.cursor/rules/environment.mdc`` asks for, on the
+argument that a major tag is mutable and one workflow runs on hardware the Node
+owns. That was retired once it was established that the self-hosted runners are
+disposable, so there is no durable credential on them for a moved tag to reach. The
+workflows follow the rule now, with no exception.
 
 Docstrings
 ----------

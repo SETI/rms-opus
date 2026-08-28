@@ -90,6 +90,12 @@ commands below would fail on the configuration they were handed rather than on
 anything in it. ``_write_opus_toml.sh`` gets this for free by writing the file as
 the deploy user; a hand-built installation has to say who owns it.
 
+For the same reason, run the ``<PLACEHOLDER>`` edit and every command below that
+names ``OPUS_CONFIG`` -- ``django-admin migrate``, ``opus_import``, and anything
+else that reads the configuration -- **as that account**, with ``sudo -u opus`` or
+an equivalent. A 0600 file is readable by exactly one user, which is the point of
+the mode and the reason a third admin account fares no better than root.
+
 There is no default location for the file. A server running several OPUS
 installations gives each one its own file, its own ``OPUS_CONFIG``, its own database
 schema and its own ``cache_server_prefix``, which is what keeps them from colliding in

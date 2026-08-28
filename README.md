@@ -72,7 +72,7 @@ so that a failed download stops rather than leaving the error page in the file:
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
-cp opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
+install -m 600 opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
 export OPUS_CONFIG=$PWD/opus.toml
 ```
 

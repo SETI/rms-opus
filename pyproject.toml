@@ -323,8 +323,9 @@ ignore_missing_imports = true
 # **That is the whole of the claim.** Suppression has not vanished from this file and
 # nobody should read it that way: `exclude` above still holds the paths that are not
 # project source, and the `ignore_missing_imports` override above still covers the
-# third-party packages that ship neither annotations nor a typeshed stub. Read both lists above rather than trusting a count here; each
-# entry is documented where it sits.
+# third-party packages that ship neither annotations nor a typeshed stub. Read both
+# lists above rather than trusting a count here; each entry is documented where it
+# sits.
 #
 # Nothing belongs here again. A tree that cannot pass the checker yet is not a
 # configuration problem: annotate it in the PR that owns it, or say at the site --

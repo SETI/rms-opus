@@ -6988,10 +6988,15 @@ body; never rewrite or delete earlier notes.*
     builds `col=%s` from bound parameters, because one statement there carries one row.
     The alias is emitted only alongside the `ON DUPLICATE KEY UPDATE` clause that reads
     it, so a key-only row still produces the same plain `INSERT` it did before.
-    - **This raises the server floor from Django's 8.0.11 to 8.0.19**, and the floor is
-      now stated in `README.md`, `docs/dev_guide_environment.rst`,
-      `docs/dev_guide_deployment.rst` and `docs/dev_guide_introduction.rst`, all of which
-      previously said "MySQL 8".
+    - **This raises the server floor from Django's 8.0.11 to 8.0.19**, and every place
+      that states a MySQL version was updated to say so. Regenerate the set rather than
+      trusting a list -- the first draft of this bullet named four files and the same
+      commit had changed five. The fifth was `docs/dev_guide_database.rst`, which said
+      "MySQL 8.x"; 8.0.11 is also 8.x, so that spelling did not distinguish. Match on
+      the separator rather than the digit, because that file spells it "MySQL, 8.0.19"
+      and a pattern anchored to `mysql *8` misses it -- which is how the list came to
+      be short in the first place:
+      `git grep -niE 'mysql[ ,]+[0-9]' -- README.md docs/ CONTRIBUTING.md`.
     - Verified against a real MySQL **8.0.46** with PR-10's own technique: two tables of
       the same shape filled from the same three row sets (2500 inserts, an overwrite of
       1800, then 10 more -- so both the insert and the update path, and the 1000-row
@@ -7024,8 +7029,13 @@ body; never rewrite or delete earlier notes.*
     trailing version comments went with them, along with the four comment blocks that
     explained the pinning. The `permissions:` blocks, `persist-credentials: false` on
     every checkout, and the header comments naming which command establishes which gate
-    all remain. Note the count moved: rev 7.25 said 13 because it predated PR-21's `Docs`
-    job and PR-22's `Package` job; there were **17**.
+    all remain. Note the count moved: rev 7.25 says 13 and there were **17** at
+    `880aaa98` -- 7 checkout, 7 setup-python, 1 codecov, 2 pypa. The provenance is *not*
+    that the revision predated anything; it is a descendant of PR-22's merge. 13 is what
+    the tree held before PR-21 added the `Docs` job and PR-22 the `Package` job, so the
+    figure was carried forward rather than re-measured -- the failure rev 7.17 bans, and
+    one this bullet repeats in miniature by naming any number at all. Count them:
+    `grep -c 'uses:' .github/workflows/*.yml`.
     - **Still no `.github/dependabot.yml`**, as PR-22 recorded. That now cuts the other
       way and is the smaller problem: a major tag moves on its own as the maintainer cuts
       releases, so the pins are no longer frozen by the absence of update tooling.
@@ -7066,6 +7076,18 @@ body; never rewrite or delete earlier notes.*
       `apache2ctl` really does source `/etc/apache2/envvars`. The `WSGIProcessGroup opus`
       line the delta added is required: without it the daemon process group is declared
       and then not used.
+  - **Two pre-existing defects the reviews stumbled on, recorded as candidates and
+    deliberately not fixed here** (neither is this PR's subject, and both widen it):
+    (a) `scripts/automated_tests/opus_setup_environment.sh` writes the CI-side
+    `opus.toml` and then `chmod 600`s it -- the same write-window the deploy-side
+    `_write_opus_toml.sh` closes with a `umask 077` subshell, and which
+    `tests/opus_packaging/test_deploy_config_generator.py` has a dedicated test for. The
+    CI-side generator has no tests at all, which is why nobody noticed. (b)
+    `src/opus_import/importdb/mysql.py` special-cases only `mysql_version[0] == '5'` at
+    connect time, so nothing checks the 8.0.19 floor this PR introduces: an 8.0.11
+    server now fails with a syntax error at the first multi-row upsert, deep into an
+    import, rather than at startup. Adding a version gate is new behavior and was left
+    for whoever wants it.
   - **Verification evidence, measured at this PR's head and not maintained after it.**
     `scripts/run-all-checks.sh` clean: ruff, mypy, pytest, pyroma, bandit, vulture,
     Sphinx under `-W -n`, PyMarkdown. Test counts are deliberately not written here; run

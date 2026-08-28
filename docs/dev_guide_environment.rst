@@ -48,7 +48,7 @@ server running several OPUS installations gives each one its own file and its ow
 
 ::
 
-    cp opus.toml.template opus.toml
+    install -m 600 opus.toml.template opus.toml
     # fill in every <PLACEHOLDER>
     export OPUS_CONFIG=$PWD/opus.toml
 
@@ -325,10 +325,12 @@ visible in the diff. There is no lock file now; the integration job logs
 ``pip freeze``, which is where to look when a check that passed yesterday fails today.
 
 Third-party actions are referenced by major tag -- ``actions/checkout@v6`` and the
-rest -- in every workflow, which is what ``.cursor/rules/environment.mdc`` asks for.
-A major tag moves when its maintainer cuts a release, and that is the trade made
-deliberately: the workflows stay current without anyone updating them, at the cost
-of a reference that is not immutable.
+rest -- which is what ``.cursor/rules/environment.mdc`` asks for. The one exception
+is ``pypa/gh-action-pypi-publish@release/v1`` in the two publish workflows, a
+*branch* ref rather than a tag, because it is the reference PyPA documents for its
+own action. A major tag moves when its maintainer cuts a release, and a branch moves
+more often still; that is the trade made deliberately, since the workflows then stay
+current without anyone updating them.
 
 Releasing
 ---------

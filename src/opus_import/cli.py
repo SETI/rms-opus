@@ -182,7 +182,10 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         '--import-ignore-errors', action='store_true', default=False,
-        help='Allow copying to permanent tables even with errors; for debugging'
+        help='Copy to the permanent tables even with errors, and substitute made-up '
+             'values where a real one cannot be determined -- an unknown target name '
+             'becomes OTHER rather than dropping the observation. The result is '
+             'wrong on purpose; for debugging'
     )
     parser.add_argument(
         '--import-suppress-mult-messages', action='store_true', default=False,
