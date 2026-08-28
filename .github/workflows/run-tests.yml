@@ -36,13 +36,6 @@ jobs:
     # are what take the time, and they are the network-dependent ones.
     timeout-minutes: 30
     env:
-      # `ruff format` is not enforced yet: the repository has never been
-      # reformatted, so switching it on before that happens fails on almost
-      # every file. The step below is kept and disabled rather than deleted so
-      # that the change which reformats the tree has only to flip this to
-      # 'true'. ENABLE_RUFF_FORMAT in scripts/run-all-checks.sh is false for
-      # the same reason and turns on at the same time.
-      ENABLE_RUFF_FORMAT: 'false'
       # Every code tree lives under src/ now; the live-DB suites are in
       # integration_tests/, the unit suite in tests/, the documentation build's
       # own extensions in docs/, manage.py at the root.
@@ -99,7 +92,17 @@ jobs:
           ruff check $RUFF_PATHS
 
       - name: Ruff (format)
-        if: ${{ env.ENABLE_RUFF_FORMAT == 'true' }}
+        # Unconditional, like every other check in this job. It was guarded by an
+        # ENABLE_RUFF_FORMAT variable while the repository was still unformatted;
+        # that guard goes with the reformat, because a skipped step reports
+        # success, so a guard that stopped matching would have retired this gate
+        # behind a green check rather than a red one.
+        #
+        # A formatter's output is a property of its version: this compares the
+        # tree against whatever ruff the install step resolved, so a ruff whose
+        # style rules differ from the one that formatted the tree turns this red
+        # on code nobody edited. Reformatting under the newer ruff is the fix, in
+        # its own commit.
         run: |
           ruff format --check $RUFF_PATHS
 

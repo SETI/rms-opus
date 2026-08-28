@@ -217,7 +217,8 @@ What it runs, and what each one is configured by:
      - ``[tool.ruff]`` in ``pyproject.toml``
    * - Format
      - ``ruff format --check``
-     - ``[tool.ruff.format]``; disabled until the format-only change enables it
+     - ``[tool.ruff.format]``; the formatter owns layout, so this fails on any
+       file you have not run ``ruff format`` over
    * - Types
      - ``mypy``
      - ``[tool.mypy]``, strict over the whole repository
