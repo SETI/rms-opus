@@ -6897,3 +6897,139 @@ body; never rewrite or delete earlier notes.*
     statements, 1874 branches, 100%**, with `opus_check_coverage.sh` invoked separately
     afterwards and exiting 0 -- because the chain does not apply the gate -- and zero
     golden-fixture diffs. Re-measure rather than citing these.
+
+- **2026-08-27 (PR-22a executed):** six items rev 7.24/rev 7.25 assigned, plus a seventh
+  the orchestrator added mid-PR. Facts later PRs need:
+  - **The "no PR numbers in shipped comments" rule is enforced now, by
+    `tests/repo/test_pr_references.py`.** It scans every path `git ls-files` reports,
+    minus `plans/`, `critiques/` and `CLAUDE.md`, for `\bPR-<digits><optional letter>\b`
+    case-insensitively, over bytes so no file has to decode. A new test directory
+    (`tests/repo/`) exists for tests about the repository rather than about a package;
+    nothing else needed changing to add it, because the unit coverage source is the four
+    packages and the integration run collects named directories.
+    - **The leading word boundary is load-bearing and must not be "simplified" away.**
+      `src/opus_import/dictionary_data/pdsdd.full` ships dozens of PDS dataset
+      identifiers whose instrument code is `PPR` (`GO-A-PPR-2-EDR-GASPRA-V1.0`), and an
+      unanchored pattern matches inside every one. Measured on the pre-sweep tree: the
+      anchored pattern found **39** references and the unanchored one **72**, the
+      difference being 33 dataset identifiers. A `PR-22a` briefing that quoted 72 was
+      measuring those. `test_the_pattern_ignores_a_pds_dataset_identifier` is what keeps
+      the anchor.
+    - The module also pins that the enumeration reaches every family of file that has
+      carried a reference, that the detector fires on a planted reference and on both
+      the lower-case and letter-suffixed spellings, and that the three excluded paths
+      still exist and still carry references -- so an exclusion cannot go stale or
+      vacuous unnoticed. Mutation-tested end to end: a planted reference in
+      `vulture_whitelist.py` turned the gate red, removing it turned it green.
+  - **A second class of unresolvable reference survives and was deliberately not
+    swept:** `(plan §5a)`, `(plan rev 7.14)`, "recorded in the plan's Execution notes"
+    and similar, in `integration_tests/.coveragerc`, `integration_tests/conftest.py`,
+    `integration_tests/test_api/TEST_API_README.md`, `pyproject.toml`,
+    `scripts/automated_tests/opus_run_unittests_coverage.sh`,
+    `src/opus_app/apps/cart/views.py`, `src/opus_log_analyzer/log_entry.py`,
+    `src/opus_log_analyzer/log_parser.py` and `src/opus_log_analyzer/opus/slug.py`.
+    Regenerate the set with `git grep -nEi 'plan (rev|§)|the plan\b'` outside `plans/`.
+    rfrench's rule names PR numbers, so only the ones inside sentences this PR was
+    rewriting anyway were removed; the rest are a decision for the orchestrator, and the
+    enforcement check does **not** cover them.
+  - **#1478 is fixed and it changes behavior.** `ObsBase.__init__` no longer takes an
+    `ignore_errors` parameter; it reads `ctx.args.import_ignore_errors`, which is how
+    `opus_import.steps.do_import` already reads the same flag. Verified by construction:
+    with the flag set, `ObsBase._get_target_info('NO SUCH TARGET')` now returns
+    `('OTHER', (None, 'OTHER', 'Other'))` where it returned `(None, None)` on every
+    tree before this one, on `rewrite` and on `main` alike.
+    - **Consequence for anyone constructing an obs class in a test:**
+      `tests/opus_import/conftest.py`'s `make_context()` used to default `args` to an
+      **empty** `argparse.Namespace`, which no longer has enough in it. It now defaults
+      to `cli._create_argument_parser().parse_args([])` -- the real CLI's own defaults,
+      regenerated rather than listed. That also retired a hand-built three-flag namespace
+      in `test_obs_field_annotations.py` whose comment said it came from a grep; the flag
+      this PR added would have made it four. Use `make_context()`; override `args` only
+      when a test needs a non-default value.
+    - Per rfrench (2026-08-27) **no dedicated test was added**; the planned import suite
+      covers it.
+  - **#1479 is done and buys documentation, not checking.** All three
+    `_pdsfile_from_filespec` definitions are annotated `-> pdsfile.PdsFile`, the base
+    both `Pds3File` and `Pds4File` derive from. `pdsfile.*` is still in
+    `ignore_missing_imports`, so mypy resolves the name to `Any`; whoever removes that
+    override is the one who turns this into a checked constraint. Two mechanical points:
+    `obs_base.py` imports `pdsfile` under `TYPE_CHECKING` (it needs the name only in an
+    annotation), and `Any` left the imports of both `obs_base_pds3.py` and
+    `obs_base_pds4.py` because this was its last use in each.
+    - **No `nitpick_ignore` entry was needed**, checked rather than assumed: autodoc does
+      not document a leading-underscore method, so the annotation never reaches the API
+      reference and `sphinx-build -W -n` cannot trip on it. Contrast
+      `pdslogger.PdsLogger`, which does appear and does have an entry.
+    - Drift from the issue: the installed `rms-pdsfile` is **0.1.2**, not the 0.0.18 the
+      issue and PR-22's note name. `PdsFile` is still the common base in 0.1.2.
+  - **The `VALUES(col)` -> `AS new` switch is done, in `upsert_rows` only.** `upsert_row`
+    (singular) was checked before being left alone and never used the deprecated form: it
+    builds `col=%s` from bound parameters, because one statement there carries one row.
+    The alias is emitted only alongside the `ON DUPLICATE KEY UPDATE` clause that reads
+    it, so a key-only row still produces the same plain `INSERT` it did before.
+    - **This raises the server floor from Django's 8.0.11 to 8.0.19**, and the floor is
+      now stated in `README.md`, `docs/dev_guide_environment.rst`,
+      `docs/dev_guide_deployment.rst` and `docs/dev_guide_introduction.rst`, all of which
+      previously said "MySQL 8".
+    - Verified against a real MySQL **8.0.46** with PR-10's own technique: two tables of
+      the same shape filled from the same three row sets (2500 inserts, an overwrite of
+      1800, then 10 more -- so both the insert and the update path, and the 1000-row
+      packet split), one through the old statement text and one through the new, ending
+      with **2510 rows identical column for column**. The server also answers the
+      question directly: the old form raises warning 1287, `'VALUES function' is
+      deprecated`, once per assigned column, and the new form raises none.
+  - **rev 7.22's SHA pins are gone and PR-20's other workflow hardening is untouched.**
+    Regenerate the inventory with `grep -rn 'uses:' .github/workflows/`; every entry is a
+    major tag again (`actions/checkout@v6`, `actions/setup-python@v6`,
+    `codecov/codecov-action@v5`, `pypa/gh-action-pypi-publish@release/v1`) and the
+    trailing version comments went with them, along with the four comment blocks that
+    explained the pinning. The `permissions:` blocks, `persist-credentials: false` on
+    every checkout, and the header comments naming which command establishes which gate
+    all remain. Note the count moved: rev 7.25 said 13 because it predated PR-21's `Docs`
+    job and PR-22's `Package` job; there were **17**.
+    - **Still no `.github/dependabot.yml`**, as PR-22 recorded. That now cuts the other
+      way and is the smaller problem: a major tag moves on its own as the maintainer cuts
+      releases, so the pins are no longer frozen by the absence of update tooling.
+  - **`.cursor/rules/pull_request.mdc` has a `## Formatting` section.** The no-hard-wrap
+    sentence used to be the last line of `## Scope of review`, an authoring instruction
+    inside a reviewer section; it now names what it governs (PR titles, descriptions and
+    review comments), says why, and exempts code blocks, tables and quoted output. Filed
+    upstream as SETI/rms-devenv#25 against the byte-identical template copy; reconcile
+    when that lands.
+    - **PyMarkdown does not lint `.mdc` files.** `pymarkdown scan ... .cursor/ ...` in
+      `run-tests.yml` and `run-all-checks.sh` finds no Markdown there and contributes
+      nothing; `pymarkdown scan .cursor/` on its own exits **1** for that reason. The
+      rules are unlinted prose. Not changed here -- it is a CI-scope decision, not this
+      PR's -- but nobody should read a green PyMarkdown as covering the cursor rules.
+  - **PR-22's unreviewed delta (`09758ceb..d64958bf`) was given an adversarial read at
+    the orchestrator's request, and it was not clean.** Three defects, all fixed here, so
+    all three files are in a diff CodeRabbit does review:
+    1. `scripts/server/import_and_deploy/run_full_opus_import.sh` gained a `mktemp` whose
+       failure nothing checked, in a script with no `set -e`. A `$$`-derived name could
+       not fail; `mktemp` can. On failure `NOHUP_LOGFILE` is empty, and
+       `_full_opus_import_wrapper.sh` then dies on bash's `ambiguous redirect` before
+       running anything **and cannot mail the failure either**, while the outer script
+       goes on printing `*** IMPORT IS RUNNING ***` and a blank log path. Guarded, and
+       the guard mutation-tested by pointing `TMPDIR` at an unwritable directory.
+    2. `docs/dev_guide_deployment.rst`'s deploy-configuration section still documented
+       the `cp` + `chmod 600` recipe that the same commit had replaced in
+       `deploy.env.template` with `install -d -m 700` + `install -m 600` -- the fix landed
+       in the template and not in the chapter describing the same procedure.
+    3. The same chapter's hand-built `opus.toml` recipe used plain `cp` for a file that is
+       about to hold a database password and a Django secret key, while the layout block
+       below it and `_write_opus_toml.sh` both require mode 0600.
+
+    - The delta's own claims were checked and all hold: `install -d -m 700` yields 700
+      under `umask 000` where `mkdir -p` yields 777; `install -m 600` yields 600;
+      `install -d` on an existing directory exits 0; GNU `mktemp` accepts a template with
+      a `.log` suffix after the X's and creates the file mode 0600; `SetEnv` really does
+      populate the WSGI request environ rather than `os.environ`, and Debian's
+      `apache2ctl` really does source `/etc/apache2/envvars`. The `WSGIProcessGroup opus`
+      line the delta added is required: without it the daemon process group is declared
+      and then not used.
+  - **Verification evidence, measured at this PR's head and not maintained after it.**
+    `scripts/run-all-checks.sh` clean: ruff, mypy, pytest, pyroma, bandit, vulture,
+    Sphinx under `-W -n`, PyMarkdown. Test counts are deliberately not written here; run
+    the script. The full local chain (`scripts/automated_tests/opus_main_test.sh`) and
+    `scripts/automated_tests/opus_check_coverage.sh` -- which the chain does **not**
+    call -- were both run, because this PR changes the SQL on the import hot path.
