@@ -7104,3 +7104,35 @@ body; never rewrite or delete earlier notes.*
     the script. The full local chain (`scripts/automated_tests/opus_main_test.sh`) and
     `scripts/automated_tests/opus_check_coverage.sh` -- which the chain does **not**
     call -- were both run, because this PR changes the SQL on the import hot path.
+- **2026-08-28 (orchestrator, after PR-22a merged as `6827329e`):** three facts later PRs need.
+  - **A COROLLARY TO rev 7.17, and the most transferable thing this PR produced.** rev 7.17
+    bans hand-maintained lists and requires you to *state the rule that regenerates them*.
+    That stands -- but PR-22a's pass 2 found that **the regenerating grep it had written to
+    replace a banned enumeration was itself anchored wrongly**, and silently missed a file
+    that spelled the version `MySQL, 8.0.19` where the pattern expected `mysql *8`. So:
+    **an unverified regenerating command is worse than the list it replaced.** A wrong list
+    is visibly wrong and invites checking; a wrong command *looks authoritative* and returns
+    a confident, incomplete answer that the next reader will trust. **Run every regenerating
+    command you write and compare its output against the thing it claims to enumerate,
+    before you publish it.** The same defect appeared twice more in this pair of PRs: the
+    orchestrator briefed PR-22a with "72 references" from a pattern that matched `PR-2`
+    inside PDS dataset identifiers (the real figure was 39), and PR-21's key-census recipe
+    searched only single-quoted literals. Three instances, one shape.
+  - **The GitHub Actions pinning question is CLOSED, and CodeRabbit has been told.** rev 7.25
+    retired the waiver; PR-22a reverted all 17 refs to major tags with PR-20's `permissions:`
+    blocks and `persist-credentials: false` intact. CodeRabbit raised it twice -- once as a
+    blanket finding, which it **withdrew**, and once narrowed to the credentialed release
+    jobs (CWE-494), which was reason-rejected and which it then **acknowledged and recorded
+    as a learning**: *"No code change is requested for this PR. Any reconsideration belongs
+    with the policy in `.cursor/rules/environment.mdc` and a new owner decision."* **PR-23 and
+    PR-24 should not re-open it**, and if it resurfaces, the answer is rev 7.25 plus that
+    acknowledgement. The narrowed form is factually correct -- `@release/v1` is a branch ref
+    that receives `PYPI_API_TOKEN` -- and is rejected as **decided, not as wrong**; rfrench
+    weighed exactly that case and accepted the residual risk to keep one policy with no
+    exception. Stating it that way is what got it accepted; a dismissive rejection would not
+    have.
+  - **PR-22a merged on a genuine review, not an exception.** CodeRabbit's status read
+    `success` / `Review completed` with the marker matching the head, so neither rev 7.2 nor
+    rev 7.18 was invoked -- worth recording because the two PRs before it both merged under
+    the quota exception, and a reader scanning the sequence could otherwise conclude the
+    exception had become the norm.
