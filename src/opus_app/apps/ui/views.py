@@ -311,10 +311,10 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
         # disp_unit, default_unit and units are not fields of ParamInfo: they are
         # attached to the row for the menu templates to read.
         (
-            p.disp_unit,
+            p.disp_unit,  # type: ignore[attr-defined]
             p.default_unit,  # type: ignore[attr-defined]
-            p.units,
-        ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
+            p.units,  # type: ignore[attr-defined]
+        ) = get_disp_default_and_avail_units(p.form_type)
 
         if desired_unit is not None:
             p.disp_unit = p.units[desired_unit]  # type: ignore[attr-defined]
@@ -1655,8 +1655,8 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             # displayable, so the assumption is the wider one that the two go
             # together, which the metadata selector relies on as well.
             msg = (
-                'Search field "'
-                + pi.body_qualified_label_results()  # type: ignore[operator]
+                'Search field "'  # type: ignore[operator]
+                + pi.body_qualified_label_results()
                 + '" is duplicated in the list of search fields; '
                 + 'only one copy is being used.'
             )
@@ -2174,10 +2174,10 @@ def _get_menu_labels(
                     # ParamInfo either; they are attached for the templates the
                     # same way, wherever this function lists a field.
                     (
-                        p.disp_unit,
+                        p.disp_unit,  # type: ignore[attr-defined]
                         p.default_unit,  # type: ignore[attr-defined]
-                        p.units,
-                    ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
+                        p.units,  # type: ignore[attr-defined]
+                    ) = get_disp_default_and_avail_units(p.form_type)
                     menu_data[table_name]['data'].setdefault(sub_head_tuple, []).append(p)
         else:
             # this div has no sub headings
@@ -2210,10 +2210,10 @@ def _get_menu_labels(
                         # Strip the trailing 1 off all ranges
                         p.slug = strip_numeric_suffix(p.slug)
                 (
-                    p.disp_unit,
+                    p.disp_unit,  # type: ignore[attr-defined]
                     p.default_unit,  # type: ignore[attr-defined]
-                    p.units,
-                ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
+                    p.units,  # type: ignore[attr-defined]
+                ) = get_disp_default_and_avail_units(p.form_type)
                 menu_data[table_name].setdefault('data', []).append(p)
 
     # If there are any search slugs, put those in first
@@ -2235,10 +2235,10 @@ def _get_menu_labels(
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
             (
-                p.disp_unit,
+                p.disp_unit,  # type: ignore[attr-defined]
                 p.default_unit,  # type: ignore[attr-defined]
-                p.units,
-            ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
+                p.units,  # type: ignore[attr-defined]
+            ) = get_disp_default_and_avail_units(p.form_type)
             menu_data['search_fields'].setdefault('data', []).append(p)
             # The line below indexes the nullable slug column.
             assert p.slug is not None
@@ -2252,10 +2252,10 @@ def _get_menu_labels(
                 # is missing from param_info is already a crash here.
                 assert p2 is not None
                 (
-                    p2.disp_unit,
+                    p2.disp_unit,  # type: ignore[attr-defined]
                     p2.default_unit,  # type: ignore[attr-defined]
-                    p2.units,
-                ) = get_disp_default_and_avail_units(p2.form_type)  # type: ignore[attr-defined]
+                    p2.units,  # type: ignore[attr-defined]
+                ) = get_disp_default_and_avail_units(p2.form_type)
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
     new_div_list = []
