@@ -17,6 +17,14 @@ tidiness: the packaged PDS data dictionary is full of dataset identifiers whose
 instrument code is ``PPR``, and an unanchored pattern matches inside every one of them.
 ``test_the_pattern_ignores_a_pds_dataset_identifier`` is what keeps that anchoring from
 being removed as redundant.
+
+A second false positive is latent rather than live, and is recorded here because the
+obvious repair for it is the wrong one. Bootstrap 4 spelled its padding-right
+utilities the way this pattern matches; the vendored copy under
+``src/opus_app/static/`` is Bootstrap 5, which spells them differently, so the scan
+is clean today. If an asset or template ever brings one back, narrow the *pattern*
+or exempt the one file by name -- do not stop scanning the served assets, because
+templates live near them and a template can carry a comment.
 """
 
 from __future__ import annotations

@@ -2,9 +2,9 @@
 #
 # Vulture reports names it cannot see used through static analysis. This file
 # lists the irreducible false positives (framework-hook signatures,
-# dynamically-referenced symbols) so `vulture` stays clean; referencing a name
-# here marks it as used. Every entry carries its own justification; genuine dead
-# code is deleted, not whitelisted.
+# dynamically-referenced symbols) so `vulture` stays clean; referencing a name here
+# marks it as used. Every entry carries its own justification; genuine dead code is
+# deleted, not whitelisted.
 #
 # This module is never imported or executed; it is only parsed by vulture, and
 # it is intentionally outside the ruff scope.

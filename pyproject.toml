@@ -320,11 +320,10 @@ ignore_missing_imports = true
 
 # There is no type burn-down list: `strict = true` applies to the whole repository
 # and no module is silenced by an `ignore_errors` entry, because that list is empty.
-# **That is the whole of the claim.** Suppression has not vanished from this file
-# and nobody should read it that way: `exclude` above
-# still holds the paths that are not project source, and the `ignore_missing_imports`
-# override above still covers the third-party packages that ship neither annotations
-# nor a typeshed stub. Read both lists above rather than trusting a count here; each
+# **That is the whole of the claim.** Suppression has not vanished from this file and
+# nobody should read it that way: `exclude` above still holds the paths that are not
+# project source, and the `ignore_missing_imports` override above still covers the
+# third-party packages that ship neither annotations nor a typeshed stub. Read both lists above rather than trusting a count here; each
 # entry is documented where it sits.
 #
 # Nothing belongs here again. A tree that cannot pass the checker yet is not a
@@ -351,9 +350,10 @@ exclude = [
   # regeneration. That script formats its own output with `ruff format`, which
   # ruff applies to an explicitly named path regardless of this exclusion.
   # Excluding it also means the 231 generated model classes and their nested
-  # Meta classes carry no docstrings and are not expected to: writing them would
-  # flood the published Sphinx API reference with entries no reader gains
-  # anything from, and the next regeneration would delete them anyway. This is a
+  # Meta classes carry no docstrings and are not expected to: the next
+  # regeneration would delete them anyway, and nothing would read them if they
+  # were there -- docs/_ext/opus_api_reference.py names this module in
+  # EXCLUDED_MODULES, so it is not in the API reference at all. This is a
   # permanent exclusion like the two above, not a burn-down entry, and does not
   # affect the per-file-ignores table.
   "src/opus_app/apps/search/models.py",

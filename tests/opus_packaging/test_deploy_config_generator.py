@@ -8,8 +8,9 @@ empty Django secret key in it.
 
 These tests run the shipped script -- not a copy of it, and not a re-implementation of
 its heredoc -- under ``bash`` with a controlled environment, then load what it wrote
-through :func:`opus_config.load_config`. That is the technique the CI-side
-generator's own tests use to prove the same properties, reused here.
+through :func:`opus_config.load_config`. Loading the result is what makes each test a
+statement about the file the loader accepts, rather than about the text the heredoc
+happens to emit.
 """
 
 from __future__ import annotations

@@ -324,9 +324,11 @@ versions and a check could pass on one side and fail on the other for no reason
 visible in the diff. There is no lock file now; the integration job logs
 ``pip freeze``, which is where to look when a check that passed yesterday fails today.
 
-Third-party actions are pinned to a full commit SHA with the release in a trailing
-comment, in every workflow. ``run-integration.yml`` carries the reasoning and the
-recipe for moving a pin; the other workflows point at it.
+Third-party actions are referenced by major tag -- ``actions/checkout@v6`` and the
+rest -- in every workflow, which is what ``.cursor/rules/environment.mdc`` asks for.
+A major tag moves when its maintainer cuts a release, and that is the trade made
+deliberately: the workflows stay current without anyone updating them, at the cost
+of a reference that is not immutable.
 
 Releasing
 ---------

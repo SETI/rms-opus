@@ -21,10 +21,9 @@ three ``obs_bundle_*`` leaves among them. A further **49** are inside modules it
 reach but are shadowed by an override in every driven leaf, so **718 definitions are
 never executed here**, and the module count is the optimistic way to say it. A wrong
 runtime type in one of those is caught by layer 1 only insofar as the schema can see it,
-which is not at all. Widening this needs
-holdings-free fixtures that can instantiate the rest of the hierarchy, which do not
-exist yet; until they do, the honest claim is that layer 2 covers the missions, not
-the hierarchy.
+which is not at all. Widening this needs holdings-free fixtures that can instantiate
+the rest of the hierarchy, which do not exist yet; until they do, the honest claim is
+that layer 2 covers the missions, not the hierarchy.
 
 The decision table lives here rather than in the package because it is the test's
 statement of what the annotations must be, not something the pipeline consults.

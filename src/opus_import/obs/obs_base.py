@@ -57,8 +57,8 @@ class ObsBase:
             ctx: The ImportContext for this import run. An obs class uses it only to
                 log and to read the run's arguments; it never reaches the database
                 through it, which is what lets
-                `opus_import.steps.do_import_obs.import_run_field_function` treat a field
-                method's exception as a bad field rather than an aborted import.
+                `opus_import.steps.do_import_obs.import_run_field_function` treat a
+                field method's exception as a bad field rather than an aborted import.
             bundle: The PDS3 volume ("COISS_2116") or PDS4 bundle.
             metadata: The collection of metadata available for this observation. This
                 includes rows from the various index as well as additional information.

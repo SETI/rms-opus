@@ -71,7 +71,7 @@ import pipeline, and any management command::
 
     curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
     sudo install -d -m 755 /etc/opus
-    sudo install -m 600 opus.toml.template /etc/opus/opus.toml
+    sudo install -m 600 -o opus -g opus opus.toml.template /etc/opus/opus.toml
     export OPUS_CONFIG=/etc/opus/opus.toml
 
 The template is **repository** infrastructure and is deliberately not inside the wheel:
@@ -80,11 +80,15 @@ nothing in the code reads it, and shipping it would mean extracting it through
 fetches it as above, or copies it from a checkout. (``-f`` is load-bearing: without it
 ``curl`` exits 0 on a 404 and writes the error page into the file the next line copies.)
 
-``install -m 600`` rather than ``cp``: the placeholders are about to be replaced with
-a database password and a Django secret key, and ``cp`` gives the new file whatever
-the caller's umask allows -- world-readable on a default one. This is the mode
-``_write_opus_toml.sh`` gives the file it generates, and the mode the layout below
-records for a deployed installation; the hand-built case is the same file.
+``install`` rather than ``cp``, and **both** of its options matter. The mode is 0600
+because the placeholders are about to be replaced by a database password and a
+Django secret key, and ``cp`` would give the file whatever the caller's umask allows
+-- world-readable under a default one. The ownership is what makes 0600 usable:
+``opus`` here stands for whatever account OPUS runs as, and a **root**-owned 0600
+file is unreadable to it, so the ``django-admin migrate`` and ``opus_import``
+commands below would fail on the configuration they were handed rather than on
+anything in it. ``_write_opus_toml.sh`` gets this for free by writing the file as
+the deploy user; a hand-built installation has to say who owns it.
 
 There is no default location for the file. A server running several OPUS
 installations gives each one its own file, its own ``OPUS_CONFIG``, its own database

@@ -78,11 +78,13 @@ they apply rather than only here:
   exception is ``/apiguide.pdf``, which served a generated PDF and now redirects
   (302) to the published guide, since the PDF is no longer built here; the URL still
   resolves, and ``test_help_api.py`` pins the redirect.
-* **GitHub Actions are pinned to a full commit SHA**, not to a major tag, because a
-  major tag is mutable by design and one of the workflows runs on hardware the Node
-  owns. Each pin carries its release in a trailing comment.
-  ``.github/workflows/run-integration.yml`` carries the reasoning and the recipe for
-  moving a pin.
+* **GitHub Actions are referenced by major tag**, per
+  ``.cursor/rules/environment.mdc``, and that is the whole of the convention: there
+  is no repository-specific exception to it. The workflows briefly pinned full
+  commit SHAs instead, on the argument that a major tag is mutable and one workflow
+  runs on hardware the Node owns. That was retired once it was established that the
+  self-hosted runners are disposable, so there is no durable credential on them for
+  a moved tag to reach.
 
 Docstrings
 ----------

@@ -6910,11 +6910,13 @@ body; never rewrite or delete earlier notes.*
     - **The leading word boundary is load-bearing and must not be "simplified" away.**
       `src/opus_import/dictionary_data/pdsdd.full` ships dozens of PDS dataset
       identifiers whose instrument code is `PPR` (`GO-A-PPR-2-EDR-GASPRA-V1.0`), and an
-      unanchored pattern matches inside every one. Measured on the pre-sweep tree: the
-      anchored pattern found **39** references and the unanchored one **72**, the
-      difference being 33 dataset identifiers. A `PR-22a` briefing that quoted 72 was
-      measuring those. `test_the_pattern_ignores_a_pds_dataset_identifier` is what keeps
-      the anchor.
+      unanchored pattern matches inside every one. Measured on the pre-sweep tree over
+      the scanned set, and stated both ways because the two are easy to confuse: the
+      anchored pattern found **44 matches on 39 lines**, the unanchored one **77 matches
+      on 72 lines**. The difference is 33 either way, and all 33 are PDS dataset
+      identifiers in `pdsdd.full`. The shipped detector reports one entry per *match*,
+      so anyone re-measuring with it gets 44, not 39. A PR-22a briefing that quoted 72
+      was counting unanchored lines.
     - The module also pins that the enumeration reaches every family of file that has
       carried a reference, that the detector fires on a planted reference and on both
       the lower-case and letter-suffixed spellings, and that the three excluded paths
@@ -6948,6 +6950,19 @@ body; never rewrite or delete earlier notes.*
       when a test needs a non-default value.
     - Per rfrench (2026-08-27) **no dedicated test was added**; the planned import suite
       covers it.
+    - **A latent defect in the code this activates, deliberately left alone and recorded
+      here as a candidate for the import-suite PR.**
+      `opus_import.obs.obs_cassini_common_pds3._cassini_intended_target_name` returns
+      the *string* `'None'` on the newly reachable branch. `'None'` is not a key of
+      `config_targets.TARGET_NAME_INFO` -- the key is `'NONE'`, whose entry is
+      `(None, 'OTHER', 'None')` -- so a Cassini row imported with
+      `--import-ignore-errors` and an unknown target gets the literal `None` written as
+      its target name with a null display name, where `'NONE'` would have produced the
+      intended one. It does not raise, and faking data is what the flag is for, so this
+      is within contract; but the sibling branch in `ObsBase._get_target_info` answers
+      `'OTHER'` for the same situation, and the two should agree. Not changed here
+      because #1478's scope is the wiring, and because nobody has yet seen this branch
+      run against real holdings.
   - **#1479 is done and buys documentation, not checking.** All three
     `_pdsfile_from_filespec` definitions are annotated `-> pdsfile.PdsFile`, the base
     both `Pds3File` and `Pds4File` derive from. `pdsfile.*` is still in
@@ -6979,9 +6994,16 @@ body; never rewrite or delete earlier notes.*
       question directly: the old form raises warning 1287, `'VALUES function' is
       deprecated`, once per assigned column, and the new form raises none.
   - **rev 7.22's SHA pins are gone and PR-20's other workflow hardening is untouched.**
+    Two chapters of the developer guide also stated the pinning as a current convention
+    -- `dev_guide_conventions.rst`'s decisions list, which recorded it as a second
+    standing deviation, and `dev_guide_environment.rst`'s CI section, which pointed at
+    the run-integration.yml comment block this PR deleted. Both are rewritten. **A
+    workflow-facing fact is stated in `docs/` as well as in the workflows**; grep the
+    claim, not the file.
     Regenerate the inventory with `grep -rn 'uses:' .github/workflows/`; every entry is a
-    major tag again (`actions/checkout@v6`, `actions/setup-python@v6`,
-    `codecov/codecov-action@v5`, `pypa/gh-action-pypi-publish@release/v1`) and the
+    major tag again -- `actions/checkout@v6`, `actions/setup-python@v6` and
+    `codecov/codecov-action@v5` -- except `pypa/gh-action-pypi-publish@release/v1`,
+    which is a **branch** ref rather than a tag and is PyPA's own documented one. The
     trailing version comments went with them, along with the four comment blocks that
     explained the pinning. The `permissions:` blocks, `persist-credentials: false` on
     every checkout, and the header comments naming which command establishes which gate

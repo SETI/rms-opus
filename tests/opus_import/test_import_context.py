@@ -265,8 +265,15 @@ _MULT_COLUMN = {'mult_options': [(0, 'COISS', 'Cassini ISS', 0, 'Y', None, None)
 
 
 def _mult_context() -> ImportContext:
-    """Return a context the mult code can run against, with its messages suppressed."""
-    return make_context(args=argparse.Namespace(import_suppress_mult_messages=True))
+    """Return a context the mult code can run against, with its messages suppressed.
+
+    Built from the real CLI's defaults with the one option this needs turned on,
+    rather than from a namespace holding only that option: the rest of the run's
+    arguments stay what a real run would have.
+    """
+    ctx = make_context()
+    ctx.args.import_suppress_mult_messages = True
+    return ctx
 
 
 def test_a_mult_table_is_converted_once_and_then_served_from_the_context() -> None:
