@@ -5,11 +5,11 @@ These tests never open a connection: they build an `ImportDBMySQL` through
 shape of the statement: one statement per packet of rows, **every** value passed as a
 parameter rather than interpolated, and the key column left out of the update clause.
 
-PR-12 tightened the middle one. Before it, only `str` values became parameters and
-everything else -- numbers, booleans, None -- was formatted into the statement text with
-`str()`; now every value is a `%s`, which is what makes "no value is ever formatted into
-SQL text" true of this backend rather than nearly true. The identifier tests below cover
-the other half of that change.
+The middle one is the one that was tightened. This backend used to pass only `str`
+values as parameters and format everything else -- numbers, booleans, None -- into
+the statement text with `str()`; now every value is a `%s`, which is what makes
+"no value is ever formatted into SQL text" true of this backend rather than nearly
+true. The identifier tests below cover the other half of that change.
 """
 
 from typing import Any
@@ -80,7 +80,68 @@ def test_upsert_rows_does_not_assign_the_key_column(db: _RecordingDB) -> None:
     cmd, _params = db.executed[0]
     update_clause = cmd.split('ON DUPLICATE KEY UPDATE', 1)[1]
     assert '`id`=' not in update_clause
-    assert '`value`=VALUES(`value`)' in update_clause
+    assert '`value`=`new`.`value`' in update_clause
+
+
+def test_upsert_rows_names_the_new_row_through_the_alias_not_values(
+        db: _RecordingDB) -> None:
+    """The update clause reads the row alias, and `VALUES(col)` is gone entirely.
+
+    ``VALUES(col)`` was deprecated in MySQL 8.0.20 and still parses, so a server would
+    accept either form and the deprecation would go on being emitted with nothing to
+    report it. Only reading the statement catches that, which is what this does: the
+    alias is declared once, immediately before the clause that reads it, and the
+    deprecated spelling appears nowhere.
+    """
+    db.upsert_rows('import', 'mult_obs_general_planet_id', 'id',
+                   [_mult_row(0, 'JUP'), _mult_row(1, 'SAT')])
+
+    cmd, _params = db.executed[0]
+    assert 'VALUES(`' not in cmd
+    assert cmd.count(' AS `new` ON DUPLICATE KEY UPDATE ') == 1
+    update_clause = cmd.split('ON DUPLICATE KEY UPDATE', 1)[1]
+    # Every assigned column reads its value off the alias -- the whole point of the
+    # form, and what a partial rewrite would leave half true.
+    assignments = update_clause.strip().split(',')
+    assert len(assignments) == 7
+    for assignment in assignments:
+        column, value = assignment.split('=')
+        assert value == f'`new`.{column}', assignment
+
+
+def test_upsert_rows_does_not_alias_a_row_as_the_table_it_writes(
+        db: _RecordingDB) -> None:
+    """A table called ``new`` gets a different row alias, because MySQL forbids the clash.
+
+    MySQL requires the row alias to differ from the table name, and the ``perm``
+    namespace passes the raw table name straight through, so the one name that collides
+    reaches the statement unprefixed. Nothing in today's schema is called ``new`` --
+    which is exactly why this is a test rather than a comment: the collision would first
+    appear as a syntax error partway through an import of some future table, and the
+    packet loop would already have written the earlier ones.
+    """
+    db.upsert_rows('perm', 'new', 'id', [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b'}])
+
+    cmd, _params = db.executed[0]
+    assert cmd.startswith('INSERT INTO `new` (')
+    assert ' AS `new_row` ON DUPLICATE KEY UPDATE `value`=`new_row`.`value`' in cmd
+    # The alias and the table must not be the same identifier, which is the whole rule.
+    assert ' AS `new` ' not in cmd
+
+
+def test_upsert_rows_keeps_the_plain_alias_for_every_other_table(
+        db: _RecordingDB) -> None:
+    """The rename is confined to the colliding name; nothing else pays for it.
+
+    Without this, widening the guard -- renaming the alias for every table, or matching
+    a prefix -- would go unnoticed, and the statement every real import runs would
+    quietly stop being the one the tests above pin.
+    """
+    db.upsert_rows('perm', 'newer', 'id', [{'id': 0, 'value': 'a'}])
+
+    cmd, _params = db.executed[0]
+    assert ' AS `new` ON DUPLICATE KEY UPDATE ' in cmd
+    assert '`new_row`' not in cmd
 
 
 def test_upsert_rows_splits_large_row_sets_into_packets(db: _RecordingDB) -> None:

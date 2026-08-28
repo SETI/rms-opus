@@ -36,9 +36,12 @@ jobs:
     # are what take the time, and they are the network-dependent ones.
     timeout-minutes: 30
     env:
-      # Ruff formatting is not enforced until the format-only PR (PR-23); the
-      # step below is kept but disabled, mirroring the ENABLE_* toggles in
-      # scripts/run-all-checks.sh. PR-23 flips this to 'true'.
+      # `ruff format` is not enforced yet: the repository has never been
+      # reformatted, so switching it on before that happens fails on almost
+      # every file. The step below is kept and disabled rather than deleted so
+      # that the change which reformats the tree has only to flip this to
+      # 'true'. ENABLE_RUFF_FORMAT in scripts/run-all-checks.sh is false for
+      # the same reason and turns on at the same time.
       ENABLE_RUFF_FORMAT: 'false'
       # Every code tree lives under src/ now; the live-DB suites are in
       # integration_tests/, the unit suite in tests/, the documentation build's
@@ -57,11 +60,8 @@ jobs:
       BANDIT_PATHS: "src integration_tests manage.py"
       VULTURE_PATHS: "src integration_tests tests docs manage.py vulture_whitelist.py"
     steps:
-      # Third-party actions are pinned to a full commit SHA with the release in a
-      # trailing comment, in every workflow in this repository. See the longer
-      # note in run-integration.yml for why, and for how to move a pin.
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm derives the version from tags, which a shallow clone
@@ -72,7 +72,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
 
@@ -141,7 +141,7 @@ jobs:
         python-version: ["3.12", "3.13"]
     steps:
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm derives the version from tags, which a shallow
@@ -150,7 +150,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -183,7 +183,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # conf.py reads the distribution version from the installed metadata, which
@@ -192,7 +192,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
 
@@ -235,7 +235,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm derives the version from tags, and the version is part
@@ -246,7 +246,7 @@ jobs:
       - name: Set up Python 3.12
         # The version both publish workflows build with, so this job builds the
         # same artifact they would.
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        uses: actions/setup-python@v6
         with:
           python-version: 3.12
 

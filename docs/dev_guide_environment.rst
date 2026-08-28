@@ -7,8 +7,9 @@ Prerequisites
 -------------
 
 * **Python 3.12 or later**. The test matrix runs 3.12 and 3.13.
-* **MySQL 8**, with a user allowed to create and drop databases. The import pipeline
-  creates every OPUS table itself.
+* **MySQL 8.0.19 or later**, with a user allowed to create and drop databases. The
+  import pipeline creates every OPUS table itself, and writes its multi-row upserts
+  with the ``AS new`` row alias that 8.0.19 added.
 * **The MySQL client development headers**, because ``mysqlclient`` ships no Linux
   wheel and is compiled during the install. On Debian or Ubuntu::
 
@@ -47,7 +48,7 @@ server running several OPUS installations gives each one its own file and its ow
 
 ::
 
-    cp opus.toml.template opus.toml
+    install -m 600 opus.toml.template opus.toml
     # fill in every <PLACEHOLDER>
     export OPUS_CONFIG=$PWD/opus.toml
 
@@ -323,9 +324,13 @@ versions and a check could pass on one side and fail on the other for no reason
 visible in the diff. There is no lock file now; the integration job logs
 ``pip freeze``, which is where to look when a check that passed yesterday fails today.
 
-Third-party actions are pinned to a full commit SHA with the release in a trailing
-comment, in every workflow. ``run-integration.yml`` carries the reasoning and the
-recipe for moving a pin; the other workflows point at it.
+Third-party actions are referenced by major tag -- ``actions/checkout@v6`` and the
+rest -- which is what ``.cursor/rules/environment.mdc`` asks for. The one exception
+is ``pypa/gh-action-pypi-publish@release/v1`` in the two publish workflows, a
+*branch* ref rather than a tag, because it is the reference PyPA documents for its
+own action. A major tag moves when its maintainer cuts a release, and a branch moves
+more often still; that is the trade made deliberately, since the workflows then stay
+current without anyone updating them.
 
 Releasing
 ---------

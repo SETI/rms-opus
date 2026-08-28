@@ -42,7 +42,7 @@
 #   ENABLE_* are true (RUN_* from CLI or defaults below; ENABLE_* from env or
 #   the defaults block below). OPUS flips each default true in its owning PR:
 #     ENABLE_RUFF_CHECK   (default: true)
-#     ENABLE_RUFF_FORMAT  (default: false — until PR-23)
+#     ENABLE_RUFF_FORMAT  (default: false — the tree is not reformatted yet)
 #     ENABLE_MYPY         (default: true)
 #     ENABLE_PYTEST       (default: true)
 #     ENABLE_PYROMA       (default: true)
@@ -90,8 +90,9 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS check state (plan §4): every check is on except ruff-format, which waits for
-# the format-only PR (PR-23) and flips true there. mypy runs strict over the whole
+# OPUS check state: every check is on except ruff-format, which stays false until
+# the repository is reformatted and turns true in the same change -- switching it
+# on before that fails on almost every file. mypy runs strict over the whole
 # repository; [tool.mypy]'s burn-down list is empty, while its exclude and
 # ignore_missing_imports remain.
 : "${ENABLE_RUFF_CHECK:=true}"
@@ -423,8 +424,10 @@ run_code_checks() {
 
     # -n controls parallelism; --dist loadscope keeps each test module on one
     # worker to avoid time-mocking and fixture-isolation interference.
-    # testpaths and the strict options come from pyproject.toml; the
-    # coverage gate joins this run with the import suite (PR-19).
+    # testpaths and the strict options come from pyproject.toml. No --cov here:
+    # this suite does not yet reach the [tool.coverage.report] fail_under
+    # threshold, so measuring it would fail a healthy tree. The gate turns on
+    # with the holdings-free import suite that is written to meet it.
     if [ "$RUN_PYTEST" = true ] && [ "$ENABLE_PYTEST" = true ]; then
         print_info "Running pytest (-n ${PYTEST_WORKERS})..."
         if python -m pytest -q -n "$PYTEST_WORKERS" --dist loadscope tests; then

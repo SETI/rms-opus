@@ -24,9 +24,9 @@ IMPORT_STATUS=$?
 # an aborted confirmation -- exits non-zero. Without this check the only gate was
 # `[ -s ERRORS.log ]` below, and a *missing* ERRORS.log is not `-s`: an import that died
 # before writing any log at all reported success, and this whole stage exited 0 having
-# imported nothing. Found during PR-16 when the venv was off a background shell's PATH,
-# `python: command not found` killed the import, and all three stages "completed" inside
-# the same wall-clock second.
+# imported nothing. Found when the venv was off a background shell's PATH, so
+# `python: command not found` killed the import and all three stages "completed"
+# inside the same wall-clock second.
 if [ $IMPORT_STATUS -ne 0 ]; then
     echo "*******************************************"
     echo "*** OPUS IMPORT FAILED (exit $IMPORT_STATUS) ***"

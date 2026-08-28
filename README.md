@@ -49,9 +49,10 @@ on: the packages carry no API stability guarantees.
 
 ## Installation
 
-`rms-opus` requires **Python 3.12 or later** and **MySQL 8**. It also needs the MySQL
-client development headers, because its MySQL driver has no Linux wheel and is compiled
-during the install:
+`rms-opus` requires **Python 3.12 or later** and **MySQL 8.0.19 or later** — the
+import pipeline writes its multi-row upserts with the row alias that release added.
+It also needs the MySQL client development headers, because its MySQL driver has no
+Linux wheel and is compiled during the install:
 
 ```bash
 sudo apt-get install pkg-config default-libmysqlclient-dev build-essential
@@ -71,7 +72,7 @@ so that a failed download stops rather than leaving the error page in the file:
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
-cp opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
+install -m 600 opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
 export OPUS_CONFIG=$PWD/opus.toml
 ```
 

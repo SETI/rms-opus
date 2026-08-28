@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from opus_config import OPUS_CONFIG_ENV_VAR
+from opus_import import cli
 from opus_import.context import ImportContext
 
 
@@ -39,6 +40,21 @@ class RecordingLogger:
         return [msg for msg_level, msg in self.messages if msg_level == level]
 
 
+def default_arguments() -> argparse.Namespace:
+    """Return what the real command line produces when it is given no options.
+
+    Built by parsing an empty argument list with the pipeline's own parser rather than
+    by listing the options a test happens to need. A hand-built namespace holds only
+    the options someone remembered, so it stops matching the CLI the moment an option
+    is added and any code reading a newer one raises `AttributeError` in the tests
+    while working in production -- or, worse, the reverse.
+
+    Returns:
+        A namespace carrying every option with its documented default.
+    """
+    return cli._create_argument_parser().parse_args([])
+
+
 def make_context(**kwargs: Any) -> ImportContext:
     """Return an `ImportContext` with a recording logger and no database.
 
@@ -47,9 +63,9 @@ def make_context(**kwargs: Any) -> ImportContext:
 
     Returns:
         A context whose `ImportContext.logger` is a `RecordingLogger` and whose
-        `ImportContext.args` is an empty `argparse.Namespace`, unless overridden.
+        `ImportContext.args` is `default_arguments`, unless overridden.
     """
-    kwargs.setdefault('args', argparse.Namespace())
+    kwargs.setdefault('args', default_arguments())
     kwargs.setdefault('logger', RecordingLogger())
     return ImportContext(**kwargs)
 

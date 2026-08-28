@@ -1,9 +1,10 @@
 """Tests for the cart's byte-count formatter.
 
-`nice_file_size` replaced `hurry.filesize.size` in PR-09. Its output is public API
-— `__cart/status.json` returns it as `download_size_pretty` — and it is embedded in
-the golden response fixtures, so what these tests pin is *parity with the package
-that was removed*, not a formatting choice made here. Every expected value below was
+`nice_file_size` replaced a call to `hurry.filesize.size`, a dependency this project
+no longer has. Its output is public API — `__cart/status.json` returns it as
+`download_size_pretty` — and it is embedded in the golden response fixtures, so what
+these tests pin is *parity with the package that was removed*, not a formatting
+choice made here. Every expected value below was
 produced by running `hurry.filesize.size` (version 0.9, the pinned version at the
 time of the change) on the same input, and cross-checked by sweeping 420,035 byte
 counts from 0 to 4 EiB against the installed package before it was dropped.

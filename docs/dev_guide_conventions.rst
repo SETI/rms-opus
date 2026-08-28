@@ -69,8 +69,8 @@ writing code:
 Deviations
 ----------
 
-Two rules are deliberately waived for this repository, and both are written down where
-they apply rather than only here:
+**One** rule is deliberately waived for this repository, and it is written down where
+it applies rather than only here:
 
 * **Public web API backwards compatibility is preserved**, against the general
   no-back-compat policy. An OPUS URL that worked before has to keep working; the
@@ -78,11 +78,17 @@ they apply rather than only here:
   exception is ``/apiguide.pdf``, which served a generated PDF and now redirects
   (302) to the published guide, since the PDF is no longer built here; the URL still
   resolves, and ``test_help_api.py`` pins the redirect.
-* **GitHub Actions are pinned to a full commit SHA**, not to a major tag, because a
-  major tag is mutable by design and one of the workflows runs on hardware the Node
-  owns. Each pin carries its release in a trailing comment.
-  ``.github/workflows/run-integration.yml`` carries the reasoning and the recipe for
-  moving a pin.
+
+There used to be a second, recorded here because a reader who remembers it should be
+able to find out that it is gone: **GitHub Actions were pinned to full commit SHAs**
+rather than to the major tag ``.cursor/rules/environment.mdc`` asks for, on the
+argument that a major tag is mutable and one workflow runs on hardware the Node
+owns. That was retired once it was established that the self-hosted runners are
+disposable, so there is no durable credential on them for a moved tag to reach. The
+workflows follow the rule now; the only reference that is not a major tag is
+``pypa/gh-action-pypi-publish@release/v1``, which is the ref PyPA documents for its
+own action, and :ref:`dev_guide_environment` says so where the workflows are
+described.
 
 Docstrings
 ----------

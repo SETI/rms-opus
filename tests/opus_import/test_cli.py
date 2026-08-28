@@ -57,8 +57,8 @@ def test_module_entry_point_binds_main() -> None:
     """``opus_import.__main__`` dispatches to exactly `cli.main` and to nothing else.
 
     That the module runs at all under ``python -m`` is covered end to end by the
-    subprocess tests below; this pins *which* callable it runs, which is also the one
-    PR-22 wires up as a console script.
+    subprocess tests below; this pins *which* callable it runs, which is also the
+    one the ``opus_import`` console script names in pyproject.toml.
     """
     assert opus_import.__main__.main is cli.main
 

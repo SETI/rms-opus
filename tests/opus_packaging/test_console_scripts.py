@@ -21,8 +21,8 @@ from pathlib import Path
 import pytest
 
 # The commands this distribution promises, and the ``module:attribute`` each one must
-# name. The plan (PR-22) fixes both the names -- underscores, not hyphens -- and the
-# targets; this mapping is the assertion, not a description of one.
+# name. Both the names -- underscores, not hyphens -- and the targets are fixed
+# here; this mapping is the assertion, not a description of one.
 EXPECTED_SCRIPTS = {
     'opus_import': 'opus_import.cli:main',
     'opus_log_analyzer': 'opus_log_analyzer.log_analyzer:main',

@@ -16,9 +16,9 @@ What is worth pinning, and why:
   None into a 400. Letting a negative number, a float or a huge value through would
   reach the handlers looking like a real request number.
 * **The `__sessionid` override.** It is how a test drives two carts in one process
-  (PR-12a's cross-session regression tests depend on it), and it is read ahead of
-  Django's own session, so a change of precedence would silently put those tests back
-  on one session.
+  (the cross-session cart tests in `integration_tests/test_api/test_cart_api.py`
+  depend on it), and it is read ahead of Django's own session, so a change of
+  precedence would silently put those tests back on one session.
 * **The slug-suffix pair.** `strip_numeric_suffix` and `get_numeric_suffix` decide
   which half of a range widget a slug names; they must agree about what a suffix is.
 * **What an error message says when there is no request.** The 500 path can be reached

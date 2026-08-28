@@ -5,7 +5,7 @@ index names its file the same way in every table, and its time columns are named
 PDS4 dictionary rather than per instrument.
 """
 
-from typing import Any, cast
+from typing import cast
 
 import pdsfile
 
@@ -48,14 +48,15 @@ class ObsBasePDS4(ObsBase):
     ### Internal access methods ###
     ###############################
 
-    def _pdsfile_from_filespec(self, filespec: str) -> Any:
+    def _pdsfile_from_filespec(self, filespec: str) -> pdsfile.PdsFile:
         """Return the ``Pds4File`` for a file specification.
 
         Parameters:
             filespec: The path, relative to the holdings root.
 
         Returns:
-            The ``pdsfile`` object.
+            The ``pdsfile`` object, typed as the ``PdsFile`` base ``Pds4File`` derives
+            from.
         """
         return pdsfile.pds4file.Pds4File.from_filespec(filespec, fix_case=True)
 

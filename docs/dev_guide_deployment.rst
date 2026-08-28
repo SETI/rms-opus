@@ -10,8 +10,9 @@ is brought up. It covers a development installation on one machine and, from
 Prerequisites
 -------------
 
-* **MySQL 8**, with a user allowed to create and drop databases -- the import pipeline
-  creates every OPUS table itself.
+* **MySQL 8.0.19 or later**, with a user allowed to create and drop databases -- the
+  import pipeline creates every OPUS table itself, and writes its multi-row upserts
+  with the ``AS new`` row alias that 8.0.19 added.
 * **memcached**, plus the ``pymemcache`` Python client. **Neither is a declared
   dependency**: :mod:`opus_app.settings` tries to import ``pymemcache`` and falls back
   to Django's local-memory cache when it is absent, so an installation that skips this
@@ -69,7 +70,8 @@ Copy ``opus.toml.template``, fill in every ``<PLACEHOLDER>``, and export
 import pipeline, and any management command::
 
     curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
-    cp opus.toml.template /etc/opus/opus.toml
+    sudo install -d -m 755 /etc/opus
+    sudo install -m 600 -o opus -g opus opus.toml.template /etc/opus/opus.toml
     export OPUS_CONFIG=/etc/opus/opus.toml
 
 The template is **repository** infrastructure and is deliberately not inside the wheel:
@@ -77,6 +79,28 @@ nothing in the code reads it, and shipping it would mean extracting it through
 ``importlib.resources`` instead of opening a file. A ``pip``-installed server therefore
 fetches it as above, or copies it from a checkout. (``-f`` is load-bearing: without it
 ``curl`` exits 0 on a 404 and writes the error page into the file the next line copies.)
+
+``opus`` in those commands is the account OPUS runs as, and it has to exist before
+the second one: ``install -o`` fails on an unknown user rather than creating it. On
+a host that has no such account yet, make one -- ``sudo useradd --system
+--no-create-home opus`` -- or substitute whichever account the WSGI daemon process
+and the import pipeline will run as.
+
+``install`` rather than ``cp``, and **both** of its options matter. The mode is 0600
+because the placeholders are about to be replaced by a database password and a
+Django secret key, and ``cp`` would give the file whatever the caller's umask allows
+-- world-readable under a default one. The ownership is what makes 0600 usable:
+``opus`` here stands for whatever account OPUS runs as, and a **root**-owned 0600
+file is unreadable to it, so the ``django-admin migrate`` and ``opus_import``
+commands below would fail on the configuration they were handed rather than on
+anything in it. ``_write_opus_toml.sh`` gets this for free by writing the file as
+the deploy user; a hand-built installation has to say who owns it.
+
+For the same reason, run the ``<PLACEHOLDER>`` edit and every command below that
+names ``OPUS_CONFIG`` -- ``django-admin migrate``, ``opus_import``, and anything
+else that reads the configuration -- **as that account**, with ``sudo -u opus`` or
+an equivalent. A 0600 file is readable by exactly one user, which is the point of
+the mode and the reason a third admin account fares no better than root.
 
 There is no default location for the file. A server running several OPUS
 installations gives each one its own file, its own ``OPUS_CONFIG``, its own database
@@ -239,8 +263,13 @@ separation is deliberate:
 ``scripts/server/secrets/deploy.env``
     Shell syntax, read by the scripts **before any OPUS code exists on the machine**.
     It says where to install, which database credentials to use, where the PDS holdings
-    are, and what Django's secret key is. Copy ``scripts/server/deploy.env.template``,
-    fill in every ``<PLACEHOLDER>``, and ``chmod 600`` it; the directory is git-ignored.
+    are, and what Django's secret key is. Install it with the two commands
+    ``deploy.env.template`` gives at the top of itself -- ``install -d -m 700`` for
+    ``scripts/server/secrets/`` and ``install -m 600`` for the file -- then fill in
+    every ``<PLACEHOLDER>``. Both modes are set as the thing is created rather than
+    afterwards, because the scripts ``source`` this file: a directory left
+    world-writable by a permissive umask lets another local account substitute shell
+    code that the deploy then runs. The directory is git-ignored.
 
 ``opus.toml``
     Read by the installed application and the import pipeline at run time.
