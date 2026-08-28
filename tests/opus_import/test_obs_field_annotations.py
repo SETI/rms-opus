@@ -21,9 +21,10 @@ three ``obs_bundle_*`` leaves among them. A further **49** are inside modules it
 reach but are shadowed by an override in every driven leaf, so **718 definitions are
 never executed here**, and the module count is the optimistic way to say it. A wrong
 runtime type in one of those is caught by layer 1 only insofar as the schema can see it,
-which is not at all. Widening this is
-what PR-19's fixture work is for; until then the honest claim is that layer 2 covers the
-missions, not the hierarchy.
+which is not at all. Widening this needs
+holdings-free fixtures that can instantiate the rest of the hierarchy, which do not
+exist yet; until they do, the honest claim is that layer 2 covers the missions, not
+the hierarchy.
 
 The decision table lives here rather than in the package because it is the test's
 statement of what the annotations must be, not something the pipeline consults.
@@ -31,7 +32,6 @@ statement of what the annotations must be, not something the pipeline consults.
 
 from __future__ import annotations
 
-import argparse
 import ast
 import functools
 import inspect
@@ -704,13 +704,10 @@ def _instrument_for(fixture: dict[str, Any]) -> ObsBase:
         'obs_general_row': {'id': 1, 'opus_id': _FakePdsFile.opus_id},
     }
     cls = _class_by_name(fixture['class_name'])
-    # The three run arguments an obs class reads, regenerated with
-    # `grep -rhoE 'self\._ctx\.args\.[a-z_]+' src/opus_import/obs`. All three are off
-    # by default in the real CLI, which is the configuration this drives.
-    args = argparse.Namespace(import_fake_images=False,
-                              import_ignore_missing_images=False,
-                              import_report_inventory_mismatch=False)
-    instrument = cls(make_context(args=args), bundle='TEST_BUNDLE', metadata=metadata)
+    # Driven with the real CLI's defaults, which `make_context` supplies. This used to
+    # name the run arguments an obs class reads, one at a time; that list was a
+    # snapshot of a grep and went stale as soon as another argument was read.
+    instrument = cls(make_context(), bundle='TEST_BUNDLE', metadata=metadata)
     # Replacing a bound method is the point: there are no holdings here, and this is
     # the one thing an obs class asks the file system for. Everything else it reads
     # comes from the metadata above.
@@ -1038,11 +1035,11 @@ def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() ->
     # An index row with none of the columns these methods read.
     metadata: dict[str, Any] = {'index_row': {}}
 
-    cocirs = ObsVolumeCOCIRS56xxx(make_context(args=argparse.Namespace()),
+    cocirs = ObsVolumeCOCIRS56xxx(make_context(),
                                   bundle='COCIRS_5408', metadata=metadata)
     assert cocirs.primary_filespec is None
 
-    covims = ObsVolumeCOVIMS0xxx(make_context(args=argparse.Namespace()),
+    covims = ObsVolumeCOVIMS0xxx(make_context(),
                                  bundle='COVIMS_0006', metadata=metadata)
     assert covims.field_obs_mission_cassini_spacecraft_clock_count1() is None
     assert covims.field_obs_mission_cassini_spacecraft_clock_count2() is None
@@ -1067,7 +1064,7 @@ def test_a_missing_filespec_is_reported_on_the_very_first_observation(
     """
     cls = _class_by_name(_MISSION_FIXTURES['COISS']['class_name'])
     monkeypatch.setattr(cls, 'primary_filespec', property(lambda self: None))
-    instrument = cls(make_context(args=argparse.Namespace()), bundle='TEST_BUNDLE')
+    instrument = cls(make_context(), bundle='TEST_BUNDLE')
 
     assert instrument.opus_id is None
     assert instrument.opus_id is None

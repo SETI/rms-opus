@@ -48,13 +48,13 @@ class ObsBase:
     """
 
     def __init__(self, ctx: ImportContext, bundle: str | None = None,
-                 metadata: dict[str, Any] | None = None,
-                 ignore_errors: bool = False) -> None:
+                 metadata: dict[str, Any] | None = None) -> None:
         """Initialize an ObsBase object.
 
         Parameters:
             ctx: The ImportContext for this import run. An obs class uses it only to
-                log; it never reaches the database through it, which is what lets
+                log and to read the run's arguments; it never reaches the database
+                through it, which is what lets
                 `opus_import.steps.do_import_obs.import_run_field_function` treat a field
                 method's exception as a bad field rather than an aborted import.
             bundle: The PDS3 volume ("COISS_2116") or PDS4 bundle.
@@ -65,14 +65,19 @@ class ObsBase:
                 Thus methods have to assume that the metadata has changed between calls
                 and they can't cache results. It is None while the tables are being
                 created, before any observation has been read.
-            ignore_errors: True if the user argument --import-ignore-errors was given.
-                This bypasses certain errors (like unknown target name) and fakes data
-                so that the import can complete, even though the answer will be wrong.
         """
         self._ctx            = ctx
         self._bundle         = bundle
         self._metadata       = metadata
-        self._ignore_errors  = ignore_errors
+        # --import-ignore-errors, read from the run's arguments rather than taken as a
+        # constructor argument. It used to be a parameter with a False default that no
+        # construction site ever passed, so the two branches reading it -- an unknown
+        # target name here and in `opus_import.obs.obs_cassini_common_pds3` -- could not
+        # be reached and the option only half-worked: `opus_import.steps.do_import`
+        # honoured it when deciding whether to abort, and the obs layer never saw it.
+        # Reading it eagerly means a context built without real parsed arguments fails
+        # at construction rather than only on the rare branch that consults it.
+        self._ignore_errors  = ctx.args.import_ignore_errors
 
         self._opus_id_last_filespec: str | None = None # For caching opus_id
         self._opus_id_cached: str | None        = None
