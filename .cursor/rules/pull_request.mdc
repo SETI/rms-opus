@@ -7,7 +7,15 @@ alwaysApply: false
 
 ## Scope of review
 
-Treat the PR as a **single unit of change**. The diff to review is the set of all commits on the current branch back to its **immediate root** (the merge-base with the target branch). Consider the net result of those commits together; do **not** comment on differences that exist only between commits within the PR (e.g. "you fixed X in a later commit" or "commit 2 undid part of commit 1"). Review the final state of the branch against the base. Do not explicitly word wrap lines; allow GitHub to flow them automatically.
+Treat the PR as a **single unit of change**. The diff to review is the set of all commits on the current branch back to its **immediate root** (the merge-base with the target branch). Consider the net result of those commits together; do **not** comment on differences that exist only between commits within the PR (e.g. "you fixed X in a later commit" or "commit 2 undid part of commit 1"). Review the final state of the branch against the base.
+
+## Formatting
+
+**Never hard-wrap prose written for GitHub.** This governs **PR titles, PR descriptions, and review comments** — everything typed into a GitHub text box rather than committed as a file. Write each paragraph as one long line and let GitHub reflow it.
+
+The reason is that GitHub renders these as Markdown in a column whose width depends on the reader's window, so hard-wrapped text is re-wrapped a second time and arrives ragged — and the newlines survive into every quoted reply, every email notification, and every diff of an edited description. A line break inserted for a 72-column terminal is a formatting decision imposed on readers who are not using one.
+
+Code blocks, tables and quoted output are exempt: their line breaks are content, not presentation.
 
 ## Principles
 
