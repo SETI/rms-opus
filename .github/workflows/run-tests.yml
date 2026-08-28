@@ -36,19 +36,18 @@ jobs:
     # are what take the time, and they are the network-dependent ones.
     timeout-minutes: 30
     env:
-      # Every code tree lives under src/ now; the live-DB suites are in
+      # The importable packages live under src/; the live-DB suites are in
       # integration_tests/, the unit suite in tests/, the documentation build's
       # own extensions in docs/, manage.py at the root.
       # Vulture also scans vulture_whitelist.py so whitelisted names count as
       # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
       # tests/ and docs/ are linted and vulture-scanned but never bandit-scanned.
       RUFF_PATHS: "src integration_tests tests docs manage.py"
-      # The type gate covers every tree the other tools scan, and none of them
-      # carries a burn-down entry any more: [tool.mypy]'s ignore_errors list is
-      # empty. That is the whole claim -- its exclude still lists the non-source
-      # paths and ignore_missing_imports still lists the untyped third-party
-      # packages. See [tool.mypy] in pyproject.toml for both, and for why each
-      # entry is there.
+      # The type gate covers every tree the other tools scan, and no tree carries
+      # a burn-down entry: [tool.mypy]'s ignore_errors list is empty. That is the
+      # whole claim -- its exclude lists the non-source paths and
+      # ignore_missing_imports lists the untyped third-party packages. See
+      # [tool.mypy] in pyproject.toml for both, and for why each entry is there.
       MYPY_PATHS: "src integration_tests tests docs manage.py"
       BANDIT_PATHS: "src integration_tests manage.py"
       VULTURE_PATHS: "src integration_tests tests docs manage.py vulture_whitelist.py"

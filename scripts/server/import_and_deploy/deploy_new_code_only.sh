@@ -38,12 +38,12 @@ export OPUS_SRC_DIR=${OPUS_DIR}/src
 export OPUS_DIR_NAME=rms-opus
 INSTALL_DIR=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 
-# Refuse anything that is not an installation this chain created. Before the pip
-# deploy flow the same path held a git checkout with an opus_secrets.py in it, and
-# an in-place upgrade of one of those would leave a half-converted installation --
-# no virtualenv holding the distribution, and configuration in a file OPUS no longer
-# reads. The way across is a full deploy, which builds the installation from
-# nothing, so this says so rather than failing later and less clearly.
+# Refuse anything that is not an installation this chain created -- a git checkout at
+# this path, a missing virtualenv, a missing opus.toml. An in-place upgrade of one of
+# those would leave a half-converted installation: no virtualenv holding the
+# distribution, and configuration OPUS does not read. The way forward is a full
+# deploy, which builds the installation from nothing, so this says so rather than
+# failing later and less clearly.
 if [[ -d ${INSTALL_DIR}/.git ]]; then
     echo "${INSTALL_DIR} is a git checkout, not a pip installation."
     echo "Run deploy_new_code_and_database.sh to replace it with one."

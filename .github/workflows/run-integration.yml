@@ -131,12 +131,12 @@ jobs:
           fi
           python -m pip install --upgrade pip
           python -m pip install wheel
-          # The same install command the GitHub-hosted lint and unit jobs run.
-          # This job used to install a compiled requirements.txt instead, which
-          # made the two sides resolve different dependency trees: mypy was green
-          # on GitHub and red here purely because the pins were older (plan
-          # rev 7.20). Installing the declared dependencies on both sides removes
-          # that class of failure rather than working around an instance of it.
+          # The same install command the GitHub-hosted lint and unit jobs run:
+          # both sides install the declared dependencies rather than a lock file.
+          # This runner's `venv` persists between runs and is not recreated with
+          # `--clear`, so pip keeps any installed version that still satisfies a
+          # requirement; the `pip freeze` below is what says which versions a run
+          # actually used.
           # `-e` is what wires up src/, since opus_support and the rest are
           # imported as installed packages rather than through a sys.path insert.
           python -m pip install -e ".[dev]"

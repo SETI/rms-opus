@@ -2059,8 +2059,7 @@ def get_triggered_tables(
                 # Currently there are no triggers on anything except obs_general
                 # and surface geometry (which is handled separately above), so
                 # only the obs_general arm of the join condition is reachable
-                # from here -- both arms of the equivalent branch used to be
-                # marked "# pragma: no cover" for that reason.
+                # from here.
                 trigger_model = apps.get_model('search', ''.join(trigger_tab.title().split('_')))
                 trigger_column = trigger_model._meta.get_field(trigger_col).column
                 select = sql_builder.Select(distinct=True)

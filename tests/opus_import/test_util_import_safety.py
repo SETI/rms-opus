@@ -1,9 +1,9 @@
 """Importing an `opus_import.util` tool must do nothing.
 
-Both tools used to run their whole job in the module body: `retrieve_ra_dec` issued one
-live SIMBAD HTTP request per star in `STARS` -- about 160 of them -- and
-`dump_pds_definitions` read ``sys.argv[1]``, so importing it with no arguments raised
-`IndexError`. Sphinx autodoc is pointed at every module in the package, so this is
+Both tools hold their work behind `main()`, and neither may do any of it on import:
+`retrieve_ra_dec` issues one live SIMBAD HTTP request per star in `STARS` -- about 160
+of them -- and `dump_pds_definitions` reads ``sys.argv[1]``, which raises `IndexError`
+with no arguments. Sphinx autodoc is pointed at every module in the package, so this is
 the property that keeps a documentation build off the network.
 
 These tests import the modules in a subprocess with the network and ``sys.argv`` set up

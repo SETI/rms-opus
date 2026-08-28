@@ -117,14 +117,14 @@ class ApiHelpTests(ApiTestHelper, TestCase):
         """[test_help_api.py] /apiguide.pdf: redirects to the published guide
 
         The guide is documentation rather than a page this application renders, so
-        the entry point that used to return a PDF of it answers 302 instead. The
-        target is a setting, and it is asserted here rather than being spelled out
-        again, so that moving the guide is one edit.
+        this entry point answers 302 rather than returning a PDF. The target is a
+        setting, and it is asserted here rather than being spelled out again, so
+        that moving the guide is one edit.
         """
         self._run_redirect_equal('/apiguide.pdf', settings.API_GUIDE_URL)
 
     def test__api_help_apiguide_internal_gone(self) -> None:
-        """[test_help_api.py] /__help/apiguide.html: no longer served"""
+        """[test_help_api.py] /__help/apiguide.html: not served"""
         self._run_status_equal('/__help/apiguide.html', 404)
 
     def test__api_help_bad(self) -> None:

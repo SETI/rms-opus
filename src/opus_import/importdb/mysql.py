@@ -987,10 +987,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             # ON DUPLICATE KEY UPDATE has to name each row's new value indirectly,
             # because one statement carries many rows. The row alias MySQL 8.0.19
             # added is how: it names the row being inserted, so `new`.`col` is that
-            # row's value for that column. It replaces VALUES(col), which 8.0.20
-            # deprecated -- so this raises the server floor from Django's own 8.0.11
-            # to 8.0.19, which README.md and the developer guide's prerequisites now
-            # state.
+            # row's value for that column. The alternative spelling, VALUES(col), is
+            # deprecated as of 8.0.20. The alias is what puts the server floor at
+            # 8.0.19, which README.md and the developer guide's prerequisites state.
             # MySQL requires the row alias to differ from the table name, and a
             # `perm`-namespace name is the raw one, so a table called `new` would
             # produce a syntax error deep inside an import. No OPUS table is called

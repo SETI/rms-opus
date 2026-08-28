@@ -1760,9 +1760,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
 
     def test__api_cart_addrange_bad_order_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart bad order slug"
-        # view=cart makes _edit_cart_range sort the cart itself, so it resolves
-        # the order slug; an unresolvable slug used to reach
-        # create_order_by_terms as None and abort there.
+        # view=cart makes _edit_cart_range sort the cart itself, so it resolves the
+        # order slug here rather than through the search cache table: an unresolvable
+        # one has to be refused here and not carried into create_order_by_terms.
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)

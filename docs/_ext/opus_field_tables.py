@@ -12,8 +12,8 @@ into ``param_info``, and the category names and their order come from
 `opus_import.steps.do_table_names.build_table_names_rows`, which is what fills
 ``table_names``. The remaining rules -- which columns are listed, how a linked field is
 labelled, and how the per-target surface geometry categories are collapsed -- follow
-`opus_app.apps.metadata.views.get_fields_info`, which is what the application rendered
-the table from before this guide took it over.
+`opus_app.apps.metadata.views.get_fields_info`, which is what the application renders
+the same table from.
 
 `setup` registers this module as a Sphinx extension: it writes the table into the
 documentation source tree before each build.

@@ -32,9 +32,8 @@ What is worth pinning here, and why:
 * **That an unhandled exception is logged with its traceback.** A 500 whose only
   record is "something failed" is what issue #512 is about; the traceback is the
   point of catching it centrally rather than letting it reach Django.
-* **Fault injection firing before the handler.** The knobs used to fire at a
-  hundred interior points; the decorator now consults them once, and a handler
-  that was not supposed to run must not have run.
+* **Fault injection firing before the handler.** The decorator consults the knobs
+  once, in one place, and a handler that was not supposed to run must not have run.
 * **That `api_code` is supplied only to handlers that ask for it.** The wrapper
   inspects the handler's signature once, at decoration time, and a mistake there
   would be a TypeError on every request to half the API.

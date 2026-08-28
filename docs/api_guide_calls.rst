@@ -1,6 +1,3 @@
-.. Ported from the API guide OPUS used to render inside the application. This
-   file is the guide now; nothing regenerates it.
-
 .. _apicalls:
 
 API Calls

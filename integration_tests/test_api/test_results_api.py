@@ -72,10 +72,10 @@ class ApiResultsTests(ApiTestHelper, TestCase):
 
     def test__api_dataimages_bad_order_cart(self) -> None:
         "[test_results_api.py] /__api/dataimages: bad order with view=cart"
-        # view=cart takes the branch that sorts the cart itself rather than
-        # reusing the search cache table's order, so it resolves the order slug
-        # in a different place; an unresolvable slug used to reach
-        # create_order_by_terms as None and abort there.
+        # view=cart takes the branch that sorts the cart itself rather than reusing
+        # the search cache table's order, so it resolves the order slug in a different
+        # place: an unresolvable one has to be refused there too, and not carried into
+        # create_order_by_terms.
         url = '/__api/dataimages.json?view=cart&order=xxx&reqno=1'
         self._run_status_equal(url, 400, http400_unknown_slug(None, '/__api/dataimages.json'))
 

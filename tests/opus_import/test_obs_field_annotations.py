@@ -779,9 +779,9 @@ def _instrument_for(fixture: dict[str, Any]) -> ObsBase:
         'obs_general_row': {'id': 1, 'opus_id': _FakePdsFile.opus_id},
     }
     cls = _class_by_name(fixture['class_name'])
-    # Driven with the real CLI's defaults, which `make_context` supplies. This used to
-    # name the run arguments an obs class reads, one at a time; that list was a
-    # snapshot of a grep and went stale as soon as another argument was read.
+    # Driven with the real CLI's defaults, which `make_context` supplies. Naming the
+    # run arguments an obs class reads, one at a time, would be a snapshot of a grep
+    # and would go stale as soon as another argument was read.
     instrument = cls(make_context(), bundle='TEST_BUNDLE', metadata=metadata)
     # Replacing a bound method is the point: there are no holdings here, and this is
     # the one thing an obs class asks the file system for. Everything else it reads
@@ -1137,8 +1137,8 @@ def test_a_missing_filespec_is_reported_on_the_very_first_observation(
     """The empty opus_id cache must not answer for an observation that has no filespec.
 
     `ObsBase` starts the cache at ``(None, None)``, so a `primary_filespec` of None
-    equals `_opus_id_last_filespec` on the first call and used to return the cached None
-    as a *hit* -- skipping the branch that logs the error. The observation that goes
+    equals `_opus_id_last_filespec` on the first call, so treating that as a *hit* and
+    returning the cached None skips the branch that logs the error. The observation that goes
     unreported is therefore the first invalid one, which is the one a maintainer most
     needs to hear about, and nothing downstream can tell "no id" from "cached no id".
 

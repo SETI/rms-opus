@@ -32,11 +32,10 @@ OUTPUT_PATH=$1
 # file that this installation's own loader rejects at startup.
 #
 # The same loop catches an unset or empty variable, so a deploy environment missing a
-# key stops here rather than writing a file with an empty database password or -- the
-# case that used to slip through the old opus_secrets reader entirely -- an empty
-# Django secret key. `set -u` alone is not enough: it reports `!_toml_var: unbound
-# variable`, naming this loop's own variable rather than the one the operator has to
-# fix, so the check is explicit and the message names the culprit.
+# key stops here rather than writing a file with an empty database password or an
+# empty Django secret key. `set -u` alone is not enough: it reports
+# `!_toml_var: unbound variable`, naming this loop's own variable rather than the one
+# the operator has to fix, so the check is explicit and the message names the culprit.
 for _toml_var in \
     OPUS_DB_NAME OPUS_DB_USER OPUS_DB_PASSWORD PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR \
     OPUS_LOG_DIR OPUS_DIR LAST_BLOG_UPDATE_FILE NOTIFICATION_FILE OPUS_SECRET_KEY \

@@ -13,10 +13,9 @@ Two ways to write one are wrong, neither announces itself, and both read natural
 - ``cls.body`` skips a method defined inside an ``if``. `ObsBase` subclasses do define
   methods conditionally, so this one is a live hazard rather than a latent one.
 
-Both were written here, and both were fixed in one file; the second was then
-reintroduced a few hundred lines below the first, in the same file, by a scan
-written later. Hence this module: import the traversal instead of writing it, so
-the correct one is the only one reachable.
+Both are easy to write independently in each scan that needs one, which is what this
+module exists to stop: import the traversal rather than writing it, so the correct one
+is the only one reachable.
 """
 
 from __future__ import annotations

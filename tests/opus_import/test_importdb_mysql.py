@@ -5,11 +5,10 @@ These tests never open a connection: they build an `ImportDBMySQL` through
 shape of the statement: one statement per packet of rows, **every** value passed as a
 parameter rather than interpolated, and the key column left out of the update clause.
 
-The middle one is the one that was tightened. This backend used to pass only `str`
-values as parameters and format everything else -- numbers, booleans, None -- into
-the statement text with `str()`; now every value is a `%s`, which is what makes
-"no value is ever formatted into SQL text" true of this backend rather than nearly
-true. The identifier tests below cover the other half of that change.
+The middle one is the one to watch: every value is a `%s`, numbers and booleans and
+None included, which is what makes "no value is ever formatted into SQL text" true of
+this backend rather than nearly true. The identifier tests below cover the other half
+of that property, the names that cannot travel as parameters at all.
 """
 
 from typing import Any
@@ -268,9 +267,9 @@ def test_quote_identifier_rejects_anything_else(db: _RecordingDB, name: Any) -> 
 def test_where_clause_values_travel_as_parameters(db: _RecordingDB) -> None:
     """delete_rows and copy_rows_between_namespaces take their own parameters.
 
-    Their callers used to build `bundle_id="COISS_2002"` by interpolation, which is
-    the one place in the import pipeline where a value read off the command line
-    reached the statement text.
+    Their WHERE clauses are the one place in the import pipeline where a value read
+    off the command line reaches a statement, so building `bundle_id="COISS_2002"` by
+    interpolation here is what parameters have to keep out.
     """
     where = f'{db.quote_identifier("bundle_id")}=%s'
     db.delete_rows('perm', 'obs_general', where, where_params=['COISS_2002'])
@@ -313,7 +312,7 @@ def test_upsert_row_omits_the_update_clause_for_a_key_only_row(db: _RecordingDB)
     """With nothing but the key there is nothing to assign, so no dangling clause.
 
     The same rule `upsert_rows` follows. It is not reachable through the pipeline,
-    which no longer calls `upsert_row` at all, but the method is part of the
+    which does not call `upsert_row` at all, but the method is part of the
     `ImportDBSuper` backend interface and an empty assignment list is a syntax
     error, so the two siblings should not disagree about it.
     """
@@ -358,10 +357,9 @@ class _FailingDB(_RecordingDB):
 def test_a_failed_statement_becomes_an_import_db_error(method: str, args: tuple[Any, ...]) -> None:
     """Every mutating method reports a server failure as ImportDBError.
 
-    `delete_rows` and `copy_rows_between_namespaces` used to let the raw
-    `MySQLdb.Error` escape, which is the one kind of database failure a plain
-    `except Exception:` could have swallowed without the top-level handler ever
-    seeing it.
+    A raw `MySQLdb.Error` escaping `delete_rows` or `copy_rows_between_namespaces`
+    is the one kind of database failure a plain `except Exception:` could swallow
+    without the top-level handler ever seeing it, so every one of them wraps.
     """
     db = _FailingDB()
 

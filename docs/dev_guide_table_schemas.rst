@@ -200,8 +200,8 @@ dispatch above: it builds each row from a literal, and takes the row id by calli
 ``MAX_ID``. Its schema's list-valued ``data_source`` entries are therefore **dead
 data** -- nothing reads them. The ``TAB:`` values among them are the only ones left in
 the repository, and a ``TAB:`` written into any other schema would be reported as an
-unknown data source: they are a survival of a vocabulary the pipeline no longer
-dispatches on.
+unknown data source: they are a survival of a vocabulary the pipeline does not
+dispatch on.
 
 Validating the value
 ~~~~~~~~~~~~~~~~~~~~
