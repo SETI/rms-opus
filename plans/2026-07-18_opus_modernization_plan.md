@@ -7206,3 +7206,30 @@ body; never rewrite or delete earlier notes.*
     content matches `\s*[)\]}]+,?`) is lines containing nothing but closing brackets and
     perhaps a comma; widen the pattern to any line beginning with a closer and it is +2399,
     so quote the pattern with the number.
+- **2026-08-28 (orchestrator, after PR-23 merged as `ff35c1c1`):** two facts, one of them a decision.
+  - **rfrench accepted the recommendation and `ruff format` is now adopted.** PR-23 was
+    deliberately opened unmerged so the reformat could be *evaluated* before being committed
+    to -- rfrench's instruction was "do not merge it, evaluate how much format changes the
+    code and if the code was easier to read before or after". The evaluation found the change
+    cuts both ways by construct (multi-kilobyte literals and deep aligned continuations
+    improve; short aligned literals grow ~3x; implicit concatenation inside dict values
+    de-indents so entry boundaries vanish, which no config prevents), and recorded that "do
+    not adopt" was a coherent reading of the same evidence. The deciding argument was that
+    **manual formatting demonstrably had not held**: 189 of 230 files disagreed with any
+    mechanical standard and the golden suite carried a **13,476-character line**. Accepted
+    2026-08-28. The formatter is enforced from here, so **PR-24 must not reformat anything**
+    -- the tree is already conformant and `ruff format --check` gates it.
+  - **The finding worth carrying past this plan: `ruff format` is not purely mechanical on an
+    existing tree.** It displaced `# type: ignore` comments in 6 sites / 17 lines, taking mypy
+    **clean -> 17 errors -> clean**; exploding a tuple assignment turned one suppression on the
+    closing line into two attached to individual elements, and an `[operator]` ignore moved
+    between operands of a concatenation. Repair meant 11 comments written and 6 removed, each
+    needing judgement about which expression the error attaches to. **Neither the formatter nor
+    `ruff format --check` can catch this, because the broken file IS correct formatter output**
+    -- only mypy did, which is a direct return on Phase D's strict-typing work. Also recorded:
+    the new gate was established **by experiment** rather than by reading YAML (a deliberate
+    formatting violation turned CI red, the revert turned it green), because a skipped step
+    reports *success* and a guard that silently stops matching would retire the gate behind a
+    green check. And `ruff` was raised to **`>=0.9`** -- a floor correction, not a cap: 0.8.x
+    formats 29 of 189 files differently and so could not satisfy the gate this PR adds, while
+    0.9.0 through 0.16.5 are byte-identical on this tree.
