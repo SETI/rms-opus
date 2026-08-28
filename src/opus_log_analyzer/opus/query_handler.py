@@ -12,6 +12,7 @@ and new clause lists is what the `__show_search_change_*` methods render; where
 the change does not fit one of the recognized shapes, the whole new term is
 reported instead.
 """
+
 from __future__ import annotations
 
 import operator
@@ -61,14 +62,16 @@ class SearchClause(NamedTuple):
             TypeError: If `pairs` is empty, since the flags are reduced with no
                 initial value.
         """
-        mapping = {slug_info.family_type: value for slug_info, value in pairs}  # family_type to value
+        mapping = {
+            slug_info.family_type: value for slug_info, value in pairs
+        }  # family_type to value
         return SearchClause(
             min_value=mapping.get(slug.FamilyType.MIN),
             max_value=mapping.get(slug.FamilyType.MAX),
             single_value=mapping.get(slug.FamilyType.SINGLETON),
             qtype=mapping.get(slug.FamilyType.QTYPE),
             unit=mapping.get(slug.FamilyType.UNIT),
-            flags=reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
+            flags=reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs)),
         )
 
     def is_value_only(self) -> bool:
@@ -109,8 +112,13 @@ class QueryHandler:
     _previous_sort_order: str  # sort order
     _previous_state: State
 
-    def __init__(self, session_info: Any, slug_map: slug.ToInfoMap, default_metadata_slug_info: MetadataSlugInfo,
-                 uses_html: bool) -> None:
+    def __init__(
+        self,
+        session_info: Any,
+        slug_map: slug.ToInfoMap,
+        default_metadata_slug_info: MetadataSlugInfo,
+        uses_html: bool,
+    ) -> None:
         """Parameters:
         session_info: The session these queries belong to, notified of each
             action and slug the handler recognizes. Typed loosely because
@@ -136,8 +144,9 @@ class QueryHandler:
         self._previous_browses = ['', '']
         self._previous_state = State.RESET
 
-    def create_widget(self, _entry: LogEntry, _query: dict[str, str],
-                      widget: str) -> tuple[list[str], str | None]:
+    def create_widget(
+        self, _entry: LogEntry, _query: dict[str, str], widget: str
+    ) -> tuple[list[str], str | None]:
         """Report the opening of a search widget.
 
         Parameters:
@@ -156,8 +165,9 @@ class QueryHandler:
         else:
             return [], None
 
-    def handle_query(self, _entry: LogEntry, query: dict[str, str],
-                     query_type: str) -> tuple[list[str], str | None]:
+    def handle_query(
+        self, _entry: LogEntry, query: dict[str, str], query_type: str
+    ) -> tuple[list[str], str | None]:
         """Report one search request as the difference from the previous one.
 
         The snapshot this query carries replaces the stored one, so the next
@@ -181,7 +191,12 @@ class QueryHandler:
         result: list[str] = []
 
         if query_type == 'result_count':
-            uses_metadata, uses_pages, uses_sort, current_state = False, False, False, State.SEARCHING
+            uses_metadata, uses_pages, uses_sort, current_state = (
+                False,
+                False,
+                False,
+                State.SEARCHING,
+            )
         elif query_type == 'data' or query_type == 'dataimages':
             uses_metadata, uses_pages, uses_sort, current_state = True, True, True, State.FETCHING
         else:
@@ -199,8 +214,9 @@ class QueryHandler:
         if uses_metadata:
             metadata_query = query.get('cols')
             if metadata_query:
-                metadata_slug_info = self.get_metadata_slug_info(metadata_query.split(','),
-                                                                 self._slug_map, self._session_info)
+                metadata_slug_info = self.get_metadata_slug_info(
+                    metadata_query.split(','), self._slug_map, self._session_info
+                )
             else:
                 metadata_slug_info = self._default_metadata_slug_info
         else:
@@ -230,7 +246,11 @@ class QueryHandler:
                 current_browse = query.get('cart_browse') or query.get('colls_browse') or ''
 
             if startobs[is_browsing]:
-                page_type, info, previous_info = 'Starting Observation', startobs[is_browsing], self._previous_startobss
+                page_type, info, previous_info = (
+                    'Starting Observation',
+                    startobs[is_browsing],
+                    self._previous_startobss,
+                )
             elif page:
                 page_type, info, previous_info = 'Page', page, self._previous_pages
             else:
@@ -240,10 +260,10 @@ class QueryHandler:
 
             if query_type == 'dataimages':
                 action_flag = {
-                    ("Browse", "Table"): Action.VIEWED_BROWSE_TAB_AS_TABLE,
-                    ("Browse", "Gallery"): Action.VIEWED_BROWSE_TAB_AS_GALLERY,
-                    ("Cart", "Table"): Action.VIEWED_CART_TAB_AS_TABLE,
-                    ("Cart", "Gallery"): Action.VIEWED_CART_TAB_AS_GALLERY,
+                    ('Browse', 'Table'): Action.VIEWED_BROWSE_TAB_AS_TABLE,
+                    ('Browse', 'Gallery'): Action.VIEWED_BROWSE_TAB_AS_GALLERY,
+                    ('Cart', 'Table'): Action.VIEWED_CART_TAB_AS_TABLE,
+                    ('Cart', 'Gallery'): Action.VIEWED_CART_TAB_AS_GALLERY,
                 }[browse_or_cart, viewed]
                 # Attach the flag to the line we're about to add.
                 self._session_info.register_info_flags(action_flag, line_number=len(result))
@@ -270,7 +290,9 @@ class QueryHandler:
 
         return result, url
 
-    def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: list[str]) -> None:
+    def __handle_search_info(
+        self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: list[str]
+    ) -> None:
         """Handles info for the contents of search slugs"""
         if not new_info:
             if old_info:
@@ -290,9 +312,13 @@ class QueryHandler:
                 self._session_info.register_search_slug(family, line_number=line_number)
                 self._session_info.changed_search_slugs(line_number=line_number)
 
-    def __handle_search_info_for_family(self, family: slug.Family, old_info: SearchSlugInfo,
-                                        new_info: SearchSlugInfo,
-                                        result: list[str]) -> None:
+    def __handle_search_info_for_family(
+        self,
+        family: slug.Family,
+        old_info: SearchSlugInfo,
+        new_info: SearchSlugInfo,
+        result: list[str],
+    ) -> None:
         """Report how one field's constraints changed, in the most specific way that fits.
 
         The old and new clause lists are compared for four shapes, in order: the
@@ -326,26 +352,45 @@ class QueryHandler:
         if family.is_singleton():
             fields_info = (('value', 'single_value'), ('qtype', 'qtype'), ('unit', 'unit'))
         else:
-            fields_info = ((family.min, 'min_value'), (family.max, 'max_value'), ('qtype', 'qtype'), ('unit', 'unit'))
+            fields_info = (
+                (family.min, 'min_value'),
+                (family.max, 'max_value'),
+                ('qtype', 'qtype'),
+                ('unit', 'unit'),
+            )
 
         if len(old_data) == len(new_data):
-            for i, _old, _new in ((i, old, new) for i, (old, new) in enumerate(zip(old_data, new_data, strict=False)) if old != new):
+            for i, _old, _new in (
+                (i, old, new)
+                for i, (old, new) in enumerate(zip(old_data, new_data, strict=False))
+                if old != new
+            ):
                 self.__show_search_change_delta(family, fields_info, old_data, new_data, i, result)
             return
         if len(old_data) == len(new_data) - 1 and old_data == new_data[0:-1]:
             self.__show_search_change_add(family, fields_info, new_data, len(new_data) - 1, result)
             return
         if len(old_data) == len(new_data) + 1:
-            mismatch = next((i for i in range(len(new_data)) if old_data[i] != new_data[i]), len(new_data))
-            if old_data[mismatch + 1:] == new_data[mismatch:]:
-                self.__show_search_change_remove(family, fields_info, old_data, new_data, mismatch, result)
+            mismatch = next(
+                (i for i in range(len(new_data)) if old_data[i] != new_data[i]), len(new_data)
+            )
+            if old_data[mismatch + 1 :] == new_data[mismatch:]:
+                self.__show_search_change_remove(
+                    family, fields_info, old_data, new_data, mismatch, result
+                )
                 return
         self.__show_unexpected_change(family, fields_info, new_data, result)
 
-    def __show_search_change_add(self, family: slug.Family, fields_info: Sequence[tuple[str, str]],
-                                 new_data: list[SearchClause], index: int,
-                                 result: list[str], *,
-                                 action: str = 'Add Search') -> None:
+    def __show_search_change_add(
+        self,
+        family: slug.Family,
+        fields_info: Sequence[tuple[str, str]],
+        new_data: list[SearchClause],
+        index: int,
+        result: list[str],
+        *,
+        action: str = 'Add Search',
+    ) -> None:
         """Report one whole clause, as an addition by default.
 
         Parameters:
@@ -361,33 +406,57 @@ class QueryHandler:
                 follow a removal or a complex change.
         """
         search_family_values = new_data[index]
-        postscript = self.__get_postscript(search_family_values.flags) if len(new_data) == 1 else ""
+        postscript = self.__get_postscript(search_family_values.flags) if len(new_data) == 1 else ''
         label = family.label if len(new_data) == 1 else f'{family.label} #{index + 1}'
         space = ' ' * max(0, 13 - len(action))
 
         if family.is_singleton() and search_family_values.is_value_only():
             if self._uses_html:
-                result.append(self.safe_format(
-                    '{}: "{}" = <mark><ins>{}</ins></mark>{}',
-                    action, label, self.__format_search_value(search_family_values.single_value), postscript))
+                result.append(
+                    self.safe_format(
+                        '{}: "{}" = <mark><ins>{}</ins></mark>{}',
+                        action,
+                        label,
+                        self.__format_search_value(search_family_values.single_value),
+                        postscript,
+                    )
+                )
             else:
-                result.append(f'{action}:{space} "{label}" = "{search_family_values.single_value}"{postscript}')
+                result.append(
+                    f'{action}:{space} "{label}" = "{search_family_values.single_value}"{postscript}'
+                )
         else:
-            fields = [(name, getattr(search_family_values, attribute)) for name, attribute in fields_info]
+            fields = [
+                (name, getattr(search_family_values, attribute)) for name, attribute in fields_info
+            ]
             if self._uses_html:
                 joined_info: str = Markup(', ').join(
-                    self.safe_format('<mark><ins>{}:{}</ins></mark>', name, self.__format_search_value(value), )
-                    for (name, value) in fields)
-                result.append(self.safe_format('{}: "{}" = ({}){}', action, label, joined_info, postscript))
+                    self.safe_format(
+                        '<mark><ins>{}:{}</ins></mark>',
+                        name,
+                        self.__format_search_value(value),
+                    )
+                    for (name, value) in fields
+                )
+                result.append(
+                    self.safe_format('{}: "{}" = ({}){}', action, label, joined_info, postscript)
+                )
             else:
-                joined_info = ", ".join(
-                    f'{name.upper()}:{self.__format_search_value(value)}' for (name, value) in fields)
+                joined_info = ', '.join(
+                    f'{name.upper()}:{self.__format_search_value(value)}'
+                    for (name, value) in fields
+                )
                 result.append(f'{action}:{space} "{label}" = ({joined_info}){postscript}')
 
-    def __show_search_change_remove(self, family: slug.Family, fields_info: Sequence[tuple[str, str]],
-                                    old_data: list[SearchClause], new_data: list[SearchClause],
-                                    index: int,
-                                    result: list[str]) -> None:
+    def __show_search_change_remove(
+        self,
+        family: slug.Family,
+        fields_info: Sequence[tuple[str, str]],
+        old_data: list[SearchClause],
+        new_data: list[SearchClause],
+        index: int,
+        result: list[str],
+    ) -> None:
         """Report that one clause was removed, then list the ones that remain.
 
         Parameters:
@@ -402,11 +471,17 @@ class QueryHandler:
         label = family.label if length == 1 else f'{family.label} #{index + 1}'
         result.append(f'Remove Search Term: "{label}"')
         for i in range(len(new_data)):
-            self.__show_search_change_add(family, fields_info, new_data, i, result, action="- Current Search Term")
+            self.__show_search_change_add(
+                family, fields_info, new_data, i, result, action='- Current Search Term'
+            )
 
-    def __show_unexpected_change(self, family: slug.Family, fields_info: Sequence[tuple[str, str]],
-                                 new_data: list[SearchClause],
-                                 result: list[str]) -> None:
+    def __show_unexpected_change(
+        self,
+        family: slug.Family,
+        fields_info: Sequence[tuple[str, str]],
+        new_data: list[SearchClause],
+        result: list[str],
+    ) -> None:
         """Report a change that fits none of the recognized shapes.
 
         The change itself is not described; every current clause is listed
@@ -421,11 +496,19 @@ class QueryHandler:
         """
         result.append(f'Complex Change for Search Term: "{family.label}"')
         for i in range(len(new_data)):
-            self.__show_search_change_add(family, fields_info, new_data, i, result, action="- Current Search Term")
+            self.__show_search_change_add(
+                family, fields_info, new_data, i, result, action='- Current Search Term'
+            )
 
-    def __show_search_change_delta(self, family: slug.Family, fields_info: Sequence[tuple[str, str]],
-                                   old_list: list[SearchClause], new_list: list[SearchClause], index: int,
-                                   result: list[str]) -> None:
+    def __show_search_change_delta(
+        self,
+        family: slug.Family,
+        fields_info: Sequence[tuple[str, str]],
+        old_list: list[SearchClause],
+        new_list: list[SearchClause],
+        index: int,
+        result: list[str],
+    ) -> None:
         """Report how one clause changed, field by field.
 
         A singleton field whose old and new clauses both carry a bare value is
@@ -442,14 +525,21 @@ class QueryHandler:
             result: The report lines, appended to.
         """
         old_values, new_values = old_list[index], new_list[index]
-        label = family.label if index == 0 and len(old_list) == 1 else f"{family.label} #{index + 1}"
+        label = (
+            family.label if index == 0 and len(old_list) == 1 else f'{family.label} #{index + 1}'
+        )
 
         if family.is_singleton() and old_values.is_value_only() and new_values.is_value_only():
-            self.__slug_value_change(label, old_values.single_value or '', new_values.single_value or '', result)
+            self.__slug_value_change(
+                label, old_values.single_value or '', new_values.single_value or '', result
+            )
         else:
-            fields = [(name, getattr(old_values, attr), getattr(new_values, attr))
-                      for name, attr in fields_info]
+            fields = [
+                (name, getattr(old_values, attr), getattr(new_values, attr))
+                for name, attr in fields_info
+            ]
             if self._uses_html:
+
                 def maybe_mark(tag: str, old: str | None, new: str | None) -> str:
                     """Render one changed attribute, marking it when it moved.
 
@@ -465,9 +555,12 @@ class QueryHandler:
                     fmt = '{}:{}' if old == new else '<mark>{}:{}</mark>'
                     return self.safe_format(fmt, tag, self.__format_search_value(new))
 
-                joined_info: str = Markup(', ').join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
+                joined_info: str = Markup(', ').join(
+                    maybe_mark(tag, old, new) for (tag, old, new) in fields
+                )
                 result.append(self.safe_format('Change Search: "{}": ({})', label, joined_info))
             else:
+
                 def maybe_mark(tag: str, old: str | None, new: str | None) -> str:
                     """Render one changed attribute, upper-casing it when it moved.
 
@@ -485,8 +578,9 @@ class QueryHandler:
                 joined_info = ', '.join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
                 result.append(f'Change Search: "{label}" = ({joined_info})')
 
-    def __get_metadata_info(self, old_info: MetadataSlugInfo | None, new_info: MetadataSlugInfo,
-                            result: list[str]) -> None:
+    def __get_metadata_info(
+        self, old_info: MetadataSlugInfo | None, new_info: MetadataSlugInfo, result: list[str]
+    ) -> None:
         """Report which metadata columns the user selected or removed.
 
         Nothing is reported when the set of columns is unchanged.
@@ -545,10 +639,12 @@ class QueryHandler:
                 result.append(f'Add Selected Metadata:    "{slug_info.label}"{postscript}')
             else:
                 result.append(
-                    self.safe_format('Add Selected Metadata: "{}"{}', slug_info.label, postscript))
+                    self.safe_format('Add Selected Metadata: "{}"{}', slug_info.label, postscript)
+                )
 
-    def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str,
-                              result: list[str]) -> None:
+    def __get_sort_order_info(
+        self, old_sort_order: str, new_sort_order: str, result: list[str]
+    ) -> None:
         """Report a change of sort order, one line per column.
 
         Nothing is reported when the order is unchanged.
@@ -580,10 +676,13 @@ class QueryHandler:
                 result.append(f'        "{slug_info.label}" ({order})')
             for line_number in range(start_result_length, len(result)):
                 self._session_info.register_sort_slugs_changed(sort_list, line_number=line_number)
-                self._session_info.register_info_flags(Action.CHANGED_SORT_ORDER, line_number=line_number)
+                self._session_info.register_info_flags(
+                    Action.CHANGED_SORT_ORDER, line_number=line_number
+                )
 
-    def __slug_value_change(self, name: str, old_value: str, new_value: str,
-                            result: list[str]) -> None:
+    def __slug_value_change(
+        self, name: str, old_value: str, new_value: str, result: list[str]
+    ) -> None:
         """Report which of a multi-valued term's values were added or removed.
 
         The values are treated as a set, so reordering alone reports nothing. In
@@ -605,9 +704,13 @@ class QueryHandler:
             for value in sorted(old_value_set.union(new_value_set)):
                 formatted_value = self.__format_search_value(value)
                 if value not in old_value_set:
-                    marked_changes.append(self.safe_format('<mark><ins>{}</ins></mark>', formatted_value))
+                    marked_changes.append(
+                        self.safe_format('<mark><ins>{}</ins></mark>', formatted_value)
+                    )
                 elif value not in new_value_set:
-                    marked_changes.append(self.safe_format('<mark><del>{}</del></mark>', formatted_value))
+                    marked_changes.append(
+                        self.safe_format('<mark><del>{}</del></mark>', formatted_value)
+                    )
                 else:
                     # formatted_value comes from this class's own safe_format helper above,
                     # which escaped it already; re-wrapping keeps it from being escaped twice.
@@ -645,12 +748,16 @@ class QueryHandler:
             nothing but a qtype and a unit is omitted, since it constrains
             nothing on its own.
         """
-        family_group_mapping: dict[tuple[slug.Family, int], list[tuple[slug.Info, str]]] = defaultdict(list)
+        family_group_mapping: dict[tuple[slug.Family, int], list[tuple[slug.Info, str]]] = (
+            defaultdict(list)
+        )
 
         for slug_name, value in query.items():
             slug_info = self._slug_map.get_info_for_search_slug(slug_name, value)
             if slug_info:
-                family_group_mapping[slug_info.family, slug_info.subgroup].append((slug_info, value))
+                family_group_mapping[slug_info.family, slug_info.subgroup].append(
+                    (slug_info, value)
+                )
                 self._session_info.add_search_slug(slug_name, slug_info)
 
         # Only keep the family/subgroup if there is something there besides QTYPE and UNIT
@@ -662,8 +769,9 @@ class QueryHandler:
         return result
 
     @staticmethod
-    def get_metadata_slug_info(slugs: list[str], slug_map: slug.ToInfoMap,
-                               session_info: Any | None = None) -> MetadataSlugInfo:
+    def get_metadata_slug_info(
+        slugs: list[str], slug_map: slug.ToInfoMap, session_info: Any | None = None
+    ) -> MetadataSlugInfo:
         """
         This returns a map from the slugs that appear in the list of strings to the Info for that slug,
         provided that the info exists.
@@ -725,4 +833,3 @@ class QueryHandler:
             The formatted text.
         """
         return cast(str, self._session_info.safe_format(format_string, *args))
-

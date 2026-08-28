@@ -28,12 +28,18 @@ if TYPE_CHECKING:
 __all__ = ['ImportDBError', 'get_db']
 
 
-def get_db(db_brand: str, db_hostname: str, db_name: str, db_schema: str,
-           db_user: str, db_password: str,
-           mult_form_types: Sequence[str] | None = None,
-           import_prefix: str | None = None,
-           logger: pdslogger.PdsLogger | None = None,
-           read_only: bool = False) -> ImportDBSuper:
+def get_db(
+    db_brand: str,
+    db_hostname: str,
+    db_name: str,
+    db_schema: str,
+    db_user: str,
+    db_password: str,
+    mult_form_types: Sequence[str] | None = None,
+    import_prefix: str | None = None,
+    logger: pdslogger.PdsLogger | None = None,
+    read_only: bool = False,
+) -> ImportDBSuper:
     """Open a database of the named brand.
 
     Parameters:
@@ -61,11 +67,17 @@ def get_db(db_brand: str, db_hostname: str, db_name: str, db_schema: str,
             connection cannot be opened.
     """
     if db_brand.upper() == 'MYSQL':
-        return ImportDBMySQL(db_hostname, db_name, db_schema,
-                             db_user, db_password,
-                             mult_form_types=mult_form_types,
-                             import_prefix=import_prefix,
-                             logger=logger, read_only=read_only)
+        return ImportDBMySQL(
+            db_hostname,
+            db_name,
+            db_schema,
+            db_user,
+            db_password,
+            mult_form_types=mult_form_types,
+            import_prefix=import_prefix,
+            logger=logger,
+            read_only=read_only,
+        )
     # if db_brand.upper() == 'POSTGRESQL':
     #     return ImportDBPostgreSQL(db_hostname, db_name, db_schema,
     #                               db_user, db_password,
@@ -74,4 +86,4 @@ def get_db(db_brand: str, db_hostname: str, db_name: str, db_schema: str,
     #                               logger=logger, read_only=read_only)
     if logger:
         logger.log('fatal', f'Unknown database brand "{db_brand}"')
-    raise ImportDBError('Unknown database brand '+db_brand)
+    raise ImportDBError('Unknown database brand ' + db_brand)

@@ -4,6 +4,7 @@
 session's actions in order. `IconFlags` names the summary icons shown against a
 session in the report's session table.
 """
+
 from enum import Enum, Flag, auto
 
 
@@ -38,8 +39,14 @@ class Action(Enum):
         Underscores become spaces, the first letter is capitalized, and the four
         initialisms the actions use (CSV, ZIP, PDF, URL) are upper-cased.
         """
-        name = self.name.lower().replace("_", " ")\
-            .replace("csv", "CSV").replace("zip", "ZIP").replace('pdf', "PDF").replace('url', 'URL')
+        name = (
+            self.name.lower()
+            .replace('_', ' ')
+            .replace('csv', 'CSV')
+            .replace('zip', 'ZIP')
+            .replace('pdf', 'PDF')
+            .replace('url', 'URL')
+        )
         return name[0].upper() + name[1:]
 
 

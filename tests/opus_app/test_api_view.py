@@ -57,16 +57,17 @@ from opus_app.apps.tools.app_utils import (
 
 
 class ApiViewTests(TestCase):
-
     #: Settings these tests move and must put back: two of them are turned all
     #: the way up here, and a suite that does not reset them in its own setUp
     #: would then see every one of its API calls fail.
     """What the `api_view` decorator does around an OPUS API handler."""
 
-    _MUTATED_SETTINGS = ('OPUS_FAKE_API_DELAYS',
-                         'OPUS_FAKE_SERVER_ERROR404_PROBABILITY',
-                         'OPUS_FAKE_SERVER_ERROR500_PROBABILITY',
-                         'OPUS_LOG_API_CALLS')
+    _MUTATED_SETTINGS = (
+        'OPUS_FAKE_API_DELAYS',
+        'OPUS_FAKE_SERVER_ERROR404_PROBABILITY',
+        'OPUS_FAKE_SERVER_ERROR500_PROBABILITY',
+        'OPUS_LOG_API_CALLS',
+    )
 
     def setUp(self) -> None:
         """Record the settings this suite moves, then turn off fault injection.
@@ -75,8 +76,7 @@ class ApiViewTests(TestCase):
         way up here, and a suite that ran afterwards without resetting them would see
         every one of its API calls fail.
         """
-        self._saved_settings = {name: getattr(settings, name)
-                                for name in self._MUTATED_SETTINGS}
+        self._saved_settings = {name: getattr(settings, name) for name in self._MUTATED_SETTINGS}
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
@@ -104,6 +104,7 @@ class ApiViewTests(TestCase):
 
     def test__api_view_returns_the_handler_response(self) -> None:
         "[test_api_view.py] api_view: a handler that succeeds"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Answer 200 with a body the test can recognize."""
@@ -115,9 +116,9 @@ class ApiViewTests(TestCase):
 
     def test__api_view_passes_url_arguments_through(self) -> None:
         "[test_api_view.py] api_view: positional and keyword URL arguments"
+
         @api_view
-        def handler(request: HttpRequest, size: str,
-                    fmt: str | None = None) -> HttpResponse:
+        def handler(request: HttpRequest, size: str, fmt: str | None = None) -> HttpResponse:
             """Answer with the URL arguments given, so the test can read them back."""
             return HttpResponse(f'{size}/{fmt}')
 
@@ -138,10 +139,11 @@ class ApiViewTests(TestCase):
         handler(self._request())
         # The API call number increments by exactly one per call, which is what
         # makes it usable for correlating a slow query with its request.
-        self.assertEqual([seen[0], seen[0]+1], seen)
+        self.assertEqual([seen[0], seen[0] + 1], seen)
 
     def test__api_view_omits_api_code_when_not_asked(self) -> None:
         "[test_api_view.py] api_view: a handler with no api_code parameter"
+
         @api_view
         def handler(request: HttpRequest, **kwargs: str) -> HttpResponse:
             """Report the keyword arguments it got; api_code must not be one."""
@@ -152,6 +154,7 @@ class ApiViewTests(TestCase):
 
     def test__api_view_reraises_http404(self) -> None:
         "[test_api_view.py] api_view: Http404 reaches Django unchanged"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Raise the exception Django answers with its own 404 page."""
@@ -162,6 +165,7 @@ class ApiViewTests(TestCase):
 
     def test__api_view_turns_http400error_into_a_400(self) -> None:
         "[test_api_view.py] api_view: Http400Error becomes a 400 naming the problem"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Raise a bad-request error carrying a message the 400 page must show."""
@@ -170,12 +174,12 @@ class ApiViewTests(TestCase):
         response = handler(self._request('/api/data.json'))
         self.assertEqual(400, response.status_code)
         body = response.content.decode()
-        self.assertIn('Badly formatted limit &quot;x&quot; for /api/data.json',
-                      body)
+        self.assertIn('Badly formatted limit &quot;x&quot; for /api/data.json', body)
         self.assertIn('/api/data.json', body)
 
     def test__http400_body_falls_back_to_the_exception_name(self) -> None:
         "[test_api_view.py] api_view: an Http400Error carrying no message"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Raise the bad-request class itself, with no message to fall back on."""
@@ -187,6 +191,7 @@ class ApiViewTests(TestCase):
 
     def test__api_view_turns_any_other_exception_into_a_500(self) -> None:
         "[test_api_view.py] api_view: an unhandled exception becomes a 500"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Raise an exception the wrapper knows nothing about."""
@@ -194,11 +199,13 @@ class ApiViewTests(TestCase):
 
         response = handler(self._request('/api/data.json'))
         self.assertEqual(500, response.status_code)
-        self.assertIn('Unspecified internal server error for /api/data.json',
-                      response.content.decode())
+        self.assertIn(
+            'Unspecified internal server error for /api/data.json', response.content.decode()
+        )
 
     def test__api_view_logs_an_unhandled_exception_with_its_traceback(self) -> None:
         "[test_api_view.py] api_view: the 500 log record carries exc_info"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Raise an exception the wrapper knows nothing about, to be logged."""
@@ -206,8 +213,7 @@ class ApiViewTests(TestCase):
 
         logging.disable(logging.NOTSET)
         try:
-            with self.assertLogs('opus_app.apps.tools.app_utils',
-                                 level='ERROR') as captured:
+            with self.assertLogs('opus_app.apps.tools.app_utils', level='ERROR') as captured:
                 handler(self._request())
         finally:
             logging.disable(logging.CRITICAL)
@@ -220,6 +226,7 @@ class ApiViewTests(TestCase):
 
     def test__the_500_body_escapes_the_request_path(self) -> None:
         "[test_api_view.py] api_view: a hostile request path cannot inject HTML"
+
         # The 500 body is the one error page OPUS builds as raw HTML rather than
         # through a template, so it is the one that has to escape for itself. The
         # path is caller-controlled and lands in the message verbatim.
@@ -238,14 +245,14 @@ class ApiViewTests(TestCase):
 
     def test__the_400_body_escapes_the_message(self) -> None:
         "[test_api_view.py] api_view: a hostile value cannot inject HTML into a 400"
+
         # The 400 page renders through 400.html, so the template engine escapes it.
         # This pins that the escaping happens somewhere, not where: an unescaped
         # 400 would be the same defect as an unescaped 500.
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Raise a bad-request error whose message is markup the page must escape."""
-            raise Http400Error(http400_bad_limit('<script>alert(1)</script>',
-                                                 request))
+            raise Http400Error(http400_bad_limit('<script>alert(1)</script>', request))
 
         response = handler(self._request('/api/data.json'))
         body = response.content.decode()
@@ -255,6 +262,7 @@ class ApiViewTests(TestCase):
 
     def test__api_view_handles_a_missing_request(self) -> None:
         "[test_api_view.py] api_view: a handler called with no request at all"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Raise, so the wrapper builds its 500 page with no request to name."""
@@ -262,8 +270,9 @@ class ApiViewTests(TestCase):
 
         response = handler(None)
         self.assertEqual(500, response.status_code)
-        self.assertIn('Unspecified internal server error for (no request)',
-                      response.content.decode())
+        self.assertIn(
+            'Unspecified internal server error for (no request)', response.content.decode()
+        )
 
     def test__api_view_injects_a_404_before_the_handler_runs(self) -> None:
         "[test_api_view.py] api_view: OPUS_FAKE_SERVER_ERROR404_PROBABILITY"
@@ -300,6 +309,7 @@ class ApiViewTests(TestCase):
 
     def test__api_view_notes_an_injected_fault_in_the_api_call_log(self) -> None:
         "[test_api_view.py] api_view: injection with OPUS_LOG_API_CALLS enabled"
+
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Answer 200, which the injected fault replaces before this is reached."""
@@ -309,24 +319,22 @@ class ApiViewTests(TestCase):
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 1
         logging.disable(logging.NOTSET)
         try:
-            with self.assertLogs('opus_app.apps.tools.app_utils',
-                                 level='ERROR') as captured:
+            with self.assertLogs('opus_app.apps.tools.app_utils', level='ERROR') as captured:
                 handler(self._request())
         finally:
             logging.disable(logging.CRITICAL)
-        self.assertIn('Faking HTTP500 error',
-                      [record.getMessage() for record in captured.records])
+        self.assertIn('Faking HTTP500 error', [record.getMessage() for record in captured.records])
 
     def test__api_view_keeps_the_handler_name_and_docstring(self) -> None:
         "[test_api_view.py] api_view: the wrapper is transparent to introspection"
+
         @api_view
         def api_something(request: HttpRequest) -> HttpResponse:
             "A docstring Sphinx would have to find."
             return HttpResponse('ok')  # Never called.
 
         self.assertEqual('api_something', api_something.__name__)
-        self.assertEqual('A docstring Sphinx would have to find.',
-                         api_something.__doc__)
+        self.assertEqual('A docstring Sphinx would have to find.', api_something.__doc__)
 
     def test__api_view_reraises_what_django_answers_itself(self) -> None:
         "[test_api_view.py] api_view: SuspiciousOperation and friends are not absorbed"
@@ -338,9 +346,11 @@ class ApiViewTests(TestCase):
         # test is what stops the guard from silently rotting.
         for exception_class in (BadRequest, PermissionDenied, SuspiciousOperation):
             with self.subTest(exception_class=exception_class.__name__):
+
                 @api_view
-                def handler(request: HttpRequest,
-                            raises: type[Exception] = exception_class) -> HttpResponse:
+                def handler(
+                    request: HttpRequest, raises: type[Exception] = exception_class
+                ) -> HttpResponse:
                     """Raise the exception class this round of the loop is checking."""
                     raise raises('nope')
 
@@ -349,6 +359,7 @@ class ApiViewTests(TestCase):
 
     def test__api_view_closes_the_api_call_record_on_every_path(self) -> None:
         "[test_api_view.py] api_view: no path leaves an entry in _API_START_TIMES"
+
         @api_view
         def ok_handler(request: HttpRequest) -> HttpResponse:
             """Leave through the wrapper's success path."""
@@ -387,13 +398,11 @@ class ApiViewTests(TestCase):
         @api_view
         def handler(request: HttpRequest) -> HttpResponse:
             """Answer with bytes that are not text, so decoding them would fail."""
-            return HttpResponse(b'PK\x03\x04\xff\xfe not text',
-                                content_type='application/zip')
+            return HttpResponse(b'PK\x03\x04\xff\xfe not text', content_type='application/zip')
 
         logging.disable(logging.NOTSET)
         try:
-            with self.assertLogs('opus_app.apps.tools.app_utils',
-                                 level='ERROR') as captured:
+            with self.assertLogs('opus_app.apps.tools.app_utils', level='ERROR') as captured:
                 handler(self._request())
         finally:
             logging.disable(logging.CRITICAL)
@@ -413,12 +422,12 @@ class ApiViewTests(TestCase):
 
         logging.disable(logging.NOTSET)
         try:
-            with self.assertLogs('opus_app.apps.tools.app_utils',
-                                 level='ERROR') as captured:
+            with self.assertLogs('opus_app.apps.tools.app_utils', level='ERROR') as captured:
                 handler(self._request())
         finally:
             logging.disable(logging.CRITICAL)
-        exit_lines = [record.getMessage() for record in captured.records
-                      if 'EXIT' in record.getMessage()]
+        exit_lines = [
+            record.getMessage() for record in captured.records if 'EXIT' in record.getMessage()
+        ]
         self.assertEqual(1, len(exit_lines))
         self.assertIn('{"a": 1}', exit_lines[0])

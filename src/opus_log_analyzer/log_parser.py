@@ -9,6 +9,7 @@ A session is a run of one host's requests with no gap longer than the session
 timeout, and one that the configuration reports no icon flags for is discarded
 as having done nothing.
 """
+
 from __future__ import annotations
 
 import datetime
@@ -111,7 +112,7 @@ class Session(NamedTuple):
 
     def __repr__(self) -> str:
         """Render the session as its id, host and start time."""
-        return f"<Session#{self.id} {self.host_ip} @ {self.start_time()}>"
+        return f'<Session#{self.id} {self.host_ip} @ {self.start_time()}>'
 
 
 class HostInfo(NamedTuple):
@@ -139,6 +140,7 @@ class LogParser:
     """
     Code that reads through the log entries, groups them by host and by session, and prints them out in a nice format.
     """
+
     _configuration: AbstractConfiguration
     _session_timeout: datetime.timedelta
     _output: TextIO
@@ -147,12 +149,18 @@ class LogParser:
     _ip_to_host_converter: IpToHostConverter
     _id_generator: Iterator[str]
 
-    def __init__(self, configuration: AbstractConfiguration, *,
-                 session_timeout_minutes: int, output: str,
-                 uses_html: bool, by_ip: bool,
-                 ip_to_host_converter: IpToHostConverter,
-                 ignored_ips: list[ipaddress.IPv4Network],
-                 **_: Any) -> None:
+    def __init__(
+        self,
+        configuration: AbstractConfiguration,
+        *,
+        session_timeout_minutes: int,
+        output: str,
+        uses_html: bool,
+        by_ip: bool,
+        ip_to_host_converter: IpToHostConverter,
+        ignored_ips: list[ipaddress.IPv4Network],
+        **_: Any,
+    ) -> None:
         """Parameters:
         configuration: Decides what each request means and renders the HTML
             report.
@@ -172,7 +180,7 @@ class LogParser:
         if output:
             Path(output).parent.mkdir(parents=True, exist_ok=True)
         # Program-lifetime output stream (a file or stdout); not a scoped resource.
-        self._output = open(output, "w") if output else sys.stdout  # noqa: SIM115
+        self._output = open(output, 'w') if output else sys.stdout  # noqa: SIM115
         self._uses_html = uses_html
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
@@ -202,16 +210,24 @@ class LogParser:
             """
             if by_ip:
                 all_sessions.sort(key=lambda session: (session.host_ip, session.start_time()))
-                sessions_list = [list(group)
-                                 for _, group in itertools.groupby(all_sessions, lambda session: session.host_ip)]
+                sessions_list = [
+                    list(group)
+                    for _, group in itertools.groupby(all_sessions, lambda session: session.host_ip)
+                ]
             else:
                 all_sessions.sort(key=lambda session: session.start_time())
                 sessions_list = [[session] for session in all_sessions]
-            host_infos = [HostInfo(ip=ip, name=self._ip_to_host_converter.convert(ip), sessions=sessions)
-                          for sessions in sessions_list
-                          for ip in [sessions[0].host_ip]]
+            host_infos = [
+                HostInfo(ip=ip, name=self._ip_to_host_converter.convert(ip), sessions=sessions)
+                for sessions in sessions_list
+                for ip in [sessions[0].host_ip]
+            ]
             if by_ip:
-                host_infos.sort(key=lambda host_info: self.__sort_key_from_ip_and_name(host_info.ip, host_info.name))
+                host_infos.sort(
+                    key=lambda host_info: self.__sort_key_from_ip_and_name(
+                        host_info.ip, host_info.name
+                    )
+                )
             return host_infos
 
         output = self._output
@@ -255,8 +271,11 @@ class LogParser:
             next_timeout = current_time + self._session_timeout
 
             # Delete all sessions that have expired, even it it matches this one.
-            expired_sessions = {session_info for session_info in live_sessions.values()
-                                if session_info.timeout < current_time}
+            expired_sessions = {
+                session_info
+                for session_info in live_sessions.values()
+                if session_info.timeout < current_time
+            }
             for session in expired_sessions:
                 live_sessions.pop(session.host_ip)
             if previous_host_ip not in live_sessions:
@@ -278,9 +297,13 @@ class LogParser:
                 entry_info, _ = session_info.parse_log_entry(entry, LogId(0))
                 if not entry_info:
                     continue
-                current_session = LiveSession(host_ip=entry.host_ip, session_info=session_info,
-                                              start_time_string=entry.time_string, start_time=entry.time,
-                                              timeout=next_timeout)
+                current_session = LiveSession(
+                    host_ip=entry.host_ip,
+                    session_info=session_info,
+                    start_time_string=entry.time_string,
+                    start_time=entry.time,
+                    timeout=next_timeout,
+                )
                 live_sessions[entry.host_ip] = current_session
 
             # Print out information about this entry.
@@ -294,7 +317,10 @@ class LogParser:
 
                 hostname_from_ip = self.__get_hostname_from_ip(current_session.host_ip)
                 postscript = '' if is_just_created_session else ' CONTINUED'
-                print(f'Host {hostname_from_ip}: {current_session.start_time_string}{postscript}', file=output)
+                print(
+                    f'Host {hostname_from_ip}: {current_session.start_time_string}{postscript}',
+                    file=output,
+                )
 
             self.__print_entry_info(entry, entry_info, current_session.start_time)
 
@@ -314,7 +340,9 @@ class LogParser:
 
         sessions: list[Session] = []
         log_entries.sort(key=lambda entry: (entry.host_ip, entry.time))
-        for session_host_ip, session_log_entries_iter in itertools.groupby(log_entries, lambda entry: entry.host_ip):
+        for session_host_ip, session_log_entries_iter in itertools.groupby(
+            log_entries, lambda entry: entry.host_ip
+        ):
             if any(session_host_ip in ipNetwork for ipNetwork in self._ignored_ips):
                 continue
             session_log_entries = deque(session_log_entries_iter)
@@ -329,10 +357,13 @@ class LogParser:
 
                 session_start_time = entry.time
 
-                def create_session_entry(log_entry: LogEntry, entry_info: list[str],
-                                         opus_url: str | None, log_id: LogId,
-                                         session_start_time: datetime.datetime = session_start_time
-                                         ) -> Entry:
+                def create_session_entry(
+                    log_entry: LogEntry,
+                    entry_info: list[str],
+                    opus_url: str | None,
+                    log_id: LogId,
+                    session_start_time: datetime.datetime = session_start_time,
+                ) -> Entry:
                     """Build one session entry, timed relative to the session start.
 
                     Parameters:
@@ -347,11 +378,17 @@ class LogParser:
                     Returns:
                         The entry.
                     """
-                    return Entry(log_entry=log_entry,
-                                 relative_start_time=log_entry.time - session_start_time,
-                                 data=entry_info, opus_url=opus_url, id=log_id)
+                    return Entry(
+                        log_entry=log_entry,
+                        relative_start_time=log_entry.time - session_start_time,
+                        data=entry_info,
+                        opus_url=opus_url,
+                        id=log_id,
+                    )
 
-                current_session_entries = [create_session_entry(entry, entry_info, opus_url, entry_id)]
+                current_session_entries = [
+                    create_session_entry(entry, entry_info, opus_url, entry_id)
+                ]
 
                 # Keep on grabbing entries for as long as we have not reached a timeout.
                 session_end_time = session_start_time + self._session_timeout
@@ -361,14 +398,20 @@ class LogParser:
                     entry_id = LogId(entry_id + 1)
                     entry_info, opus_url = session_info.parse_log_entry(entry, entry_id)
                     if entry_info:
-                        current_session_entries.append(create_session_entry(entry, entry_info, opus_url, entry_id))
+                        current_session_entries.append(
+                            create_session_entry(entry, entry_info, opus_url, entry_id)
+                        )
 
                 if session_info.get_icon_flags():
                     # We ignore sessions that don't actually do anything.
-                    sessions.append(Session(host_ip=session_host_ip,
-                                            entries=current_session_entries,
-                                            session_info=session_info,
-                                            id=next(self._id_generator)))
+                    sessions.append(
+                        Session(
+                            host_ip=session_host_ip,
+                            entries=current_session_entries,
+                            session_info=session_info,
+                            id=next(self._id_generator),
+                        )
+                    )
 
         return sessions
 
@@ -383,7 +426,9 @@ class LogParser:
         for i, host_info in enumerate(host_infos):
             if i > 0:
                 print('\n----------\n', file=output)
-            hostname_from_ip = f'{host_info.name, ({host_info.ip})}' if host_info.name else str(host_info.ip)
+            hostname_from_ip = (
+                f'{host_info.name, ({host_info.ip})}' if host_info.name else str(host_info.ip)
+            )
             for j, session in enumerate(host_info.sessions):
                 if j > 0:
                     print(file=output)
@@ -401,8 +446,12 @@ class LogParser:
         batch_html_generator = self._configuration.create_batch_html_generator(host_infos_by_ip)
         batch_html_generator.generate_output(self._output)
 
-    def __print_entry_info(self, this_entry: LogEntry, this_entry_info: list[str],
-                           session_start_time: datetime.datetime) -> None:
+    def __print_entry_info(
+        self,
+        this_entry: LogEntry,
+        this_entry_info: list[str],
+        session_start_time: datetime.datetime,
+    ) -> None:
         """Print out the information for a log entry.
 
         Parameters:
@@ -474,5 +523,3 @@ class LogParser:
             value, modulus = divmod(value, 36)
             result.append(cls.ALPHABET36[modulus])
         return ''.join(reversed(result))
-
-

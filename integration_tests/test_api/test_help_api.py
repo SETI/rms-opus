@@ -33,7 +33,7 @@ class ApiHelpTests(ApiTestHelper, TestCase):
         settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -43,21 +43,19 @@ class ApiHelpTests(ApiTestHelper, TestCase):
         """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
-
-            #####################################
-            ######### /__help API TESTS #########
-            #####################################
+        #####################################
+        ######### /__help API TESTS #########
+        #####################################
 
     def test__api_help_about(self) -> None:
         "[test_help_api.py] /__help: about"
         url = '/__help/about.html'
         # Remove the GIT version number, host name, and database schema name.
-        self._run_html_range_file(url, 'api_help_about.html',
-                                  '<p><small>OPUS version', None)
+        self._run_html_range_file(url, 'api_help_about.html', '<p><small>OPUS version', None)
 
     def test__api_help_about_pdf(self) -> None:
         "[test_help_api.py] /__help: about pdf"
-        if platform.system() == 'Linux': # pragma: no cover
+        if platform.system() == 'Linux':  # pragma: no cover
             url = '/__help/about.pdf'
             self._run_status_equal(url, 200)
 
@@ -68,7 +66,7 @@ class ApiHelpTests(ApiTestHelper, TestCase):
 
     def test__api_help_bundles_pdf(self) -> None:
         "[test_help_api.py] /__help: bundles pdf"
-        if platform.system() == 'Linux': # pragma: no cover
+        if platform.system() == 'Linux':  # pragma: no cover
             url = '/__help/bundles.pdf'
             self._run_status_equal(url, 200)
 
@@ -79,7 +77,7 @@ class ApiHelpTests(ApiTestHelper, TestCase):
 
     def test__api_help_faq_pdf(self) -> None:
         "[test_help_api.py] /__help: faq pdf"
-        if platform.system() == 'Linux': # pragma: no cover
+        if platform.system() == 'Linux':  # pragma: no cover
             url = '/__help/faq.pdf'
             self._run_status_equal(url, 200)
 
@@ -90,7 +88,7 @@ class ApiHelpTests(ApiTestHelper, TestCase):
 
     def test__api_help_gettingstarted_pdf(self) -> None:
         "[test_help_api.py] /__help: gettingstarted pdf"
-        if platform.system() == 'Linux': # pragma: no cover
+        if platform.system() == 'Linux':  # pragma: no cover
             url = '/__help/gettingstarted.pdf'
             self._run_status_equal(url, 200)
 
@@ -111,7 +109,7 @@ class ApiHelpTests(ApiTestHelper, TestCase):
 
     def test__api_help_citing_pdf(self) -> None:
         "[test_help_api.py] /__help: citing pdf"
-        if platform.system() == 'Linux': # pragma: no cover
+        if platform.system() == 'Linux':  # pragma: no cover
             url = '/__help/citing.pdf'
             self._run_status_equal(url, 200)
 

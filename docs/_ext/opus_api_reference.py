@@ -37,22 +37,27 @@ class PackageEntry(NamedTuple):
 
 #: The packages the API reference covers, in the order its landing page lists them.
 PACKAGES = (
-    PackageEntry('opus_config',
-                 'Loads the TOML configuration file named by ``OPUS_CONFIG`` and hands '
-                 'it to the rest of OPUS as frozen dataclasses.'),
-    PackageEntry('opus_support',
-                 'The unit, time, spacecraft-clock, angle and orbit conversions that '
-                 'the import pipeline and the web application both need. It is '
-                 'internal to OPUS and carries no API guarantees for anything outside '
-                 'this distribution.'),
-    PackageEntry('opus_import',
-                 'The import pipeline: reads PDS holdings and writes the OPUS '
-                 'database.'),
-    PackageEntry('opus_app',
-                 'The Django project serving the OPUS user interface and the public '
-                 'web API.'),
-    PackageEntry('opus_log_analyzer',
-                 'Turns Apache access logs into reports on how OPUS is being used.'),
+    PackageEntry(
+        'opus_config',
+        'Loads the TOML configuration file named by ``OPUS_CONFIG`` and hands '
+        'it to the rest of OPUS as frozen dataclasses.',
+    ),
+    PackageEntry(
+        'opus_support',
+        'The unit, time, spacecraft-clock, angle and orbit conversions that '
+        'the import pipeline and the web application both need. It is '
+        'internal to OPUS and carries no API guarantees for anything outside '
+        'this distribution.',
+    ),
+    PackageEntry(
+        'opus_import', 'The import pipeline: reads PDS holdings and writes the OPUS database.'
+    ),
+    PackageEntry(
+        'opus_app', 'The Django project serving the OPUS user interface and the public web API.'
+    ),
+    PackageEntry(
+        'opus_log_analyzer', 'Turns Apache access logs into reports on how OPUS is being used.'
+    ),
 )
 
 #: Modules kept out of the reference, mapped to the reason each one is out.
@@ -61,15 +66,13 @@ PACKAGES = (
 #: here, because a reader who cannot find a module needs to be told it was left out --
 #: silence would look like an oversight, or like the module not existing.
 EXCLUDED_MODULES = {
-    'opus_app.clear_django_cache':
-        'calls ``settings.configure()`` in its module body, which autodoc would run '
-        'during the build -- configuring Django a second time, from a different '
-        'source than the build has already used',
-    'opus_app.apps.search.models':
-        'is machine-written by ``scripts/models/create_opus_models.sh`` from a '
-        'populated database: one class per database table plus a nested ``Meta`` '
-        'class each, none docstringed and none surviving the next regeneration. The '
-        'tables themselves are described in :doc:`dev_guide_database`',
+    'opus_app.clear_django_cache': 'calls ``settings.configure()`` in its module body, which autodoc would run '
+    'during the build -- configuring Django a second time, from a different '
+    'source than the build has already used',
+    'opus_app.apps.search.models': 'is machine-written by ``scripts/models/create_opus_models.sh`` from a '
+    'populated database: one class per database table plus a nested ``Meta`` '
+    'class each, none docstringed and none surviving the next regeneration. The '
+    'tables themselves are described in :doc:`dev_guide_database`',
 }
 
 #: The name of the page listing the packages.
@@ -98,6 +101,7 @@ def walk_package(package_name: str) -> dict[str, list[str]]:
             module is never imported by the walk, so a broken one is still listed
             here and surfaces when autodoc imports it, which ``-W`` does catch.
     """
+
     def reraise(name: str) -> None:
         """Re-raise whatever stopped a subpackage importing.
 
@@ -108,9 +112,10 @@ def walk_package(package_name: str) -> dict[str, list[str]]:
 
     package = importlib.import_module(package_name)
     grouped: dict[str, list[str]] = {package_name: []}
-    for info in sorted(pkgutil.walk_packages(package.__path__, f'{package_name}.',
-                                             onerror=reraise),
-                       key=lambda info: info.name):
+    for info in sorted(
+        pkgutil.walk_packages(package.__path__, f'{package_name}.', onerror=reraise),
+        key=lambda info: info.name,
+    ):
         if info.name in EXCLUDED_MODULES:
             continue
         if info.ispkg:
@@ -136,18 +141,21 @@ def _automodule(name: str, is_package: bool = False) -> list[str]:
     Returns:
         The directive and its options, as lines.
     """
-    lines = [f'.. automodule:: {name}',
-             '   :members:',
-             '   :undoc-members:',
-             '   :show-inheritance:']
+    lines = [
+        f'.. automodule:: {name}',
+        '   :members:',
+        '   :undoc-members:',
+        '   :show-inheritance:',
+    ]
     if is_package:
         lines.append('   :ignore-module-all:')
     lines.append('')
     return lines
 
 
-def render_package_page(name: str, modules: list[str], subpackages: list[str],
-                        summary: str | None = None) -> str:
+def render_package_page(
+    name: str, modules: list[str], subpackages: list[str], summary: str | None = None
+) -> str:
     """Render the API-reference page for one package.
 
     Parameters:
@@ -160,20 +168,20 @@ def render_package_page(name: str, modules: list[str], subpackages: list[str],
     Returns:
         The page as reStructuredText.
     """
-    lines = ['.. Written by docs/_ext/opus_api_reference.py at build time. Change the',
-             '   generator rather than this file.',
-             '',
-             f'.. _api_{name}:',
-             '',
-             name,
-             '=' * len(name),
-             '']
+    lines = [
+        '.. Written by docs/_ext/opus_api_reference.py at build time. Change the',
+        '   generator rather than this file.',
+        '',
+        f'.. _api_{name}:',
+        '',
+        name,
+        '=' * len(name),
+        '',
+    ]
     if summary is not None:
         lines += [summary, '']
     if subpackages:
-        lines += ['.. toctree::',
-                  '   :maxdepth: 1',
-                  '']
+        lines += ['.. toctree::', '   :maxdepth: 1', '']
         lines += [f'   api_{subpackage}' for subpackage in subpackages]
         lines += ['']
     lines += _automodule(name, is_package=True)
@@ -194,8 +202,10 @@ def absent_phrase() -> str:
         The opening of the sentence, ending in a full stop.
     """
     count = len(EXCLUDED_MODULES)
-    return f'{count} module{"" if count == 1 else "s"} ' \
-           f'{"is" if count == 1 else "are"} deliberately absent.'
+    return (
+        f'{count} module{"" if count == 1 else "s"} '
+        f'{"is" if count == 1 else "are"} deliberately absent.'
+    )
 
 
 def render_index_page() -> str:
@@ -205,32 +215,37 @@ def render_index_page() -> str:
         The page as reStructuredText.
     """
     title = 'API Reference'
-    lines = ['.. Written by docs/_ext/opus_api_reference.py at build time. Change the',
-             '   generator rather than this file.',
-             '',
-             '.. _api_reference:',
-             '',
-             title,
-             '=' * len(title),
-             '',
-             'Every module of every OPUS package, generated from the docstrings in',
-             'the source, apart from those named at the bottom of this page. These',
-             'pages are written before each build by walking the packages, so a module',
-             'added to one of them appears here without anything having to be listed by',
-             'hand, and a package that stops importing fails the build rather than',
-             'disappearing from the reference.',
-             '']
+    lines = [
+        '.. Written by docs/_ext/opus_api_reference.py at build time. Change the',
+        '   generator rather than this file.',
+        '',
+        '.. _api_reference:',
+        '',
+        title,
+        '=' * len(title),
+        '',
+        'Every module of every OPUS package, generated from the docstrings in',
+        'the source, apart from those named at the bottom of this page. These',
+        'pages are written before each build by walking the packages, so a module',
+        'added to one of them appears here without anything having to be listed by',
+        'hand, and a package that stops importing fails the build rather than',
+        'disappearing from the reference.',
+        '',
+    ]
     for entry in PACKAGES:
         lines += [f':doc:`api_{entry.name}`', f'    {entry.summary}', '']
-    lines += ['.. toctree::',
-              '   :hidden:',
-              '   :maxdepth: 2',
-              '']
+    lines += ['.. toctree::', '   :hidden:', '   :maxdepth: 2', '']
     lines += [f'   api_{entry.name}' for entry in PACKAGES]
-    lines += ['', 'What is left out', '----------------', '',
-              f'{absent_phrase()} autodoc documents a module by importing it, and',
-              'each of these would do something during the build that a documentation',
-              'build must not do:', '']
+    lines += [
+        '',
+        'What is left out',
+        '----------------',
+        '',
+        f'{absent_phrase()} autodoc documents a module by importing it, and',
+        'each of these would do something during the build that a documentation',
+        'build must not do:',
+        '',
+    ]
     for name, reason in sorted(EXCLUDED_MODULES.items()):
         lines += [f'``{name}``', f'    It {reason}.', '']
     return '\n'.join(lines)
@@ -246,11 +261,15 @@ def build_pages() -> dict[str, str]:
     for entry in PACKAGES:
         grouped = walk_package(entry.name)
         for package_name, modules in grouped.items():
-            subpackages = [candidate for candidate in grouped
-                           if candidate.rpartition('.')[0] == package_name]
+            subpackages = [
+                candidate for candidate in grouped if candidate.rpartition('.')[0] == package_name
+            ]
             pages[f'api_{package_name}'] = render_package_page(
-                package_name, modules, sorted(subpackages),
-                entry.summary if package_name == entry.name else None)
+                package_name,
+                modules,
+                sorted(subpackages),
+                entry.summary if package_name == entry.name else None,
+            )
     return pages
 
 

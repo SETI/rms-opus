@@ -24,7 +24,6 @@ class ObsSurfaceGeometryName(ObsBase):
 
     ### Don't override these ###
 
-
     def field_obs_surface_geometry_name_opus_id(self) -> StrField:
         return self.opus_id
 
@@ -43,6 +42,9 @@ class ObsSurfaceGeometryName(ObsBase):
         if target_info is None:
             return self._create_mult(None)
         group_info = self._get_planet_group_info(target_name)
-        return self._create_mult(col_val=target_name, disp_name=target_info[2],
-                                 grouping=group_info['label'],
-                                 group_disp_order=group_info['disp_order'])
+        return self._create_mult(
+            col_val=target_name,
+            disp_name=target_info[2],
+            grouping=group_info['label'],
+            group_disp_order=group_info['disp_order'],
+        )

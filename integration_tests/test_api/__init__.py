@@ -6,4 +6,3 @@ Between them they pin the public API's observable behavior response by response,
 which is what makes a refactor anywhere beneath them checkable. See
 TEST_API_README.md for how to run them and how to regenerate a recorded response.
 """
-

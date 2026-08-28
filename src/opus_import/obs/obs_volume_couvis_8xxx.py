@@ -20,24 +20,20 @@ class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``COUVIS``."""
         return 'COUVIS'
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
     def field_obs_wavelength_wavelength1(self) -> FloatField:
-        return cast(FloatField,
-                    self._index_col('MINIMUM_WAVELENGTH') / 1000.) # nm -> micron
+        return cast(FloatField, self._index_col('MINIMUM_WAVELENGTH') / 1000.0)  # nm -> micron
 
     def field_obs_wavelength_wavelength2(self) -> FloatField:
-        return cast(FloatField,
-                    self._index_col('MAXIMUM_WAVELENGTH') / 1000.) # nm -> micron
+        return cast(FloatField, self._index_col('MAXIMUM_WAVELENGTH') / 1000.0)  # nm -> micron
 
     def field_obs_wavelength_wave_res1(self) -> FloatField:
         return self._wave_res_from_full_bandwidth()
@@ -51,18 +47,15 @@ class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
     def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
 
-
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
 
     def field_obs_profile_temporal_sampling(self) -> FloatField:
-        return cast(FloatField,
-                    self._supp_index_col('INTEGRATION_DURATION') / 1000) # msec -> sec
+        return cast(FloatField, self._supp_index_col('INTEGRATION_DURATION') / 1000)  # msec -> sec
 
     def field_obs_profile_wl_band(self) -> MultFieldRet:
         return self._create_mult('UV')
-
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
@@ -85,15 +78,15 @@ class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
-                f'({sc_cvt}) are in the wrong order - setting to count1')
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '
+                + f'({sc_cvt}) are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
 
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         return self._create_mult(self._cassini_normalize_mission_phase_name())
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_couvis ###

@@ -15,6 +15,7 @@ Usage is tallied against log markers. A marker is either the id of a log entry o
 (log entry id, line number) pair naming one of the report lines that entry produced,
 so a tally can point at either a whole request or a single line of it.
 """
+
 import collections
 import re
 import urllib.parse
@@ -45,6 +46,7 @@ class SessionInfo(AbstractSessionInfo):
     `Configuration.create_session_info` instantiates it. Obtain instances from
     the Configuration rather than constructing them directly.
     """
+
     _session_search_slugs: dict[str, slug.Info]
     _session_metadata_slugs: dict[str, slug.Info]
     _icon_flags: IconFlags
@@ -66,8 +68,14 @@ class SessionInfo(AbstractSessionInfo):
 
     pattern_registry = PatternRegistry()
 
-    def __init__(self, slug_map: slug.ToInfoMap, default_column_slug_info: MetadataSlugInfo,
-                 show_all: bool, uses_html: bool, sessionless_downloads: list[tuple[str, LogEntry]]):
+    def __init__(
+        self,
+        slug_map: slug.ToInfoMap,
+        default_column_slug_info: MetadataSlugInfo,
+        show_all: bool,
+        uses_html: bool,
+        sessionless_downloads: list[tuple[str, LogEntry]],
+    ):
         """Create the state for one user session.
 
         Parameters:
@@ -175,8 +183,7 @@ class SessionInfo(AbstractSessionInfo):
         """Raise the session's gallery icon."""
         self._icon_flags |= IconFlags.FETCHED_GALLERY
 
-    def get_slug_info(self) -> tuple[list[tuple[str, bool]],
-                                     list[tuple[str, bool]]]:
+    def get_slug_info(self) -> tuple[list[tuple[str, bool]], list[tuple[str, bool]]]:
         """The search slugs and the metadata slugs this session used.
 
         A search slug whose name ends in an underscore followed by two or more digits is
@@ -188,17 +195,20 @@ class SessionInfo(AbstractSessionInfo):
             list holds (slug name, is obsolete) pairs sorted case-insensitively by name,
             leaving out names that start with `qtype-` or `unit-`.
         """
+
         def fixit(info: dict[str, Info]) -> list[tuple[str, bool]]:
             """The reported (name, is obsolete) pairs for one map of slug name to info.
 
             The pairs are sorted case-insensitively by name, and names starting with
             `qtype-` or `unit-` are left out.
             """
-            return [(slug, info[slug].flags.is_obsolete())
-                    for slug in sorted(info, key=str.lower)
-                    # Rob doesn't want to see slugs that start with 'qtype-' in the list.
-                    if not slug.startswith('qtype-')
-                    if not slug.startswith('unit-')]
+            return [
+                (slug, info[slug].flags.is_obsolete())
+                for slug in sorted(info, key=str.lower)
+                # Rob doesn't want to see slugs that start with 'qtype-' in the list.
+                if not slug.startswith('qtype-')
+                if not slug.startswith('unit-')
+            ]
 
         # Make a copy of session_search_slugs, and change any subgroup slugs to the base value.  If we overwrite
         # an existing value, that's fine.
@@ -287,7 +297,7 @@ class SessionInfo(AbstractSessionInfo):
             path: The request path.
             entry: The log entry for the request.
         """
-        match = re.fullmatch(r"/downloads/([^/]+)", path)
+        match = re.fullmatch(r'/downloads/([^/]+)', path)
         if match:
             self._sessionless_downloads_usage.append((match.group(1), entry))
 
@@ -324,7 +334,9 @@ class SessionInfo(AbstractSessionInfo):
         """
         self._help_files_usage[file_name].add(self._current_id)
 
-    def register_sort_slugs_changed(self, slugs_list: Sequence[slug.Info], *, line_number: int) -> None:
+    def register_sort_slugs_changed(
+        self, slugs_list: Sequence[slug.Info], *, line_number: int
+    ) -> None:
         """Record the sort order a report line changed the session to.
 
         The whole ordered list is the key, so the same slugs in a different order are a
@@ -420,7 +432,7 @@ class SessionInfo(AbstractSessionInfo):
         # We ignore all sorts of log entries.
         if entry.method != 'GET' or entry.status != 200:
             return [], None
-        if entry.agent and ("bot" in entry.agent.lower() or "spider" in entry.agent.lower()):
+        if entry.agent and ('bot' in entry.agent.lower() or 'spider' in entry.agent.lower()):
             return [], None
 
         path = entry.url.path
@@ -436,9 +448,11 @@ class SessionInfo(AbstractSessionInfo):
         raw_query = urllib.parse.parse_qs(entry.url.query)
         # raw_query will match a key to a list of values for that key.  Opus only uses each key once
         # (values are separated by commas), so we convert the raw query to a more useful form.
-        query = {key: value[0]
-                 for key, value in raw_query.items()
-                 if isinstance(value, list) and len(value) == 1}
+        query = {
+            key: value[0]
+            for key, value in raw_query.items()
+            if isinstance(value, list) and len(value) == 1
+        }
         # ignorelog is a marker to ignore this entry
         if 'ignorelog' in query:
             return [], None
@@ -472,7 +486,9 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__api/(data)\.html')
     @pattern_registry.register(r'/__api/(dataimages)\.json')
     @pattern_registry.register(r'/__api/meta/(result_count)\.json')
-    def __api_data(self, log_entry: LogEntry, query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __api_data(
+        self, log_entry: LogEntry, query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report a request for search results, for their images, or for their count.
 
         The captured name -- `data`, `dataimages` or `result_count` -- says which of the
@@ -482,14 +498,16 @@ class SessionInfo(AbstractSessionInfo):
         return self._query_handler.handle_query(log_entry, query, match.group(1))
 
     @pattern_registry.register(r'/__api/data\.json')
-    def __api_data_old(self, log_entry: LogEntry, query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __api_data_old(
+        self, log_entry: LogEntry, query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report a request for `data.json`, an alternate spelling of `dataimages.json`.
 
         The request is reported the way `dataimages.json` is, not the way `data.html`
         is.
         """
         # data.json was the old name for dataimages.json.  Treat it like dataimages, rather than like data.html.
-        return self._query_handler.handle_query(log_entry, query, "dataimages")
+        return self._query_handler.handle_query(log_entry, query, 'dataimages')
 
     #
     # CREATE WIDGET
@@ -497,7 +515,9 @@ class SessionInfo(AbstractSessionInfo):
 
     @pattern_registry.register(r'/__widget/(.*).html')
     @pattern_registry.register(r'/__forms/widget/(.*).html')
-    def __initialize_widget(self, log_entry: LogEntry, query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __initialize_widget(
+        self, log_entry: LogEntry, query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report the creation of a search widget.
 
         The widget's name is the captured part of the path. A name the slug map does not
@@ -507,7 +527,9 @@ class SessionInfo(AbstractSessionInfo):
 
     @pattern_registry.register(r'/__api/image/med/(.*)\.json')
     @pattern_registry.register(r'/__viewmetadatamodal/(.*)\.json')
-    def __view_metadata(self,  _log_entry: LogEntry, _query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __view_metadata(
+        self, _log_entry: LogEntry, _query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report one observation's metadata being viewed.
 
         Registers `Action.VIEWED_SLIDE_SHOW` and links the line to the observation's
@@ -518,7 +540,9 @@ class SessionInfo(AbstractSessionInfo):
         return [f'View Metadata: {metadata}'], self.__create_opus_url(metadata)
 
     @pattern_registry.register(r'/__api/data\.csv')
-    def __download_results_csv(self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __download_results_csv(
+        self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report a CSV of the whole search result being downloaded.
 
         Raises the session's download icon and registers
@@ -526,10 +550,12 @@ class SessionInfo(AbstractSessionInfo):
         """
         self.performed_download()
         self.register_info_flags(Action.DOWNLOADED_CSV_FILE_FOR_ALL_RESULTS)
-        return ["Download CSV of Search Results"], None
+        return ['Download CSV of Search Results'], None
 
     @pattern_registry.register(r'/__api/metadata_v2/(.*)\.csv')
-    def __download_metadata_csv(self, log_entry: LogEntry, query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __download_metadata_csv(
+        self, log_entry: LogEntry, query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report a CSV of one observation's metadata being downloaded.
 
         Raises the session's download icon, registers
@@ -546,10 +572,12 @@ class SessionInfo(AbstractSessionInfo):
         if self._uses_html:
             return [self.safe_format('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
         else:
-            return [f'{text}: { opus_id }'], None
+            return [f'{text}: {opus_id}'], None
 
     @pattern_registry.register(r'/__api/download/(.*)\.zip')
-    def __download_archive(self, log_entry: LogEntry, query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __download_archive(
+        self, log_entry: LogEntry, query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report a data or URL archive for one observation being downloaded.
 
         Raises the session's download icon and tallies the download under the OPUS id
@@ -561,14 +589,17 @@ class SessionInfo(AbstractSessionInfo):
         self.performed_download()
         opus_id = match.group(1)
         self.register_sessioned_download(opus_id + '.zip', log_entry)
-        url_only = query.get('urlonly') not in (None, "0")
+        url_only = query.get('urlonly') not in (None, '0')
         text = f'Download {"URL" if url_only else "Data"} Archive for OPUSID'
-        self.register_info_flags(Action.DOWNLOADED_ZIP_URL_FILE_FOR_ONE_OBSERVATION if url_only else
-                                 Action.DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION)
+        self.register_info_flags(
+            Action.DOWNLOADED_ZIP_URL_FILE_FOR_ONE_OBSERVATION
+            if url_only
+            else Action.DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION
+        )
         if self._uses_html:
             return [self.safe_format('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
         else:
-            return [f'{text}: { opus_id }'], None
+            return [f'{text}: {opus_id}'], None
 
     #
     # Collections
@@ -576,13 +607,17 @@ class SessionInfo(AbstractSessionInfo):
 
     @pattern_registry.register(r'/__collections/view\.html')
     @pattern_registry.register(r'/__cart/view\.html')
-    def __collections_view_cart(self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __collections_view_cart(
+        self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report the cart being viewed."""
         return ['View Cart'], None
 
     @pattern_registry.register(r'/__collections/data\.csv')
     @pattern_registry.register(r'/__cart/data\.csv')
-    def __download_cart_metadata_csv(self, _: LogEntry, _query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __download_cart_metadata_csv(
+        self, _: LogEntry, _query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report a CSV of the cart's selected metadata being downloaded.
 
         Raises the session's download icon and registers
@@ -590,12 +625,14 @@ class SessionInfo(AbstractSessionInfo):
         """
         self.performed_download()
         self.register_info_flags(Action.DOWNLOADED_CSV_FILE_FOR_CART)
-        return ["Download CSV of Selected Metadata for Cart"], None
+        return ['Download CSV of Selected Metadata for Cart'], None
 
     @pattern_registry.register(r'/__collections/download\.(json|zip)')
     @pattern_registry.register(r'/__collections/download/default\.zip')
     @pattern_registry.register(r'/__cart/download\.json')
-    def __create_archive(self, _log_entry: LogEntry, query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __create_archive(
+        self, _log_entry: LogEntry, query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report a data or URL archive for the whole cart being downloaded.
 
         Raises the session's download icon and records the product types the request
@@ -607,8 +644,11 @@ class SessionInfo(AbstractSessionInfo):
         """
         self.performed_download()
         url_only = query.get('urlonly') not in [None, '0']
-        self.register_info_flags(Action.DOWNLOADED_ZIP_URL_FILE_FOR_CART if url_only else
-                                 Action.DOWNLOADED_ZIP_ARCHIVE_FILE_FOR_CART)
+        self.register_info_flags(
+            Action.DOWNLOADED_ZIP_URL_FILE_FOR_CART
+            if url_only
+            else Action.DOWNLOADED_ZIP_ARCHIVE_FILE_FOR_CART
+        )
         ptypes_field = query.get('types')
         ptypes = [x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])]
         self.register_product_types(ptypes)
@@ -620,7 +660,9 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/(view)\.json')
     @pattern_registry.register(r'/__collections/default/(view)\.json')
     @pattern_registry.register(r'/__cart/(status)\.json')
-    def __download_product_types(self, _log_entry: LogEntry, query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __download_product_types(
+        self, _log_entry: LogEntry, query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report the product types selected for a cart download.
 
         The report is a difference against the types this session last selected: the
@@ -636,7 +678,9 @@ class SessionInfo(AbstractSessionInfo):
             # The __cart/status version requires &download=1
             return [], None
         ptypes_field = query.get('types')
-        new_ptypes = {x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])}
+        new_ptypes = {
+            x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])
+        }
 
         old_ptypes = self._previous_product_info_type
         self._previous_product_info_type = new_ptypes
@@ -668,14 +712,18 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/reset\.(html|json)')
     @pattern_registry.register(r'/__collections/default/reset\.(html|json)')
     @pattern_registry.register(r'/__cart/reset\.(html|json)')
-    def __reset_cart(self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __reset_cart(
+        self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report the cart being emptied."""
         return ['Empty Cart'], None
 
     @pattern_registry.register(r'/__collections/(add|remove)\.json')
     @pattern_registry.register(r'/__collections/default/(add|remove)\.json')
     @pattern_registry.register(r'/__cart/(add|remove)\.json')
-    def __add_remove_cart(self, _log_entry: LogEntry, query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __add_remove_cart(
+        self, _log_entry: LogEntry, query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report one observation being added to or removed from the cart.
 
         The observation is taken from the request's `opusid`, or from `opus_id` when
@@ -684,14 +732,18 @@ class SessionInfo(AbstractSessionInfo):
         opus_id = query.get('opusid') or query.get('opus_id')  # opusid is new name, opus_id is old
         selection = match.group(1).title()
         if self._uses_html and opus_id:
-            return [self.safe_format('Cart {}: {}', selection.title(), opus_id)], self.__create_opus_url(opus_id)
+            return [
+                self.safe_format('Cart {}: {}', selection.title(), opus_id)
+            ], self.__create_opus_url(opus_id)
         else:
             return [f'Cart {selection.title() + ":":<7} {opus_id or "???"}'], None
 
     @pattern_registry.register(r'/__collections/(add|remove)range\.json')
     @pattern_registry.register(r'/__collections/default/(add|remove)range\.json')
     @pattern_registry.register(r'/__cart/(add|remove)range\.json')
-    def __add_remove_range_to_cart(self, _log: LogEntry, query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __add_remove_range_to_cart(
+        self, _log: LogEntry, query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report a range of observations being added to or removed from the cart.
 
         The range comes from the request's `range`; a request without one reports "???"
@@ -704,7 +756,9 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/addall\.json')
     @pattern_registry.register(r'/__collections/default/addall\.json')
     @pattern_registry.register(r'/__cart/addall\.json')
-    def __add_all_to_cart(self, _log_entry: LogEntry, query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __add_all_to_cart(
+        self, _log_entry: LogEntry, query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report observations being added to the cart in bulk.
 
         A request carrying a `range` reports that range; one without reports that
@@ -723,7 +777,9 @@ class SessionInfo(AbstractSessionInfo):
 
     @pattern_registry.register(r'/__forms/column_chooser\.html')
     @pattern_registry.register(r'/__selectmetadatamodal\.json')
-    def __column_chooser(self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __column_chooser(
+        self, _log_entry: LogEntry, _query: dict[str, str], _match: Match[str]
+    ) -> SESSION_INFO:
         """Report the metadata selector being opened.
 
         Registers `Action.VIEWED_SELECT_METADATA`.
@@ -736,7 +792,9 @@ class SessionInfo(AbstractSessionInfo):
     #
 
     @pattern_registry.register(r'/__initdetail/(.*)\.html')
-    def __initialize_detail(self, _log_entry: LogEntry, _query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __initialize_detail(
+        self, _log_entry: LogEntry, _query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report one observation's detail tab being opened.
 
         Registers `Action.VIEWED_DETAIL_TAB`. When the report is HTML, the line links to
@@ -747,14 +805,16 @@ class SessionInfo(AbstractSessionInfo):
         if self._uses_html:
             return [self.safe_format('View Detail: {}', opus_id)], self.__create_opus_url(opus_id)
         else:
-            return [f'View Detail: { opus_id }'], None
+            return [f'View Detail: {opus_id}'], None
 
     #
     # HELP
     #
 
     @pattern_registry.register(r'/__help/(\w+)\.(html|pdf)')
-    def __read_help_information(self, _log_entry: LogEntry, _query: dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __read_help_information(
+        self, _log_entry: LogEntry, _query: dict[str, str], match: Match[str]
+    ) -> SESSION_INFO:
         """Report a help page being read as HTML or as PDF.
 
         The file is tallied under its name and extension, with `faq` reported as `FAQ`.
@@ -764,7 +824,9 @@ class SessionInfo(AbstractSessionInfo):
         help_type, file_type = match.group(1, 2)
         help_name = help_type.upper() if help_type == 'faq' else help_type
         if help_name != 'splash':
-            flag = Action.VIEWED_HELP_FILE if file_type == 'html' else Action.VIEWED_HELP_FILE_AS_PDF
+            flag = (
+                Action.VIEWED_HELP_FILE if file_type == 'html' else Action.VIEWED_HELP_FILE_AS_PDF
+            )
             self.register_info_flags(flag)
         self.register_help_file(help_name + '.' + file_type)
         if self._uses_html:

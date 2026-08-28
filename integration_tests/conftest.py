@@ -160,8 +160,7 @@ def managed_database_request(item: pytest.Item) -> str | None:
             return f'the {name!r} fixture'
     test_class = getattr(item, 'cls', None)
     if isinstance(test_class, type) and issubclass(test_class, SimpleTestCase):
-        return (f'{test_class.__name__}, which subclasses '
-                f'django.test.{SimpleTestCase.__name__}')
+        return f'{test_class.__name__}, which subclasses django.test.{SimpleTestCase.__name__}'
     return None
 
 
@@ -181,8 +180,11 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
         asked_for = managed_database_request(item)
         if asked_for is not None:
-            where = ('in integration_tests/' if _is_ours(item) else
-                     'in a session that also collects integration_tests/')
+            where = (
+                'in integration_tests/'
+                if _is_ours(item)
+                else 'in a session that also collects integration_tests/'
+            )
             raise pytest.UsageError(
                 f'{item.nodeid} uses {asked_for}, which is forbidden {where}: those '
                 f'suites run against the imported schema itself, and '
@@ -193,7 +195,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
                 f'the ones under integration_tests/, which is why this applies to '
                 f'yours. Use a plain unittest.TestCase, as everything in '
                 f'integration_tests/ does, or run your suite without naming '
-                f'integration_tests/ on the same command line.')
+                f'integration_tests/ on the same command line.'
+            )
         if not _is_ours(item):
             continue
         item.add_marker(pytest.mark.integration)

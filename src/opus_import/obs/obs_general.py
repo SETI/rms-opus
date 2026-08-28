@@ -22,13 +22,11 @@ class ObsGeneral(ObsBase):
     declaring the type `opus_import.obs.field_types` gives that column.
     """
 
-
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
     ### Don't override these ###
-
 
     def field_obs_general_opus_id(self) -> StrField:
         return self.opus_id
@@ -70,20 +68,17 @@ class ObsGeneral(ObsBase):
         ### XXX Review this
         filespec = self.primary_filespec
         if filespec is None:
-            self._log_nonrepeating_warning(
-                'No preview images: this observation has no filespec')
+            self._log_nonrepeating_warning('No preview images: this observation has no filespec')
             return json.dumps({'viewables': []})
         pdsf = self._pdsfile_from_filespec(filespec)
 
         try:
             viewset = pdsf.viewset
         except ValueError as e:
-            self._log_nonrepeating_warning(
-                f'ViewSet threw ValueError for "{filespec}": {e}')
+            self._log_nonrepeating_warning(f'ViewSet threw ValueError for "{filespec}": {e}')
             viewset = None
         except OSError as e:
-            self._log_nonrepeating_warning(
-                f'ViewSet threw IOError for "{filespec}": {e}')
+            self._log_nonrepeating_warning(f'ViewSet threw IOError for "{filespec}": {e}')
             viewset = None
 
         if viewset:
@@ -91,50 +86,73 @@ class ObsGeneral(ObsBase):
             if not self._ctx.args.import_ignore_missing_images:
                 if not viewset.thumbnail:
                     self._log_nonrepeating_warning(
-                        f'Missing thumbnail browse/diagram image for "{filespec}"')
+                        f'Missing thumbnail browse/diagram image for "{filespec}"'
+                    )
                 if not viewset.small:
                     self._log_nonrepeating_warning(
-                        f'Missing small browse/diagram image for "{filespec}"')
+                        f'Missing small browse/diagram image for "{filespec}"'
+                    )
                 if not viewset.medium:
                     self._log_nonrepeating_warning(
-                        f'Missing medium browse/diagram image for "{filespec}"')
+                        f'Missing medium browse/diagram image for "{filespec}"'
+                    )
                 if not viewset.full_size:
                     self._log_nonrepeating_warning(
-                        f'Missing full_size browse/diagram image for "{filespec}"')
+                        f'Missing full_size browse/diagram image for "{filespec}"'
+                    )
         else:
             if self._ctx.args.import_fake_images:
                 base_path = os.path.splitext(pdsf.logical_path)[0]
                 if base_path.find('CIRS') != -1:
                     base_path = base_path.replace('volumes', 'diagrams')
-                    base_path = base_path.replace('DATA/APODSPEC/SPEC',
-                                                  'BROWSE/TARGETS/IMG')
+                    base_path = base_path.replace('DATA/APODSPEC/SPEC', 'BROWSE/TARGETS/IMG')
                 else:
                     base_path = base_path.replace('volumes', 'previews')
-                base_path = 'holdings/'+base_path
+                base_path = 'holdings/' + base_path
                 ext = 'jpg'
-                if (base_path.find('VIMS') != -1 or  # XXX
-                    base_path.find('UVIS') != -1):
+                if (
+                    base_path.find('VIMS') != -1  # XXX
+                    or base_path.find('UVIS') != -1
+                ):
                     ext = 'png'
-                browse_data = {'viewables':
-                    [{'url': base_path+'_thumb.'+ext,
-                      'bytes': 500, 'width': 100, 'height': 100},
-                     {'url': base_path+'_small.'+ext,
-                      'bytes': 1000, 'width': 256, 'height': 256},
-                     {'url': base_path+'_med.'+ext,
-                      'bytes': 2000, 'width': 512, 'height': 512},
-                     {'url': base_path+'_full.'+ext, 'name': 'full',
-                      'bytes': 4000, 'width': 1024, 'height': 1024}
-                     ]
+                browse_data = {
+                    'viewables': [
+                        {
+                            'url': base_path + '_thumb.' + ext,
+                            'bytes': 500,
+                            'width': 100,
+                            'height': 100,
+                        },
+                        {
+                            'url': base_path + '_small.' + ext,
+                            'bytes': 1000,
+                            'width': 256,
+                            'height': 256,
+                        },
+                        {
+                            'url': base_path + '_med.' + ext,
+                            'bytes': 2000,
+                            'width': 512,
+                            'height': 512,
+                        },
+                        {
+                            'url': base_path + '_full.' + ext,
+                            'name': 'full',
+                            'bytes': 4000,
+                            'width': 1024,
+                            'height': 1024,
+                        },
+                    ]
                 }
             else:
                 browse_data = {'viewables': []}
                 if not self._ctx.args.import_ignore_missing_images:
                     self._log_nonrepeating_warning(
-                       f'Missing all browse/diagram images for "{self.primary_filespec}"')
+                        f'Missing all browse/diagram images for "{self.primary_filespec}"'
+                    )
 
         ret = json.dumps(browse_data)
         return ret
-
 
     ################################
     ### ! Might override these ! ###
@@ -160,10 +178,14 @@ class ObsGeneral(ObsBase):
                 ret.append(self._create_mult(None))
             else:
                 group_info = self._get_planet_group_info(target_name)
-                ret.append(self._create_mult(col_val=target_name,
-                                             disp_name=target_disp_name,
-                                             grouping=group_info['label'],
-                                             group_disp_order=group_info['disp_order']))
+                ret.append(
+                    self._create_mult(
+                        col_val=target_name,
+                        disp_name=target_disp_name,
+                        grouping=group_info['label'],
+                        group_disp_order=group_info['disp_order'],
+                    )
+                )
         return ret
 
     def field_obs_general_time1(self) -> FloatField:
@@ -195,7 +217,6 @@ class ObsGeneral(ObsBase):
 
     def field_obs_general_ring_obs_id(self) -> StrField:
         return None
-
 
     ###################################
     ### !!! Must override these !!! ###

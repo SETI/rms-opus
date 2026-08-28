@@ -25,8 +25,9 @@ if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
 
-def _lookup_table_column(table_schema: Sequence[dict[str, Any]],
-                         column_name: str) -> dict[str, Any] | None:
+def _lookup_table_column(
+    table_schema: Sequence[dict[str, Any]], column_name: str
+) -> dict[str, Any] | None:
     """Return one column's definition out of a table schema.
 
     Parameters:
@@ -40,6 +41,7 @@ def _lookup_table_column(table_schema: Sequence[dict[str, Any]],
         if table_column.get('field_name', None) == column_name:
             return table_column
     return None
+
 
 def create_import_partables_table(ctx: ImportContext) -> None:
     """Fill the import ``partables`` table with every trigger OPUS knows.
@@ -63,8 +65,7 @@ def create_import_partables_table(ctx: ImportContext) -> None:
     assert partables_schema is not None
     # Start from scratch
     db.drop_table('import', 'partables')
-    db.create_table('import', 'partables', partables_schema,
-                    ignore_if_exists=False)
+    db.create_table('import', 'partables', partables_schema, ignore_if_exists=False)
 
     # We use the entries in data_config to determine the first part of what
     # goes into partables.
@@ -81,21 +82,23 @@ def create_import_partables_table(ctx: ImportContext) -> None:
     mission_id_column = _lookup_table_column(obs_general_schema, 'mission_id')
     assert mission_id_column is not None
     for mission_id in sorted(config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
-        mission_id_val = mult_table_lookup_id(ctx, 'obs_general', 'mission_id',
-                                              mission_id_column, mission_id)
+        mission_id_val = mult_table_lookup_id(
+            ctx, 'obs_general', 'mission_id', mission_id_column, mission_id
+        )
         entry = {
             'trigger_tab': 'obs_general',
             'trigger_col': 'mission_id',
             'trigger_val': str(mission_id_val),
-            'partable':    import_util.table_name_obs_mission(mission_id)
+            'partable': import_util.table_name_obs_mission(mission_id),
         }
         rows.append(entry)
 
     instrument_id_column = _lookup_table_column(obs_general_schema, 'instrument_id')
     assert instrument_id_column is not None
     for instrument_id in sorted(config_data.INSTRUMENT_ID_TO_MISSION_ID.keys()):
-        instrument_id_val = mult_table_lookup_id(ctx, 'obs_general', 'instrument_id',
-                                                 instrument_id_column, instrument_id)
+        instrument_id_val = mult_table_lookup_id(
+            ctx, 'obs_general', 'instrument_id', instrument_id_column, instrument_id
+        )
         partable = import_util.table_name_obs_instrument(instrument_id)
         if instrument_id[:3] == 'HST':
             # This is a hack because we don't actually have HST instrument
@@ -105,23 +108,26 @@ def create_import_partables_table(ctx: ImportContext) -> None:
             'trigger_tab': 'obs_general',
             'trigger_col': 'instrument_id',
             'trigger_val': str(instrument_id_val),
-            'partable':    partable
+            'partable': partable,
         }
         rows.append(entry)
 
     inst_host_id_column = _lookup_table_column(obs_general_schema, 'inst_host_id')
     assert inst_host_id_column is not None
     for inst_host_id in sorted(config_data.INST_HOST_ID_TO_MISSION_ID.keys()):
-        inst_host_id_val = mult_table_lookup_id(ctx, 'obs_general', 'inst_host_id',
-                                                inst_host_id_column, inst_host_id)
+        inst_host_id_val = mult_table_lookup_id(
+            ctx, 'obs_general', 'inst_host_id', inst_host_id_column, inst_host_id
+        )
         entry = {
             'trigger_tab': 'obs_general',
             'trigger_col': 'inst_host_id',
             'trigger_val': str(inst_host_id_val),
-            'partable':    ('obs_mission_'+
-                            config_data.MISSION_ID_TO_MISSION_TABLE_SFX[
-                                config_data.INST_HOST_ID_TO_MISSION_ID[
-                                    inst_host_id]])
+            'partable': (
+                'obs_mission_'
+                + config_data.MISSION_ID_TO_MISSION_TABLE_SFX[
+                    config_data.INST_HOST_ID_TO_MISSION_ID[inst_host_id]
+                ]
+            ),
         }
         rows.append(entry)
 
@@ -135,9 +141,7 @@ def create_import_partables_table(ctx: ImportContext) -> None:
     # }
     # rows.append(entry)
 
-    surface_geo_table_names = db.table_names(
-                                            'perm',
-                                            prefix='obs_surface_geometry__')
+    surface_geo_table_names = db.table_names('perm', prefix='obs_surface_geometry__')
     for table_name in sorted(surface_geo_table_names):
         target_name = table_name.replace('obs_surface_geometry__', '')
         target_name = import_util.decode_target_name(target_name).upper()
@@ -150,11 +154,12 @@ def create_import_partables_table(ctx: ImportContext) -> None:
             'trigger_tab': 'obs_surface_geometry_name',
             'trigger_col': 'target_name',
             'trigger_val': target_name,
-            'partable':    table_name
+            'partable': table_name,
         }
         rows.append(entry)
 
     db.insert_rows('import', 'partables', rows)
+
 
 def copy_partables_from_import_to_permanent(ctx: ImportContext) -> None:
     """Replace the permanent ``partables`` table with the import one.

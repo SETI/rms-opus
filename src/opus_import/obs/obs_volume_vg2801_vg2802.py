@@ -22,7 +22,6 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-
     def field_obs_general_quantity(self) -> MultFieldRet:
         return self._create_mult('OPDEPTH')
 
@@ -40,7 +39,6 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
 
     def field_obs_general_declination2(self) -> FloatField:
         return self._prof_ra_dec_helper('supp_index_row', 'SIGNAL_SOURCE_NAME_1')[3]
-
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
@@ -63,7 +61,6 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
 
     def field_obs_profile_host(self) -> MultFieldRet:
         return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME').lower())
-
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
@@ -91,25 +88,32 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
 
         start_time = self.field_obs_general_time1()
 
-        is_at_north = (src_name == 'DELTA SCO' or
-                       (src_name == 'SIGMA SGR' and target_name == 'U RINGS'))
+        is_at_north = src_name == 'DELTA SCO' or (
+            src_name == 'SIGMA SGR' and target_name == 'U RINGS'
+        )
         # Check if the start time matches the Voyager location
         if is_at_north:
-            if (start_time > THRESHOLD_START_TIME_VG_AT_NORTH[4] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[1] > start_time >
-                    THRESHOLD_START_TIME_VG_AT_NORTH[0] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[3] > start_time >
-                    THRESHOLD_START_TIME_VG_AT_NORTH[2]):
-                self._log_nonrepeating_error(
-                    'Start time and Voyager N/S location do not match.')
+            if (
+                start_time > THRESHOLD_START_TIME_VG_AT_NORTH[4]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[1]
+                > start_time
+                > THRESHOLD_START_TIME_VG_AT_NORTH[0]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[3]
+                > start_time
+                > THRESHOLD_START_TIME_VG_AT_NORTH[2]
+            ):
+                self._log_nonrepeating_error('Start time and Voyager N/S location do not match.')
         else:
-            if (start_time <= THRESHOLD_START_TIME_VG_AT_NORTH[0] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[1] <= start_time <=
-                    THRESHOLD_START_TIME_VG_AT_NORTH[2] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[3] <= start_time <=
-                    THRESHOLD_START_TIME_VG_AT_NORTH[4]):
-                self._log_nonrepeating_error(
-                    'Start time and Voyager N/S location do not match.')
+            if (
+                start_time <= THRESHOLD_START_TIME_VG_AT_NORTH[0]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[1]
+                <= start_time
+                <= THRESHOLD_START_TIME_VG_AT_NORTH[2]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[3]
+                <= start_time
+                <= THRESHOLD_START_TIME_VG_AT_NORTH[4]
+            ):
+                self._log_nonrepeating_error('Start time and Voyager N/S location do not match.')
         return cast(bool, is_at_north)
 
     def _is_voyager_at_north_except_uranus(self) -> bool:
@@ -128,26 +132,31 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
 
         start_time = self.field_obs_general_time1()
 
-        is_at_north = (src_name == 'DELTA SCO')
+        is_at_north = src_name == 'DELTA SCO'
         # Check if the start time matches the Voyager location.
         if is_at_north or (src_name == 'SIGMA SGR' and target_name == 'U RINGS'):
-            if (start_time > THRESHOLD_START_TIME_VG_AT_NORTH[4] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[1] > start_time >
-                    THRESHOLD_START_TIME_VG_AT_NORTH[0] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[3] > start_time >
-                    THRESHOLD_START_TIME_VG_AT_NORTH[2]):
-                self._log_nonrepeating_error(
-                    'Start time and Voyager N/S location do not match.')
+            if (
+                start_time > THRESHOLD_START_TIME_VG_AT_NORTH[4]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[1]
+                > start_time
+                > THRESHOLD_START_TIME_VG_AT_NORTH[0]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[3]
+                > start_time
+                > THRESHOLD_START_TIME_VG_AT_NORTH[2]
+            ):
+                self._log_nonrepeating_error('Start time and Voyager N/S location do not match.')
         else:
-            if (start_time <= THRESHOLD_START_TIME_VG_AT_NORTH[0] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[1] <= start_time <=
-                    THRESHOLD_START_TIME_VG_AT_NORTH[2] or
-                THRESHOLD_START_TIME_VG_AT_NORTH[3] <= start_time <=
-                    THRESHOLD_START_TIME_VG_AT_NORTH[4]):
-                self._log_nonrepeating_error(
-                    'Start time and Voyager N/S location do not match.')
+            if (
+                start_time <= THRESHOLD_START_TIME_VG_AT_NORTH[0]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[1]
+                <= start_time
+                <= THRESHOLD_START_TIME_VG_AT_NORTH[2]
+                or THRESHOLD_START_TIME_VG_AT_NORTH[3]
+                <= start_time
+                <= THRESHOLD_START_TIME_VG_AT_NORTH[4]
+            ):
+                self._log_nonrepeating_error('Start time and Voyager N/S location do not match.')
         return cast(bool, is_at_north)
-
 
     # Source is star, observer is Voyager
     # Source DELTA SCO is at south, observer Voyager is at north. Target: S ring.
@@ -163,19 +172,19 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         if self._is_voyager_at_north_except_uranus():
             incidence1 = self.field_obs_ring_geometry_incidence1()
             assert incidence1 is not None
-            return incidence1 - 90.
+            return incidence1 - 90.0
         incidence2 = self.field_obs_ring_geometry_incidence2()
         assert incidence2 is not None
-        return 90. - incidence2
+        return 90.0 - incidence2
 
     def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
         if self._is_voyager_at_north_except_uranus():
             incidence2 = self.field_obs_ring_geometry_incidence2()
             assert incidence2 is not None
-            return incidence2 - 90.
+            return incidence2 - 90.0
         incidence1 = self.field_obs_ring_geometry_incidence1()
         assert incidence1 is not None
-        return 90. - incidence1
+        return 90.0 - incidence1
 
     # Ring elevation to observer, same to opening angle except, it's positive if
     # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -185,25 +194,25 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         if self._is_voyager_at_north_except_uranus():
             emission1 = self.field_obs_ring_geometry_emission1()
             assert emission1 is not None
-            return emission1 - 90.
+            return emission1 - 90.0
         emission2 = self.field_obs_ring_geometry_emission2()
         assert emission2 is not None
-        return 90. - emission2
+        return 90.0 - emission2
 
     def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
         if self._is_voyager_at_north_except_uranus():
             emission1 = self.field_obs_ring_geometry_emission1()
             assert emission1 is not None
-            return emission1 - 90.
+            return emission1 - 90.0
         emission2 = self.field_obs_ring_geometry_emission2()
         assert emission2 is not None
-        return 90. - emission2
+        return 90.0 - emission2
 
     def field_obs_ring_geometry_phase1(self) -> FloatField:
-        return 180.
+        return 180.0
 
     def field_obs_ring_geometry_phase2(self) -> FloatField:
-        return 180.
+        return 180.0
 
     # Incidence angle: The angle between the point where the incoming source
     # photos hit the ring and the normal to the ring plane on the LIT side of
@@ -218,7 +227,8 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         cal_inc = 180 - max_ea
         if abs(cal_inc - inc) >= 0.005:
             self._log_nonrepeating_error(
-                'The difference between incidence angle and 180-emission is > 0.005')
+                'The difference between incidence angle and 180-emission is > 0.005'
+            )
         return cast(FloatField, cal_inc)
 
     def field_obs_ring_geometry_incidence2(self) -> FloatField:
@@ -227,7 +237,8 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         cal_inc = 180 - max_ea
         if abs(cal_inc - inc) >= 0.005:
             self._log_nonrepeating_error(
-                'The difference between incidence angle and 180-emission is > 0.005')
+                'The difference between incidence angle and 180-emission is > 0.005'
+            )
         return cast(FloatField, cal_inc)
 
     # Emission angle: the angle between the normal vector on the LIT side, to the
@@ -247,28 +258,28 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         if self._is_voyager_at_north():
             incidence2 = self.field_obs_ring_geometry_incidence2()
             assert incidence2 is not None
-            return 180. - incidence2
+            return 180.0 - incidence2
         return self.field_obs_ring_geometry_incidence1()
 
     def field_obs_ring_geometry_north_based_incidence2(self) -> FloatField:
         if self._is_voyager_at_north():
             incidence1 = self.field_obs_ring_geometry_incidence1()
             assert incidence1 is not None
-            return 180. - incidence1
+            return 180.0 - incidence1
         return self.field_obs_ring_geometry_incidence2()
 
     def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
         if self._is_voyager_at_north():
             emission2 = self.field_obs_ring_geometry_emission2()
             assert emission2 is not None
-            return 180. - emission2
+            return 180.0 - emission2
         return self.field_obs_ring_geometry_emission1()
 
     def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
         if self._is_voyager_at_north():
             emission1 = self.field_obs_ring_geometry_emission1()
             assert emission1 is not None
-            return 180. - emission1
+            return 180.0 - emission1
         return self.field_obs_ring_geometry_emission2()
 
     # Opening angle to Sun: the angle between the ring surface to the direction
@@ -280,19 +291,19 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         if self._is_voyager_at_north():
             incidence1 = self.field_obs_ring_geometry_incidence1()
             assert incidence1 is not None
-            return incidence1 - 90.
+            return incidence1 - 90.0
         incidence2 = self.field_obs_ring_geometry_incidence2()
         assert incidence2 is not None
-        return 90. - incidence2
+        return 90.0 - incidence2
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self) -> FloatField:
         if self._is_voyager_at_north():
             incidence2 = self.field_obs_ring_geometry_incidence2()
             assert incidence2 is not None
-            return incidence2 - 90.
+            return incidence2 - 90.0
         incidence1 = self.field_obs_ring_geometry_incidence1()
         assert incidence1 is not None
-        return 90. - incidence1
+        return 90.0 - incidence1
 
     # Opening angle to observer: the angle between the ring surface to the direction
     # where outgoing photons to the observer. Positive if observer is at the north
@@ -303,19 +314,19 @@ class ObsVolumeVG28xxVGPPSUVS(ObsVolumeVG28xx):
         if self._is_voyager_at_north():
             emission1 = self.field_obs_ring_geometry_emission1()
             assert emission1 is not None
-            return emission1 - 90.
+            return emission1 - 90.0
         emission2 = self.field_obs_ring_geometry_emission2()
         assert emission2 is not None
-        return 90. - emission2
+        return 90.0 - emission2
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
         if self._is_voyager_at_north():
             emission2 = self.field_obs_ring_geometry_emission2()
             assert emission2 is not None
-            return emission2 - 90.
+            return emission2 - 90.0
         emission1 = self.field_obs_ring_geometry_emission1()
         assert emission1 is not None
-        return 90. - emission1
+        return 90.0 - emission1
 
 
 class ObsVolumeVG2801VGPPS(ObsVolumeVG28xxVGPPSUVS):

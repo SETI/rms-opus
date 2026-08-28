@@ -63,21 +63,36 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
             target_code = obs_parts[1][-2:]
 
         # 1: TARGET_NAME of SATURN or SKY and TARGET_CODE is one of the rings
-        if ((target_name == 'SATURN' or target_name == 'SKY') and
-            target_code in ('RA','RB','RC','RD','RE','RF','RG','RI')):
+        if (target_name == 'SATURN' or target_name == 'SKY') and target_code in (
+            'RA',
+            'RB',
+            'RC',
+            'RD',
+            'RE',
+            'RF',
+            'RG',
+            'RI',
+        ):
             return ('S RINGS', 'Saturn Rings')
 
         # 2: TARGET_NAME of SATURN or SKY and TARGET_DESC contains "RING"
         # (leave TARGET_CODE of "Star" alone)
-        if ((target_name == 'SATURN' or target_name == 'SKY') and
-            target_desc is not None and target_desc.find('RING') != -1 and
-            target_code != 'ST'):
+        if (
+            (target_name == 'SATURN' or target_name == 'SKY')
+            and target_desc is not None
+            and target_desc.find('RING') != -1
+            and target_code != 'ST'
+        ):
             return ('S RINGS', 'Saturn Rings')
 
         # 3: TARGET_NAME of SKY and TARGET_CODE of Skeleton, let TARGET_DESC
         # override TARGET_NAME
-        if (target_name == 'SKY' and target_code == 'SK' and
-            target_desc is not None and target_desc in config_targets.TARGET_NAME_INFO):
+        if (
+            target_name == 'SKY'
+            and target_code == 'SK'
+            and target_desc is not None
+            and target_desc in config_targets.TARGET_NAME_INFO
+        ):
             target_name_info = config_targets.TARGET_NAME_INFO[target_desc]
             return target_desc, target_name_info[2]
 
@@ -123,13 +138,11 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
 
         return count
 
-
     ##############################################################
     ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
     ##############################################################
     def field_obs_mission_cassini_obs_name(self) -> StrField:
         return cast(StrField, self._some_index_col('OBSERVATION_ID'))
-
 
     #######################################################################
     ### OVERRIDE METHODS FOR obs_instrument_coiss FROM ObsCassiniCommon ###
@@ -173,9 +186,10 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
 
         # If the result isn't the same length as what we started with, we must've
         # encountered a new type we didn't know about
-        if len(ret) != len(obs_type.replace('UNK','UNKNOWN')):
+        if len(ret) != len(obs_type.replace('UNK', 'UNKNOWN')):
             self._log_nonrepeating_error(
-                f'Unknown format for COISS image_observation_type: "{obs_type}"')
+                f'Unknown format for COISS image_observation_type: "{obs_type}"'
+            )
             return self._create_mult(None)
 
         return self._create_mult(ret)

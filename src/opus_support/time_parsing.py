@@ -11,12 +11,13 @@ import julian
 # We limit the available times because julian doesn't support parsing dates
 # outside of this range
 MIN_TIME = -31556908800  # 1000-01-01T00:00:00
-MAX_TIME =  31556995236  # 2999-12-31T23:59:59
+MAX_TIME = 31556995236  # 2999-12-31T23:59:59
 
 ################################################################################
 ################################################################################
 # TIME CONVERSION
 ################################################################################
+
 
 def parse_time(iso: object, unit: str | None = None, **kwargs: object) -> float:
     """Convert a time to the internal value, seconds of TAI from J2000.
@@ -85,6 +86,7 @@ def parse_time(iso: object, unit: str | None = None, **kwargs: object) -> float:
         raise ValueError
     return float(ret)
 
+
 def format_time_ymd(tai: float, **kwargs: object) -> str:
     """Format an internal time as a calendar date and time.
 
@@ -100,6 +102,7 @@ def format_time_ymd(tai: float, **kwargs: object) -> str:
     iso: str = julian.iso_from_tai(tai, ymd=True, digits=3)
     return iso
 
+
 def format_time_ydoy(tai: float, **kwargs: object) -> str:
     """Format an internal time as a year, day of year, and time.
 
@@ -114,6 +117,7 @@ def format_time_ydoy(tai: float, **kwargs: object) -> str:
     """
     iso: str = julian.iso_from_tai(tai, ymd=False, digits=3)
     return iso
+
 
 def format_time_jd(tai: float, **kwargs: object) -> str:
     """Format an internal time as a Julian date.
@@ -134,6 +138,7 @@ def format_time_jd(tai: float, **kwargs: object) -> str:
     # So we want 5+3=8 decimal places
     return f'JD{jd:.8f}'
 
+
 def format_time_jed(tai: float, **kwargs: object) -> str:
     """Format an internal time as a Julian ephemeris date.
 
@@ -151,6 +156,7 @@ def format_time_jed(tai: float, **kwargs: object) -> str:
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
     return f'JED{jed:.8f}'
+
 
 def format_time_mjd(tai: float, **kwargs: object) -> str:
     """Format an internal time as a Modified Julian date.
@@ -171,6 +177,7 @@ def format_time_mjd(tai: float, **kwargs: object) -> str:
     # So we want 5+3=8 decimal places
     return f'MJD{mjd:.8f}'
 
+
 def format_time_mjed(tai: float, **kwargs: object) -> str:
     """Format an internal time as a Modified Julian ephemeris date.
 
@@ -189,6 +196,7 @@ def format_time_mjed(tai: float, **kwargs: object) -> str:
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
     return f'MJED{mjed:.8f}'
+
 
 def format_time_et(tai: float, **kwargs: object) -> str:
     """Format an internal time as an ephemeris time.

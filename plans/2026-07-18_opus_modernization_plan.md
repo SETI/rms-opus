@@ -7136,3 +7136,73 @@ body; never rewrite or delete earlier notes.*
     rev 7.18 was invoked -- worth recording because the two PRs before it both merged under
     the quota exception, and a reader scanning the sequence could otherwise conclude the
     exception had become the norm.
+- **2026-08-28 (PR-23, the `ruff format` adoption):** five facts, the first two of which
+  PR-24 needs before it touches anything.
+  - **A formatter's output belongs to its version, and the declared floor was below the
+    boundary -- now corrected to `ruff>=0.9`.** `pyproject.toml` declared `ruff>=0.8`, and CI's
+    `pip install -e ".[dev]"` therefore resolves the newest ruff at install time (0.16.5 on
+    this date). Measured on this tree by formatting it with six versions and comparing the
+    results byte for byte: **0.9.0, 0.12.12, 0.14.14, 0.15.7 and 0.16.5 all produce
+    identical output**, and **0.8.6 differs on 29 of the 189 files** -- ruff's 2025 style
+    guide, which landed in **0.9.0**, added f-string expression formatting (`{a+3}` becomes
+    `{a + 3}`) and joins implicit string concatenations. So the `>=0.8` floor admits exactly
+    one minor version that reddens `ruff format --check` on code nobody touched, and the
+    style guide is versioned on a stated annual cadence, so the next such boundary is a
+    future release rather than a hypothetical. **The orchestrator ruled the floor up to
+    `ruff>=0.9` in this PR**, as internal consistency rather than dependency policy: the old
+    range declared support for a version that could not satisfy the repository's own gate.
+    **No upper bound was added and rfrench's standing no-caps ruling is untouched** -- that
+    ruling is about runtime libraries and behaviour-compatible upgrades, and a formatter
+    behind a `--check` gate is output-defining in a way a runtime library is not. A future
+    style guide is handled by reformatting under it, in its own commit, not by a cap.
+    Regenerate rather than trust these numbers: format the tree under two versions and `cmp`
+    the results.
+  - **`ruff format` is not behaviour-inert: it moves suppression comments off the lines they
+    suppress.** Reformatting this tree turned mypy from clean to **17 errors in
+    `src/opus_app/apps/ui/views.py`** without changing one token of code, because a
+    `# type: ignore` covers the physical line it sits on and the reformat split the
+    statements underneath six of them. Fixed in this PR's third commit. **Any future
+    reformat -- including the one a newer ruff will force -- must re-run the type, lint,
+    security and coverage gates rather than assuming a formatting diff cannot fail them**,
+    and the same hazard applies to `# noqa`, `# nosec` and `# pragma: no cover`. Those three
+    happened to survive here and it was verified, not assumed: `ruff check` passes with
+    `RUF100` enabled (so no `# noqa` became unused and no rule became unsuppressed), bandit
+    reports the same 0 issues and the same 57 redundant-`nosec` warnings on both trees, and
+    coverage.py's own parser measures **the same 29112 statements** across the 189 changed
+    files before and after, with three files' *excluded* line counts growing only by
+    non-statement continuation lines.
+  - **The technique that proves a formatting commit is formatting-only**, reusable whenever
+    one is produced: parse each changed file's pre- and post- content and compare
+    `ast.dump()`. Here 185 of 189 matched exactly and the other four differed only in
+    whitespace inside docstrings, across 19 docstrings. Seventeen are continuation-line
+    re-indents that leave the first line alone; the other two are single-line docstrings in
+    non-test modules that lost one leading or trailing space. Every docstring in the two
+    *test* files keeps its first line, which is what `unittest.shortDescription()` reads --
+    state it that narrowly, because the tempting absolute ("all first lines unchanged") is
+    false. Reading the diff cannot establish
+    this and neither can the test suite; the AST can. Pair it with the coverage-parser check
+    above, because the AST is blind to comment position and that is precisely where the
+    `# type: ignore` breakage lived.
+  - **`skip-magic-trailing-comma` was evaluated and rejected as not worth it**, so a later
+    reader does not have to re-run the experiment. It reduces the reformat's net line growth
+    from **+6498 to +6312** -- 2.9% of the growth -- while causing *three more* files to be
+    rewritten, because the dominant cost is not the magic trailing comma but the conversion
+    of visually-aligned continuations into hanging indents, which no format option controls.
+    The decisive objection is not the line count though: the option makes the formatter
+    *re-collapse* lists an author deliberately exploded one-per-line, so adding an item
+    re-explodes the whole block and the one-line-per-change diff behaviour that is the main
+    reason to adopt a formatter is lost. `line-length` is the only setting that moves the
+    number materially -- 120 gives **+3328** against the default's +6498 -- and it is pinned
+    at 100 by the E501 retirement note in `pyproject.toml`, so changing it is a separate
+    owner decision and not this PR's. `docstring-code-format` is a wash (+6499).
+  - **Where the +6498 lines actually went**, since the headline number is misleading:
+    `integration_tests/` accounts for **+4166 across 24 files** and `src/` for only **+1791
+    across 126 files**, roughly 14 lines per production file. The two largest single files
+    are `integration_tests/test_api/test_cart_api.py` at **+1032** and
+    `integration_tests/apps_db_tests/test_file_utils.py` at **+954**; the second is the more
+    instructive, because its expected-value dictionaries were written as single lines up to
+    **13476 characters** long, and after formatting no line anywhere in the tree exceeds
+    **1055**. Just under a third of the net growth (**+1978**, counting lines whose whole
+    content matches `\s*[)\]}]+,?`) is lines containing nothing but closing brackets and
+    perhaps a comma; widen the pattern to any line beginning with a closer and it is +2399,
+    so quote the pattern with the number.

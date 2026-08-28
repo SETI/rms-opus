@@ -14,8 +14,10 @@ from collections.abc import Sequence
 #   - the clock partition is always one
 ################################################################################
 
-def _parse_multi_field_sclk(sclk: str, ndigits: int, sep: str,
-                            modvals: int | Sequence[int], scname: str) -> float:
+
+def _parse_multi_field_sclk(
+    sclk: str, ndigits: int, sep: str, modvals: int | Sequence[int], scname: str
+) -> float:
     """Convert a multi-field clock string to a numeric value.
 
     Parameters:
@@ -55,7 +57,7 @@ def _parse_multi_field_sclk(sclk: str, ndigits: int, sep: str,
         sclk = parts[1]
 
     # Interpret the fields
-    nfields = len(modvals)+1  # this is how many fields we want
+    nfields = len(modvals) + 1  # this is how many fields we want
     parts = sclk.split(sep)
 
     if len(parts) > nfields:
@@ -69,10 +71,11 @@ def _parse_multi_field_sclk(sclk: str, ndigits: int, sep: str,
     # empty -- a trailing separator, or one of the fields appended just above --
     # therefore becomes all zeroes.
     for idx in range(1, len(parts)):
-        modval_len = len(str(modvals[idx-1]-1))
+        modval_len = len(str(modvals[idx - 1] - 1))
         if len(parts[idx]) > modval_len:
-            raise ValueError(f'{scname} clock field {idx+1} "{parts[idx]}" has too many '
-                             f'digits: {sclk}')
+            raise ValueError(
+                f'{scname} clock field {idx + 1} "{parts[idx]}" has too many digits: {sclk}'
+            )
         parts[idx] = parts[idx] + '0' * (modval_len - len(parts[idx]))
 
     # Make sure all fields are integers
@@ -88,17 +91,20 @@ def _parse_multi_field_sclk(sclk: str, ndigits: int, sep: str,
         raise ValueError(f'{scname} clock leading field has too many digits: {sclk}')
 
     result: float = 0
-    for idx in range(nfields-1, 0, -1):
-        modval = modvals[idx-1]
+    for idx in range(nfields - 1, 0, -1):
+        modval = modvals[idx - 1]
         if not 0 <= ints[idx] < modval:
-            raise ValueError(f'{scname} clock field {idx+1} out of range '
-                            f'0-{modval-1:d}: {sclk}')
+            raise ValueError(
+                f'{scname} clock field {idx + 1} out of range 0-{modval - 1:d}: {sclk}'
+            )
         result = (result + ints[idx]) / float(modval)
 
     return result + ints[0]
 
-def _format_multi_field_sclk(value: float, ndigits: int, sep: str,
-                             modvals: int | Sequence[int], scname: str) -> str:
+
+def _format_multi_field_sclk(
+    value: float, ndigits: int, sep: str, modvals: int | Sequence[int], scname: str
+) -> str:
     """Convert a number into a valid spacecraft clock string.
 
     Parameters:
@@ -127,9 +133,9 @@ def _format_multi_field_sclk(value: float, ndigits: int, sep: str,
     fmts = [f'%0{ndigits}d']
 
     for idx, modval in enumerate(modvals):
-        fmts.append(f'%0{len(str(modval-1))}d')
+        fmts.append(f'%0{len(str(modval - 1))}d')
         value *= modval
-        if idx != len(modvals)-1:
+        if idx != len(modvals) - 1:
             # Don't round up intermediate fields
             field_val = int(value)
         else:
@@ -140,12 +146,12 @@ def _format_multi_field_sclk(value: float, ndigits: int, sep: str,
 
     # If rounding up the final field made it too large, then propagate a carry
     # to earlier fields
-    for idx in range(len(ret_vals)-1, 0, -1):
-        modval = modvals[idx-1]
+    for idx in range(len(ret_vals) - 1, 0, -1):
+        modval = modvals[idx - 1]
         if ret_vals[idx] < modval:
             break
         ret_vals[idx] -= modval
-        ret_vals[idx-1] += 1
+        ret_vals[idx - 1] += 1
 
     fmt = sep.join(fmts)
     return fmt % tuple(ret_vals)
@@ -172,6 +178,7 @@ def _format_multi_field_sclk(value: float, ndigits: int, sep: str,
 # parsing, and allowing any missing fields to be set to zero.
 ################################################################################
 
+
 def parse_galileo_sclk(sclk: str, **kwargs: object) -> float:
     """Convert a Galileo clock string to a numeric value.
 
@@ -192,6 +199,7 @@ def parse_galileo_sclk(sclk: str, **kwargs: object) -> float:
     """
     sclk = sclk.replace('.', ':')
     return _parse_multi_field_sclk(sclk, 8, ':', (91, 10, 8), 'Galileo')
+
 
 def format_galileo_sclk(value: float, **kwargs: object) -> str:
     """Convert a number into a valid Galileo clock string.
@@ -221,6 +229,7 @@ def format_galileo_sclk(value: float, **kwargs: object) -> str:
 # count does not roll over between partitions.
 ################################################################################
 
+
 def parse_new_horizons_sclk(sclk: str, **kwargs: object) -> float:
     """Convert a New Horizons clock string to a numeric value.
 
@@ -243,7 +252,7 @@ def parse_new_horizons_sclk(sclk: str, **kwargs: object) -> float:
 
     # Check for partition number
     parts = sclk.partition('/')
-    if parts[1]:        # a slash if present, otherwise an empty string
+    if parts[1]:  # a slash if present, otherwise an empty string
         if parts[0] not in ('1', '3'):
             raise ValueError(f'New Horizons partition number must be 1 or 3: {sclk}')
         sclk = parts[2]
@@ -252,12 +261,13 @@ def parse_new_horizons_sclk(sclk: str, **kwargs: object) -> float:
     value = _parse_multi_field_sclk(sclk, 10, ':', 50000, 'New Horizons')
 
     # Validate the partition number if any
-    if parts[1] and ((parts[0] == '3' and value < 150000000.) or
-        (parts[0] == '1' and value > 150000000.)):
-        raise ValueError('New Horizons partition number is invalid: '
-                            f'{original_sclk}')
+    if parts[1] and (
+        (parts[0] == '3' and value < 150000000.0) or (parts[0] == '1' and value > 150000000.0)
+    ):
+        raise ValueError(f'New Horizons partition number is invalid: {original_sclk}')
 
     return value
+
 
 def format_new_horizons_sclk(value: float, **kwargs: object) -> str:
     """Convert a number into a valid New Horizons clock string.
@@ -285,6 +295,7 @@ def format_new_horizons_sclk(value: float, **kwargs: object) -> str:
 # separator is always a dot.
 ################################################################################
 
+
 def parse_cassini_sclk(sclk: str, **kwargs: object) -> float:
     """Convert a Cassini clock string to a numeric value.
 
@@ -303,6 +314,7 @@ def parse_cassini_sclk(sclk: str, **kwargs: object) -> float:
             limited to 0-255.
     """
     return _parse_multi_field_sclk(sclk, 10, '.', 256, 'Cassini')
+
 
 def format_cassini_sclk(value: float, **kwargs: object) -> str:
     """Convert a number into a valid Cassini clock string.
@@ -341,12 +353,11 @@ def format_cassini_sclk(value: float, **kwargs: object) -> str:
 # minutes have been appended with no separator.
 ################################################################################
 
-VOYAGER_PLANET_NAMES: dict[int, str] = {5:'Jupiter', 6:'Saturn', 7:'Uranus',
-                                        8:'Neptune'}
-VOYAGER_PLANET_PARTITIONS: dict[int, int] = {5:2, 6:2, 7:3, 8:4}
+VOYAGER_PLANET_NAMES: dict[int, str] = {5: 'Jupiter', 6: 'Saturn', 7: 'Uranus', 8: 'Neptune'}
+VOYAGER_PLANET_PARTITIONS: dict[int, int] = {5: 2, 6: 2, 7: 3, 8: 4}
 
-def parse_voyager_sclk(sclk: str, planet: int | None = None,
-                       **kwargs: object) -> float:
+
+def parse_voyager_sclk(sclk: str, planet: int | None = None, **kwargs: object) -> float:
     """Convert a Voyager clock string (FDS) to a numeric value.
 
     Typically, a partition number is not specified for FDS counts. However, if
@@ -397,8 +408,9 @@ def parse_voyager_sclk(sclk: str, planet: int | None = None,
             required_partition = VOYAGER_PLANET_PARTITIONS[planet]
             if partition != required_partition:
                 name = VOYAGER_PLANET_NAMES[planet]
-                raise ValueError(f'Partition number for {name} flyby '
-                                 f'must be {required_partition:d}: {sclk}')
+                raise ValueError(
+                    f'Partition number for {name} flyby must be {required_partition:d}: {sclk}'
+                )
 
         sclk = parts[1]
 
@@ -412,7 +424,6 @@ def parse_voyager_sclk(sclk: str, planet: int | None = None,
 
     if len(parts) > 3:
         raise ValueError(f'More than three fields in Voyager clock: {sclk}')
-
 
     # Append zeroes to make each field the proper length
     if len(parts) > 1 and len(parts[1]) < 2:
@@ -448,10 +459,10 @@ def parse_voyager_sclk(sclk: str, planet: int | None = None,
         raise ValueError(f'Voyager clock "seconds" out of range 1-800: {sclk}')
 
     # Return in units of FDS hours
-    return ints[0] + (ints[1] + (ints[2]-1) / 800.) / 60.
+    return ints[0] + (ints[1] + (ints[2] - 1) / 800.0) / 60.0
 
-def format_voyager_sclk(value: float, sep: str = ':', fields: int = 3,
-                        **kwargs: object) -> str:
+
+def format_voyager_sclk(value: float, sep: str = ':', fields: int = 3, **kwargs: object) -> str:
     """Convert a number in units of FDS hours to valid Voyager clock string.
 
     Parameters:
@@ -472,7 +483,7 @@ def format_voyager_sclk(value: float, sep: str = ':', fields: int = 3,
             hours.
     """
     assert sep in (':', '.'), f'Separator must be ":" or ".": {sep}'
-    assert fields in (2,3), f'Fields must be 2 or 3: {fields}'
+    assert fields in (2, 3), f'Fields must be 2 or 3: {fields}'
 
     saved_value = value
 
@@ -496,7 +507,7 @@ def format_voyager_sclk(value: float, sep: str = ':', fields: int = 3,
         value -= minutes
         value *= 800
         value += 1
-        seconds = int(value + 0.5)    # round off seconds
+        seconds = int(value + 0.5)  # round off seconds
 
         # Handle carry
         if seconds > 800:

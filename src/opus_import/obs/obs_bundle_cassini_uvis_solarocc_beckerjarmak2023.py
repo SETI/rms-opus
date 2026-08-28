@@ -23,12 +23,10 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``COUVIS``."""
         return 'COUVIS'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -51,7 +49,6 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         """
         return [('S RINGS', 'Saturn Rings')]
 
-
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
@@ -66,7 +63,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         return self._create_mult('cassini')
 
     def field_obs_profile_temporal_sampling(self) -> FloatField:
-        return cast(FloatField, self._index_col('rings:temporal_sampling')) # sec
+        return cast(FloatField, self._index_col('rings:temporal_sampling'))  # sec
 
     def field_obs_profile_wl_band(self) -> MultFieldRet:
         return self._create_mult('UV')
@@ -77,7 +74,8 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
             occ_dir = self._index_col('rings:time_series_direction')
         if occ_dir is None:
             self._log_nonrepeating_error(
-                '"rings:ring_profile_direction" and "rings:time_series_direction" are missing')
+                '"rings:ring_profile_direction" and "rings:time_series_direction" are missing'
+            )
             return self._create_mult(None)
         occ_dir = occ_dir.upper()
         if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
@@ -102,7 +100,6 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         ret = self._index_col('rings:highest_detectable_normal_optical_depth')
         return cast(FloatField, ret)
 
-
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
@@ -126,21 +123,21 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
             if the observation has no start time or either angle is missing.
         """
         inc = self.field_obs_ring_geometry_incidence1()
-        em  = self.field_obs_ring_geometry_emission1()
+        em = self.field_obs_ring_geometry_emission1()
 
         # Observation ET time (float seconds)
-        time1 = self.field_obs_general_time1() # pds:start_date_time converted to ET
+        time1 = self.field_obs_general_time1()  # pds:start_date_time converted to ET
         if time1 is None:
             return (None, None)
 
         # Before equinox ==> south side lit ==> flip to north-based
         if not self._is_ring_north_side_lit():
             north_inc = 180.0 - inc if inc is not None else None
-            north_em  = 180.0 - em if em is not None else None
+            north_em = 180.0 - em if em is not None else None
         else:
             # On/after equinox ==> north side lit (no change)
             north_inc = inc
-            north_em  = em
+            north_em = em
 
         return (north_inc, north_em)
 
@@ -180,7 +177,6 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
     def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
         return self.field_obs_ring_geometry_observer_ring_opening_angle1()
 
-
     ######################################
     ### OVERRIDE FROM ObsCassiniCommon ###
     ######################################
@@ -190,7 +186,6 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
 
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         return self._create_mult(self._cassini_normalize_mission_phase_name())
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_couvis ###
@@ -209,7 +204,7 @@ class ObsBundleCassiniUvisSolarOccBeckerJarmak(ObsBundleOccCommon, ObsCassiniCom
         return self.field_obs_profile_temporal_sampling()
 
     def field_obs_instrument_couvis_compression_type(self) -> MultFieldRet:
-        comp_type = "SQRT_9" # All BeckerJarmak observations use this compression type.
+        comp_type = 'SQRT_9'  # All BeckerJarmak observations use this compression type.
         return self._create_mult_keep_case(comp_type)
 
     def field_obs_instrument_couvis_occultation_port_state(self) -> MultFieldRet:

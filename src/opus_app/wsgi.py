@@ -6,6 +6,7 @@ importable straight from the installed distribution and needs no sys.path setup,
 but ``OPUS_CONFIG`` must be set in the server's environment: it names the OPUS
 configuration file, and there is no default location for it.
 """
+
 import os
 
 from django.core.wsgi import get_wsgi_application

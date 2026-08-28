@@ -76,8 +76,7 @@ _IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
 
 #: Operators that may appear between two rendered expressions. Restricting the set
 #: means `binary_op` cannot be handed arbitrary SQL text through its operator.
-_BINARY_OPERATORS = frozenset(['=', '<', '<=', '>', '>=', '+', '-',
-                               'LIKE', 'NOT LIKE', 'RLIKE'])
+_BINARY_OPERATORS = frozenset(['=', '<', '<=', '>', '>=', '+', '-', 'LIKE', 'NOT LIKE', 'RLIKE'])
 
 #: How the items of a list are separated. No space, because that is what the
 #: queries this module replaced emitted and what the integration suite pins.
@@ -87,9 +86,11 @@ _SEPARATOR = ','
 #: table and the short-lived temporary table the cart's range editor builds use
 #: exactly these, because both are consumed the same way: `sort_order` gives the
 #: result ordering and `id` joins back to `obs_general`.
-CACHE_TABLE_COLUMN_DEFS = ('sort_order INT NOT NULL AUTO_INCREMENT, '
-                           'PRIMARY KEY(sort_order), id INT UNSIGNED, '
-                           'UNIQUE KEY(id)')
+CACHE_TABLE_COLUMN_DEFS = (
+    'sort_order INT NOT NULL AUTO_INCREMENT, '
+    'PRIMARY KEY(sort_order), id INT UNSIGNED, '
+    'UNIQUE KEY(id)'
+)
 
 
 class SQLIdentifierError(ValueError):
@@ -207,8 +208,10 @@ def angular_separation(longitude_column: Expr, target_longitude: float) -> Expr:
     half-width of the user's range and of the observation's own range, which is
     what makes a search that straddles 0 degrees work.
     """
-    return Expr(f'ABS(MOD(%s - {longitude_column.sql} + 540., 360.) - 180.)',
-                [target_longitude, *longitude_column.params])
+    return Expr(
+        f'ABS(MOD(%s - {longitude_column.sql} + 540., 360.) - 180.)',
+        [target_longitude, *longitude_column.params],
+    )
 
 
 def binary_op(left: Expr, operator: str, right: Expr) -> Expr:
@@ -224,8 +227,7 @@ def binary_op(left: Expr, operator: str, right: Expr) -> Expr:
     """
     if operator not in _BINARY_OPERATORS:
         raise ValueError(f'Unsupported SQL operator: {operator!r}')
-    return Expr(f'{left.sql} {operator} {right.sql}',
-                list(left.params) + list(right.params))
+    return Expr(f'{left.sql} {operator} {right.sql}', list(left.params) + list(right.params))
 
 
 def columns_equal(left: Expr, right: Expr) -> Expr:
@@ -248,8 +250,7 @@ def is_null(expr: Expr) -> Expr:
 def in_values(expr: Expr, vals: list[Any]) -> Expr:
     """Return `expr IN (%s,...)` with one placeholder per value."""
     placeholders = _SEPARATOR.join(['%s'] * len(vals))
-    return Expr(f'{expr.sql} IN ({placeholders})',
-                list(expr.params) + list(vals))
+    return Expr(f'{expr.sql} IN ({placeholders})', list(expr.params) + list(vals))
 
 
 def in_sequence(expr: Expr, vals: list[Any] | tuple[Any, ...]) -> Expr:
@@ -326,10 +327,12 @@ class JSONTable:
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this source as it appears in a FROM clause."""
-        return (f'JSON_TABLE({self.source_column.sql}, "$[*]" COLUMNS '
-                f'({quote_identifier(self.value_column)} TEXT PATH "$")) '
-                f'{quote_identifier(self.alias)}',
-                list(self.source_column.params))
+        return (
+            f'JSON_TABLE({self.source_column.sql}, "$[*]" COLUMNS '
+            f'({quote_identifier(self.value_column)} TEXT PATH "$")) '
+            f'{quote_identifier(self.alias)}',
+            list(self.source_column.params),
+        )
 
 
 def _render_source(source: str | Subquery | JSONTable) -> tuple[str, list[Any]]:
@@ -375,8 +378,9 @@ class FromSource:
     source: str | Subquery | JSONTable
     joins: list[Join] = field(default_factory=list)
 
-    def add_join(self, kind: str, source: str | Subquery | JSONTable,
-                 on: Expr | None = None) -> 'FromSource':
+    def add_join(
+        self, kind: str, source: str | Subquery | JSONTable, on: Expr | None = None
+    ) -> 'FromSource':
         """Append a join to this source and return self."""
         self.joins.append(Join(kind, source, on))
         return self
@@ -407,8 +411,7 @@ class Select:
     placeholder order.
     """
 
-    def __init__(self, distinct: bool = False,
-                 max_execution_time: int | None = None) -> None:
+    def __init__(self, distinct: bool = False, max_execution_time: int | None = None) -> None:
         """Create an empty statement.
 
         Parameters:
@@ -425,8 +428,9 @@ class Select:
         """
         self._distinct = distinct
         if max_execution_time is not None and not isinstance(max_execution_time, int):
-            raise ValueError('max_execution_time must be an int number of '
-                             f'milliseconds: {max_execution_time!r}')
+            raise ValueError(
+                f'max_execution_time must be an int number of milliseconds: {max_execution_time!r}'
+            )
         self._max_execution_time = max_execution_time
         self._columns: list[Expr] = []
         self._from: list[FromSource] = []
@@ -549,9 +553,9 @@ class Select:
         return sql, params
 
 
-def create_table_from_select_sql(table_name: str, select_sql: str,
-                                 column_defs: str | None = None,
-                                 temporary: bool = False) -> str:
+def create_table_from_select_sql(
+    table_name: str, select_sql: str, column_defs: str | None = None, temporary: bool = False
+) -> str:
     """Return the SQL of a CREATE TABLE ... SELECT, given the SELECT as text.
 
     This is for the one caller that receives its SELECT already rendered --
@@ -576,9 +580,9 @@ def create_table_from_select_sql(table_name: str, select_sql: str,
     return statement + select_sql
 
 
-def create_table_as_select(table_name: str, select: Select,
-                           column_defs: str | None = None,
-                           temporary: bool = False) -> tuple[str, list[Any]]:
+def create_table_as_select(
+    table_name: str, select: Select, column_defs: str | None = None, temporary: bool = False
+) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a CREATE TABLE ... SELECT.
 
     Parameters:
@@ -588,10 +592,12 @@ def create_table_as_select(table_name: str, select: Select,
         temporary: See `create_table_from_select_sql`.
     """
     select_sql, params = select.build()
-    return (create_table_from_select_sql(table_name, select_sql,
-                                         column_defs=column_defs,
-                                         temporary=temporary),
-            params)
+    return (
+        create_table_from_select_sql(
+            table_name, select_sql, column_defs=column_defs, temporary=temporary
+        ),
+        params,
+    )
 
 
 def drop_table(table_name: str) -> str:
@@ -619,12 +625,13 @@ def delete_from(table_name: str, where: Expr) -> tuple[str, list[Any]]:
     """
     # The table name is the only interpolation and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
     # the WHERE clause's own values are %s placeholders in where.params.
-    return (f'DELETE FROM {quote_identifier(table_name)} WHERE {where.sql}',  # nosec B608
-            list(where.params))
+    return (
+        f'DELETE FROM {quote_identifier(table_name)} WHERE {where.sql}',  # nosec B608
+        list(where.params),
+    )
 
 
-def delete_joined(target_table: str, from_source: FromSource,
-                  where: Expr) -> tuple[str, list[Any]]:
+def delete_joined(target_table: str, from_source: FromSource, where: Expr) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a DELETE that selects its rows through a join.
 
     Renders `DELETE <target> FROM <source> ... WHERE ...`: the rows to delete come
@@ -638,9 +645,11 @@ def delete_joined(target_table: str, from_source: FromSource,
     from_sql, from_params = from_source.render()
     # Every interpolation is an identifier or an already-rendered clause, and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
     # all values travel in from_params and where.params as %s placeholders.
-    return (f'DELETE {quote_identifier(target_table)} FROM {from_sql}'  # nosec B608
-            f' WHERE {where.sql}',
-            from_params + list(where.params))
+    return (
+        f'DELETE {quote_identifier(target_table)} FROM {from_sql}'  # nosec B608
+        f' WHERE {where.sql}',
+        from_params + list(where.params),
+    )
 
 
 def _quoted_column_list(column_names: tuple[str, ...] | list[str]) -> str:
@@ -651,8 +660,7 @@ def _quoted_column_list(column_names: tuple[str, ...] | list[str]) -> str:
     return _SEPARATOR.join(quote_identifier(name) for name in column_names)
 
 
-def replace_into_values(table_name: str,
-                        column_names: tuple[str, ...] | list[str]) -> str:
+def replace_into_values(table_name: str, column_names: tuple[str, ...] | list[str]) -> str:
     """Return the SQL of a `REPLACE INTO <table> (...) VALUES (%s,...)`.
 
     One placeholder per column, so the statement is what `cursor.executemany` wants:
@@ -664,21 +672,26 @@ def replace_into_values(table_name: str,
     into a replacement instead of a duplicate.
     """
     placeholders = _SEPARATOR.join(['%s'] * len(column_names))
-    return (f'REPLACE INTO {quote_identifier(table_name)}'
-            f' ({_quoted_column_list(column_names)}) VALUES ({placeholders})')
+    return (
+        f'REPLACE INTO {quote_identifier(table_name)}'
+        f' ({_quoted_column_list(column_names)}) VALUES ({placeholders})'
+    )
 
 
-def replace_into_select(table_name: str,
-                        column_names: tuple[str, ...] | list[str],
-                        select: Select) -> tuple[str, list[Any]]:
+def replace_into_select(
+    table_name: str, column_names: tuple[str, ...] | list[str], select: Select
+) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a `REPLACE INTO <table> (...) SELECT ...`."""
     sql, params = select.build()
-    return (f'REPLACE INTO {quote_identifier(table_name)}'
-            f' ({_quoted_column_list(column_names)}) {sql}', params)
+    return (
+        f'REPLACE INTO {quote_identifier(table_name)} ({_quoted_column_list(column_names)}) {sql}',
+        params,
+    )
 
 
-def update(table_name: str, assignments: list[tuple[str, Any]],
-           where: Expr) -> tuple[str, list[Any]]:
+def update(
+    table_name: str, assignments: list[tuple[str, Any]], where: Expr
+) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of an UPDATE.
 
     Parameters:
@@ -694,6 +707,8 @@ def update(table_name: str, assignments: list[tuple[str, Any]],
         params.append(val)
     # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
     # every assigned value is a %s placeholder appended to params above.
-    return (f'UPDATE {quote_identifier(table_name)} SET '  # nosec B608
-            f'{_SEPARATOR.join(sets)} WHERE {where.sql}',
-            params + list(where.params))
+    return (
+        f'UPDATE {quote_identifier(table_name)} SET '  # nosec B608
+        f'{_SEPARATOR.join(sets)} WHERE {where.sql}',
+        params + list(where.params),
+    )

@@ -21,7 +21,6 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
         """Whether this STIS observation is a spectrum rather than an image."""
         return self._observation_type() == 'SPE'
 
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
@@ -30,7 +29,6 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``HSTSTIS``."""
         return 'HSTSTIS'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -50,13 +48,12 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
         if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'):
             self._log_nonrepeating_error(f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
             return None
-        if obs_type.startswith('SPEC'): # SPECTRUM or SPECTROSCOPIC
-            return 'SPE' # Spectrum (1-D with spectral information)
-        return 'IMG' # Image
+        if obs_type.startswith('SPEC'):  # SPECTRUM or SPECTROSCOPIC
+            return 'SPE'  # Spectrum (1-D with spectral information)
+        return 'IMG'  # Image
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -65,13 +62,11 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
     def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
-        return SIXTEEN_BIT_IMAGE_LEVELS # STIS Inst Handbook, Sec 7.5.1
-
+        return SIXTEEN_BIT_IMAGE_LEVELS  # STIS Inst Handbook, Sec 7.5.1
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
-
 
     def field_obs_wavelength_wave_res1(self) -> FloatField:
         wr1 = self._index_col('MAXIMUM_WAVELENGTH_RESOLUTION')
@@ -79,8 +74,8 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
         # This is necessary because in some cases these are backwards in the table!
         if wr1 is not None and wr2 is not None and wr1 > wr2:
             self._log_warning(
-                'MAXIMUM_WAVELENGTH_RESOLUTION < MINIMUM_WAVELENGTH_RESOLUTION; '
-                +'swapping')
+                'MAXIMUM_WAVELENGTH_RESOLUTION < MINIMUM_WAVELENGTH_RESOLUTION; ' + 'swapping'
+            )
             return cast(FloatField, wr2)
         return cast(FloatField, wr1)
 
@@ -120,7 +115,6 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
     def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         return self._create_mult('NONE')
 
-
     ###########################################
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
@@ -133,8 +127,7 @@ class ObsVolumeHSTOxxxxx(ObsVolumeHubbleCommon):
             self._log_nonrepeating_error('filter2 not None')
             return self._create_mult(None)
 
-        if filter1 in ('CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS',
-                       'STRONTIUM_FLUORIDE', 'ND_3'):
+        if filter1 in ('CLEAR', 'CRYSTAL QUARTZ', 'LONG_PASS', 'STRONTIUM_FLUORIDE', 'ND_3'):
             return self._create_mult('LP')
         if filter1 == 'LYMAN_ALPHA':
             return self._create_mult('N')

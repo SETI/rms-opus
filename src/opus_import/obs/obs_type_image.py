@@ -29,7 +29,6 @@ class ObsTypeImage(ObsBase):
 
     ### Don't override these ###
 
-
     def field_obs_type_image_opus_id(self) -> StrField:
         return self.opus_id
 
@@ -38,7 +37,6 @@ class ObsTypeImage(ObsBase):
 
     def field_obs_type_image_instrument_id(self) -> StrField:
         return self.instrument_id
-
 
     ################################
     ### ! Might override these ! ###

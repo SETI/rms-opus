@@ -14,8 +14,9 @@
 #   All higher numbers map to themselves.
 ################################################################################
 
-CASSINI_ORBIT_NUMBER: dict[str, int] = {'A':0, 'B':1, 'C':2}
-CASSINI_ORBIT_NAME: dict[int, str] = {-1:'000', 0:'00A', 1:'00B', 2:'00C'}
+CASSINI_ORBIT_NUMBER: dict[str, int] = {'A': 0, 'B': 1, 'C': 2}
+CASSINI_ORBIT_NAME: dict[int, str] = {-1: '000', 0: '00A', 1: '00B', 2: '00C'}
+
 
 def parse_cassini_orbit(orbit: str, **kwargs: object) -> int:
     """Convert Cassini orbit name to an integer.
@@ -52,6 +53,7 @@ def parse_cassini_orbit(orbit: str, **kwargs: object) -> int:
     if name not in CASSINI_ORBIT_NUMBER:
         raise ValueError(f'Invalid Cassini orbit {orbit}')
     return CASSINI_ORBIT_NUMBER[name]
+
 
 def format_cassini_orbit(value: int, **kwargs: object) -> str:
     """Convert an internal number for a Cassini orbit to its displayed value.

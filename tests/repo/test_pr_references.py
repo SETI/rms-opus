@@ -60,8 +60,9 @@ def _tracked_files() -> list[str]:
     Returns:
         The paths, in git's order.
     """
-    finished = subprocess.run(['git', 'ls-files', '-z'], cwd=REPO_ROOT,
-                              capture_output=True, check=True)
+    finished = subprocess.run(
+        ['git', 'ls-files', '-z'], cwd=REPO_ROOT, capture_output=True, check=True
+    )
     return [name.decode() for name in finished.stdout.split(b'\0') if name]
 
 
@@ -197,8 +198,7 @@ def test_dropping_the_anchor_is_what_would_break_it() -> None:
     unanchored pattern and *must* match, which is what makes the anchored result mean
     something.
     """
-    unanchored = re.compile(PLAN_PR_REFERENCE.pattern.replace(rb'\b', b''),
-                            PLAN_PR_REFERENCE.flags)
+    unanchored = re.compile(PLAN_PR_REFERENCE.pattern.replace(rb'\b', b''), PLAN_PR_REFERENCE.flags)
     assert unanchored.pattern != PLAN_PR_REFERENCE.pattern
 
     for line in PDS_DATASET_IDENTIFIERS:

@@ -19,12 +19,9 @@ class ObsProfile(ObsBase):
     declaring the type `opus_import.obs.field_types` gives that column.
     """
 
-
     ### Utility functions useful for subclasses ###
 
-
-    def _star_name_helper(self, index: str,
-                          col: str) -> tuple[str | None, TargetInfo | None]:
+    def _star_name_helper(self, index: str, col: str) -> tuple[str | None, TargetInfo | None]:
         """Look up the occulted star named in one of the index files.
 
         Parameters:
@@ -40,11 +37,11 @@ class ObsProfile(ObsBase):
         target_name = target_name.replace(' ', '').upper()
         return self._get_target_info(target_name)
 
-    _STAR_RA_DEC_SLOP = 0. # Decided at meeting 2020/05/14 to have stars as fixed pts
+    _STAR_RA_DEC_SLOP = 0.0  # Decided at meeting 2020/05/14 to have stars as fixed pts
 
     def _prof_ra_dec_helper(
-            self, index: str,
-            col: str) -> tuple[FloatField, FloatField, FloatField, FloatField]:
+        self, index: str, col: str
+    ) -> tuple[FloatField, FloatField, FloatField, FloatField]:
         """Return the search range for the occulted star's position.
 
         Parameters:
@@ -60,16 +57,15 @@ class ObsProfile(ObsBase):
         if target_name is None:
             return None, None, None, None
         if target_name not in config_targets.STAR_RA_DEC:
-            self._log_nonrepeating_error(
-                f'Star "{target_name}" missing RA and DEC information'
-            )
+            self._log_nonrepeating_error(f'Star "{target_name}" missing RA and DEC information')
             return None, None, None, None
 
-        return (config_targets.STAR_RA_DEC[target_name][0]-self._STAR_RA_DEC_SLOP,
-                config_targets.STAR_RA_DEC[target_name][0]+self._STAR_RA_DEC_SLOP,
-                config_targets.STAR_RA_DEC[target_name][1]-self._STAR_RA_DEC_SLOP,
-                config_targets.STAR_RA_DEC[target_name][1]+self._STAR_RA_DEC_SLOP)
-
+        return (
+            config_targets.STAR_RA_DEC[target_name][0] - self._STAR_RA_DEC_SLOP,
+            config_targets.STAR_RA_DEC[target_name][0] + self._STAR_RA_DEC_SLOP,
+            config_targets.STAR_RA_DEC[target_name][1] - self._STAR_RA_DEC_SLOP,
+            config_targets.STAR_RA_DEC[target_name][1] + self._STAR_RA_DEC_SLOP,
+        )
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -85,7 +81,6 @@ class ObsProfile(ObsBase):
 
     def field_obs_profile_instrument_id(self) -> StrField:
         return self.instrument_id
-
 
     ################################
     ### ! Might override these ! ###

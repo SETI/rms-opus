@@ -39,10 +39,13 @@ if TYPE_CHECKING:
     from opus_import.import_util import TableSchema
 
 
-def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
-                             table_name: str,
-                             table_schema: TableSchema,
-                             metadata: dict[str, Any]) -> dict[str, Any] | None:
+def import_observation_table(
+    ctx: ImportContext,
+    instrument_obj: ObsBase,
+    table_name: str,
+    table_schema: TableSchema,
+    metadata: dict[str, Any],
+) -> dict[str, Any] | None:
     """Compute one observation's row of one table.
 
     Three kinds of column are skipped: ``timestamp``, which the database maintains
@@ -73,7 +76,7 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
     """
     new_row: dict[str, Any] = {}
 
-    metadata[table_name+'_row'] = new_row
+    metadata[table_name + '_row'] = new_row
 
     # Run through all the based columns and compute their values.
     # Always skip "id" for tables other than obs_general, because this is just
@@ -84,8 +87,7 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
     # type is a GROUP-type.
 
     for table_column in table_schema:
-        if (table_column.get('put_mults_here', False) or
-            table_column.get('pi_referred_slug', False)):
+        if table_column.get('put_mults_here', False) or table_column.get('pi_referred_slug', False):
             continue
         field_name = table_column['field_name']
         field_type = table_column['field_type']
@@ -99,9 +101,8 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
         data_source = table_column.get('data_source', None)
         if not data_source:
             import_util.log_nonrepeating_warning(
-                ctx,
-                f'No data source for column "{field_name}" in table '+
-                f'"{table_name}"')
+                ctx, f'No data source for column "{field_name}" in table ' + f'"{table_name}"'
+            )
             column_val_list: list[Any] | None = []
         else:
             ### COMPUTE THE NEW COLUMN VALUE ###
@@ -120,11 +121,9 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                 column_val_list = [import_util.safe_column(obs_general_row, 'id')]
 
             elif data_source == 'COMPUTE':
-                ok, ret = import_run_field_function(ctx, instrument_obj,
-                                                    table_name,
-                                                    table_schema,
-                                                    metadata,
-                                                    field_name)
+                ok, ret = import_run_field_function(
+                    ctx, instrument_obj, table_name, table_schema, metadata, field_name
+                )
                 if ok:
                     # For a mult_list field, it's OK to return a single value, just to
                     # make the populate_ code simpler. In that case we turn it into a
@@ -155,17 +154,18 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
 
             elif data_source == 'MAX_ID':
                 if table_name not in ctx.max_table_id_cache:
-                    ctx.max_table_id_cache[table_name] = (
-                        import_util.find_max_table_id(ctx, table_name))
-                ctx.max_table_id_cache[table_name] = (
-                    ctx.max_table_id_cache[table_name]+1)
+                    ctx.max_table_id_cache[table_name] = import_util.find_max_table_id(
+                        ctx, table_name
+                    )
+                ctx.max_table_id_cache[table_name] = ctx.max_table_id_cache[table_name] + 1
                 column_val_list = [ctx.max_table_id_cache[table_name]]
 
             else:
                 import_util.log_nonrepeating_error(
                     ctx,
-                    f'Unknown data_source type "{data_source}" for '+
-                    f'"{field_name}" in table "{table_name}"')
+                    f'Unknown data_source type "{data_source}" for '
+                    + f'"{field_name}" in table "{table_name}"',
+                )
 
         ### VALIDATE THE COLUMN VALUE ###
 
@@ -176,7 +176,8 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
             # variable got a value at all -- not an internal invariant.
             raise ValueError(
                 f'No value computed for column "{field_name}" in table "{table_name}": '
-                f'unknown data_source "{data_source}"')
+                f'unknown data_source "{data_source}"'
+            )
 
         # For a mult_list field, the column_val_list contains a list of column_vals.
         # Otherwise it contains a list with a single entry for the single value.
@@ -190,8 +191,9 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                 if notnull:
                     import_util.log_nonrepeating_error(
                         ctx,
-                        f'Column "{field_name}" in table "{table_name}" '+
-                        'has NULL value but NOT NULL is set')
+                        f'Column "{field_name}" in table "{table_name}" '
+                        + 'has NULL value but NOT NULL is set',
+                    )
             else:
                 if field_type.startswith('flag'):
                     if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
@@ -209,29 +211,34 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                     else:
                         import_util.log_nonrepeating_error(
                             ctx,
-                            f'Column "{field_name}" in table "{table_name}" '+
-                            f'has FLAG type but value "{column_val}" is not '+
-                            'a valid flag value')
+                            f'Column "{field_name}" in table "{table_name}" '
+                            + f'has FLAG type but value "{column_val}" is not '
+                            + 'a valid flag value',
+                        )
                         column_val = None
                 if field_type.startswith('char'):
                     field_size = int(field_type[4:])
                     if not isinstance(column_val, str):
                         import_util.log_nonrepeating_error(
                             ctx,
-                            f'Column "{field_name}" in table "{table_name}" '+
-                            f'has CHAR type but value "{column_val}" is of '+
-                            f'type "{type(column_val)}"')
+                            f'Column "{field_name}" in table "{table_name}" '
+                            + f'has CHAR type but value "{column_val}" is of '
+                            + f'type "{type(column_val)}"',
+                        )
                         column_val = ''
                     elif len(column_val) > field_size:
                         import_util.log_nonrepeating_error(
                             ctx,
-                            f'Column "{field_name}" in table "{table_name}" '+
-                            f'has CHAR size {field_size} but value '+
-                            f'"{column_val}" is too long')
+                            f'Column "{field_name}" in table "{table_name}" '
+                            + f'has CHAR size {field_size} but value '
+                            + f'"{column_val}" is too long',
+                        )
                         column_val = column_val[:field_size]
-                elif (field_type.startswith('real') or
-                      field_type.startswith('int') or
-                      field_type.startswith('uint')):
+                elif (
+                    field_type.startswith('real')
+                    or field_type.startswith('int')
+                    or field_type.startswith('uint')
+                ):
                     the_val = None
                     if field_type.startswith('real'):
                         try:
@@ -239,9 +246,10 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                         except ValueError:
                             import_util.log_nonrepeating_error(
                                 ctx,
-                                f'Column "{field_name}" in table '+
-                                f'"{table_name}" has REAL type but '+
-                                f'"{column_val}" is not a float')
+                                f'Column "{field_name}" in table '
+                                + f'"{table_name}" has REAL type but '
+                                + f'"{column_val}" is not a float',
+                            )
                             column_val = None
                     else:
                         try:
@@ -249,9 +257,10 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                         except ValueError:
                             import_util.log_nonrepeating_error(
                                 ctx,
-                                f'Column "{field_name}" in table '+
-                                f'"{table_name}" has INT type but '+
-                                f'"{column_val}" is not an int')
+                                f'Column "{field_name}" in table '
+                                + f'"{table_name}" has INT type but '
+                                + f'"{column_val}" is not an int',
+                            )
                             column_val = None
                     if column_val is not None and the_val is not None:
                         val_sentinel = table_column.get('val_sentinel', None)
@@ -261,38 +270,46 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                             column_val = None
                             import_util.log_nonrepeating_error(
                                 ctx,
-                                f'Caught sentinel value {the_val} for column '+
-                                f'"{field_name}" that was missed'+
-                                ' by the PDS label!')
+                                f'Caught sentinel value {the_val} for column '
+                                + f'"{field_name}" that was missed'
+                                + ' by the PDS label!',
+                            )
                     if column_val is not None and the_val is not None:
                         val_min = table_column.get('val_min', None)
                         val_max = table_column.get('val_max', None)
-                        val_use_null = table_column.get('val_set_invalid_to_null',
-                                                        False)
+                        val_use_null = table_column.get('val_set_invalid_to_null', False)
                         if val_min is not None and the_val < val_min:
                             if val_use_null:
-                                msg = (f'Column "{field_name}" in table '+
-                                       f'"{table_name}" has minimum value '+
-                                       f'{val_min} but {column_val} is too small -'+
-                                       ' substituting NULL')
+                                msg = (
+                                    f'Column "{field_name}" in table '
+                                    + f'"{table_name}" has minimum value '
+                                    + f'{val_min} but {column_val} is too small -'
+                                    + ' substituting NULL'
+                                )
                                 import_util.log_debug(ctx, msg)
                             else:
-                                msg = (f'Column "{field_name}" in table '+
-                                       f'"{table_name}" has minimum value '+
-                                       f'{val_min} but {column_val} is too small')
+                                msg = (
+                                    f'Column "{field_name}" in table '
+                                    + f'"{table_name}" has minimum value '
+                                    + f'{val_min} but {column_val} is too small'
+                                )
                                 import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
                         if val_max is not None and the_val > val_max:
                             if val_use_null:
-                                msg = (f'Column "{field_name}" in table '+
-                                       f'"{table_name}" has maximum value {val_max}'+
-                                       f' but {column_val} is too large - '+
-                                       'substituting NULL')
+                                msg = (
+                                    f'Column "{field_name}" in table '
+                                    + f'"{table_name}" has maximum value {val_max}'
+                                    + f' but {column_val} is too large - '
+                                    + 'substituting NULL'
+                                )
                                 import_util.log_debug(ctx, msg)
                             else:
-                                msg = (f'Column "{field_name}" in table '+
-                                       f'"{table_name}" has maximum value '+
-                                       f'{val_max} but {column_val} is too large')
+                                msg = (
+                                    f'Column "{field_name}" in table '
+                                    + f'"{table_name}" has maximum value '
+                                    + f'{val_max} but {column_val} is too large'
+                                )
                                 import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
 
@@ -300,7 +317,7 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
 
             form_type = table_column.get('pi_form_type', None)
             if form_type is not None and form_type.find(':') != -1:
-                form_type = form_type[:form_type.find(':')]
+                form_type = form_type[: form_type.find(':')]
             if form_type in config_data.GROUP_FORM_TYPES:
                 # Handle the case when display value is not set. This stays here because
                 # mult_label gets updated based on column_val after column_val is validated.
@@ -310,7 +327,7 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                     import_util.log_nonrepeating_error(
                         ctx,
                         f'Fatal error processing column "{field_name}" in '
-                        f'table "{table_name}" - bad data type returned for mult'
+                        f'table "{table_name}" - bad data type returned for mult',
                     )
                     return None
                 # The seven lists are assigned together in the full-spec mult branch
@@ -326,20 +343,24 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
                         mult_label = 'N/A'
                     else:
                         mult_label = str(column_val)
-                        if (not mult_label[0].isdigit() or
-                            not mult_label[-1].isdigit()):
+                        if not mult_label[0].isdigit() or not mult_label[-1].isdigit():
                             # This catches things like 2014 MU69 and leaves them
                             # in all caps
                             mult_label = mult_label.title()
 
                 column_val = do_import_mult.update_mult_table(
-                              ctx, table_name, field_name, table_column,
-                              column_val, mult_label,
-                              aliases_list[column_val_num],
-                              disp_list[column_val_num],
-                              disp_order_list[column_val_num],
-                              grouping_list[column_val_num],
-                              group_disp_order_list[column_val_num])
+                    ctx,
+                    table_name,
+                    field_name,
+                    table_column,
+                    column_val,
+                    mult_label,
+                    aliases_list[column_val_num],
+                    disp_list[column_val_num],
+                    disp_order_list[column_val_num],
+                    grouping_list[column_val_num],
+                    group_disp_order_list[column_val_num],
+                )
 
             if field_type != 'mult_list' or column_val is not None:
                 # When making a list for a mult_list field, don't include None
@@ -355,7 +376,7 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
             else:
                 new_row[field_name] = json.dumps(row_val)
         else:
-            new_row[field_name] = row_val[0] # Only a single value
+            new_row[field_name] = row_val[0]  # Only a single value
 
     if not ctx.args.import_ignore_geo_mismatch:
         if table_name == 'obs_ring_geometry':
@@ -368,6 +389,7 @@ def import_observation_table(ctx: ImportContext, instrument_obj: ObsBase,
             instrument_obj.validate_surface_geo_fields(new_row, metadata, table_name)
 
     return new_row
+
 
 def field_function_name(table_name: str, field_name: str) -> str:
     """Return the name of the obs method that computes one column.
@@ -389,12 +411,17 @@ def field_function_name(table_name: str, field_name: str) -> str:
     """
     if table_name.startswith('obs_surface_geometry__'):
         table_name = 'obs_surface_geometry_target'
-    return 'field_'+table_name+'_'+field_name
+    return 'field_' + table_name + '_' + field_name
 
-def import_run_field_function(ctx: ImportContext, instrument_obj: ObsBase,
-                              table_name: str, table_schema: TableSchema,
-                              metadata: dict[str, Any],
-                              field_name: str) -> tuple[bool, Any]:
+
+def import_run_field_function(
+    ctx: ImportContext,
+    instrument_obj: ObsBase,
+    table_name: str,
+    table_schema: TableSchema,
+    metadata: dict[str, Any],
+    field_name: str,
+) -> tuple[bool, Any]:
     """Call the obs class method that computes one column's value.
 
     The method is named ``field_<table>_<column>``, and every
@@ -417,12 +444,13 @@ def import_run_field_function(ctx: ImportContext, instrument_obj: ObsBase,
         logged as an error.
     """
     func_name = field_function_name(table_name, field_name)
-    if (not hasattr(instrument_obj, func_name) or
-        not callable(func := getattr(instrument_obj, func_name))):
+    if not hasattr(instrument_obj, func_name) or not callable(
+        func := getattr(instrument_obj, func_name)
+    ):
         class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
-            ctx,
-            f'Unknown table field func "{class_name}::{func_name}"')
+            ctx, f'Unknown table field func "{class_name}::{func_name}"'
+        )
         return (False, None)
     try:
         res = func()
@@ -431,7 +459,7 @@ def import_run_field_function(ctx: ImportContext, instrument_obj: ObsBase,
         class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
             ctx,
-            f'Execution of field function {class_name}::{func_name} failed with '
-            f'exception:\n{tb}')
+            f'Execution of field function {class_name}::{func_name} failed with exception:\n{tb}',
+        )
         return False, None
     return (True, res)

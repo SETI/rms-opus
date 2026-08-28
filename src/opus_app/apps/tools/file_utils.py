@@ -32,10 +32,11 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
-                     loc_type: str = 'url',
-                     product_types: str | list[str] | tuple[str, ...] | None = None
-                     ) -> dict[str, dict[str, dict[tuple[str, int, str, str], list[Any]]]]:
+def get_pds_products(
+    opus_id_list: str | list[str] | tuple[str, ...],
+    loc_type: str = 'url',
+    product_types: str | list[str] | tuple[str, ...] | None = None,
+) -> dict[str, dict[str, dict[tuple[str, int, str, str], list[Any]]]]:
     """Return all PDS products for a given opus_id(s) organized by version.
 
     Parameters:
@@ -77,7 +78,9 @@ def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
     assert len(opus_id_list) > 0
     assert len(product_types) > 0
 
-    results: dict[str, dict[str, dict[tuple[str, int, str, str], list[Any]]]] = {} # Dict of opus_ids
+    results: dict[
+        str, dict[str, dict[tuple[str, int, str, str], list[Any]]]
+    ] = {}  # Dict of opus_ids
 
     cursor = connection.cursor()
 
@@ -86,8 +89,16 @@ def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
         return sql_builder.column(name, 'obs_files')
 
     select = sql_builder.Select()
-    for column_name in ('opus_id', 'version_name', 'category', 'sort_order',
-                        'short_name', 'full_name', 'size', 'pds_version'):
+    for column_name in (
+        'opus_id',
+        'version_name',
+        'category',
+        'sort_order',
+        'short_name',
+        'full_name',
+        'size',
+        'pds_version',
+    ):
         select.add_column(obs_files_column(column_name))
     if loc_type == 'path' or loc_type == 'raw':
         select.add_column(obs_files_column('logical_path'))
@@ -113,26 +124,38 @@ def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
                 prod_type, _, version = p.partition('@')
                 if version.lower() == 'current':
                     version = 'Current'
-                condition = sql_builder.binary_op(obs_files_column('short_name'),
-                                                  '=', sql_builder.value(prod_type))
+                condition = sql_builder.binary_op(
+                    obs_files_column('short_name'), '=', sql_builder.value(prod_type)
+                )
                 if version.lower() != 'all':
                     condition = sql_builder.join_exprs(
-                        [condition,
-                         sql_builder.binary_op(obs_files_column('version_name'), '=',
-                                               sql_builder.value(version))], 'AND')
+                        [
+                            condition,
+                            sql_builder.binary_op(
+                                obs_files_column('version_name'), '=', sql_builder.value(version)
+                            ),
+                        ],
+                        'AND',
+                    )
             else:
                 # When there is no modifier "@" in types, we will display "Current"
                 # version of the files. This will match the behavior of api/download
                 condition = sql_builder.join_exprs(
-                    [sql_builder.binary_op(obs_files_column('short_name'), '=',
-                                           sql_builder.value(p)),
-                     sql_builder.binary_op(obs_files_column('version_name'), '=',
-                                           sql_builder.value('Current'))], 'AND')
+                    [
+                        sql_builder.binary_op(
+                            obs_files_column('short_name'), '=', sql_builder.value(p)
+                        ),
+                        sql_builder.binary_op(
+                            obs_files_column('version_name'), '=', sql_builder.value('Current')
+                        ),
+                    ],
+                    'AND',
+                )
             product_type_conditions.append(sql_builder.parenthesize(condition))
-        select.add_where(sql_builder.parenthesize(
-            sql_builder.join_exprs(product_type_conditions, 'OR')))
-    select.add_where(sql_builder.in_sequence(obs_files_column('opus_id'),
-                                             opus_id_list))
+        select.add_where(
+            sql_builder.parenthesize(sql_builder.join_exprs(product_type_conditions, 'OR'))
+        )
+    select.add_where(sql_builder.in_sequence(obs_files_column('opus_id'), opus_id_list))
     select.add_order_by(obs_files_column('opus_id'))
     select.add_order_by(obs_files_column('version_number'), descending=True)
     select.add_order_by(obs_files_column('sort_order'))
@@ -147,20 +170,49 @@ def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
     # We do this here so if there aren't any products, there's still an empty
     # dictionary returned
     for opus_id in opus_id_list:
-        results[opus_id] = {} # Dict of versions
+        results[opus_id] = {}  # Dict of versions
 
     for row in cursor:
         path: str | None = None
         url: str | None = None
         if loc_type == 'path':
-            (opus_id, version_name, category, sort_order, short_name,
-             full_name, size, pds_version, path) = row
+            (
+                opus_id,
+                version_name,
+                category,
+                sort_order,
+                short_name,
+                full_name,
+                size,
+                pds_version,
+                path,
+            ) = row
         elif loc_type == 'url':
-            (opus_id, version_name, category, sort_order, short_name,
-             full_name, size, pds_version, url) = row
+            (
+                opus_id,
+                version_name,
+                category,
+                sort_order,
+                short_name,
+                full_name,
+                size,
+                pds_version,
+                url,
+            ) = row
         else:
-            (opus_id, version_name, category, sort_order, short_name,
-             full_name, size, pds_version, path, url, checksum) = row
+            (
+                opus_id,
+                version_name,
+                category,
+                sort_order,
+                short_name,
+                full_name,
+                size,
+                pds_version,
+                path,
+                url,
+                checksum,
+            ) = row
 
         # sort_order is in the format CASISSxxx where xxx is the original numeric
         # sort order
@@ -187,25 +239,29 @@ def get_pds_products(opus_id_list: str | list[str] | tuple[str, ...],
         elif loc_type == 'url':
             res = url
         else:
-            res = {'path': path,
-                   'url': url,
-                   'checksum': checksum,
-                   'category': category,
-                   'version_name': version_name,
-                   'full_name': full_name,
-                   'short_name': short_name,
-                   'size': size,
-                   'pds_version': pds_version}
+            res = {
+                'path': path,
+                'url': url,
+                'checksum': checksum,
+                'category': category,
+                'version_name': version_name,
+                'full_name': full_name,
+                'short_name': short_name,
+                'size': size,
+                'pds_version': pds_version,
+            }
         if res not in results[opus_id][version_name][product_type]:
             results[opus_id][version_name][product_type].append(res)
 
     return results
 
 
-def get_pds_preview_images(opus_id_list: str | list[str] | tuple[str, ...] | None,
-                           preview_jsons: list[Any] | None,
-                           sizes: str | Collection[str] | None = None,
-                           ignore_missing: bool = False) -> list[dict[str, Any]]:
+def get_pds_preview_images(
+    opus_id_list: str | list[str] | tuple[str, ...] | None,
+    preview_jsons: list[Any] | None,
+    sizes: str | Collection[str] | None = None,
+    ignore_missing: bool = False,
+) -> list[dict[str, Any]]:
     """Given a list of opus_ids, return a list of image info for each size.
 
     Parameters:
@@ -238,7 +294,7 @@ def get_pds_preview_images(opus_id_list: str | list[str] | tuple[str, ...] | Non
     elif not isinstance(sizes, (list, tuple)):
         # A single size name reaches here. mypy cannot tell that apart from the
         # collection the branch above puts in this same variable.
-        sizes = [sizes] # type: ignore[list-item]
+        sizes = [sizes]  # type: ignore[list-item]
 
     product_types: list[str] = []
     for size in sizes:
@@ -254,8 +310,10 @@ def get_pds_preview_images(opus_id_list: str | list[str] | tuple[str, ...] | Non
             try:
                 preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
             except ObjectDoesNotExist:  # pragma: no cover - import error
-                log.error('get_pds_preview_images: Failed to find opus_id "%r" '
-                          +'in obs_general', opus_id)
+                log.error(
+                    'get_pds_preview_images: Failed to find opus_id "%r" ' + 'in obs_general',
+                    opus_id,
+                )
         viewset = None
         if preview_json:  # pragma: no cover - import error
             viewset = pdsfile.pdsviewable.PdsViewSet.from_dict(preview_json)
@@ -295,17 +353,19 @@ def get_pds_preview_images(opus_id_list: str | list[str] | tuple[str, ...] | Non
                 byte_size = viewable.bytes
                 width = viewable.width
                 height = viewable.height
-            data[size+'_url'] = url
-            data[size+'_alt_text'] = alt_text
-            data[size+'_size_bytes'] = byte_size
-            data[size+'_width'] = width
-            data[size+'_height'] = height
+            data[size + '_url'] = url
+            data[size + '_alt_text'] = alt_text
+            data[size + '_size_bytes'] = byte_size
+            data[size + '_width'] = width
+            data[size + '_height'] = height
         image_list.append(data)
 
     return image_list
 
-def get_displayed_browse_products(opus_id: str,
-                                  version_name: str = 'Current') -> list[tuple[str, str]]:
+
+def get_displayed_browse_products(
+    opus_id: str, version_name: str = 'Current'
+) -> list[tuple[str, str]]:
     """Return the browse product URLs to display on an observation's Detail tab.
 
     Parameters:
@@ -317,13 +377,14 @@ def get_displayed_browse_products(opus_id: str,
         or a single pair of the not-found thumbnail when the observation has no
         browse product in that version.
     """
-    browse_products = get_pds_products(opus_id,
-                                       product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
+    browse_products = get_pds_products(opus_id, product_types=settings.DISPLAYED_BROWSE_PRODUCTS)
 
     # `.get` falls back to an empty list rather than an empty dict, which the
     # emptiness test below accepts and returns for before anything treats it as a
     # dict, so the declaration describes every value that reaches the loop.
-    selected_browse_products: dict[tuple[str, int, str, str], list[Any]] = browse_products[opus_id].get(version_name, []) # type: ignore[arg-type]
+    selected_browse_products: dict[tuple[str, int, str, str], list[Any]] = browse_products[
+        opus_id
+    ].get(version_name, [])  # type: ignore[arg-type]
     # When there is no preview image, we return settings.THUMBNAIL_NOT_FOUND
     if len(selected_browse_products) == 0:  # pragma: no cover - thumbnails not available
         return [(settings.THUMBNAIL_NOT_FOUND, settings.THUMBNAIL_NOT_FOUND)]
@@ -343,7 +404,7 @@ def get_displayed_browse_products(opus_id: str,
                     # the full image to come first.
                     res.append((browse_url, disp_prod_dict[basename]))
                     continue
-            else: # '_full.' in browse_url
+            else:  # '_full.' in browse_url
                 basename, _, _ = browse_url.partition('_full.')
                 if basename in disp_prod_dict:  # pragma: no cover - see above
                     res.append((disp_prod_dict[basename], browse_url))

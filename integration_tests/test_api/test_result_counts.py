@@ -36,7 +36,7 @@ pytestmark = pytest.mark.livetest
 class APIResultCountsTests(TestCase):
     """Result counts for each recorded search, checked against `result_counts.csv`."""
 
-    filename = "integration_tests/test_api/data/result_counts.csv"
+    filename = 'integration_tests/test_api/data/result_counts.csv'
 
     # disable error logging and trace output before test
     def setUp(self) -> None:
@@ -62,16 +62,16 @@ class APIResultCountsTests(TestCase):
 
     def test_api_result_counts_from_csv(self) -> None:
         """[test_result_counts.py] Compare result counts of API calls between csv and live server
-           Result counts from live server should always be greater or equal.
-           Expected values in csv is obtain from production site on 12/12/18.
-           Example of return json:
-           {
-               "data": [
-                   {
-                   "result_count": 1411270
-                   }
-               ]
-           }
+        Result counts from live server should always be greater or equal.
+        Expected values in csv is obtain from production site on 12/12/18.
+        Example of return json:
+        {
+            "data": [
+                {
+                "result_count": 1411270
+                }
+            ]
+        }
         """
         api_public = ApiForResultCounts(target=go_live_target())
         if go_live_target():
@@ -83,13 +83,12 @@ class APIResultCountsTests(TestCase):
             error_flag = []
             count = 0
             with open(self.filename) as csvfile:
-
                 filereader = csv.reader(csvfile)
                 for row in filereader:
                     if len(row) != 3:
                         if len(row) == 0:
                             continue
-                        msg = 'Bad results_count line: '+str(row)
+                        msg = 'Bad results_count line: ' + str(row)
                         error_flag.append(msg)
                         msg += ' ==> FAIL!'
                         continue
@@ -97,35 +96,34 @@ class APIResultCountsTests(TestCase):
                     q_str, expected, _info = row
 
                     if q_str.find('#/') == -1:
-                        msg = 'Bad results_count line: '+str(row)
+                        msg = 'Bad results_count line: ' + str(row)
                         error_flag.append(msg)
                         msg += ' ==> FAIL!'
                         continue
 
-                    url_hash = q_str.split("#/")[1].strip()
+                    url_hash = q_str.split('#/')[1].strip()
                     api_url = api_public.result_counts_api + url_hash
 
                     # If current api return has error, we test the next api
                     try:
                         data = json.loads(client.get(api_url).text)
                     except Exception as error:
-                        error_flag.append(f"Return error:\n{api_url}\n{error}")
+                        error_flag.append(f'Return error:\n{api_url}\n{error}')
                         continue
 
-                    result_count = data["data"][0]["result_count"]
+                    result_count = data['data'][0]['result_count']
 
                     comparison = '>='
                     if expected[0] == '=':
                         comparison = '='
                         expected = expected[1:]
 
-                    msg = "checking: "+api_url+"\n"
-                    msg += f"result: expected {comparison} {expected} :: got {result_count}"
+                    msg = 'checking: ' + api_url + '\n'
+                    msg += f'result: expected {comparison} {expected} :: got {result_count}'
 
-                    if ((comparison == '>=' and
-                         int(result_count) < int(expected)) or
-                        (comparison == '=' and
-                         int(result_count) != int(expected))):
+                    if (comparison == '>=' and int(result_count) < int(expected)) or (
+                        comparison == '=' and int(result_count) != int(expected)
+                    ):
                         error_flag.append(msg)
                         msg += ' ==> FAIL!'
                     else:
@@ -133,19 +131,20 @@ class APIResultCountsTests(TestCase):
 
                     print(msg)
 
-                    count = count+1
+                    count = count + 1
 
             if error_flag:
-                print("============================")
-                print("Result counts error summary:")
-                print("============================")
+                print('============================')
+                print('Result counts error summary:')
+                print('============================')
                 for e in error_flag:
-                    print(e+'\n')
-                raise Exception("API result counts test failed")
+                    print(e + '\n')
+                raise Exception('API result counts test failed')
             else:
-                print(f"Pass! No result counts failed! \
-                      \nActual Number of Tests Run: {count}")
-
+                print(
+                    f'Pass! No result counts failed! \
+                      \nActual Number of Tests Run: {count}'
+                )
 
 
 ########################################
@@ -155,9 +154,9 @@ class ApiForResultCounts:
     """The result-count endpoint of whichever server this run checks against."""
 
     # we need https and no need to specify port number
-    api_base_url = "{}://{}.seti.org/opus/api/meta/result_count.json?"
+    api_base_url = '{}://{}.seti.org/opus/api/meta/result_count.json?'
 
-    def __init__(self, target: str | None = "production") -> None:
+    def __init__(self, target: str | None = 'production') -> None:
         """Choose the server whose result counts are compared with the recorded ones.
 
         Parameters:
@@ -168,9 +167,9 @@ class ApiForResultCounts:
             AssertionError: If `target` names neither.
         """
         self.target = target
-        if not self.target or self.target == "production":
-            self.result_counts_api = self.api_base_url.format("https", "opus.pds-rings")
-        elif self.target == "dev":
-            self.result_counts_api = self.api_base_url.format("http", "dev.pds")
+        if not self.target or self.target == 'production':
+            self.result_counts_api = self.api_base_url.format('https', 'opus.pds-rings')
+        elif self.target == 'dev':
+            self.result_counts_api = self.api_base_url.format('http', 'dev.pds')
         else:
             raise AssertionError(self.target)

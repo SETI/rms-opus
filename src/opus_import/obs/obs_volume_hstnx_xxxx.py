@@ -3,7 +3,6 @@
 HST NICMOS observations.
 """
 
-
 from opus_import.obs.field_types import IntField, MultFieldRet, as_int
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
@@ -25,7 +24,6 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
         filter1, filter2 = self._decode_filters()
         return filter1.startswith('G'), filter1, filter2
 
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
@@ -34,7 +32,6 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``HSTNICMOS``."""
         return 'HSTNICMOS'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -50,10 +47,8 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
             return 'SPI'
         return 'IMG'
 
-
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -62,8 +57,7 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
     def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
-        return SIXTEEN_BIT_IMAGE_LEVELS # NICMOS Inst Handbook, Sec 7.2.1
-
+        return SIXTEEN_BIT_IMAGE_LEVELS  # NICMOS Inst Handbook, Sec 7.2.1
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -100,7 +94,6 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
             return self._create_mult('NONE')
         return self._create_mult('LINEAR')
 
-
     ###########################################
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
@@ -130,7 +123,7 @@ class ObsVolumeHSTNxxxxx(ObsVolumeHubbleCommon):
                 # POLxL is 1.89-2.1, about the same as medium filters
                 return self._create_mult('M')
 
-        if filter1 == 'BLANK': # Opaque
+        if filter1 == 'BLANK':  # Opaque
             return self._create_mult('OT')
 
         self._log_nonrepeating_error(f'Unknown filter "{filter1}"')

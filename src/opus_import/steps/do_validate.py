@@ -65,19 +65,19 @@ def validate_param_info(ctx: ImportContext, namespace: Namespace) -> None:
         field_names = [x['field_name'] for x in column_list]
         for column in column_list:
             field_name = column['field_name']
-            if (field_name == 'id' or
-                field_name == 'timestamp' or
-                field_name == 'obs_general_id' or
-                field_name.startswith('d_') or
-                'd_'+field_name in field_names or
-                (field_name == 'opus_id' and
-                 obs_table_name != 'obs_general') or
-                (field_name.startswith('mult_'))):
+            if (
+                field_name == 'id'
+                or field_name == 'timestamp'
+                or field_name == 'obs_general_id'
+                or field_name.startswith('d_')
+                or 'd_' + field_name in field_names
+                or (field_name == 'opus_id' and obs_table_name != 'obs_general')
+                or (field_name.startswith('mult_'))
+            ):
                 continue
             if field_name == 'bundle_id' and obs_table_name != 'obs_pds':
                 continue
-            if (field_name == 'instrument_id' and
-                obs_table_name != 'obs_general'):
+            if field_name == 'instrument_id' and obs_table_name != 'obs_general':
                 continue
             cmd = f"""
 COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
@@ -85,8 +85,9 @@ COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
             res = db.general_select(cmd, [obs_table_name, field_name])
             count = res[0][0]
             if count == 0:
-                logger.log('error',
-       f'OBS field "{obs_table_name}.{field_name}" missing param_info entry')
+                logger.log(
+                    'error', f'OBS field "{obs_table_name}.{field_name}" missing param_info entry'
+                )
 
     # Every param_info entry should have a unique disp_order
     # This is a hideous query that looks for duplicate disp_order fields
@@ -104,8 +105,7 @@ COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
         LIMIT 1,1)"""  # nosec B608
     res = db.general_select(cmd)
     for cat_name, field_name in res:
-        logger.log('error',
-    f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate disp_order')
+        logger.log('error', f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate disp_order')
 
     # Every param_info entry should have a unique slug. Period.
     # Every interpolation is an identifier produced by quote_identifier
@@ -118,8 +118,7 @@ COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
         LIMIT 1,1)"""  # nosec B608
     res = db.general_select(cmd)
     for cat_name, field_name in res:
-        logger.log('error',
-    f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate slug')
+        logger.log('error', f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate slug')
 
 
 def validate_nulls(ctx: ImportContext, namespace: Namespace) -> None:
@@ -160,16 +159,17 @@ def validate_nulls(ctx: ImportContext, namespace: Namespace) -> None:
             if notnull:
                 continue
             # OK the column allows nulls...are there any?
-            full_obs_table_name = db.convert_raw_to_namespace(namespace,
-                                                              obs_table_name)
+            full_obs_table_name = db.convert_raw_to_namespace(namespace, obs_table_name)
             cmd = f"""
 count(*) FROM {q(full_obs_table_name)} WHERE {q(field_name)} is NULL"""
             res = db.general_select(cmd)
             count = res[0][0]
             if count == 0:
-                logger.log('info',
-    f'Column "{full_obs_table_name}.{field_name}" allows NULLs but none found '+
-    '- suggest changing column attributes')
+                logger.log(
+                    'info',
+                    f'Column "{full_obs_table_name}.{field_name}" allows NULLs but none found '
+                    + '- suggest changing column attributes',
+                )
 
 
 def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
@@ -201,19 +201,20 @@ def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
     q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
-        full_obs_table_name = db.convert_raw_to_namespace(namespace,
-                                                          obs_table_name)
+        full_obs_table_name = db.convert_raw_to_namespace(namespace, obs_table_name)
         column_list = db.table_info(namespace, obs_table_name)
-        column_list.sort(key=lambda x:x['field_name'])
+        column_list.sort(key=lambda x: x['field_name'])
         for column in column_list:
             field_name1 = column['field_name']
             if not field_name1.endswith('1'):
                 continue
             field_name2 = field_name1[:-1] + '2'
             if field_name2 not in [x['field_name'] for x in column_list]:
-                logger.log('error',
-    f'Column "{full_obs_table_name}.{field_name1}" present but there is no '
-    +f'{field_name2}')
+                logger.log(
+                    'error',
+                    f'Column "{full_obs_table_name}.{field_name1}" present but there is no '
+                    + f'{field_name2}',
+                )
                 continue
 
             # Check param_info to see if this is a longitude field
@@ -222,12 +223,15 @@ def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
 {q('name')}=%s"""
             res = db.general_select(cmd, [obs_table_name, field_name1])
             if len(res) == 0:
-                logger.log('error',
-    f'No param_info entry for "{full_obs_table_name}.{field_name1}"')
+                logger.log(
+                    'error', f'No param_info entry for "{full_obs_table_name}.{field_name1}"'
+                )
                 continue
             if len(res) > 1:
-                logger.log('error',
-    f'More than one param_info entry for "{full_obs_table_name}.{field_name1}"')
+                logger.log(
+                    'error',
+                    f'More than one param_info entry for "{full_obs_table_name}.{field_name1}"',
+                )
                 continue
             pi_form_type = res[0][0]
             if pi_form_type is None or pi_form_type.startswith('LONG'):
@@ -239,13 +243,15 @@ def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
             res = db.general_select(cmd)
             if len(res):
                 opus_ids = [x[0] for x in res]
-                logger.log('error',
-    f'Column "{full_obs_table_name}.{field_name1}" has values greater than '+
-    f'{field_name2} for some OPUS IDs; first 100: ' + ' '.join(opus_ids[:100]))
+                logger.log(
+                    'error',
+                    f'Column "{full_obs_table_name}.{field_name1}" has values greater than '
+                    + f'{field_name2} for some OPUS IDs; first 100: '
+                    + ' '.join(opus_ids[:100]),
+                )
 
 
-def validate_filter_wavelength_consistency(ctx: ImportContext,
-                                           namespace: Namespace) -> None:
+def validate_filter_wavelength_consistency(ctx: ImportContext, namespace: Namespace) -> None:
     """Report filters whose observations disagree about their wavelengths.
 
     Every observation taken through one filter should record the same wavelength range,
@@ -272,19 +278,20 @@ def validate_filter_wavelength_consistency(ctx: ImportContext,
 
     q = db.quote_identifier
     wl_table = q('obs_wavelength')
-    wl_fields = ('wavelength1',
-                 'wavelength2',
-                 'wave_res1',
-                 'wave_res2',
-                 'wave_no1',
-                 'wave_no2',
-                 'wave_no_res1',
-                 'wave_no_res2',
-                 'spec_size')
+    wl_fields = (
+        'wavelength1',
+        'wavelength2',
+        'wave_res1',
+        'wave_res2',
+        'wave_no1',
+        'wave_no2',
+        'wave_no_res1',
+        'wave_no_res2',
+        'spec_size',
+    )
 
     for obs_table_name in obs_table_names:
-        full_obs_table_name = db.convert_raw_to_namespace(namespace,
-                                                          obs_table_name)
+        full_obs_table_name = db.convert_raw_to_namespace(namespace, obs_table_name)
         column_list = db.table_info(namespace, obs_table_name)
         for column in column_list:
             field_name = column['field_name']
@@ -294,10 +301,10 @@ def validate_filter_wavelength_consistency(ctx: ImportContext,
             # Select obs_wavelength entries that match, group by filter name,
             # and check the range for the various wavelength fields
             if obs_table_name == 'obs_instrument_coiss':
-                cmd = f"{q('camera')}, {q(field_name)}"
+                cmd = f'{q("camera")}, {q(field_name)}'
                 start_col = 2
             else:
-                cmd = f"{q(field_name)}"
+                cmd = f'{q(field_name)}'
                 start_col = 1
 
             for wl_field in wl_fields:
@@ -308,19 +315,22 @@ def validate_filter_wavelength_consistency(ctx: ImportContext,
 LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
 {wl_table}.{q('obs_general_id')}"""
             if obs_table_name == 'obs_instrument_coiss':
-                cmd += f"GROUP BY {q('camera')}, {q(field_name)}"
+                cmd += f'GROUP BY {q("camera")}, {q(field_name)}'
             else:
-                cmd += f"GROUP BY {q(field_name)}"
+                cmd += f'GROUP BY {q(field_name)}'
 
             res = db.general_select(cmd)
             for row in res:
-                for col in range(start_col, len(row)-1, 2):
+                for col in range(start_col, len(row) - 1, 2):
                     pretty_filter = ':'.join([str(x) for x in row[0:start_col]])
-                    if row[col] != row[col+1]:
-                        logger.log('warning',
-            f'"obs_wavelength.{wl_fields[(col-start_col)//2]}" has inconsistent'
-            +f' values for {full_obs_table_name} filter "{pretty_filter}": '
-            +f'{row[col]} and {row[col+1]}')
+                    if row[col] != row[col + 1]:
+                        logger.log(
+                            'warning',
+                            f'"obs_wavelength.{wl_fields[(col - start_col) // 2]}" has inconsistent'
+                            + f' values for {full_obs_table_name} filter "{pretty_filter}": '
+                            + f'{row[col]} and {row[col + 1]}',
+                        )
+
 
 def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> None:
     """Run every validation check, driven by ``--validate-perm``.
@@ -329,8 +339,7 @@ def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> None:
         ctx: The import run's context, for the open database and the logger.
         namespace: The namespace holding the tables to check.
     """
-    ctx.logger.open(
-            'Performing database validation', limits={'info': -1, 'debug': -1})
+    ctx.logger.open('Performing database validation', limits={'info': -1, 'debug': -1})
 
     validate_param_info(ctx, namespace)
     validate_nulls(ctx, namespace)

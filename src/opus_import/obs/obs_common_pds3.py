@@ -17,7 +17,15 @@ from opus_import.obs.obs_type_image import ObsTypeImage
 from opus_import.obs.obs_wavelength import ObsWavelength
 
 
-class ObsCommonPDS3(ObsGeneralPDS3, ObsPdsPDS3, ObsTypeImage, ObsWavelength,
-                    ObsProfilePDS3, ObsRingGeometry, ObsSurfaceGeometry,
-                    ObsSurfaceGeometryName, ObsSurfaceGeometryTarget):
+class ObsCommonPDS3(
+    ObsGeneralPDS3,
+    ObsPdsPDS3,
+    ObsTypeImage,
+    ObsWavelength,
+    ObsProfilePDS3,
+    ObsRingGeometry,
+    ObsSurfaceGeometry,
+    ObsSurfaceGeometryName,
+    ObsSurfaceGeometryTarget,
+):
     """Every table module a PDS3 observation needs, combined in one base class."""

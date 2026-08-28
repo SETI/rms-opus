@@ -5,6 +5,7 @@ a slug.  `ToInfoMap` reads the field definitions an OPUS server publishes and tu
 slug into an `Info`, giving the slug's verbose label, the `Family` of related slugs it
 belongs to, and `Flags` recording whether the slug was unrecognized or obsolete.
 """
+
 import json
 import re
 from enum import Enum, Flag, auto
@@ -80,6 +81,7 @@ class Info(NamedTuple):
     Information about a slug.  Note that we can't let the Info for an obsolete slug and its replacement be
     identical, since they are used as keys in a dictionary.
     """
+
     canonical_name: str  # The slug name.  Included so obsolete slugs will be different than their updated version
     label: str  # The verbose label for this slug
     flags: Flags
@@ -109,21 +111,45 @@ class ToInfoMap:
     OBSOLETE_SLUG_INFO = 'obsolete slug'
 
     # Slugs that should be ignored when see them as either a column name or as a search term.
-    SLUGS_NOT_IN_DB: ClassVar[set[str]] = {'browse', 'order', 'page', 'startobs',
-                       'cart_browse', 'cart_order', 'cart_page', 'cart_startobs',
-                       'colls_browse', 'colls_order', 'colls_page',
-                       'colls_startobs',
-                       'cols', 'col_chooser', 'detail', 'download',
-                       'expanded_cats',
-                       'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
-                       'range', 'recyclebin', 'reqno', 'request',
-                       'types', 'url_cols', 'units', 'unselected_types', 'view',
-                       'widgets', 'widgets2',
-                       '__sessionid',
-
-                       # Not mentioned by Rob French, but ignored anyway.
-                       'timesampling', 'wavelengthsampling', 'colls',
-                       }
+    SLUGS_NOT_IN_DB: ClassVar[set[str]] = {
+        'browse',
+        'order',
+        'page',
+        'startobs',
+        'cart_browse',
+        'cart_order',
+        'cart_page',
+        'cart_startobs',
+        'colls_browse',
+        'colls_order',
+        'colls_page',
+        'colls_startobs',
+        'cols',
+        'col_chooser',
+        'detail',
+        'download',
+        'expanded_cats',
+        'gallery_data_viewer',
+        'ignorelog',
+        'limit',
+        'loc_type',
+        'range',
+        'recyclebin',
+        'reqno',
+        'request',
+        'types',
+        'url_cols',
+        'units',
+        'unselected_types',
+        'view',
+        'widgets',
+        'widgets2',
+        '__sessionid',
+        # Not mentioned by Rob French, but ignored anyway.
+        'timesampling',
+        'wavelengthsampling',
+        'colls',
+    }
 
     def __init__(self, url_prefix: str):
         """Initializes the slug info by reading the JSON describing it either from a URL or from a file to which
@@ -152,7 +178,8 @@ class ToInfoMap:
         self._old_slug_to_new_slug = {
             old_slug_info.lower(): slug_info['slug'].lower()
             for slug_info in json_data.values()
-            for old_slug_info in [slug_info.get('old_slug')] if old_slug_info
+            for old_slug_info in [slug_info.get('old_slug')]
+            if old_slug_info
         }
 
         for slug in self.SLUGS_NOT_IN_DB:
@@ -176,9 +203,9 @@ class ToInfoMap:
         widget = widget.lower()
         result = self._search_map.get(widget)
         if not result:
-            result = self._search_map.get(widget + "1")
+            result = self._search_map.get(widget + '1')
         if not result:
-            result = self._search_map.get(widget + "2")
+            result = self._search_map.get(widget + '2')
 
         if result:
             return result.family
@@ -202,7 +229,9 @@ class ToInfoMap:
         """
         return self._get_info_for_search_slug(slug, True, value)
 
-    def _get_info_for_search_slug(self, original_slug: str, create: bool = True, value: str = '') -> Info | None:
+    def _get_info_for_search_slug(
+        self, original_slug: str, create: bool = True, value: str = ''
+    ) -> Info | None:
         """Look up a search slug, working one out where the definitions do not cover it.
 
         The first of these that applies decides the answer: an entry already recorded
@@ -237,7 +266,9 @@ class ToInfoMap:
         match = re.fullmatch(r'(.*)_(\d{2,})$', slug)
         if match:
             base_result = self._get_info_for_search_slug(match.group(1), create, value)
-            result = search_map[slug] = base_result._replace(subgroup=int(match.group(2))) if base_result else None
+            result = search_map[slug] = (
+                base_result._replace(subgroup=int(match.group(2))) if base_result else None
+            )
             return result
 
         label = self._slug_to_search_label.get(slug)
@@ -260,7 +291,9 @@ class ToInfoMap:
                     canonical_name=f'{base_result.canonical_name}{suffix}',
                     label=f'{base_result.label} ({family_type.name.title()})',
                     flags=base_result.flags,
-                    family=family, family_type=family_type)
+                    family=family,
+                    family_type=family_type,
+                )
             result = search_map[slug]
             return result
 
@@ -268,7 +301,9 @@ class ToInfoMap:
             # Look to see if the slug with the qtype- removed, but 1 or 2 added does exist
             is_numeric = value in ('any', 'all', 'only')
             if is_numeric:
-                base_result = next((self._get_info_for_search_slug(slug[6:] + i, False) for i in '12'), None)
+                base_result = next(
+                    (self._get_info_for_search_slug(slug[6:] + i, False) for i in '12'), None
+                )
                 if base_result:
                     assert base_result.family
                     assert base_result.canonical_name[-1] in '12'
@@ -276,7 +311,9 @@ class ToInfoMap:
                         canonical_name='qtype-' + base_result.canonical_name[:-1],
                         label=base_result.family.label + self.QTYPE_SUFFIX,
                         flags=base_result.flags,
-                        family=base_result.family, family_type=FamilyType.QTYPE)
+                        family=base_result.family,
+                        family_type=FamilyType.QTYPE,
+                    )
                     return result
             # Okay.  We have a qtype- slug.  Create whatever kind of slug we can without the qtype- and guess.
             base_result = cast(Info, self._get_info_for_search_slug(slug[6:], True))
@@ -288,19 +325,27 @@ class ToInfoMap:
                 canonical_name='qtype-' + base_result.canonical_name,
                 label=base_result.label + self.QTYPE_SUFFIX,
                 flags=base_result.flags,
-                family=family, family_type=FamilyType.QTYPE)
+                family=family,
+                family_type=FamilyType.QTYPE,
+            )
             return result
 
         if slug.startswith('unit-'):
             for suffix in ('1', '2', ''):
                 base_result = self._get_info_for_search_slug(slug[5:] + suffix, False, value)
                 if base_result:
-                    stripped_name = base_result.canonical_name[:-len(suffix)] if suffix else base_result.canonical_name
+                    stripped_name = (
+                        base_result.canonical_name[: -len(suffix)]
+                        if suffix
+                        else base_result.canonical_name
+                    )
                     result = search_map[slug] = Info(
                         canonical_name='qtype-' + stripped_name,
                         label=base_result.family.label + self.UNIT_SUFFIX,
                         flags=base_result.flags,
-                        family=base_result.family, family_type=FamilyType.UNIT)
+                        family=base_result.family,
+                        family_type=FamilyType.UNIT,
+                    )
                     return result
             return None
 
@@ -340,7 +385,9 @@ class ToInfoMap:
         else:
             family_type = FamilyType.SINGLETON
             family = Family(label=label, min='', max='')
-        return Info(canonical_name=slug, label=label, flags=flag, family=family, family_type=family_type)
+        return Info(
+            canonical_name=slug, label=label, flags=flag, family=family, family_type=family_type
+        )
 
     def get_info_for_column_slug(self, slug: str, create: bool = True) -> Info | None:
         """Returns information about a slug that appears in a cols= part of a query
@@ -368,14 +415,20 @@ class ToInfoMap:
         if slug in self._old_slug_to_new_slug:
             new_slug = self._old_slug_to_new_slug[slug]
             new_slug_info = cast(Info, self.get_info_for_column_slug(new_slug, True))
-            result = column_map[slug] = new_slug_info._replace(flags=(Flags.OBSOLETE_SLUG | new_slug_info.flags))
+            result = column_map[slug] = new_slug_info._replace(
+                flags=(Flags.OBSOLETE_SLUG | new_slug_info.flags)
+            )
             return result
 
         if slug[-1] in '12':
             base_slug = self.get_info_for_column_slug(slug[:-1], False)
             if base_slug:
-                column_map[slug[:-1] + '1'] = base_slug._replace(flags=(Flags.REMOVED_1_FROM_END | base_slug.flags))
-                column_map[slug[:-1] + '2'] = base_slug._replace(flags=(Flags.REMOVED_2_FROM_END | base_slug.flags))
+                column_map[slug[:-1] + '1'] = base_slug._replace(
+                    flags=(Flags.REMOVED_1_FROM_END | base_slug.flags)
+                )
+                column_map[slug[:-1] + '2'] = base_slug._replace(
+                    flags=(Flags.REMOVED_2_FROM_END | base_slug.flags)
+                )
                 return column_map[slug]
 
         if create:

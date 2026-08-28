@@ -52,14 +52,14 @@ class SearchTests(TestCase):
         call the views with, because `setUp` calls this instead of doing either.
         """
         cursor = connection.cursor()
-        sql = 'SELECT COUNT(*) FROM user_searches' # Check first for efficiency
+        sql = 'SELECT COUNT(*) FROM user_searches'  # Check first for efficiency
         cursor.execute(sql)
         results = cursor.fetchall()
         if int(results[0][0]) != 0:
             cursor.execute('DELETE FROM user_searches')
-            cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-            cursor.execute("SHOW TABLES LIKE %s", ["cache_%"])
-            for row in cursor: # pragma: no cover - may never be cache_ tables
+            cursor.execute('ALTER TABLE user_searches AUTO_INCREMENT = 1')
+            cursor.execute('SHOW TABLES LIKE %s', ['cache_%'])
+            for row in cursor:  # pragma: no cover - may never be cache_ tables
                 q = 'DROP TABLE ' + row[0]
                 print(q)
                 cursor.execute(q)
@@ -87,13 +87,16 @@ class SearchTests(TestCase):
         """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
-    def _search_params(self, request_get: Mapping[str, str], *,
-                       allow_errors: bool = False,
-                       allow_regex_errors: bool = False,
-                       return_slugs: bool = False,
-                       pretty_results: bool = False,
-                       allow_empty: bool = False
-                       ) -> tuple[dict[str, Any], dict[str, Any]]:
+    def _search_params(
+        self,
+        request_get: Mapping[str, str],
+        *,
+        allow_errors: bool = False,
+        allow_regex_errors: bool = False,
+        return_slugs: bool = False,
+        pretty_results: bool = False,
+        allow_empty: bool = False,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Parse a query string, requiring that it parsed.
 
         `url_to_search_params` answers None for both halves when it cannot parse a
@@ -124,38 +127,43 @@ class SearchTests(TestCase):
             The selections and the extras, both known to be present.
         """
         selections, extras = url_to_search_params(
-            request_get, allow_errors=allow_errors,
-            allow_regex_errors=allow_regex_errors, return_slugs=return_slugs,
-            pretty_results=pretty_results, allow_empty=allow_empty)
+            request_get,
+            allow_errors=allow_errors,
+            allow_regex_errors=allow_regex_errors,
+            return_slugs=return_slugs,
+            pretty_results=pretty_results,
+            allow_empty=allow_empty,
+        )
         assert selections is not None
         assert extras is not None
         return selections, extras
 
-
-            ##################################################
-            ######### api_normalize_input UNIT TESTS #########
-            ##################################################
+        ##################################################
+        ######### api_normalize_input UNIT TESTS #########
+        ##################################################
 
     def test__api_normalize_input_no_request(self) -> None:
         "[test_search.py] api_normalize_input: no request"
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__api/normalizeinput.json'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__api/normalizeinput.json'
+        ):
             api_normalize_input(None)
 
     def test__api_normalize_input_no_meta(self) -> None:
         "[test_search.py] api_normalize_input: no META"
         request = request_without_meta(self.factory, '/__api/normalizeinput.json')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__api/normalizeinput.json'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__api/normalizeinput.json'
+        ):
             api_normalize_input(request)
 
     def test__api_normalize_input_no_get(self) -> None:
         "[test_search.py] api_normalize_input: no GET"
         request = request_without_get(self.factory, '/__api/normalizeinput.json')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__api/normalizeinput.json'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__api/normalizeinput.json'
+        ):
             api_normalize_input(request)
-
 
             ########################################################
             ######### api_string_search_choices UNIT TESTS #########
@@ -163,24 +171,29 @@ class SearchTests(TestCase):
 
     def test__api_string_search_choices_no_request(self) -> None:
         "[test_search.py] api_string_search_choices: no request"
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
+        with self.assertRaisesRegex(
+            Http404,
+            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json',
+        ):
             api_string_search_choices(None, 'slug')
 
     def test__api_string_search_choices_no_meta(self) -> None:
         "[test_search.py] api_string_search_choices: no META"
         request = request_without_meta(self.factory, '/__api/stringsearchchoices/bundleid.json')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
+        with self.assertRaisesRegex(
+            Http404,
+            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json',
+        ):
             api_string_search_choices(request, 'slug')
 
     def test__api_string_search_choices_no_get(self) -> None:
         "[test_search.py] api_string_search_choices: no GET"
         request = request_without_get(self.factory, '/__api/stringsearchchoices/bundleid.json')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
+        with self.assertRaisesRegex(
+            Http404,
+            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json',
+        ):
             api_string_search_choices(request, 'slug')
-
 
             ###################################################
             ######### url_to_search_params UNIT TESTS #########
@@ -195,10 +208,8 @@ class SearchTests(TestCase):
         # Using old slug name
         q = QueryDict('timesec1=2000-023T06:00:00&timesec2=2000-024T06:00:00')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -212,10 +223,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY-DDD format any"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&qtype-time=any')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -229,10 +238,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY-DDD format all"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&qtype-time=all')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['all']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -246,10 +253,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY-DDD format only"
         q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&qtype-time=only')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['only']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -264,10 +269,8 @@ class SearchTests(TestCase):
         # Using old slug name
         q = QueryDict('timesec1=2000-01-23T06:00:00&timesec2=2000-01-24T06:00:00')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -281,10 +284,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY MMM DD format"
         q = QueryDict('time1=2000+JAN+23+6:00:00&time2=2000+January+24+6:00:00')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -298,10 +299,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: date parsing in YYYY/MM/DD format"
         q = QueryDict('time1=2000/1/23+06:00:00.000&time2=2000/01/24+06:00')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -316,10 +315,8 @@ class SearchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1_1=2000-01-23T06:00:00&time2_1=2000-01-24T06:00:00')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1879232.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -332,12 +329,15 @@ class SearchTests(TestCase):
     def test__url_to_search_params_times_multi_2(self) -> None:
         "[test_search.py] url_to_search_params: date parsing multi 2"
         # Using old slug name
-        q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01')
+        q = QueryDict(
+            'time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
-                        'obs_general.time2': [1965632.0, None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.time1': [1879232.0, 1965633.0],
+            'obs_general.time2': [1965632.0, None],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
         units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
@@ -350,12 +350,15 @@ class SearchTests(TestCase):
     def test__url_to_search_params_times_multi_3(self) -> None:
         "[test_search.py] url_to_search_params: date parsing multi 3 oldslug"
         # Using old slug name
-        q = QueryDict('timesec1=2000-01-23T06:00:00&timesec2=2000-01-24T06:00:00&timesec1_2=2000-01-24T06:00:01&timesec2_2=2000-01-24T06:00:02')
+        q = QueryDict(
+            'timesec1=2000-01-23T06:00:00&timesec2=2000-01-24T06:00:00&timesec1_2=2000-01-24T06:00:01&timesec2_2=2000-01-24T06:00:02'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
-                        'obs_general.time2': [1965632.0, 1965634.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.time1': [1879232.0, 1965633.0],
+            'obs_general.time2': [1965632.0, 1965634.0],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
         units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
@@ -368,12 +371,15 @@ class SearchTests(TestCase):
     def test__url_to_search_params_times_multi_4(self) -> None:
         "[test_search.py] url_to_search_params: date parsing multi 4 all/only"
         # Using old slug name
-        q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time=all&qtype-time_2=only')
+        q = QueryDict(
+            'time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time=all&qtype-time_2=only'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
-                        'obs_general.time2': [1965632.0, 1965634.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.time1': [1879232.0, 1965633.0],
+            'obs_general.time2': [1965632.0, 1965634.0],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['all', 'only']}
         units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
@@ -386,12 +392,15 @@ class SearchTests(TestCase):
     def test__url_to_search_params_times_multi_4_bad_case(self) -> None:
         "[test_search.py] url_to_search_params: date parsing multi 4 all/only"
         # Using old slug name
-        q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time=AlL&qtype-time_2=ONly')
+        q = QueryDict(
+            'time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time=AlL&qtype-time_2=ONly'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
-                        'obs_general.time2': [1965632.0, 1965634.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.time1': [1879232.0, 1965633.0],
+            'obs_general.time2': [1965632.0, 1965634.0],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['all', 'only']}
         units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
@@ -404,12 +413,15 @@ class SearchTests(TestCase):
     def test__url_to_search_params_times_multi_5(self) -> None:
         "[test_search.py] url_to_search_params: date parsing multi 5 none/only"
         # Using old slug name
-        q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time_2=only')
+        q = QueryDict(
+            'time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time_2=only'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
-                        'obs_general.time2': [1965632.0, 1965634.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.time1': [1879232.0, 1965633.0],
+            'obs_general.time2': [1965632.0, 1965634.0],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'only']}
         units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
@@ -422,12 +434,15 @@ class SearchTests(TestCase):
     def test__url_to_search_params_times_multi_6(self) -> None:
         "[test_search.py] url_to_search_params: date parsing multi 6 only/none"
         # Using old slug name
-        q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_20=2000-01-24T06:00:01&time2_20=2000-01-24T06:00:02&qtype-time=only')
+        q = QueryDict(
+            'time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_20=2000-01-24T06:00:01&time2_20=2000-01-24T06:00:02&qtype-time=only'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1879232.0, 1965633.0],
-                        'obs_general.time2': [1965632.0, 1965634.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.time1': [1879232.0, 1965633.0],
+            'obs_general.time2': [1965632.0, 1965634.0],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['only', 'any']}
         units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
@@ -440,12 +455,12 @@ class SearchTests(TestCase):
     def test__url_to_search_params_times_multi_7(self) -> None:
         "[test_search.py] url_to_search_params: date parsing multi 7"
         # Using old slug name
-        q = QueryDict('time1_1=&time2_2=&time1_3=2000-01-24T06:00:00&time2_3=2000-01-24T06:00:00&qtype-time_1=only')
+        q = QueryDict(
+            'time1_1=&time2_2=&time1_3=2000-01-24T06:00:00&time2_3=2000-01-24T06:00:00&qtype-time_1=only'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1965632.0],
-                        'obs_general.time2': [1965632.0]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1965632.0], 'obs_general.time2': [1965632.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -460,10 +475,8 @@ class SearchTests(TestCase):
         # Using old slug name
         q = QueryDict('time1_1=&time2_2=&time1_3=2000-01-24T06:00:00&time2_3=&qtype-time_3=only')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.time1': [1965632.0],
-                        'obs_general.time2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.time1': [1965632.0], 'obs_general.time2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.time': ['only']}
         units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
@@ -505,7 +518,9 @@ class SearchTests(TestCase):
 
     def test__url_to_search_params_times_bad_qtype_2(self) -> None:
         "[test_search.py] url_to_search_params: bad qtype 2"
-        q = QueryDict('time1=2000-023T06:00:00&time2=2000-024T06:00:00&time1_2=2000-023T06:00:00&qtype-time=fred&qtype-time_2=all')
+        q = QueryDict(
+            'time1=2000-023T06:00:00&time2=2000-024T06:00:00&time1_2=2000-023T06:00:00&qtype-time=fred&qtype-time_2=all'
+        )
         (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
@@ -545,7 +560,6 @@ class SearchTests(TestCase):
         (selections, _extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
-
     ####################
     ### BASIC RANGES ###
     ####################
@@ -555,8 +569,7 @@ class SearchTests(TestCase):
         q = QueryDict('qtype-RINGGEOphase=only')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -580,8 +593,7 @@ class SearchTests(TestCase):
         q = QueryDict('unit-RINGGEOphase=degrees')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -596,8 +608,7 @@ class SearchTests(TestCase):
         q = QueryDict('unit-RINGGEOphase=DeGreeS')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -621,8 +632,7 @@ class SearchTests(TestCase):
         q = QueryDict('RINGGEOphase1=')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -636,10 +646,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with only missing min value allow_empty"
         q = QueryDict('RINGGEOphase1=')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_ring_geometry.phase1': [None],
-                        'obs_ring_geometry.phase2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [None], 'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -654,8 +662,7 @@ class SearchTests(TestCase):
         q = QueryDict('RINGGEOphase2=')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -669,10 +676,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with only missing max value allow_empty"
         q = QueryDict('RINGGEOphase2=')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_ring_geometry.phase1': [None],
-                        'obs_ring_geometry.phase2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [None], 'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -687,8 +692,7 @@ class SearchTests(TestCase):
         q = QueryDict('RINGGEOphase1=&RINGGEOphase2=')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -702,10 +706,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with both missing allow_empty"
         q = QueryDict('RINGGEOphase1=&RINGGEOphase2=')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_ring_geometry.phase1': [None],
-                        'obs_ring_geometry.phase2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [None], 'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -720,8 +722,7 @@ class SearchTests(TestCase):
         q = QueryDict('qtype-RINGGEOphase=only')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -735,10 +736,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with both missing with qtype allow_empty"
         q = QueryDict('qtype-RINGGEOphase=only')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_ring_geometry.phase1': [None],
-                        'obs_ring_geometry.phase2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [None], 'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['only']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -752,10 +751,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with min only, max missing value"
         q = QueryDict('RINGGEOphase1=80.1&RINGGEOphase2=')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [80.1],
-                        'obs_ring_geometry.phase2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [80.1], 'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -769,10 +766,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with min only, max missing entirely #2"
         q = QueryDict('RINGGEOphase1=80.1')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [80.1],
-                        'obs_ring_geometry.phase2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [80.1], 'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -786,10 +781,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with min only, max missing value, ignored UI slugs"
         q = QueryDict('RINGGEOphase1=80.1&widgets=fred,ethel&RINGGEOphase2=&reqno=5')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [80.1],
-                        'obs_ring_geometry.phase2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [80.1], 'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -803,10 +796,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with max only, min missing value"
         q = QueryDict('RINGGEOphase1=&RINGGEOphase2=90.5')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [None],
-                        'obs_ring_geometry.phase2': [90.5]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [None], 'obs_ring_geometry.phase2': [90.5]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -820,10 +811,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with max only, min missing entirely"
         q = QueryDict('RINGGEOphase2=90.5')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [None],
-                        'obs_ring_geometry.phase2': [90.5]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [None], 'obs_ring_geometry.phase2': [90.5]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -837,10 +826,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with both min and max"
         q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0.],
-                        'obs_ring_geometry.phase2': [355.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [0.0], 'obs_ring_geometry.phase2': [355.201]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -854,10 +841,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with qtype=any"
         q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201&qtype-RINGGEOphase=any')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0.],
-                        'obs_ring_geometry.phase2': [355.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [0.0], 'obs_ring_geometry.phase2': [355.201]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -871,10 +856,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with qtype=all"
         q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201&qtype-RINGGEOphase=all')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0.],
-                        'obs_ring_geometry.phase2': [355.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [0.0], 'obs_ring_geometry.phase2': [355.201]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['all']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -888,10 +871,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range with qtype=only"
         q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201&qtype-RINGGEOphase=only')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0.],
-                        'obs_ring_geometry.phase2': [355.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [0.0], 'obs_ring_geometry.phase2': [355.201]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['only']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -903,12 +884,15 @@ class SearchTests(TestCase):
 
     def test__url_to_search_params_range_multi_1(self) -> None:
         "[test_search.py] url_to_search_params: range multi 1"
-        q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_1=255.201')
+        q = QueryDict(
+            'RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_1=255.201'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0., 10.],
-                        'obs_ring_geometry.phase2': [355.201, 255.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_ring_geometry.phase1': [0.0, 10.0],
+            'obs_ring_geometry.phase2': [355.201, 255.201],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any', 'any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees', 'degrees']}
         print(selections)
@@ -920,12 +904,15 @@ class SearchTests(TestCase):
 
     def test__url_to_search_params_range_multi_2(self) -> None:
         "[test_search.py] url_to_search_params: range multi 2"
-        q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_2=255.201')
+        q = QueryDict(
+            'RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_2=255.201'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0., 10., None],
-                        'obs_ring_geometry.phase2': [355.201, None, 255.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_ring_geometry.phase1': [0.0, 10.0, None],
+            'obs_ring_geometry.phase2': [355.201, None, 255.201],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['any', 'any', 'any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees', 'degrees', 'degrees']}
         print(selections)
@@ -937,12 +924,15 @@ class SearchTests(TestCase):
 
     def test__url_to_search_params_range_multi_3(self) -> None:
         "[test_search.py] url_to_search_params: range multi 3"
-        q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_1=255.201&qtype-RINGGEOphase=only&qtype-RINGGEOphase_1=all&qtype-RINGGEOphase_2=only')
+        q = QueryDict(
+            'RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_1=255.201&qtype-RINGGEOphase=only&qtype-RINGGEOphase_1=all&qtype-RINGGEOphase_2=only'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0., 10.],
-                        'obs_ring_geometry.phase2': [355.201, 255.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_ring_geometry.phase1': [0.0, 10.0],
+            'obs_ring_geometry.phase2': [355.201, 255.201],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['only', 'all']}
         units_expected = {'obs_ring_geometry.phase': ['degrees', 'degrees']}
         print(selections)
@@ -954,12 +944,15 @@ class SearchTests(TestCase):
 
     def test__url_to_search_params_range_multi_4(self) -> None:
         "[test_search.py] url_to_search_params: range multi 4"
-        q = QueryDict('RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_1=255.201&qtype-RINGGEOphase=only&qtype-RINGGEOphase_2=only')
+        q = QueryDict(
+            'RINGGEOphase1=0&RINGGEOphase2=355.201&RINGGEOphase1_1=10&RINGGEOphase2_1=255.201&qtype-RINGGEOphase=only&qtype-RINGGEOphase_2=only'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [0., 10.],
-                        'obs_ring_geometry.phase2': [355.201, 255.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_ring_geometry.phase1': [0.0, 10.0],
+            'obs_ring_geometry.phase2': [355.201, 255.201],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['only', 'any']}
         units_expected = {'obs_ring_geometry.phase': ['degrees', 'degrees']}
         print(selections)
@@ -971,12 +964,12 @@ class SearchTests(TestCase):
 
     def test__url_to_search_params_range_multi_5(self) -> None:
         "[test_search.py] url_to_search_params: range multi 5"
-        q = QueryDict('RINGGEOphase1_10=10&RINGGEOphase2_10=255.201&qtype-RINGGEOphase=only&qtype-RINGGEOphase_10=only')
+        q = QueryDict(
+            'RINGGEOphase1_10=10&RINGGEOphase2_10=255.201&qtype-RINGGEOphase=only&qtype-RINGGEOphase_10=only'
+        )
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_ring_geometry.phase1': [10.],
-                        'obs_ring_geometry.phase2': [255.201]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_ring_geometry.phase1': [10.0], 'obs_ring_geometry.phase2': [255.201]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.phase': ['only']}
         units_expected = {'obs_ring_geometry.phase': ['degrees']}
         print(selections)
@@ -990,10 +983,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range return_slugs pretty, with wavelength cm values and unit: cm"
         q = QueryDict('wavelength1_01=0.000039&wavelength2_01=0.00007&unit-wavelength_01=cm')
         (selections, extras) = self._search_params(q, return_slugs=True, pretty_results=True)
-        sel_expected = {'wavelength1_01': '0.000039',
-                        'wavelength2_01': '0.00007'}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'wavelength1_01': '0.000039', 'wavelength2_01': '0.00007'}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_wavelength.wavelength': ['any']}
         units_expected = {'obs_wavelength.wavelength': ['cm']}
         print(selections)
@@ -1007,10 +998,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: range return_slugs pretty, with wavelength cm values and no unit (default unit)"
         q = QueryDict('wavelength1_01=0.000039&wavelength2_01=0.00007')
         (selections, extras) = self._search_params(q, return_slugs=True, pretty_results=True)
-        sel_expected = {'wavelength1_01': '0',
-                        'wavelength2_01': '0.0001'}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'wavelength1_01': '0', 'wavelength2_01': '0.0001'}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_wavelength.wavelength': ['any']}
         units_expected = {'obs_wavelength.wavelength': ['microns']}
         print(selections)
@@ -1020,7 +1009,6 @@ class SearchTests(TestCase):
         self.assertEqual(extras['qtypes'], qtypes_expected)
         self.assertEqual(extras['units'], units_expected)
 
-
     #######################
     ### NUMERIC FORMATS ###
     #######################
@@ -1029,10 +1017,11 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: numeric with spaces"
         q = QueryDict('observationduration1=+1+0+')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.observation_duration1': [10.],
-                        'obs_general.observation_duration2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.observation_duration1': [10.0],
+            'obs_general.observation_duration2': [None],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected = {'obs_general.observation_duration': ['seconds']}
         print(selections)
@@ -1046,10 +1035,11 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: numeric with commas"
         q = QueryDict('observationduration1=,100,000.0,')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.observation_duration1': [100000.],
-                        'obs_general.observation_duration2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.observation_duration1': [100000.0],
+            'obs_general.observation_duration2': [None],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected = {'obs_general.observation_duration': ['seconds']}
         print(selections)
@@ -1091,8 +1081,10 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: search allowing empty range input set 1"
         q = QueryDict('wavelength1_02=0.0100&wavelength2_03=0.4000')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_wavelength.wavelength1': [None, 0.01, None],
-                        'obs_wavelength.wavelength2': [None, None, 0.4]}
+        sel_expected = {
+            'obs_wavelength.wavelength1': [None, 0.01, None],
+            'obs_wavelength.wavelength2': [None, None, 0.4],
+        }
         qtypes_expected = {'obs_wavelength.wavelength': [None, 'any', 'any']}
         print(selections)
         print(extras)
@@ -1103,8 +1095,10 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: search allowing empty range input set 2"
         q = QueryDict('qtype-wavelength_03=any')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_wavelength.wavelength1': [None, None, None],
-                        'obs_wavelength.wavelength2': [None, None, None]}
+        sel_expected = {
+            'obs_wavelength.wavelength1': [None, None, None],
+            'obs_wavelength.wavelength2': [None, None, None],
+        }
         qtypes_expected = {'obs_wavelength.wavelength': [None, None, 'any']}
         print(selections)
         print(extras)
@@ -1115,8 +1109,10 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: search allowing empty range input set 3"
         q = QueryDict('wavelength1_03=0.0100')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_wavelength.wavelength1': [None, None, 0.01],
-                        'obs_wavelength.wavelength2': [None, None, None]}
+        sel_expected = {
+            'obs_wavelength.wavelength1': [None, None, 0.01],
+            'obs_wavelength.wavelength2': [None, None, None],
+        }
         qtypes_expected = {'obs_wavelength.wavelength': [None, None, 'any']}
         print(selections)
         print(extras)
@@ -1127,8 +1123,10 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: search allowing empty range input set 4"
         q = QueryDict('wavelength2_03=0.4000')
         (selections, extras) = self._search_params(q, allow_empty=True)
-        sel_expected = {'obs_wavelength.wavelength1': [None, None, None],
-                        'obs_wavelength.wavelength2': [None, None, 0.4]}
+        sel_expected = {
+            'obs_wavelength.wavelength1': [None, None, None],
+            'obs_wavelength.wavelength2': [None, None, 0.4],
+        }
         qtypes_expected = {'obs_wavelength.wavelength': [None, None, 'any']}
         print(selections)
         print(extras)
@@ -1157,7 +1155,6 @@ class SearchTests(TestCase):
         self.assertEqual(selections, sel_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
-
     ######################
     ### STRING FORMATS ###
     ######################
@@ -1167,8 +1164,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1183,8 +1179,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=')
         (selections, extras) = self._search_params(q, allow_empty=True)
         sel_expected = {'obs_pds.note': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1199,8 +1194,7 @@ class SearchTests(TestCase):
         q = QueryDict('qtype-note=matches')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1215,8 +1209,7 @@ class SearchTests(TestCase):
         q = QueryDict('qtype-note=matches')
         (selections, extras) = self._search_params(q, allow_empty=True)
         sel_expected = {'obs_pds.note': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['matches']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1231,8 +1224,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=Incomplete')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': ['Incomplete']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1247,8 +1239,7 @@ class SearchTests(TestCase):
         q = QueryDict('opusid=XXX')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.opus_id': ['XXX']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_general.opus_id': ['contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1263,8 +1254,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=Incomplete&qtype-note=contains')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': ['Incomplete']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1290,8 +1280,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=,')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': [',']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1306,8 +1295,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=,Note1,Note2,&qtype-note=ends')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': [',Note1,Note2,']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['ends']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1322,8 +1310,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=+')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': [' ']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1338,8 +1325,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=++++')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': ['    ']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1354,8 +1340,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=Incomplete&note_2=Fred')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': ['Incomplete', 'Fred']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['contains', 'contains']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1370,8 +1355,7 @@ class SearchTests(TestCase):
         q = QueryDict('note=Incomplete&note_2=Fred&qtype-note=ends&qtype-note_2=matches')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_pds.note': ['Incomplete', 'Fred']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['ends', 'matches']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1380,7 +1364,6 @@ class SearchTests(TestCase):
         self.assertEqual(extras['order'], order_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
         self.assertEqual(extras['units'], units_expected)
-
 
     #############
     ### MULTS ###
@@ -1391,8 +1374,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=&target=')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1406,10 +1388,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults empty return_slugs pretty"
         q = QueryDict('planet=&target=')
         (selections, extras) = self._search_params(q, return_slugs=True, pretty_results=True)
-        sel_expected = {'planet': '',
-                        'target': ''}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'planet': '', 'target': ''}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1424,8 +1404,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=,&target=,,')
         (selections, extras) = self._search_params(q)
         sel_expected: dict[str, Any] = {}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1439,10 +1418,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults empty comma return_slugs pretty"
         q = QueryDict('planet=,&target=,,')
         (selections, extras) = self._search_params(q, return_slugs=True, pretty_results=True)
-        sel_expected = {'planet': '',
-                        'target': ''}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'planet': '', 'target': ''}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1456,10 +1433,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults upper case"
         q = QueryDict('planet=SATURN&target=PAN')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.target_name': ['PAN'],
-                        'obs_general.planet_id': ['SATURN']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.target_name': ['PAN'], 'obs_general.planet_id': ['SATURN']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1473,10 +1448,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults lower case"
         q = QueryDict('planet=saturn&target=pan')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.target_name': ['pan'],
-                        'obs_general.planet_id': ['saturn']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.target_name': ['pan'], 'obs_general.planet_id': ['saturn']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1490,9 +1463,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults lower case dual"
         q = QueryDict('planet=saturn,jupiter')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.planet_id': ['jupiter','saturn']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.planet_id': ['jupiter', 'saturn']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1507,8 +1479,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=saturn,jupiter')
         (selections, extras) = self._search_params(q, pretty_results=True)
         sel_expected = {'obs_general.planet_id': 'jupiter,saturn'}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1522,9 +1493,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults lower case dual return_slug"
         q = QueryDict('planet=saturn,jupiter')
         (selections, extras) = self._search_params(q, return_slugs=True)
-        sel_expected = {'planet': ['jupiter','saturn']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'planet': ['jupiter', 'saturn']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1539,8 +1509,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=saturn,jupiter')
         (selections, extras) = self._search_params(q, return_slugs=True, pretty_results=True)
         sel_expected = {'planet': 'jupiter,saturn'}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1556,8 +1525,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=SATURN,SATURN')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.planet_id': ['SATURN']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1590,8 +1558,7 @@ class SearchTests(TestCase):
         q = QueryDict('instrument=Cassini+ISS')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.instrument_id': ['Cassini ISS']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1606,8 +1573,7 @@ class SearchTests(TestCase):
         q = QueryDict('COISSfilter=BL1%2BGRN')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_instrument_coiss.combined_filter': ['BL1+GRN']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1621,11 +1587,12 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults from different tables"
         q = QueryDict('planet=Saturn&RINGGEOringradius1=60000')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.planet_id': ['Saturn'],
-                        'obs_ring_geometry.ring_radius1': [60000],
-                        'obs_ring_geometry.ring_radius2': [None]}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.planet_id': ['Saturn'],
+            'obs_ring_geometry.ring_radius1': [60000],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_ring_geometry.ring_radius': ['any']}
         units_expected = {'obs_ring_geometry.ring_radius': ['km']}
         print(selections)
@@ -1639,11 +1606,12 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mults and string searches at the same time"
         q = QueryDict('planet=SATURN&target=PAN&note=Incomplete&qtype-note=begins')
         (selections, extras) = self._search_params(q)
-        sel_expected = {'obs_general.planet_id': ['SATURN'],
-                        'obs_general.target_name': ['PAN'],
-                        'obs_pds.note': ['Incomplete']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {
+            'obs_general.planet_id': ['SATURN'],
+            'obs_general.target_name': ['PAN'],
+            'obs_pds.note': ['Incomplete'],
+        }
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected = {'obs_pds.note': ['begins']}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1666,10 +1634,8 @@ class SearchTests(TestCase):
         "[test_search.py] url_to_search_params: mult bad val allow_errors"
         q = QueryDict('planet=SATURN,XXX&target=PAN')
         (selections, extras) = self._search_params(q, allow_errors=True)
-        sel_expected = {'obs_general.planet_id': None,
-                        'obs_general.target_name': ['PAN']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        sel_expected = {'obs_general.planet_id': None, 'obs_general.target_name': ['PAN']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1715,7 +1681,6 @@ class SearchTests(TestCase):
         self.assertIsNone(selections)
         self.assertIsNone(extras)
 
-
     ##################
     ### SORT ORDER ###
     ##################
@@ -1725,8 +1690,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=Saturn')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.planet_id': ['Saturn']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1741,8 +1705,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=Saturn&order=')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.planet_id': ['Saturn']}
-        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
-                          [False, False])
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'], [False, False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1766,8 +1729,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=Saturn&order=opusid')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.planet_id': ['Saturn']}
-        order_expected = (['obs_general.opus_id'],
-                          [False])
+        order_expected = (['obs_general.opus_id'], [False])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1782,8 +1744,7 @@ class SearchTests(TestCase):
         q = QueryDict('planet=Saturn&order=-opusid')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.planet_id': ['Saturn']}
-        order_expected = (['obs_general.opus_id'],
-                          [True])
+        order_expected = (['obs_general.opus_id'], [True])
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1798,9 +1759,10 @@ class SearchTests(TestCase):
         q = QueryDict('planet=Saturn&order=-opusid,RINGGEOphase1,-bundleid')
         (selections, extras) = self._search_params(q)
         sel_expected = {'obs_general.planet_id': ['Saturn']}
-        order_expected = (['obs_general.opus_id', 'obs_ring_geometry.phase1',
-                           'obs_pds.bundle_id'],
-                          [True, False, True])
+        order_expected = (
+            ['obs_general.opus_id', 'obs_ring_geometry.phase1', 'obs_pds.bundle_id'],
+            [True, False, True],
+        )
         qtypes_expected: dict[str, Any] = {}
         units_expected: dict[str, Any] = {}
         print(selections)
@@ -1810,15 +1772,13 @@ class SearchTests(TestCase):
         self.assertEqual(extras['qtypes'], qtypes_expected)
         self.assertEqual(extras['units'], units_expected)
 
-
-            ##############################################
-            ######### get_range_query UNIT TESTS #########
-            ##############################################
+        ##############################################
+        ######### get_range_query UNIT TESTS #########
+        ##############################################
 
     def test__range_query_single_col_range_left_side(self) -> None:
         "[test_search.py] range_query: single column range with min only"
-        selections = {'obs_type_image.duration1': [20.0],
-                      'obs_type_image.duration2': [None]}
+        selections = {'obs_type_image.duration1': [20.0], 'obs_type_image.duration2': [None]}
         sql, params = get_range_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
@@ -1831,8 +1791,7 @@ class SearchTests(TestCase):
 
     def test__range_query_single_col_range_right_side(self) -> None:
         "[test_search.py] range_query: single column range with max only"
-        selections = {'obs_type_image.duration1': [None],
-                      'obs_type_image.duration2': [180.0]}
+        selections = {'obs_type_image.duration1': [None], 'obs_type_image.duration2': [180.0]}
         sql, params = get_range_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
@@ -1845,13 +1804,12 @@ class SearchTests(TestCase):
 
     def test__range_query_single_col_range_both_side(self) -> None:
         "[test_search.py] range_query: single column range with both min and max"
-        selections = {'obs_type_image.duration2': [180.0],
-                      'obs_type_image.duration1': [20.0]}
+        selections = {'obs_type_image.duration2': [180.0], 'obs_type_image.duration1': [20.0]}
         sql, params = get_range_query(selections, 'obs_type_image.duration1', ['any'], [])
         print(sql)
         print(params)
         expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
-        expected_params = [20.0,180.0]
+        expected_params = [20.0, 180.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1859,8 +1817,7 @@ class SearchTests(TestCase):
 
     def test__range_query_single_col_range_all(self) -> None:
         "[test_search.py] range_query: single column range with bogus qtype=all"
-        selections = {'obs_type_image.duration2': [180.0],
-                      'obs_type_image.duration1': [20.0]}
+        selections = {'obs_type_image.duration2': [180.0], 'obs_type_image.duration1': [20.0]}
         sql, params = get_range_query(selections, 'obs_type_image.duration1', ['all'], [])
         print(sql)
         print(params)
@@ -1869,8 +1826,10 @@ class SearchTests(TestCase):
 
     def test__range_query_no_qtype_left_side(self) -> None:
         "[test_search.py] range_query: multi column range with no qtype, min only"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [None]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', [], [])
         print(sql)
         print(params)
@@ -1884,8 +1843,10 @@ class SearchTests(TestCase):
 
     def test__range_query_any_left_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, min only"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [None]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], [])
         print(sql)
         print(params)
@@ -1899,8 +1860,10 @@ class SearchTests(TestCase):
 
     def test__range_query_any_right_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, max only"
-        selections = {'obs_ring_geometry.ring_radius1': [None],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [None],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], [])
         print(sql)
         print(params)
@@ -1914,14 +1877,18 @@ class SearchTests(TestCase):
 
     def test__range_query_any_both_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, both min and max"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], [])
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1929,8 +1896,10 @@ class SearchTests(TestCase):
 
     def test__range_query_all_left_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=all, min only"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [None]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['all'], [])
         print(sql)
         print(params)
@@ -1944,8 +1913,10 @@ class SearchTests(TestCase):
 
     def test__range_query_all_right_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=all, max only"
-        selections = {'obs_ring_geometry.ring_radius1': [None],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [None],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['all'], [])
         print(sql)
         print(params)
@@ -1959,14 +1930,18 @@ class SearchTests(TestCase):
 
     def test__range_query_all_both_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=all, both min and max"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['all'], [])
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius1` <= %s AND `obs_ring_geometry`.`ring_radius2` >= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius1` <= %s AND `obs_ring_geometry`.`ring_radius2` >= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1974,8 +1949,10 @@ class SearchTests(TestCase):
 
     def test__range_query_only_left_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=only, min only"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [None]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only'], [])
         print(sql)
         print(params)
@@ -1989,8 +1966,10 @@ class SearchTests(TestCase):
 
     def test__range_query_only_right_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=only, max only"
-        selections = {'obs_ring_geometry.ring_radius1': [None],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [None],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only'], [])
         print(sql)
         print(params)
@@ -2004,14 +1983,18 @@ class SearchTests(TestCase):
 
     def test__range_query_only_both_side(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=only, both min and max"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only'], [])
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2019,14 +2002,20 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_1(self) -> None:
         "[test_search.py] range_query: clause 1 second all None"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None],
-                      'obs_ring_geometry.ring_radius2': [40000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'], [])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None],
+            'obs_ring_geometry.ring_radius2': [40000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'], []
+        )
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2034,14 +2023,18 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_2(self) -> None:
         "[test_search.py] range_query: clause 2 second part None"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None],
-                      'obs_ring_geometry.ring_radius2': [40000., 50000.]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'], [])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None],
+            'obs_ring_geometry.ring_radius2': [40000.0, 50000.0],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'], []
+        )
         print(sql)
         print(params)
         # 10000 to 40000
         expected = '(`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s)'
-        expected_params = [10000.0,40000.,50000.]
+        expected_params = [10000.0, 40000.0, 50000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2049,14 +2042,18 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_3(self) -> None:
         "[test_search.py] range_query: clause 3 some each None"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None, 60000.],
-                      'obs_ring_geometry.ring_radius2': [40000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], [])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None, 60000.0],
+            'obs_ring_geometry.ring_radius2': [40000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], []
+        )
         print(sql)
         print(params)
         # 10000 to 40000
         expected = '(`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s)'
-        expected_params = [10000.0,40000.,50000.,60000.]
+        expected_params = [10000.0, 40000.0, 50000.0, 60000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2064,9 +2061,13 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_4(self) -> None:
         "[test_search.py] range_query: clause 4 wrote qtype len"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None, 60000.],
-                      'obs_ring_geometry.ring_radius2': [40000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'], [])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None, 60000.0],
+            'obs_ring_geometry.ring_radius2': [40000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'], []
+        )
         print(sql)
         print(params)
         expected = None
@@ -2078,14 +2079,20 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_5(self) -> None:
         "[test_search.py] range_query: clause 5 qtype any second part both None"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None],
-                      'obs_ring_geometry.ring_radius2': [40000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any', 'any'], [])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None],
+            'obs_ring_geometry.ring_radius2': [40000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['any', 'any'], []
+        )
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2093,14 +2100,20 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_6(self) -> None:
         "[test_search.py] range_query: clause 6 qtype all second part both None"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None],
-                      'obs_ring_geometry.ring_radius2': [40000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any', 'all'], [])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None],
+            'obs_ring_geometry.ring_radius2': [40000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['any', 'all'], []
+        )
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2108,14 +2121,20 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_7(self) -> None:
         "[test_search.py] range_query: clause 7 qtype only second part both None"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None],
-                      'obs_ring_geometry.ring_radius2': [40000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any', 'only'], [])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None],
+            'obs_ring_geometry.ring_radius2': [40000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['any', 'only'], []
+        )
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2123,8 +2142,10 @@ class SearchTests(TestCase):
 
     def test__range_query_any_left_side_units_default(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, min only, units default"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [None]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['km'])
         print(sql)
         print(params)
@@ -2138,8 +2159,10 @@ class SearchTests(TestCase):
 
     def test__range_query_any_right_side_units_default(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, max only, units default"
-        selections = {'obs_ring_geometry.ring_radius1': [None],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [None],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['km'])
         print(sql)
         print(params)
@@ -2153,14 +2176,18 @@ class SearchTests(TestCase):
 
     def test__range_query_any_both_side_units_default(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, both min and max, units default"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.],
-                      'obs_ring_geometry.ring_radius2': [40000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0],
+            'obs_ring_geometry.ring_radius2': [40000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['km'])
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2168,8 +2195,10 @@ class SearchTests(TestCase):
 
     def test__range_query_any_left_side_units_m(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, min only, units m"
-        selections = {'obs_ring_geometry.ring_radius1': [10000000.],
-                      'obs_ring_geometry.ring_radius2': [None]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000000.0],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['m'])
         print(sql)
         print(params)
@@ -2183,9 +2212,13 @@ class SearchTests(TestCase):
 
     def test__range_query_any_left_side_unit_overflow(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, min only, unit overflow"
-        selections = {'obs_ring_geometry.ring_radius1': [1e307],
-                      'obs_ring_geometry.ring_radius2': [None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['saturnradii'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [1e307],
+            'obs_ring_geometry.ring_radius2': [None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['any'], ['saturnradii']
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2193,8 +2226,10 @@ class SearchTests(TestCase):
 
     def test__range_query_any_right_side_units_m(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, max only, units default"
-        selections = {'obs_ring_geometry.ring_radius1': [None],
-                      'obs_ring_geometry.ring_radius2': [40000000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [None],
+            'obs_ring_geometry.ring_radius2': [40000000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['m'])
         print(sql)
         print(params)
@@ -2208,9 +2243,13 @@ class SearchTests(TestCase):
 
     def test__range_query_any_right_side_unit_overflow(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, max only, unit overflow"
-        selections = {'obs_ring_geometry.ring_radius1': [None],
-                      'obs_ring_geometry.ring_radius2': [1e307]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['saturnradii'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [None],
+            'obs_ring_geometry.ring_radius2': [1e307],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['any'], ['saturnradii']
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2218,14 +2257,18 @@ class SearchTests(TestCase):
 
     def test__range_query_any_both_side_units_m(self) -> None:
         "[test_search.py] range_query: multi column range with qtype=any, both min and max, units default"
-        selections = {'obs_ring_geometry.ring_radius1': [10000000.],
-                      'obs_ring_geometry.ring_radius2': [40000000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000000.0],
+            'obs_ring_geometry.ring_radius2': [40000000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['m'])
         print(sql)
         print(params)
         # 10000 to 40000
-        expected = '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
-        expected_params = [10000.0,40000.]
+        expected = (
+            '`obs_ring_geometry`.`ring_radius2` >= %s AND `obs_ring_geometry`.`ring_radius1` <= %s'
+        )
+        expected_params = [10000.0, 40000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2233,14 +2276,18 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_3_units_default(self) -> None:
         "[test_search.py] range_query: clause 3 some each None units default"
-        selections = {'obs_ring_geometry.ring_radius1': [10000., None, 60000.],
-                      'obs_ring_geometry.ring_radius2': [40000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], ['km', 'km', 'km'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000.0, None, 60000.0],
+            'obs_ring_geometry.ring_radius2': [40000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], ['km', 'km', 'km']
+        )
         print(sql)
         print(params)
         # 10000 to 40000
         expected = '(`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s)'
-        expected_params = [10000.0,40000.,50000.,60000.]
+        expected_params = [10000.0, 40000.0, 50000.0, 60000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2249,14 +2296,18 @@ class SearchTests(TestCase):
     def test__range_query_clause_3_units_various(self) -> None:
         "[test_search.py] range_query: clause 3 some each None units various"
         # We don't use 6xxx as the last value here because the floating point inaccuracy makes the assert fail
-        selections = {'obs_ring_geometry.ring_radius1': [10000000., None, 80000000.],
-                      'obs_ring_geometry.ring_radius2': [40000000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], ['m', 'km', 'm'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000000.0, None, 80000000.0],
+            'obs_ring_geometry.ring_radius2': [40000000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], ['m', 'km', 'm']
+        )
         print(sql)
         print(params)
         # 10000 to 40000
         expected = '(`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s)'
-        expected_params = [10000.0,40000.,50000.,80000.]
+        expected_params = [10000.0, 40000.0, 50000.0, 80000.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2271,7 +2322,10 @@ class SearchTests(TestCase):
         selections = None
         sql, params = get_range_query(
             selections,  # type: ignore[arg-type]
-            'obs_ring_geometry.ring_radius1', [], [])
+            'obs_ring_geometry.ring_radius1',
+            [],
+            [],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2279,8 +2333,10 @@ class SearchTests(TestCase):
 
     def test__range_query_bad_param(self) -> None:
         "[test_search.py] range_query: bad param"
-        selections = {'obs_ring_geometry.ring_radius3': [100000.],
-                      'obs_ring_geometry.ring_radius2': [200000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius3': [100000.0],
+            'obs_ring_geometry.ring_radius2': [200000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', [], [])
         print(sql)
         print(params)
@@ -2289,8 +2345,10 @@ class SearchTests(TestCase):
 
     def test__range_query_bad_param_2(self) -> None:
         "[test_search.py] range_query: bad param 2"
-        selections = {'obs_ring_geometry.ring_radius1': [100000.],
-                      'obs_ring_geometry.ring_radius2': [200000.]}
+        selections = {
+            'obs_ring_geometry.ring_radius1': [100000.0],
+            'obs_ring_geometry.ring_radius2': [200000.0],
+        }
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius3', [], [])
         print(sql)
         print(params)
@@ -2299,9 +2357,13 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_bad_length_qtypes(self) -> None:
         "[test_search.py] range_query: inconsistent length qtypes"
-        selections = {'obs_ring_geometry.ring_radius1': [10000000., None, 8000000000.],
-                      'obs_ring_geometry.ring_radius2': [40000000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'all'], ['m', 'km', 'cm'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000000.0, None, 8000000000.0],
+            'obs_ring_geometry.ring_radius2': [40000000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'all'], ['m', 'km', 'cm']
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2309,9 +2371,13 @@ class SearchTests(TestCase):
 
     def test__range_query_clause_bad_length_units(self) -> None:
         "[test_search.py] range_query: inconsistent length units"
-        selections = {'obs_ring_geometry.ring_radius1': [10000000., None, 8000000000.],
-                      'obs_ring_geometry.ring_radius2': [40000000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'all', 'all'], ['m', 'cm'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000000.0, None, 8000000000.0],
+            'obs_ring_geometry.ring_radius2': [40000000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'all', 'all'], ['m', 'cm']
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2319,9 +2385,13 @@ class SearchTests(TestCase):
 
     def test__range_query_bad_qtype(self) -> None:
         "[test_search.py] range_query: bad qtype"
-        selections = {'obs_ring_geometry.ring_radius1': [10000000., None, 8000000000.],
-                      'obs_ring_geometry.ring_radius2': [40000000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'some', 'all'], ['m', 'km', 'cm'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000000.0, None, 8000000000.0],
+            'obs_ring_geometry.ring_radius2': [40000000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections, 'obs_ring_geometry.ring_radius1', ['only', 'some', 'all'], ['m', 'km', 'cm']
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2329,18 +2399,24 @@ class SearchTests(TestCase):
 
     def test__range_query_bad_unit(self) -> None:
         "[test_search.py] range_query: bad unit"
-        selections = {'obs_ring_geometry.ring_radius1': [10000000., None, 8000000000.],
-                      'obs_ring_geometry.ring_radius2': [40000000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'all', 'all'], ['m', 'fred', 'cm'])
+        selections = {
+            'obs_ring_geometry.ring_radius1': [10000000.0, None, 8000000000.0],
+            'obs_ring_geometry.ring_radius2': [40000000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections,
+            'obs_ring_geometry.ring_radius1',
+            ['only', 'all', 'all'],
+            ['m', 'fred', 'cm'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
         self.assertIsNone(params)
 
-
-            ###################################################
-            ######### get_longitude_query UNIT TESTS ##########
-            ###################################################
+        ###################################################
+        ######### get_longitude_query UNIT TESTS ##########
+        ###################################################
 
     def test__longitude_query_single_col_range_left_side_no_right(self) -> None:
         "[test_search.py] longitude_query: single column long range with min only"
@@ -2348,7 +2424,7 @@ class SearchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
+        expected = None  # Can't have one-sided longitude queries
         expected_params = None
         print(expected)
         print(expected_params)
@@ -2357,8 +2433,7 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_left_side(self) -> None:
         "[test_search.py] longitude_query: single column long range with min only"
-        selections = {'obs_type_image.duration1': [20.0],
-                      'obs_type_image.duration2': [None]}
+        selections = {'obs_type_image.duration1': [20.0], 'obs_type_image.duration2': [None]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
@@ -2371,8 +2446,7 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_right_side(self) -> None:
         "[test_search.py] longitude_query: single column long range with max only"
-        selections = {'obs_type_image.duration1': [None],
-                      'obs_type_image.duration2': [180.0]}
+        selections = {'obs_type_image.duration1': [None], 'obs_type_image.duration2': [180.0]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
@@ -2385,13 +2459,12 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_both_side(self) -> None:
         "[test_search.py] longitude_query: single column long range with both min and max"
-        selections = {'obs_type_image.duration2': [180.0],
-                      'obs_type_image.duration1': [20.0]}
+        selections = {'obs_type_image.duration2': [180.0], 'obs_type_image.duration1': [20.0]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
         expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
-        expected_params = [20.0,180.0]
+        expected_params = [20.0, 180.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2399,8 +2472,7 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_all(self) -> None:
         "[test_search.py] longitude_query: single column long range with bogus qtype=all"
-        selections = {'obs_type_image.duration2': [180.0],
-                      'obs_type_image.duration1': [20.0]}
+        selections = {'obs_type_image.duration2': [180.0], 'obs_type_image.duration1': [20.0]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['all'], [])
         print(sql)
         print(params)
@@ -2409,13 +2481,17 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_clause_1(self) -> None:
         "[test_search.py] longitude_query: single column long range clause 1 second both None"
-        selections = {'obs_type_image.duration2': [180.0, None],
-                      'obs_type_image.duration1': [20.0, None]}
-        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any'], [])
+        selections = {
+            'obs_type_image.duration2': [180.0, None],
+            'obs_type_image.duration1': [20.0, None],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_type_image.duration1', ['any', 'any'], []
+        )
         print(sql)
         print(params)
         expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
-        expected_params = [20.0,180.0]
+        expected_params = [20.0, 180.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2423,9 +2499,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_clause_2(self) -> None:
         "[test_search.py] longitude_query: single column long range clause 2 second one None"
-        selections = {'obs_type_image.duration2': [180.0, None],
-                      'obs_type_image.duration1': [20.0, 30.]}
-        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any'], [])
+        selections = {
+            'obs_type_image.duration2': [180.0, None],
+            'obs_type_image.duration1': [20.0, 30.0],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_type_image.duration1', ['any', 'any'], []
+        )
         print(sql)
         print(params)
         expected = '(`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s) OR (`obs_type_image`.`duration` >= %s)'
@@ -2437,13 +2517,17 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_clause_3(self) -> None:
         "[test_search.py] longitude_query: single column long range clause 3 second both OK"
-        selections = {'obs_type_image.duration2': [180.0, 280.0],
-                      'obs_type_image.duration1': [20.0, 220.0]}
-        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any'], [])
+        selections = {
+            'obs_type_image.duration2': [180.0, 280.0],
+            'obs_type_image.duration1': [20.0, 220.0],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_type_image.duration1', ['any', 'any'], []
+        )
         print(sql)
         print(params)
         expected = '(`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s) OR (`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s)'
-        expected_params = [20.0,180.0,220.0,280.0]
+        expected_params = [20.0, 180.0, 220.0, 280.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2451,11 +2535,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_any_left_side_no_right(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=any, min only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'], [])
+        selections = {'obs_ring_geometry.J2000_longitude1': [240.0]}
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['any'], []
+        )
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
+        expected = None  # Can't have one-sided longitude queries
         expected_params = None
         print(expected)
         print(expected_params)
@@ -2464,9 +2550,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_any_left_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=any, min only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [None],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['any'], []
+        )
         print(sql)
         print(params)
         expected = '`obs_ring_geometry`.`j2000_longitude2` >= %s'
@@ -2478,9 +2568,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_any_right_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=any, max only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [None],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [None],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['any'], []
+        )
         print(sql)
         print(params)
         expected = '`obs_ring_geometry`.`j2000_longitude1` <= %s'
@@ -2492,9 +2586,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_any_both_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=any, both min and max"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['any'], []
+        )
         print(sql)
         print(params)
         # 240 to 310.5
@@ -2507,9 +2605,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_all_left_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=all, min only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [None],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['all'], []
+        )
         print(sql)
         print(params)
         expected = '`obs_ring_geometry`.`j2000_longitude1` <= %s'
@@ -2521,9 +2623,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_all_right_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=all, max only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [None],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [None],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['all'], []
+        )
         print(sql)
         print(params)
         expected = '`obs_ring_geometry`.`j2000_longitude2` >= %s'
@@ -2535,9 +2641,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_all_both_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=all, both min and max"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['all'], []
+        )
         print(sql)
         print(params)
         # 240 to 310.5
@@ -2550,9 +2660,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_only_left_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=only, min only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [None],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['only'], []
+        )
         print(sql)
         print(params)
         expected = '`obs_ring_geometry`.`j2000_longitude1` >= %s'
@@ -2564,9 +2678,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_only_right_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=only, max only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [None],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [None],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['only'], []
+        )
         print(sql)
         print(params)
         expected = '`obs_ring_geometry`.`j2000_longitude2` <= %s'
@@ -2578,9 +2696,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_only_both_side(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=only, both min and max"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['only'], []
+        )
         print(sql)
         print(params)
         # 240 to 310.5
@@ -2593,13 +2715,12 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_both_side_wrap(self) -> None:
         "[test_search.py] longitude_query: single column long range with both min and max"
-        selections = {'obs_type_image.duration1': [180.0],
-                      'obs_type_image.duration2': [20.0]}
+        selections = {'obs_type_image.duration1': [180.0], 'obs_type_image.duration2': [20.0]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any'], [])
         print(sql)
         print(params)
         expected = '`obs_type_image`.`duration` >= %s OR `obs_type_image`.`duration` <= %s'
-        expected_params = [180.0,20.0]
+        expected_params = [180.0, 20.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2607,9 +2728,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_any_both_side_wrap(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=any, both min and max"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [30.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [30.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['any'], []
+        )
         print(sql)
         print(params)
         # 240 to 30.5
@@ -2622,9 +2747,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_all_both_side_wrap(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=all, both min and max"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [30.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [30.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['all'], []
+        )
         print(sql)
         print(params)
         # 240 to 30.5
@@ -2637,9 +2766,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_only_both_side_wrap(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=only, both min and max"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [30.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [30.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['only'], []
+        )
         print(sql)
         print(params)
         # 240 to 30.5
@@ -2652,9 +2785,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_all_clause_1(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=all, clause 1 second both None"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240., None],
-                      'obs_ring_geometry.J2000_longitude2': [310.5, None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all', 'all'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0, None],
+            'obs_ring_geometry.J2000_longitude2': [310.5, None],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['all', 'all'], []
+        )
         print(sql)
         print(params)
         # 240 to 310.5
@@ -2667,9 +2804,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_all_clause_2(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=all, clause 2 second one None"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240., 20.],
-                      'obs_ring_geometry.J2000_longitude2': [310.5, None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0, 20.0],
+            'obs_ring_geometry.J2000_longitude2': [310.5, None],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['all'], []
+        )
         print(sql)
         print(params)
         expected = None
@@ -2681,9 +2822,13 @@ class SearchTests(TestCase):
 
     def test__longitude_query_only_all_both_side_clause_3(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=only, clause 3 both OK"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240., 250.],
-                      'obs_ring_geometry.J2000_longitude2': [30.5, 40.5]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'all'], [])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0, 250.0],
+            'obs_ring_geometry.J2000_longitude2': [30.5, 40.5],
+        }
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'all'], []
+        )
         print(sql)
         print(params)
         # 240 to 30.5
@@ -2696,10 +2841,14 @@ class SearchTests(TestCase):
 
     def test__longitude_query_all_clause_4(self) -> None:
         "[test_search.py] longitude_query: long range with qtype=all, clause 4 wrote qtype len"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240., None],
-                      'obs_ring_geometry.J2000_longitude2': [310.5, None]}
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0, None],
+            'obs_ring_geometry.J2000_longitude2': [310.5, None],
+        }
         # Inconsistent qtype length
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'], [])
+        sql, params = get_longitude_query(
+            selections, 'obs_ring_geometry.J2000_longitude1', ['all'], []
+        )
         print(sql)
         print(params)
         expected = None
@@ -2711,8 +2860,7 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_left_side_units_default(self) -> None:
         "[test_search.py] longitude_query: single column long range with min only units default"
-        selections = {'obs_type_image.duration1': [20.0],
-                      'obs_type_image.duration2': [None]}
+        selections = {'obs_type_image.duration1': [20.0], 'obs_type_image.duration2': [None]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], ['seconds'])
         print(sql)
         print(params)
@@ -2725,8 +2873,7 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_right_side_units_default(self) -> None:
         "[test_search.py] longitude_query: single column long range with max only units default"
-        selections = {'obs_type_image.duration1': [None],
-                      'obs_type_image.duration2': [180.0]}
+        selections = {'obs_type_image.duration1': [None], 'obs_type_image.duration2': [180.0]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], ['seconds'])
         print(sql)
         print(params)
@@ -2739,13 +2886,12 @@ class SearchTests(TestCase):
 
     def test__longitude_query_single_col_range_both_side_units_default(self) -> None:
         "[test_search.py] longitude_query: single column long range with both min and max units default"
-        selections = {'obs_type_image.duration2': [180.0],
-                      'obs_type_image.duration1': [20.0]}
+        selections = {'obs_type_image.duration2': [180.0], 'obs_type_image.duration1': [20.0]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], ['seconds'])
         print(sql)
         print(params)
         expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
-        expected_params = [20.0,180.0]
+        expected_params = [20.0, 180.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -2760,7 +2906,10 @@ class SearchTests(TestCase):
         selections = None
         sql, params = get_longitude_query(
             selections,  # type: ignore[arg-type]
-            'obs_type_image.duration1', [], [])
+            'obs_type_image.duration1',
+            [],
+            [],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2768,8 +2917,7 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_param_single(self) -> None:
         "[test_search.py] longitude_query: bad param single column"
-        selections = {'obs_type_image.duration1': [20.0],
-                      'obs_type_image.duration2': [30.0]}
+        selections = {'obs_type_image.duration1': [20.0], 'obs_type_image.duration2': [30.0]}
         sql, params = get_longitude_query(selections, 'obs_type_image.duration3', [], [])
         print(sql)
         print(params)
@@ -2778,9 +2926,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_qtype_single(self) -> None:
         "[test_search.py] longitude_query: bad qtype single column"
-        selections = {'obs_type_image.duration1': [20.0, 30.0, 40.0],
-                      'obs_type_image.duration2': [25.0, 35.0, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'only', 'any'], ['degrees', 'degrees', 'degrees'])
+        selections = {
+            'obs_type_image.duration1': [20.0, 30.0, 40.0],
+            'obs_type_image.duration2': [25.0, 35.0, 45.0],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_type_image.duration1',
+            ['any', 'only', 'any'],
+            ['degrees', 'degrees', 'degrees'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2788,9 +2943,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_qtype_single_min(self) -> None:
         "[test_search.py] longitude_query: bad qtype single column"
-        selections = {'obs_type_image.duration1': [20.0, 30.0, 40.0],
-                      'obs_type_image.duration2': [25.0, None, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'only', 'any'], ['seconds', 'seconds', 'seconds'])
+        selections = {
+            'obs_type_image.duration1': [20.0, 30.0, 40.0],
+            'obs_type_image.duration2': [25.0, None, 45.0],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_type_image.duration1',
+            ['any', 'only', 'any'],
+            ['seconds', 'seconds', 'seconds'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2798,9 +2960,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_unit_single(self) -> None:
         "[test_search.py] longitude_query: bad unit single column"
-        selections = {'obs_type_image.duration1': [10000000., 40000., 8000000000.],
-                      'obs_type_image.duration2': [40000000., 50000., None]}
-        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any', 'any'], ['seconds', 'km', 'seconds'])
+        selections = {
+            'obs_type_image.duration1': [10000000.0, 40000.0, 8000000000.0],
+            'obs_type_image.duration2': [40000000.0, 50000.0, None],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_type_image.duration1',
+            ['any', 'any', 'any'],
+            ['seconds', 'km', 'seconds'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2808,9 +2977,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_unit_single_min(self) -> None:
         "[test_search.py] longitude_query: bad unit single column min"
-        selections = {'obs_type_image.duration1': [10000000., 40000., 8000000000.],
-                      'obs_type_image.duration2': [40000000., None,   9000000000.]}
-        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any', 'any'], ['seconds', 'km', 'seconds'])
+        selections = {
+            'obs_type_image.duration1': [10000000.0, 40000.0, 8000000000.0],
+            'obs_type_image.duration2': [40000000.0, None, 9000000000.0],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_type_image.duration1',
+            ['any', 'any', 'any'],
+            ['seconds', 'km', 'seconds'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2825,7 +3001,10 @@ class SearchTests(TestCase):
         selections = None
         sql, params = get_longitude_query(
             selections,  # type: ignore[arg-type]
-            'obs_ring_geometry.J2000_longitude1', [], [])
+            'obs_ring_geometry.J2000_longitude1',
+            [],
+            [],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2833,8 +3012,10 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_param(self) -> None:
         "[test_search.py] longitude_query: bad param"
-        selections = {'obs_ring_geometry.J2000_longitude1': [20.0],
-                      'obs_ring_geometry.J2000_longitude2': [30.0]}
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [20.0],
+            'obs_ring_geometry.J2000_longitude2': [30.0],
+        }
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude3', [], [])
         print(sql)
         print(params)
@@ -2843,9 +3024,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_clause_bad_length_qtypes(self) -> None:
         "[test_search.py] longitude_query: inconsistent length qtypes"
-        selections = {'obs_ring_geometry.J2000_longitude1': [20.0, 30.0, 40.0],
-                      'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'all'], ['degrees', 'degrees', 'degrees'])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [20.0, 30.0, 40.0],
+            'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_ring_geometry.J2000_longitude1',
+            ['only', 'all'],
+            ['degrees', 'degrees', 'degrees'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2853,9 +3041,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_clause_bad_length_units(self) -> None:
         "[test_search.py] longitude_query: inconsistent length units"
-        selections = {'obs_ring_geometry.J2000_longitude1': [20.0, 30.0, 40.0],
-                      'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'all', 'all'], ['degrees', 'degrees'])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [20.0, 30.0, 40.0],
+            'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_ring_geometry.J2000_longitude1',
+            ['only', 'all', 'all'],
+            ['degrees', 'degrees'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2863,9 +3058,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_qtype(self) -> None:
         "[test_search.py] longitude_query: bad qtype"
-        selections = {'obs_ring_geometry.J2000_longitude1': [20.0, 30.0, 40.0],
-                      'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'many', 'all'], ['degrees', 'degrees', 'degrees'])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [20.0, 30.0, 40.0],
+            'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_ring_geometry.J2000_longitude1',
+            ['only', 'many', 'all'],
+            ['degrees', 'degrees', 'degrees'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2873,9 +3075,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_qtype_max(self) -> None:
         "[test_search.py] longitude_query: bad qtype max"
-        selections = {'obs_ring_geometry.J2000_longitude1': [20.0, None, 40.0],
-                      'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'many', 'all'], ['degrees', 'degrees', 'degrees'])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [20.0, None, 40.0],
+            'obs_ring_geometry.J2000_longitude2': [25.0, 35.0, 45.0],
+        }
+        sql, params = get_longitude_query(
+            selections,
+            'obs_ring_geometry.J2000_longitude1',
+            ['only', 'many', 'all'],
+            ['degrees', 'degrees', 'degrees'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2883,9 +3092,16 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_unit(self) -> None:
         "[test_search.py] longitude_query: bad unit"
-        selections = {'obs_ring_geometry.J2000_longitude1': [10000000., None, 8000000000.],
-                      'obs_ring_geometry.J2000_longitude2': [40000000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'all', 'all'], ['degrees', 'km', 'degrees'])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [10000000.0, None, 8000000000.0],
+            'obs_ring_geometry.J2000_longitude2': [40000000.0, 50000.0, None],
+        }
+        sql, params = get_range_query(
+            selections,
+            'obs_ring_geometry.J2000_longitude1',
+            ['only', 'all', 'all'],
+            ['degrees', 'km', 'degrees'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2893,18 +3109,24 @@ class SearchTests(TestCase):
 
     def test__longitude_query_bad_unit_max(self) -> None:
         "[test_search.py] longitude_query: bad unit"
-        selections = {'obs_ring_geometry.J2000_longitude1': [10000000., 50000., 8000000000.],
-                      'obs_ring_geometry.J2000_longitude2': [40000000., None,   9000000000.]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'all', 'all'], ['degrees', 'km', 'degrees'])
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [10000000.0, 50000.0, 8000000000.0],
+            'obs_ring_geometry.J2000_longitude2': [40000000.0, None, 9000000000.0],
+        }
+        sql, params = get_range_query(
+            selections,
+            'obs_ring_geometry.J2000_longitude1',
+            ['only', 'all', 'all'],
+            ['degrees', 'km', 'degrees'],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
         self.assertIsNone(params)
 
-
-            ###############################################
-            ######### get_string_query UNIT TESTS #########
-            ###############################################
+        ###############################################
+        ######### get_string_query UNIT TESTS #########
+        ###############################################
 
     def test__string_query(self) -> None:
         "[test_search.py] string_query: string query with no qtype"
@@ -2922,8 +3144,7 @@ class SearchTests(TestCase):
     def test__string_query_contains(self) -> None:
         "[test_search.py] string_query: string query with qtype contains"
         selections = {'obs_pds.bundle_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['contains'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['contains'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` LIKE %s'
@@ -2936,8 +3157,7 @@ class SearchTests(TestCase):
     def test__string_query_begins(self) -> None:
         "[test_search.py] string_query: string query with qtype begins"
         selections = {'obs_pds.bundle_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['begins'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['begins'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` LIKE %s'
@@ -2950,8 +3170,7 @@ class SearchTests(TestCase):
     def test__string_query_ends(self) -> None:
         "[test_search.py] string_query: string query with qtype ends"
         selections = {'obs_pds.bundle_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['ends'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['ends'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` LIKE %s'
@@ -2964,8 +3183,7 @@ class SearchTests(TestCase):
     def test__string_query_matches(self) -> None:
         "[test_search.py] string_query: string query with qtype matches"
         selections = {'obs_pds.bundle_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['matches'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['matches'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` = %s'
@@ -2978,8 +3196,7 @@ class SearchTests(TestCase):
     def test__string_query_excludes(self) -> None:
         "[test_search.py] string_query: string query with qtype excludes"
         selections = {'obs_pds.bundle_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['excludes'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['excludes'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` NOT LIKE %s'
@@ -2992,8 +3209,7 @@ class SearchTests(TestCase):
     def test__string_query_regex(self) -> None:
         "[test_search.py] string_query: string query with qtype regex"
         selections = {'obs_pds.bundle_id': [r'^COISS.\d\d\d\d$']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['regex'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['regex'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` RLIKE %s'
@@ -3006,8 +3222,7 @@ class SearchTests(TestCase):
     def test__string_query_regex_bad(self) -> None:
         "[test_search.py] string_query: string query with qtype regex bad"
         selections = {'obs_pds.bundle_id': [r'^COISS.\d\d\d\d($']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['regex'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['regex'])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -3016,8 +3231,7 @@ class SearchTests(TestCase):
     def test__string_query_ends_special_chars(self) -> None:
         "[test_search.py] string_query: string query with qtype matches special chars"
         selections = {'obs_pds.bundle_id': ['ISS_\\%\\X\\']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['ends'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['ends'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` LIKE %s'
@@ -3030,8 +3244,7 @@ class SearchTests(TestCase):
     def test__string_query_matches_special_chars(self) -> None:
         "[test_search.py] string_query: string query with qtype matches special chars"
         selections = {'obs_pds.bundle_id': ['ISS_\\%\\X\\']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['matches'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['matches'])
         print(sql)
         print(params)
         expected = '`obs_pds`.`bundle_id` = %s'
@@ -3044,8 +3257,7 @@ class SearchTests(TestCase):
     def test__string_query_clause(self) -> None:
         "[test_search.py] string_query: string query with qtype clause"
         selections = {'obs_pds.bundle_id': ['ISS', 'COUVIS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['excludes', 'matches'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['excludes', 'matches'])
         print(sql)
         print(params)
         expected = '(`obs_pds`.`bundle_id` NOT LIKE %s) OR (`obs_pds`.`bundle_id` = %s)'
@@ -3064,7 +3276,9 @@ class SearchTests(TestCase):
         selections = None
         sql, params = get_string_query(
             selections,  # type: ignore[arg-type]
-            'obs_pds.bundle_id', [])
+            'obs_pds.bundle_id',
+            [],
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -3100,8 +3314,9 @@ class SearchTests(TestCase):
     def test__string_query_clause_bad_length(self) -> None:
         "[test_search.py] string_query: string query with qtype clause inconsistent length"
         selections = {'obs_pds.bundle_id': ['ISS', 'COUVIS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['excludes', 'matches', 'excludes'])
+        sql, params = get_string_query(
+            selections, 'obs_pds.bundle_id', ['excludes', 'matches', 'excludes']
+        )
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -3110,17 +3325,15 @@ class SearchTests(TestCase):
     def test__string_query_bad_qtype(self) -> None:
         "[test_search.py] string_query: string query with bad qtype"
         selections = {'obs_pds.bundle_id': ['ISS']}
-        sql, params = get_string_query(selections, 'obs_pds.bundle_id',
-                                       ['excludesXXX'])
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['excludesXXX'])
         print(sql)
         print(params)
         self.assertIsNone(sql)
         self.assertIsNone(params)
 
-
-            #####################################################
-            ######### construct_query_string UNIT TESTS #########
-            #####################################################
+        #####################################################
+        ######### construct_query_string UNIT TESTS #########
+        #####################################################
 
     def test__construct_query_string_bad_paraminfo(self) -> None:
         "[test_search.py] construct_query_string: unknown param name"
@@ -3190,8 +3403,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_nojoin(self) -> None:
         "[test_search.py] construct_query_string: just obs_general"
-        selections = {'obs_general.observation_duration1': [20],
-                      'obs_general.observation_duration2': [None]}
+        selections = {
+            'obs_general.observation_duration1': [20],
+            'obs_general.observation_duration2': [None],
+        }
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3205,8 +3420,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_nojoin_unit_overflow(self) -> None:
         "[test_search.py] construct_query_string: just obs_general, unit overflow"
-        selections = {'obs_general.observation_duration1': [1e307],
-                      'obs_general.observation_duration2': [None]}
+        selections = {
+            'obs_general.observation_duration1': [1e307],
+            'obs_general.observation_duration2': [None],
+        }
         extras = {'units': {'obs_general.observation_duration': 'days'}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3230,8 +3447,7 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_single_column_range(self) -> None:
         "[test_search.py] construct_query_string: a single column range"
-        selections = {'obs_type_image.duration1': [20.0],
-                      'obs_type_image.duration2': [180.0]}
+        selections = {'obs_type_image.duration1': [20.0], 'obs_type_image.duration2': [180.0]}
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3245,8 +3461,7 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_single_column_range_unit_overflow(self) -> None:
         "[test_search.py] construct_query_string: a single column range, unit overflow"
-        selections = {'obs_type_image.duration1': [20.0],
-                      'obs_type_image.duration2': [1e307]}
+        selections = {'obs_type_image.duration1': [20.0], 'obs_type_image.duration2': [1e307]}
         extras = {'units': {'obs_type_image.duration': 'msecs'}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3256,8 +3471,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_longitude_range(self) -> None:
         "[test_search.py] construct_query_string: a single column range"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3272,8 +3489,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_longitude_range_bad_qtype(self) -> None:
         "[test_search.py] construct_query_string: a single column range"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [240.0],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
         extras = {'qtypes': {'obs_ring_geometry.J2000_longitude': ['fred']}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3287,12 +3506,13 @@ class SearchTests(TestCase):
     # into the rejection asserted below. `filterwarnings = ["error"]` would otherwise
     # make the warning itself the failure. Scoped to this test rather than to the
     # suite, so an unintended overflow anywhere else still fails.
-    @pytest.mark.filterwarnings('ignore:overflow encountered in scalar multiply'
-                                ':RuntimeWarning')
+    @pytest.mark.filterwarnings('ignore:overflow encountered in scalar multiply:RuntimeWarning')
     def test__construct_query_string_longitude_range_unit_overflow(self) -> None:
         "[test_search.py] construct_query_string: a single column range, unit overflow"
-        selections = {'obs_ring_geometry.J2000_longitude1': [1e307],
-                      'obs_ring_geometry.J2000_longitude2': [310.5]}
+        selections = {
+            'obs_ring_geometry.J2000_longitude1': [1e307],
+            'obs_ring_geometry.J2000_longitude2': [310.5],
+        }
         extras = {'units': {'obs_ring_geometry.J2000_longitude': ['radians']}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3302,8 +3522,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_single_column_range_clause(self) -> None:
         "[test_search.py] construct_query_string: a single column range clause"
-        selections = {'obs_type_image.duration1': [20.0, 200.0],
-                      'obs_type_image.duration2': [180.0, 300.0]}
+        selections = {
+            'obs_type_image.duration1': [20.0, 200.0],
+            'obs_type_image.duration2': [180.0, 300.0],
+        }
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3350,7 +3572,9 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`planet_id` IN (%s)'
+        expected = (
+            'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`planet_id` IN (%s)'
+        )
         expected_params = [4]
         print(expected)
         print(expected_params)
@@ -3364,7 +3588,9 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`planet_id` IN (%s)'
+        expected = (
+            'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`planet_id` IN (%s)'
+        )
         expected_params = [4]
         print(expected)
         print(expected_params)
@@ -3387,7 +3613,7 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_mults_planet_bad(self) -> None:
         "[test_search.py] construct_query_string: planet_id unknown planet"
-        selections = {'obs_general.planet_id': ['Jupiter','SaturnX']}
+        selections = {'obs_general.planet_id': ['Jupiter', 'SaturnX']}
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3401,8 +3627,7 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_mults_planet_instrument_coiss(self) -> None:
         "[test_search.py] construct_query_string: two mults"
-        selections = {'obs_general.planet_id': ['Saturn'],
-                      'obs_general.instrument_id': ['COISS']}
+        selections = {'obs_general.planet_id': ['Saturn'], 'obs_general.instrument_id': ['COISS']}
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3416,8 +3641,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_mults_with_join(self) -> None:
         "[test_search.py] construct_query_string: obs_general and obs_instrument_coiss"
-        selections = {'obs_general.planet_id': ['Saturn'],
-                      'obs_instrument_coiss.camera': ['Wide Angle']}
+        selections = {
+            'obs_general.planet_id': ['Saturn'],
+            'obs_instrument_coiss.camera': ['Wide Angle'],
+        }
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3431,9 +3658,11 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_mults_with_3_table_join(self) -> None:
         "[test_search.py] construct_query_string: three tables"
-        selections = {'obs_general.planet_id': ['Saturn'],
-                      'obs_instrument_coiss.camera': ['Narrow Angle'],
-                      'obs_mission_cassini.rev_no': ['00A','00C']}
+        selections = {
+            'obs_general.planet_id': ['Saturn'],
+            'obs_instrument_coiss.camera': ['Narrow Angle'],
+            'obs_mission_cassini.rev_no': ['00A', '00C'],
+        }
         extras: dict[str, Any] = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3442,14 +3671,18 @@ class SearchTests(TestCase):
         expected_params = [4, 0, 2, 4]
         print(expected)
         print(expected_params)
-        print('NOTE: This test requires one of COISS or COVIMS to be imported before COUVIS due to a bad observation name in COUVIS!')
+        print(
+            'NOTE: This test requires one of COISS or COVIMS to be imported before COUVIS due to a bad observation name in COUVIS!'
+        )
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
     def test__construct_query_string_order_existing_table(self) -> None:
         "[test_search.py] construct_query_string: sort order already joined"
-        selections = {'obs_general.observation_duration1': [20],
-                      'obs_general.observation_duration2': [None]}
+        selections = {
+            'obs_general.observation_duration1': [20],
+            'obs_general.observation_duration2': [None],
+        }
         extras = {'order': (['obs_general.time1'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3463,11 +3696,15 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_order_existing_table_2(self) -> None:
         "[test_search.py] construct_query_string: sort order already joined #2"
-        selections = {'obs_general.observation_duration1': [20],
-                      'obs_general.observation_duration2': [None],
-                      'obs_pds.bundle_id': ['COISS']}
-        extras = {'qtypes': {'obs_pds.bundle_id': ['begins']},
-                  'order': (['obs_pds.data_set_id'], [True])}
+        selections = {
+            'obs_general.observation_duration1': [20],
+            'obs_general.observation_duration2': [None],
+            'obs_pds.bundle_id': ['COISS'],
+        }
+        extras = {
+            'qtypes': {'obs_pds.bundle_id': ['begins']},
+            'order': (['obs_pds.data_set_id'], [True]),
+        }
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
@@ -3480,11 +3717,11 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_order_existing_table_multi(self) -> None:
         "[test_search.py] construct_query_string: complex sort order already joined"
-        selections = {'obs_general.observation_duration1': [20],
-                      'obs_general.observation_duration2': [None]}
-        extras = {'order': (['obs_general.time1',
-                             'obs_general.time2'],
-                            [False, True])}
+        selections = {
+            'obs_general.observation_duration1': [20],
+            'obs_general.observation_duration2': [None],
+        }
+        extras = {'order': (['obs_general.time1', 'obs_general.time2'], [False, True])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
@@ -3497,8 +3734,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_order_new_table(self) -> None:
         "[test_search.py] construct_query_string: sort order not already joined"
-        selections = {'obs_general.observation_duration1': [20],
-                      'obs_general.observation_duration2': [None]}
+        selections = {
+            'obs_general.observation_duration1': [20],
+            'obs_general.observation_duration2': [None],
+        }
         extras = {'order': (['obs_pds.bundle_id'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3512,8 +3751,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_order_new_table_2(self) -> None:
         "[test_search.py] construct_query_string: sort order not already joined 2"
-        selections = {'obs_general.observation_duration1': [20],
-                      'obs_general.observation_duration2': [None]}
+        selections = {
+            'obs_general.observation_duration1': [20],
+            'obs_general.observation_duration2': [None],
+        }
         extras = {'order': (['obs_instrument_coiss.data_conversion_type'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3527,8 +3768,10 @@ class SearchTests(TestCase):
 
     def test__construct_query_string_order_bad(self) -> None:
         "[test_search.py] construct_query_string: sort order bad"
-        selections = {'obs_general.observation_duration1': [20],
-                      'obs_general.observation_duration2': [None]}
+        selections = {
+            'obs_general.observation_duration1': [20],
+            'obs_general.observation_duration2': [None],
+        }
         extras = {'order': (['obs_general.time3'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
@@ -3578,19 +3821,16 @@ class SearchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
-
-            #####################################################
-            ######### set_user_search_number UNIT TESTS #########
-            #####################################################
+        #####################################################
+        ######### set_user_search_number UNIT TESTS #########
+        #####################################################
 
     def test__set_user_search_number_no_extras(self) -> None:
         "[test_search.py] set_user_search_number: no extras"
         selections = {'obs_pds.bundle_id': ['FRED']}
         extras: dict[str, Any] = {}
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {},
-                  'units': {},
-                  'order': ([], [])}
+        extras = {'qtypes': {}, 'units': {}, 'order': ([], [])}
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (1, False))
@@ -3598,14 +3838,20 @@ class SearchTests(TestCase):
     def test__set_user_search_number_dead_qtype_str(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype string"
         selections = {'obs_pds.bundle_id': ['FRED']}
-        extras = {'qtypes': {'obs_pds.bundle_id': ['excludes']},
-                  'units': {},
-                  'order': (['obs_pds.bundle_id'], [False])}
+        extras = {
+            'qtypes': {'obs_pds.bundle_id': ['excludes']},
+            'units': {},
+            'order': (['obs_pds.bundle_id'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_pds.bundle_id': ['excludes'],
-                             'obs_pds.data_set_id': ['matches']}, # goes away
-                  'units': {},
-                  'order': (['obs_pds.bundle_id'], [False])}
+        extras = {
+            'qtypes': {
+                'obs_pds.bundle_id': ['excludes'],
+                'obs_pds.data_set_id': ['matches'],
+            },  # goes away
+            'units': {},
+            'order': (['obs_pds.bundle_id'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (1, False))
@@ -3613,14 +3859,20 @@ class SearchTests(TestCase):
     def test__set_user_search_number_dead_qtype_num_1(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype numeric 1"
         selections = {'obs_general.declination1': ['1']}
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any'],
-                             'obs_general.right_asc1': ['only']}, # goes away
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {
+                'obs_general.declination1': ['any'],
+                'obs_general.right_asc1': ['only'],
+            },  # goes away
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (1, False))
@@ -3628,14 +3880,20 @@ class SearchTests(TestCase):
     def test__set_user_search_number_dead_qtype_num_2(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype numeric 2"
         selections = {'obs_general.declination2': ['1']}
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any'],
-                             'obs_general.right_asc1': ['only']}, # goes away
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {
+                'obs_general.declination1': ['any'],
+                'obs_general.right_asc1': ['only'],
+            },  # goes away
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (1, False))
@@ -3643,14 +3901,20 @@ class SearchTests(TestCase):
     def test__set_user_search_number_dead_unit_num_1(self) -> None:
         "[test_search.py] set_user_search_number: dead unit numeric 1"
         selections = {'obs_general.declination1': ['1']}
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees'],
-                            'obs_general.right_asc1': ['degrees']}, # goes away
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {
+                'obs_general.declination1': ['degrees'],
+                'obs_general.right_asc1': ['degrees'],
+            },  # goes away
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (1, False))
@@ -3658,14 +3922,20 @@ class SearchTests(TestCase):
     def test__set_user_search_number_dead_unit_num_2(self) -> None:
         "[test_search.py] set_user_search_number: dead unit numeric 2"
         selections = {'obs_general.declination2': ['1']}
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees'],
-                            'obs_general.right_asc1': ['degrees']}, # goes away
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {
+                'obs_general.declination1': ['degrees'],
+                'obs_general.right_asc1': ['degrees'],
+            },  # goes away
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (1, False))
@@ -3674,13 +3944,17 @@ class SearchTests(TestCase):
         "[test_search.py] set_user_search_number: qtype numeric 1"
         # No qtype vs. used qtype means different search
         selections = {'obs_general.declination1': ['1']}
-        extras = {'qtypes': {},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (2, True))
@@ -3689,13 +3963,17 @@ class SearchTests(TestCase):
         "[test_search.py] set_user_search_number: qtype numeric 2"
         # No qtype vs. used qtype means different search
         selections = {'obs_general.declination2': ['1']}
-        extras = {'qtypes': {},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (2, True))
@@ -3704,13 +3982,17 @@ class SearchTests(TestCase):
         "[test_search.py] set_user_search_number: unit numeric 1"
         # No units vs. used units means different search
         selections = {'obs_general.declination1': ['1']}
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (2, True))
@@ -3719,13 +4001,17 @@ class SearchTests(TestCase):
         "[test_search.py] set_user_search_number: unit numeric 2"
         # No units vs. used units means different search
         selections = {'obs_general.declination2': ['1']}
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {},
+            'order': (['obs_general.time1'], [False]),
+        }
         num1 = set_user_search_number(selections, extras)
-        extras = {'qtypes': {'obs_general.declination1': ['any']},
-                  'units': {'obs_general.declination1': ['degrees']},
-                  'order': (['obs_general.time1'], [False])}
+        extras = {
+            'qtypes': {'obs_general.declination1': ['any']},
+            'units': {'obs_general.declination1': ['degrees']},
+            'order': (['obs_general.time1'], [False]),
+        }
         num2 = set_user_search_number(selections, extras)
         self.assertEqual(num1, (1, True))
         self.assertEqual(num2, (2, True))

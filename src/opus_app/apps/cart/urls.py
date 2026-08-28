@@ -1,5 +1,6 @@
 # cart/urls.py
 """The routes of the cart API."""
+
 from django.urls import re_path
 
 from opus_app.apps.cart.views import (

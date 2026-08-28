@@ -4,6 +4,7 @@ One `LogEntry` is one line of the combined log format. `LogReader` reads a whole
 file, or tails one, and silently drops any line that does not match -- a log
 directory holds lines from other tools as well.
 """
+
 import io
 import ipaddress
 import re
@@ -130,15 +131,23 @@ class LogReader:
         time_string = info['time']
         status = int(info['status'])
         request = info['request']
-        first_space = request.find(" ")
-        last_space = request.rfind(" ")
+        first_space = request.find(' ')
+        last_space = request.rfind(' ')
         if first_space == -1 or last_space == -1 or first_space >= last_space:
             return None
         method = request[:first_space].upper()
-        url = urlsplit(request[first_space + 1:last_space])
+        url = urlsplit(request[first_space + 1 : last_space])
         size = None if info['size'] == '-' else int(info['size'])
         agent = None if info['agent'] == '-' else info['agent']
         time = datetime.strptime(time_string, '%d/%b/%Y:%H:%M:%S %z')
-        return LogEntry(host_ip=host_ip,  # type: ignore[arg-type]  # see the note above
-                        user=user, status=status, method=method,
-                        url=url, size=size, agent=agent, time_string=time_string, time=time)
+        return LogEntry(
+            host_ip=host_ip,  # type: ignore[arg-type]  # see the note above
+            user=user,
+            status=status,
+            method=method,
+            url=url,
+            size=size,
+            agent=agent,
+            time_string=time_string,
+            time=time,
+        )

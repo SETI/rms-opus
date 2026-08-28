@@ -60,7 +60,7 @@ class ImportLog:
         if ctx.current_bundle_id is not None:
             ret = ctx.current_bundle_id
             if ctx.current_index_row_number is not None:
-                ret += ' index row '+str(ctx.current_index_row_number)
+                ret += ' index row ' + str(ctx.current_index_row_number)
             if ctx.current_primary_filespec is not None:
                 ret += f' "{ctx.current_primary_filespec}"'
         if ret != '':
@@ -74,7 +74,7 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
-        self._ctx.logger.log('error', self._position()+msg, *args)
+        self._ctx.logger.log('error', self._position() + msg, *args)
         self._ctx.import_has_bad_data = True
 
     def warning(self, msg: str, *args: Any) -> None:
@@ -84,7 +84,7 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
-        self._ctx.logger.log('warning', self._position()+msg, *args)
+        self._ctx.logger.log('warning', self._position() + msg, *args)
 
     def info(self, msg: str, *args: Any) -> None:
         """Log a message at info level.
@@ -93,7 +93,7 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
-        self._ctx.logger.log('info', self._position()+msg, *args)
+        self._ctx.logger.log('info', self._position() + msg, *args)
 
     def debug(self, msg: str, *args: Any) -> None:
         """Log a message at debug level.
@@ -102,7 +102,7 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
-        self._ctx.logger.log('debug', self._position()+msg, *args)
+        self._ctx.logger.log('debug', self._position() + msg, *args)
 
     def nonrepeating_error(self, msg: str) -> None:
         """Log an error the first time this run produces it, and ignore it after that.
@@ -132,8 +132,9 @@ class ImportLog:
         Parameters:
             target_name: The name read from the PDS label.
         """
-        self.nonrepeating_error(f'Unknown TARGET_NAME "{target_name}" - edit '
-                                'config_targets/target_name_info.py')
+        self.nonrepeating_error(
+            f'Unknown TARGET_NAME "{target_name}" - edit config_targets/target_name_info.py'
+        )
 
 
 @dataclass

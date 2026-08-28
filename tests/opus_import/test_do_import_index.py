@@ -57,26 +57,29 @@ def failing_pdsfile(monkeypatch: pytest.MonkeyPatch) -> ImportContext:
 
 @pytest.mark.parametrize('pds_version', [3, 4])
 def test_a_failed_filespec_conversion_returns_an_empty_list(
-        pds_version: Literal[3, 4], failing_pdsfile: ImportContext) -> None:
+    pds_version: Literal[3, 4], failing_pdsfile: ImportContext
+) -> None:
     """The result must be iterable: the caller extends its row list with it."""
     rows = do_import_index.get_opus_products_rows_for_filespec(
-        failing_pdsfile, pds_version, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0',
-        'COISS_2002', 'COISS')
+        failing_pdsfile, pds_version, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0', 'COISS_2002', 'COISS'
+    )
 
     assert rows == []
     assert failing_pdsfile.logger.messages_at('error') == [
-        'Failed to convert filespec "BOGUS/FILESPEC.LBL"']
+        'Failed to convert filespec "BOGUS/FILESPEC.LBL"'
+    ]
     assert failing_pdsfile.import_has_bad_data is True
 
 
 def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
-        failing_pdsfile: ImportContext) -> None:
+    failing_pdsfile: ImportContext,
+) -> None:
     """Reproduces the caller's exact use, which used to raise TypeError on None."""
     table_rows: dict[str, list[Any]] = {'obs_files': []}
 
     rows = do_import_index.get_opus_products_rows_for_filespec(
-        failing_pdsfile, 3, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0', 'COISS_2002',
-        'COISS')
+        failing_pdsfile, 3, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0', 'COISS_2002', 'COISS'
+    )
     table_rows['obs_files'].extend(rows)
 
     assert table_rows == {'obs_files': []}
@@ -108,8 +111,9 @@ def test_every_table_rows_guard_initializes_the_key_it_tested() -> None:
         test = node.test
         if not (len(test.ops) == 1 and isinstance(test.ops[0], ast.NotIn)):
             continue
-        if not (isinstance(test.comparators[0], ast.Name)
-                and test.comparators[0].id == 'table_rows'):
+        if not (
+            isinstance(test.comparators[0], ast.Name) and test.comparators[0].id == 'table_rows'
+        ):
             continue
         assigns = [stmt for stmt in node.body if isinstance(stmt, ast.Assign)]
         assert assigns, f'line {node.lineno}: guard body assigns nothing'
@@ -118,8 +122,8 @@ def test_every_table_rows_guard_initializes_the_key_it_tested() -> None:
         guards.append((node.lineno, ast.unparse(test.left), ast.unparse(target.slice)))
 
     assert len(guards) == 4, f'expected 4 table_rows guards, found {guards}'
-    mismatched = [(line, tested, created)
-                  for line, tested, created in guards if tested != created]
+    mismatched = [(line, tested, created) for line, tested, created in guards if tested != created]
     assert mismatched == [], (
         'a table_rows guard initializes a different key than it tested, so the append '
-        f'that follows it raises KeyError: {mismatched}')
+        f'that follows it raises KeyError: {mismatched}'
+    )

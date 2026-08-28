@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 # TOP-LEVEL IMPORT ROUTINES
 ################################################################################
 
+
 def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     """Import one bundle into the import namespace.
 
@@ -61,9 +62,10 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
         False if the bundle is unknown, is not a bundle, has an unsupported PDS version,
         no index file was found, or an index failed to import.
     """
-    ctx.logger.open(f'Importing {bundle_id}',
-                    limits={'info': ctx.args.log_info_limit,
-                            'debug': ctx.args.log_debug_limit})
+    ctx.logger.open(
+        f'Importing {bundle_id}',
+        limits={'info': ctx.args.log_info_limit, 'debug': ctx.args.log_debug_limit},
+    )
 
     # Start fresh
     ctx.mult_table_cache = {}
@@ -99,13 +101,11 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
         import_util.log_error(ctx, f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')
         return False
 
-
     if not bundle_pdsfile.is_bundle:
         import_util.log_error(ctx, f'{bundle_id} is not a bundle!')
         ctx.logger.close()
         ctx.current_bundle_id = None
         return False
-
 
     ##################################
     ### FIND PRIMARY INDEX FILE(s) ###
@@ -115,8 +115,7 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     # bundles with neither returned above.
     primary_index = vol_info['primary_index']
     assert primary_index is not None
-    primary_index_names = [
-        x.replace('<BUNDLE>', bundle_id) for x in primary_index]
+    primary_index_names = [x.replace('<BUNDLE>', bundle_id) for x in primary_index]
 
     # These are the metadata directories
     index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
@@ -138,10 +137,9 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
                 bundle_label_path = import_util.safe_join(path, basename)
                 import_util.log_debug(ctx, f'Using index: {bundle_label_path}')
                 found_in_this_dir = True
-                ret = ret and do_import_index.import_one_index(ctx, bundle_id,
-                                                               vol_info,
-                                                               index_paths,
-                                                               bundle_label_path)
+                ret = ret and do_import_index.import_one_index(
+                    ctx, bundle_id, vol_info, index_paths, bundle_label_path
+                )
         if found_in_this_dir:
             ctx.logger.close()
             ctx.current_bundle_id = None
@@ -161,6 +159,7 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
 ################################################################################
 # THE MAIN IMPORT LOOP
 ################################################################################
+
 
 def do_import_steps(ctx: ImportContext) -> bool:
     """Run the import work the command line asked for, in the one order that is safe.
@@ -196,8 +195,7 @@ def do_import_steps(ctx: ImportContext) -> bool:
     #   --leave-old-import-tables
     # is given.
     old_imp_tables_dropped = False
-    if (ctx.args.drop_old_import_tables and
-        not ctx.args.leave_old_import_tables):
+    if ctx.args.drop_old_import_tables and not ctx.args.leave_old_import_tables:
         import_util.log_info(ctx, 'Deleting all old import tables')
         do_import_tables.delete_all_obs_mult_tables(ctx, 'import')
         old_imp_tables_dropped = True
@@ -207,8 +205,7 @@ def do_import_steps(ctx: ImportContext) -> bool:
     # real import so that there are no vestigial mult tables and the ids
     # can be reset to 0.
     old_perm_tables_dropped = False
-    if (ctx.args.drop_permanent_tables and
-        ctx.args.scorched_earth):
+    if ctx.args.drop_permanent_tables and ctx.args.scorched_earth:
         import_util.log_warning(ctx, '** DELETING ALL PERMANENT TABLES **')
         do_import_tables.delete_all_obs_mult_tables(ctx, 'perm')
         old_perm_tables_dropped = True
@@ -216,12 +213,11 @@ def do_import_steps(ctx: ImportContext) -> bool:
         # This must be done after the permanent tables were deleted, since
         # that process also deleted these tables. In this case, we didn't do
         # this step earlier.
-        if (ctx.args.drop_cache_tables or
-            ctx.args.create_cart):
+        if ctx.args.drop_cache_tables or ctx.args.create_cart:
             ctx.logger.open(
                 'Cleaning up OPUS/Django tables',
-                limits={'info': ctx.args.log_info_limit,
-                        'debug': ctx.args.log_debug_limit})
+                limits={'info': ctx.args.log_info_limit, 'debug': ctx.args.log_debug_limit},
+            )
 
             if ctx.args.create_cart:
                 do_cart.create_cart(ctx)
@@ -232,8 +228,7 @@ def do_import_steps(ctx: ImportContext) -> bool:
 
     # If --import is given, first delete the bundles from the import tables,
     # then do the new import
-    if (ctx.args.do_import or
-        ctx.args.delete_import_bundles) and not old_imp_tables_dropped:
+    if (ctx.args.do_import or ctx.args.delete_import_bundles) and not old_imp_tables_dropped:
         import_util.log_warning(ctx, 'Importing on top of previous import tables!')
         for bundle_id in import_util.yield_import_bundle_ids(ctx):
             do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'import')
@@ -241,16 +236,13 @@ def do_import_steps(ctx: ImportContext) -> bool:
     if ctx.args.do_import:
         for bundle_id in bundle_id_list:
             if not import_one_bundle(ctx, bundle_id):
-                ctx.logger.log('fatal',
-                               f'Import of bundle {bundle_id} failed - Aborting')
+                ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
                 ctx.import_has_bad_data = True
                 if not ctx.args.import_ignore_errors:
                     break
 
-        if (ctx.import_has_bad_data and
-            not ctx.args.import_ignore_errors):
-            ctx.logger.log('fatal',
-                           'ERRORs found during import - aborting early')
+        if ctx.import_has_bad_data and not ctx.args.import_ignore_errors:
+            ctx.logger.log('fatal', 'ERRORs found during import - aborting early')
             return False
 
     # If --copy-import-to-permanent-tables or --delete-permanent-import-bundles
@@ -259,22 +251,23 @@ def do_import_steps(ctx: ImportContext) -> bool:
     db = ctx.db
     assert db is not None
     import_bundle_ids = []
-    if ((ctx.args.copy_import_to_permanent_tables or
-         ctx.args.delete_permanent_import_bundles) and
-        db.table_exists('import', 'obs_general')):
-        imp_obs_general_table_name = (
-            db.convert_raw_to_namespace('import', 'obs_general'))
+    if (
+        ctx.args.copy_import_to_permanent_tables or ctx.args.delete_permanent_import_bundles
+    ) and db.table_exists('import', 'obs_general'):
+        imp_obs_general_table_name = db.convert_raw_to_namespace('import', 'obs_general')
         q = db.quote_identifier
-        import_bundle_ids = [x[0] for x in
-                      db.general_select(
-    f'DISTINCT {q("bundle_id")} FROM {q(imp_obs_general_table_name)} ORDER BY {q("bundle_id")}')
-                     ]
+        import_bundle_ids = [
+            x[0]
+            for x in db.general_select(
+                f'DISTINCT {q("bundle_id")} FROM {q(imp_obs_general_table_name)} ORDER BY {q("bundle_id")}'
+            )
+        ]
         if not old_perm_tables_dropped:
             # Don't bother if there's nothing there!
             if not ctx.args.create_cart:
                 import_util.log_warning(
-                        ctx,
-                        'Deleting bundles from perm tables but cart table not wiped')
+                    ctx, 'Deleting bundles from perm tables but cart table not wiped'
+                )
             for bundle_id in import_bundle_ids:
                 do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
 

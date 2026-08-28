@@ -5,6 +5,7 @@ through the resolver every time, or look up through the resolver and remember
 the answer in a `shelve` cache between runs. All three memoize within a single
 run, because a log holds many entries per host.
 """
+
 from __future__ import annotations
 
 import abc
@@ -25,11 +26,13 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
     This class is the abstract superclass of any class that has a method 'convert' that converts an ip address
     to a host name.
     """
+
     RESULT_TYPE = Callable[[IPv4Address], str | None]
 
     @staticmethod
-    def get_ip_to_host_converter(uses_reverse_dns: bool, dns_cache: bool,
-                                 **_args: Any) -> IpToHostConverter:
+    def get_ip_to_host_converter(
+        uses_reverse_dns: bool, dns_cache: bool, **_args: Any
+    ) -> IpToHostConverter:
         """Return the converter the command-line arguments select.
 
         Parameters:
@@ -48,7 +51,7 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
         if not uses_reverse_dns:
             return NullIpToHostConverter()
         elif dns_cache:
-            return ShelvedIPToHostConverter(".logs/reverse-dns")
+            return ShelvedIPToHostConverter('.logs/reverse-dns')
         else:
             return NormalIpToHostConverter()
 
@@ -176,7 +179,7 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         """
         now = datetime.datetime.now()
         expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < now]
-        print(f"There are {len(expired_keys)} expired keys")
+        print(f'There are {len(expired_keys)} expired keys')
         for key in expired_keys:
             del self._database[key]
         return len(expired_keys)
@@ -190,7 +193,9 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         """
         oldest = min(expiration for (_, expiration) in self._database.values())
         self._database.close()
-        print(f"IP Cache: Created {self._created}; Expired {self._expired}; Cached {self._cached}; oldest {oldest}.")
+        print(
+            f'IP Cache: Created {self._created}; Expired {self._expired}; Cached {self._cached}; oldest {oldest}.'
+        )
 
     def __testing_update_expiration(self, days: float) -> None:
         """Move every entry's expiry earlier, to exercise the purge by hand.
@@ -199,5 +204,8 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
             days: How many days earlier to move each expiry.
         """
         delta = datetime.timedelta(days=days)
-        values = [(key, (value, expiration - delta)) for key, (value, expiration) in self._database.items()]
+        values = [
+            (key, (value, expiration - delta))
+            for key, (value, expiration) in self._database.items()
+        ]
         self._database.update(values)

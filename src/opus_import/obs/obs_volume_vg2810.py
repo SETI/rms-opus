@@ -20,12 +20,10 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``VGISS``."""
         return 'VGISS'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -36,7 +34,6 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('REF')
-
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
@@ -54,7 +51,6 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
     def field_obs_profile_host(self) -> MultFieldRet:
         return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME').lower())
 
-
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
@@ -71,10 +67,10 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
     # and north side of Uranus. In this volume, source is at north of Saturn,
     # so ring elevation will be the same as opening angle.
     def field_obs_ring_geometry_solar_ring_elevation1(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('INCIDENCE_ANGLE'))
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
 
     def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('INCIDENCE_ANGLE'))
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
 
     # Ring elevation to observer, same to opening angle except, it's positive if
     # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -82,10 +78,10 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
     # and north side of Uranus. In this volume, observer is at the south of Saturn,
     # so ring elevation will be the same as opening angle.
     def field_obs_ring_geometry_observer_ring_elevation1(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
+        return cast(FloatField, 90.0 - self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
 
     def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
+        return cast(FloatField, 90.0 - self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
 
     def field_obs_ring_geometry_phase1(self) -> FloatField:
         return cast(FloatField, self._supp_index_col('MINIMUM_PHASE_ANGLE'))
@@ -126,17 +122,16 @@ class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
     # is at the north side, so it's 90 - inc. For reference, if source is at the
     # south side, then oa is - (90 - inc).
     def field_obs_ring_geometry_solar_ring_opening_angle1(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('INCIDENCE_ANGLE'))
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('INCIDENCE_ANGLE'))
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
 
     def field_obs_ring_geometry_observer_ring_opening_angle1(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
+        return cast(FloatField, 90.0 - self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
-        return cast(FloatField, 90. - self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
-
+        return cast(FloatField, 90.0 - self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
 
     ##############################################
     ### FIELD METHODS FOR obs_instrument_vgiss ###

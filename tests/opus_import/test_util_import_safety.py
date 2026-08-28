@@ -39,8 +39,7 @@ socket.socket.connect_ex = _no_network
 """
 
 
-def _import_in_subprocess(module: str, argv: list[str]
-                          ) -> subprocess.CompletedProcess[str]:
+def _import_in_subprocess(module: str, argv: list[str]) -> subprocess.CompletedProcess[str]:
     """Import `module` in a fresh interpreter with `argv` and no network access."""
     script = _BLOCK_NETWORK + textwrap.dedent(f"""
         import sys
@@ -49,8 +48,9 @@ def _import_in_subprocess(module: str, argv: list[str]
         importlib.import_module({module!r})
         print('IMPORTED')
     """)
-    return subprocess.run([sys.executable, '-c', script], capture_output=True,
-                          text=True, timeout=120, check=False)
+    return subprocess.run(
+        [sys.executable, '-c', script], capture_output=True, text=True, timeout=120, check=False
+    )
 
 
 @pytest.mark.parametrize('module', MODULES)

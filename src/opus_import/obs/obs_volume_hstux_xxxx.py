@@ -19,12 +19,10 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``HSTWFPC2``."""
         return 'HSTWFPC2'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -41,7 +39,6 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
 
-
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
@@ -49,8 +46,7 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
     def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
-        return TWELVE_BIT_IMAGE_LEVELS # WFPC2 Inst Handbook, Sec 2.8
-
+        return TWELVE_BIT_IMAGE_LEVELS  # WFPC2 Inst Handbook, Sec 2.8
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -68,7 +64,6 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
             return self._create_mult('NONE')
         return self._create_mult('LINEAR')
 
-
     ###########################################
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
@@ -80,7 +75,7 @@ class ObsVolumeHSTUxxxxx(ObsVolumeHubbleCommon):
             filter2 = ''
 
         if filter1.startswith('FR') or filter2.startswith('FR'):
-            return self._create_mult('FR') # Ramp overrides everything
+            return self._create_mult('FR')  # Ramp overrides everything
 
         if filter1.startswith('FQ') or filter1 == 'F160BN15':
             filter1 = 'N'

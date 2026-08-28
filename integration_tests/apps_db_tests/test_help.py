@@ -45,25 +45,25 @@ class HelpTests(TestCase):
         """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
-
-            ########################################
-            ######### api_about UNIT TESTS #########
-            ########################################
+        ########################################
+        ######### api_about UNIT TESTS #########
+        ########################################
 
     def test__api_about_no_meta(self) -> None:
         "[test_help.py] api_about: no META"
         request = request_without_meta(self.factory, 'dummy')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/about.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/about.html'
+        ):
             api_about(request, 'html')
 
     def test__api_about_no_get(self) -> None:
         "[test_help.py] api_about: no GET"
         request = request_without_get(self.factory, '__help/about.html')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/about.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/about.html'
+        ):
             api_about(request, 'html')
-
 
             ##########################################
             ######### api_bundles UNIT TESTS #########
@@ -72,17 +72,18 @@ class HelpTests(TestCase):
     def test__api_bundles_no_meta(self) -> None:
         "[test_help.py] api_bundles: no META"
         request = request_without_meta(self.factory, 'dummy')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/bundles.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/bundles.html'
+        ):
             api_bundles(request, 'html')
 
     def test__api_bundles_no_get(self) -> None:
         "[test_help.py] api_bundles: no GET"
         request = request_without_get(self.factory, '__help/bundles.html')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/bundles.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/bundles.html'
+        ):
             api_bundles(request, 'html')
-
 
             ######################################
             ######### api_faq UNIT TESTS #########
@@ -91,18 +92,18 @@ class HelpTests(TestCase):
     def test__api_faq_no_meta(self) -> None:
         "[test_help.py] api_faq: no META"
         request = request_without_meta(self.factory, 'dummy')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/faq.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/faq.html'
+        ):
             api_faq(request, 'html')
 
     def test__api_faq_no_get(self) -> None:
         "[test_help.py] api_faq: no GET"
         request = request_without_get(self.factory, '__help/faq.html')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/faq.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/faq.html'
+        ):
             api_faq(request, 'html')
-
-
 
             #################################################
             ######### api_gettingstarted UNIT TESTS #########
@@ -111,17 +112,18 @@ class HelpTests(TestCase):
     def test__api_gettingstarted_no_meta(self) -> None:
         "[test_help.py] api_gettingstarted: no META"
         request = request_without_meta(self.factory, 'dummy')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/gettingstarted.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/gettingstarted.html'
+        ):
             api_gettingstarted(request, 'html')
 
     def test__api_gettingstarted_no_get(self) -> None:
         "[test_help.py] api_gettingstarted: no GET"
         request = request_without_get(self.factory, '__help/gettingstarted.html')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/gettingstarted.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/gettingstarted.html'
+        ):
             api_gettingstarted(request, 'html')
-
 
             #########################################
             ######### api_splash UNIT TESTS #########
@@ -130,17 +132,18 @@ class HelpTests(TestCase):
     def test__api_splash_no_meta(self) -> None:
         "[test_help.py] api_splash: no META"
         request = request_without_meta(self.factory, 'dummy')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/splash.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/splash.html'
+        ):
             api_splash(request)
 
     def test__api_splash_no_get(self) -> None:
         "[test_help.py] api_splash: no GET"
         request = request_without_get(self.factory, '__help/splash.html')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/splash.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/splash.html'
+        ):
             api_splash(request)
-
 
             ##############################################
             ######### api_citing_opus UNIT TESTS #########
@@ -149,13 +152,15 @@ class HelpTests(TestCase):
     def test__api_citing_opus_no_meta(self) -> None:
         "[test_help.py] api_citing_opus: no META"
         request = request_without_meta(self.factory, 'dummy')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/citing.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/citing.html'
+        ):
             api_citing_opus(request, 'html')
 
     def test__api_citing_opus_no_get(self) -> None:
         "[test_help.py] api_citing_opus: no GET"
         request = request_without_get(self.factory, '__help/citing.html')
-        with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__help/citing.html'):
+        with self.assertRaisesRegex(
+            Http404, r'Internal error \(No request was provided\) for /__help/citing.html'
+        ):
             api_citing_opus(request, 'html')

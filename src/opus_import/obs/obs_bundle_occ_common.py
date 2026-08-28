@@ -21,7 +21,6 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def primary_filespec(self) -> str | None:
         """The path of this occultation profile's data file.
@@ -31,7 +30,6 @@ class ObsBundleOccCommon(ObsCommonPDS4):
             already relative to the holdings root.
         """
         return cast(str | None, self._index_col('filepath'))
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -43,7 +41,6 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('OCC')
 
-
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
@@ -51,15 +48,14 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     def field_obs_wavelength_wavelength1(self) -> FloatField:
         wl = self._index_col('rings:minimum_wavelength')
         if wl is not None:
-            wl = wl / 1000.  # nm->microns
+            wl = wl / 1000.0  # nm->microns
         return cast(FloatField, wl)
 
     def field_obs_wavelength_wavelength2(self) -> FloatField:
         wl = self._index_col('rings:maximum_wavelength')
         if wl is not None:
-            wl = wl / 1000.  # nm->microns
+            wl = wl / 1000.0  # nm->microns
         return cast(FloatField, wl)
-
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
@@ -72,18 +68,20 @@ class ObsBundleOccCommon(ObsCommonPDS4):
         return cast(FloatField, self._index_col('rings:maximum_ring_radius'))
 
     def field_obs_ring_geometry_j2000_longitude1(self) -> FloatField:
-        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
-            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+        if (
+            self.field_obs_ring_geometry_ascending_longitude1() == 0
+            and self.field_obs_ring_geometry_ascending_longitude2() == 360
+        ):
             return 0
-        return self._ascending_to_j2000(
-            self.field_obs_ring_geometry_ascending_longitude1())
+        return self._ascending_to_j2000(self.field_obs_ring_geometry_ascending_longitude1())
 
     def field_obs_ring_geometry_j2000_longitude2(self) -> FloatField:
-        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
-            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+        if (
+            self.field_obs_ring_geometry_ascending_longitude1() == 0
+            and self.field_obs_ring_geometry_ascending_longitude2() == 360
+        ):
             return 360
-        return self._ascending_to_j2000(
-            self.field_obs_ring_geometry_ascending_longitude2())
+        return self._ascending_to_j2000(self.field_obs_ring_geometry_ascending_longitude2())
 
     def field_obs_ring_geometry_ascending_longitude1(self) -> FloatField:
         return cast(FloatField, self._index_col('rings:minimum_ring_longitude'))
@@ -100,7 +98,7 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     def field_obs_ring_geometry_solar_ring_elevation1(self) -> FloatField:
         inc = self._index_col('rings:light_source_incidence_angle')
         if inc is not None:
-            inc = inc - 90.
+            inc = inc - 90.0
         return cast(FloatField, inc)
 
     def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
@@ -109,17 +107,17 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     def field_obs_ring_geometry_observer_ring_elevation1(self) -> FloatField:
         inc = self._index_col('rings:light_source_incidence_angle')
         if inc is not None:
-            inc = 90. - inc
+            inc = 90.0 - inc
         return cast(FloatField, inc)
 
     def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
         return self.field_obs_ring_geometry_observer_ring_elevation1()
 
     def field_obs_ring_geometry_phase1(self) -> FloatField:
-        return 180.
+        return 180.0
 
     def field_obs_ring_geometry_phase2(self) -> FloatField:
-        return 180.
+        return 180.0
 
     def field_obs_ring_geometry_incidence1(self) -> FloatField:
         return cast(FloatField, self._index_col('rings:light_source_incidence_angle'))
@@ -130,7 +128,7 @@ class ObsBundleOccCommon(ObsCommonPDS4):
     def field_obs_ring_geometry_emission1(self) -> FloatField:
         em = self._index_col('rings:light_source_incidence_angle')
         if em is not None:
-            em = 180. - em
+            em = 180.0 - em
         return cast(FloatField, em)
 
     def field_obs_ring_geometry_emission2(self) -> FloatField:

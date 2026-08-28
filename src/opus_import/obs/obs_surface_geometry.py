@@ -23,7 +23,6 @@ class ObsSurfaceGeometry(ObsBase):
 
     ### Don't override these ###
 
-
     def field_obs_surface_geometry_opus_id(self) -> StrField:
         return self.opus_id
 
@@ -63,13 +62,13 @@ class ObsSurfaceGeometry(ObsBase):
             if ret != used_str:
                 # It's OK if the surface geo has the central planet but the
                 # inventory doesn't
-                for planet in ['Jupiter', 'Saturn', 'Uranus', 'Neptune',
-                               'Pluto']:
+                for planet in ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']:
                     if planet in used_target_list:
                         used_target_list.remove(planet)
                 used_str = ','.join(sorted(used_target_list))
                 if ret != used_str:
                     self._log_nonrepeating_warning(
-                        f'Inventory and surface geo differ: {ret} vs {used_str}')
+                        f'Inventory and surface geo differ: {ret} vs {used_str}'
+                    )
 
         return ret

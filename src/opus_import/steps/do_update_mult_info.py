@@ -79,12 +79,10 @@ def update_mult_info(ctx: ImportContext) -> None:
             if column is not None:
                 break
         if table_schema is None:
-            logger.log('error',
-                f'Unable to find table schema for mult "{table_name}"')
+            logger.log('error', f'Unable to find table schema for mult "{table_name}"')
             continue
         if column is None:
-            logger.log('error',
-                f'Unable to find a column matching mult table "{table_name}"')
+            logger.log('error', f'Unable to find a column matching mult table "{table_name}"')
             continue
 
         mult_options = column.get('mult_options', False)
@@ -102,6 +100,10 @@ def update_mult_info(ctx: ImportContext) -> None:
                 'group_disp_order': option.group_disp_order,
             }
 
-            db.update_row('perm', table_name, row_dict,
-                          f'{db.quote_identifier("id")}=%s',
-                          where_params=[option.id])
+            db.update_row(
+                'perm',
+                table_name,
+                row_dict,
+                f'{db.quote_identifier("id")}=%s',
+                where_params=[option.id],
+            )

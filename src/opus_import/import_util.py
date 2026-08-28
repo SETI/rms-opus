@@ -92,6 +92,7 @@ class MultOption(NamedTuple):
     grouping: str | None
     group_disp_order: str | None
 
+
 # Data that ships inside the package, located through importlib.resources rather than
 # from __file__ or the working directory so that it is found in an installed wheel too:
 # the JSON schemas that define every OPUS table, and the PDS data dictionary sources the
@@ -127,6 +128,7 @@ _NHXXMV_BUNDLES = [
     'NHKCMV_1001',
     'NHKEMV_1001',
 ]
+
 
 def yield_import_bundle_ids(ctx: ImportContext) -> Iterator[str]:
     """Yield the bundle ids named on the command line, in the order they import.
@@ -280,16 +282,14 @@ def yield_import_bundle_ids(ctx: ImportContext) -> Iterator[str]:
                         msg += traceback.format_exc()
                     ctx.logger.log('fatal', msg)
             if good_bundle:
-                if (not bundle_pdsfile.is_bundle_dir and
-                    not bundle_pdsfile.is_bundleset_dir):
+                if not bundle_pdsfile.is_bundle_dir and not bundle_pdsfile.is_bundleset_dir:
                     any_invalid = True
                     ctx.logger.log(
-                        'fatal',
-                        f'Bundle descriptor not a bundle or bundleset: {bundle_desc}')
+                        'fatal', f'Bundle descriptor not a bundle or bundleset: {bundle_desc}'
+                    )
                 if not bundle_pdsfile.exists:
                     any_invalid = True
-                    ctx.logger.log('fatal',
-                                   f'Bundle descriptor not found: {bundle_desc}')
+                    ctx.logger.log('fatal', f'Bundle descriptor not found: {bundle_desc}')
 
         if any_invalid:
             sys.exit(-1)
@@ -306,7 +306,7 @@ def yield_import_bundle_ids(ctx: ImportContext) -> Iterator[str]:
                 # Make sure 2001 is imported first and then 1001 second for each
                 # New Horizon bundle. That way, the primary filespec will be
                 # raw in OPUS (same as pdsfile).
-                if bundle_pdsfile.bundleset.startswith("NH"):
+                if bundle_pdsfile.bundleset.startswith('NH'):
                     childnames.reverse()
                 new_bundledescs += childnames
             else:
@@ -318,8 +318,9 @@ def yield_import_bundle_ids(ctx: ImportContext) -> Iterator[str]:
                 ctx.logger.log('info', f'Excluding bundle: {bundle_id}')
                 continue
             if bundle_id.find('.') != -1:
-                continue # Sometimes a bad tar file gets stuck in the dir
+                continue  # Sometimes a bad tar file gets stuck in the dir
             yield bundle_id
+
 
 def log_accumulated_warnings(ctx: ImportContext, title: str) -> bool:
     """Report the Python warnings raised since the last report, and clear them.
@@ -335,15 +336,16 @@ def log_accumulated_warnings(ctx: ImportContext, title: str) -> bool:
     if len(ctx.python_warning_list) > 0:
         log_error(ctx, f'Warnings found during {title}:')
         for w in ctx.python_warning_list:
-            log_error(ctx, '  '+w)
+            log_error(ctx, '  ' + w)
         ctx.python_warning_list = []
         ctx.import_has_bad_data = True
         return True
     return False
 
-def safe_pdstable_read(ctx: ImportContext, filename: str,
-                       pds_version: Literal[3, 4]
-                       ) -> tuple[list[IndexRow] | None, dict[str, Any] | None]:
+
+def safe_pdstable_read(
+    ctx: ImportContext, filename: str, pds_version: Literal[3, 4]
+) -> tuple[list[IndexRow] | None, dict[str, Any] | None]:
     """Read a PDS index table.
 
     Parameters:
@@ -386,28 +388,29 @@ def safe_pdstable_read(ctx: ImportContext, filename: str,
         # First check if they are all integers
         try:
             _ = [int(x) for x in col_data]
-        except ValueError: # Something parsed badly
+        except ValueError:  # Something parsed badly
             # Now check if they are all floats
             try:
                 _ = [float(x) for x in col_data]
-            except ValueError: # Something parsed badly
+            except ValueError:  # Something parsed badly
                 # Not ints or floats, just leave them as strings and strip surrounding spaces
                 # pass
                 for row in rows:
                     row[col_name] = row[col_name].strip()
-            else: # All floats
+            else:  # All floats
                 for row in rows:
                     row[col_name] = float(row[col_name])
 
-        else: # All integers
+        else:  # All integers
             for row in rows:
                 row[col_name] = int(row[col_name])
 
     return rows, None  # TODOPDS4 There is no label for now
 
-def safe_pdstable_read_pds3(ctx: ImportContext,
-                            filename: str) -> tuple[list[IndexRow] | None,
-                                                    dict[str, Any] | None]:
+
+def safe_pdstable_read_pds3(
+    ctx: ImportContext, filename: str
+) -> tuple[list[IndexRow] | None, dict[str, Any] | None]:
     """Read a PDS3 index label and its table, reporting a bad one rather than raising.
 
     Parameters:
@@ -434,14 +437,18 @@ def safe_pdstable_read_pds3(ctx: ImportContext,
             break
     try:
         if preprocess_label_func is None:
-            table = pdstable.PdsTable(filename, replacements=replacements,
-                                      table_callback=preprocess_table_func)
+            table = pdstable.PdsTable(
+                filename, replacements=replacements, table_callback=preprocess_table_func
+            )
         else:
             lines = pdsparser.PdsLabel.load_file(filename)
             lines = preprocess_label_func(lines)
-            table = pdstable.PdsTable(filename, label_contents=lines,
-                                      replacements=replacements,
-                                      table_callback=preprocess_table_func)
+            table = pdstable.PdsTable(
+                filename,
+                label_contents=lines,
+                replacements=replacements,
+                table_callback=preprocess_table_func,
+            )
 
     except KeyboardInterrupt:
         raise
@@ -459,6 +466,7 @@ def safe_pdstable_read_pds3(ctx: ImportContext,
     label = table.info.label.as_dict()
 
     return rows, label
+
 
 def safe_column(row: IndexRow, column_name: str, idx: int | None = None) -> Any:
     """Read a value from a pdstable column accounting for the mask.
@@ -478,17 +486,17 @@ def safe_column(row: IndexRow, column_name: str, idx: int | None = None) -> Any:
     if column_name not in row:
         return None
 
-    if column_name+'_mask' not in row:
+    if column_name + '_mask' not in row:
         if idx is None:
             return row[column_name]
         return row[column_name][idx]
 
     if idx is None:
-        if np.any(row[column_name+'_mask']):
+        if np.any(row[column_name + '_mask']):
             return None
         return row[column_name]
 
-    if row[column_name+'_mask'][idx]:
+    if row[column_name + '_mask'][idx]:
         return None
     return row[column_name][idx]
 
@@ -496,6 +504,7 @@ def safe_column(row: IndexRow, column_name: str, idx: int | None = None) -> Any:
 ################################################################################
 # TABLE MANIPULATION
 ################################################################################
+
 
 def table_name_obs_mission(mission_name: str) -> str:
     """Return the name of a mission's own observation table.
@@ -507,8 +516,8 @@ def table_name_obs_mission(mission_name: str) -> str:
         The table name, such as ``'obs_mission_cassini'``.
     """
     assert mission_name in config_data.MISSION_ID_TO_MISSION_TABLE_SFX
-    return ('obs_mission_'+
-            config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower())
+    return 'obs_mission_' + config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower()
+
 
 def table_name_obs_instrument(inst_name: str) -> str:
     """Return the name of an instrument's own observation table.
@@ -520,7 +529,8 @@ def table_name_obs_instrument(inst_name: str) -> str:
         The table name, such as ``'obs_instrument_coiss'``.
     """
     assert inst_name in config_data.INSTRUMENT_ID_TO_MISSION_ID
-    return 'obs_instrument_'+inst_name.lower()
+    return 'obs_instrument_' + inst_name.lower()
+
 
 def table_name_mult(table_name: str, field_name: str) -> str:
     """Return the name of the ``mult_`` table holding one column's enumerated values.
@@ -532,7 +542,8 @@ def table_name_mult(table_name: str, field_name: str) -> str:
     Returns:
         The table name, such as ``'mult_obs_general_planet_id'``.
     """
-    return 'mult_'+table_name.lower()+'_'+field_name.lower()
+    return 'mult_' + table_name.lower() + '_' + field_name.lower()
+
 
 # These two have no caller anywhere in the repository, and could never have had one:
 # both read `impglobals.DATABASES`, an attribute that never existed (the global was
@@ -552,6 +563,7 @@ def table_name_param_info(ctx: ImportContext, namespace: Namespace) -> str:
     assert ctx.db is not None
     return ctx.db.convert_raw_to_namespace(namespace, 'param_info')
 
+
 def table_name_partables(ctx: ImportContext, namespace: Namespace) -> str:
     """Return the name of the ``partables`` table in a namespace.
 
@@ -564,6 +576,7 @@ def table_name_partables(ctx: ImportContext, namespace: Namespace) -> str:
     """
     assert ctx.db is not None
     return ctx.db.convert_raw_to_namespace(namespace, 'partables')
+
 
 def encode_target_name(target_name: str) -> str:
     """Return a target name in the form a surface geometry table name uses.
@@ -581,6 +594,7 @@ def encode_target_name(target_name: str) -> str:
     target_name = target_name.replace(' ', '____')
     return target_name
 
+
 def decode_target_name(target_name: str) -> str:
     """Return the target name an encoded surface geometry table name was made from.
 
@@ -595,6 +609,7 @@ def decode_target_name(target_name: str) -> str:
     target_name = target_name.replace('___', '/')
     return target_name
 
+
 def table_name_for_sfc_target(target_name: str) -> str:
     """Return the encoded target name a surface geometry table is named for.
 
@@ -608,6 +623,7 @@ def table_name_for_sfc_target(target_name: str) -> str:
     if target_name.upper() in config_targets.TARGET_NAME_MAPPING:
         target_name = config_targets.TARGET_NAME_MAPPING[target_name.upper()]
     return encode_target_name(target_name)
+
 
 # NOTE: whenever we change this function, we will have to change
 # getSurfacegeoTargetSlug in JS code (in utils.js) as well.
@@ -627,6 +643,7 @@ def slug_name_for_sfc_target(target_name: str) -> str:
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
 
+
 def table_schema_files(pattern: str) -> list[Traversable]:
     """Return the packaged table_schemas files whose names match a glob pattern.
 
@@ -638,13 +655,19 @@ def table_schema_files(pattern: str) -> list[Traversable]:
         The matching files, sorted by name, as importlib.resources traversables. Sorting
         makes an import run's order independent of the file system's directory order.
     """
-    return sorted((entry for entry in TABLE_SCHEMA_DIR.iterdir()
-                   if entry.is_file() and fnmatch.fnmatch(entry.name, pattern)),
-                  key=lambda entry: entry.name)
+    return sorted(
+        (
+            entry
+            for entry in TABLE_SCHEMA_DIR.iterdir()
+            if entry.is_file() and fnmatch.fnmatch(entry.name, pattern)
+        ),
+        key=lambda entry: entry.name,
+    )
 
-def read_schema_for_table(ctx: ImportContext, table_name: str,
-                          replace: Sequence[tuple[str, str]] | None = None
-                          ) -> TableSchema | None:
+
+def read_schema_for_table(
+    ctx: ImportContext, table_name: str, replace: Sequence[tuple[str, str]] | None = None
+) -> TableSchema | None:
     """Read the packaged JSON schema that defines one OPUS table.
 
     Parameters:
@@ -666,9 +689,11 @@ def read_schema_for_table(ctx: ImportContext, table_name: str,
         assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
-        replace = [('<TARGET>', table_name_for_sfc_target(target_name)),
-                   ('<SLUGTARGET>', slug_name_for_sfc_target(target_name))]
-    schema_file = TABLE_SCHEMA_DIR / (table_name+'.json')
+        replace = [
+            ('<TARGET>', table_name_for_sfc_target(target_name)),
+            ('<SLUGTARGET>', slug_name_for_sfc_target(target_name)),
+        ]
+    schema_file = TABLE_SCHEMA_DIR / (table_name + '.json')
     if not schema_file.is_file():
         return None
     contents = schema_file.read_text(encoding='utf-8')
@@ -681,6 +706,7 @@ def read_schema_for_table(ctx: ImportContext, table_name: str,
     except json.decoder.JSONDecodeError:
         log_debug(ctx, f'Was reading table "{table_name}"')
         raise
+
 
 def find_max_table_id(ctx: ImportContext, table_name: str) -> Any:
     """Return the largest row id a table holds in either namespace.
@@ -712,6 +738,7 @@ def find_max_table_id(ctx: ImportContext, table_name: str) -> Any:
 ################################################################################
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################
+
 
 class NoDupLogger:
     """Wrapper around PdsLogger that only logs each message one time.
@@ -768,8 +795,14 @@ class NoDupLogger:
         """
         return repr((msg, args, sorted(kwargs.items())))
 
-    def _log_once(self, logged: set[str], log_func: Callable[..., None], msg: str,
-                  args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
+    def _log_once(
+        self,
+        logged: set[str],
+        log_func: Callable[..., None],
+        msg: str,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> None:
         """Log a message unless this record has already seen it.
 
         Parameters:
@@ -825,8 +858,10 @@ class NoDupLogger:
         """
         self._log_once(self._LOGGED_FATAL, self._logger.fatal, msg, args, kwargs)
 
+
 # The step modules log through these; the obs classes reach the same operations as
 # `self._ctx.log.<name>`. Both spellings are one implementation, on `ImportLog`.
+
 
 def log_error(ctx: ImportContext, msg: str, *args: Any) -> None:
     """Log a message at error level and mark the import as having produced bad data.
@@ -838,6 +873,7 @@ def log_error(ctx: ImportContext, msg: str, *args: Any) -> None:
     """
     ctx.log.error(msg, *args)
 
+
 def log_warning(ctx: ImportContext, msg: str, *args: Any) -> None:
     """Log a message at warning level.
 
@@ -847,6 +883,7 @@ def log_warning(ctx: ImportContext, msg: str, *args: Any) -> None:
         args: Further arguments passed to the underlying logger.
     """
     ctx.log.warning(msg, *args)
+
 
 def log_info(ctx: ImportContext, msg: str, *args: Any) -> None:
     """Log a message at info level.
@@ -858,6 +895,7 @@ def log_info(ctx: ImportContext, msg: str, *args: Any) -> None:
     """
     ctx.log.info(msg, *args)
 
+
 def log_debug(ctx: ImportContext, msg: str, *args: Any) -> None:
     """Log a message at debug level.
 
@@ -868,6 +906,7 @@ def log_debug(ctx: ImportContext, msg: str, *args: Any) -> None:
     """
     ctx.log.debug(msg, *args)
 
+
 def log_nonrepeating_error(ctx: ImportContext, msg: str) -> None:
     """Log an error the first time this run produces it, and ignore it after that.
 
@@ -877,6 +916,7 @@ def log_nonrepeating_error(ctx: ImportContext, msg: str) -> None:
     """
     ctx.log.nonrepeating_error(msg)
 
+
 def log_nonrepeating_warning(ctx: ImportContext, msg: str) -> None:
     """Log a warning the first time this run produces it, and ignore it after that.
 
@@ -885,6 +925,7 @@ def log_nonrepeating_warning(ctx: ImportContext, msg: str) -> None:
         msg: The message.
     """
     ctx.log.nonrepeating_warning(msg)
+
 
 def log_unknown_target_name(ctx: ImportContext, target_name: str) -> None:
     """Report a TARGET_NAME the target tables do not describe.
@@ -899,6 +940,7 @@ def log_unknown_target_name(ctx: ImportContext, target_name: str) -> None:
 ################################################################################
 # MISC UTILITIES
 ################################################################################
+
 
 @lru_cache(maxsize=64)
 def cached_tai_from_iso(s: str) -> float:
@@ -915,6 +957,7 @@ def cached_tai_from_iso(s: str) -> float:
     """
     tai: float = julian.tai_from_iso(s)
     return tai
+
 
 def safe_join(*paths: str) -> str:
     """Join path components with forward slashes on every operating system.

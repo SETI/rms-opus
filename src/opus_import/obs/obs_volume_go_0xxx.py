@@ -27,13 +27,13 @@ _GOSSI_FOV_RAD_DIAG = _GOSSI_FOV_RAD * np.sqrt(2)
 # Note that min/max are the FULL bandwidth, not just the FWHM
 # (WL MIN, WL MAX, EFFECTIVE WL)
 _GOSSI_FILTER_WAVELENGTHS = {
-    'CLEAR':   (360, 1050, 611),
-    'VIOLET':  (360,  440, 404),
-    'GREEN':   (510,  610, 559),
-    'RED':     (620,  730, 671),
-    'IR-7270': (725,  750, 734),
-    'IR-7560': (750,  790, 756),
-    'IR-8890': (870,  900, 887),
+    'CLEAR': (360, 1050, 611),
+    'VIOLET': (360, 440, 404),
+    'GREEN': (510, 610, 559),
+    'RED': (620, 730, 671),
+    'IR-7270': (725, 750, 734),
+    'IR-7560': (750, 790, 756),
+    'IR-8890': (870, 900, 887),
     'IR-9680': (940, 1050, 986),
 }
 
@@ -47,6 +47,7 @@ _GOSSI_FILTER_WAVELENGTHS = {
 # looking to see where there is a <field> or MINIMUM/MAXIMUM_<field> in the index.
 # What a mess for only 13 observations...
 
+
 class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     """The Galileo SSI images of GO_0xxx.
 
@@ -57,7 +58,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
-
 
     @property
     def instrument_id(self) -> str | None:
@@ -90,9 +90,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         # to actually find the matching row in the supplemental index dictionary.
         # Format: GO_0017/J0/OPNAV/C0347569700R.LBL
         assert self.bundle is not None
-        return cast(str | None,
-                    self.bundle + '/' + self._index_col('FILE_SPECIFICATION_NAME'))
-
+        return cast(str | None, self.bundle + '/' + self._index_col('FILE_SPECIFICATION_NAME'))
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -115,9 +113,9 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         dec = self._index_col('DECLINATION')
         if ra is None or dec is None:
             return None, None
-        delta = np.rad2deg(_GOSSI_FOV_RAD_DIAG/2 / np.cos(np.deg2rad(dec)))
-        ra1 = (ra-delta) % 360
-        ra2 = (ra+delta) % 360
+        delta = np.rad2deg(_GOSSI_FOV_RAD_DIAG / 2 / np.cos(np.deg2rad(dec)))
+        ra1 = (ra - delta) % 360
+        ra2 = (ra + delta) % 360
         if ra2 < ra1:
             ra1, ra2 = ra2, ra1
         return ra1, ra2
@@ -141,7 +139,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         dec = self._index_col('DECLINATION')
         if dec is None:
             return None
-        return cast(FloatField, dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG/2))
+        return cast(FloatField, dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG / 2))
 
     def field_obs_general_declination2(self) -> FloatField:
         dec = self._sky_geo_index_col('MAXIMUM_DECLINATION')
@@ -150,13 +148,13 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         dec = self._index_col('DECLINATION')
         if dec is None:
             return None
-        return cast(FloatField, dec + np.rad2deg(_GOSSI_FOV_RAD_DIAG/2))
+        return cast(FloatField, dec + np.rad2deg(_GOSSI_FOV_RAD_DIAG / 2))
 
     def field_obs_general_ring_obs_id(self) -> StrField:
         if self._index_col('ORBIT_NUMBER') is None:
             return None
         if not self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
-            return None # SL9 - they didn't exist before anyway
+            return None  # SL9 - they didn't exist before anyway
         image_num = self._index_col('SPACECRAFT_CLOCK_START_COUNT').replace('.', '')
         return cast(StrField, 'J_IMG_GO_SSI_' + image_num)
 
@@ -192,7 +190,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             exposure = self._index_col('EXPOSURE_DURATION')
             if exposure is None:
                 return None
-            return cast(FloatField, exposure/1000)
+            return cast(FloatField, exposure / 1000)
         return max(round(time2 - time1, 5), 0)
 
     def field_obs_general_quantity(self) -> MultFieldRet:
@@ -200,7 +198,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('IMG')
-
 
     ############################
     ### OVERRIDE FROM ObsPds ###
@@ -214,7 +211,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     def field_obs_pds_note(self) -> StrField:
         return cast(StrField, self._index_col('PROCESSING_HISTORY_TEXT'))
 
-
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
@@ -226,7 +222,7 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         exposure = self._index_col('EXPOSURE_DURATION')
         if exposure is None:
             return self.field_obs_general_observation_duration()
-        return cast(FloatField, exposure/1000)
+        return cast(FloatField, exposure / 1000)
 
     def field_obs_type_image_levels(self) -> IntField:
         return EIGHT_BIT_IMAGE_LEVELS
@@ -242,7 +238,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         if cutoff is None or cutoff[2] is None or cutoff[3] is None:
             return 800
         return as_int(min(cutoff[2], cutoff[3]))
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -267,13 +262,13 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
         wavelengths = self._gossi_wavelength_helper()
         if wavelengths is None:
             return None
-        return wavelengths[0] / 1000 # microns
+        return wavelengths[0] / 1000  # microns
 
     def field_obs_wavelength_wavelength2(self) -> FloatField:
         wavelengths = self._gossi_wavelength_helper()
         if wavelengths is None:
             return None
-        return wavelengths[1] / 1000 # microns
+        return wavelengths[1] / 1000  # microns
 
     def field_obs_wavelength_wave_res1(self) -> FloatField:
         return self._wave_res_from_full_bandwidth()
@@ -286,7 +281,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
 
     def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
-
 
     ############################################
     ### OVERRIDE FROM ObsVolumeGalileoCommon ###
@@ -305,7 +299,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     def field_obs_mission_galileo_spacecraft_clock_count2(self) -> FloatField:
         sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         return self._parse_galileo_sclk(sc)
-
 
     ##############################################
     ### FIELD METHODS FOR obs_instrument_gossi ###

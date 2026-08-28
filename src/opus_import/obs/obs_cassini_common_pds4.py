@@ -23,7 +23,6 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
     ### OVERRIDE FOR obs_mission_cassini FROM ObsCassiniCommon ###
     ##############################################################
 
-
     def field_obs_mission_cassini_obs_name(self) -> StrField:
         # Strip leading/trailing whitespace from the label value
         val = self._some_index_col('cassini:observation_id')
@@ -46,10 +45,10 @@ class ObsCassiniCommonPDS4(ObsCommonPDS4, ObsCassiniCommon):
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
                 'spacecraft_clock_count1 and spacecraft_clock_count2 are in the '
-                'wrong order - setting count2 to count1')
+                'wrong order - setting count2 to count1'
+            )
             return sc1
         return sc_cvt
-
 
     #######################################################################
     ### OVERRIDE METHODS FOR obs_instrument_coiss FROM ObsCassiniCommon ###

@@ -58,6 +58,7 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
+
 @never_cache
 @api_view
 def api_about(request: HttpRequest, fmt: str) -> HttpResponse:
@@ -93,11 +94,10 @@ def api_about(request: HttpRequest, fmt: str) -> HttpResponse:
         'git_id': git_id,
         'database_schema': database_schema,
         'database_host': database_host,
-        'hostname': hostname
+        'hostname': hostname,
     }
 
-    return _render_html_or_pdf(request, 'help/about.html', fmt, 'about',
-                               'About OPUS', context)
+    return _render_html_or_pdf(request, 'help/about.html', fmt, 'about', 'About OPUS', context)
 
 
 @never_cache
@@ -128,20 +128,28 @@ def api_bundles(request: HttpRequest, fmt: str) -> HttpResponse:
         raise Http404(http404_no_request(f'/__help/bundles.{fmt}'))
 
     all_bundles: dict[str, list[str]] = {}
-    for d in (ObsGeneral.objects.values('instrument_id','bundle_id')
-              .order_by('instrument_id','bundle_id').distinct()):
-        instrument_name = (MultObsGeneralInstrumentId.objects.values('label')
-                           .filter(id=d['instrument_id']))
-        all_bundles.setdefault(instrument_name[0]['label'],
-                               []).append(d['bundle_id'])
+    for d in (
+        ObsGeneral.objects.values('instrument_id', 'bundle_id')
+        .order_by('instrument_id', 'bundle_id')
+        .distinct()
+    ):
+        instrument_name = MultObsGeneralInstrumentId.objects.values('label').filter(
+            id=d['instrument_id']
+        )
+        all_bundles.setdefault(instrument_name[0]['label'], []).append(d['bundle_id'])
     joined_bundles: dict[str, str] = {}
-    for k,_v in all_bundles.items():
+    for k, _v in all_bundles.items():
         joined_bundles[k] = ', '.join(all_bundles[k])
 
     context = {'all_bundles': joined_bundles}
     return _render_html_or_pdf(
-                    request, 'help/bundles.html', fmt, 'bundles',
-                    'Bundles/Volumes Available for Searching with OPUS', context)
+        request,
+        'help/bundles.html',
+        fmt,
+        'bundles',
+        'Bundles/Volumes Available for Searching with OPUS',
+        context,
+    )
 
 
 @never_cache
@@ -180,17 +188,16 @@ def api_faq(request: HttpRequest, fmt: str) -> HttpResponse:
             # FullLoader (not the unsafe default) over apps/help/faq.yaml, which
             # ships inside this package. No request data reaches this parser.
             faq = yaml.load(text, Loader=yaml.FullLoader)  # nosec B506
-        except yaml.YAMLError as exc: # pragma: no cover -
+        except yaml.YAMLError as exc:  # pragma: no cover -
             # This can only happen if there is a problem with the YAML in the
             # FAQ.YAML file
             log.exception('api_faq: Unable to parse %r', faq_content_file)
             raise Http404 from exc
 
-    context = {'faq': faq,
-               'allow_collapse': fmt == 'html'}
+    context = {'faq': faq, 'allow_collapse': fmt == 'html'}
     return _render_html_or_pdf(
-                    request, 'help/faq.html', fmt, 'faq',
-                    'Frequently Asked Questions (FAQ) About OPUS', context)
+        request, 'help/faq.html', fmt, 'faq', 'Frequently Asked Questions (FAQ) About OPUS', context
+    )
 
 
 @never_cache
@@ -217,9 +224,9 @@ def api_gettingstarted(request: HttpRequest, fmt: str) -> HttpResponse:
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/__help/gettingstarted.{fmt}'))
 
-    return _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
-                               'getting_started',
-                               'Getting Started with OPUS')
+    return _render_html_or_pdf(
+        request, 'help/gettingstarted.html', fmt, 'getting_started', 'Getting Started with OPUS'
+    )
 
 
 @never_cache
@@ -313,20 +320,27 @@ def api_citing_opus(request: HttpRequest, fmt: str) -> HttpResponse:
     if opus_state_url is not None:
         opus_state_qr_str = url_to_png_string(opus_state_url)
 
-    context = {'basic_opus_url': settings.PUBLIC_OPUS_URL,
-               'basic_opus_qr': basic_opus_qr_str,
-               'opus_search_url': opus_search_url,
-               'opus_search_qr': opus_search_qr_str,
-               'opus_state_url': opus_state_url,
-               'opus_state_qr': opus_state_qr_str}
-    return _render_html_or_pdf(request, 'help/citing.html', fmt, 'citing',
-                               'How to Cite OPUS',
-                               context)
+    context = {
+        'basic_opus_url': settings.PUBLIC_OPUS_URL,
+        'basic_opus_qr': basic_opus_qr_str,
+        'opus_search_url': opus_search_url,
+        'opus_search_qr': opus_search_qr_str,
+        'opus_state_url': opus_state_url,
+        'opus_state_qr': opus_state_qr_str,
+    }
+    return _render_html_or_pdf(
+        request, 'help/citing.html', fmt, 'citing', 'How to Cite OPUS', context
+    )
 
 
-def _render_html_or_pdf(request: HttpRequest, template: str, fmt: str, filename: str,
-                        title: str | None,
-                        context: dict[str, Any] | None = None) -> HttpResponse:
+def _render_html_or_pdf(
+    request: HttpRequest,
+    template: str,
+    fmt: str,
+    filename: str,
+    title: str | None,
+    context: dict[str, Any] | None = None,
+) -> HttpResponse:
     """Render a template as HTML or PDF.
 
     Parameters:
@@ -346,9 +360,11 @@ def _render_html_or_pdf(request: HttpRequest, template: str, fmt: str, filename:
         # Since we can't render PDF on Windows or Mac, we have to avoid using
         # this section for code coverage.
         header_template = get_template('ui/header.html')
-        header_context = {'STATIC_URL': settings.OPUS_STATIC_ROOT+'/',
-                          'allow_fallback': False,
-                          'include_print_style': True}
+        header_context = {
+            'STATIC_URL': settings.OPUS_STATIC_ROOT + '/',
+            'allow_fallback': False,
+            'include_print_style': True,
+        }
         header = header_template.render(header_context)
         body_template = get_template(template)
         body = body_template.render(context)
@@ -357,23 +373,23 @@ def _render_html_or_pdf(request: HttpRequest, template: str, fmt: str, filename:
             html += '<h1>' + title + '</h1>'
         html += body + '</body>'
         options = {
-            'page-size':        'Letter',
-            'encoding':         'UTF-8',
-            'margin-top':       '1in',
-            'margin-bottom':    '1in', # Footer eats into this
-            'margin-left':      '1in',
-            'margin-right':     '1in',
-            'footer-center':    'Page [page] of [topage]',
-            'footer-spacing':   '5', # in mm
-            'outline':          None, # Turn on PDF bookmarks
-            'print-media-type': None, # Turn on @media print
-            'quiet':            None, # Turn off console messages
+            'page-size': 'Letter',
+            'encoding': 'UTF-8',
+            'margin-top': '1in',
+            'margin-bottom': '1in',  # Footer eats into this
+            'margin-left': '1in',
+            'margin-right': '1in',
+            'footer-center': 'Page [page] of [topage]',
+            'footer-spacing': '5',  # in mm
+            'outline': None,  # Turn on PDF bookmarks
+            'print-media-type': None,  # Turn on @media print
+            'quiet': None,  # Turn off console messages
         }
         pdf = pdfkit.from_string(html, False, options)
         # pdf = re.sub(b'file:///tmp/wktemp.*#', b'/#', pdf)
 
         ret = HttpResponse(pdf, content_type='application/pdf')
-        filename = 'opus_'+filename+'.pdf'
+        filename = 'opus_' + filename + '.pdf'
         ret['Content-Disposition'] = f'attachment; filename="{filename}"'
         ret['Content-Transfer-Encoding'] = 'binary'
     return ret

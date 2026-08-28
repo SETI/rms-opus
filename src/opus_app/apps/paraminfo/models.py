@@ -30,6 +30,7 @@ class ParamInfo(models.Model):
     the slug it is named by in the API, its display flags and ordering, the labels
     and dictionary tooltips shown for it, and the ranges offered for it.
     """
+
     category_name = models.CharField(max_length=150)
     name = models.CharField(max_length=87)
     form_type = models.CharField(max_length=100, blank=True, null=True)
@@ -56,12 +57,12 @@ class ParamInfo(models.Model):
     class Meta:
         """Model options: the table the rows come from, and the order they come in."""
 
-        db_table = ('param_info')
+        db_table = 'param_info'
         ordering = ('category_name', 'sub_heading', 'disp_order')
 
     def __unicode__(self) -> str:
         """Return the field's column name."""
-        return f"{self.name}"
+        return f'{self.name}'
 
     def param_qualified_name(self) -> str:
         """Return the field's category and column name, joined by a period.
@@ -91,8 +92,7 @@ class ParamInfo(models.Model):
             None when the term is not defined.
         """
         if self.dict_name_results:
-            definition = get_def_for_tooltip(self.dict_name_results,
-                                             self.dict_context_results)
+            definition = get_def_for_tooltip(self.dict_name_results, self.dict_context_results)
         else:
             definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
@@ -107,10 +107,11 @@ class ParamInfo(models.Model):
             django.core.exceptions.ObjectDoesNotExist: If no table is registered
                 under the field's category name.
         """
-        table_label = (TableNames.objects
-                      .get(table_name=self.category_name).label)
-        return (f'This field is a link to one available under {table_label}. '+
-                'It is provided here for your convenience.')
+        table_label = TableNames.objects.get(table_name=self.category_name).label
+        return (
+            f'This field is a link to one available under {table_label}. '
+            + 'It is provided here for your convenience.'
+        )
 
     def body_qualified_label(self) -> str | None:
         """Return the field's search label with the body it describes appended.
@@ -128,8 +129,7 @@ class ParamInfo(models.Model):
                 under the field's category name.
         """
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
-        pretty_name = (TableNames.objects
-                       .get(table_name=self.category_name).label)
+        pretty_name = TableNames.objects.get(table_name=self.category_name).label
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Mission Constraints', '')
@@ -140,10 +140,9 @@ class ParamInfo(models.Model):
         # body_qualified_label_results handles a missing label_results. That is a
         # real fault rather than a typing artifact, so it is recorded here instead of
         # being annotated away.
-        if (pretty_name == 'Surface' or
-            f'[{pretty_name}]' in self.label): # type: ignore[operator]
+        if pretty_name == 'Surface' or f'[{pretty_name}]' in self.label:  # type: ignore[operator]
             return self.label
-        return self.label + ' [' + pretty_name + ']' # type: ignore[operator]
+        return self.label + ' [' + pretty_name + ']'  # type: ignore[operator]
 
     def body_qualified_label_results(self, referred: bool = False) -> str | None:
         """Return the field's results label with the body it describes appended.
@@ -171,16 +170,24 @@ class ParamInfo(models.Model):
         if self.label_results is None:
             return None
 
-        pretty_name = (TableNames.objects
-                       .get(table_name=self.category_name).label)
+        pretty_name = TableNames.objects.get(table_name=self.category_name).label
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if (pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
-                            'Occultation/Reflectance Profiles', 'Surface']
-            and not referred):
+        if (
+            pretty_name
+            in [
+                'General',
+                'PDS',
+                'Wavelength',
+                'Image',
+                'Occultation/Reflectance Profiles',
+                'Surface',
+            ]
+            and not referred
+        ):
             return self.label_results
         # Make sure "[Ring]", "[<Surface Body>]", etc is not duplicated in the
         # label for referred slug.
@@ -202,15 +209,14 @@ class ParamInfo(models.Model):
         Raises:
             KeyError: If `override_unit` is not a unit of this field's unit system.
         """
-        (_form_type, _form_type_format,
-         form_type_unit_id) = parse_form_type(self.form_type)
+        (_form_type, _form_type_format, form_type_unit_id) = parse_form_type(self.form_type)
         if form_type_unit_id and display_result_unit(form_type_unit_id):
             if override_unit:
                 unit = override_unit
             else:
                 # get_default_unit returns None only for a None unit_id, which the
                 # test above has already excluded.
-                unit = get_default_unit(form_type_unit_id) # type: ignore[assignment]
+                unit = get_default_unit(form_type_unit_id)  # type: ignore[assignment]
             display_name = get_unit_display_name(form_type_unit_id, unit)
             return display_name
         return ''
@@ -231,7 +237,7 @@ class ParamInfo(models.Model):
         # Put parentheses around units (units)
         display_name = self.get_default_unit(override_unit)
         if display_name:
-            return ('(' + display_name + ')')
+            return '(' + display_name + ')'
         return display_name
 
     def is_valid_unit(self, unit: str) -> bool:
@@ -244,8 +250,7 @@ class ParamInfo(models.Model):
             True if the field's values carry a unit that is shown beside a result
             and `unit` names one of that system's units.
         """
-        (_form_type, _form_type_format,
-         form_type_unit_id) = parse_form_type(self.form_type)
+        (_form_type, _form_type_format, form_type_unit_id) = parse_form_type(self.form_type)
         if form_type_unit_id and display_result_unit(form_type_unit_id):
             return is_valid_unit(form_type_unit_id, unit)
         return False
@@ -264,7 +269,7 @@ class ParamInfo(models.Model):
         # a real fault rather than a typing artifact, so it is recorded here instead
         # of being annotated away.
         if units != '':
-            ret += ' '+units # type: ignore[operator]
+            ret += ' ' + units  # type: ignore[operator]
         return ret
 
     def is_string(self) -> bool:
@@ -273,8 +278,7 @@ class ParamInfo(models.Model):
         Returns:
             True if the field's form type is `STRING`.
         """
-        (form_type, _form_type_format,
-         _form_type_unit_id) = parse_form_type(self.form_type)
+        (form_type, _form_type_format, _form_type_unit_id) = parse_form_type(self.form_type)
         return form_type == 'STRING'
 
     def is_string_or_mult(self) -> bool:
@@ -283,8 +287,7 @@ class ParamInfo(models.Model):
         Returns:
             True if the field's form type is `STRING` or one of the mult form types.
         """
-        (form_type, _form_type_format,
-         _form_type_unit_id) = parse_form_type(self.form_type)
+        (form_type, _form_type_format, _form_type_unit_id) = parse_form_type(self.form_type)
         return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
 
     def get_ranges_info(self) -> list[dict[str, Any]]:

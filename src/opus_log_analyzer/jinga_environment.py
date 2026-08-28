@@ -18,5 +18,5 @@ JINJA_ENVIRONMENT = Environment(
     line_comment_prefix='##',
     undefined=StrictUndefined,
     trim_blocks=True,
-    lstrip_blocks=True
+    lstrip_blocks=True,
 )

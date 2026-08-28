@@ -3,7 +3,6 @@
 HST WFC3 observations.
 """
 
-
 from opus_import.obs.field_types import IntField, MultFieldRet, as_int
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
@@ -31,7 +30,6 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
             return None
         return filter1.startswith('G'), filter1, filter2
 
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
@@ -40,7 +38,6 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``HSTWFC3``."""
         return 'HSTWFC3'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -63,7 +60,6 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
 
-
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
@@ -71,8 +67,7 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
     def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
-        return SIXTEEN_BIT_IMAGE_LEVELS # WFC3 Inst Handbook, Sec 2.2.3
-
+        return SIXTEEN_BIT_IMAGE_LEVELS  # WFC3 Inst Handbook, Sec 2.2.3
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -99,14 +94,14 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
         # Handbook Table 8.1
 
         if filter1 == 'G280':
-            wr = 300. / 70 * .001
-            bw = (450-190) * .001
+            wr = 300.0 / 70 * 0.001
+            bw = (450 - 190) * 0.001
         elif filter1 == 'G102':
-            wr = 1000. / 210 * .001
-            bw = (1150-800) * .001
+            wr = 1000.0 / 210 * 0.001
+            bw = (1150 - 800) * 0.001
         elif filter1 == 'G141':
-            wr = 1400. / 130 * .001
-            bw = (1700-1075) * .001
+            wr = 1400.0 / 130 * 0.001
+            bw = (1700 - 1075) * 0.001
         else:
             raise NotImplementedError(filter1)
 
@@ -121,7 +116,6 @@ class ObsVolumeHSTIxxxxx(ObsVolumeHubbleCommon):
 
     def field_obs_wavelength_polarization_type(self) -> MultFieldRet:
         return self._create_mult('NONE')
-
 
     ###########################################
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###

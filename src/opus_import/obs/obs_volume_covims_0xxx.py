@@ -22,7 +22,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         """Whether this observation is a spectral image rather than a single spectrum."""
         return cast(bool, self._index_col('INSTRUMENT_MODE_ID') == 'IMAGE')
 
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
@@ -100,7 +99,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
             phase_names.append('IR')
         return phase_names
 
-
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
@@ -164,9 +162,8 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         inst_mod = self._index_col('INSTRUMENT_MODE_ID')
         if inst_mod == 'OCCULTATION':
-            return self._create_mult('TS') # Time Series
-        return self._create_mult('SCU') # Spectral Cube
-
+            return self._create_mult('TS')  # Time Series
+        return self._create_mult('SCU')  # Spectral Cube
 
     ############################
     ### OVERRIDE FROM ObsPds ###
@@ -174,7 +171,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
 
     def field_obs_pds_note(self) -> StrField:
         return None
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -200,13 +196,13 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
             if ir_exp < 0:
                 self._log_nonrepeating_warning(f'IR Exposure {ir_exp} is < 0')
                 return None
-            return cast(FloatField, ir_exp/1000)
+            return cast(FloatField, ir_exp / 1000)
         if vis_exp is None:
             return None
         if vis_exp < 0:
             self._log_nonrepeating_warning(f'VIS Exposure {vis_exp} is < 0')
             return None
-        return cast(FloatField, vis_exp/1000)
+        return cast(FloatField, vis_exp / 1000)
 
     def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
@@ -222,7 +218,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         if not self._is_image():
             return None
         return as_int(min(self._index_col('SWATH_WIDTH'), self._index_col('SWATH_LENGTH')))
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -261,7 +256,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         if self.phase_name == 'IR':
             return 256
         return 96
-
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
@@ -309,8 +303,9 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
             self._log_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
-                f'({sc_cvt}) are in the wrong order - setting to count1')
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '
+                + f'({sc_cvt}) are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
 
         return sc_cvt
@@ -320,7 +315,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
 
     def field_obs_mission_cassini_sequence_id(self) -> StrField:
         return cast(StrField, self._index_col('SEQ_ID'))
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_covims ###
@@ -354,7 +348,7 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         ir_exp = self._index_col('IR_EXPOSURE')
         if ir_exp is None:
             return None
-        return cast(FloatField, ir_exp / 1000.)
+        return cast(FloatField, ir_exp / 1000.0)
 
     def field_obs_instrument_covims_ir_sampling_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('IR_SAMPLING_MODE_ID'))
@@ -363,7 +357,7 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
         vis_exp = self._index_col('VIS_EXPOSURE')
         if vis_exp is None:
             return None
-        return cast(FloatField, vis_exp / 1000.)
+        return cast(FloatField, vis_exp / 1000.0)
 
     def field_obs_instrument_covims_vis_sampling_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('VIS_SAMPLING_MODE_ID'))

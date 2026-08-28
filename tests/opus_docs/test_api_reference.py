@@ -39,7 +39,8 @@ def package_with_broken_subpackage(tmp_path: Path) -> Iterator[str]:
     (package / '__init__.py').write_text('"""A package for the walk to fail on."""\n')
     (package / 'fine.py').write_text('"""A module that imports."""\n')
     (package / 'broken_sub' / '__init__.py').write_text(
-        '"""A subpackage that does not import."""\n' + BROKEN)
+        '"""A subpackage that does not import."""\n' + BROKEN
+    )
     sys.path.insert(0, str(tmp_path))
     try:
         yield name
@@ -74,7 +75,8 @@ def package_with_broken_module(tmp_path: Path) -> Iterator[str]:
 
 
 def test_a_subpackage_that_cannot_be_imported_stops_the_build(
-        package_with_broken_subpackage: str) -> None:
+    package_with_broken_subpackage: str,
+) -> None:
     """The walk raises rather than dropping the subtree it could not import.
 
     Given no ``onerror``, `pkgutil.walk_packages` catches and ignores the ImportError
@@ -85,8 +87,7 @@ def test_a_subpackage_that_cannot_be_imported_stops_the_build(
         opus_api_reference.walk_package(package_with_broken_subpackage)
 
 
-def test_a_broken_plain_module_is_still_listed(
-        package_with_broken_module: str) -> None:
+def test_a_broken_plain_module_is_still_listed(package_with_broken_module: str) -> None:
     """A module the walk cannot import is still written onto a page.
 
     The walk never imports a plain module, so it cannot fail here -- and it must not
@@ -131,8 +132,7 @@ def test_excluded_modules_are_named_on_the_landing_page() -> None:
     # Read the count back out of the rendered page and compare it with the data,
     # rather than with the function that phrased it -- comparing the page against
     # `absent_phrase()` would agree with any wording, including a hardcoded one.
-    stated = re.search(r'(\d+) modules? (?:is|are) deliberately absent',
-                       ' '.join(index.split()))
+    stated = re.search(r'(\d+) modules? (?:is|are) deliberately absent', ' '.join(index.split()))
     assert stated is not None, 'the page states no count as a numeral'
     assert int(stated.group(1)) == len(excluded)
 

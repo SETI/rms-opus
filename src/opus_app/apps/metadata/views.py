@@ -93,10 +93,12 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
+
 @never_cache
 @api_view
-def api_get_result_count(request: HttpRequest, fmt: str, internal: bool = False, *,
-                         api_code: int) -> HttpResponse:
+def api_get_result_count(
+    request: HttpRequest, fmt: str, internal: bool = False, *, api_code: int
+) -> HttpResponse:
     """Return the result count for a given search.
 
     You can specify a sort order as well as search arguments because the result
@@ -152,7 +154,7 @@ def api_get_result_count(request: HttpRequest, fmt: str, internal: bool = False,
         raise Http404(http404_no_request(f'/api/meta/result_count.{fmt}'))
 
     count, _, err = get_result_count_helper(request, api_code)
-    if err is not None: # pragma: no cover - database error
+    if err is not None:  # pragma: no cover - database error
         return err
 
     data = {'result_count': count}
@@ -160,23 +162,21 @@ def api_get_result_count(request: HttpRequest, fmt: str, internal: bool = False,
         reqno = get_reqno(request)
         if reqno is None:
             log.error('api_get_result_count: Missing or badly formatted reqno')
-            raise Http400Error(http400_bad_or_missing_reqno(
-                                        '/__api/meta/result_count.json'))
+            raise Http400Error(http400_bad_or_missing_reqno('/__api/meta/result_count.json'))
         data['reqno'] = reqno
 
     if fmt == 'json':
         ret = json_response({'data': [data]})
     elif fmt == 'html':
-        ret = render(request,
-                     'metadata/result_count.html',
-                     {'data': data})
+        ret = render(request, 'metadata/result_count.html', {'data': data})
     elif fmt == 'csv':
         ret = csv_response('result_count', [['result count', count]])
-    else: # pragma: no cover - error catchall
+    else:  # pragma: no cover - error catchall
         log.error('api_get_result_count: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 
     return ret
+
 
 def api_get_result_count_internal(request: HttpRequest) -> HttpResponse:
     """Return the result count for a given search, for the OPUS user interface.
@@ -201,9 +201,9 @@ def api_get_result_count_internal(request: HttpRequest) -> HttpResponse:
 
 @never_cache
 @api_view
-def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
-                        internal: bool = False, *,
-                        api_code: int) -> HttpResponse:
+def api_get_mult_counts(
+    request: HttpRequest, slug: str, fmt: str, internal: bool = False, *, api_code: int
+) -> HttpResponse:
     r"""Return the mults for a given slug along with result counts.
 
     This is a PUBLIC API.
@@ -267,17 +267,24 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
 
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
-        log.error('api_get_mult_counts: Failed to get selections for slug %r, '
-                  +'URL %r', str(slug), request.GET)
+        log.error(
+            'api_get_mult_counts: Failed to get selections for slug %r, ' + 'URL %r',
+            str(slug),
+            request.GET,
+        )
         raise Http400Error(http400_search_params_invalid(request))
     # url_to_search_params returns both of them or neither.
     assert extras is not None
 
     param_info = get_param_info_by_slug(slug, 'col', allow_units_override=False)
     if not param_info:
-        log.error('api_get_mult_counts: Could not find param_info entry for '
-                  +'slug %r *** Selections %r *** Extras %r', str(slug),
-                  str(selections), str(extras))
+        log.error(
+            'api_get_mult_counts: Could not find param_info entry for '
+            + 'slug %r *** Selections %r *** Extras %r',
+            str(slug),
+            str(selections),
+            str(extras),
+        )
         raise Http400Error(http400_unknown_slug(slug, request))
 
     table_name = param_info.category_name
@@ -289,18 +296,26 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
         del selections[param_qualified_name]
 
     cache_num, _cache_new_flag = set_user_search_number(selections, extras)
-    if cache_num is None: # pragma: no cover - database error
-        log.error('api_get_mult_counts: Failed to create user_selections entry'
-                  +' for *** Selections %r *** Extras %r',
-                  str(selections), str(extras))
+    if cache_num is None:  # pragma: no cover - database error
+        log.error(
+            'api_get_mult_counts: Failed to create user_selections entry'
+            + ' for *** Selections %r *** Extras %r',
+            str(selections),
+            str(extras),
+        )
         return HttpResponseServerError(http500_database_error(request))
 
     # Note we don't actually care here if the cache table even exists, because
     # if it's in the cache, it must exist, and if it's not in the cache, it
     # will be created if necessary by get_user_query_table below.
-    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
-                 + ':mults_' + param_qualified_name
-                 + ':' + str(cache_num))
+    cache_key = (
+        settings.CACHE_SERVER_PREFIX
+        + settings.CACHE_KEY_PREFIX
+        + ':mults_'
+        + param_qualified_name
+        + ':'
+        + str(cache_num)
+    )
 
     cached_val = cache.get(cache_key)
     if cached_val is not None:
@@ -308,19 +323,21 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
     else:
         mult_name = get_mult_name(param_qualified_name)
         try:
-            mult_model = apps.get_model('search',
-                                        mult_name.title().replace('_',''))
-        except LookupError: # pragma: no cover - configuration error
-            log.exception('api_get_mult_counts: Could not get_model for %r',
-                          mult_name.title().replace('_',''))
+            mult_model = apps.get_model('search', mult_name.title().replace('_', ''))
+        except LookupError:  # pragma: no cover - configuration error
+            log.exception(
+                'api_get_mult_counts: Could not get_model for %r',
+                mult_name.title().replace('_', ''),
+            )
             return HttpResponseServerError(http500_internal_error(request))
 
         try:
-            table_model = apps.get_model('search',
-                                         table_name.title().replace('_',''))
-        except LookupError: # pragma: no cover - configuration error
-            log.exception('api_get_mult_counts: Could not get_model for %r',
-                          table_name.title().replace('_',''))
+            table_model = apps.get_model('search', table_name.title().replace('_', ''))
+        except LookupError:  # pragma: no cover - configuration error
+            log.exception(
+                'api_get_mult_counts: Could not get_model for %r',
+                table_name.title().replace('_', ''),
+            )
             return HttpResponseServerError(http500_internal_error(request))
 
         cursor = connection.cursor()
@@ -328,7 +345,8 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
         # The database column, not the model field name: the two differ for a
         # field declared with db_column.
         param_column = sql_builder.column(
-            table_model._meta.get_field(param_info.name).column, table_name)
+            table_model._meta.get_field(param_info.name).column, table_name
+        )
 
         select = sql_builder.Select()
         if param_info.form_type == 'MULTIGROUP':
@@ -336,26 +354,28 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
             # column with them that is then summarized by count.
             counted_column = sql_builder.column('_mult_val_', table_name)
             select.add_column(counted_column)
-            select.add_column(sql_builder.count_star(),
-                              alias=param_info.name+'__count')
+            select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
             select.add_from(table_name).add_join(
                 'INNER',
-                sql_builder.JSONTable(source_column=param_column,
-                                      value_column='_mult_val_',
-                                      alias=table_name))
+                sql_builder.JSONTable(
+                    source_column=param_column, value_column='_mult_val_', alias=table_name
+                ),
+            )
         else:
             counted_column = param_column
             select.add_column(counted_column)
-            select.add_column(sql_builder.count_star(),
-                              alias=param_info.name+'__count')
+            select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
             select.add_from(table_name)
 
         user_table = get_user_query_table(selections, extras, api_code=api_code)
 
-        if selections and not user_table: # pragma: no cover - database corruption
-            log.error('api_get_mult_counts: has selections but no user_table '
-                      +'found *** Selections %r *** Extras %r',
-                      str(selections), str(extras))
+        if selections and not user_table:  # pragma: no cover - database corruption
+            log.error(
+                'api_get_mult_counts: has selections but no user_table '
+                + 'found *** Selections %r *** Extras %r',
+                str(selections),
+                str(extras),
+            )
             return HttpResponseServerError(http500_search_cache_failed(request))
 
         if selections:
@@ -380,14 +400,15 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
                 mult = mult_model.objects.get(id=mult_id)
                 mult_disp_order = mult.disp_order
                 mult_label = mult.label
-            except ObjectDoesNotExist: # pragma: no cover - import error
-                log.exception('api_get_mult_counts: Could not find mult entry '
-                              +'for mult_model %r id %r', str(mult_model),
-                              str(mult_id))
+            except ObjectDoesNotExist:  # pragma: no cover - import error
+                log.exception(
+                    'api_get_mult_counts: Could not find mult entry ' + 'for mult_model %r id %r',
+                    str(mult_model),
+                    str(mult_id),
+                )
                 return HttpResponseServerError(http500_internal_error(request))
 
-            mult_result_list.append((mult_disp_order,
-                                     (mult_label, row[1])))
+            mult_result_list.append((mult_disp_order, (mult_label, row[1])))
         mult_result_list.sort()
 
         mults = {}  # info to return
@@ -396,8 +417,7 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
 
         cache.set(cache_key, mults)
 
-    data = {'field_id': slug,
-            'mults': mults}
+    data = {'field_id': slug, 'mults': mults}
     if internal:
         reqno = get_reqno(request)
         if reqno is None:
@@ -411,10 +431,10 @@ def api_get_mult_counts(request: HttpRequest, slug: str, fmt: str,
         ret = render(request, 'metadata/mults.html', data)
     else:
         assert fmt == 'csv'
-        ret = csv_response(slug, [list(mults.values())],
-                           column_names=list(mults.keys()))
+        ret = csv_response(slug, [list(mults.values())], column_names=list(mults.keys()))
 
     return ret
+
 
 def api_get_mult_counts_internal(request: HttpRequest, slug: str) -> HttpResponse:
     r"""Return the mults for a given slug with result counts, for the OPUS user interface.
@@ -440,9 +460,9 @@ def api_get_mult_counts_internal(request: HttpRequest, slug: str) -> HttpRespons
 
 @never_cache
 @api_view
-def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
-                            internal: bool = False, *,
-                            api_code: int) -> HttpResponse:
+def api_get_range_endpoints(
+    request: HttpRequest, slug: str, fmt: str, internal: bool = False, *, api_code: int
+) -> HttpResponse:
     r"""Compute and return range widget endpoints (min, max, nulls)
 
     This is a PUBLIC API.
@@ -509,8 +529,7 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
             one of the formats above.
     """
     if not request or request.GET is None or request.META is None:
-        raise Http404(http404_no_request(
-                                    f'/api/meta/range/endpoints/{slug}.{fmt}'))
+        raise Http404(http404_no_request(f'/api/meta/range/endpoints/{slug}.{fmt}'))
 
     if fmt not in ('json', 'html', 'csv'):
         log.error('api_get_range_endpoints: Unknown format "%r"', fmt)
@@ -518,31 +537,28 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
 
     param_info = get_param_info_by_slug(slug, 'widget')
     if not param_info:
-        log.error('api_get_range_endpoints: Could not find param_info entry '
-                  +'for slug %r', slug)
+        log.error('api_get_range_endpoints: Could not find param_info entry ' + 'for slug %r', slug)
         raise Http400Error(http400_unknown_slug(slug, request))
 
-    (form_type, form_type_format,
-     form_type_unit_id) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format, form_type_unit_id) = parse_form_type(param_info.form_type)
     units = request.GET.get('units', get_default_unit(form_type_unit_id))
     # units is None only when the caller named none and form_type_unit_id is None,
     # which this condition has already excluded.
     if form_type_unit_id and not is_valid_unit(form_type_unit_id, units):  # type: ignore[arg-type]
-        log.error('api_get_range_endpoints: Bad units %r for '
-                  +'slug %r', units, slug)
+        log.error('api_get_range_endpoints: Bad units %r for ' + 'slug %r', units, slug)
         raise Http400Error(http400_unknown_units(units, slug, request))
 
-    param_name = param_info.name # Just name
-    param_qualified_name = param_info.param_qualified_name() # category.name
-    (form_type, form_type_format,
-     form_type_unit_id) = parse_form_type(param_info.form_type)
+    param_name = param_info.name  # Just name
+    param_qualified_name = param_info.param_qualified_name()  # category.name
+    (form_type, form_type_format, form_type_unit_id) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
     try:
-        table_model = apps.get_model('search',
-                                     table_name.title().replace('_',''))
-    except LookupError: # pragma: no cover - configuration error
-        log.exception('api_get_range_endpoints: Could not get_model for %r',
-                      table_name.title().replace('_',''))
+        table_model = apps.get_model('search', table_name.title().replace('_', ''))
+    except LookupError:  # pragma: no cover - configuration error
+        log.exception(
+            'api_get_range_endpoints: Could not get_model for %r',
+            table_name.title().replace('_', ''),
+        )
         return HttpResponseServerError(http500_internal_error(request))
 
     param_no_num = strip_numeric_suffix(param_name)
@@ -551,14 +567,15 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
 
     # The comparison below already requires the field to carry a slug.
     assert param_info.slug is not None
-    if (form_type in settings.RANGE_FORM_TYPES and
-        param_info.slug[-1] not in '12'):
+    if form_type in settings.RANGE_FORM_TYPES and param_info.slug[-1] not in '12':
         param1 = param2 = param_no_num  # single column range query
 
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
-        log.error('api_get_range_endpoints: Could not find selections for '
-                  +'request %r', str(request.GET))
+        log.error(
+            'api_get_range_endpoints: Could not find selections for ' + 'request %r',
+            str(request.GET),
+        )
         raise Http400Error(http400_search_params_invalid(request))
     # url_to_search_params returns both of them or neither.
     assert extras is not None
@@ -567,31 +584,44 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
     # This keeps the green hinting numbers from reacting to changes to its
     # own field.
     qualified_param_name_no_num = strip_numeric_suffix(param_qualified_name)
-    for to_remove in [qualified_param_name_no_num,
-                      qualified_param_name_no_num + '1',
-                      qualified_param_name_no_num + '2']:
+    for to_remove in [
+        qualified_param_name_no_num,
+        qualified_param_name_no_num + '1',
+        qualified_param_name_no_num + '2',
+    ]:
         if to_remove in selections:
             del selections[to_remove]
     if selections:
         user_table = get_user_query_table(selections, extras, api_code=api_code)
-        if user_table is None: # pragma: no cover - database corruption
-            log.error('api_get_range_endpoints: Count not retrieve query table'
-                      +' for *** Selections %r *** Extras %r',
-                      str(selections), str(extras))
+        if user_table is None:  # pragma: no cover - database corruption
+            log.error(
+                'api_get_range_endpoints: Count not retrieve query table'
+                + ' for *** Selections %r *** Extras %r',
+                str(selections),
+                str(extras),
+            )
             return HttpResponseServerError(http500_search_cache_failed(request))
     else:
         user_table = None
 
     # Is this result already cached?
-    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
-                 + ':rangeep:' + qualified_param_name_no_num
-                 + ':units:' + str(units))
+    cache_key = (
+        settings.CACHE_SERVER_PREFIX
+        + settings.CACHE_KEY_PREFIX
+        + ':rangeep:'
+        + qualified_param_name_no_num
+        + ':units:'
+        + str(units)
+    )
     if user_table:
         cache_num, _cache_new_flag = set_user_search_number(selections, extras)
-        if cache_num is None: # pragma: no cover - database error
-            log.error('api_get_range_endpoints: Failed to create cache table '
-                      +'for *** Selections %r *** Extras %r',
-                      str(selections), str(extras))
+        if cache_num is None:  # pragma: no cover - database error
+            log.error(
+                'api_get_range_endpoints: Failed to create cache table '
+                + 'for *** Selections %r *** Extras %r',
+                str(selections),
+                str(extras),
+            )
             raise Http404
         # We're guaranteed the table actually exists here, since
         # get_user_query_table has already returned for the same search.
@@ -609,10 +639,8 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
             cache_join = search_cache_join_condition(table_name, user_table)
             # The database column, not the model field name: the two differ for a
             # field declared with db_column, and the ORM path below names fields.
-            min_column = sql_builder.column(
-                table_model._meta.get_field(param1).column, table_name)
-            max_column = sql_builder.column(
-                table_model._meta.get_field(param2).column, table_name)
+            min_column = sql_builder.column(table_model._meta.get_field(param1).column, table_name)
+            max_column = sql_builder.column(table_model._meta.get_field(param2).column, table_name)
 
             endpoints_select = sql_builder.Select()
             endpoints_select.add_column(sql_builder.min_of(min_column))
@@ -643,8 +671,7 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
         else:
             # There are no selections, so hit the whole table
             results = table_model.objects
-            range_endpoints = results.all().aggregate(min=Min(param1),
-                                                      max=Max(param2))
+            range_endpoints = results.all().aggregate(min=Min(param1), max=Max(param2))
             # For a single-column range param1 and param2 are the same column, so
             # this is one condition rather than two.
             null_filter = {f'{param1}__isnull': True, f'{param2}__isnull': True}
@@ -653,23 +680,18 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
         # The returned range endpoints are converted to the destination
         # unit
         range_endpoints['min'] = format_unit_value(
-                                                range_endpoints['min'],
-                                                form_type_format,
-                                                form_type_unit_id,
-                                                units)
+            range_endpoints['min'], form_type_format, form_type_unit_id, units
+        )
         range_endpoints['max'] = format_unit_value(
-                                                range_endpoints['max'],
-                                                form_type_format,
-                                                form_type_unit_id,
-                                                units)
+            range_endpoints['max'], form_type_format, form_type_unit_id, units
+        )
 
         cache.set(cache_key, range_endpoints)
 
     if internal:
         reqno = get_reqno(request)
         if reqno is None:
-            log.error(
-                'api_get_range_endpoints: Missing or badly formatted reqno')
+            log.error('api_get_range_endpoints: Missing or badly formatted reqno')
             raise Http400Error(http400_bad_or_missing_reqno(request))
         range_endpoints['reqno'] = reqno
 
@@ -678,18 +700,24 @@ def api_get_range_endpoints(request: HttpRequest, slug: str, fmt: str,
     if fmt == 'json':
         ret = json_response(range_endpoints)
     elif fmt == 'html':
-        ret = render(request,
-                     'metadata/endpoints.html',
-                     {'data': range_endpoints})
+        ret = render(request, 'metadata/endpoints.html', {'data': range_endpoints})
     else:
         assert fmt == 'csv'
-        ret = csv_response(slug, [[range_endpoints['min'],
-                                   range_endpoints['max'],
-                                   range_endpoints['nulls'],
-                                   range_endpoints['units']]],
-                           ['min', 'max', 'nulls', 'units'])
+        ret = csv_response(
+            slug,
+            [
+                [
+                    range_endpoints['min'],
+                    range_endpoints['max'],
+                    range_endpoints['nulls'],
+                    range_endpoints['units'],
+                ]
+            ],
+            ['min', 'max', 'nulls', 'units'],
+        )
 
     return ret
+
 
 def api_get_range_endpoints_internal(request: HttpRequest, slug: str) -> HttpResponse:
     r"""Return range widget endpoints for a given slug, for the OPUS user interface.
@@ -797,11 +825,12 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
 #
 ################################################################################
 
+
 # This routine is public because it's called by _edit_cart_addall
 # in cart/views.py
-def get_result_count_helper(request: HttpRequest,
-                            api_code: int) -> tuple[int | None, str | None,
-                                                    HttpResponse | None]:
+def get_result_count_helper(
+    request: HttpRequest, api_code: int
+) -> tuple[int | None, str | None, HttpResponse | None]:
     """Count the observations a search matches.
 
     Parameters:
@@ -819,22 +848,25 @@ def get_result_count_helper(request: HttpRequest,
     """
     (selections, extras) = url_to_search_params(request.GET)
     if selections is None:
-        log.error('get_result_count_helper: Could not find selections for '
-                  +'request %r', str(request.GET))
+        log.error(
+            'get_result_count_helper: Could not find selections for ' + 'request %r',
+            str(request.GET),
+        )
         raise Http400Error(http400_search_params_invalid(request))
     # url_to_search_params returns both of them or neither.
     assert extras is not None
 
     table = get_user_query_table(selections, extras, api_code=api_code)
 
-    if not table: # pragma: no cover - internal or database failure
-        log.error('get_result_count_helper: Could not find/create query table '
-                  +'for request %r', str(request.GET))
+    if not table:  # pragma: no cover - internal or database failure
+        log.error(
+            'get_result_count_helper: Could not find/create query table ' + 'for request %r',
+            str(request.GET),
+        )
         ret = HttpResponseServerError(http500_search_cache_failed(request))
         return None, None, ret
 
-    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
-                 + ':resultcount:' + table)
+    cache_key = settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX + ':resultcount:' + table
     count = cache.get(cache_key)
     if count is None:
         cursor = connection.cursor()
@@ -842,15 +874,19 @@ def get_result_count_helper(request: HttpRequest,
         try:
             cursor.execute(sql)
             count = cursor.fetchone()[0]
-        except DatabaseError: # pragma: no cover - database error
-            log.exception('get_result_count_helper: SQL query failed for '
-                          +'request %r: SQL "%r"', str(request.GET), sql)
+        except DatabaseError:  # pragma: no cover - database error
+            log.exception(
+                'get_result_count_helper: SQL query failed for ' + 'request %r: SQL "%r"',
+                str(request.GET),
+                sql,
+            )
             ret = HttpResponseServerError(http500_database_error(request))
             return None, None, ret
 
         cache.set(cache_key, count)
 
     return count, table, None
+
 
 def get_cart_count(session_id: str | None) -> tuple[int, int]:
     """Return the number of items in the current cart.
@@ -862,18 +898,14 @@ def get_cart_count(session_id: str | None) -> tuple[int, int]:
         The number of items in the cart, and the number of items in its recycle
         bin.
     """
-    count = (Cart.objects
-             .filter(session_id__exact=session_id)
-             .filter(recycled=0)
-             .count())
-    recycled_count = (Cart.objects
-             .filter(session_id__exact=session_id)
-             .filter(recycled=1)
-             .count())
+    count = Cart.objects.filter(session_id__exact=session_id).filter(recycled=0).count()
+    recycled_count = Cart.objects.filter(session_id__exact=session_id).filter(recycled=1).count()
     return count, recycled_count
 
-def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
-                    collapse: bool = False) -> HttpResponse:
+
+def get_fields_info(
+    fmt: str, request: HttpRequest, slug: str | None = None, collapse: bool = False
+) -> HttpResponse:
     """Describe the searchable fields, for `api_get_fields`.
 
     Parameters:
@@ -906,8 +938,9 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
                 category = f.category_name
                 disp_order = f.disp_order
                 # A referred slug will never contain a unit specifier
-                referred_f = get_param_info_by_slug(referred_slug, 'col',
-                                                    allow_units_override=False)
+                referred_f = get_param_info_by_slug(
+                    referred_slug, 'col', allow_units_override=False
+                )
                 # The lines below already require the referred field to exist.
                 assert referred_f is not None
                 f = referred_f
@@ -916,7 +949,7 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
                 f.referred_slug = referred_slug
                 f.category_name = category
                 f.disp_order = disp_order
-            else: # pragma: no cover - protection against future bugs
+            else:  # pragma: no cover - protection against future bugs
                 # There shouldn't be a case where BOTH the slug and
                 # referred_slug are None, but just to be careful...
                 continue
@@ -927,9 +960,11 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
         # surface geometry down to a single target version to save screen
         # space. This is a horrible hack, but for right now we just assume
         # there will always be surface geometry data for Saturn.
-        if (collapse and
-            f.slug.startswith('SURFACEGEO') and
-            not f.slug.startswith('SURFACEGEOsaturn')):
+        if (
+            collapse
+            and f.slug.startswith('SURFACEGEO')
+            and not f.slug.startswith('SURFACEGEOsaturn')
+        ):
             continue
         if f.slug.startswith('**'):
             # Internal use only
@@ -947,15 +982,13 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
         entry['disp_order'] = f.disp_order
         collapsed_slug = f.slug
         if collapse:
-            collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
-                                                                '<TARGET>')
+            collapsed_slug = entry['field_id'] = f.slug.replace('saturn', '<TARGET>')
             entry['category'] = table_name.label.replace('Saturn', '<TARGET>')
         else:
             entry['field_id'] = f.slug
             entry['category'] = table_name.label
         f_type = None
-        (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(f.form_type)
+        (form_type, form_type_format, form_type_unit_id) = parse_form_type(f.form_type)
         if form_type in settings.RANGE_FORM_TYPES:
             if form_type == 'LONG':
                 f_type = 'range_longitude'
@@ -964,34 +997,33 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
                     f_type = 'range_integer'
                 elif form_type_format[-1] == 'f':
                     f_type = 'range_float'
-                else: # pragma: no cover - error catchall
+                else:  # pragma: no cover - error catchall
                     log.warning('Unparseable form type %r', f.form_type)
             elif form_type_unit_id == 'datetime':
                 f_type = 'range_time'
             elif form_type_unit_id is not None:
                 f_type = 'range_special'
-            else: # pragma: no cover - error catchall
+            else:  # pragma: no cover - error catchall
                 f_type = 'Internal Error'
         elif form_type in settings.MULT_FORM_TYPES:
             f_type = 'multiple'
         elif form_type == 'STRING':
             f_type = 'string'
-        else: # pragma: no cover - error catchall
+        else:  # pragma: no cover - error catchall
             log.warning('Unparseable form type %r', f.form_type)
         entry['type'] = f_type
         entry['label'] = f.label_results
         entry['search_label'] = f.label
         entry['full_label'] = f.body_qualified_label_results()
         entry['full_search_label'] = f.body_qualified_label()
-        (form_type, form_type_format,
-         form_type_unit_id) = parse_form_type(f.form_type)
+        (form_type, form_type_format, form_type_unit_id) = parse_form_type(f.form_type)
         entry['default_units'] = get_default_unit(form_type_unit_id)
         entry['available_units'] = get_valid_units(form_type_unit_id)
-        if f.old_slug and collapse: # Backwards compatibility
+        if f.old_slug and collapse:  # Backwards compatibility
             entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
         else:
             entry['old_slug'] = f.old_slug
-        entry['slug'] = entry['field_id'] # Backwards compatibility
+        entry['slug'] = entry['field_id']  # Backwards compatibility
         entry['linked'] = bool(f.referred_slug)
         return_obj[cat][collapsed_slug] = entry
 
@@ -1010,29 +1042,43 @@ def get_fields_info(fmt: str, request: HttpRequest, slug: str | None = None,
     if fmt == 'json':
         ret = json_response({'data': return_obj})
     elif fmt == 'csv':
-        labels = ['Field ID', 'Category', 'Type',
-                  'Search Label', 'Results Label',
-                  'Full Search Label', 'Full Results Label',
-                  'Default Units', 'Available Units', 'Old Field ID',
-                  'Linked'
-                  ]
+        labels = [
+            'Field ID',
+            'Category',
+            'Type',
+            'Search Label',
+            'Results Label',
+            'Full Search Label',
+            'Full Results Label',
+            'Default Units',
+            'Available Units',
+            'Old Field ID',
+            'Linked',
+        ]
 
         rows = []
         for _cat, cat_data in return_obj.items():
             for _k, v in cat_data.items():
                 # In csv, we will store the linked field value as 0 or 1.
                 linked = 1 if v['linked'] else 0
-                row_data = [(v['field_id'], v['category'], v['type'],
-                             v['search_label'], v['label'],
-                             v['full_search_label'],
-                             v['full_label'],
-                             v['default_units'],
-                             v['available_units'],
-                             v['old_slug'], linked
-                             )]
+                row_data = [
+                    (
+                        v['field_id'],
+                        v['category'],
+                        v['type'],
+                        v['search_label'],
+                        v['label'],
+                        v['full_search_label'],
+                        v['full_label'],
+                        v['default_units'],
+                        v['available_units'],
+                        v['old_slug'],
+                        linked,
+                    )
+                ]
                 rows += row_data
         ret = csv_response('fields', rows, labels)
-    else: # pragma: no cover - error catchall
+    else:  # pragma: no cover - error catchall
         log.error('get_fields_info: Unknown format "%r"', fmt)
         raise Http404(http404_unknown_format(fmt, request))
 

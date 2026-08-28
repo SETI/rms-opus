@@ -5,4 +5,3 @@ the URL router, so they can drive an argument no URL can produce. What makes
 them belong here rather than in `tests/` is the database: nearly every one
 reaches a query against the imported schema.
 """
-

@@ -29,14 +29,17 @@ from opus_import.obs.obs_volume_hstux_xxxx import ObsVolumeHSTUxxxxx
 from opus_import.obs.obs_volume_nhxxlo_xxxx import ObsVolumeNHxxLOXxxx
 from opus_import.obs.obs_volume_nhxxmv_xxxx import ObsVolumeNHxxMVXxxx
 from opus_import.obs.obs_volume_vgiss_5678xxx import ObsVolumeVGISS5678xxx
-from opus_import.obs.obs_volume_vg2801_vg2802 import (ObsVolumeVG2801VGPPS,
-                                                      ObsVolumeVG2802VGUVS)
+from opus_import.obs.obs_volume_vg2801_vg2802 import ObsVolumeVG2801VGPPS, ObsVolumeVG2802VGUVS
 from opus_import.obs.obs_volume_vg2803 import ObsVolumeVG2803VGRSS
 from opus_import.obs.obs_volume_vg2810 import ObsVolumeVG2810VGISS
 
 from opus_import.obs.obs_bundle_uranus_occs_earthbased import ObsBundleUranusOccsEarthbased
-from opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023 import ObsBundleCassiniUvisSolarOccBeckerJarmak
-from opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import ObsBundleCassiniISSFRingMosaicsRSFrench2025
+from opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023 import (
+    ObsBundleCassiniUvisSolarOccBeckerJarmak,
+)
+from opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import (
+    ObsBundleCassiniISSFRingMosaicsRSFrench2025,
+)
 
 # The BUNDLE_INFO structure is used to determine the details of importing
 # each distinct type of bundle/volume.
@@ -60,6 +63,7 @@ from opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025 import Ob
 #       period that things like ring center distance can vary.
 #   - instrument_class: The Python class, imported above, that will handle the
 #       import.
+
 
 class BundleInfo(TypedDict):
     """What the import needs to know about one kind of bundle.
@@ -88,221 +92,309 @@ class BundleInfo(TypedDict):
 
 
 BUNDLE_INFO: list[tuple[str, BundleInfo]] = [
-
     ####################
     ### PDS3 VOLUMES ###
     ####################
-
-    (r'COCIRS_0[0123]\d\d|COCIRS_0401',     # We ignore these volumes from early
-        {'pds_version': 3,
-         'primary_index': None,             # in the cruise without metadata
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': None},
+    (
+        r'COCIRS_0[0123]\d\d|COCIRS_0401',  # We ignore these volumes from early
+        {
+            'pds_version': 3,
+            'primary_index': None,  # in the cruise without metadata
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': None,
+        },
     ),
-    (r'COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d\d|COCIRS_1\d\d\d', # COCIRS_0402->
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_cube_equi_index.lbl',
-                           '<BUNDLE>_cube_point_index.lbl',
-                           '<BUNDLE>_cube_ring_index.lbl'),
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeCOCIRS01xxx},
+    (
+        r'COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d\d|COCIRS_1\d\d\d',  # COCIRS_0402->
+        {
+            'pds_version': 3,
+            'primary_index': (
+                '<BUNDLE>_cube_equi_index.lbl',
+                '<BUNDLE>_cube_point_index.lbl',
+                '<BUNDLE>_cube_ring_index.lbl',
+            ),
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeCOCIRS01xxx,
+        },
     ),
-    (r'COCIRS_[56]\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('OBSINDEX.LBL',),
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeCOCIRS56xxx},
+    (
+        r'COCIRS_[56]\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('OBSINDEX.LBL',),
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeCOCIRS56xxx,
+        },
     ),
-    (r'COISS_[12]\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeCOISS12xxx},
+    (
+        r'COISS_[12]\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeCOISS12xxx,
+        },
     ),
-    (r'CORSS_8001',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeCORSS8xxx},
+    (
+        r'CORSS_8001',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeCORSS8xxx,
+        },
     ),
-    (r'COUVIS_0\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeCOUVIS0xxx},
+    (
+        r'COUVIS_0\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeCOUVIS0xxx,
+        },
     ),
-    (r'COUVIS_8001',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeCOUVIS8xxx},
+    (
+        r'COUVIS_8001',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeCOUVIS8xxx,
+        },
     ),
-    (r'COVIMS_0\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeCOVIMS0xxx},
+    (
+        r'COVIMS_0\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeCOVIMS0xxx,
+        },
     ),
-    (r'COVIMS_8001',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeCOVIMS8xxx},
+    (
+        r'COVIMS_8001',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeCOVIMS8xxx,
+        },
     ),
-    (r'EBROCC_0001',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeEBROCCxxxx},
+    (
+        r'EBROCC_0001',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeEBROCCxxxx,
+        },
     ),
-    (r'GO_0001',
-        {'pds_version': 3,
-         'primary_index': None,
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': None},
+    (
+        r'GO_0001',
+        {
+            'pds_version': 3,
+            'primary_index': None,
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': None,
+        },
     ),
-    (r'GO_000[2-9]|GO_001\d|GO_002\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl', '<BUNDLE>_sl9_index.lbl'),
-         'validate_index_rows': True,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeGO0xxx},
+    (
+        r'GO_000[2-9]|GO_001\d|GO_002\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl', '<BUNDLE>_sl9_index.lbl'),
+            'validate_index_rows': True,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeGO0xxx,
+        },
     ),
-    (r'HSTI\d_\d\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeHSTIxxxxx},
+    (
+        r'HSTI\d_\d\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeHSTIxxxxx,
+        },
     ),
-    (r'HSTJ\d_\d\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeHSTJxxxxx},
+    (
+        r'HSTJ\d_\d\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeHSTJxxxxx,
+        },
     ),
-    (r'HSTN\d_\d\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeHSTNxxxxx},
+    (
+        r'HSTN\d_\d\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeHSTNxxxxx,
+        },
     ),
-    (r'HSTO\d_\d\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeHSTOxxxxx},
+    (
+        r'HSTO\d_\d\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeHSTOxxxxx,
+        },
     ),
-    (r'HSTU\d_\d\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeHSTUxxxxx},
+    (
+        r'HSTU\d_\d\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeHSTUxxxxx,
+        },
     ),
-    (r'NH..LO_1001',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeNHxxLOXxxx},
+    (
+        r'NH..LO_1001',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeNHxxLOXxxx,
+        },
     ),
-    (r'NH..MV_1001',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeNHxxMVXxxx},
+    (
+        r'NH..MV_1001',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeNHxxMVXxxx,
+        },
     ),
-    (r'NH...._2\d\d\d',  # Ignore these volumes - we only import 1001
-        {'pds_version': 3,
-         'primary_index': None,
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': None},
+    (
+        r'NH...._2\d\d\d',  # Ignore these volumes - we only import 1001
+        {
+            'pds_version': 3,
+            'primary_index': None,
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': None,
+        },
     ),
-    (r'VGISS_[5678]\d\d\d',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_raw_image_index.lbl',),
-         'validate_index_rows': False,
-         'temporal_camera': False,
-         'instrument_class': ObsVolumeVGISS5678xxx},
+    (
+        r'VGISS_[5678]\d\d\d',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_raw_image_index.lbl',),
+            'validate_index_rows': False,
+            'temporal_camera': False,
+            'instrument_class': ObsVolumeVGISS5678xxx,
+        },
     ),
-    (r'VG_2801',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeVG2801VGPPS},
+    (
+        r'VG_2801',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeVG2801VGPPS,
+        },
     ),
-    (r'VG_2802',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeVG2802VGUVS},
+    (
+        r'VG_2802',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeVG2802VGUVS,
+        },
     ),
-    (r'VG_2803',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeVG2803VGRSS},
+    (
+        r'VG_2803',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeVG2803VGRSS,
+        },
     ),
-    (r'VG_2810',
-        {'pds_version': 3,
-         'primary_index': ('<BUNDLE>_index.lbl',),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsVolumeVG2810VGISS},
+    (
+        r'VG_2810',
+        {
+            'pds_version': 3,
+            'primary_index': ('<BUNDLE>_index.lbl',),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsVolumeVG2810VGISS,
+        },
     ),
-
     ####################
     ### PDS4 BUNDLES ###
     ####################
-    (r'cassini_iss_fring_mosaics_rsfrench2025',
-        {'pds_version': 4,
-         'primary_index': ('global_mosaic_index.tab',),
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': ObsBundleCassiniISSFRingMosaicsRSFrench2025},
+    (
+        r'cassini_iss_fring_mosaics_rsfrench2025',
+        {
+            'pds_version': 4,
+            'primary_index': ('global_mosaic_index.tab',),
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': ObsBundleCassiniISSFRingMosaicsRSFrench2025,
+        },
     ),
-    (r'cassini_uvis_solarocc_beckerjarmak2023',
-        {'pds_version': 4,
-         'primary_index': ('<BUNDLE>_index.csv',),
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': ObsBundleCassiniUvisSolarOccBeckerJarmak},
+    (
+        r'cassini_uvis_solarocc_beckerjarmak2023',
+        {
+            'pds_version': 4,
+            'primary_index': ('<BUNDLE>_index.csv',),
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': ObsBundleCassiniUvisSolarOccBeckerJarmak,
+        },
     ),
-    (r'uranus_occ_u.*',
-        {'pds_version': 4,
-         'primary_index': ('<BUNDLE>_rings_index.csv',
-                           '<BUNDLE>_global_index.csv',
-                           '<BUNDLE>_atmosphere_index.csv'),
-         'validate_index_rows': True,
-         'temporal_camera': True,
-         'instrument_class': ObsBundleUranusOccsEarthbased},
+    (
+        r'uranus_occ_u.*',
+        {
+            'pds_version': 4,
+            'primary_index': (
+                '<BUNDLE>_rings_index.csv',
+                '<BUNDLE>_global_index.csv',
+                '<BUNDLE>_atmosphere_index.csv',
+            ),
+            'validate_index_rows': True,
+            'temporal_camera': True,
+            'instrument_class': ObsBundleUranusOccsEarthbased,
+        },
     ),
     # These bundles are part of uranus_occs_earthbased but should not be imported
-    (r'checksums_uranus_occs_earthbased|uranus_occ_support|superseded',
-        {'pds_version': 4,
-         'primary_index': None,
-         'validate_index_rows': False,
-         'temporal_camera': True,
-         'instrument_class': None},
+    (
+        r'checksums_uranus_occs_earthbased|uranus_occ_support|superseded',
+        {
+            'pds_version': 4,
+            'primary_index': None,
+            'validate_index_rows': False,
+            'temporal_camera': True,
+            'instrument_class': None,
+        },
     ),
 ]

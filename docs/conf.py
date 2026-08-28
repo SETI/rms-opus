@@ -90,9 +90,13 @@ source_suffix = {
     '.md': 'markdown',
 }
 
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
-                    # Included into a page rather than being one.
-                    'api_guide_fields_table.rst']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    # Included into a page rather than being one.
+    'api_guide_fields_table.rst',
+]
 
 # Every cross-reference has to resolve; see nitpick_ignore below for the exceptions
 # and why each one cannot be linked.
@@ -139,8 +143,10 @@ napoleon_use_ivar = True
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'django': ('https://docs.djangoproject.com/en/stable/',
-               'https://docs.djangoproject.com/en/stable/_objects/'),
+    'django': (
+        'https://docs.djangoproject.com/en/stable/',
+        'https://docs.djangoproject.com/en/stable/_objects/',
+    ),
 }
 
 # -- Cross-reference repair ---------------------------------------------------
@@ -169,8 +175,9 @@ REFERENCE_ALIASES = {
 }
 
 
-def _redirect_reference(app: Sphinx, env: BuildEnvironment, node: pending_xref,
-                        contnode: Element) -> None:
+def _redirect_reference(
+    app: Sphinx, env: BuildEnvironment, node: pending_xref, contnode: Element
+) -> None:
     """Rewrite a reference target that no inventory carries under that spelling.
 
     This runs on ``missing-reference`` ahead of intersphinx, rewrites the target in

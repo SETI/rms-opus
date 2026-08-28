@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 try:
     import MySQLdb
+
     MYSQLDB_AVAILABLE = True
 except ImportError:
     MYSQLDB_AVAILABLE = False
@@ -50,6 +51,7 @@ ERR_UNKNOWN_DATABASE = 1049
 # what keeps a computed identifier from ending the quoting early.
 _IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
 
+
 class ImportDBMySQL(ImportDBSuper):
     """The import pipeline's database interface, rendered as MySQL.
 
@@ -60,12 +62,18 @@ class ImportDBMySQL(ImportDBSuper):
     """
 
     # Note that for MySQL, we ignore the db_name and only use the schema_name
-    def __init__(self, db_hostname: str, db_name: str, db_schema: str, db_user: str,
-                 db_password: str,
-                 mult_form_types: Sequence[str] | None = None,
-                 import_prefix: str | None = None,
-                 logger: pdslogger.PdsLogger | None = None,
-                 read_only: bool = False) -> None:
+    def __init__(
+        self,
+        db_hostname: str,
+        db_name: str,
+        db_schema: str,
+        db_user: str,
+        db_password: str,
+        mult_form_types: Sequence[str] | None = None,
+        import_prefix: str | None = None,
+        logger: pdslogger.PdsLogger | None = None,
+        read_only: bool = False,
+    ) -> None:
         """Open the connection to a MySQL server, creating the schema if it is absent.
 
         The parameters are `ImportDBSuper`'s, and ``db_name`` is ignored: MySQL has no
@@ -90,10 +98,17 @@ class ImportDBMySQL(ImportDBSuper):
             ImportDBError: If the server cannot be reached, the schema can be neither
                 used nor created, or the session's SQL mode cannot be set.
         """
-        super().__init__(db_hostname, db_name, db_schema, db_user, db_password,
-                         mult_form_types=mult_form_types,
-                         import_prefix=import_prefix,
-                         logger=logger, read_only=read_only)
+        super().__init__(
+            db_hostname,
+            db_name,
+            db_schema,
+            db_user,
+            db_password,
+            mult_form_types=mult_form_types,
+            import_prefix=import_prefix,
+            logger=logger,
+            read_only=read_only,
+        )
         super()._enter('__init__')
 
         self._table_info_cache: dict[tuple[Namespace, str], list[SchemaColumn]] = {}
@@ -101,34 +116,39 @@ class ImportDBMySQL(ImportDBSuper):
         if not MYSQLDB_AVAILABLE:
             self.read_only = True
             if self.logger:
-                self.logger.log('warning',
-                    'Python package MySQLdb not available - simulating all '+
-                    'database accesses!')
+                self.logger.log(
+                    'warning',
+                    'Python package MySQLdb not available - simulating all ' + 'database accesses!',
+                )
 
         self.default_engine = 'INNODB'
 
         if not MYSQLDB_AVAILABLE:
             self.conn = None
             if self.logger:
-                self.logger.log('info',
-                        f'[SIM] Connected to MySQL server "{self.db_hostname}" '
-                       +f'as "{self.db_user}"')
+                self.logger.log(
+                    'info',
+                    f'[SIM] Connected to MySQL server "{self.db_hostname}" '
+                    + f'as "{self.db_user}"',
+                )
         else:
             try:
-                self.conn = MySQLdb.connect(host=self.db_hostname,
-                                            user=self.db_user,
-                                            passwd=self.db_password)
+                self.conn = MySQLdb.connect(
+                    host=self.db_hostname, user=self.db_user, passwd=self.db_password
+                )
             except MySQLdb.Error as e:
                 if self.logger:
-                    self.logger.log('fatal',
-                            'Unable to connect to MySQL server '
-                           +f'"{self.db_hostname}": {e.args[1]}')
+                    self.logger.log(
+                        'fatal',
+                        'Unable to connect to MySQL server ' + f'"{self.db_hostname}": {e.args[1]}',
+                    )
                 raise ImportDBError(e) from e
 
             if self.logger:
-                self.logger.log('info',
-                        f'Connected to MySQL server "{self.db_hostname}" '
-                       +f'as "{self.db_user}"')
+                self.logger.log(
+                    'info',
+                    f'Connected to MySQL server "{self.db_hostname}" ' + f'as "{self.db_user}"',
+                )
 
             try:
                 cmd = f'USE {self.quote_identifier(self.db_schema)}'
@@ -141,33 +161,36 @@ class ImportDBMySQL(ImportDBSuper):
                         self._execute(cmd)
                     except MySQLdb.Error as create_err:
                         if self.logger:
-                            self.logger.log('fatal',
-                            f'Unable to create new database "{self.db_schema}"'+
-                            f': {create_err.args[1]}')
+                            self.logger.log(
+                                'fatal',
+                                f'Unable to create new database "{self.db_schema}"'
+                                + f': {create_err.args[1]}',
+                            )
                         raise ImportDBError(create_err) from create_err
                     if self.logger:
-                        self.logger.log('warning',
-                                f'  Created new database "{self.db_schema}"')
+                        self.logger.log('warning', f'  Created new database "{self.db_schema}"')
 
                     try:
                         cmd = f'USE {self.quote_identifier(self.db_schema)}'
                         self._execute(cmd)
                     except MySQLdb.Error as use_err:
                         if self.logger:
-                            self.logger.log('fatal',
-                                'Unable to use new database '+
-                                f'"{self.db_schema}": {use_err.args[1]}')
+                            self.logger.log(
+                                'fatal',
+                                'Unable to use new database '
+                                + f'"{self.db_schema}": {use_err.args[1]}',
+                            )
                         raise ImportDBError(use_err) from use_err
                 else:
                     if self.logger:
-                        self.logger.log('fatal',
-                            'Unable to use existing database '+
-                            f'"{self.db_schema}": {e.args[1]}')
+                        self.logger.log(
+                            'fatal',
+                            'Unable to use existing database ' + f'"{self.db_schema}": {e.args[1]}',
+                        )
                     raise ImportDBError(e) from e
 
         if self.logger:
-            self.logger.log('info',
-                            f'  Using database "{self.db_schema}"')
+            self.logger.log('info', f'  Using database "{self.db_schema}"')
 
         # We keep a cached list of table names so we don't have to keep doing
         # SQL queries - go ahead and populate it now
@@ -189,23 +212,29 @@ class ImportDBMySQL(ImportDBSuper):
                 self.logger.log('info', f'  MySQL version: {self.mysql_version}')
 
             try:
-                cmd = ("set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,"
-                       "ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,"
-                       "STRICT_ALL_TABLES")
+                cmd = (
+                    "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,"
+                    'ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,'
+                    'STRICT_ALL_TABLES'
+                )
                 if self.mysql_version[0] == '5':
                     cmd += ',NO_AUTO_CREATE_USER'
                 cmd += "'"
                 self._execute(cmd)
             except MySQLdb.Error as e:
                 if self.logger:
-                    self.logger.log('fatal',
-                        f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
+                    self.logger.log('fatal', f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
                 raise ImportDBError(e) from e
 
         super()._exit()
 
-    def _execute(self, cmd: str, param_list: Sequence[Any] | None = None,
-                 cur: Any = None, mutates: bool = False) -> None:
+    def _execute(
+        self,
+        cmd: str,
+        param_list: Sequence[Any] | None = None,
+        cur: Any = None,
+        mutates: bool = False,
+    ) -> None:
         """Execute one statement, or do nothing at all when the driver is absent.
 
         Parameters:
@@ -218,9 +247,9 @@ class ImportDBMySQL(ImportDBSuper):
             return
         super()._execute(cmd, param_list, cur=cur, mutates=mutates)
 
-    def _execute_and_fetchall(self, cmd: str, func_name: str,
-                              param_list: Sequence[Any] | None = None
-                              ) -> Sequence[ResultRow]:
+    def _execute_and_fetchall(
+        self, cmd: str, func_name: str, param_list: Sequence[Any] | None = None
+    ) -> Sequence[ResultRow]:
         """Execute one query and return every row of its result.
 
         Parameters:
@@ -246,8 +275,7 @@ class ImportDBMySQL(ImportDBSuper):
                 return rows
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                    f'Failed in {func_name}: {e.args[1]}')
+                self.logger.log('fatal', f'Failed in {func_name}: {e.args[1]}')
             raise ImportDBError(e) from e
 
     def quote_identifier(self, s: str) -> str:
@@ -282,8 +310,7 @@ class ImportDBMySQL(ImportDBSuper):
         return ','.join(self.quote_identifier(c) for c in column_names)
 
     @staticmethod
-    def _row_placeholders(row: DBRow, column_names: Sequence[str],
-                          param_list: list[Any]) -> str:
+    def _row_placeholders(row: DBRow, column_names: Sequence[str], param_list: list[Any]) -> str:
         """Append a row's values to param_list and return their placeholders.
 
         Every value is a parameter, including None: MySQLdb renders that as NULL,
@@ -301,9 +328,9 @@ class ImportDBMySQL(ImportDBSuper):
             param_list.append(row[column_name])
         return ','.join(['%s'] * len(column_names))
 
-    def table_names(self, namespace: Namespace,
-                    prefix: str | list[str] | tuple[str, ...] | None = None
-                    ) -> Collection[str]:
+    def table_names(
+        self, namespace: Namespace, prefix: str | list[str] | tuple[str, ...] | None = None
+    ) -> Collection[str]:
         """Return the names of the tables in a namespace.
 
         The names are read from the server once and cached, so a run that creates and
@@ -330,8 +357,7 @@ class ImportDBMySQL(ImportDBSuper):
             cmd = """
 SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 `TABLE_TYPE`='BASE TABLE' AND `TABLE_SCHEMA`=%s"""
-            res = self._execute_and_fetchall(cmd, 'table_names',
-                                             [self.db_schema])
+            res = self._execute_and_fetchall(cmd, 'table_names', [self.db_schema])
             # Note: SQL table names are case-insensitive on SOME OSes and this
             # query returns them in whatever case SQL returns them in.
             # But table_exists does a case-insensitive match.
@@ -345,13 +371,17 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         if namespace == 'all':
             ret_names = self._table_names
         elif namespace == 'import':
-            ret_names = [self.convert_namespace_to_raw(namespace, x)
-                            for x in self._table_names if
-                                self._is_import_namespace(x)]
+            ret_names = [
+                self.convert_namespace_to_raw(namespace, x)
+                for x in self._table_names
+                if self._is_import_namespace(x)
+            ]
         elif namespace == 'perm':
-            ret_names = [self.convert_namespace_to_raw(namespace, x)
-                            for x in self._table_names if
-                                self._is_perm_namespace(x)]
+            ret_names = [
+                self.convert_namespace_to_raw(namespace, x)
+                for x in self._table_names
+                if self._is_perm_namespace(x)
+            ]
         else:
             raise NotImplementedError(namespace)
 
@@ -369,8 +399,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 
         return [x for x in ret_names if x.startswith(prefix)]
 
-    def table_info(self, namespace: Namespace,
-                   raw_table_name: str) -> list[SchemaColumn]:
+    def table_info(self, namespace: Namespace, raw_table_name: str) -> list[SchemaColumn]:
         """Return the columns of a table as the server currently defines them.
 
         The answer is cached per table and discarded whenever a table is created or
@@ -403,14 +432,12 @@ SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
 `CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
 FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 `TABLE_NAME`=%s ORDER BY `ORDINAL_POSITION`"""
-        rows = self._execute_and_fetchall(cmd, 'table_info',
-                                          [self.db_schema, table_name])
+        rows = self._execute_and_fetchall(cmd, 'table_info', [self.db_schema, table_name])
 
         column_list = []
 
         for row in rows:
-            (column_name, column_default, is_nullable,
-             data_type, char_len, column_type) = row
+            (column_name, column_default, is_nullable, data_type, char_len, column_type) = row
             if data_type == 'tinyint':
                 field_type = 'int1'
             elif data_type == 'smallint':
@@ -439,15 +466,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 field_type = 'mult_list'
             else:
                 raise NotImplementedError(data_type)
-            if (field_type.startswith('int') and
-                column_type.find('unsigned') != -1):
+            if field_type.startswith('int') and column_type.find('unsigned') != -1:
                 field_type = 'u' + field_type
 
             column_dict = {
                 'field_name': column_name,
                 'field_default': column_default,
                 'field_notnull': is_nullable == 'NO',
-                'field_type': field_type
+                'field_type': field_type,
             }
             column_list.append(column_dict)
 
@@ -455,8 +481,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         self._table_info_cache[cache_key] = column_list
         return column_list
 
-    def drop_table(self, namespace: Namespace, raw_table_name: str,
-                   ignore_if_not_exists: bool = True) -> None:
+    def drop_table(
+        self, namespace: Namespace, raw_table_name: str, ignore_if_not_exists: bool = True
+    ) -> None:
         """Delete the given table if it exists.
 
         Parameters:
@@ -476,12 +503,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         if not self.table_exists(namespace, raw_table_name):
             if ignore_if_not_exists:
                 if self.logger:
-                    self.logger.log('debug',
-                        f'drop_table "{table_name}" - no table found')
+                    self.logger.log('debug', f'drop_table "{table_name}" - no table found')
             else:
                 if self.logger:
-                    self.logger.log('fatal',
-            f'Attempted to drop table "{table_name}" that doesn\'t exist')
+                    self.logger.log(
+                        'fatal', f'Attempted to drop table "{table_name}" that doesn\'t exist'
+                    )
                 raise ImportDBError()
         else:
             try:
@@ -489,17 +516,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:
                 if self.logger:
-                    self.logger.log('fatal',
-                        f'Failed in drop_table on "{table_name}": {e.args[1]}')
+                    self.logger.log('fatal', f'Failed in drop_table on "{table_name}": {e.args[1]}')
                 raise ImportDBError(e) from e
 
             if self.logger:
                 if self.read_only:
-                    self.logger.log('debug',
-                            f'[SIM] Dropped table "{table_name}"')
+                    self.logger.log('debug', f'[SIM] Dropped table "{table_name}"')
                 else:
-                    self.logger.log('debug',
-                            f'Dropped table "{table_name}"')
+                    self.logger.log('debug', f'Dropped table "{table_name}"')
 
             # __init__ populates the cache and nothing clears it, so it is a set from
             # the moment the instance exists; the None is only the load-once sentinel.
@@ -514,9 +538,13 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def create_table(self, namespace: Namespace, raw_table_name: str,
-                     schema: Sequence[SchemaColumn],
-                     ignore_if_exists: bool = True) -> bool:
+    def create_table(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        schema: Sequence[SchemaColumn],
+        ignore_if_exists: bool = True,
+    ) -> bool:
         """Create a new table from the given OPUS table schema.
 
         Parameters:
@@ -556,7 +584,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 cmd += ',\n'
 
             if 'constraint' in column:
-                cmd += '  '+column['constraint']+'\n'
+                cmd += '  ' + column['constraint'] + '\n'
                 continue
 
             field_name = column['field_name']
@@ -591,9 +619,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 cmd += 'double'
 
             elif field_type[:4] == 'char':
-                cmd += 'char('+field_type[4:]+')'
+                cmd += 'char(' + field_type[4:] + ')'
             elif field_type[:7] == 'varchar':
-                cmd += 'varchar('+field_type[7:]+')'
+                cmd += 'varchar(' + field_type[7:] + ')'
             elif field_type == 'text':
                 cmd += 'text'
             elif field_type in ('mult_list', 'json'):
@@ -602,9 +630,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 enum_str = column.get('field_enum_options', None)
                 assert enum_str, (raw_table_name, column)
                 cmd += f'enum({enum_str})'
-            elif (field_type == 'flag_yesno' or field_type == 'flag_onoff' or
-                  field_type == 'mult_idx'):
-                cmd += 'int unsigned' # Index for mult table
+            elif (
+                field_type == 'flag_yesno' or field_type == 'flag_onoff' or field_type == 'mult_idx'
+            ):
+                cmd += 'int unsigned'  # Index for mult table
             elif field_type == 'timestamp':
                 cmd += 'timestamp'
             elif field_type == 'datetime':
@@ -624,9 +653,11 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 field_default = 'CURRENT_TIMESTAMP'
 
             if field_default != '':
-                if (field_default != 'NULL' and
-                    field_default != 'CURRENT_TIMESTAMP'
-                    and not field_default.isdigit()):
+                if (
+                    field_default != 'NULL'
+                    and field_default != 'CURRENT_TIMESTAMP'
+                    and not field_default.isdigit()
+                ):
                     field_default = "'" + field_default + "'"
                 cmd += f' DEFAULT {field_default}'
 
@@ -646,15 +677,12 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     quoted_field = self.quote_identifier(field_name)
                     key_cmd += f'  UNIQUE KEY {quoted_field} ({quoted_field})'
                 elif key_type == 'primary':
-                    key_cmd += (f'  PRIMARY KEY '
-                                f'({self.quote_identifier(field_name)})')
+                    key_cmd += f'  PRIMARY KEY ({self.quote_identifier(field_name)})'
                 elif key_type == 'foreign':
                     assert foreign_key
-                    key_cmd += (f'  FOREIGN KEY '
-                                f'({self.quote_identifier(field_name)})')
+                    key_cmd += f'  FOREIGN KEY ({self.quote_identifier(field_name)})'
                     key_cmd += ' REFERENCES '
-                    f_table = self.convert_raw_to_namespace(namespace,
-                                                            foreign_key[0])
+                    f_table = self.convert_raw_to_namespace(namespace, foreign_key[0])
                     key_cmd += self.quote_identifier(f_table)
                     key_cmd += f'({self.quote_identifier(foreign_key[1])})'
                     key_cmd += ' ON DELETE RESTRICT ON UPDATE CASCADE'
@@ -664,16 +692,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         if key_cmd != '':
             cmd += ',\n' + key_cmd
-        cmd = (f'CREATE TABLE {self.quote_identifier(table_name)} (\n'
-               + cmd + '\n)')
+        cmd = f'CREATE TABLE {self.quote_identifier(table_name)} (\n' + cmd + '\n)'
         cmd += f' ENGINE={self.default_engine}\n'
 
         try:
             self._execute(cmd, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to create table "{table_name}": {e.args[1]}')
+                self.logger.log('fatal', f'Failed to create table "{table_name}": {e.args[1]}')
             raise ImportDBError(e) from e
 
         if self.logger:
@@ -713,8 +739,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             self._execute(cmd, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to analyze table "{table_name}": {e.args[1]}')
+                self.logger.log('fatal', f'Failed to analyze table "{table_name}": {e.args[1]}')
             raise ImportDBError(e) from e
 
         if self.logger:
@@ -725,8 +750,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         super()._exit()
 
-    def insert_row(self, namespace: Namespace, raw_table_name: str,
-                   row: DBRow) -> None:
+    def insert_row(self, namespace: Namespace, raw_table_name: str, row: DBRow) -> None:
         """Insert one row.
 
         Parameters:
@@ -743,26 +767,25 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         sorted_column_names = sorted(row.keys())
         param_list: list[Any] = []
-        placeholders = self._row_placeholders(row, sorted_column_names,
-                                              param_list)
+        placeholders = self._row_placeholders(row, sorted_column_names, param_list)
         # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
         # every row value is a %s placeholder bound through param_list.
-        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
-               f'({self._quoted_column_list(sorted_column_names)}) '
-               f'VALUES({placeholders})')
+        cmd = (
+            f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
+            f'({self._quoted_column_list(sorted_column_names)}) '
+            f'VALUES({placeholders})'
+        )
 
         try:
             self._execute(cmd, param_list, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to insert row into "{table_name}": {e.args[1]}')
+                self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e.args[1]}')
             raise ImportDBError(e) from e
 
         super()._exit()
 
-    def insert_rows(self, namespace: Namespace, raw_table_name: str,
-                    rows: Sequence[DBRow]) -> None:
+    def insert_rows(self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]) -> None:
         """Insert multiple rows, a thousand at a time.
 
         Parameters:
@@ -782,42 +805,50 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        packet_size = 1000 # Limit number of rows at a time - MySQL barfs
+        packet_size = 1000  # Limit number of rows at a time - MySQL barfs
 
-        num_packets = ((len(rows)-1) // packet_size) + 1
+        num_packets = ((len(rows) - 1) // packet_size) + 1
 
         for packet_num in range(num_packets):
             start_row = packet_size * packet_num
-            end_row = min(len(rows),
-                          packet_size * (packet_num+1))
+            end_row = min(len(rows), packet_size * (packet_num + 1))
 
             sorted_column_names = sorted(rows[0].keys())
 
             param_list: list[Any] = []
             value_tuples = []
             for row in rows[start_row:end_row]:
-                assert sorted_column_names == sorted(row.keys()), \
-                        (sorted_column_names, sorted(row.keys()))
-                placeholders = self._row_placeholders(row, sorted_column_names,
-                                                      param_list)
+                assert sorted_column_names == sorted(row.keys()), (
+                    sorted_column_names,
+                    sorted(row.keys()),
+                )
+                placeholders = self._row_placeholders(row, sorted_column_names, param_list)
                 value_tuples.append(f'({placeholders})')
 
-            cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
-                   f'({self._quoted_column_list(sorted_column_names)}) VALUES'
-                   + ','.join(value_tuples))
+            cmd = (
+                f'INSERT INTO {self.quote_identifier(table_name)} '
+                f'({self._quoted_column_list(sorted_column_names)}) VALUES' + ','.join(value_tuples)
+            )
 
             try:
                 self._execute(cmd, param_list, mutates=True)
             except MySQLdb.Error as e:
                 if self.logger:
-                    self.logger.log('fatal',
-                    f'Failed to insert row into "{table_name}": {e.args[1]}')
+                    self.logger.log(
+                        'fatal', f'Failed to insert row into "{table_name}": {e.args[1]}'
+                    )
                 raise ImportDBError(e) from e
 
         super()._exit()
 
-    def update_row(self, namespace: Namespace, raw_table_name: str, row: DBRow,
-                   where: str, where_params: Sequence[Any] | None = None) -> None:
+    def update_row(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        row: DBRow,
+        where: str,
+        where_params: Sequence[Any] | None = None,
+    ) -> None:
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
@@ -846,22 +877,25 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         # row value is a %s placeholder bound through param_list. The caller's
         # `where` fragment, however, is appended verbatim and is not validated:
         # only the values inside it are bound. This method is for trusted callers.
-        cmd = (f'UPDATE {self.quote_identifier(table_name)} SET '  # nosec B608
-               + ','.join(set_cmds) + f' WHERE {where}')
+        cmd = (
+            f'UPDATE {self.quote_identifier(table_name)} SET '  # nosec B608
+            + ','.join(set_cmds)
+            + f' WHERE {where}'
+        )
         param_list += list(where_params or [])
 
         try:
             self._execute(cmd, param_list, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to update row in "{table_name}": {e.args[1]}')
+                self.logger.log('fatal', f'Failed to update row in "{table_name}": {e.args[1]}')
             raise ImportDBError(e) from e
 
         super()._exit()
 
-    def upsert_row(self, namespace: Namespace, raw_table_name: str, key_name: str,
-                   row: DBRow) -> None:
+    def upsert_row(
+        self, namespace: Namespace, raw_table_name: str, key_name: str, row: DBRow
+    ) -> None:
         """Insert one row, or update it if its key is already present.
 
         Parameters:
@@ -881,8 +915,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         sorted_column_names = sorted(row.keys())
         param_list: list[Any] = []
-        placeholders = self._row_placeholders(row, sorted_column_names,
-                                              param_list)
+        placeholders = self._row_placeholders(row, sorted_column_names, param_list)
 
         assign_list = []
         dup_param_list: list[Any] = []
@@ -893,9 +926,11 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
         # every row value is a %s placeholder bound through param_list.
-        cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
-               f'({self._quoted_column_list(sorted_column_names)}) '
-               f'VALUES({placeholders})')
+        cmd = (
+            f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
+            f'({self._quoted_column_list(sorted_column_names)}) '
+            f'VALUES({placeholders})'
+        )
         if assign_list:
             # A row of nothing but the key has nothing to assign, and an empty
             # assignment list is a syntax error. `upsert_rows` guards the same case.
@@ -905,17 +940,17 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             cmd += ' ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
 
         try:
-            self._execute(cmd, param_list+dup_param_list, mutates=True)
+            self._execute(cmd, param_list + dup_param_list, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to insert row into "{table_name}": {e.args[1]}')
+                self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e.args[1]}')
             raise ImportDBError(e) from e
 
         super()._exit()
 
-    def upsert_rows(self, namespace: Namespace, raw_table_name: str, key_name: str,
-                    rows: Sequence[DBRow]) -> None:
+    def upsert_rows(
+        self, namespace: Namespace, raw_table_name: str, key_name: str, rows: Sequence[DBRow]
+    ) -> None:
         """Insert or update multiple rows, a packet of rows per statement.
 
         Parameters:
@@ -945,7 +980,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         for row in rows:
             groups.setdefault(tuple(sorted(row.keys())), []).append(row)
 
-        packet_size = 1000 # Limit number of rows at a time - MySQL barfs
+        packet_size = 1000  # Limit number of rows at a time - MySQL barfs
 
         for sorted_column_names, group_rows in groups.items():
             quoted_columns = self._quoted_column_list(sorted_column_names)
@@ -963,28 +998,28 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             # colliding name is answered here instead of being assumed away.
             # Compared case-insensitively: MySQL folds identifiers for this check
             # even where the file system makes table names case-sensitive.
-            row_alias = self.quote_identifier(
-                'new_row' if table_name.lower() == 'new' else 'new')
+            row_alias = self.quote_identifier('new_row' if table_name.lower() == 'new' else 'new')
             assign_list = ','.join(
                 f'{self.quote_identifier(c)}={row_alias}.{self.quote_identifier(c)}'
-                for c in sorted_column_names if c != key_name)
+                for c in sorted_column_names
+                if c != key_name
+            )
 
-            num_packets = ((len(group_rows)-1) // packet_size) + 1
+            num_packets = ((len(group_rows) - 1) // packet_size) + 1
             for packet_num in range(num_packets):
                 start_row = packet_size * packet_num
-                end_row = min(len(group_rows), packet_size * (packet_num+1))
+                end_row = min(len(group_rows), packet_size * (packet_num + 1))
 
                 value_tuples = []
                 param_list: list[Any] = []
                 for row in group_rows[start_row:end_row]:
-                    placeholders = self._row_placeholders(row,
-                                                          sorted_column_names,
-                                                          param_list)
+                    placeholders = self._row_placeholders(row, sorted_column_names, param_list)
                     value_tuples.append(f'({placeholders})')
 
-                cmd = (f'INSERT INTO {self.quote_identifier(table_name)} '
-                       f'({quoted_columns}) VALUES'
-                       + ','.join(value_tuples))
+                cmd = (
+                    f'INSERT INTO {self.quote_identifier(table_name)} '
+                    f'({quoted_columns}) VALUES' + ','.join(value_tuples)
+                )
                 if assign_list:
                     # The alias is emitted only with the clause that reads it. A row
                     # of nothing but the key has nothing to assign, and an alias with
@@ -996,15 +1031,20 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     self._execute(cmd, param_list, mutates=True)
                 except MySQLdb.Error as e:
                     if self.logger:
-                        self.logger.log('fatal',
-                                f'Failed to insert row into "{table_name}": {e.args[1]}')
+                        self.logger.log(
+                            'fatal', f'Failed to insert row into "{table_name}": {e.args[1]}'
+                        )
                     raise ImportDBError(e) from e
 
         super()._exit()
 
-    def delete_rows(self, namespace: Namespace, raw_table_name: str,
-                    where: str | None = None,
-                    where_params: Sequence[Any] | None = None) -> None:
+    def delete_rows(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        where: str | None = None,
+        where_params: Sequence[Any] | None = None,
+    ) -> None:
         """Delete the rows a WHERE clause selects.
 
         Parameters:
@@ -1030,20 +1070,22 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             cmd += f' WHERE {where}'
 
         try:
-            self._execute(cmd, list(where_params) if where_params else None,
-                          mutates=True)
+            self._execute(cmd, list(where_params) if where_params else None, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to delete rows from "{table_name}": {e.args[1]}')
+                self.logger.log('fatal', f'Failed to delete rows from "{table_name}": {e.args[1]}')
             raise ImportDBError(e) from e
 
         self._exit()
 
-    def copy_rows_between_namespaces(self, src_namespace: Namespace,
-                                     dest_namespace: Namespace, raw_table_name: str,
-                                     where: str | None = None,
-                                     where_params: Sequence[Any] | None = None) -> None:
+    def copy_rows_between_namespaces(
+        self,
+        src_namespace: Namespace,
+        dest_namespace: Namespace,
+        raw_table_name: str,
+        where: str | None = None,
+        where_params: Sequence[Any] | None = None,
+    ) -> None:
         """Copy rows of one table from one namespace to the same table in another.
 
         Both tables must have the same columns in the same order, which they do because
@@ -1062,34 +1104,36 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         """
         super()._enter('copy_rows')
 
-        src_table_name = self.convert_raw_to_namespace(src_namespace,
-                                                       raw_table_name)
-        dest_table_name = self.convert_raw_to_namespace(dest_namespace,
-                                                        raw_table_name)
+        src_table_name = self.convert_raw_to_namespace(src_namespace, raw_table_name)
+        dest_table_name = self.convert_raw_to_namespace(dest_namespace, raw_table_name)
 
         # Both table names are validated by quote_identifier (^[A-Za-z0-9_]+$).
         # The caller's `where` fragment is appended verbatim below and is not
         # validated; only the values inside it are bound, through where_params.
         # This method is for trusted callers.
-        cmd = (f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '  # nosec B608
-               f'FROM {self.quote_identifier(src_table_name)}')
+        cmd = (
+            f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '  # nosec B608
+            f'FROM {self.quote_identifier(src_table_name)}'
+        )
         if where:
             cmd += f' WHERE {where}'
 
         try:
-            self._execute(cmd, list(where_params) if where_params else None,
-                          mutates=True)
+            self._execute(cmd, list(where_params) if where_params else None, mutates=True)
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal',
-                        f'Failed to copy rows from "{src_table_name}" to '
-                        f'"{dest_table_name}": {e.args[1]}')
+                self.logger.log(
+                    'fatal',
+                    f'Failed to copy rows from "{src_table_name}" to '
+                    f'"{dest_table_name}": {e.args[1]}',
+                )
             raise ImportDBError(e) from e
 
         self._exit()
 
-    def general_select(self, cmd: str,
-                       param_list: Sequence[Any] | None = None) -> Sequence[ResultRow]:
+    def general_select(
+        self, cmd: str, param_list: Sequence[Any] | None = None
+    ) -> Sequence[ResultRow]:
         """Run `SELECT <cmd>` and return every row.
 
         Parameters:
@@ -1106,13 +1150,11 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         """
         super()._enter('cmd')
 
-        res = self._execute_and_fetchall('SELECT '+cmd, 'general_select',
-                                         param_list)
+        res = self._execute_and_fetchall('SELECT ' + cmd, 'general_select', param_list)
         self._exit()
         return res
 
-    def find_column_max(self, namespace: Namespace, raw_table_name: str,
-                        column_name: str) -> Any:
+    def find_column_max(self, namespace: Namespace, raw_table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.
 
         Parameters:
@@ -1132,8 +1174,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         # Column and table names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$).
         # This statement carries no values at all.
-        cmd = (f'SELECT MAX({self.quote_identifier(column_name)}) '  # nosec B608
-               f'FROM {self.quote_identifier(table_name)}')
+        cmd = (
+            f'SELECT MAX({self.quote_identifier(column_name)}) '  # nosec B608
+            f'FROM {self.quote_identifier(table_name)}'
+        )
         res = self._execute_and_fetchall(cmd, 'find_column_max')
         self._exit()
         return res[0][0]

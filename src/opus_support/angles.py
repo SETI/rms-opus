@@ -17,6 +17,7 @@ from opus_support._numeric_text import _clean_numeric_field, _strip_trailing_zer
 # ANGLE CONVERSION
 ################################################################################
 
+
 def parse_dms_hms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse DMS, HMS, or single number, but "x x x" defaults to DMS.
 
@@ -40,8 +41,8 @@ def parse_dms_hms(s: str, conversion_factor: float = 1, **kwargs: object) -> flo
         ValueError: If the string is not a value this parser accepts, always with an
             empty message.
     """
-    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
-                          default='dms')
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True, default='dms')
+
 
 def parse_hms_dms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse DMS, HMS, or single number, but "x x x" defaults to HMS.
@@ -63,8 +64,8 @@ def parse_hms_dms(s: str, conversion_factor: float = 1, **kwargs: object) -> flo
         ValueError: If the string is not a value this parser accepts, always with an
             empty message.
     """
-    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
-                          default='hms')
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True, default='hms')
+
 
 def parse_dms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse a DMS string or single number.
@@ -85,8 +86,8 @@ def parse_dms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
         ValueError: If the string is not a value this parser accepts, always with an
             empty message.
     """
-    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=False,
-                          default='dms')
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=False, default='dms')
+
 
 def parse_hms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
     """Parse an HMS string or single number.
@@ -108,11 +109,16 @@ def parse_hms(s: str, conversion_factor: float = 1, **kwargs: object) -> float:
         ValueError: If the string is not a value this parser accepts, always with an
             empty message.
     """
-    return _parse_dms_hms(s, conversion_factor, allow_dms=False, allow_hms=True,
-                          default='hms')
+    return _parse_dms_hms(s, conversion_factor, allow_dms=False, allow_hms=True, default='hms')
 
-def _parse_dms_hms(s: str, conversion_factor: float = 1, allow_dms: bool = True,
-                   allow_hms: bool = True, default: str = 'dms') -> float:
+
+def _parse_dms_hms(
+    s: str,
+    conversion_factor: float = 1,
+    allow_dms: bool = True,
+    allow_hms: bool = True,
+    default: str = 'dms',
+) -> float:
     """Parse a DMS or HMS or "x x x" or plain number.
 
     Parameters:
@@ -154,12 +160,15 @@ def _parse_dms_hms(s: str, conversion_factor: float = 1, allow_dms: bool = True,
         format_types.append(('h', 15))
     for format_char, format_factor in format_types:
         # We allow exponential notation in the first position
-        match = re.fullmatch(r'(|[+-]) *(|\d+(|e(|\+)\d+)(|\.\d*)'+format_char+
-                             r') *(|\d+(|\.\d*)m) *(|\d+(|\.\d*)s)', s)
+        match = re.fullmatch(
+            r'(|[+-]) *(|\d+(|e(|\+)\d+)(|\.\d*)'
+            + format_char
+            + r') *(|\d+(|\.\d*)m) *(|\d+(|\.\d*)s)',
+            s,
+        )
         if match is None and format_char == default[0]:
             # Check for just "N N N" if we are looking at the default format
-            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|\.\d*))',
-                                 s)
+            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|\.\d*))', s)
         if match:
             neg = match[1]
             degrees_hours = match[2]
@@ -233,9 +242,14 @@ def _parse_dms_hms(s: str, conversion_factor: float = 1, allow_dms: bool = True,
     return ret
 
 
-def format_dms_hms(val: float, *, unit_id: str | None = None, unit: str,
-                   numerical_format: str,
-                   keep_trailing_zeros: bool = False) -> str:
+def format_dms_hms(
+    val: float,
+    *,
+    unit_id: str | None = None,
+    unit: str,
+    numerical_format: str,
+    keep_trailing_zeros: bool = False,
+) -> str:
     """Format a number as DMS or HMS or a single number as appropriate.
 
     Every argument but `val` is keyword-only, and `unit` and `numerical_format` are
@@ -291,7 +305,7 @@ def format_dms_hms(val: float, *, unit_id: str | None = None, unit: str,
         assert unit == 'radians'
         subtract_amt = -2
 
-    new_dec = max(int(numerical_format[1:-1])-subtract_amt, 0)
+    new_dec = max(int(numerical_format[1:-1]) - subtract_amt, 0)
 
     if unit in ['degrees', 'radians', 'hours']:
         # Plain numeric formatting
@@ -308,18 +322,18 @@ def format_dms_hms(val: float, *, unit_id: str | None = None, unit: str,
     if new_dec == 0:
         new_format = '02d'
     else:
-        new_format = f'0{new_dec+3}.{new_dec}f'
+        new_format = f'0{new_dec + 3}.{new_dec}f'
 
-    val_sec = val * 3600 # Do all the work in seconds for better rounding
+    val_sec = val * 3600  # Do all the work in seconds for better rounding
     neg = val_sec < 0
     val_sec = abs(val_sec)
     # Round the input number to the given precision
     prec = 10**new_dec
     val_sec = np.round(val_sec * prec) / prec
     dh = int(val_sec // 3600)
-    val_sec = val_sec-dh*3600
+    val_sec = val_sec - dh * 3600
     m = min(int(val_sec // 60), 59)
-    val_sec = val_sec-m*60
+    val_sec = val_sec - m * 60
 
     leading_char = 'h'
     if unit == 'dms':

@@ -30,10 +30,21 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # Directories that hold no shell script of ours: build output, virtual environments,
 # git internals, and the working documents for the modernization.
 SKIP_DIRECTORIES = {
-    '.git', 'venv', '.venv', 'opus_venv', '_build', 'node_modules', '__pycache__',
+    '.git',
+    'venv',
+    '.venv',
+    'opus_venv',
+    '_build',
+    'node_modules',
+    '__pycache__',
     # Build and tool output. Nothing here is ours, and `dist/` in particular holds
     # unpacked distributions during a release check.
-    'build', 'dist', 'htmlcov', '.mypy_cache', '.pytest_cache', '.ruff_cache',
+    'build',
+    'dist',
+    'htmlcov',
+    '.mypy_cache',
+    '.pytest_cache',
+    '.ruff_cache',
     '.eggs',
 }
 
@@ -155,9 +166,7 @@ def _parse(script: str | None = None, path: Path | None = None) -> subprocess.Co
         return subprocess.run(
             ['bash', '-n', str(path)], capture_output=True, text=True, check=False
         )
-    return subprocess.run(
-        ['bash', '-n'], input=script, capture_output=True, text=True, check=False
-    )
+    return subprocess.run(['bash', '-n'], input=script, capture_output=True, text=True, check=False)
 
 
 def _assert_parses(result: subprocess.CompletedProcess[str], label: str) -> None:

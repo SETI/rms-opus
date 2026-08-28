@@ -49,9 +49,13 @@ _TIMING_SCRIPT = Path(conftest.__file__).parent / 'test_perf' / 'test_perf_targe
 class StubItem:
     """The parts of a `pytest.Item` that the collection hook touches."""
 
-    def __init__(self, path: Path, markers: dict[str, Any] | None = None,
-                 fixturenames: tuple[str, ...] = (),
-                 cls: type | None = None) -> None:
+    def __init__(
+        self,
+        path: Path,
+        markers: dict[str, Any] | None = None,
+        fixturenames: tuple[str, ...] = (),
+        cls: type | None = None,
+    ) -> None:
         """Record where the stub test lives and what it asks for.
 
         Parameters:
@@ -123,8 +127,7 @@ def test_a_test_in_the_tree_gets_the_suppressed_warning_filters() -> None:
     """The concession reaches the tree's tests, as a per-item marker."""
     item = StubItem(_INSIDE)
     _run_hook(item)
-    applied = [marker.args[0] for marker in item.added
-               if marker.name == 'filterwarnings']
+    applied = [marker.args[0] for marker in item.added if marker.name == 'filterwarnings']
     assert applied == list(conftest.SUPPRESSED_WARNINGS)
 
 
@@ -144,8 +147,7 @@ def test_the_django_db_marker_is_refused() -> None:
     assert 'django_db' in str(excinfo.value)
 
 
-@pytest.mark.parametrize('fixture', ['db', 'transactional_db', 'live_server',
-                                     'django_db_setup'])
+@pytest.mark.parametrize('fixture', ['db', 'transactional_db', 'live_server', 'django_db_setup'])
 def test_a_database_fixture_is_refused(fixture: str) -> None:
     """Each fixture spelling is the same request, and the same hazard.
 
@@ -243,8 +245,9 @@ def test_the_timing_script_defines_no_test_to_collect() -> None:
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    collectable = [name for name in vars(module)
-                   if name.startswith('test') or name.startswith('Test')]
+    collectable = [
+        name for name in vars(module) if name.startswith('test') or name.startswith('Test')
+    ]
     assert collectable == []
 
 
@@ -256,8 +259,7 @@ def test_the_timing_script_keeps_its_work_behind_a_main_guard() -> None:
     assert ast.unparse(guards[0].test) == "__name__ == '__main__'"
 
 
-def test_the_internal_db_flag_is_off_by_default(
-        monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_internal_db_flag_is_off_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     """An ordinary run does not compare result counts against the local database."""
     monkeypatch.delenv(conftest.INTERNAL_DB_ENV_VAR, raising=False)
     assert conftest.internal_db_requested() is False
@@ -265,14 +267,14 @@ def test_the_internal_db_flag_is_off_by_default(
 
 @pytest.mark.parametrize('value', ['1', 'true', 'yes', 'anything'])
 def test_any_non_empty_value_turns_the_internal_db_flag_on(
-        monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
     """The variable is a switch, not a vocabulary: presence is what it means."""
     monkeypatch.setenv(conftest.INTERNAL_DB_ENV_VAR, value)
     assert conftest.internal_db_requested() is True
 
 
-def test_an_empty_internal_db_variable_is_off(
-        monkeypatch: pytest.MonkeyPatch) -> None:
+def test_an_empty_internal_db_variable_is_off(monkeypatch: pytest.MonkeyPatch) -> None:
     """Exporting the variable empty is how a shell unsets it in practice."""
     monkeypatch.setenv(conftest.INTERNAL_DB_ENV_VAR, '')
     assert conftest.internal_db_requested() is False

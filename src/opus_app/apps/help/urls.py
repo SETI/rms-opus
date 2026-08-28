@@ -31,7 +31,9 @@ urlpatterns = [
     # which no test of another URL would catch. RedirectView also drops the query
     # string by default, which is right here: nothing meaningful can be passed on to
     # a guide.
-    re_path(r'^apiguide.(?P<fmt>pdf)$',
-            RedirectView.as_view(url=settings.API_GUIDE_URL, permanent=False)),
+    re_path(
+        r'^apiguide.(?P<fmt>pdf)$',
+        RedirectView.as_view(url=settings.API_GUIDE_URL, permanent=False),
+    ),
     re_path(r'^__help/citing.(?P<fmt>html|pdf)$', api_citing_opus),
 ]

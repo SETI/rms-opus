@@ -77,17 +77,20 @@ def test_two_contexts_share_no_state() -> None:
     assert _messages(second, 'error') == []
 
 
-@pytest.mark.parametrize(('bundle', 'row', 'filespec', 'expected'), [
-    (None, None, None, ''),
-    (None, 7, 'a/b.LBL', ''),
-    ('COISS_2002', None, None, '[COISS_2002] '),
-    ('COISS_2002', 7, None, '[COISS_2002 index row 7] '),
-    ('COISS_2002', 7, 'a/b.LBL', '[COISS_2002 index row 7 "a/b.LBL"] '),
-    ('COISS_2002', None, 'a/b.LBL', '[COISS_2002 "a/b.LBL"] '),
-])
+@pytest.mark.parametrize(
+    ('bundle', 'row', 'filespec', 'expected'),
+    [
+        (None, None, None, ''),
+        (None, 7, 'a/b.LBL', ''),
+        ('COISS_2002', None, None, '[COISS_2002] '),
+        ('COISS_2002', 7, None, '[COISS_2002 index row 7] '),
+        ('COISS_2002', 7, 'a/b.LBL', '[COISS_2002 index row 7 "a/b.LBL"] '),
+        ('COISS_2002', None, 'a/b.LBL', '[COISS_2002 "a/b.LBL"] '),
+    ],
+)
 def test_a_message_names_the_position_the_run_is_at(
-        ctx: ImportContext, bundle: str | None, row: int | None,
-        filespec: str | None, expected: str) -> None:
+    ctx: ImportContext, bundle: str | None, row: int | None, filespec: str | None, expected: str
+) -> None:
     """The prefix grows as the run learns where it is, and is absent between bundles."""
     ctx.current_bundle_id = bundle
     ctx.current_index_row_number = row
@@ -114,8 +117,7 @@ def test_an_error_marks_the_import_as_having_bad_data(ctx: ImportContext) -> Non
 
 
 @pytest.mark.parametrize('level', ['warning', 'info', 'debug'])
-def test_nothing_below_error_marks_the_import_as_bad(
-        ctx: ImportContext, level: str) -> None:
+def test_nothing_below_error_marks_the_import_as_bad(ctx: ImportContext, level: str) -> None:
     """Only errors abort a run; a warning is reported and the import continues."""
     getattr(ctx.log, level)('a message')
 
@@ -123,7 +125,8 @@ def test_nothing_below_error_marks_the_import_as_bad(
 
 
 def test_a_nonrepeating_error_is_logged_once_however_the_position_changes(
-        ctx: ImportContext) -> None:
+    ctx: ImportContext,
+) -> None:
     """Deduplication is on the message alone, which keeps a per-row fault to one line.
 
     A fault shared by every row of an index would otherwise be logged once per row, and
@@ -149,27 +152,33 @@ def test_a_nonrepeating_warning_is_logged_once(ctx: ImportContext) -> None:
 
 
 def test_an_unknown_target_name_is_reported_once_and_names_the_file_to_edit(
-        ctx: ImportContext) -> None:
+    ctx: ImportContext,
+) -> None:
     """The message tells the operator where to add the target, and repeats no further."""
     ctx.log.unknown_target_name('PLUTO')
     ctx.log.unknown_target_name('PLUTO')
 
     assert _messages(ctx, 'error') == [
-        'Unknown TARGET_NAME "PLUTO" - edit config_targets/target_name_info.py']
+        'Unknown TARGET_NAME "PLUTO" - edit config_targets/target_name_info.py'
+    ]
     assert ctx.import_has_bad_data is True
 
 
-@pytest.mark.parametrize(('func_name', 'method_name', 'level'), [
-    ('log_error', 'error', 'error'),
-    ('log_warning', 'warning', 'warning'),
-    ('log_info', 'info', 'info'),
-    ('log_debug', 'debug', 'debug'),
-    ('log_nonrepeating_error', 'nonrepeating_error', 'error'),
-    ('log_nonrepeating_warning', 'nonrepeating_warning', 'warning'),
-    ('log_unknown_target_name', 'unknown_target_name', 'error'),
-])
+@pytest.mark.parametrize(
+    ('func_name', 'method_name', 'level'),
+    [
+        ('log_error', 'error', 'error'),
+        ('log_warning', 'warning', 'warning'),
+        ('log_info', 'info', 'info'),
+        ('log_debug', 'debug', 'debug'),
+        ('log_nonrepeating_error', 'nonrepeating_error', 'error'),
+        ('log_nonrepeating_warning', 'nonrepeating_warning', 'warning'),
+        ('log_unknown_target_name', 'unknown_target_name', 'error'),
+    ],
+)
 def test_the_step_spelling_and_the_object_spelling_are_one_operation(
-        func_name: str, method_name: str, level: str) -> None:
+    func_name: str, method_name: str, level: str
+) -> None:
     """``import_util.log_x(ctx, m)`` and ``ctx.log.x(m)`` do the same thing.
 
     The step modules use the first spelling and the obs classes the second, so a
@@ -200,7 +209,8 @@ def test_an_obs_object_logs_through_its_own_context() -> None:
 
     assert _messages(first, 'error') == [
         'a bad field',
-        'Unknown TARGET_NAME "PLUTO" - edit config_targets/target_name_info.py']
+        'Unknown TARGET_NAME "PLUTO" - edit config_targets/target_name_info.py',
+    ]
     assert _messages(first, 'warning') == ['a questionable field', 'a note']
     assert second.logger.messages == []
 
@@ -224,8 +234,11 @@ def test_accumulated_python_warnings_are_reported_and_cleared() -> None:
 
     assert import_util.log_accumulated_warnings(ctx, 'table import of x.LBL') is True
 
-    assert _messages(ctx, 'error') == ['Warnings found during table import of x.LBL:',
-                                       '  first warning', '  second warning']
+    assert _messages(ctx, 'error') == [
+        'Warnings found during table import of x.LBL:',
+        '  first warning',
+        '  second warning',
+    ]
     assert ctx.python_warning_list == []
     assert ctx.import_has_bad_data is True
 
@@ -284,10 +297,8 @@ def test_a_mult_table_is_converted_once_and_then_served_from_the_context() -> No
     """
     ctx = _mult_context()
 
-    first = do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x',
-                                                     _MULT_COLUMN)
-    second = do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x',
-                                                      _MULT_COLUMN)
+    first = do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
+    second = do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
 
     assert first is second
     assert ctx.mult_table_cache['mult_obs_general_x'] is first
@@ -317,10 +328,10 @@ def test_one_context_s_mult_cache_is_invisible_to_another() -> None:
     first = _mult_context()
     second = _mult_context()
 
-    first_rows = do_import_mult.read_or_create_mult_table(first, 'mult_obs_general_x',
-                                                          _MULT_COLUMN)
-    second_rows = do_import_mult.read_or_create_mult_table(second, 'mult_obs_general_x',
-                                                           _MULT_COLUMN)
+    first_rows = do_import_mult.read_or_create_mult_table(first, 'mult_obs_general_x', _MULT_COLUMN)
+    second_rows = do_import_mult.read_or_create_mult_table(
+        second, 'mult_obs_general_x', _MULT_COLUMN
+    )
 
     assert first_rows is not second_rows
     assert second.modified_mult_tables == {'mult_obs_general_x'}
@@ -339,15 +350,15 @@ def test_dumping_writes_only_the_modified_tables_and_clears_the_created_record()
             return f'{namespace}_{raw_table_name}'
 
         @staticmethod
-        def upsert_rows(namespace: str, raw_table_name: str, key_name: str,
-                        rows: list[dict[str, Any]]) -> None:
+        def upsert_rows(
+            namespace: str, raw_table_name: str, key_name: str, rows: list[dict[str, Any]]
+        ) -> None:
             written.append((namespace, raw_table_name))
 
     ctx.db = cast(ImportDBSuper, _FakeDatabase())
     do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
     ctx.mult_table_cache['mult_obs_general_untouched'] = []
-    ctx.created_import_mult_tables |= {'mult_obs_general_x',
-                                       'mult_obs_general_untouched'}
+    ctx.created_import_mult_tables |= {'mult_obs_general_x', 'mult_obs_general_untouched'}
 
     do_import_mult.dump_import_mult_tables(ctx)
 
@@ -371,9 +382,11 @@ def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() 
         tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
         assigned[func.__name__] = {
             ast.unparse(target)
-            for node in ast.walk(tree) if isinstance(node, ast.Assign)
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Assign)
             for target in node.targets
-            if ast.unparse(target).startswith('ctx.')}
+            if ast.unparse(target).startswith('ctx.')
+        }
 
     assert 'ctx.mult_table_cache' in assigned['import_one_bundle']
     assert 'ctx.modified_mult_tables' in assigned['import_one_bundle']

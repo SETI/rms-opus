@@ -42,8 +42,17 @@ def _mult_table_column_names() -> list[str]:
         The column names, in the order the tables are read and written in.
     """
 
-    return ['id', 'value', 'label', 'disp_order', 'display',
-            'grouping', 'group_disp_order', 'aliases']
+    return [
+        'id',
+        'value',
+        'label',
+        'disp_order',
+        'display',
+        'grouping',
+        'group_disp_order',
+        'aliases',
+    ]
+
 
 def _convert_sql_response_to_mult_table(rows: Sequence[Sequence[Any]]) -> list[MultRow]:
     """Convert queried or preprogrammed mult rows into the internal representation.
@@ -80,13 +89,15 @@ def _convert_sql_response_to_mult_table(rows: Sequence[Sequence[Any]]) -> list[M
             'disp_order': option.disp_order,
             'display': option.display,
             'grouping': option.grouping,
-            'group_disp_order': option.group_disp_order
+            'group_disp_order': option.group_disp_order,
         }
         mult_rows.append(row_dict)
     return mult_rows
 
-def read_or_create_mult_table(ctx: ImportContext, mult_table_name: str,
-                              table_column: dict[str, Any]) -> list[MultRow]:
+
+def read_or_create_mult_table(
+    ctx: ImportContext, mult_table_name: str, table_column: dict[str, Any]
+) -> list[MultRow]:
     """Return a mult table's rows, reading them into the cache the first time.
 
     A column whose schema carries ``mult_options`` has its values fixed there, so those
@@ -114,8 +125,7 @@ def read_or_create_mult_table(ctx: ImportContext, mult_table_name: str,
 
     if 'mult_options' in table_column:
         if not ctx.args.import_suppress_mult_messages:
-            import_util.log_debug(
-                ctx, f'Using preprogrammed mult table "{mult_table_name}"')
+            import_util.log_debug(ctx, f'Using preprogrammed mult table "{mult_table_name}"')
         mult_rows = _convert_sql_response_to_mult_table(table_column['mult_options'])
         ctx.mult_table_cache[mult_table_name] = mult_rows
         ctx.modified_mult_tables.add(mult_table_name)
@@ -132,8 +142,9 @@ def read_or_create_mult_table(ctx: ImportContext, mult_table_name: str,
 
     db = ctx.db
     assert db is not None
-    if (mult_table_name not in ctx.created_import_mult_tables and
-        db.table_exists('import', mult_table_name)):
+    if mult_table_name not in ctx.created_import_mult_tables and db.table_exists(
+        'import', mult_table_name
+    ):
         # Previous import table available
         use_namespace = 'import'
 
@@ -146,12 +157,10 @@ def read_or_create_mult_table(ctx: ImportContext, mult_table_name: str,
             ctx.modified_mult_tables.add(mult_table_name)
 
     if use_namespace is not None:
-        ns_mult_table_name = (
-            db.convert_raw_to_namespace(use_namespace, mult_table_name))
+        ns_mult_table_name = db.convert_raw_to_namespace(use_namespace, mult_table_name)
         if not ctx.args.import_suppress_mult_messages:
             import_util.log_debug(ctx, f'Reading from mult table "{ns_mult_table_name}"')
-        rows = db.read_rows(use_namespace, mult_table_name,
-                            _mult_table_column_names())
+        rows = db.read_rows(use_namespace, mult_table_name, _mult_table_column_names())
         mult_rows = _convert_sql_response_to_mult_table(rows)
         ctx.mult_table_cache[mult_table_name] = mult_rows
         return mult_rows
@@ -161,8 +170,9 @@ def read_or_create_mult_table(ctx: ImportContext, mult_table_name: str,
     return empty_rows
 
 
-def mult_table_lookup_id(ctx: ImportContext, table_name: str, field_name: str,
-                         table_column: dict[str, Any], val: Any) -> Any:
+def mult_table_lookup_id(
+    ctx: ImportContext, table_name: str, field_name: str, table_column: dict[str, Any], val: Any
+) -> Any:
     """Return the id a mult table already gives a value, without adding it.
 
     Parameters:
@@ -187,11 +197,19 @@ def mult_table_lookup_id(ctx: ImportContext, table_name: str, field_name: str,
     return None
 
 
-def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
-                      table_column: dict[str, Any], val: Any, label: Any,
-                      aliases: str | None = None, disp: str = 'Y',
-                      disp_order: Any = None, grouping: str | None = None,
-                      group_disp_order: Any = None) -> Any:
+def update_mult_table(
+    ctx: ImportContext,
+    table_name: str,
+    field_name: str,
+    table_column: dict[str, Any],
+    val: Any,
+    label: Any,
+    aliases: str | None = None,
+    disp: str = 'Y',
+    disp_order: Any = None,
+    grouping: str | None = None,
+    group_disp_order: Any = None,
+) -> Any:
     """Return the id a mult table gives a value, adding a row for it if it is new.
 
     A new row is appended to the cached table and the table is marked for writing at the
@@ -234,9 +252,8 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
 
     if 'mult_options' in table_column:
         import_util.log_nonrepeating_error(
-            ctx,
-            f'Unable to add value "{val}" to preprogrammed mult table '
-            f'"{mult_table_name}"')
+            ctx, f'Unable to add value "{val}" to preprogrammed mult table "{mult_table_name}"'
+        )
         return 0
 
     label = str(label)
@@ -244,16 +261,19 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
     if disp_order is None:
         # No disp_order specified, so make one up
         # Update the display_order
-        (_form_type, _form_type_format,
-         form_type_unit_id) = opus_support.parse_form_type(table_column['pi_form_type'])
+        (_form_type, _form_type_format, form_type_unit_id) = opus_support.parse_form_type(
+            table_column['pi_form_type']
+        )
         parse_func = opus_support.get_single_parse_function(form_type_unit_id)
 
         # See if all values in the mult table are numeric
         all_numeric = True
         for row in mult_table:
-            if (row['label'] is None or
-                str(row['label']).upper() == 'NONE' or
-                str(row['label']).upper() == 'NULL'):
+            if (
+                row['label'] is None
+                or str(row['label']).upper() == 'NONE'
+                or str(row['label']).upper() == 'NULL'
+            ):
                 continue
             try:
                 float(row['label'])
@@ -288,9 +308,8 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
                 disp_order = f'{parse_func(str(val)):030.9f}'
             except Exception as e:
                 import_util.log_nonrepeating_error(
-                    ctx,
-                    f'Unable to parse "{label}" for unit type '
-                    f'"{form_type_unit_id}": {e}')
+                    ctx, f'Unable to parse "{label}" for unit type "{form_type_unit_id}": {e}'
+                )
                 disp_order = label
         elif all_numeric:
             disp_order = f'{float(label):20.9f}'
@@ -306,7 +325,7 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
     if len(mult_table) == 0:
         next_id = 0
     else:
-        next_id = max([x['id'] for x in mult_table])+1
+        next_id = max([x['id'] for x in mult_table]) + 1
     if label is None:
         label = 'N/A'
 
@@ -321,16 +340,17 @@ def update_mult_table(ctx: ImportContext, table_name: str, field_name: str,
         'label': label,
         'aliases': aliases,
         'disp_order': disp_order,
-        'display': disp, # default display: 'Y'
+        'display': disp,  # default display: 'Y'
         'grouping': grouping,
-        'group_disp_order': group_disp_order
+        'group_disp_order': group_disp_order,
     }
     mult_table.append(new_entry)
 
     ctx.modified_mult_tables.add(mult_table_name)
     if not ctx.args.import_suppress_mult_messages:
-        import_util.log_info(ctx, f'Added new value "{val}" ("{label}") to mult table '+
-                             f'"{mult_table_name}"')
+        import_util.log_info(
+            ctx, f'Added new value "{val}" ("{label}") to mult table ' + f'"{mult_table_name}"'
+        )
 
     return next_id
 
@@ -346,8 +366,7 @@ def dump_import_mult_tables(ctx: ImportContext) -> None:
     for mult_table_name in sorted(ctx.modified_mult_tables):
         rows = ctx.mult_table_cache[mult_table_name]
         # Insert or update all the rows
-        imp_mult_table_name = db.convert_raw_to_namespace('import',
-                                                          mult_table_name)
+        imp_mult_table_name = db.convert_raw_to_namespace('import', mult_table_name)
         import_util.log_debug(ctx, f'Writing mult table "{imp_mult_table_name}"')
         db.upsert_rows('import', mult_table_name, 'id', rows)
         # If we wrote out a mult table, that means we didn't just create it
@@ -369,8 +388,7 @@ def copy_mult_from_import_to_permanent(ctx: ImportContext) -> None:
     assert db is not None
     table_names = db.table_names('import', prefix='mult_')
     for table_name in table_names:
-        imp_mult_table_name = db.convert_raw_to_namespace('import',
-                                                          table_name)
+        imp_mult_table_name = db.convert_raw_to_namespace('import', table_name)
         import_util.log_debug(ctx, f'Copying mult table "{imp_mult_table_name}"')
         # Read the import mult table
         column_list = _mult_table_column_names()

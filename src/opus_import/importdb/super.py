@@ -60,6 +60,7 @@ handler makes the last two optional. Naming either shape would reject the other.
 class ImportDBError(Exception):
     """Raised when a database operation fails; always aborts the import."""
 
+
 class ImportDBSuper:
     """The brand-independent half of the import pipeline's database interface.
 
@@ -81,12 +82,18 @@ class ImportDBSuper:
     # cannot name a brand's own connection type without depending on that brand.
     conn: Any
 
-    def __init__(self, db_hostname: str, db_name: str, db_schema: str, db_user: str,
-                 db_password: str,
-                 mult_form_types: Sequence[str] | None = None,
-                 import_prefix: str | None = None,
-                 logger: pdslogger.PdsLogger | None = None,
-                 read_only: bool = False) -> None:
+    def __init__(
+        self,
+        db_hostname: str,
+        db_name: str,
+        db_schema: str,
+        db_user: str,
+        db_password: str,
+        mult_form_types: Sequence[str] | None = None,
+        import_prefix: str | None = None,
+        logger: pdslogger.PdsLogger | None = None,
+        read_only: bool = False,
+    ) -> None:
         """Record what a connection needs, without opening one.
 
         Parameters:
@@ -161,8 +168,7 @@ class ImportDBSuper:
             return True
         return not table_name.lower().startswith(self.import_prefix.lower())
 
-    def convert_raw_to_namespace(self, namespace: Namespace,
-                                 raw_table_name: str) -> str:
+    def convert_raw_to_namespace(self, namespace: Namespace, raw_table_name: str) -> str:
         """Return the name a table has when it is used in the given namespace.
 
         Parameters:
@@ -196,14 +202,20 @@ class ImportDBSuper:
             return table_name
         if namespace == 'import':
             assert table_name.lower().startswith(self.import_prefix.lower())
-            return (table_name.replace(self.import_prefix, '')
-                              .replace(self.import_prefix.lower(), ''))
+            return table_name.replace(self.import_prefix, '').replace(
+                self.import_prefix.lower(), ''
+            )
         elif namespace == 'perm' or namespace == 'all':
             return table_name
         raise NotImplementedError
 
-    def _execute(self, cmd: str, param_list: Sequence[Any] | None = None,
-                 cur: Any = None, mutates: bool = False) -> None:
+    def _execute(
+        self,
+        cmd: str,
+        param_list: Sequence[Any] | None = None,
+        cur: Any = None,
+        mutates: bool = False,
+    ) -> None:
         """Execute one statement, or log it and skip it in a read-only run.
 
         Parameters:
@@ -225,9 +237,12 @@ class ImportDBSuper:
             sim_str = ''
             if self.read_only and mutates:
                 sim_str = '[SIM] '
-            self.logger.log('debug', f'{sim_str} SQL COMMAND:'+
-                                     pretty_cmd[:self._log_sql_char_limit]
-                                     +f' PARAMS: {param_list}')
+            self.logger.log(
+                'debug',
+                f'{sim_str} SQL COMMAND:'
+                + pretty_cmd[: self._log_sql_char_limit]
+                + f' PARAMS: {param_list}',
+            )
         self._cmds_executed.append(cmd)
         if not self.read_only or not mutates:
             if cur:
@@ -237,9 +252,9 @@ class ImportDBSuper:
                     cur.execute(cmd, param_list)
                     self.conn.commit()
 
-    def _execute_and_fetchall(self, cmd: str, func_name: str,
-                              param_list: Sequence[Any] | None = None
-                              ) -> Sequence[ResultRow]:
+    def _execute_and_fetchall(
+        self, cmd: str, func_name: str, param_list: Sequence[Any] | None = None
+    ) -> Sequence[ResultRow]:
         """Execute one query and return every row of its result.
 
         Parameters:
@@ -253,8 +268,7 @@ class ImportDBSuper:
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
-        raise NotImplementedError(
-            'ImportDBSuper::_execute_and_fetchall must be overridden')
+        raise NotImplementedError('ImportDBSuper::_execute_and_fetchall must be overridden')
 
     @staticmethod
     def _make_warning_handler(warning_list: list[str]) -> WarningHandler:
@@ -267,9 +281,15 @@ class ImportDBSuper:
             A handler with `warnings.showwarning`'s signature, which records the message
             alone and discards the category, location and formatted line.
         """
-        def _warning_handler(message: Warning | str, category: type[Warning],
-                             filename: str, lineno: int, file: TextIO | None,
-                             line: str | None) -> None:
+
+        def _warning_handler(
+            message: Warning | str,
+            category: type[Warning],
+            filename: str,
+            lineno: int,
+            file: TextIO | None,
+            line: str | None,
+        ) -> None:
             """Append one warning's text to the captured list.
 
             Parameters:
@@ -281,6 +301,7 @@ class ImportDBSuper:
                 line: The source line, if the caller supplied one. Not recorded.
             """
             warning_list.append(str(message))
+
         return _warning_handler
 
     def _enter(self, func_name: str) -> None:
@@ -300,8 +321,7 @@ class ImportDBSuper:
             if self.logger:
                 self._old_warning_handler = warnings.showwarning
                 self._warning_handler_installed = True
-                warnings.showwarning = self._make_warning_handler(
-                                                self._warning_list)
+                warnings.showwarning = self._make_warning_handler(self._warning_list)
 
     def _exit(self) -> None:
         """End a database operation, reporting its warnings at the outermost one.
@@ -312,12 +332,11 @@ class ImportDBSuper:
         self._enter_stack.pop()
         if len(self._enter_stack) == 0:
             if self.logger and len(self._warning_list) > 0:
-                self.logger.log('warning',
-                           'Warnings found during database operation:')
+                self.logger.log('warning', 'Warnings found during database operation:')
                 for cmd in self._cmds_executed:
-                    self.logger.log('warning', '  '+cmd)
+                    self.logger.log('warning', '  ' + cmd)
                 for w in self._warning_list:
-                    self.logger.log('warning', '  '+w)
+                    self.logger.log('warning', '  ' + w)
             # Restore only if we installed (i.e. only when self.logger was set);
             # restoring unconditionally would assign None to
             # warnings.showwarning, and the next warnings.warn() would then
@@ -344,9 +363,9 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::quote_identifier must be overridden')
 
-    def table_names(self, namespace: Namespace,
-                    prefix: str | list[str] | tuple[str, ...] | None = None
-                    ) -> Collection[str]:
+    def table_names(
+        self, namespace: Namespace, prefix: str | list[str] | tuple[str, ...] | None = None
+    ) -> Collection[str]:
         """Return the names of the tables in a namespace.
 
         Parameters:
@@ -378,8 +397,7 @@ class ImportDBSuper:
         self._exit()
         return table_name.lower() in table_names
 
-    def table_info(self, namespace: Namespace,
-                   raw_table_name: str) -> list[SchemaColumn]:
+    def table_info(self, namespace: Namespace, raw_table_name: str) -> list[SchemaColumn]:
         """Return the columns of a table as the database currently defines them.
 
         Parameters:
@@ -394,8 +412,9 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::table_info must be overridden')
 
-    def drop_table(self, namespace: Namespace, raw_table_name: str,
-                   ignore_if_not_exists: bool = True) -> None:
+    def drop_table(
+        self, namespace: Namespace, raw_table_name: str, ignore_if_not_exists: bool = True
+    ) -> None:
         """Delete a table.
 
         Parameters:
@@ -409,9 +428,13 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::drop_table must be overridden')
 
-    def create_table(self, namespace: Namespace, raw_table_name: str,
-                     schema: Sequence[SchemaColumn],
-                     ignore_if_exists: bool = True) -> bool:
+    def create_table(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        schema: Sequence[SchemaColumn],
+        ignore_if_exists: bool = True,
+    ) -> bool:
         """Create a table from an OPUS table schema.
 
         Parameters:
@@ -443,9 +466,14 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::analyze_table must be overridden')
 
-    def read_rows(self, namespace: Namespace, raw_table_name: str,
-                  column_names: Sequence[str], where: str | None = None,
-                  where_params: Sequence[Any] | None = None) -> Sequence[ResultRow]:
+    def read_rows(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        column_names: Sequence[str],
+        where: str | None = None,
+        where_params: Sequence[Any] | None = None,
+    ) -> Sequence[ResultRow]:
         """Return the given columns of the rows the WHERE clause selects.
 
         Parameters:
@@ -473,14 +501,13 @@ class ImportDBSuper:
         cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
         if where:
             cmd += f' WHERE {where}'
-        res = self._execute_and_fetchall(cmd, 'read_rows',
-                                         list(where_params) if where_params
-                                         else None)
+        res = self._execute_and_fetchall(
+            cmd, 'read_rows', list(where_params) if where_params else None
+        )
         self._exit()
         return res
 
-    def insert_row(self, namespace: Namespace, raw_table_name: str,
-                   row: DBRow) -> None:
+    def insert_row(self, namespace: Namespace, raw_table_name: str, row: DBRow) -> None:
         """Insert one row.
 
         Parameters:
@@ -493,8 +520,7 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::insert_row must be overridden')
 
-    def insert_rows(self, namespace: Namespace, raw_table_name: str,
-                    rows: Sequence[DBRow]) -> None:
+    def insert_rows(self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]) -> None:
         """Insert many rows.
 
         Parameters:
@@ -507,8 +533,14 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::insert_rows must be overridden')
 
-    def update_row(self, namespace: Namespace, raw_table_name: str, row: DBRow,
-                   where: str, where_params: Sequence[Any] | None = None) -> None:
+    def update_row(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        row: DBRow,
+        where: str,
+        where_params: Sequence[Any] | None = None,
+    ) -> None:
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
@@ -524,8 +556,9 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::update_row must be overridden')
 
-    def upsert_row(self, namespace: Namespace, raw_table_name: str, key_name: str,
-                   row: DBRow) -> None:
+    def upsert_row(
+        self, namespace: Namespace, raw_table_name: str, key_name: str, row: DBRow
+    ) -> None:
         """Insert one row, or update it if its key is already present.
 
         Parameters:
@@ -540,8 +573,9 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::upsert_row must be overridden')
 
-    def upsert_rows(self, namespace: Namespace, raw_table_name: str, key_name: str,
-                    rows: Sequence[DBRow]) -> None:
+    def upsert_rows(
+        self, namespace: Namespace, raw_table_name: str, key_name: str, rows: Sequence[DBRow]
+    ) -> None:
         """Insert many rows, updating each one whose key is already present.
 
         Parameters:
@@ -556,9 +590,13 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::upsert_rows must be overridden')
 
-    def delete_rows(self, namespace: Namespace, raw_table_name: str,
-                    where: str | None = None,
-                    where_params: Sequence[Any] | None = None) -> None:
+    def delete_rows(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        where: str | None = None,
+        where_params: Sequence[Any] | None = None,
+    ) -> None:
         """Delete the rows a WHERE clause selects.
 
         Parameters:
@@ -573,10 +611,14 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::delete_rows must be overridden')
 
-    def copy_rows_between_namespaces(self, src_namespace: Namespace,
-                                     dest_namespace: Namespace, raw_table_name: str,
-                                     where: str | None = None,
-                                     where_params: Sequence[Any] | None = None) -> None:
+    def copy_rows_between_namespaces(
+        self,
+        src_namespace: Namespace,
+        dest_namespace: Namespace,
+        raw_table_name: str,
+        where: str | None = None,
+        where_params: Sequence[Any] | None = None,
+    ) -> None:
         """Copy rows of one table from one namespace to the same table in another.
 
         Parameters:
@@ -590,11 +632,11 @@ class ImportDBSuper:
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
-        raise NotImplementedError('ImportDBSuper::copy_rows_between_namespaces '
-                                  'must be overridden')
+        raise NotImplementedError('ImportDBSuper::copy_rows_between_namespaces must be overridden')
 
-    def general_select(self, cmd: str,
-                       param_list: Sequence[Any] | None = None) -> Sequence[ResultRow]:
+    def general_select(
+        self, cmd: str, param_list: Sequence[Any] | None = None
+    ) -> Sequence[ResultRow]:
         """Run a query the caller assembled and return every row.
 
         Parameters:
@@ -609,8 +651,7 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::general_select must be overridden')
 
-    def find_column_max(self, namespace: Namespace, raw_table_name: str,
-                        column_name: str) -> Any:
+    def find_column_max(self, namespace: Namespace, raw_table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.
 
         Parameters:

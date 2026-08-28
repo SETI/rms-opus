@@ -30,14 +30,19 @@ class _RecordingDatabase:
         self.updates: list[tuple[str, dict[str, Any], list[Any]]] = []
 
     def table_names(self, namespace: str, prefix: str | None = None) -> list[str]:
-        return [name for name in self._table_names
-                if prefix is None or name.startswith(prefix)]
+        return [name for name in self._table_names if prefix is None or name.startswith(prefix)]
 
     def quote_identifier(self, name: str) -> str:
         return f'`{name}`'
 
-    def update_row(self, namespace: str, raw_table_name: str, row: dict[str, Any],
-                   where: str, where_params: list[Any] | None = None) -> None:
+    def update_row(
+        self,
+        namespace: str,
+        raw_table_name: str,
+        row: dict[str, Any],
+        where: str,
+        where_params: list[Any] | None = None,
+    ) -> None:
         assert namespace == 'perm'
         assert where == '`id`=%s'
         assert where_params is not None
@@ -77,8 +82,7 @@ def test_a_preprogrammed_table_is_updated_row_for_row() -> None:
     options = _packaged_options('obs_general', 'instrument_id')
     assert len(db.updates) == len(options)
     assert [where[0] for _table, _row, where in db.updates] == [o[0] for o in options]
-    assert {table for table, _row, _where in db.updates} == {
-        'mult_obs_general_instrument_id'}
+    assert {table for table, _row, _where in db.updates} == {'mult_obs_general_instrument_id'}
     assert logger.messages_at('error') == []
 
 
@@ -126,7 +130,8 @@ def test_an_unknown_mult_table_is_reported_and_the_rest_still_run() -> None:
 
     assert db.updates, 'the second table was skipped along with the first'
     assert logger.messages_at('error') == [
-        'Unable to find table schema for mult "mult_obs_nosuchtable_x"']
+        'Unable to find table schema for mult "mult_obs_nosuchtable_x"'
+    ]
 
 
 def test_an_unknown_column_is_reported() -> None:
@@ -134,7 +139,8 @@ def test_an_unknown_column_is_reported() -> None:
     _db, logger = _run(['mult_obs_general_nosuchcolumn'])
 
     assert logger.messages_at('error') == [
-        'Unable to find a column matching mult table "mult_obs_general_nosuchcolumn"']
+        'Unable to find a column matching mult table "mult_obs_general_nosuchcolumn"'
+    ]
 
 
 def test_a_table_whose_name_is_also_a_shorter_table_still_resolves() -> None:
@@ -164,11 +170,9 @@ def test_every_mult_table_the_schemas_imply_resolves() -> None:
             if not isinstance(column, dict) or not column.get('field_name'):
                 continue
             form_type = column.get('pi_form_type')
-            head = (form_type.split(':')[0] if isinstance(form_type, str)
-                    else form_type)
+            head = form_type.split(':')[0] if isinstance(form_type, str) else form_type
             if head in ('GROUP', 'MULTIGROUP'):
-                implied.append(
-                    import_util.table_name_mult(path.stem, column['field_name']))
+                implied.append(import_util.table_name_mult(path.stem, column['field_name']))
     # Exact, not a floor: a floor cannot see a table dropping out, which is what the
     # name-splitting fault looked like. Regenerate deliberately when a schema changes.
     assert len(implied) == 90
@@ -192,16 +196,18 @@ def test_every_mult_table_the_schemas_imply_resolves() -> None:
             for option in column['mult_options']:
                 row_id, _value, label, disp_order, display, grouping, gdo = option
                 expected[(table, row_id)] = {
-                    'label': str(label), 'disp_order': disp_order,
-                    'display': display, 'grouping': grouping,
-                    'group_disp_order': gdo}
+                    'label': str(label),
+                    'disp_order': disp_order,
+                    'display': display,
+                    'grouping': grouping,
+                    'group_disp_order': gdo,
+                }
     written = {(table, where[0]): row for table, row, where in db.updates}
 
     assert written == expected
 
 
-def test_an_entry_of_the_wrong_length_stops_the_step(
-        monkeypatch: pytest.MonkeyPatch) -> None:
+def test_an_entry_of_the_wrong_length_stops_the_step(monkeypatch: pytest.MonkeyPatch) -> None:
     """A schema entry that is not seven values raises rather than writing a mangled row.
 
     An entry one value short would otherwise leave ``group_disp_order`` unset while
@@ -210,10 +216,14 @@ def test_an_entry_of_the_wrong_length_stops_the_step(
     """
     short_entry = [0, 'COISS', 'Cassini ISS', '010', 'Y', None]
     monkeypatch.setattr(
-        import_util, 'read_schema_for_table',
+        import_util,
+        'read_schema_for_table',
         lambda ctx, name, replace=None: (
             [{'field_name': 'instrument_id', 'mult_options': [short_entry]}]
-            if name == 'obs_general' else None))
+            if name == 'obs_general'
+            else None
+        ),
+    )
 
     db = _RecordingDatabase(['mult_obs_general_instrument_id'])
     ctx: ImportContext = make_context(logger=RecordingLogger(), db=db)

@@ -44,32 +44,31 @@ def _schema_fields() -> list[dict[str, Any]]:
     return columns
 
 
-def test_runs_against_the_packaged_schemas(rows: list[opus_field_tables.FieldRow]
-                                           ) -> None:
+def test_runs_against_the_packaged_schemas(rows: list[opus_field_tables.FieldRow]) -> None:
     """The generator produces a table from the schemas that ship in the package."""
     assert rows
     assert all(isinstance(row, opus_field_tables.FieldRow) for row in rows)
 
 
-def test_describes_every_searchable_column(rows: list[opus_field_tables.FieldRow]
-                                           ) -> None:
+def test_describes_every_searchable_column(rows: list[opus_field_tables.FieldRow]) -> None:
     """Every column that becomes a param_info row is described, and nothing else.
 
     A column is left out only for one of the two reasons the application leaves it
     out: it names no field at all, or its field id marks it internal.
     """
     columns = _schema_fields()
-    internal = [column for column in columns
-                if (column.get('pi_slug') or '').startswith('**')]
-    nameless = [column for column in columns
-                if not column.get('pi_slug') and not column.get('pi_referred_slug')]
+    internal = [column for column in columns if (column.get('pi_slug') or '').startswith('**')]
+    nameless = [
+        column
+        for column in columns
+        if not column.get('pi_slug') and not column.get('pi_referred_slug')
+    ]
     assert internal, 'the schemas should still carry internal fields to exclude'
     assert nameless, 'the schemas should still carry a definition-only column'
     assert len(rows) == len(columns) - len(internal) - len(nameless)
 
 
-def test_field_ids_are_unique_within_a_category(
-        rows: list[opus_field_tables.FieldRow]) -> None:
+def test_field_ids_are_unique_within_a_category(rows: list[opus_field_tables.FieldRow]) -> None:
     """No category lists the same field id twice.
 
     A field id can appear in more than one category, because a category may carry a
@@ -81,14 +80,13 @@ def test_field_ids_are_unique_within_a_category(
     pairs = [(row.category, row.field_id) for row in rows]
     assert len(pairs) == len(set(pairs))
 
-    repeated = {row.field_id for row in rows
-                if [r.field_id for r in rows].count(row.field_id) > 1}
+    repeated = {row.field_id for row in rows if [r.field_id for r in rows].count(row.field_id) > 1}
     assert repeated, 'the schemas should still carry linked fields'
     for field_id in repeated:
         labels = [row.label for row in rows if row.field_id == field_id]
         assert any('[' in label for label in labels), (
-            f'{field_id} appears in several categories with no label saying where it '
-            'is defined')
+            f'{field_id} appears in several categories with no label saying where it is defined'
+        )
 
 
 def test_every_row_is_usable(rows: list[opus_field_tables.FieldRow]) -> None:
@@ -107,7 +105,8 @@ def test_every_row_is_usable(rows: list[opus_field_tables.FieldRow]) -> None:
 
 
 def test_surface_geometry_is_collapsed_onto_one_target(
-        rows: list[opus_field_tables.FieldRow]) -> None:
+    rows: list[opus_field_tables.FieldRow],
+) -> None:
     """The per-target surface geometry fields appear once, under ``<TARGET>``."""
     surface = [row for row in rows if row.field_id.startswith('SURFACEGEO')]
     assert surface
@@ -115,8 +114,7 @@ def test_surface_geometry_is_collapsed_onto_one_target(
     assert {row.category for row in surface} == {'<TARGET> Surface Geometry Constraints'}
 
 
-def test_categories_are_contiguous_and_ordered(
-        rows: list[opus_field_tables.FieldRow]) -> None:
+def test_categories_are_contiguous_and_ordered(rows: list[opus_field_tables.FieldRow]) -> None:
     """Each category's rows are together, and General Constraints comes first.
 
     ``table_names`` decides the order, and a reader depends on a category not being

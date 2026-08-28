@@ -23,7 +23,6 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``COCIRS``."""
@@ -60,7 +59,6 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         """
         return filespec.replace('.LBL', '.IMG')
 
-
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
@@ -69,8 +67,7 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         instrument_id = self._index_col('DETECTOR_ID')
         filename = self._index_col('SPECTRUM_FILE_SPECIFICATION').split('/')[-1]
         if not filename.startswith('SPEC') or not filename.endswith('.DAT'):
-            self._log_nonrepeating_error(
-                f'Bad format SPECTRUM_FILE_SPECIFICATION "{filename}"')
+            self._log_nonrepeating_error(f'Bad format SPECTRUM_FILE_SPECIFICATION "{filename}"')
             return None
         image_num = filename[4:14]
         planet = self._cassini_planet_id()
@@ -96,8 +93,7 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         return self._create_mult('THERMAL')
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
-        return self._create_mult('STS') # Spectral Time Series
-
+        return self._create_mult('STS')  # Spectral Time Series
 
     ############################
     ### OVERRIDE FROM ObsPds ###
@@ -105,12 +101,10 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
 
     def field_obs_pds_product_id(self) -> StrField:
         # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
-        return cast(StrField,
-                    self._index_col('SPECTRUM_FILE_SPECIFICATION').split('/')[-1])
+        return cast(StrField, self._index_col('SPECTRUM_FILE_SPECIFICATION').split('/')[-1])
 
     def field_obs_pds_product_creation_time(self) -> FloatField:
         return None
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -133,14 +127,14 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         wn2 = self._index_col('MAXIMUM_WAVENUMBER')
         if wnr is None or wn2 is None:
             return None
-        return cast(FloatField, MICRONS_PER_CM*wnr/(wn2*wn2))
+        return cast(FloatField, MICRONS_PER_CM * wnr / (wn2 * wn2))
 
     def field_obs_wavelength_wave_res2(self) -> FloatField:
         wnr = self._index_col('WAVENUMBER_RESOLUTION')
         wn1 = self._index_col('MINIMUM_WAVENUMBER')
         if wnr is None or wn1 is None:
             return None
-        return cast(FloatField, MICRONS_PER_CM*wnr/(wn1*wn1))
+        return cast(FloatField, MICRONS_PER_CM * wnr / (wn1 * wn1))
 
     def field_obs_wavelength_wave_no1(self) -> FloatField:
         return cast(FloatField, self._index_col('MINIMUM_WAVENUMBER'))
@@ -160,7 +154,6 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     def field_obs_wavelength_spec_size(self) -> IntField:
         return as_int(self._index_col('SPECTRUM_SAMPLES'))
 
-
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ##########################################
@@ -169,8 +162,7 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
         if sc is None or not sc.startswith('1/') or sc[2] == ' ':
-            self._log_nonrepeating_warning(
-                f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
+            self._log_nonrepeating_warning(f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         return self._parse_cassini_sclk(sc, self._log_nonrepeating_warning)
 
@@ -178,8 +170,7 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         sc = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = self._fix_cassini_sclk(sc)
         if sc is None or not sc.startswith('1/') or sc[2] == ' ':
-            self._log_nonrepeating_warning(
-                f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
+            self._log_nonrepeating_warning(f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
             return None
         sc_cvt = self._parse_cassini_sclk(sc, self._log_nonrepeating_warning)
         if sc_cvt is None:
@@ -188,8 +179,9 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
-                f'({sc_cvt}) are in the wrong order - setting to count1')
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '
+                + f'({sc_cvt}) are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
 
         return sc_cvt
@@ -197,7 +189,6 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         mp = self._cassini_normalize_mission_phase_name()
         return self._create_mult(mp)
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_cocirs ###

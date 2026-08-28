@@ -77,38 +77,44 @@ def _request(factory: RequestFactory, query: str) -> HttpRequest:
     return factory.get('/api/data.json' + ('?' + query if query else ''))
 
 
-@pytest.mark.parametrize(('query', 'expected'), [
-    ('reqno=0', 0),
-    ('reqno=123', 123),
-    ('reqno=+7', 7),
-    ('reqno=%20456%20', 456),          # int() accepts surrounding whitespace
-    # No upper bound, deliberately recorded rather than endorsed: the value is only
-    # echoed back in the response, so nothing downstream cares how large it is.
-    ('reqno=' + '1' * 400, int('1' * 400)),
-])
-def test_get_reqno_accepts_a_non_negative_integer(factory: RequestFactory, query: str,
-                                                  expected: int) -> None:
+@pytest.mark.parametrize(
+    ('query', 'expected'),
+    [
+        ('reqno=0', 0),
+        ('reqno=123', 123),
+        ('reqno=+7', 7),
+        ('reqno=%20456%20', 456),  # int() accepts surrounding whitespace
+        # No upper bound, deliberately recorded rather than endorsed: the value is only
+        # echoed back in the response, so nothing downstream cares how large it is.
+        ('reqno=' + '1' * 400, int('1' * 400)),
+    ],
+)
+def test_get_reqno_accepts_a_non_negative_integer(
+    factory: RequestFactory, query: str, expected: int
+) -> None:
     """A request number is any non-negative integer, however it is spelled."""
     assert get_reqno(_request(factory, query)) == expected
 
 
-@pytest.mark.parametrize('query', [
-    '',                       # absent altogether
-    'reqno=',                 # present and empty
-    'reqno=-1',               # negative
-    'reqno=1.5',              # not an integer
-    'reqno=1e3',              # not an integer, even though float() would take it
-    'reqno=abc',
-    'reqno=0x10',
-    'reqno=NaN',
-])
+@pytest.mark.parametrize(
+    'query',
+    [
+        '',  # absent altogether
+        'reqno=',  # present and empty
+        'reqno=-1',  # negative
+        'reqno=1.5',  # not an integer
+        'reqno=1e3',  # not an integer, even though float() would take it
+        'reqno=abc',
+        'reqno=0x10',
+        'reqno=NaN',
+    ],
+)
 def test_get_reqno_rejects_everything_else(factory: RequestFactory, query: str) -> None:
     """Anything that is not a non-negative integer is None, which handlers answer 400."""
     assert get_reqno(_request(factory, query)) is None
 
 
-def test_get_reqno_takes_the_last_of_a_repeated_parameter(
-        factory: RequestFactory) -> None:
+def test_get_reqno_takes_the_last_of_a_repeated_parameter(factory: RequestFactory) -> None:
     """A repeated parameter is Django's last-wins, not a list reaching int()."""
     assert get_reqno(_request(factory, 'reqno=1&reqno=2')) == 2
 
@@ -119,31 +125,36 @@ def test_get_session_id_prefers_the_override(factory: RequestFactory) -> None:
     assert get_session_id(request) == 'cross_session_a'
 
 
-@pytest.mark.parametrize(('name', 'stripped', 'suffix'), [
-    ('J2000_longitude1', 'J2000_longitude', '1'),
-    ('J2000_longitude2', 'J2000_longitude', '2'),
-    ('J2000_longitude', 'J2000_longitude', None),
-    ('time3', 'time3', None),        # only 1 and 2 are range halves
-    ('time0', 'time0', None),
-    ('', '', None),
-])
-def test_the_slug_suffix_pair_agree(name: str, stripped: str,
-                                    suffix: str | None) -> None:
+@pytest.mark.parametrize(
+    ('name', 'stripped', 'suffix'),
+    [
+        ('J2000_longitude1', 'J2000_longitude', '1'),
+        ('J2000_longitude2', 'J2000_longitude', '2'),
+        ('J2000_longitude', 'J2000_longitude', None),
+        ('time3', 'time3', None),  # only 1 and 2 are range halves
+        ('time0', 'time0', None),
+        ('', '', None),
+    ],
+)
+def test_the_slug_suffix_pair_agree(name: str, stripped: str, suffix: str | None) -> None:
     """Whatever one of the two calls a suffix, the other must remove exactly that."""
     assert strip_numeric_suffix(name) == stripped
     assert get_numeric_suffix(name) == suffix
     assert stripped + (suffix or '') == name
 
 
-@pytest.mark.parametrize(('slugs', 'expected'), [
-    (None, []),
-    ('', []),
-    ('opusid', ['opusid']),
-    ('opusid,target', ['opusid', 'target']),
-    ('opusid,,target', ['opusid', '', 'target']),   # an empty slug is kept, and
-                                                    # rejected later by name
-    ('opusid,', ['opusid', '']),
-])
+@pytest.mark.parametrize(
+    ('slugs', 'expected'),
+    [
+        (None, []),
+        ('', []),
+        ('opusid', ['opusid']),
+        ('opusid,target', ['opusid', 'target']),
+        ('opusid,,target', ['opusid', '', 'target']),  # an empty slug is kept, and
+        # rejected later by name
+        ('opusid,', ['opusid', '']),
+    ],
+)
 def test_cols_to_slug_list(slugs: str | None, expected: list[str]) -> None:
     """A `?cols=` value is split on commas, and an absent one is no columns at all."""
     assert cols_to_slug_list(slugs) == expected
@@ -154,14 +165,17 @@ def test_get_mult_name() -> None:
     assert get_mult_name('obs_general.planet_id') == 'mult_obs_general_planet_id'
 
 
-@pytest.mark.parametrize(('identifier', 'is_old'), [
-    ('S_IMG_CO_ISS_1866145657_N', True),     # underscore in position 1
-    ('_IMG_CO_ISS_1866145657_N', True),      # underscore in position 0
-    ('co-iss-n1866145657', False),           # a modern opus id
-    ('vg-iss-2-s-c4360845', False),
-    ('S_', False),                           # too short to be either
-    ('', False),
-])
+@pytest.mark.parametrize(
+    ('identifier', 'is_old'),
+    [
+        ('S_IMG_CO_ISS_1866145657_N', True),  # underscore in position 1
+        ('_IMG_CO_ISS_1866145657_N', True),  # underscore in position 0
+        ('co-iss-n1866145657', False),  # a modern opus id
+        ('vg-iss-2-s-c4360845', False),
+        ('S_', False),  # too short to be either
+        ('', False),
+    ],
+)
 def test_is_old_format_ring_obs_id(identifier: str, is_old: bool) -> None:
     """A ringobsid is told from an opusid by an underscore in its first two places."""
     assert is_old_format_ring_obs_id(identifier) is is_old
@@ -172,8 +186,8 @@ def test_download_filename_is_safe_for_a_filesystem_and_a_suffix() -> None:
     name = download_filename('co-iss-n1866145657', None)
     assert name.startswith('pdsrms-')
     assert name.endswith('_co-iss-n1866145657')
-    assert ':' not in name       # Windows rejects it in a file name
-    assert '.' not in name       # would be read as the start of the suffix
+    assert ':' not in name  # Windows rejects it in a file name
+    assert '.' not in name  # would be read as the start of the suffix
     assert '/' not in name
 
 
@@ -216,8 +230,7 @@ def test_json_response_declares_its_type() -> None:
 
 def test_csv_response_is_a_named_attachment() -> None:
     """A CSV download is an attachment whose name the caller chose, plus `.csv`."""
-    response = csv_response('pdsrms-data', [[1, 'a'], [2, 'b']],
-                            column_names=['n', 'letter'])
+    response = csv_response('pdsrms-data', [[1, 'a'], [2, 'b']], column_names=['n', 'letter'])
     assert response['Content-Type'] == 'text/csv'
     assert response['Content-Disposition'] == 'attachment; filename=pdsrms-data.csv'
     rows = list(csv.reader(io.StringIO(response.content.decode())))
@@ -225,8 +238,7 @@ def test_csv_response_is_a_named_attachment() -> None:
 
 
 @pytest.mark.parametrize('column_names', [None, []])
-def test_csv_response_without_column_names_writes_no_header(
-        column_names: list[str] | None) -> None:
+def test_csv_response_without_column_names_writes_no_header(column_names: list[str] | None) -> None:
     """The header row is optional, and no columns is the same as none given.
 
     A caller that computed an empty column list must not get a blank first line,
@@ -237,16 +249,15 @@ def test_csv_response_without_column_names_writes_no_header(
     assert rows == [['1', 'a']]
 
 
-def test_an_error_message_names_the_path_it_was_given(
-        factory: RequestFactory) -> None:
+def test_an_error_message_names_the_path_it_was_given(factory: RequestFactory) -> None:
     """The builders take a request or a bare path, and say the same thing either way."""
     request = _request(factory, 'opusid=nosuch')
-    assert (http404_unknown_opus_id('nosuch', request)
-            == http404_unknown_opus_id('nosuch', '/api/data.json'))
+    assert http404_unknown_opus_id('nosuch', request) == http404_unknown_opus_id(
+        'nosuch', '/api/data.json'
+    )
 
 
-def test_an_error_message_names_the_value_that_was_rejected(
-        factory: RequestFactory) -> None:
+def test_an_error_message_names_the_value_that_was_rejected(factory: RequestFactory) -> None:
     """A page that says only "not found" leaves the user nothing to correct."""
     message = http404_unknown_opus_id('nosuch', _request(factory, 'opusid=nosuch'))
     assert 'nosuch' in message

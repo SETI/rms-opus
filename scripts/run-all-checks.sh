@@ -42,7 +42,7 @@
 #   ENABLE_* are true (RUN_* from CLI or defaults below; ENABLE_* from env or
 #   the defaults block below). OPUS flips each default true in its owning PR:
 #     ENABLE_RUFF_CHECK   (default: true)
-#     ENABLE_RUFF_FORMAT  (default: false — the tree is not reformatted yet)
+#     ENABLE_RUFF_FORMAT  (default: true)
 #     ENABLE_MYPY         (default: true)
 #     ENABLE_PYTEST       (default: true)
 #     ENABLE_PYROMA       (default: true)
@@ -90,13 +90,14 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS check state: every check is on except ruff-format, which stays false until
-# the repository is reformatted and turns true in the same change -- switching it
-# on before that fails on almost every file. mypy runs strict over the whole
-# repository; [tool.mypy]'s burn-down list is empty, while its exclude and
+# OPUS check state: every check is on. ruff-format is the newest of them: it was
+# held false while the repository was still unformatted, and turned true in the
+# change that reformatted the tree, so `ruff format` now owns layout everywhere
+# OPUS_RUFF_PATHS reaches. mypy runs strict over the whole repository;
+# [tool.mypy]'s burn-down list is empty, while its exclude and
 # ignore_missing_imports remain.
 : "${ENABLE_RUFF_CHECK:=true}"
-: "${ENABLE_RUFF_FORMAT:=false}"
+: "${ENABLE_RUFF_FORMAT:=true}"
 : "${ENABLE_MYPY:=true}"
 : "${ENABLE_PYTEST:=true}"
 : "${ENABLE_PYROMA:=true}"

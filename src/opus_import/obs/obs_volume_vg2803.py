@@ -9,10 +9,7 @@ from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_volume_vg28xx import ObsVolumeVG28xx
 
 # TODOPDS4 Verify that these are correct
-_DSN_NUM_TO_PDS4_INST = {
-    43: 'canberra.dss43_70m',
-    63: 'madrid.dss63_70m'
-}
+_DSN_NUM_TO_PDS4_INST = {43: 'canberra.dss43_70m', 63: 'madrid.dss63_70m'}
 
 
 class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
@@ -26,12 +23,10 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``VGRSS``."""
         return 'VGRSS'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -42,7 +37,6 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('OCC')
-
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
@@ -65,11 +59,9 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
         dsn = int(receiver_host[-2:])
         return self._create_mult(_DSN_NUM_TO_PDS4_INST[dsn], grouping='DSS')
 
-
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
     #####################################
-
 
     def _is_voyager_at_uranus(self) -> bool:
         """Whether this profile is of Uranus's rings rather than another planet's."""
@@ -90,19 +82,19 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
         if self._is_voyager_at_uranus():
             incidence2 = self.field_obs_ring_geometry_incidence2()
             assert incidence2 is not None
-            return 90. - incidence2
+            return 90.0 - incidence2
         incidence1 = self.field_obs_ring_geometry_incidence1()
         assert incidence1 is not None
-        return incidence1 - 90.
+        return incidence1 - 90.0
 
     def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
         if self._is_voyager_at_uranus():
             incidence1 = self.field_obs_ring_geometry_incidence1()
             assert incidence1 is not None
-            return 90. - incidence1
+            return 90.0 - incidence1
         incidence2 = self.field_obs_ring_geometry_incidence2()
         assert incidence2 is not None
-        return incidence2 - 90.
+        return incidence2 - 90.0
 
     # Ring elevation to observer, same to opening angle except, it's positive if
     # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -111,18 +103,18 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     def field_obs_ring_geometry_observer_ring_elevation1(self) -> FloatField:
         incidence1 = self.field_obs_ring_geometry_incidence1()
         assert incidence1 is not None
-        return incidence1 - 90.
+        return incidence1 - 90.0
 
     def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
         incidence2 = self.field_obs_ring_geometry_incidence2()
         assert incidence2 is not None
-        return incidence2 - 90.
+        return incidence2 - 90.0
 
     def field_obs_ring_geometry_phase1(self) -> FloatField:
-        return 180.
+        return 180.0
 
     def field_obs_ring_geometry_phase2(self) -> FloatField:
-        return 180.
+        return 180.0
 
     # Incidence angle: The angle between the point where the incoming source
     # photos hit the ring and the normal to the ring plane on the LIT side of
@@ -137,7 +129,8 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
         cal_inc = 180 - max_ea
         if abs(cal_inc - inc) >= 0.005:
             self._log_nonrepeating_error(
-                'The difference between incidence angle and 180-emission is > 0.005')
+                'The difference between incidence angle and 180-emission is > 0.005'
+            )
         return cast(FloatField, cal_inc)
 
     def field_obs_ring_geometry_incidence2(self) -> FloatField:
@@ -146,7 +139,8 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
         cal_inc = 180 - max_ea
         if abs(cal_inc - inc) >= 0.005:
             self._log_nonrepeating_error(
-                'The difference between incidence angle and 180-emission is > 0.005')
+                'The difference between incidence angle and 180-emission is > 0.005'
+            )
         return cast(FloatField, cal_inc)
 
     # Emission angle: the angle between the normal vector on the LIT side, to the
@@ -173,12 +167,12 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
         emission2 = self.field_obs_ring_geometry_emission2()
         assert emission2 is not None
-        return 180. - emission2
+        return 180.0 - emission2
 
     def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
         emission1 = self.field_obs_ring_geometry_emission1()
         assert emission1 is not None
-        return 180. - emission1
+        return 180.0 - emission1
 
     # Opening angle to Sun: the angle between the ring surface to the direction
     # where incoming photons from the source. Positive if source is at the north
@@ -188,12 +182,12 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     def field_obs_ring_geometry_solar_ring_opening_angle1(self) -> FloatField:
         incidence1 = self.field_obs_ring_geometry_incidence1()
         assert incidence1 is not None
-        return incidence1 - 90.
+        return incidence1 - 90.0
 
     def field_obs_ring_geometry_solar_ring_opening_angle2(self) -> FloatField:
         incidence2 = self.field_obs_ring_geometry_incidence2()
         assert incidence2 is not None
-        return incidence2 - 90.
+        return incidence2 - 90.0
 
     # Opening angle to observer: the angle between the ring surface to the direction
     # where outgoing photons to the observer. Positive if observer is at the north
@@ -203,9 +197,9 @@ class ObsVolumeVG2803VGRSS(ObsVolumeVG28xx):
     def field_obs_ring_geometry_observer_ring_opening_angle1(self) -> FloatField:
         emission1 = self.field_obs_ring_geometry_emission1()
         assert emission1 is not None
-        return emission1 - 90.
+        return emission1 - 90.0
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
         emission2 = self.field_obs_ring_geometry_emission2()
         assert emission2 is not None
-        return emission2 - 90.
+        return emission2 - 90.0

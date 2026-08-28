@@ -3,7 +3,6 @@
 HST ACS observations.
 """
 
-
 from opus_import.obs.field_types import IntField, MultFieldRet, as_int
 from opus_import.obs.obs_type_image import SIXTEEN_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_hubble_common import ObsVolumeHubbleCommon
@@ -23,9 +22,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
             Whether the filter is a grism or a prism, followed by the two filter names.
         """
         filter1, filter2 = self._decode_filters()
-        return (filter1.startswith('G') or filter1.startswith('PR'),
-                filter1, filter2)
-
+        return (filter1.startswith('G') or filter1.startswith('PR'), filter1, filter2)
 
     #############################
     ### OVERRIDE FROM ObsBase ###
@@ -35,7 +32,6 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``HSTACS``."""
         return 'HSTACS'
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -54,7 +50,6 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult(self._observation_type())
 
-
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
@@ -62,8 +57,7 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
     def field_obs_type_image_levels(self) -> IntField:
         if not self._is_image():
             return None
-        return SIXTEEN_BIT_IMAGE_LEVELS # ACS Inst Handbook 25, Sec 3.4.3
-
+        return SIXTEEN_BIT_IMAGE_LEVELS  # ACS Inst Handbook 25, Sec 3.4.3
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -87,19 +81,19 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
             # G800L's resolving power depends on the channel and order, which we
             # don't know
             self._log_nonrepeating_warning(
-                'G800L filter used, but not enough information available to '+
-                'compute spec_size')
-            wr = 8000. / 140 * .0001
-            bw = (10500-5500) * .0001
+                'G800L filter used, but not enough information available to ' + 'compute spec_size'
+            )
+            wr = 8000.0 / 140 * 0.0001
+            bw = (10500 - 5500) * 0.0001
         elif filter1 == 'PR200L':
-            wr = 2500. / 59 * .0001
-            bw = (3900-1700) * .0001
+            wr = 2500.0 / 59 * 0.0001
+            bw = (3900 - 1700) * 0.0001
         elif filter1 == 'PR110L':
-            wr = 1500. / 79 * .0001
-            bw = (1800-1150) * .0001
+            wr = 1500.0 / 79 * 0.0001
+            bw = (1800 - 1150) * 0.0001
         elif filter1 == 'PR130L':
-            wr = 1500. / 96 * .0001
-            bw = (1800-1250) * .0001
+            wr = 1500.0 / 96 * 0.0001
+            bw = (1800 - 1250) * 0.0001
         else:
             self._log_nonrepeating_error(f'Unknown filter {filter1}')
             return None
@@ -119,7 +113,6 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
             return self._create_mult('LINEAR')
         return self._create_mult('NONE')
 
-
     ###########################################
     ### OVERRIDE FROM ObsVolumeHubbleCommon ###
     ###########################################
@@ -131,12 +124,25 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
         if filter2 is not None and not filter2.startswith('POL'):
             self._log_nonrepeating_warning(
                 f'Filter combination {filter1}+{filter2} does not have a'
-                +' polarizer as the second filter - filter_type may be wrong')
+                + ' polarizer as the second filter - filter_type may be wrong'
+            )
 
         # From ACS Inst handbook Table 3.3
-        if filter1 in ('F475W', 'F625W', 'F775W', 'F850LP', 'F435W', 'F555W',
-                       'F550M', 'F606W', 'F814W', 'F220W', 'F250W', 'F330W',
-                       'CLEAR'):
+        if filter1 in (
+            'F475W',
+            'F625W',
+            'F775W',
+            'F850LP',
+            'F435W',
+            'F555W',
+            'F550M',
+            'F606W',
+            'F814W',
+            'F220W',
+            'F250W',
+            'F330W',
+            'CLEAR',
+        ):
             return self._create_mult('W')
 
         if filter1 in ('F658N', 'F502N', 'F660N', 'F344N', 'F892N'):
@@ -156,6 +162,5 @@ class ObsVolumeHSTJxxxxx(ObsVolumeHubbleCommon):
 
         # ACS doesn't have any CH4 filters
 
-        self._log_nonrepeating_error(
-            f'Unknown filter {filter1} while determining filter type')
+        self._log_nonrepeating_error(f'Unknown filter {filter1} while determining filter type')
         return self._create_mult(None)

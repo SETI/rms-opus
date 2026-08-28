@@ -72,6 +72,7 @@ _LID_TO_INST = {
     'teide_155cm': 'teide.carlossanchez_1m55',
 }
 
+
 class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     """The Earth-based stellar occultations of Uranus and its rings.
 
@@ -131,11 +132,12 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
             star's position is treated as fixed.
         """
         star_id = self._star_id()
-        return (config_targets.STAR_RA_DEC[star_id][0]-self._STAR_RA_DEC_SLOP,
-                config_targets.STAR_RA_DEC[star_id][0]+self._STAR_RA_DEC_SLOP,
-                config_targets.STAR_RA_DEC[star_id][1]-self._STAR_RA_DEC_SLOP,
-                config_targets.STAR_RA_DEC[star_id][1]+self._STAR_RA_DEC_SLOP)
-
+        return (
+            config_targets.STAR_RA_DEC[star_id][0] - self._STAR_RA_DEC_SLOP,
+            config_targets.STAR_RA_DEC[star_id][0] + self._STAR_RA_DEC_SLOP,
+            config_targets.STAR_RA_DEC[star_id][1] - self._STAR_RA_DEC_SLOP,
+            config_targets.STAR_RA_DEC[star_id][1] + self._STAR_RA_DEC_SLOP,
+        )
 
     #############################
     ### OVERRIDE FROM ObsBase ###
@@ -151,7 +153,6 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
             from being created for a bundle that has no single instrument.
         """
         return self._inst_name()
-
 
     @property
     def inst_host_id(self) -> str:
@@ -205,7 +206,6 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
             return [(None, None)]
         return [(target_name, target_info[2])]
 
-
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
@@ -214,8 +214,7 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
         occ_type = self._index_col('rings:occultation_type')
         if occ_type == 'stellar':
             return self._create_mult('STE')
-        self._log_nonrepeating_error(
-            f'Unknown rings:occultation:type "{occ_type}"')
+        self._log_nonrepeating_error(f'Unknown rings:occultation:type "{occ_type}"')
         return self._create_mult(None)
 
     def field_obs_profile_occ_dir(self) -> MultFieldRet:
@@ -224,7 +223,8 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
             occ_dir = self._index_col('rings:time_series_direction')
         if occ_dir is None:
             self._log_nonrepeating_error(
-                'rings:ring_profile_direction and rings:time_series_direction missing')
+                'rings:ring_profile_direction and rings:time_series_direction missing'
+            )
             return self._create_mult(None)
         occ_dir = occ_dir.upper()
         if occ_dir in ('INGRESS', 'EGRESS', 'BOTH'):
@@ -262,12 +262,10 @@ class ObsBundleUranusOccsEarthbased(ObsBundleOccCommon):
     def field_obs_profile_source(self) -> MultFieldRet:
         star_name = self._index_col('rings:star_name')
         star_name_id = star_name.upper().replace(' ', '_')
-        return self._create_mult(star_name_id, disp_name=star_name,
-                                 grouping='Stars')
+        return self._create_mult(star_name_id, disp_name=star_name, grouping='Stars')
 
     def field_obs_profile_host(self) -> MultFieldRet:
         return self._create_mult(self._inst_name())
-
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###

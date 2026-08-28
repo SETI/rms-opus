@@ -58,8 +58,9 @@ def test_read_schema_for_table_parses_a_schema() -> None:
 
 def test_read_schema_for_table_strips_the_import_prefix() -> None:
     """An import-table name resolves to the schema of the table it is a copy of."""
-    assert (import_util.read_schema_for_table(make_context(), 'imp_obs_general')
-            == import_util.read_schema_for_table(make_context(), 'obs_general'))
+    assert import_util.read_schema_for_table(
+        make_context(), 'imp_obs_general'
+    ) == import_util.read_schema_for_table(make_context(), 'obs_general')
 
 
 def test_read_schema_for_table_substitutes_the_surface_geometry_target() -> None:
@@ -78,7 +79,8 @@ def test_read_schema_for_table_returns_none_for_an_unknown_table() -> None:
 
 
 def test_schemas_are_found_from_any_working_directory(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """The schemas are package data, so they no longer have to be run from one directory.
 
     Before the pipeline became a package this lookup was a relative path, and running

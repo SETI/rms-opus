@@ -39,7 +39,6 @@ class StripWhitespaceMiddleware:
         self.whitespace_lead = re.compile(r'^\s+', re.MULTILINE)
         self.whitespace_trail = re.compile(r'\s+$', re.MULTILINE)
 
-
     def __call__(self, request: HttpRequest) -> HttpResponse:
         """Answer a request, stripping the whitespace out of a text response.
 
@@ -58,7 +57,7 @@ class StripWhitespaceMiddleware:
                 a cached 304 response does not.
         """
         response = self.get_response(request)
-        if "text" in response['Content-Type']:
+        if 'text' in response['Content-Type']:
             # Use next line instead to avoid failure on cached / HTTP 304 NOT MODIFIED responses without Content-Type
             # if response.status_code == 200 and "text" in response['Content-Type']:
             decoded = response.content.decode()

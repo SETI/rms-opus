@@ -21,12 +21,13 @@ class ObsBasePDS4(ObsBase):
     ### Public access methods ###
     #############################
 
-
-    def primary_filespec_from_index_row(self, row: IndexRow,
-                                        convert_lbl: bool = False,
-                                        add_phase_from_row: bool = False,
-                                        add_phase_from_inst: bool = False
-                                        ) -> str | None:
+    def primary_filespec_from_index_row(
+        self,
+        row: IndexRow,
+        convert_lbl: bool = False,
+        add_phase_from_row: bool = False,
+        add_phase_from_inst: bool = False,
+    ) -> str | None:
         """Return the file specification a PDS4 index row carries.
 
         A PDS4 index names the file the same way in every one of its tables, so unlike the
@@ -42,7 +43,6 @@ class ObsBasePDS4(ObsBase):
             The path the row's ``filepath`` column holds.
         """
         return cast(str | None, row['filepath'])
-
 
     ###############################
     ### Internal access methods ###
@@ -60,11 +60,9 @@ class ObsBasePDS4(ObsBase):
         """
         return pdsfile.pds4file.Pds4File.from_filespec(filespec, fix_case=True)
 
-
     # Helpers for time fields
 
-    def _time_from_index(self,
-                         column: str = 'pds:start_date_time') -> FloatField:
+    def _time_from_index(self, column: str = 'pds:start_date_time') -> FloatField:
         """Read the observation's start time from the primary index row.
 
         Parameters:
@@ -75,8 +73,9 @@ class ObsBasePDS4(ObsBase):
         """
         return self._time_helper('index_row', column)
 
-    def _time2_from_index(self, start_time_sec: FloatField,
-                          column: str = 'pds:stop_date_time') -> FloatField:
+    def _time2_from_index(
+        self, start_time_sec: FloatField, column: str = 'pds:stop_date_time'
+    ) -> FloatField:
         """Read the observation's stop time from the primary index row.
 
         Parameters:
@@ -88,8 +87,7 @@ class ObsBasePDS4(ObsBase):
         """
         return self._time2_helper('index_row', start_time_sec, column)
 
-    def _time_from_some_index(self,
-                              column: str = 'pds:start_date_time') -> FloatField:
+    def _time_from_some_index(self, column: str = 'pds:start_date_time') -> FloatField:
         """Read the observation's start time from whichever index row carries the column.
 
         Parameters:
@@ -100,8 +98,9 @@ class ObsBasePDS4(ObsBase):
         """
         return self._time_from_index(column=column)
 
-    def _time2_from_some_index(self, time1: FloatField,
-                               column: str = 'pds:stop_date_time') -> FloatField:
+    def _time2_from_some_index(
+        self, time1: FloatField, column: str = 'pds:stop_date_time'
+    ) -> FloatField:
         """Read the observation's stop time from whichever index row carries the column.
 
         Parameters:
