@@ -120,7 +120,19 @@ dev = [
   "pytest-django>=4.5",
   "pytest-xdist>=3.8.0",
   "djangorestframework",
-  "ruff>=0.8",
+  # Floor set by the formatter, not the linter. `ruff format --check` is a CI
+  # gate, so the tree has to agree with whichever ruff the environment resolved,
+  # and a formatter's output is a property of its version: ruff's 2025 style
+  # guide arrived in 0.9.0 and changed two things this repository contains a lot
+  # of -- expressions inside f-strings gained spaces around their operators, and
+  # adjacent implicitly-concatenated strings are joined. Measured on this tree,
+  # 0.8.6 formats 29 of the 189 reformatted files differently from every release
+  # from 0.9.0 onwards, which are byte-identical to each other; a 0.8.x install
+  # would therefore fail the gate on code nobody had touched. Regenerate rather
+  # than trust that: format the tree under two versions and compare the results.
+  # This is a floor, not a cap -- newer ruff is always allowed, and a future
+  # style guide is handled by reformatting under it, in its own commit.
+  "ruff>=0.9",
   "bandit[toml]>=1.8",
   "pyroma>=4.2",
   "vulture>=2.14",
