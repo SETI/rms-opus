@@ -1,5 +1,3 @@
-.. This file is the API guide itself; nothing generates it.
-
 .. _basicconcepts:
 
 Basic Concepts: Metadata Fields, Retrieving, and Searching

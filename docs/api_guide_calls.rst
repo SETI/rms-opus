@@ -1,5 +1,3 @@
-.. This file is the API guide itself; nothing generates it.
-
 .. _apicalls:
 
 API Calls
