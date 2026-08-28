@@ -112,7 +112,7 @@ dev = [
   # Floor set by CVE-2025-71176: pytest through 9.0.2 creates
   # /tmp/pytest-of-<user> with predictable permissions, so a local user on a
   # shared UNIX box can cause a denial of service or possibly gain privileges.
-  # This floor now governs every environment that runs the suite -- the
+  # This floor governs every environment that runs the suite -- the
   # GitHub-hosted jobs, the self-hosted integration runner and developer
   # installs -- because all three install `-e ".[dev]"`.
   "pytest>=9.0.3",
@@ -177,17 +177,12 @@ markers = [
   "holdings: reads a product file out of the PDS holdings tree, not just the database row naming it",
   "livetest: queries an OPUS server outside this process rather than the in-process application",
 ]
-# Warnings are errors so a third-party deprecation cannot rot unnoticed. Add a
-# narrowly-scoped "default::"/"ignore::" entry (with a comment) only for a
-# warning coming from code we cannot fix.
+# Warnings are errors so a third-party deprecation cannot rot unnoticed.
 # There are no entries, and that is the claim: nothing this suite imports raises a
-# warning that has to be tolerated. The one entry this list used to carry named
-# rms-julian 3.0.1's `setParseAction` DeprecationWarning; [project].dependencies now
-# floors rms-julian at 3.0.2, where it is fixed, so the suppression suppressed
-# nothing and a suppression that suppresses nothing is a claim about the code that is
-# no longer true. Add a narrowly-scoped "default::"/"ignore::" entry -- with a comment
-# saying which package raises it and why it cannot be fixed -- only for a warning
-# coming from code this project does not control.
+# warning that has to be tolerated. A suppression that suppresses nothing is a claim
+# about the code that is false, so add a narrowly-scoped "default::"/"ignore::" entry
+# -- with a comment saying which package raises it and why it cannot be fixed -- only
+# for a warning coming from code this project does not control.
 filterwarnings = [
   "error",
 ]
@@ -406,19 +401,8 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
 # Empty. Every tree in RUFF_PATHS passes with no *per-file* exception. That is what
-# an empty table means and all it means: the codes in `extend-ignore` above are still
-# ignored globally, and `exclude` above still lists the paths that are not project
-# source. What the burn-down held, and where each entry went:
-#
-#   E722, F403/F405   the bare `except:` and the star imports were refactored away
-#                     by the PRs that owned those trees.
-#   PT015, B011, B006 the `assert False` statements became `NotImplementedError`
-#                     and the mutable default arguments were rewritten.
-#   E501              retired into the documented global ignore above rather than
-#                     burned down; the reasoning is stated there.
-#   N801, N802        the last row. The live-DB suites' classes and test methods now
-#                     read `CartTests` and `test__api_meta_mults_coiss_2111`; a PDS
-#                     bundle identifier keeps its shape in lower case.
+# an empty table means and all it means: the codes in `extend-ignore` above are
+# ignored globally, and `exclude` above lists the paths that are not project source.
 #
 # A new row is not the way to land code that does not pass. Fix the code, or suppress
 # the one rule on the one line with `# noqa: <CODE>` and the reason, which `RUF100`
@@ -436,7 +420,7 @@ enabled = false
 # Recurse the code trees; exclude the fixture- and live-server-driven suites
 # (integration_tests/{test_api,test_db_data,test_perf}) and the out-of-scope
 # perf_test/.
-# Every code tree is under src/ now; `tests/` is deliberately not a target.
+# Every code tree is under src/; `tests/` is deliberately not a target.
 # Path-anchored so a same-named directory elsewhere in the tree cannot match by
 # accident. integration_tests/apps_db_tests is deliberately absent: the per-app suites
 # it holds are scanned.
@@ -453,17 +437,13 @@ exclude_dirs = [
   "src/opus_app/static/admin/js/compress.py",
 ]
 targets = ["src", "integration_tests", "manage.py"]
-# This list opened with fourteen category skips as a burn-down valve and has been
-# closed down to the one entry that is irreducible: a category skip hides every
+# One entry, and it is the one that is irreducible: a category skip hides every
 # future instance of its rule as well as the ones it was written for. Everything
 # else is a per-line `# nosec <ID> - <reason>` at the statement it covers;
-# regenerate the set with `grep -rn "# nosec" src integration_tests manage.py`, and
-# re-derive what the list is holding back by emptying it and re-running bandit.
-#
-# B105 left when the 'XXX' placeholder went with the dictionary app's secrets
-# template, and B610 when the last QuerySet.extra() call site was rewritten.
-# B607 left here: it fired zero times, and a skip that suppresses nothing is a
-# claim about the code that is no longer true.
+# regenerate that set with `grep -rn "# nosec" src integration_tests manage.py`, and
+# re-derive what this list is holding back by emptying it and re-running bandit.
+# A skip that suppresses nothing is a claim about the code that is false, so a rule
+# that stops firing comes out of the list rather than being left in it.
 #
 # Expect bandit to log "nosec encountered (Bxxx), but no failed test on
 # file X:N" lines on a clean run. That is not a misplaced marker: bandit runs
@@ -474,26 +454,18 @@ targets = ["src", "integration_tests", "manage.py"]
 # suppressing every check on the line, which is worse, so the markers name their
 # test id and the warnings stand. The exit status is what gates.
 skips = [
-  # assert_used. These are not input validation and never were: they are the
-  # narrowing assertions the annotation work added so that mypy strict could
-  # follow an invariant the code already relied on, plus a few pre-existing
-  # invariant checks. Do not trust the number below without re-measuring -- it
-  # grows with every annotation PR. Regenerate it with `skips` emptied and
-  # `--ignore-nosec`, which is the only way to see what the list is holding back:
+  # assert_used. These are not input validation: they are the narrowing assertions
+  # that let mypy strict follow an invariant the code already relies on, plus a few
+  # long-standing invariant checks. Every package bandit scans holds some, so this
+  # is not a skip that covers only one tree, and a per-line `# nosec` on each would
+  # be hundreds of comments restating one fact. Trust no figure for how many there
+  # are; regenerate it with `skips` emptied and `--ignore-nosec`, which is the only
+  # way to see what this list is holding back:
   #     bandit -c pyproject.toml -r src integration_tests manage.py \
   #            -f json -q --ignore-nosec
-  # Measured that way when this comment was written: 326 B101 findings -- 199 in
-  # src/opus_import, 90 in src/opus_app, 17 in src/opus_log_analyzer, 16 in
-  # src/opus_support and 4 in integration_tests/apps_db_tests. An earlier
-  # measurement read 322 without that last group; any change that annotates
-  # anything bandit scans moves this number, which is why the command is written
-  # out above rather than the figure being trusted.
-  # The largest share is in other packages' trees, but every annotation PR has
-  # contributed its own, so this is not a skip that only covers somebody else's
-  # code. A per-line `# nosec` on each would be 326 comments restating one fact,
-  # which is the noise this list was shrunk to avoid. Python's -O strips asserts,
-  # and nothing here is deployed with -O; if that ever changes, these become real
-  # checks and this skip has to be revisited rather than kept.
+  # Python's -O strips asserts, and nothing here is deployed with -O; if that ever
+  # changes, these become real checks and this skip has to be revisited rather than
+  # kept.
   "B101",
 ]
 

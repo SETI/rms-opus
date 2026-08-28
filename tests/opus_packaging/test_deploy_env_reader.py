@@ -4,9 +4,8 @@
 else, and it is the deploy's only chance to reject a bad environment *before* it stops
 Apache. Its failure modes are all quiet ones: a key missing from ``deploy.env``, a key
 left as the ``<PLACEHOLDER>`` the template ships, or a key present but empty. The last
-of those is not hypothetical -- an unset ``OPUS_SECRET_KEY`` used to reach ``opus.toml``
-as an empty string, because the file this one replaces validated seven variables and
-not that one.
+of those is not hypothetical -- an unset ``OPUS_SECRET_KEY`` that this reader lets by
+reaches ``opus.toml`` as an empty string, and Django then runs with no secret key.
 
 Like the generator tests beside them, these run the shipped script under ``bash``
 rather than re-implementing what it does.

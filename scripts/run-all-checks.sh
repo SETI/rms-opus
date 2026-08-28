@@ -90,12 +90,11 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS check state: every check is on. ruff-format is the newest of them: it was
-# held false while the repository was still unformatted, and turned true in the
-# change that reformatted the tree, so `ruff format` now owns layout everywhere
-# OPUS_RUFF_PATHS reaches. mypy runs strict over the whole repository;
+# OPUS check state: every check is on. `ruff format` owns layout everywhere
+# OPUS_RUFF_PATHS reaches, and mypy runs strict over the whole repository;
 # [tool.mypy]'s burn-down list is empty, while its exclude and
-# ignore_missing_imports remain.
+# ignore_missing_imports carry the non-source paths and the untyped third-party
+# packages.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=true}"
 : "${ENABLE_MYPY:=true}"
@@ -106,7 +105,7 @@ SCOPE_SPECIFIED=false
 : "${ENABLE_SPHINX:=true}"
 : "${ENABLE_PYMARKDOWN:=true}"
 
-# Every code tree now lives under src/, with the live-DB suites in
+# Every code tree lives under src/, with the live-DB suites in
 # integration_tests/, the unit suite in tests/, the documentation build's own
 # extensions in docs/ and manage.py at the root.
 # Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
@@ -114,7 +113,7 @@ SCOPE_SPECIFIED=false
 # never scans tests.
 : "${OPUS_RUFF_PATHS:=src integration_tests tests docs manage.py}"
 # mypy covers the same trees, and integration_tests/ is checked strictly like
-# every other one: no tree carries a burn-down entry any more.
+# every other one: no tree carries a burn-down entry.
 : "${OPUS_MYPY_PATHS:=src integration_tests tests docs manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
 : "${OPUS_VULTURE_PATHS:=src integration_tests tests docs manage.py vulture_whitelist.py}"
@@ -411,8 +410,7 @@ run_code_checks() {
     if [ "$RUN_MYPY" = true ] && [ "$ENABLE_MYPY" = true ]; then
         print_info "Running mypy..."
         # The source root and the strict settings come from pyproject.toml, which
-        # carries no burn-down list any more; the paths match the CI lint job's
-        # MYPY_PATHS.
+        # carries no burn-down list; the paths match the CI lint job's MYPY_PATHS.
         # shellcheck disable=SC2086  # word-splitting of the path list is intended
         if python -m mypy $OPUS_MYPY_PATHS; then
             print_success "Mypy passed"

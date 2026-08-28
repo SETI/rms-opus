@@ -28,8 +28,8 @@ source ${SECRETS_DIR}/deploy.env
 
 # Every variable the chain needs, checked here rather than where it is used, so a
 # deploy fails before it stops Apache rather than half way through. OPUS_SECRET_KEY
-# is in this list where the old opus_secrets reader left it out: an unset one used to
-# reach opus.toml as an empty string and Django would then run with no secret key.
+# is in this list because an unset one reaches opus.toml as an empty string, and
+# Django then runs with no secret key.
 for _required in \
     OPUS_DIR OPUS_DB_USER OPUS_DB_PASSWORD OPUS_SECRET_KEY \
     PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR LAST_BLOG_UPDATE_FILE NOTIFICATION_FILE; do

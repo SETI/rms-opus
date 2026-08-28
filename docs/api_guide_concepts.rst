@@ -1,5 +1,4 @@
-.. Ported from the API guide OPUS used to render inside the application. This
-   file is the guide now; nothing regenerates it.
+.. This file is the API guide itself; nothing generates it.
 
 .. _basicconcepts:
 

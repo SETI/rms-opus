@@ -317,13 +317,9 @@ refactor did not change what OPUS answers.
 
 The lint, unit and integration jobs all install the same thing a developer does,
 ``pip install -e ".[dev]"`` -- **Docs** installs ``".[docs]"`` and **Package**
-deliberately installs the built wheel instead of the project. That is worth stating
-because it was not always so: the
-self-hosted runner used to install a compiled ``requirements.txt`` while the
-GitHub-hosted jobs installed the declared dependencies, so the two resolved different
-versions and a check could pass on one side and fail on the other for no reason
-visible in the diff. There is no lock file now; the integration job logs
-``pip freeze``, which is where to look when a check that passed yesterday fails today.
+deliberately installs the built wheel instead of the project. No job installs from a
+lock file, so the integration job logs ``pip freeze``, which is where to look when a
+check that passed yesterday fails today.
 
 Third-party actions are referenced by major tag -- ``actions/checkout@v6`` and the
 rest -- which is what ``.cursor/rules/environment.mdc`` asks for. The one exception

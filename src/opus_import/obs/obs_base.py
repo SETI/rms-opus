@@ -72,14 +72,12 @@ class ObsBase:
         self._ctx = ctx
         self._bundle = bundle
         self._metadata = metadata
-        # --import-ignore-errors, read from the run's arguments rather than taken as a
-        # constructor argument. It used to be a parameter with a False default that no
-        # construction site ever passed, so the two branches reading it -- an unknown
-        # target name here and in `opus_import.obs.obs_cassini_common_pds3` -- could not
-        # be reached and the option only half-worked: `opus_import.steps.do_import`
-        # honoured it when deciding whether to abort, and the obs layer never saw it.
-        # Reading it eagerly means a context built without real parsed arguments fails
-        # at construction rather than only on the rare branch that consults it.
+        # --import-ignore-errors, read off the run's arguments rather than taken as a
+        # constructor argument, so that every construction site reaches the two branches
+        # that consult it -- an unknown target name here and in
+        # `opus_import.obs.obs_cassini_common_pds3` -- without having to pass it on.
+        # Read eagerly, so a context built without real parsed arguments fails at
+        # construction rather than only on the rare error path that needs the flag.
         self._ignore_errors = ctx.args.import_ignore_errors
 
         self._opus_id_last_filespec: str | None = None  # For caching opus_id

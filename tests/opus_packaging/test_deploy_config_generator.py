@@ -3,8 +3,8 @@
 ``scripts/server/import_and_deploy/_write_opus_toml.sh`` is the only part of the
 deploy chain that can be exercised away from a server, and it is the part whose
 failures are silent: a mis-escaped password produces a file the loader rejects at
-startup, and an unset variable used to produce a file the loader *accepts* with an
-empty Django secret key in it.
+startup, and an unset variable would otherwise produce a file the loader *accepts*,
+with an empty Django secret key in it.
 
 These tests run the shipped script -- not a copy of it, and not a re-implementation of
 its heredoc -- under ``bash`` with a controlled environment, then load what it wrote
@@ -291,9 +291,9 @@ def test_a_stale_temporary_file_does_not_keep_its_permissions(
 
     It has to inspect the file *mid-flight*, for the same reason that test does: on a
     successful run the mode is renamed away and then chmod'd, so the end state is
-    identical whether or not the leftover was removed. The first version of this test
-    asserted the end state and passed with the ``rm -f`` deleted -- the same
-    check-that-cannot-fail shape, caught by mutating the guard it was written for. So
+    identical whether or not the leftover was removed, so asserting it would pass with
+    the ``rm -f`` deleted -- the same check-that-cannot-fail shape the umask test one
+    layer up has to avoid. So
     the destination is again a directory the process cannot write into, stranding the
     temporary file with the mode it was actually created with.
     """

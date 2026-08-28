@@ -191,7 +191,7 @@ def test_shell_file_parses(script: Path) -> None:
 def test_the_parse_check_can_actually_fail(tmp_path: Path) -> None:
     """A file with a syntax error is rejected.
 
-    Constructed with the exact defect this module was written for: a ``#`` comment
+    Constructed with the exact defect this module guards against: a ``#`` comment
     inside a backslash continuation, which reads as harmless and is not.
     """
     broken = tmp_path / 'broken.sh'

@@ -238,15 +238,13 @@ with ``pip install --upgrade`` instead, reusing its ``opus.toml`` because only a
 deploy knows which database to name in one.
 
 The optional argument of both is a **PEP 440 version specifier** appended to the
-distribution name -- ``==3.23.0`` for a particular release, omitted for the newest. It
-used to be a git branch name; there is no branch to choose any more.
+distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
 
 ``deploy_new_code_only.sh`` refuses to run against anything that is not an installation
 this chain created -- a git checkout at that path, a missing ``opus_venv``, or a missing
-``opus.toml`` -- and names the full deploy as the way across. That refusal is what
-carries a server over from the pre-pip arrangement: the first deploy after this change
-has to be ``deploy_new_code_and_database.sh``, which builds the installation from
-nothing.
+``opus.toml`` -- and names the full deploy as the way across. An in-place upgrade of
+any of those would leave a half-converted installation, so the way forward is
+``deploy_new_code_and_database.sh``, which builds the installation from nothing.
 
 ``run_full_opus_import.sh`` runs a complete import into a new database, which is the
 first half of bringing up a new one.
