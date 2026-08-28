@@ -36,9 +36,12 @@ jobs:
     # are what take the time, and they are the network-dependent ones.
     timeout-minutes: 30
     env:
-      # Ruff formatting is not enforced until the format-only PR (PR-23); the
-      # step below is kept but disabled, mirroring the ENABLE_* toggles in
-      # scripts/run-all-checks.sh. PR-23 flips this to 'true'.
+      # `ruff format` is not enforced yet: the repository has never been
+      # reformatted, so switching it on before that happens fails on almost
+      # every file. The step below is kept and disabled rather than deleted so
+      # that the change which reformats the tree has only to flip this to
+      # 'true'. ENABLE_RUFF_FORMAT in scripts/run-all-checks.sh is false for
+      # the same reason and turns on at the same time.
       ENABLE_RUFF_FORMAT: 'false'
       # Every code tree lives under src/ now; the live-DB suites are in
       # integration_tests/, the unit suite in tests/, the documentation build's

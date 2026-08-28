@@ -8,8 +8,8 @@ empty Django secret key in it.
 
 These tests run the shipped script -- not a copy of it, and not a re-implementation of
 its heredoc -- under ``bash`` with a controlled environment, then load what it wrote
-through :func:`opus_config.load_config`. That is the technique PR-08 used to prove the
-same properties of the CI-side generator, reused here as the plan directs.
+through :func:`opus_config.load_config`. That is the technique the CI-side
+generator's own tests use to prove the same properties, reused here.
 """
 
 from __future__ import annotations
@@ -229,9 +229,9 @@ def test_the_file_is_never_world_readable_even_briefly(
     The trailing ``chmod 600`` fixes the mode after the fact, so the test above passes
     with the ``( umask 077; ... )`` subshell deleted -- while the file spends the whole
     of its write world-readable with the password already in it. That window is the
-    property PR-08's note cared about, and this is what defends it: the temporary file
-    is created under a deliberately permissive umask and its mode is read before the
-    chmod can hide the difference.
+    property at issue, and this is what defends it: the temporary file is created
+    under a deliberately permissive umask and its mode is read before the chmod can
+    hide the difference.
 
     Race-free, and without needing to catch the file mid-write: the destination is
     pre-created as a directory the process cannot write into, so the rename fails while

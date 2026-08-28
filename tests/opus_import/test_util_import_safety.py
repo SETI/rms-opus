@@ -3,8 +3,8 @@
 Both tools used to run their whole job in the module body: `retrieve_ra_dec` issued one
 live SIMBAD HTTP request per star in `STARS` -- about 160 of them -- and
 `dump_pds_definitions` read ``sys.argv[1]``, so importing it with no arguments raised
-`IndexError`. PR-21 points Sphinx autodoc at every module in the package, so this is the
-property that keeps a documentation build off the network.
+`IndexError`. Sphinx autodoc is pointed at every module in the package, so this is
+the property that keeps a documentation build off the network.
 
 These tests import the modules in a subprocess with the network and ``sys.argv`` set up
 to make any regression loud rather than slow.

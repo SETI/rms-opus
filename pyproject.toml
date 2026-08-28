@@ -189,8 +189,8 @@ where = ["src"]
 # outside the package-data rules below.
 namespaces = false
 
-# Package-data audit (plan PR-22). What ships in the wheel, and why -- re-derive
-# the inventory rather than trusting a description of it:
+# Package-data audit. What ships in the wheel, and why -- re-derive the inventory
+# rather than trusting a description of it:
 #
 #     python -m build --wheel && python -c "import zipfile,sys; \
 #       print('\n'.join(zipfile.ZipFile(sys.argv[1]).namelist()))" dist/*.whl
@@ -318,10 +318,10 @@ module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
           "pdstable.*", "rest_framework.*"]
 ignore_missing_imports = true
 
-# The type burn-down list is gone (plan PR-17, completed by PR-17b): `strict = true`
-# applies to the whole repository and no module is silenced by an `ignore_errors`
-# entry, because that list is empty. **That is the whole of the claim.** Suppression
-# has not vanished from this file and nobody should read it that way: `exclude` above
+# There is no type burn-down list: `strict = true` applies to the whole repository
+# and no module is silenced by an `ignore_errors` entry, because that list is empty.
+# **That is the whole of the claim.** Suppression has not vanished from this file
+# and nobody should read it that way: `exclude` above
 # still holds the paths that are not project source, and the `ignore_missing_imports`
 # override above still covers the third-party packages that ship neither annotations
 # nor a typeshed stub. Read both lists above rather than trusting a count here; each
@@ -352,7 +352,7 @@ exclude = [
   # ruff applies to an explicitly named path regardless of this exclusion.
   # Excluding it also means the 231 generated model classes and their nested
   # Meta classes carry no docstrings and are not expected to: writing them would
-  # flood the Sphinx API reference PR-21 publishes with entries no reader gains
+  # flood the published Sphinx API reference with entries no reader gains
   # anything from, and the next regeneration would delete them anyway. This is a
   # permanent exclusion like the two above, not a burn-down entry, and does not
   # affect the per-file-ignores table.
@@ -374,34 +374,33 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 # SIM108 - Use ternary operator for simple if/else (template default).
 # PT009/PT027 - self.assertEqual / self.assertRaises. The live-DB integration
 #   suite (integration_tests/apps_db_tests/*, integration_tests/test_api/*) stays
-#   unittest.TestCase permanently (plan PR-18), so these unittest->pytest-assertion
-#   rules can never burn down and are ignored globally; PT018 and every other PT
-#   rule stay enforced.
-# E501  - line too long. Retired here (plan rev 7.20) rather than burned down,
-#   because from PR-23 onward `ruff format` is what enforces layout, and E501's
-#   entire residue is tokens no formatter can split. Regenerate the measurement
-#   rather than trusting these numbers: empty the per-file-ignores table below
-#   and run `ruff check`, then run `ruff format` over the same paths and run it
-#   again. Measured that way at this PR (ruff 0.16.4): 1267 before formatting,
-#   718 after, and 678 of those 718 are in integration_tests -- single URL query
-#   strings and PDS file paths inside the golden-response fixtures, each one
-#   literal with nothing to break at. Splitting them means 678 hand-edits to the
-#   suite that is this rewrite's primary safety net, in the implicit-string-
-#   concatenation defect class that produced the fused 'cm^-1perpixel' alias bug
-#   PR-03a fixed. `line-length` stays 100 and still governs the formatter.
+#   unittest.TestCase permanently, so these unittest->pytest-assertion rules can
+#   never burn down and are ignored globally; PT018 and every other PT rule stay
+#   enforced.
+# E501  - line too long. Retired rather than burned down, because `ruff format` is
+#   what governs layout wherever it is applied, and E501's entire residue is tokens
+#   no formatter can split. Regenerate the measurement rather than trusting these
+#   numbers: empty the per-file-ignores table below and run `ruff check`, then run
+#   `ruff format` over the same paths and run it again. Measured that way at the
+#   time of writing (ruff 0.16.4): 1267 before formatting, 718 after, and 678 of
+#   those 718 are in integration_tests -- single URL query strings and PDS file
+#   paths inside the golden-response fixtures, each one literal with nothing to
+#   break at. Splitting them means 678 hand-edits to the suite that is this
+#   rewrite's primary safety net, in the implicit-string-concatenation defect class
+#   that once produced a fused 'cm^-1perpixel' alias. `line-length` stays 100 and
+#   still governs the formatter.
 extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
-# Empty, and that is PR-01's exit criterion met (plan PR-17, finished by PR-17b).
-# Every tree in RUFF_PATHS passes with no *per-file* exception. That is what an empty table means and all it means:
-# the codes in `extend-ignore` above are still ignored globally, and `exclude` above
-# still lists the paths that are not project source. What the burn-down held, and
-# where each entry went:
+# Empty. Every tree in RUFF_PATHS passes with no *per-file* exception. That is what
+# an empty table means and all it means: the codes in `extend-ignore` above are still
+# ignored globally, and `exclude` above still lists the paths that are not project
+# source. What the burn-down held, and where each entry went:
 #
 #   E722, F403/F405   the bare `except:` and the star imports were refactored away
 #                     by the PRs that owned those trees.
-#   PT015, B011, B006 `assert False` and the mutable default arguments were fixed in
-#                     PR-02.
+#   PT015, B011, B006 the `assert False` statements became `NotImplementedError`
+#                     and the mutable default arguments were rewritten.
 #   E501              retired into the documented global ignore above rather than
 #                     burned down; the reasoning is stated there.
 #   N801, N802        the last row. The live-DB suites' classes and test methods now
@@ -441,14 +440,15 @@ exclude_dirs = [
   "src/opus_app/static/admin/js/compress.py",
 ]
 targets = ["src", "integration_tests", "manage.py"]
-# PR-01 opened this list with fourteen category skips as a burn-down valve, and
-# PR-17a closed it down to the one entry that is irreducible. Everything else is
-# a per-line `# nosec <ID> - <reason>` at the statement it covers; regenerate the
-# set with `grep -rn "# nosec" src integration_tests manage.py`, and re-derive
-# what the list is holding back by emptying it and re-running bandit.
+# This list opened with fourteen category skips as a burn-down valve and has been
+# closed down to the one entry that is irreducible: a category skip hides every
+# future instance of its rule as well as the ones it was written for. Everything
+# else is a per-line `# nosec <ID> - <reason>` at the statement it covers;
+# regenerate the set with `grep -rn "# nosec" src integration_tests manage.py`, and
+# re-derive what the list is holding back by emptying it and re-running bandit.
 #
-# B105 left in PR-08 (the 'XXX' placeholder went with the dictionary app's
-# secrets template) and B610 in PR-12 (all four QuerySet.extra() sites are gone).
+# B105 left when the 'XXX' placeholder went with the dictionary app's secrets
+# template, and B610 when the last QuerySet.extra() call site was rewritten.
 # B607 left here: it fired zero times, and a skip that suppresses nothing is a
 # claim about the code that is no longer true.
 #
@@ -462,19 +462,19 @@ targets = ["src", "integration_tests", "manage.py"]
 # test id and the warnings stand. The exit status is what gates.
 skips = [
   # assert_used. These are not input validation and never were: they are the
-  # narrowing assertions PR-14, PR-15 and PR-16 added so that mypy strict could
+  # narrowing assertions the annotation work added so that mypy strict could
   # follow an invariant the code already relied on, plus a few pre-existing
   # invariant checks. Do not trust the number below without re-measuring -- it
   # grows with every annotation PR. Regenerate it with `skips` emptied and
   # `--ignore-nosec`, which is the only way to see what the list is holding back:
   #     bandit -c pyproject.toml -r src integration_tests manage.py \
   #            -f json -q --ignore-nosec
-  # Measured that way on the PR-17b tree: 326 B101 findings -- 199 in
+  # Measured that way when this comment was written: 326 B101 findings -- 199 in
   # src/opus_import, 90 in src/opus_app, 17 in src/opus_log_analyzer, 16 in
-  # src/opus_support and 4 in integration_tests/apps_db_tests. (PR-17a measured
-  # 322 without that last group, which is the four narrowing assertions PR-17b
-  # added; a PR that annotates anything bandit scans moves this number, which is
-  # why the command is written out above rather than the figure being trusted.)
+  # src/opus_support and 4 in integration_tests/apps_db_tests. An earlier
+  # measurement read 322 without that last group; any change that annotates
+  # anything bandit scans moves this number, which is why the command is written
+  # out above rather than the figure being trusted.
   # The largest share is in other packages' trees, but every annotation PR has
   # contributed its own, so this is not a skip that only covers somebody else's
   # code. A per-line `# nosec` on each would be 326 comments restating one fact,
@@ -484,10 +484,10 @@ skips = [
   "B101",
 ]
 
-# Enabled in PR-02 (after the dead-code removal). Genuine dead code is
-# deleted; irreducible false positives live in vulture_whitelist.py (which is
-# passed as an input path so its names count as used). PR-17 shrinks the
-# whitelist. The same paths are also set via OPUS_VULTURE_PATHS
+# Genuine dead code is deleted, not suppressed; the irreducible false positives
+# live in vulture_whitelist.py (which is passed as an input path so its names
+# count as used), and that file is kept to the entries that can still be
+# justified one at a time. The same paths are also set via OPUS_VULTURE_PATHS
 # (run-all-checks.sh) and VULTURE_PATHS (run-tests.yml).
 # tests/ is scanned too: its own dead imports are caught, and names that only
 # the suite uses then count as used.

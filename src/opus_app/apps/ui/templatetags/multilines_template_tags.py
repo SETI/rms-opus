@@ -16,7 +16,7 @@ installed app, so this module is imported before any template is rendered.
 Monkeypatching a private-by-convention module global is fragile across upgrades, so
 it carries the version it was last verified against.
 
-**Verified against Django 5.2.17** (PR-09, 2026-08-23), by three separate checks:
+**Verified against Django 5.2.17** (2026-08-23), by three separate checks:
 `template.base.tag_re` is still a plain `re.Pattern` holding the pattern this
 recompiles; `Lexer.tokenize` still resolves `tag_re` as a module global at call time,
 so rebinding the attribute takes effect; and with the engine set up, `tag_re.flags`
