@@ -85,7 +85,10 @@ rather than to the major tag ``.cursor/rules/environment.mdc`` asks for, on the
 argument that a major tag is mutable and one workflow runs on hardware the Node
 owns. That was retired once it was established that the self-hosted runners are
 disposable, so there is no durable credential on them for a moved tag to reach. The
-workflows follow the rule now, with no exception.
+workflows follow the rule now; the only reference that is not a major tag is
+``pypa/gh-action-pypi-publish@release/v1``, which is the ref PyPA documents for its
+own action, and :ref:`dev_guide_environment` says so where the workflows are
+described.
 
 Docstrings
 ----------

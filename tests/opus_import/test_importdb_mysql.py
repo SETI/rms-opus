@@ -109,6 +109,41 @@ def test_upsert_rows_names_the_new_row_through_the_alias_not_values(
         assert value == f'`new`.{column}', assignment
 
 
+def test_upsert_rows_does_not_alias_a_row_as_the_table_it_writes(
+        db: _RecordingDB) -> None:
+    """A table called ``new`` gets a different row alias, because MySQL forbids the clash.
+
+    MySQL requires the row alias to differ from the table name, and the ``perm``
+    namespace passes the raw table name straight through, so the one name that collides
+    reaches the statement unprefixed. Nothing in today's schema is called ``new`` --
+    which is exactly why this is a test rather than a comment: the collision would first
+    appear as a syntax error partway through an import of some future table, and the
+    packet loop would already have written the earlier ones.
+    """
+    db.upsert_rows('perm', 'new', 'id', [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b'}])
+
+    cmd, _params = db.executed[0]
+    assert cmd.startswith('INSERT INTO `new` (')
+    assert ' AS `new_row` ON DUPLICATE KEY UPDATE `value`=`new_row`.`value`' in cmd
+    # The alias and the table must not be the same identifier, which is the whole rule.
+    assert ' AS `new` ' not in cmd
+
+
+def test_upsert_rows_keeps_the_plain_alias_for_every_other_table(
+        db: _RecordingDB) -> None:
+    """The rename is confined to the colliding name; nothing else pays for it.
+
+    Without this, widening the guard -- renaming the alias for every table, or matching
+    a prefix -- would go unnoticed, and the statement every real import runs would
+    quietly stop being the one the tests above pin.
+    """
+    db.upsert_rows('perm', 'newer', 'id', [{'id': 0, 'value': 'a'}])
+
+    cmd, _params = db.executed[0]
+    assert ' AS `new` ON DUPLICATE KEY UPDATE ' in cmd
+    assert '`new_row`' not in cmd
+
+
 def test_upsert_rows_splits_large_row_sets_into_packets(db: _RecordingDB) -> None:
     """MySQL rejects an unbounded statement, so rows go 1000 at a time."""
     db.upsert_rows('perm', 'mult_obs_general_target_name', 'id',

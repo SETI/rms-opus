@@ -6988,15 +6988,25 @@ body; never rewrite or delete earlier notes.*
     builds `col=%s` from bound parameters, because one statement there carries one row.
     The alias is emitted only alongside the `ON DUPLICATE KEY UPDATE` clause that reads
     it, so a key-only row still produces the same plain `INSERT` it did before.
+    - **The row alias is `new` for every table except one.** MySQL requires the alias
+      to differ from the table name, and `convert_raw_to_namespace` returns the raw
+      name for the `perm` namespace, so a table literally called `new` would reach the
+      statement unprefixed and collide -- a syntax error partway through an import,
+      after the packet loop had already written earlier tables. Nothing in the schema
+      is called that today; the guard renames the alias to `new_row` for that one
+      name, compared case-insensitively, and two tests pin both branches. Raised by
+      CodeRabbit on this PR and mutation-tested before being trusted.
     - **This raises the server floor from Django's 8.0.11 to 8.0.19**, and every place
       that states a MySQL version was updated to say so. Regenerate the set rather than
       trusting a list -- the first draft of this bullet named four files and the same
       commit had changed five. The fifth was `docs/dev_guide_database.rst`, which said
-      "MySQL 8.x"; 8.0.11 is also 8.x, so that spelling did not distinguish. Match on
-      the separator rather than the digit, because that file spells it "MySQL, 8.0.19"
-      and a pattern anchored to `mysql *8` misses it -- which is how the list came to
-      be short in the first place:
-      `git grep -niE 'mysql[ ,]+[0-9]' -- README.md docs/ CONTRIBUTING.md`.
+      "MySQL 8.x"; 8.0.11 is also 8.x, so that spelling did not distinguish. All five
+      now spell it the same way, which is itself the point -- the first replacement
+      wrote "MySQL, 8.0.19" there and a regenerating grep anchored on `mysql *8`
+      silently missed it, so the command written to retire a stale list was stale in
+      the same way. CodeRabbit caught the comma. Regenerate with
+      `git grep -niE 'mysql[ ,]+[0-9]' -- README.md docs/ CONTRIBUTING.md`, which
+      tolerates either spelling.
     - Verified against a real MySQL **8.0.46** with PR-10's own technique: two tables of
       the same shape filled from the same three row sets (2500 inserts, an overwrite of
       1800, then 10 more -- so both the insert and the update path, and the 1000-row

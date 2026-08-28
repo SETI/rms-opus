@@ -80,6 +80,12 @@ nothing in the code reads it, and shipping it would mean extracting it through
 fetches it as above, or copies it from a checkout. (``-f`` is load-bearing: without it
 ``curl`` exits 0 on a 404 and writes the error page into the file the next line copies.)
 
+``opus`` in those commands is the account OPUS runs as, and it has to exist before
+the second one: ``install -o`` fails on an unknown user rather than creating it. On
+a host that has no such account yet, make one -- ``sudo useradd --system
+--no-create-home opus`` -- or substitute whichever account the WSGI daemon process
+and the import pipeline will run as.
+
 ``install`` rather than ``cp``, and **both** of its options matter. The mode is 0600
 because the placeholders are about to be replaced by a database password and a
 Django secret key, and ``cp`` would give the file whatever the caller's umask allows

@@ -956,7 +956,15 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             # deprecated -- so this raises the server floor from Django's own 8.0.11
             # to 8.0.19, which README.md and the developer guide's prerequisites now
             # state.
-            row_alias = self.quote_identifier('new')
+            # MySQL requires the row alias to differ from the table name, and a
+            # `perm`-namespace name is the raw one, so a table called `new` would
+            # produce a syntax error deep inside an import. No OPUS table is called
+            # that, but the schema is data rather than a guarantee, so the one
+            # colliding name is answered here instead of being assumed away.
+            # Compared case-insensitively: MySQL folds identifiers for this check
+            # even where the file system makes table names case-sensitive.
+            row_alias = self.quote_identifier(
+                'new_row' if table_name.lower() == 'new' else 'new')
             assign_list = ','.join(
                 f'{self.quote_identifier(c)}={row_alias}.{self.quote_identifier(c)}'
                 for c in sorted_column_names if c != key_name)
